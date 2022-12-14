@@ -5,7 +5,7 @@ import com.zufarproject.aws.dynamodb.model.Customer;
 import com.zufarproject.aws.dynamodb.repository.CustomerCrudRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,33 +15,36 @@ public class CustomerEndpoint {
     private final ModelMapper modelMapper;
 
     @PostMapping("/customer")
-    @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public Customer saveCustomer(@RequestBody final Customer customer) {
-        return customerCrudRepository.saveCustomer(customer);
+    public ResponseEntity<Void> saveCustomer(@RequestBody final Customer customer) {
+        customerCrudRepository.saveCustomer(customer);
+        return ResponseEntity.ok()
+                .build();
     }
 
     @GetMapping("/customer/{id}")
     @ResponseBody
-    public CustomerDto getCustomerById(@PathVariable("id") final String customerId) {
+    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") final String customerId) {
         Customer customer = customerCrudRepository.getCustomerById(customerId);
-        return modelMapper.map(customer, CustomerDto.class);
+        CustomerDto customerDto = modelMapper.map(customer, CustomerDto.class);
+        return ResponseEntity.ok()
+                .body(customerDto);
     }
 
     @DeleteMapping("/customer/{id}")
-    @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public String deleteCustomerById(@PathVariable("id") final String customerId) {
+    public ResponseEntity<Void> deleteCustomerById(@PathVariable("id") final String customerId) {
         customerCrudRepository.deleteCustomerById(customerId);
-        return  "";
+        return ResponseEntity.ok()
+                .build();
     }
 
     @PutMapping("/customer/{id}")
-    @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public String updateCustomer(@PathVariable("id") final String customerId,
-                                 @RequestBody final Customer customer) {
-        customerCrudRepository.updateCustomer(customerId,customer);
-        return "";
+    public ResponseEntity<Void> updateCustomer(@PathVariable("id") final String customerId,
+                                               @RequestBody final Customer customer) {
+        customerCrudRepository.updateCustomer(customerId, customer);
+        return ResponseEntity.ok()
+                .build();
     }
 }
