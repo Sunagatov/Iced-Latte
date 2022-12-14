@@ -13,10 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/v1")
+@RequestMapping(value = "/api")
 public class CustomerEndpoint {
     private final CustomerCrudRepository customerCrudRepository;
     private final ModelMapper modelMapper;
@@ -33,8 +35,12 @@ public class CustomerEndpoint {
     @GetMapping("/customer/{id}")
     @ResponseBody
     public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") @NotBlank final String customerId) {
-        Customer customer = customerCrudRepository.getCustomerById(customerId);
-        CustomerDto customerDto = modelMapper.map(customer, CustomerDto.class);
+        Optional<Customer> customer = customerCrudRepository.getCustomerById(customerId);
+        if (customer.isEmpty()) {
+            return ResponseEntity.notFound()
+                    .build();
+        }
+        CustomerDto customerDto = modelMapper.map(customer.get(), CustomerDto.class);
         return ResponseEntity.ok()
                 .body(customerDto);
     }
