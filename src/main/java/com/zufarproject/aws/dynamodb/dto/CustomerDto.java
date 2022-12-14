@@ -13,17 +13,23 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomerDto {
+
     @NotBlank(message = "CustomerId is mandatory")
+    @Size(min = 2, max = 55)
     private String customerId;
+
     @NotBlank(message = "FirstName must be between 2 to 55 characters")
     @Size(min = 2, max = 55)
     private String firstName;
+
     @NotBlank(message = "LastName must be between 2 to 55 characters")
     @Size(min = 2, max = 55)
     private String lastName;
+
     @NotBlank(message = "Email is mandatory")
     @Email
     private String email;
+
     @NotNull(message = "AddressDto is mandatory")
     @Valid
     private AddressDto addressDto;
