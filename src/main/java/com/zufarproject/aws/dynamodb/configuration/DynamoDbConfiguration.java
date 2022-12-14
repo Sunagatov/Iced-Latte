@@ -18,8 +18,8 @@ import software.amazon.awssdk.regions.Region;
 public class DynamoDbConfiguration {
     private static final String AWS_ACCESS_KEY = System.getProperty("AWS_ACCESS_KEY");
     private static final String AWS_SECRET_KEY = System.getProperty("AWS_SECRET_KEY");
-    public static final String AWS_SERVICE_ENDPOINT = System.getProperty("AWS_SERVICE_ENDPOINT");
-    public static final String AWS_REGION = Region.AWS_GLOBAL.id();
+    private static final String AWS_SERVICE_ENDPOINT = System.getProperty("AWS_SERVICE_ENDPOINT");
+    private static final String AWS_REGION = System.getProperty("AWS_REGION");
 
     @Bean
     public DynamoDBMapper dynamoDBMapper() {
