@@ -1,8 +1,10 @@
 package com.zufarproject.aws.dynamodb.endpoint;
 
+import com.zufarproject.aws.dynamodb.dto.CustomerDto;
 import com.zufarproject.aws.dynamodb.model.Customer;
 import com.zufarproject.aws.dynamodb.repository.CustomerCrudRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CustomerEndpoint {
     private final CustomerCrudRepository customerCrudRepository;
+    private final ModelMapper modelMapper;
 
     @PostMapping("/customer")
     @ResponseStatus(HttpStatus.CREATED)
@@ -20,8 +23,9 @@ public class CustomerEndpoint {
 
     @GetMapping("/customer/{id}")
     @ResponseBody
-    public Customer getCustomerById(@PathVariable("id") final String customerId) {
-        return customerCrudRepository.getCustomerById(customerId);
+    public CustomerDto getCustomerById(@PathVariable("id") final String customerId) {
+        Customer customer = customerCrudRepository.getCustomerById(customerId);
+        return modelMapper.map(customer, CustomerDto.class);
     }
 
     @DeleteMapping("/customer/{id}")
