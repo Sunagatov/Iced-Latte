@@ -4,22 +4,22 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDto {
 
-    @NotBlank(message = "Line must be between 2 to 55 characters")
-    @Size(min = 2, max = 55)
+    @NotBlank(message = "Line is mandatory")
+    @Size(max = 55, message = "Line length must be less than 55 characters")
     private String line;
 
-    @NotBlank(message = "City must be between 2 to 55 characters")
-    @Size(min = 2, max = 55)
+    @NotBlank(message = "City is mandatory")
+    @Size(max = 55, message = "City length must be less than 55 characters")
     private String city;
 
-    @NotBlank(message = "Country must be between 2 to 55 characters")
-    @Size(min = 2, max = 55)
+    @NotBlank(message = "Country is mandatory")
+    @Size(max = 55, message = "Country length must be less than 55 characters")
     private String country;
 }

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +16,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "v1")
+@RequestMapping(value = "/v1")
 public class CustomerEndpoint {
     private final CustomerCrudRepository customerCrudRepository;
     private final ModelMapper modelMapper;
 
     @PostMapping("/customer")
     @ResponseBody
-    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid @NotNull final CustomerDto customer) {
+    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid @NotNull(message = "Customer is mandatory") final CustomerDto customer) {
         Customer customerEntity = modelMapper.map(customer, Customer.class);
         customerCrudRepository.saveCustomer(customerEntity);
-        return ResponseEntity.ok()
+        return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
     }
 

@@ -1,27 +1,43 @@
 package com.zufarproject.aws.dynamodb.exception;
 
-import org.springframework.http.HttpStatus;
+import com.amazonaws.util.StringUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@ControllerAdvice
 public class ExceptionsHandler {
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(final MethodArgumentNotValidException exception) {
-        Map<String, String> errors = new HashMap<>();
-        exception.getBindingResult()
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
+        Map<String, String> errors = exception.getBindingResult()
                 .getAllErrors()
-                .forEach((error) -> {
-                    String fieldName = ((FieldError) error).getField();
-                    String errorMessage = error.getDefaultMessage();
-                    errors.put(fieldName, errorMessage);
-                });
-        return errors;
+                .stream()
+                .collect(Collectors.toMap(error -> ((FieldError) error).getField(),
+                        error -> {
+                            String errorMessage = error.getDefaultMessage();
+                            if (StringUtils.isNullOrEmpty(errorMessage)) {
+                                errorMessage = "ErrorMessage is empty";
+                            }
+                            return errorMessage;
+                        }));
+
+        return ResponseEntity.badRequest()
+                .body(errors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException() {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("Error message", "Request body is mandatory");
+        return ResponseEntity.badRequest()
+                .body(errors);
     }
 }

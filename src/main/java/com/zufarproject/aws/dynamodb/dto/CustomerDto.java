@@ -2,12 +2,12 @@ package com.zufarproject.aws.dynamodb.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
 
 @Data
 @AllArgsConstructor
@@ -15,22 +15,22 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
 public class CustomerDto {
 
     @NotBlank(message = "CustomerId is mandatory")
-    @Size(min = 2, max = 55)
+    @Size(max = 55, message = "CustomerId length must be less than 55 characters")
     private String customerId;
 
-    @NotBlank(message = "FirstName must be between 2 to 55 characters")
-    @Size(min = 2, max = 55)
+    @NotBlank(message = "FirstName is mandatory")
+    @Size(max = 55, message = "FirstName length must be less than 55 characters")
     private String firstName;
 
-    @NotBlank(message = "LastName must be between 2 to 55 characters")
-    @Size(min = 2, max = 55)
+    @NotBlank(message = "LastName is mandatory")
+    @Size(max = 55, message = "LastName length must be less than 55 characters")
     private String lastName;
 
+    @Email(message = "Email should be valid")
     @NotBlank(message = "Email is mandatory")
-    @Email
     private String email;
 
-    @NotNull(message = "AddressDto is mandatory")
     @Valid
+    @NotNull(message = "Address is mandatory")
     private AddressDto address;
 }
