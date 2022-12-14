@@ -8,20 +8,21 @@ import com.zufarproject.aws.dynamodb.model.Customer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class CustomerDynamoDbMapper implements CustomerCrudRepository {
     private final DynamoDBMapper dynamoDBMapper;
 
     @Override
-    public Customer saveCustomer(final Customer customer) {
+    public void saveCustomer(final Customer customer) {
         dynamoDBMapper.save(customer);
-        return customer;
     }
 
     @Override
-    public Customer getCustomerById(final String customerId) {
-        return dynamoDBMapper.load(Customer.class, customerId);
+    public Optional<Customer> getCustomerById(final String customerId) {
+        return Optional.ofNullable(dynamoDBMapper.load(Customer.class, customerId));
     }
 
     @Override

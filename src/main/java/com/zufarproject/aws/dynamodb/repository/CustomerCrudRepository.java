@@ -2,11 +2,13 @@ package com.zufarproject.aws.dynamodb.repository;
 
 import com.zufarproject.aws.dynamodb.model.Customer;
 
+import java.util.Optional;
+
 public interface CustomerCrudRepository {
 
-    Customer saveCustomer(final Customer customer);
+    void saveCustomer(final Customer customer);
 
-    Customer getCustomerById(final String customerId);
+    Optional<Customer> getCustomerById(final String customerId);
 
     void deleteCustomerById(final String customerId);
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Primary
 @Repository
@@ -15,14 +16,13 @@ public class CustomerTestCrudRepository implements CustomerCrudRepository {
     private final Map<String, Customer> customers = new HashMap<>();
 
     @Override
-    public Customer saveCustomer(final Customer customer) {
+    public void saveCustomer(final Customer customer) {
         customers.put(customer.getCustomerId(), customer);
-        return customer;
     }
 
     @Override
-    public Customer getCustomerById(final String customerId) {
-        return customers.get(customerId);
+    public Optional<Customer> getCustomerById(final String customerId) {
+       return Optional.ofNullable(customers.get(customerId));
     }
 
     @Override
