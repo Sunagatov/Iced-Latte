@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Validated
+@RequestMapping(value = "v1")
 public class CustomerEndpoint {
     private final CustomerCrudRepository customerCrudRepository;
     private final ModelMapper modelMapper;
