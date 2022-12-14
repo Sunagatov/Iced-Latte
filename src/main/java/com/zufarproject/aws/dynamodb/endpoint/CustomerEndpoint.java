@@ -16,8 +16,9 @@ public class CustomerEndpoint {
 
     @PostMapping("/customer")
     @ResponseBody
-    public ResponseEntity<Void> saveCustomer(@RequestBody final Customer customer) {
-        customerCrudRepository.saveCustomer(customer);
+    public ResponseEntity<Void> saveCustomer(@RequestBody final CustomerDto customer) {
+        Customer customerEntity = modelMapper.map(customer, Customer.class);
+        customerCrudRepository.saveCustomer(customerEntity);
         return ResponseEntity.ok()
                 .build();
     }
@@ -42,8 +43,9 @@ public class CustomerEndpoint {
     @PutMapping("/customer/{id}")
     @ResponseBody
     public ResponseEntity<Void> updateCustomer(@PathVariable("id") final String customerId,
-                                               @RequestBody final Customer customer) {
-        customerCrudRepository.updateCustomer(customerId, customer);
+                                               @RequestBody final CustomerDto customer) {
+        Customer customerEntity = modelMapper.map(customer, Customer.class);
+        customerCrudRepository.updateCustomer(customerId, customerEntity);
         return ResponseEntity.ok()
                 .build();
     }
