@@ -18,7 +18,7 @@ import software.amazon.awssdk.regions.Region;
 public class DynamoDbConfiguration {
     private static final String AWS_ACCESS_KEY = System.getProperty("AWS_ACCESS_KEY");
     private static final String AWS_SECRET_KEY = System.getProperty("AWS_SECRET_KEY");
-    public static final String SERVICE_ENDPOINT = "";
+    public static final String AWS_SERVICE_ENDPOINT = System.getProperty("AWS_SERVICE_ENDPOINT");
     public static final String AWS_REGION = Region.AWS_GLOBAL.id();
 
     @Bean
@@ -37,7 +37,7 @@ public class DynamoDbConfiguration {
 
     @Bean
     public AwsClientBuilder.EndpointConfiguration getEndpointConfiguration() {
-        return new AwsClientBuilder.EndpointConfiguration(SERVICE_ENDPOINT, AWS_REGION);
+        return new AwsClientBuilder.EndpointConfiguration(AWS_SERVICE_ENDPOINT, AWS_REGION);
     }
 
     @Bean
