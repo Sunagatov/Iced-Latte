@@ -32,5 +32,5 @@ public class CustomerDto {
 
     @NotNull(message = "AddressDto is mandatory")
     @Valid
-    private AddressDto addressDto;
+    private AddressDto address;
 }

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDto {
+
     @NotBlank(message = "Line must be between 2 to 55 characters")
     @Size(min = 2, max = 55)
     private String line;
