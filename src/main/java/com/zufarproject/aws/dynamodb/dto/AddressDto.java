@@ -9,10 +9,10 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDto {
-    @NotBlank
+    @NotBlank(message = "line is mandatory")
     private String line;
-    @NotBlank
+    @NotBlank(message = "city is mandatory")
     private String city;
-    @NotBlank
+    @NotBlank(message = "country is mandatory")
     private String country;
 }

@@ -11,15 +11,15 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomerDto {
-    @NotBlank
+    @NotBlank(message = "customerId is mandatory")
     private String customerId;
-    @NotBlank
+    @NotBlank(message = "firstName is mandatory")
     private String firstName;
-    @NotBlank
+    @NotBlank(message = "lastName is mandatory")
     private String lastName;
-    @NotBlank
+    @NotBlank(message = "email is mandatory")
     private String email;
-    @NotNull
+    @NotNull(message = "addressDto is mandatory")
     @Valid
     private AddressDto addressDto;
 }
