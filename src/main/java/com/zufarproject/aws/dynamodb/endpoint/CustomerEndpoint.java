@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 public class CustomerEndpoint {
-    private CustomerCrudRepository customerCrudRepository;
+    private final CustomerCrudRepository customerCrudRepository;
 
     @PostMapping("/customer")
     @ResponseStatus(HttpStatus.CREATED)
