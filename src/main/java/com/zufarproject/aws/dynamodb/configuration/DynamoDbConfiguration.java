@@ -11,7 +11,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.regions.Region;
 
 @Configuration
 @RequiredArgsConstructor
