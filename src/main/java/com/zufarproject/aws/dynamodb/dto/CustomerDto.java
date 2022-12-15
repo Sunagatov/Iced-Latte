@@ -1,5 +1,6 @@
 package com.zufarproject.aws.dynamodb.dto;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -16,8 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CustomerDto {
 
-    @NotBlank(message = "CustomerId is mandatory")
-    @Size(max = 55, message = "CustomerId length must be less than 55 characters")
+    @Nullable
     private String customerId;
 
     @NotBlank(message = "FirstName is mandatory")
