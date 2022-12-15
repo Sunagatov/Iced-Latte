@@ -18,12 +18,12 @@ import java.util.Optional;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/api")
+@RequestMapping(value = "/customers")
 public class CustomerEndpoint {
     private final CustomerCrudRepository customerCrudRepository;
     private final ModelMapper modelMapper;
 
-    @PostMapping("/customer")
+    @PostMapping
     @ResponseBody
     public ResponseEntity<Void> saveCustomer(@RequestBody @Valid @NotNull(message = "Customer is mandatory") final CustomerDto customer) {
         Customer customerEntity = modelMapper.map(customer, Customer.class);
@@ -32,7 +32,7 @@ public class CustomerEndpoint {
                 .build();
     }
 
-    @GetMapping("/customer/{id}")
+    @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") @NotBlank final String customerId) {
         Optional<Customer> customer = customerCrudRepository.getCustomerById(customerId);
@@ -45,7 +45,7 @@ public class CustomerEndpoint {
                 .body(customerDto);
     }
 
-    @DeleteMapping("/customer/{id}")
+    @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Void> deleteCustomerById(@PathVariable("id") @NotBlank final String customerId) {
         customerCrudRepository.deleteCustomerById(customerId);
@@ -53,7 +53,7 @@ public class CustomerEndpoint {
                 .build();
     }
 
-    @PutMapping("/customer/{id}")
+    @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Void> updateCustomer(@PathVariable("id") @NotBlank final String customerId,
                                                @RequestBody @Valid @NotNull final CustomerDto customer) {
