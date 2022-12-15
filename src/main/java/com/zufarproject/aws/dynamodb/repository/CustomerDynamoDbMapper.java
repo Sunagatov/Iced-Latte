@@ -1,13 +1,12 @@
 package com.zufarproject.aws.dynamodb.repository;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.zufarproject.aws.dynamodb.model.Customer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @Repository
@@ -21,6 +20,11 @@ public class CustomerDynamoDbMapper implements CustomerCrudRepository {
     }
 
     @Override
+    public void saveCustomers(final Collection<Customer> customers) {
+        dynamoDBMapper.batchSave(customers);
+    }
+
+    @Override
     public Optional<Customer> getCustomerById(final String customerId) {
         return Optional.ofNullable(dynamoDBMapper.load(Customer.class, customerId));
     }
@@ -31,16 +35,18 @@ public class CustomerDynamoDbMapper implements CustomerCrudRepository {
     }
 
     @Override
-    public void updateCustomer(final String customerId, final Customer customer) {
-        AttributeValue attributeValue = new AttributeValue().withS(customerId);
-        ExpectedAttributeValue expectedAttributeValue = new ExpectedAttributeValue(attributeValue);
-        String attributeName = "customerId";
+    public void deleteCustomersByIds(final Collection<String> customerIds) {
+        dynamoDBMapper.batchDelete(dynamoDBMapper.load(Customer.class, customerIds));
+    }
 
-        DynamoDBSaveExpression dynamoDBSaveExpression = new DynamoDBSaveExpression()
-                .withExpectedEntry(
-                        attributeName,
-                        expectedAttributeValue
-                );
-        dynamoDBMapper.save(customer, dynamoDBSaveExpression);
+    @Override
+    public void updateCustomer(final String customerId, final Customer customer) {
+        customer.setCustomerId(customerId);
+
+        DynamoDBMapperConfig dynamoDBMapperConfig = new DynamoDBMapperConfig.Builder()
+                .withConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT)
+                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE)
+                .build();
+        dynamoDBMapper.save(customer, dynamoDBMapperConfig);
     }
 }
