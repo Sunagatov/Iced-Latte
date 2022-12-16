@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class CommonConfiguration {
+public class ClassConverterConfiguration {
 
-    @Bean
-    public ModelMapper modelMapper(){
-        return new ModelMapper();
-    }
+	@Bean
+	public ModelMapper modelMapper(){
+		return new ModelMapper();
+	}
 }
