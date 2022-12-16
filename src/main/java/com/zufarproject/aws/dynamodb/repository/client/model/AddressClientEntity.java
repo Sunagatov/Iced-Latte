@@ -15,6 +15,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @DynamoDBDocument
 public class AddressClientEntity {
     private String line;
-    private  String city;
-    private  String country;
+    private String city;
+    private String country;
 }
