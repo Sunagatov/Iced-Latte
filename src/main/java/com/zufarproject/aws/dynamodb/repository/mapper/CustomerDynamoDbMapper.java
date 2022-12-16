@@ -1,46 +1,49 @@
-package com.zufarproject.aws.dynamodb.repository;
+package com.zufarproject.aws.dynamodb.repository.mapper;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.zufarproject.aws.dynamodb.model.Customer;
+import com.zufarproject.aws.dynamodb.repository.CrudRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.Optional;
 
+@Primary
 @Repository
 @RequiredArgsConstructor
-public class CustomerDynamoDbMapper implements CustomerCrudRepository {
+public class CustomerDynamoDbMapper implements CrudRepository<Customer> {
     private final DynamoDBMapper dynamoDBMapper;
 
     @Override
-    public void saveCustomer(final Customer customer) {
+    public void save(final Customer customer) {
         dynamoDBMapper.save(customer);
     }
 
     @Override
-    public void saveCustomers(final Collection<Customer> customers) {
+    public void save(final Collection<Customer> customers) {
         dynamoDBMapper.batchSave(customers);
     }
 
     @Override
-    public Optional<Customer> getCustomerById(final String customerId) {
+    public Optional<Customer> getById(final String customerId) {
         return Optional.ofNullable(dynamoDBMapper.load(Customer.class, customerId));
     }
 
     @Override
-    public void deleteCustomerById(final String customerId) {
+    public void deleteById(final String customerId) {
         dynamoDBMapper.delete(dynamoDBMapper.load(Customer.class, customerId));
     }
 
     @Override
-    public void deleteCustomersByIds(final Collection<String> customerIds) {
+    public void deleteByIds(final Collection<String> customerIds) {
         dynamoDBMapper.batchDelete(dynamoDBMapper.load(Customer.class, customerIds));
     }
 
     @Override
-    public void updateCustomer(final String customerId, final Customer customer) {
+    public void update(final String customerId, final Customer customer) {
         customer.setCustomerId(customerId);
 
         DynamoDBMapperConfig dynamoDBMapperConfig = new DynamoDBMapperConfig.Builder()

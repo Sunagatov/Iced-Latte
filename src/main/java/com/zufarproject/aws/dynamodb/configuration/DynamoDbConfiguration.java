@@ -11,6 +11,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
 @RequiredArgsConstructor
@@ -23,6 +30,24 @@ public class DynamoDbConfiguration {
     @Bean
     public DynamoDBMapper dynamoDBMapper() {
         return new DynamoDBMapper(getAmazonDynamoDB());
+    }
+
+    @Bean
+    public DynamoDbEnhancedClient getDynamoDbEnhancedClient() {
+        return DynamoDbEnhancedClient.builder()
+                .dynamoDbClient(getDynamoDbClient())
+                .build();
+    }
+
+    @Bean
+    public DynamoDbClient getDynamoDbClient() {
+        AwsCredentials awsBasicCredentials = AwsBasicCredentials.create(AWS_ACCESS_KEY, AWS_SECRET_KEY);
+        AwsCredentialsProvider awsCredentialsProvider = StaticCredentialsProvider.create(awsBasicCredentials);
+
+        return DynamoDbClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
+                .region(Region.EU_WEST_2)
+                .build();
     }
 
     @Bean

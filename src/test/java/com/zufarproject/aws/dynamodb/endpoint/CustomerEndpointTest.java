@@ -5,7 +5,7 @@ import com.zufarproject.aws.dynamodb.dto.AddressDto;
 import com.zufarproject.aws.dynamodb.dto.CustomerDto;
 import com.zufarproject.aws.dynamodb.model.Address;
 import com.zufarproject.aws.dynamodb.model.Customer;
-import com.zufarproject.aws.dynamodb.repository.CustomerCrudRepository;
+import com.zufarproject.aws.dynamodb.repository.CrudRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -24,7 +24,7 @@ import java.util.Optional;
 class CustomerEndpointTest {
 
     @MockBean
-    private CustomerCrudRepository customerCrudRepository;
+    private CrudRepository<Customer> customerCrudRepository;
 
     @MockBean
     private ModelMapper modelMapper;
@@ -75,7 +75,7 @@ class CustomerEndpointTest {
     @DisplayName("CustomerEndpoint returns HttpStatus 'Created' when CustomerEndpoint.saveCustomer was executed successfully")
     void returnsHttpStatusCreatedWhenSaveCustomerWasCalled() throws Exception {
         Mockito.doNothing()
-                .when(customerCrudRepository).saveCustomer(CUSTOMER);
+                .when(customerCrudRepository).save(CUSTOMER);
 
         Mockito.when(modelMapper.map(CUSTOMER_DTO, Customer.class))
                 .thenReturn(CUSTOMER);
@@ -90,7 +90,7 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns Customer when CustomerEndpoint.getCustomerById was called")
     void returnsCustomerWhenGetCustomerByIdWasCalled() throws Exception {
-        Mockito.when(customerCrudRepository.getCustomerById(CUSTOMER_ID))
+        Mockito.when(customerCrudRepository.getById(CUSTOMER_ID))
                 .thenReturn(Optional.of(CUSTOMER));
 
         Mockito.when(modelMapper.map(CUSTOMER, CustomerDto.class))
@@ -112,7 +112,7 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'NotFound' when CustomerEndpoint.getCustomerById was called and returned null")
     void returnsNotFoundWhenGetCustomerByIdReturnsNull() throws Exception {
-        Mockito.when(customerCrudRepository.getCustomerById(CUSTOMER_ID))
+        Mockito.when(customerCrudRepository.getById(CUSTOMER_ID))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -125,7 +125,7 @@ class CustomerEndpointTest {
     @DisplayName("CustomerEndpoint returns HttpStatus 'OK' when CustomerEndpoint.deleteCustomerById was called")
     void returnsHttpStatusOkWhenDeleteCustomerByIdWasCalled() throws Exception {
         Mockito.doNothing()
-                .when(customerCrudRepository).deleteCustomerById(CUSTOMER_ID);
+                .when(customerCrudRepository).deleteById(CUSTOMER_ID);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/customer/{id}", CUSTOMER_ID)
@@ -140,7 +140,7 @@ class CustomerEndpointTest {
                 .thenReturn(CUSTOMER);
 
         Mockito.doNothing()
-                .when(customerCrudRepository).updateCustomer(CUSTOMER_ID, CUSTOMER);
+                .when(customerCrudRepository).update(CUSTOMER_ID, CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .put("/api/customer/{id}", CUSTOMER_ID)
