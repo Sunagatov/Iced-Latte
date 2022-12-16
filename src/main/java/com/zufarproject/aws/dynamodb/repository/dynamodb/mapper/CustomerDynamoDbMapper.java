@@ -1,4 +1,4 @@
-package com.zufarproject.aws.dynamodb.repository.mapper;
+package com.zufarproject.aws.dynamodb.repository.dynamodb.mapper;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;

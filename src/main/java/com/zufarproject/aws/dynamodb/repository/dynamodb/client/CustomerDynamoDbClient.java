@@ -1,7 +1,8 @@
-package com.zufarproject.aws.dynamodb.repository.client;
+package com.zufarproject.aws.dynamodb.repository.dynamodb.client;
 
-import com.zufarproject.aws.dynamodb.repository.client.model.CustomerClientEntity;
+import com.zufarproject.aws.dynamodb.repository.dynamodb.client.model.CustomerClientEntity;
 import com.zufarproject.aws.dynamodb.repository.CrudRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
