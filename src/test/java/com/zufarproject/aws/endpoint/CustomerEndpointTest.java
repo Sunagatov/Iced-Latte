@@ -81,7 +81,7 @@ class CustomerEndpointTest {
                 .thenReturn(CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/customer")
+                        .post("/api/customers")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsBytes(CUSTOMER_DTO)))
                 .andExpect(MockMvcResultMatchers.status().isCreated());
@@ -97,7 +97,7 @@ class CustomerEndpointTest {
                 .thenReturn(CUSTOMER_DTO);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/customer/{id}", CUSTOMER_ID)
+                        .get("/api/customers/{id}", CUSTOMER_ID)
                         .contentType("application/json"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.customerId").value(CUSTOMER_ID))
@@ -116,7 +116,7 @@ class CustomerEndpointTest {
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/customer/{id}", CUSTOMER_ID)
+                        .get("/api/customers/{id}", CUSTOMER_ID)
                         .contentType("application/json"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
@@ -128,7 +128,7 @@ class CustomerEndpointTest {
                 .when(customerCrudRepository).deleteById(CUSTOMER_ID);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/api/customer/{id}", CUSTOMER_ID)
+                        .delete("/api/customers/{id}", CUSTOMER_ID)
                         .contentType("application/json"))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
@@ -143,7 +143,7 @@ class CustomerEndpointTest {
                 .when(customerCrudRepository).update(CUSTOMER_ID, CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .put("/api/customer/{id}", CUSTOMER_ID)
+                        .put("/api/customers/{id}", CUSTOMER_ID)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsBytes(CUSTOMER_DTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk());

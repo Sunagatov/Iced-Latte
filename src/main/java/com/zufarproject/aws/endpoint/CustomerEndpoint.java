@@ -18,7 +18,7 @@ import java.util.Optional;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/customers")
+@RequestMapping(value = "/api/customers")
 public class CustomerEndpoint {
     private final CrudRepository<Customer> customerCrudRepository;
     private final ModelMapper modelMapper;
