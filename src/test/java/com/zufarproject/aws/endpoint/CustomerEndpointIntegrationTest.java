@@ -8,13 +8,13 @@ import com.zufarproject.aws.repository.CrudRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
+import software.amazon.awssdk.http.HttpStatusCode;
 
 import java.util.Optional;
 
@@ -26,9 +26,6 @@ class CustomerEndpointIntegrationTest {
 
     @MockBean
     private CrudRepository<Customer> customerCrudRepository;
-
-    @MockBean
-    private ModelMapper modelMapper;
 
     @Value(value="${local.server.port}")
     private int port;
@@ -80,7 +77,7 @@ class CustomerEndpointIntegrationTest {
         ResponseEntity<Void> responseEntity = this.restTemplate
                 .postForEntity(url, CUSTOMER_DTO, Void.class);
 
-        assertEquals(201, responseEntity.getStatusCode().value());
+        assertEquals(HttpStatusCode.CREATED, responseEntity.getStatusCode().value());
     }
 
     @Test
@@ -94,6 +91,6 @@ class CustomerEndpointIntegrationTest {
         ResponseEntity<CustomerDto> responseEntity = this.restTemplate
                 .postForEntity(url, CUSTOMER_DTO, CustomerDto.class);
 
-        assertEquals(200, responseEntity.getStatusCode().value());
+        assertEquals(HttpStatusCode.OK, responseEntity.getStatusCode().value());
     }
 }
