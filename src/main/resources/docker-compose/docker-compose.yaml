@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      - AWS_DEFAULT_REGION=us-east-2
+      - SERVICES=sqs,sns,s3,dynamodb
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
