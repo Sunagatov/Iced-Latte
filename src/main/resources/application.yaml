@@ -1,6 +1,25 @@
+
+# Server Properties
 server:
   port: 8081
 
+# Spring Properties
 spring:
   application:
     name: aws-services
+
+# AWS Properties
+cloud:
+  aws:
+    service:
+      endpoint: http://localhost:8000
+    region: eu-west-2
+    credentials:
+      access-key: KEY
+      secret-key: SECRET
+    sqs:
+      queue:
+        url: queue-url
+    sns:
+      topic:
+        name: topic-name

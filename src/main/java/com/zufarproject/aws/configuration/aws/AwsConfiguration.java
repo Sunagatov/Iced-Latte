@@ -6,6 +6,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,14 +16,22 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
 @Configuration
 public class AwsConfiguration {
-	private static final String AWS_ACCESS_KEY = System.getProperty("AWS_ACCESS_KEY");
-	private static final String AWS_SECRET_KEY = System.getProperty("AWS_SECRET_KEY");
-	private static final String AWS_SERVICE_ENDPOINT = System.getProperty("AWS_SERVICE_ENDPOINT");
-	private static final String AWS_REGION = System.getProperty("AWS_REGION");
+
+	@Value("${cloud.aws.credentials.access-key}")
+	private String awsAccessKey;
+
+	@Value("${cloud.aws.credentials.secret-key}")
+	private String awsSecretKey;
+
+	@Value("${cloud.aws.service.endpoint}")
+	private String awsServiceEndpoint;
+
+	@Value("${cloud.aws.region}")
+	private String awsRegion;
 
 	@Bean
 	public AWSCredentials getAWSCredentials() {
-		return new BasicAWSCredentials(AWS_ACCESS_KEY, AWS_SECRET_KEY);
+		return new BasicAWSCredentials(awsAccessKey, awsSecretKey);
 	}
 
 	@Bean
@@ -37,11 +46,11 @@ public class AwsConfiguration {
 
 	@Bean
 	public AwsBasicCredentials getAwsBasicCredentials() {
-		return AwsBasicCredentials.create(AWS_ACCESS_KEY, AWS_SECRET_KEY);
+		return AwsBasicCredentials.create(awsAccessKey, awsSecretKey);
 	}
 
 	@Bean
 	public AwsClientBuilder.EndpointConfiguration getEndpointConfiguration() {
-		return new AwsClientBuilder.EndpointConfiguration(AWS_SERVICE_ENDPOINT, AWS_REGION);
+		return new AwsClientBuilder.EndpointConfiguration(awsServiceEndpoint, awsRegion);
 	}
 }
