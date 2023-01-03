@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -16,9 +18,14 @@ public class SqsMessageReceiver {
     private final AwsSqsConfiguration awsSqsConfiguration;
     private final AmazonSQS sqsClient;
 
-    public Collection<Message> receive() {
-        return sqsClient
-                .receiveMessage(awsSqsConfiguration.getQueueUrl())
+    public Collection<String> receiveAllMessageBodies(final String queueUrl) {
+        List<Message> messages = sqsClient
+                .receiveMessage(queueUrl)
                 .getMessages();
+
+        return messages
+                .stream()
+                .map(Message::getBody)
+                .collect(Collectors.toList());
     }
 }
