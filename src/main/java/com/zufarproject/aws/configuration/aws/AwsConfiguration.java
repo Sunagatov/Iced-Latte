@@ -28,7 +28,7 @@ public class AwsConfiguration {
 	@Value("${cloud.aws.service.endpoint}")
 	private String awsServiceEndpoint;
 
-	@Value("${cloud.aws.region}")
+	@Value("${cloud.aws.region.static}")
 	private String awsRegion;
 
 	@Bean

@@ -13,7 +13,8 @@ cloud:
   aws:
     service:
       endpoint: http://localhost:8000
-    region: eu-west-2
+    region:
+     static: eu-west-2
     credentials:
       access-key: KEY
       secret-key: SECRET
