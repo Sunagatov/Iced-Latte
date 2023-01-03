@@ -1,6 +1,6 @@
 package com.zufarproject.aws.endpoint;
 
-import com.zufarproject.aws.dto.PurchasePurchaseRequest;
+import com.zufarproject.aws.dto.PurchaseProductsRequest;
 import com.zufarproject.aws.service.PurchaseTransactionHandler;
 
 import org.springframework.http.HttpStatus;
@@ -28,8 +28,8 @@ public class StoreEndpoint {
 
 	@PostMapping(value = "/products")
 	@ResponseBody
-	public ResponseEntity<Void> purchaseProduct(@RequestBody @Valid @NotNull(message = "PurchaseRequest is mandatory") final PurchasePurchaseRequest purchasePurchaseRequest) {
-		purchaseTransactionHandler.processRequest(purchasePurchaseRequest);
+	public ResponseEntity<Void> purchaseProduct(@RequestBody @Valid @NotNull(message = "PurchaseRequest is mandatory") final PurchaseProductsRequest purchaseProductsRequest) {
+		purchaseTransactionHandler.processRequest(purchaseProductsRequest);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.build();
 	}
