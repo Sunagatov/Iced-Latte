@@ -12,3 +12,4 @@ services:
       - SERVICES=sqs,sns,s3,dynamodb
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./init-scripts:/docker-entrypoint-initaws.d
