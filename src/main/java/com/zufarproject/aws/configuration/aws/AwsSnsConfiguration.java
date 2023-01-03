@@ -22,7 +22,7 @@ public class AwsSnsConfiguration {
 	private final AwsConfiguration awsConfiguration;
 	private final AWSCredentialsProvider awsCredentialsProvider;
 
-	@Value("${cloud.aws.sns.endpoint}")
+	@Value("${cloud.aws.sns.topic.url}")
 	private String snsEndpoint;
 
 	@Value("${cloud.aws.sns.topic.name}")

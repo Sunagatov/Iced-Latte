@@ -8,7 +8,7 @@ services:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # External services port range
     environment:
-      - AWS_DEFAULT_REGION=us-east-2
+      - AWS_DEFAULT_REGION=us-east-1
       - SERVICES=sqs,sns,s3,dynamodb
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

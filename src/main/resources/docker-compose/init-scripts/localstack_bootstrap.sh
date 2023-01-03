@@ -1,8 +1,8 @@
 #!/bin/bash
 echo "########### Setting env variables ###########"
 export AWS_DEFAULT_PROFILE=test-profile
-export SNS_TOPIC=sns-test-topic
-export SQS_QUEUE=sqs-queue-topic-subscriber
+export SNS_TOPIC=purchase-transactions-sns-topic
+export SQS_QUEUE=purchase-transactions-sqs-queue
 export SNS_ENDPOINT_URL=http://localhost:4566
 
 echo "########### Setting up localstack profile ###########"
