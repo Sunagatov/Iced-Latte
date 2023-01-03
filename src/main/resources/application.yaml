@@ -20,8 +20,7 @@ cloud:
       secret-key: aws_secret_access_key
     sqs:
       queue:
-        name: purchase-transactions-sqs-queue
-        url: http://localhost:4566
+        purchase-transactions-sqs-queue-url: http://localhost:4566/000000000000/purchase-transactions-sqs-queue
     sns:
       topic:
         name: purchase-transactions-sns-topic
