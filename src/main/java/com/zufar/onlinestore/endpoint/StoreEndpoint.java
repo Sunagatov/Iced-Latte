@@ -34,7 +34,7 @@ public class StoreEndpoint {
 				.build();
 	}
 
-	@GetMapping(value = "/products/transactions")
+	@GetMapping(value = "/transactions")
 	@ResponseBody
 	public ResponseEntity<Collection<String>> getAllTransactions() {
 		Collection<String> allTransactions = purchaseTransactionHandler.getAllTransactions();
