@@ -5,19 +5,24 @@ services:
     container_name: localstack
     hostname: awslocal
     ports:
-      - "4566:4566"            # LocalStack Gateway
-      - "4510-4559:4510-4559"  # External services port range
+      - "4566:4566"
+      - "4510-4559:4510-4559"
     user: root
     environment:
       DEBUG: 0
-      SERVICES: "sqs,sns"      # Declare which aws services will be used in localstack
+      SERVICES: "sqs,sns,dynamodb"
       HOSTNAME_EXTERNAL: awslocal
       DATA_DIR: "/var/lib/localstack/data"
-      AWS_DEFAULT_REGION: us-east-1  # This is the region where your localstack mocks to be running
+      AWS_DEFAULT_REGION: us-east-1
+      DYNAMODB_SHARE_DB: 1
+      DYNAMODB_IN_MEMORY: 1
       EDGE_PORT: 4566
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./init-scripts:/etc/localstack/init/ready.d"
+    profiles:
+      - prod
+      - test
   online-store-app:
     image: 'online-store/online-store:latest'
     container_name: online-store
@@ -34,3 +39,5 @@ services:
       dockerfile: docker/online-store-app/Dockerfile
     deploy:
       replicas: 1
+    profiles:
+      - prod
