@@ -38,9 +38,9 @@
 	</dependencyManagement>
 
 	<groupId>com.zufar-project</groupId>
-	<artifactId>aws</artifactId>
+	<artifactId>online-store</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>aws</name>
+	<name>Online Store</name>
 	<description>AWS Microservice for learning purpose </description>
 
 	<properties>
