@@ -7,6 +7,8 @@ export AWS_REGION=us-east-1
 export AWS_OUTPUT_FORMAT=json
 export SNS_TOPIC=purchase-transactions-sns-topic
 export SQS_QUEUE=purchase-transactions-sqs-queue
+export DYNAMODB_TABLE_NAME=Customer
+
 export EMAIL_ADDRESS=zufar.sunagatov@gmail.com
 
 echo "AWS_ENDPOINT_URL         = ${AWS_ENDPOINT_URL}"
@@ -14,6 +16,7 @@ echo "AWS_DEFAULT_PROFILE      = ${AWS_DEFAULT_PROFILE}"
 echo "AWS_REGION               = ${AWS_REGION}"
 echo "SNS_TOPIC                = ${SNS_TOPIC}"
 echo "SQS_QUEUE                = ${SQS_QUEUE}"
+echo "DYNAMODB_TABLE_NAME      = ${DYNAMODB_TABLE_NAME}"
 echo "CURRENT MACHINE HOSTNAME = ${HOSTNAME}"
 
 echo "-----------------------------------------------------------------------------------"
@@ -71,11 +74,21 @@ sns subscribe \
 --notification-endpoint arn:aws:sqs:$AWS_REGION:000000000000:$SQS_QUEUE \
 --return-subscription-arn
 
-
 echo "-----------------------------------------------------------------------------------"
 echo "########### Printing list of AWS SNS topic subscriptions  ###########"
 aws --endpoint-url $AWS_ENDPOINT_URL \
 sns list-subscriptions \
 --region $AWS_REGION
+
+echo "-----------------------------------------------------------------------------------"
+echo "########### Creating DynamoDB table  ###########"
+aws --endpoint-url="$AWS_ENDPOINT_URL" \
+dynamodb create-table \
+--region $AWS_REGION \
+--table-name $DYNAMODB_TABLE_NAME \
+--attribute-definitions AttributeName=id,AttributeType=S  \
+--key-schema AttributeName=id,KeyType=HASH \
+--provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+
 
 
