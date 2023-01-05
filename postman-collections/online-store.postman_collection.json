@@ -109,6 +109,26 @@
 			"response": []
 		},
 		{
+			"name": "get all customers",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/api/customers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"customers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "delete the customer by id",
 			"request": {
 				"method": "DELETE",
