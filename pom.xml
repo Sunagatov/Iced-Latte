@@ -47,9 +47,11 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>17</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 		<slf4j-api.version>2.0.5</slf4j-api.version>
 		<jackson-databind.version>2.14.0</jackson-databind.version>
-		<dynamodb-enhanced.version>2.19.4</dynamodb-enhanced.version>
+		<dynamodb-enhanced.version>2.19.8</dynamodb-enhanced.version>
 		<modelmapper.version>3.1.1</modelmapper.version>
 		<junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
 		<junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
@@ -57,9 +59,51 @@
 		<junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
 		<junit-jupiter.version>5.9.0</junit-jupiter.version>
 		<jackson-core.version>2.14.0</jackson-core.version>
+		<springfox.swagger.version>3.0.0</springfox.swagger.version>
+		<swagger-core-version>2.2.6</swagger-core-version>
+		<version.keycloak>11.0.3</version.keycloak>
+		<spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+		<jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
 	</properties>
 
 	<dependencies>
+		<!--  Swagger dependencies -->
+		<dependency>
+			<groupId>io.swagger.core.v3</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>${swagger-core-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>${springfox.swagger.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>${springfox.swagger.version}</version>
+		</dependency>
+
+		<!-- Keycloak dependencies -->
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-authz-client</artifactId>
+			<version>${version.keycloak}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-spring-security-adapter</artifactId>
+			<version>${version.keycloak}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-test-helper</artifactId>
+			<version>${version.keycloak}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!--  Spring dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -140,7 +184,7 @@
 		<dependency>
 			<groupId>io.awspring.cloud</groupId>
 			<artifactId>spring-cloud-aws-messaging</artifactId>
-			<version>2.4.2</version>
+			<version>${spring-cloud-aws-messaging.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.amazonaws</groupId>
@@ -167,6 +211,40 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>default-prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<!-- Sets the path to the file which contains the execution data. -->
+							<dataFile>target/jacoco.exec</dataFile>
+							<!-- Sets the output directory for the code coverage report. -->
+							<outputDirectory>target/jacoco-ut</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
