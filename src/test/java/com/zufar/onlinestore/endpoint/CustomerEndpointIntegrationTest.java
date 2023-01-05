@@ -82,7 +82,7 @@ class CustomerEndpointIntegrationTest {
 
     @Test
     @DisplayName("CustomerEndpoint returns Customer when CustomerEndpoint.getCustomerById was called")
-    void returnsCustomerWhenGetCustomerByIdWasCalled() throws Exception {
+    void returnsCustomerWhenGetCustomerByIdWasCalled() {
         Mockito.when(customerCrudRepository.getById(CUSTOMER_ID))
                 .thenReturn(Optional.of(CUSTOMER));
 
