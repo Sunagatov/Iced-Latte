@@ -1,12 +1,13 @@
 #!/bin/bash
 echo "-----------------------------------------------------------------------------------"
 echo "########### Setting env variables ###########"
-export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_ENDPOINT_URL=http://awslocal:4566
 export AWS_DEFAULT_PROFILE=test-profile
 export AWS_REGION=us-east-1
-export AWS_OUTPUT_FORMAT=table
+export AWS_OUTPUT_FORMAT=json
 export SNS_TOPIC=purchase-transactions-sns-topic
 export SQS_QUEUE=purchase-transactions-sqs-queue
+export EMAIL_ADDRESS=zufar.sunagatov@gmail.com
 
 echo "AWS_ENDPOINT_URL         = ${AWS_ENDPOINT_URL}"
 echo "AWS_DEFAULT_PROFILE      = ${AWS_DEFAULT_PROFILE}"
@@ -52,14 +53,24 @@ sns  list-topics \
 --max-items=3
 
 echo "-----------------------------------------------------------------------------------"
+echo "########### Subscribe The Specified Email to AWS SNS topic  ###########"
+aws --endpoint-url="$AWS_ENDPOINT_URL" \
+sns subscribe \
+--region us-east-1 \
+--topic-arn arn:aws:sns:$AWS_REGION:000000000000:$SNS_TOPIC \
+--protocol email \
+--notification-endpoint $EMAIL_ADDRESS
+
+echo "-----------------------------------------------------------------------------------"
 echo "########### Subscribe AWS SQS queue to AWS SNS topic  ###########"
 aws --endpoint-url="$AWS_ENDPOINT_URL" \
 sns subscribe \
 --region $AWS_REGION \
---topic-arn arn:aws:sns:us-east-1:000000000000:purchase-transactions-sns-topic \
+--topic-arn arn:aws:sns:$AWS_REGION:000000000000:$SNS_TOPIC \
 --protocol sqs \
---notification-endpoint http://localhost:4566/000000000000/purchase-transactions-sqs-queue \
+--notification-endpoint arn:aws:sqs:$AWS_REGION:000000000000:$SQS_QUEUE \
 --return-subscription-arn
+
 
 echo "-----------------------------------------------------------------------------------"
 echo "########### Printing list of AWS SNS topic subscriptions  ###########"

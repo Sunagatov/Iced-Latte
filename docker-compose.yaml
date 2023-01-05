@@ -1,40 +1,36 @@
 version: '3.9'
-
 services:
-
   localstack:
     image: 'localstack/localstack:latest'
     container_name: localstack
-    hostname: localhost
+    hostname: awslocal
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range
     user: root
     environment:
-      DEBUG: 1
+      DEBUG: 0
       SERVICES: "sqs,sns"      # Declare which aws services will be used in localstack
-      HOSTNAME_EXTERNAL: localhost
+      HOSTNAME_EXTERNAL: awslocal
       DATA_DIR: "/var/lib/localstack/data"
       AWS_DEFAULT_REGION: us-east-1  # This is the region where your localstack mocks to be running
       EDGE_PORT: 4566
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./init-scripts/localstack_bootstrap.sh:/etc/localstack/init/ready.d"        # executed when localstack becomes ready
-    tmpfs:
-      - /var/lib/localstack:exec,mode=600
-
-  backend:
+      - "./init-scripts:/etc/localstack/init/ready.d"
+  online-store-app:
+    image: 'online-store/online-store:latest'
+    container_name: online-store
+    ports:
+      - "8081:8081"
+    user: root
+    environment:
+      AWS_ENDPOINT_URL: http://awslocal:4566
     depends_on:
       localstack:
         condition: service_healthy
-    image: 'online-store/online-store:latest'
-    container_name: online-store
     build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      AWS_ENDPOINT_URL: http://localhost:4566
+      context: ./
+      dockerfile: docker/online-store-app/Dockerfile
     deploy:
       replicas: 1
-    ports:
-      - "8081:8081"
