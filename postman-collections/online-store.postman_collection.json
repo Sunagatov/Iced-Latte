@@ -1,0 +1,62 @@
+{
+	"info": {
+		"_postman_id": "2369b4a8-ebc7-44b6-b5ba-d576d586654b",
+		"name": "online-store",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1249530"
+	},
+	"item": [
+		{
+			"name": "make a transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"customerId\": \"1\",\n    \"products\": [\n        {\n          \"name\": \"Bread\",\n          \"category\": \"Food\",\n          \"price\": {\n            \"amount\": \"2.5\",\n            \"currency\": \"GBP\"\n          } \n        },\n        {\n          \"name\": \"Milk\",\n          \"category\": \"Food\",\n          \"price\": {\n            \"amount\": \"3.1\",\n            \"currency\": \"GBP\"\n          } \n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/store/products",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"store",
+						"products"
+					]
+				},
+				"description": "Purhchase products"
+			},
+			"response": []
+		},
+		{
+			"name": "get all transactions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/api/store/transactions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"store",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
