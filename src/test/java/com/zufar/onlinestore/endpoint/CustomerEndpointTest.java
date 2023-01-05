@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.endpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.onlinestore.converter.CustomerDtoConverter;
 import com.zufar.onlinestore.dto.AddressDto;
 import com.zufar.onlinestore.dto.CustomerDto;
 import com.zufar.onlinestore.model.Address;
@@ -9,7 +10,6 @@ import com.zufar.onlinestore.repository.CrudRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -27,7 +27,7 @@ class CustomerEndpointTest {
     private CrudRepository<Customer> customerCrudRepository;
 
     @MockBean
-    private ModelMapper modelMapper;
+    private CustomerDtoConverter customerDtoConverter;
 
     @Autowired
     private MockMvc mockMvc;
@@ -77,7 +77,7 @@ class CustomerEndpointTest {
         Mockito.doNothing()
                 .when(customerCrudRepository).save(CUSTOMER);
 
-        Mockito.when(modelMapper.map(CUSTOMER_DTO, Customer.class))
+        Mockito.when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
                 .thenReturn(CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -93,7 +93,7 @@ class CustomerEndpointTest {
         Mockito.when(customerCrudRepository.getById(CUSTOMER_ID))
                 .thenReturn(Optional.of(CUSTOMER));
 
-        Mockito.when(modelMapper.map(CUSTOMER, CustomerDto.class))
+        Mockito.when(customerDtoConverter.convertToDto(CUSTOMER))
                 .thenReturn(CUSTOMER_DTO);
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -136,7 +136,7 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'OK' when CustomerEndpoint.updateCustomer was called")
     void returnsHttpStatusOkWhenUpdateCustomerWasCalled() throws Exception {
-        Mockito.when(modelMapper.map(CUSTOMER_DTO, Customer.class))
+        Mockito.when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
                 .thenReturn(CUSTOMER);
 
         Mockito.doNothing()
