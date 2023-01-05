@@ -81,6 +81,12 @@ sns list-subscriptions \
 --region $AWS_REGION
 
 echo "-----------------------------------------------------------------------------------"
+echo "########### Deleting existed DynamoDB table  ###########"
+aws --endpoint-url="$AWS_ENDPOINT_URL" \
+dynamodb delete-table \
+--table-name $DYNAMODB_TABLE_NAME
+
+echo "-----------------------------------------------------------------------------------"
 echo "########### Creating DynamoDB table  ###########"
 aws --endpoint-url="$AWS_ENDPOINT_URL" \
 dynamodb create-table \
@@ -88,7 +94,4 @@ dynamodb create-table \
 --table-name $DYNAMODB_TABLE_NAME \
 --attribute-definitions AttributeName=id,AttributeType=S  \
 --key-schema AttributeName=id,KeyType=HASH \
---provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-
-
-
+--provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
