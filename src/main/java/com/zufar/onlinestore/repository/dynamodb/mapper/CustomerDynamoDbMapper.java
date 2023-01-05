@@ -2,6 +2,7 @@ package com.zufar.onlinestore.repository.dynamodb.mapper;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.zufar.onlinestore.model.Customer;
 import com.zufar.onlinestore.repository.CrudRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,12 @@ public class CustomerDynamoDbMapper implements CrudRepository<Customer> {
         return Optional.ofNullable(dynamoDBMapper.load(Customer.class, customerId));
     }
 
-    @Override
+	@Override
+	public Optional<Collection<Customer>> getAll() {
+        return Optional.ofNullable(dynamoDBMapper.scan(Customer.class, new DynamoDBScanExpression()));
+	}
+
+	@Override
     public void deleteById(final String customerId) {
         dynamoDBMapper.delete(dynamoDBMapper.load(Customer.class, customerId));
     }

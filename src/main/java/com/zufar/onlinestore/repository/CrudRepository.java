@@ -11,6 +11,8 @@ public interface CrudRepository<T> {
 
     Optional<T> getById(final String customerId);
 
+    Optional<Collection<T>> getAll();
+
     void deleteById(final String customerId);
 
     void deleteByIds(Collection<String> customerIds);

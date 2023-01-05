@@ -15,7 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -51,6 +54,25 @@ public class CustomerEndpoint {
         log.info("the Customer with id - {} was retrieved - {}.", customerId, customerDto);
         return ResponseEntity.ok()
                 .body(customerDto);
+    }
+
+    @GetMapping
+    @ResponseBody
+    public ResponseEntity<Collection<CustomerDto>> getAllCustomers() {
+        log.info("Received request to get all customers");
+        Optional<Collection<Customer>> customerEntities = customerCrudRepository.getAll();
+        if (customerEntities.isEmpty()) {
+            log.info("All customers are absent.");
+            return ResponseEntity.notFound()
+                    .build();
+        }
+        Collection<CustomerDto> customers = customerEntities.stream()
+                .map(customerEntity -> modelMapper.map(customerEntity, CustomerDto.class))
+                .toList();
+
+        log.info("All customers were retrieved - {}.", customers);
+        return ResponseEntity.ok()
+                .body(customers);
     }
 
     @DeleteMapping("/{id}")

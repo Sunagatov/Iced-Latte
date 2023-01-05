@@ -60,7 +60,12 @@ public class CustomerDynamoDbClient implements CrudRepository<CustomerClientEnti
         return Optional.ofNullable(customer);
     }
 
-    @Override
+	@Override
+	public Optional<Collection<CustomerClientEntity>> getAll() {
+		return Optional.empty();
+	}
+
+	@Override
     public void deleteById(String customerId) {
         Key key = Key.builder()
                 .partitionValue(customerId)
