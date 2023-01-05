@@ -1,44 +1,40 @@
 version: '3.9'
 
 services:
-#  localstack:
-#    container_name: localstack
-#    image: 'localstack/localstack:latest'
-#    ports:
-#      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-#      - "127.0.0.1:4510-4559:4510-4559"  # External services port range
-#    environment:
-#      - AWS_DEFAULT_REGION=us-east-1
-#      - SERVICES=sqs,sns,s3,dynamodb
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock
-#      - ./init-scripts:/docker-entrypoint-initaws.d
-#    networks:
-#      - online-store-network
+
+  localstack:
+    image: 'localstack/localstack:latest'
+    container_name: localstack
+    hostname: localhost
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    user: root
+    environment:
+      DEBUG: 1
+      SERVICES: "sqs,sns"      # Declare which aws services will be used in localstack
+      HOSTNAME_EXTERNAL: localhost
+      DATA_DIR: "/var/lib/localstack/data"
+      AWS_DEFAULT_REGION: us-east-1  # This is the region where your localstack mocks to be running
+      EDGE_PORT: 4566
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-scripts/localstack_bootstrap.sh:/etc/localstack/init/ready.d"        # executed when localstack becomes ready
+    tmpfs:
+      - /var/lib/localstack:exec,mode=600
 
   backend:
-#    depends_on:
-#      localstack:
-#        condition: service_healthy
+    depends_on:
+      localstack:
+        condition: service_healthy
     image: 'online-store/online-store:latest'
     container_name: online-store
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      AWS_ENDPOINT_URL: http://localhost:4566
     deploy:
       replicas: 1
-    restart: always
     ports:
       - "8081:8081"
-    networks:
-      - online-store-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost" ]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-networks:
-  online-store-network:
-    name: online-store-network
