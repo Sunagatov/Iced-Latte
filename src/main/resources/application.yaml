@@ -12,7 +12,7 @@ spring:
 cloud:
   aws:
     service:
-      endpoint: http://localhost:4566
+      endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
     region:
       static: us-east-1
     credentials:
@@ -20,8 +20,8 @@ cloud:
       secret-key: aws_secret_access_key
     sqs:
       queue:
-        purchase-transactions-sqs-queue-url: http://localhost:4566/000000000000/purchase-transactions-sqs-queue
+        purchase-transactions-sqs-queue-url: ${cloud.aws.service.endpoint}/000000000000/purchase-transactions-sqs-queue
     sns:
       topic:
         name: purchase-transactions-sns-topic
-        url: http://localhost:4566
+        url: ${cloud.aws.service.endpoint}
