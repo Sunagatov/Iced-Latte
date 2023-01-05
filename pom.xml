@@ -61,7 +61,7 @@
 		<jackson-core.version>2.14.0</jackson-core.version>
 		<springfox.swagger.version>3.0.0</springfox.swagger.version>
 		<swagger-core-version>2.2.6</swagger-core-version>
-		<version.keycloak>11.0.3</version.keycloak>
+		<version.keycloak>19.0.3</version.keycloak>
 		<spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
