@@ -178,6 +178,36 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "register user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"Zufar\",\r\n    \"password\": \"Igromania1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/auth/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
