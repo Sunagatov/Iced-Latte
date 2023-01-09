@@ -25,3 +25,9 @@ cloud:
       topic:
         name: purchase-transactions-sns-topic
         url: ${cloud.aws.service.endpoint}
+
+# JWT Security Properties
+jwt:
+  header: Authorization
+  secret: proselyte
+  expiration: 6044800
