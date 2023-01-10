@@ -42,7 +42,8 @@ public class AuthenticationUserEndpoint {
 	}
 
 	@PostMapping("/logout")
-	public ResponseEntity<Void> authenticate(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<Void> logout(final HttpServletRequest request,
+	                                   final HttpServletResponse response) {
 		userAuthenticationManager.logout(request, response);
 		return ResponseEntity.ok()
 				.build();
