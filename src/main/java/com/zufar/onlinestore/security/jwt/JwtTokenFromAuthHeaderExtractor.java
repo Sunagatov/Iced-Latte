@@ -15,6 +15,9 @@ public class JwtTokenFromAuthHeaderExtractor {
 	private String jwtHttpRequestHeader;
 
 	public Optional<String> extract(final HttpServletRequest request) {
+		if (request == null) {
+			return Optional.empty();
+		}
 		final String authHeader = request.getHeader(jwtHttpRequestHeader);
 
 

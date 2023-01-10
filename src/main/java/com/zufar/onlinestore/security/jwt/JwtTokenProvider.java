@@ -1,5 +1,7 @@
 package com.zufar.onlinestore.security.jwt;
 
+import com.zufar.onlinestore.security.exception.JwtTokenException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -11,7 +13,9 @@ import java.util.Map;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class JwtTokenProvider {
@@ -26,12 +30,17 @@ public class JwtTokenProvider {
 
 	public String generateToken(final Map<String, Object> extraClaims,
 	                            final UserDetails userDetails) {
-		return Jwts.builder()
-				.setClaims(extraClaims)
-				.setSubject(userDetails.getUsername())
-				.setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
-				.signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
-				.compact();
+		try {
+			return Jwts.builder()
+					.setClaims(extraClaims)
+					.setSubject(userDetails.getUsername())
+					.setIssuedAt(new Date(System.currentTimeMillis()))
+					.setExpiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
+					.signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
+					.compact();
+		} catch (Exception exception) {
+			log.error("Jwt token validation error", exception);
+			throw new JwtTokenException(exception);
+		}
 	}
 }
