@@ -9,6 +9,16 @@
 		{
 			"name": "make a transaction",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -40,6 +50,16 @@
 		{
 			"name": "get all transactions",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
@@ -61,6 +81,16 @@
 		{
 			"name": "create a new customer",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -90,10 +120,20 @@
 		{
 			"name": "get the customer by id",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/api/customers/1",
+					"raw": "http://localhost:8081/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -102,7 +142,7 @@
 					"path": [
 						"api",
 						"customers",
-						"1"
+						"9947489f-7bfe-4770-b892-3839f5f25046"
 					]
 				}
 			},
@@ -111,6 +151,16 @@
 		{
 			"name": "get all customers",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
@@ -152,6 +202,16 @@
 		{
 			"name": "update the customer by id and a request body",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "PUT",
 				"header": [],
 				"body": {
@@ -164,7 +224,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/customers/1",
+					"raw": "http://localhost:8081/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -173,7 +233,7 @@
 					"path": [
 						"api",
 						"customers",
-						"1"
+						"9947489f-7bfe-4770-b892-3839f5f25046"
 					]
 				}
 			},
@@ -194,7 +254,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/auth/register",
+					"raw": "http://localhost:8081/api/auth/authenticate",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -203,7 +263,58 @@
 					"path": [
 						"api",
 						"auth",
-						"register"
+						"authenticate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "authenticate user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"Zufar\",\r\n    \"password\": \"Igromania1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/auth/authenticate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"auth",
+						"authenticate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/api/auth/logout",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"auth",
+						"logout"
 					]
 				}
 			},
