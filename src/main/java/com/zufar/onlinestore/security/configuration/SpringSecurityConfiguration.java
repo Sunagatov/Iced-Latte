@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
+	private static final String API_AUTH_URL_PREFIX = "/api/auth/**";
+
 	private final UserDetailsServiceImpl userDetailsService;
 	private final JwtAuthenticationFilter jwtTokenFilter;
 
@@ -31,7 +33,7 @@ public class SpringSecurityConfiguration {
 		return httpSecurity
 				.csrf().disable()
 				.authorizeHttpRequests()
-				.requestMatchers("/api/auth/**").permitAll()
+				.requestMatchers(API_AUTH_URL_PREFIX).permitAll()
 				.anyRequest().authenticated()
 				.and()
 				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -49,12 +51,12 @@ public class SpringSecurityConfiguration {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager(final HttpSecurity http,
-	                                                   final PasswordEncoder bCryptPasswordEncoder,
+	public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
+	                                                   final PasswordEncoder passwordEncoder,
 	                                                   final UserDetailsServiceImpl userDetailService) throws Exception {
-		return http.getSharedObject(AuthenticationManagerBuilder.class)
+		return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class)
 				.userDetailsService(userDetailService)
-				.passwordEncoder(bCryptPasswordEncoder)
+				.passwordEncoder(passwordEncoder)
 				.and()
 				.build();
 	}
