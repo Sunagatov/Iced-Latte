@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 	private static final String API_AUTH_URL_PREFIX = "/api/auth/**";
+	public static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
 
 	private final UserDetailsServiceImpl userDetailsService;
 	private final JwtAuthenticationFilter jwtTokenFilter;
@@ -34,6 +35,7 @@ public class SpringSecurityConfiguration {
 				.csrf().disable()
 				.authorizeHttpRequests()
 				.requestMatchers(API_AUTH_URL_PREFIX).permitAll()
+				.requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
 				.anyRequest().authenticated()
 				.and()
 				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

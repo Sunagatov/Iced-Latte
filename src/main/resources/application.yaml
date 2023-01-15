@@ -8,6 +8,20 @@ spring:
   application:
     name: aws-services
 
+# Management Properties
+management:
+  endpoint:
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 # AWS Properties
 cloud:
   aws:
