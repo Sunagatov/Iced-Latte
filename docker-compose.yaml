@@ -71,6 +71,27 @@ services:
       - prod
       - test
 
+  grafana:
+    image: 'grafana/grafana-oss:latest'
+    container_name: grafana
+    pull_policy: always
+    restart: unless-stopped
+    user: root
+    ports:
+       - '3000:3000'
+    environment:
+       - GF_SECURITY_ADMIN_PASSWORD=admin
+       - GF_USERS_ALLOW_SIGN_UP=false
+       - GF_SERVER_DOMAIN=host.docker.internal
+       # Enabled for logging
+       - GF_LOG_MODE=console file
+       - GF_LOG_FILTERS=alerting.notifier.slack:debug alertmanager:debug ngalert:debug
+    depends_on:
+       - prometheus
+    profiles:
+      - prod
+      - test
+
 networks:
   online-store-app-network:
     driver: bridge
