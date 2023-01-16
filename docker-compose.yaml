@@ -1,6 +1,9 @@
 version: '3.9'
 services:
 
+  #
+  # Localstack
+  #
   localstack:
     image: 'localstack/localstack:latest'
     container_name: localstack
@@ -27,6 +30,9 @@ services:
       - prod
       - test
 
+  #
+  # Online Store App
+  #
   online-store-app:
     image: 'online-store/online-store:latest'
     container_name: online-store
@@ -54,6 +60,9 @@ services:
     profiles:
       - prod
 
+  #
+  # Prometheus
+  #
   prometheus:
     image: 'prom/prometheus:latest'
     container_name: prometheus
@@ -71,6 +80,9 @@ services:
       - prod
       - test
 
+  #
+  # Grafana
+  #
   grafana:
     image: 'grafana/grafana-oss:latest'
     container_name: grafana
@@ -83,7 +95,6 @@ services:
        - GF_SECURITY_ADMIN_PASSWORD=admin
        - GF_USERS_ALLOW_SIGN_UP=false
        - GF_SERVER_DOMAIN=host.docker.internal
-       # Enabled for logging
        - GF_LOG_MODE=console file
        - GF_LOG_FILTERS=alerting.notifier.slack:debug alertmanager:debug ngalert:debug
     depends_on:
