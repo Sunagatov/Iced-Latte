@@ -6,21 +6,28 @@ server:
 # Spring Properties
 spring:
   application:
-    name: aws-services
+    name: Online Store Application
 
 # Management Properties
 management:
+  server:
+    port: 8081
   endpoint:
     prometheus:
+      enabled: true
+    shutdown:
       enabled: true
   endpoints:
     web:
       exposure:
-        include: '*'
+        include: health, shutdown, prometheus
   prometheus:
     metrics:
       export:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 # AWS Properties
 cloud:
