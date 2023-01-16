@@ -9,8 +9,8 @@ services:
     container_name: localstack
     hostname: awslocal
     ports:
-      - "4566:4566"
-      - "4510-4559:4510-4559"
+      - '4566:4566'
+      - '4510-4559:4510-4559'
     user: root
     environment:
       DEBUG: 0
@@ -37,7 +37,7 @@ services:
     image: 'online-store/online-store:latest'
     container_name: online-store
     ports:
-      - "8081:8081"
+      - '8081:8081'
     user: root
     environment:
       AWS_ENDPOINT_URL: http://awslocal:4566
