@@ -2,6 +2,12 @@
 # Server Properties
 server:
   port: 8081
+  ssl:
+    key-store-type: PKCS12
+    key-store: classpath:keystore/baeldung.p12
+    key-store-password: password
+    key-alias: baeldung
+    enabled: false
 
 # Spring Properties
 spring:
