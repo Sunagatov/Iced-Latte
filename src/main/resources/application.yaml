@@ -5,7 +5,7 @@ server:
   ssl:
     key-store-type: PKCS12
     key-store: certs/springboot.p12
-    key-store-password: password
+    key-store-password: newpass
     key-alias: springboot
     enabled: true
 
