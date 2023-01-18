@@ -23,14 +23,14 @@ echo "KEY_TOOL_PATH      = ${KEY_TOOL_PATH}"
 echo "-----------------------------------------------------------------------------------"
 echo "########### Setting env for certificate ###########"
 
-export COMMON_NAME="Zufar Sunagatov"                #Specifies the keystore password
-export EMAIL_ADDRESS="zufar.sunagatov@gmail.com"    #Specifies the keystore password
-export ORGANIZATION_UNIT="Zufar Organization Unit"  #Specifies the keystore password
-export ORGANIZATION="Zufar Organization"            #Specifies the keystore password
-export LOCALITY="London"                            #Specifies the keystore password
-export STATE="London State"                         #Specifies the keystore password
-export COUNTRY="GB"                                 #Specifies the keystore password
-export DOMAIN_COMPONENT="com"                       #Specifies the keystore password
+export COMMON_NAME="Zufar Sunagatov"                #Specifies the common name
+export EMAIL_ADDRESS="zufar.sunagatov@gmail.com"    #Specifies the email address
+export ORGANIZATION_UNIT="Zufar Organization Unit"  #Specifies the organization unit
+export ORGANIZATION="Zufar Organization"            #Specifies the organization
+export LOCALITY="London"                            #Specifies the locality
+export STATE="London State"                         #Specifies the state
+export COUNTRY="GB"                                 #Specifies the country code
+export DOMAIN_COMPONENT="com"                       #Specifies the domain component name
 
 echo "COMMON_NAME          = ${COMMON_NAME}"
 echo "EMAIL_ADDRESS        = ${EMAIL_ADDRESS}"
