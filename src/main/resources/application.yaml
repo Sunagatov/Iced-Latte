@@ -4,9 +4,9 @@ server:
   port: 8443
   ssl:
     key-store-type: PKCS12
-    key-store: certs/springboot.p12
+    key-store: certs/zufarkeystore.p12
     key-store-password: newpass
-    key-alias: springboot
+    key-alias: zufarkeystore
     enabled: true
 
 # Spring Properties
@@ -17,7 +17,7 @@ spring:
 # Management Properties
 management:
   server:
-    port: 8081
+    port: 8443
   endpoint:
     prometheus:
       enabled: true
