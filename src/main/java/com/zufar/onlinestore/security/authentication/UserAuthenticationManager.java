@@ -9,6 +9,7 @@ import com.zufar.onlinestore.security.dto.authentication.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserAuthenticationManager {
@@ -27,6 +29,8 @@ public class UserAuthenticationManager {
 	private final AuthenticationManager authenticationManager;
 
 	public AuthenticationResponse register(final RegisterRequest request) {
+		log.info("Received registration request from {}.", request.getUsername());
+
 		final UserDetails userDetails = User.builder()
 				.username(request.getUsername())
 				.password(passwordEncoder.encode(request.getPassword()))
@@ -36,6 +40,9 @@ public class UserAuthenticationManager {
 		repository.save(userDetails);
 
 		final String jwtToken = jwtTokenProvider.generateToken(userDetails);
+
+		log.info("Registration was successful for {}.", request.getUsername());
+
 
 		return AuthenticationResponse.builder()
 				.token(jwtToken)

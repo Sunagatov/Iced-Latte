@@ -5,7 +5,7 @@ import com.zufar.onlinestore.dto.CustomerDto;
 import com.zufar.onlinestore.model.Customer;
 import com.zufar.onlinestore.repository.CrudRepository;
 
-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
