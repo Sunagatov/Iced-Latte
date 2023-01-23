@@ -14,7 +14,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NDQ3NDY0MywiZXhwIjoxNjc0NDgwNjg3fQ.UwKerKgAYT-nkIzuxa4oQCisQmSAdN4s-CVf7n7EKdI",
 							"type": "string"
 						}
 					]
@@ -55,7 +55,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NDQ3NDY0MywiZXhwIjoxNjc0NDgwNjg3fQ.UwKerKgAYT-nkIzuxa4oQCisQmSAdN4s-CVf7n7EKdI",
 							"type": "string"
 						}
 					]
@@ -156,7 +156,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3MzM1MDc4NywiZXhwIjoxNjczMzU2ODMxfQ.sagLJworMbO8LH4MvKvAaNsk_SdSH-Ex8ZTYjtaxkUM",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NDA3MDkxMywiZXhwIjoxNjc0MDc2OTU4fQ.8axyUVJXDB9dZ3b3re9im-K-TX-M0GnwapoB7q-9tq4",
 							"type": "string"
 						}
 					]
@@ -254,7 +254,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/auth/authenticate",
+					"raw": "http://localhost:8081/api/auth/register",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -263,7 +263,7 @@
 					"path": [
 						"api",
 						"auth",
-						"authenticate"
+						"register"
 					]
 				}
 			},
