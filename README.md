@@ -6,15 +6,26 @@
 ## Prerequisites
 * JDK 17
 * Apache Maven 3.6.3
+* Docker Desktop
 
 ## Tech stack
-* Spring Boot 3
-* Spring Security
-* JWT
-* AWS Dynamo Db
-* AWS SNS
-* AWS SQS
-* Docker
+* Spring 
+  * Boot 3
+  * Security
+* Security
+  * JWT
+  * TLS
+* AWS 
+  * Dynamo Db
+  * SNS
+  * SQS
+* Containerisation
+  * Docker
+* Monitoring
+  * ElasticSearch
+  * Logstash
+  * Kibana
+  * Filebeat
 
 ## Docker
 Build the Docker image
