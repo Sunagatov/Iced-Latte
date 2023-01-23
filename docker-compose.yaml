@@ -56,7 +56,6 @@ services:
     depends_on:
        localstack:
           condition: service_healthy
-
     deploy:
       replicas: 1
     networks:

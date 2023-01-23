@@ -1,13 +1,13 @@
 
 # Server Properties
 server:
-  port: 8443
+  port: 8081
   ssl:
     key-store-type: PKCS12
     key-store: certs/zufarkeystore.p12
     key-store-password: newpass
     key-alias: zufarkeystore
-    enabled: true
+    enabled: false
 
 # Spring Properties
 spring:
@@ -20,10 +20,10 @@ spring:
 # Management Properties
 management:
   server:
-    port: 8443
+    port: 8081
   endpoint:
     prometheus:
-      enabled: true
+      enabled: false
     shutdown:
       enabled: true
   endpoints:
@@ -33,7 +33,7 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: true
+        enabled: false
   metrics:
     tags:
       application: ${spring.application.name}

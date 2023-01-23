@@ -21,5 +21,5 @@ FROM eclipse-temurin:17-jre-jammy
 MAINTAINER Zufar Sunagatov <zufar.sunagatov@gmail.com>
 WORKDIR $HOME
 COPY --from=maven_build $HOME/target/*.jar $HOME/*.jar
-EXPOSE 8081
+EXPOSE 8443
 ENTRYPOINT ["java", "-jar", "$HOME/*.jar" ]
