@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+   <!--  CONSOLE LOGGING CONFIGURATION  -->
+    <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d [%thread] %-5level %-50logger{40} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--  FILE LOGGING CONFIGURATION  -->
+    <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/online-store.log</file>
 
         <encoder>
@@ -24,8 +26,8 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="Console" />
-        <appender-ref ref="RollingFile" />
+        <appender-ref ref="ConsoleAppender" />
+        <appender-ref ref="FileAppender" />
     </root>
 
 </configuration>
