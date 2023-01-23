@@ -1,5 +1,7 @@
 
+#
 # Server Properties
+#
 server:
   port: 8081
   ssl:
@@ -9,15 +11,22 @@ server:
     key-alias: zufarkeystore
     enabled: false
 
+#
 # Spring Properties
+#
 spring:
   application:
     name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
+  output:
+    ansi:
+      enabled: detect
 
+#
 # Management Properties
+#
 management:
   server:
     port: 8081
@@ -38,7 +47,9 @@ management:
     tags:
       application: ${spring.application.name}
 
+#
 # AWS Properties
+#
 cloud:
   aws:
     service:
@@ -56,8 +67,18 @@ cloud:
         name: purchase-transactions-sns-topic
         url: ${cloud.aws.service.endpoint}
 
+#
 # JWT Security Properties
+#
 jwt:
   header: Authorization
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 6044800
+
+#
+# Logging Properties
+#
+logging:
+  pattern:
+    file: online-store-%d{yyyy-MM-dd}.%i.log
+  config: classpath:logback-spring.xml
