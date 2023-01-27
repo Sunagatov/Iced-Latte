@@ -28,10 +28,11 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./init-scripts:/etc/localstack/init/ready.d"
     networks:
-      - online-store-app-network
+      - elk
     profiles:
       - prod
       - test
+      - prod-with-monitoring
 
   #
   # Online Store App
@@ -54,15 +55,129 @@ services:
       retries: 5
       start_period: 40s
     depends_on:
-       localstack:
-          condition: service_healthy
+      localstack:
+        condition: service_healthy
     deploy:
       replicas: 1
+    volumes:
+      - "C:/Users/ZSunagatov/IdeaProjects/Online-Store/logs: /logs"
     networks:
-      - online-store-app-network
+      - elk
     profiles:
       - prod
+      - prod-with-monitoring
+
+  # The 'setup' service runs a one-off script which initializes users inside
+  # Elasticsearch — such as 'logstash_internal' and 'kibana_system' — with the
+  # values of the passwords defined in the '.env' file.
+  #
+  # This task is only performed during the *initial* startup of the stack. On all
+  # subsequent runs, the service simply returns immediately, without performing
+  # any modification to existing users.
+  setup:
+    build:
+      context: ./elastic-stack/setup/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    init: true
+    volumes:
+      - ./elastic-stack/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./elastic-stack/setup/helpers.sh:/helpers.sh:ro,Z
+      - ./elastic-stack/setup/roles:/roles:ro,Z
+      - ./elastic-stack/setup:/state:Z
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+       online-store-app:
+          condition: service_healthy
+    profiles:
+      - prod-with-monitoring
+
+  #
+  # ELASTICSEARCH
+  #
+  elasticsearch:
+    build:
+      context: ./elastic-stack/elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - ./elastic-stack/elasticsearch:/usr/share/elasticsearch/data:Z
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    environment:
+      node.name: elasticsearch
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      discovery.type: single-node # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+    networks:
+      - elk
+    profiles:
+      - prod-with-monitoring
+
+  #
+  # LOGSTASH
+  #
+  logstash:
+    build:
+      context: ./elastic-stack/logstash/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+      - ./elastic-stack/logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+    ports:
+      - '5044:5044'
+      - '50000:50000/tcp'
+      - '50000:50000/udp'
+      - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    profiles:
+      - prod-with-monitoring
+
+
+  #
+  # KIBANA
+  #
+  kibana:
+    build:
+      context: ./elastic-stack/kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    ports:
+      - '5601:5601'
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    profiles:
+      - prod-with-monitoring
 
 networks:
-  online-store-app-network:
+  elk:
     driver: bridge
+
+volumes:
+  setup:
+  elasticsearch:

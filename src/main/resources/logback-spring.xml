@@ -16,6 +16,8 @@
             <pattern>%d [%thread] %-5level %-50logger{40} - %msg%n</pattern>
         </encoder>
 
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/online-store-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>1MB</maxFileSize>
