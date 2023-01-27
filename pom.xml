@@ -69,6 +69,7 @@
 		<jjwt-impl.version>0.11.5</jjwt-impl.version>
 		<jjwt-api.version>0.11.5</jjwt-api.version>
 		<jjwt-jackson.version>0.11.5</jjwt-jackson.version>
+		<logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
 	</properties>
 
 	<dependencies>
@@ -145,6 +146,10 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
 
 		<!--  JWT dependencies -->
 		<dependency>
@@ -171,9 +176,9 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.modelmapper</groupId>
-			<artifactId>modelmapper</artifactId>
-			<version>${modelmapper.version}</version>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>${logstash-logback-encoder.version}</version>
 		</dependency>
 
 		<!-- junit dependencies -->
