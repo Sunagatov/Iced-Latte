@@ -23,6 +23,13 @@ spring:
   output:
     ansi:
       enabled: detect
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: online-store-database
+      password: password
+      username: admin
 
 #
 # Management Properties

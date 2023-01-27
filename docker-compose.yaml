@@ -28,7 +28,28 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./init-scripts:/etc/localstack/init/ready.d"
     networks:
-      - elk
+      - online-store-network
+    profiles:
+      - prod
+      - test
+      - prod-with-monitoring
+
+  #
+  # Mongo Database
+  #
+  mongo_db:
+    image: "mongo:latest"
+    container_name: mongo-database
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+    depends_on:
+      localstack:
+        condition: service_healthy
+    ports:
+      - '27017:27017'
+    networks:
+      - online-store-network
     profiles:
       - prod
       - test
@@ -39,7 +60,7 @@ services:
   #
   online-store-app:
     image: 'online-store/online-store:latest'
-    container_name: online-store
+    container_name: online-store-app
     build:
       context: ./
       dockerfile: docker/online-store-app/Dockerfile
@@ -55,14 +76,11 @@ services:
       retries: 5
       start_period: 40s
     depends_on:
-      localstack:
-        condition: service_healthy
+      - mongo_db
     deploy:
       replicas: 1
-    volumes:
-      - "C:/Users/ZSunagatov/IdeaProjects/Online-Store/logs: /logs"
     networks:
-      - elk
+      - online-store-network
     profiles:
       - prod
       - prod-with-monitoring
@@ -95,7 +113,7 @@ services:
       MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
       BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
     networks:
-      - elk
+      - online-store-network
     depends_on:
        online-store-app:
           condition: service_healthy
@@ -122,7 +140,7 @@ services:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       discovery.type: single-node # Use single node discovery in order to disable production mode and avoid bootstrap checks.
     networks:
-      - elk
+      - online-store-network
     profiles:
       - prod-with-monitoring
 
@@ -146,7 +164,7 @@ services:
       LS_JAVA_OPTS: -Xms256m -Xmx256m
       LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
     networks:
-      - elk
+      - online-store-network
     depends_on:
       - elasticsearch
     profiles:
@@ -168,14 +186,14 @@ services:
     environment:
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
     networks:
-      - elk
+      - online-store-network
     depends_on:
       - elasticsearch
     profiles:
       - prod-with-monitoring
 
 networks:
-  elk:
+  online-store-network:
     driver: bridge
 
 volumes:
