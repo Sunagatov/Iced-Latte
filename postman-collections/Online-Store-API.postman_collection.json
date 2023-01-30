@@ -1,0 +1,516 @@
+{
+	"info": {
+		"_postman_id": "2369b4a8-ebc7-44b6-b5ba-d576d586654b",
+		"name": "Online-Store-API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1249530"
+	},
+	"item": [
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Make a transaction",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NDQ3NDY0MywiZXhwIjoxNjc0NDgwNjg3fQ.UwKerKgAYT-nkIzuxa4oQCisQmSAdN4s-CVf7n7EKdI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerId\": \"1\",\n    \"products\": [\n        {\n          \"name\": \"Bread\",\n          \"category\": \"Food\",\n          \"price\": {\n            \"amount\": \"2.5\",\n            \"currency\": \"GBP\"\n          } \n        },\n        {\n          \"name\": \"Milk\",\n          \"category\": \"Food\",\n          \"price\": {\n            \"amount\": \"3.1\",\n            \"currency\": \"GBP\"\n          } \n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/store/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"store",
+								"products"
+							]
+						},
+						"description": "Purhchase products"
+					},
+					"response": []
+				},
+				{
+					"name": "Get all transactions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA4OTg2OCwiZXhwIjoxNjc1MDk1OTEzfQ.V_93mI2ApOV_dcZlchwdIZxRZ7YNPMo3EwMXUoCAWN8",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/store/transactions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"store",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get the product by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDE4MiwiZXhwIjoxNjc1MDk2MjI3fQ.sf9yQ5qkI2aA6RCqwTQwPoBgy094su9u3VocwYurrm0",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/products/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"products",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete the product by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDczMSwiZXhwIjoxNjc1MDk2Nzc1fQ.qiQ27dSgHiNeuph9Pxg75qX5d7fhw-hxp0Lzu0uqxRU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/products/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"products",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all products",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MTQyNSwiZXhwIjoxNjc1MDk3NDcwfQ.PJtdFpOyKk8XiidxUIlCNO0Ty8ulJ7SmyM3CZGEXEbA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update the product by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDczMSwiZXhwIjoxNjc1MDk2Nzc1fQ.qiQ27dSgHiNeuph9Pxg75qX5d7fhw-hxp0Lzu0uqxRU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/products/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"products",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add a new product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MTg2MywiZXhwIjoxNjc1MDk3OTA4fQ.JbIuI_QdT93sLGD3NjgB_XmhzGQuZWyigQ2kF5JHNHM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 3,\r\n    \"name\": \"Product3\",\r\n    \"price\": {\r\n        \"amount\": 123.67,\r\n        \"currency\": \"GB\"\r\n    },\r\n    \"category\": \"Category2\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"products"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Create a new customer",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDk3MywiZXhwIjoxNjc1MDk3MDE4fQ.T3KMI0xeVXf9XxLdMbp_B52nZhLcZtymtP7OlfGEo-M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstName\": \"Zufar\",\r\n    \"lastName\": \"Zufar\",\r\n    \"email\": \"zufar.sunagatov@gmail.com\",\r\n    \"address\": {\r\n        \"line\": \"153 Cordellia Street\",\r\n        \"city\": \"London\",\r\n        \"country\": \"The UK\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/customers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"customers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get the customer by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDk3MywiZXhwIjoxNjc1MDk3MDE4fQ.T3KMI0xeVXf9XxLdMbp_B52nZhLcZtymtP7OlfGEo-M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/customers/cf5f2e21-08df-419e-a996-e62e798a9bcd",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"customers",
+								"cf5f2e21-08df-419e-a996-e62e798a9bcd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all customers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDk3MywiZXhwIjoxNjc1MDk3MDE4fQ.T3KMI0xeVXf9XxLdMbp_B52nZhLcZtymtP7OlfGEo-M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/customers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"customers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete the customer by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDk3MywiZXhwIjoxNjc1MDk3MDE4fQ.T3KMI0xeVXf9XxLdMbp_B52nZhLcZtymtP7OlfGEo-M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/customers/dd32bfb3-a29a-4513-b83f-bd11b4feb3e7",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"customers",
+								"dd32bfb3-a29a-4513-b83f-bd11b4feb3e7"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update the customer by id and a request body",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDk3MywiZXhwIjoxNjc1MDk3MDE4fQ.T3KMI0xeVXf9XxLdMbp_B52nZhLcZtymtP7OlfGEo-M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstName\": \"Zufar\",\r\n    \"lastName\": \"Sunagatov\",\r\n    \"email\": \"zufar.sunagatov@gmail.com\",\r\n    \"address\": {\r\n        \"line\": \"153 Cordellia Street\",\r\n        \"city\": \"London\",\r\n        \"country\": \"The UK\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/customers/cf5f2e21-08df-419e-a996-e62e798a9bcd",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"customers",
+								"cf5f2e21-08df-419e-a996-e62e798a9bcd"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Security",
+			"item": [
+				{
+					"name": "Register user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"Zufar\",\r\n    \"password\": \"Igromania1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Authenticate user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"Zufar\",\r\n    \"password\": \"Igromania1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/auth/authenticate",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"api",
+								"auth",
+								"authenticate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/auth/logout",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
