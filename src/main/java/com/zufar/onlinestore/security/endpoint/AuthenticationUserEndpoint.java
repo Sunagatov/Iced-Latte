@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.endpoint;
+package com.zufar.onlinestore.security.endpoint;
 
 import com.zufar.onlinestore.security.authentication.UserAuthenticationManager;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationRequest;
