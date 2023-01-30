@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class ProductInfoDtoConverter {
-	private final AddressDtoConverter addressDtoConverter;
 
 	public ProductInfoDto convertToDto(final ProductInfo entity) {
 		return ProductInfoDto.builder()
+				.id(entity.getId())
 				.category(entity.getCategory())
 				.name(entity.getName())
 				.price(entity.getPrice())

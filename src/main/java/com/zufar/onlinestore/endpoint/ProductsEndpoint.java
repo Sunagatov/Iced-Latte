@@ -49,9 +49,9 @@ public class ProductsEndpoint {
 
 	@GetMapping("/{id}")
 	@ResponseBody
-	public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") @NotBlank final Integer id) {
+	public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") @NotBlank final String id) {
 		log.info("Received request to get the ProductInfo with id - {}.", id);
-		Optional<ProductInfo> ProductInfo = productInfoRepository.findById(id);
+		Optional<ProductInfo> ProductInfo = productInfoRepository.findById(Integer.parseInt(id));
 		if (ProductInfo.isEmpty()) {
 			log.info("the ProductInfo with id - {} is absent.", id);
 			return ResponseEntity.notFound()
@@ -84,9 +84,9 @@ public class ProductsEndpoint {
 
 	@DeleteMapping("/{id}")
 	@ResponseBody
-	public ResponseEntity<Void> deleteById(@PathVariable("id") @NotBlank final Integer id) {
+	public ResponseEntity<Void> deleteById(@PathVariable("id") @NotBlank final String id) {
 		log.info("Received request to delete the ProductInfo with id - {}.", id);
-		productInfoRepository.deleteById(id);
+		productInfoRepository.deleteById(Integer.parseInt(id));
 		log.info("the ProductInfo with id - {} was deleted.", id);
 		return ResponseEntity.ok()
 				.build();
@@ -94,11 +94,11 @@ public class ProductsEndpoint {
 
 	@PutMapping("/{id}")
 	@ResponseBody
-	public ResponseEntity<Void> updateProductInfo(@PathVariable("id") @NotBlank final Integer id,
+	public ResponseEntity<Void> updateProductInfo(@PathVariable("id") @NotBlank final String id,
 	                                              @RequestBody @Valid @NotNull final ProductInfoDto request) {
 		log.info("Received request to update the ProductInfo with id - {}, request - {}.", id, request);
 		ProductInfo productInfo = productInfoDtoConverter.convertToEntity(request);
-		productInfo.setId(id);
+		productInfo.setId(Integer.parseInt(id));
 		productInfoRepository.save(productInfo);
 		log.info("the ProductInfo with id - {} was updated.", id);
 		return ResponseEntity.ok()

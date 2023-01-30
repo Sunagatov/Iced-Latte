@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProductInfoDto {
 
+	private int id;
+
 	@NotBlank(message = "Name is mandatory")
 	@Size(max = 55, message = "Name length must be less than 55 characters")
 	private String name;

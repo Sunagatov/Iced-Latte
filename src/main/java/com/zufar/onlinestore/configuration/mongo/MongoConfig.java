@@ -20,25 +20,25 @@ public class MongoConfig {
 					new ProductInfo(
 							1,
 							"Product1",
-							new PriceDto(BigDecimal.valueOf(256, 7), "GB"),
+							new PriceDto(BigDecimal.valueOf(256.73), "GB"),
 							"Category1"));
 			repository.save(
 					new ProductInfo(
 							2,
 							"Product2",
-							new PriceDto(BigDecimal.valueOf(312, 7), "GB"),
+							new PriceDto(BigDecimal.valueOf(312.56), "GB"),
 							"Category1"));
 			repository.save(
 					new ProductInfo(
 							3,
 							"Product3",
-							new PriceDto(BigDecimal.valueOf(123, 7), "GB"),
+							new PriceDto(BigDecimal.valueOf(123.67), "GB"),
 							"Category2"));
 			repository.save(
 					new ProductInfo(
 							4,
 							"Product4",
-							new PriceDto(BigDecimal.valueOf(223, 7), "GB"),
+							new PriceDto(BigDecimal.valueOf(223.456), "GB"),
 							"Category2"));
 		};
 	}
