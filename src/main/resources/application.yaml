@@ -3,7 +3,7 @@
 # Server Properties
 #
 server:
-  port: 8081
+  port: 8083
   ssl:
     key-store-type: PKCS12
     key-store: certs/zufarkeystore.p12
@@ -25,18 +25,19 @@ spring:
       enabled: detect
   data:
     mongodb:
-      host: localhost
+      host: mongodb
       port: 27017
-      database: online-store-database
-      password: password
-      username: admin
+      database: data
+      password: rootpass
+      username: rootuser
+      authentication-database: admin
 
 #
 # Management Properties
 #
 management:
   server:
-    port: 8081
+    port: 8083
   endpoint:
     prometheus:
       enabled: false

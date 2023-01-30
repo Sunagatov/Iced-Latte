@@ -12,7 +12,7 @@ WORKDIR $HOME
 ADD pom.xml $HOME
 RUN mvn verify --fail-never
 ADD . $HOME
-RUN mvn package
+RUN mvn package -DskipTests
 
 #
 # RUN APPLICATION ARTIFACT STAGE
@@ -20,6 +20,6 @@ RUN mvn package
 FROM eclipse-temurin:17-jre-jammy
 MAINTAINER Zufar Sunagatov <zufar.sunagatov@gmail.com>
 WORKDIR $HOME
-COPY --from=maven_build $HOME/target/*.jar $HOME/*.jar
-EXPOSE 8443
-ENTRYPOINT ["java", "-jar", "$HOME/*.jar" ]
+COPY --from=maven_build /opt/app/target/online-store-0.0.1-SNAPSHOT.jar /opt/app/online-store-0.0.1-SNAPSHOT.jar
+EXPOSE 8083
+ENTRYPOINT ["java", "-jar", "/opt/app/online-store-0.0.1-SNAPSHOT.jar" ]

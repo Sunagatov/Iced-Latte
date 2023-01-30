@@ -37,12 +37,12 @@ services:
   #
   # Mongo Database
   #
-  mongo_db:
+  mongodb:
     image: "mongo:latest"
-    container_name: mongo-database
+    container_name: mongodb
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      - MONGO_INITDB_ROOT_USERNAME=rootuser
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
     depends_on:
       localstack:
         condition: service_healthy
@@ -65,18 +65,18 @@ services:
       context: ./
       dockerfile: docker/online-store-app/Dockerfile
     ports:
-      - '8081:8081'
+      - '8083:8083'
     user: root
     environment:
       AWS_ENDPOINT_URL: http://awslocal:4566
     healthcheck:
-      test: "curl --fail --silent localhost:8081/actuator/health | grep UP || exit 1"
+      test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
       interval: 20s
       timeout: 5s
       retries: 5
       start_period: 40s
     depends_on:
-      - mongo_db
+      - mongodb
     deploy:
       replicas: 1
     networks:
@@ -195,7 +195,3 @@ services:
 networks:
   online-store-network:
     driver: bridge
-
-volumes:
-  setup:
-  elasticsearch:
