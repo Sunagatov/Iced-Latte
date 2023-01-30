@@ -1,9 +1,9 @@
-package com.zufar.onlinestore.repository.dynamodb.mapper;
+package com.zufar.onlinestore.customer.repository.dynamodb.mapper;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.zufar.onlinestore.model.Customer;
+import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.repository.CrudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;

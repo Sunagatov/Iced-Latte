@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.dto;
+package com.zufar.onlinestore.customer.dto;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
-package com.zufar.onlinestore.repository.dynamodb.client;
+package com.zufar.onlinestore.customer.repository.dynamodb.client;
 
-import com.zufar.onlinestore.repository.dynamodb.client.model.CustomerClientEntity;
+import com.zufar.onlinestore.customer.repository.dynamodb.client.model.CustomerClientEntity;
 import com.zufar.onlinestore.repository.CrudRepository;
 
 import lombok.RequiredArgsConstructor;

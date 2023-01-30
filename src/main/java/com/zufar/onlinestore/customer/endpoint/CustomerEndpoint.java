@@ -1,8 +1,8 @@
-package com.zufar.onlinestore.endpoint;
+package com.zufar.onlinestore.customer.endpoint;
 
-import com.zufar.onlinestore.converter.CustomerDtoConverter;
-import com.zufar.onlinestore.dto.CustomerDto;
-import com.zufar.onlinestore.model.Customer;
+import com.zufar.onlinestore.customer.converter.CustomerDtoConverter;
+import com.zufar.onlinestore.customer.dto.CustomerDto;
+import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.repository.CrudRepository;
 
 

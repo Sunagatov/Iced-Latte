@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.converter;
+package com.zufar.onlinestore.customer.converter;
 
-import com.zufar.onlinestore.dto.AddressDto;
-import com.zufar.onlinestore.model.Address;
+import com.zufar.onlinestore.customer.dto.AddressDto;
+import com.zufar.onlinestore.customer.entity.Address;
 
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.repository.dynamodb.client.model;
+package com.zufar.onlinestore.customer.repository.dynamodb.client.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

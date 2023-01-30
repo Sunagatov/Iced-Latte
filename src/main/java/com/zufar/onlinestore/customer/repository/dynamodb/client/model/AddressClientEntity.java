@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.repository.dynamodb.client.model;
+package com.zufar.onlinestore.customer.repository.dynamodb.client.model;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 import lombok.AllArgsConstructor;
