@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.security.authentication;
 
-import com.zufar.onlinestore.repository.UserDetailsRepository;
+import com.zufar.onlinestore.security.repository.UserDetailsRepository;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

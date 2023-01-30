@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.security.authentication;
 
-import com.zufar.onlinestore.repository.UserDetailsRepository;
+import com.zufar.onlinestore.security.repository.UserDetailsRepository;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationRequest;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationResponse;

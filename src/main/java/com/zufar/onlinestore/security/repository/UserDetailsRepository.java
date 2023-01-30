@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.repository;
+package com.zufar.onlinestore.security.repository;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
