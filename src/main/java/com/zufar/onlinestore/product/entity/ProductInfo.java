@@ -1,6 +1,6 @@
-package com.zufar.onlinestore.model;
+package com.zufar.onlinestore.product.entity;
 
-import com.zufar.onlinestore.dto.PriceDto;
+import com.zufar.onlinestore.product.dto.PriceDto;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.AllArgsConstructor;

@@ -2,7 +2,7 @@ package com.zufar.onlinestore.converter;
 
 import com.zufar.onlinestore.dto.TransactionRequest;
 import com.zufar.onlinestore.dto.PurchaseTransactionDto;
-import com.zufar.onlinestore.service.ProductsSumCalculator;
+import com.zufar.onlinestore.product.ProductsSumCalculator;
 
 import org.springframework.stereotype.Service;
 

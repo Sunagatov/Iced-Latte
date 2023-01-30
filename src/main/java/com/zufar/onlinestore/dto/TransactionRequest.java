@@ -1,6 +1,8 @@
 package com.zufar.onlinestore.dto;
 
 
+import com.zufar.onlinestore.product.dto.ProductInfoDto;
+
 import java.util.Collection;
 
 import jakarta.validation.constraints.NotBlank;

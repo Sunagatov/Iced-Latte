@@ -1,9 +1,9 @@
-package com.zufar.onlinestore.endpoint;
+package com.zufar.onlinestore.product.endpoint;
 
-import com.zufar.onlinestore.converter.ProductInfoDtoConverter;
-import com.zufar.onlinestore.dto.ProductInfoDto;
-import com.zufar.onlinestore.model.ProductInfo;
-import com.zufar.onlinestore.repository.ProductInfoRepository;
+import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
+import com.zufar.onlinestore.product.dto.ProductInfoDto;
+import com.zufar.onlinestore.product.entity.ProductInfo;
+import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

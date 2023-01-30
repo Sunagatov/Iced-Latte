@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.dto;
+package com.zufar.onlinestore.product.dto;
 
 import java.math.BigDecimal;
 

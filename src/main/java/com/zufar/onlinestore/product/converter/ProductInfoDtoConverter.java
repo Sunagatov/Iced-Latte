@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.converter;
+package com.zufar.onlinestore.product.converter;
 
-import com.zufar.onlinestore.dto.ProductInfoDto;
-import com.zufar.onlinestore.model.ProductInfo;
+import com.zufar.onlinestore.product.dto.ProductInfoDto;
+import com.zufar.onlinestore.product.entity.ProductInfo;
 
 import org.springframework.stereotype.Service;
 

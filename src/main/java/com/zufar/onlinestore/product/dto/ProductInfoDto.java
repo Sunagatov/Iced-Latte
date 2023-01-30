@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.dto;
+package com.zufar.onlinestore.product.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

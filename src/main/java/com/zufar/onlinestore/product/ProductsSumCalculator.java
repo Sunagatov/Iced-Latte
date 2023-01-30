@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.service;
+package com.zufar.onlinestore.product;
 
-import com.zufar.onlinestore.dto.PriceDto;
-import com.zufar.onlinestore.dto.ProductInfoDto;
+import com.zufar.onlinestore.product.dto.PriceDto;
+import com.zufar.onlinestore.product.dto.ProductInfoDto;
 
 import org.springframework.stereotype.Service;
 

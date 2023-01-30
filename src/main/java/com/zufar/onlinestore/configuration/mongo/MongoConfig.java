@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.configuration.mongo;
 
-import com.zufar.onlinestore.dto.PriceDto;
-import com.zufar.onlinestore.model.ProductInfo;
-import com.zufar.onlinestore.repository.ProductInfoRepository;
+import com.zufar.onlinestore.product.dto.PriceDto;
+import com.zufar.onlinestore.product.entity.ProductInfo;
+import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
