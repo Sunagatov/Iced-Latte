@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.endpoint;
+package com.zufar.onlinestore.transacton.endpoint;
 
-import com.zufar.onlinestore.dto.TransactionRequest;
-import com.zufar.onlinestore.service.PurchaseTransactionHandler;
+import com.zufar.onlinestore.transacton.dto.TransactionRequest;
+import com.zufar.onlinestore.transacton.PurchaseTransactionHandler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

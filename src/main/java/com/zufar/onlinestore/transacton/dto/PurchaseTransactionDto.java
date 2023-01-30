@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.dto;
+package com.zufar.onlinestore.transacton.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

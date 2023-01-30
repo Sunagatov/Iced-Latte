@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.dto;
+package com.zufar.onlinestore.transacton.dto;
 
 
 import com.zufar.onlinestore.product.dto.ProductInfoDto;

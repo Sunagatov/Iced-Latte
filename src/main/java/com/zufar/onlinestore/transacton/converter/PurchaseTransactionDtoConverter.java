@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.converter;
+package com.zufar.onlinestore.transacton.converter;
 
-import com.zufar.onlinestore.dto.TransactionRequest;
-import com.zufar.onlinestore.dto.PurchaseTransactionDto;
+import com.zufar.onlinestore.transacton.dto.TransactionRequest;
+import com.zufar.onlinestore.transacton.dto.PurchaseTransactionDto;
 import com.zufar.onlinestore.product.ProductsSumCalculator;
 
 import org.springframework.stereotype.Service;
