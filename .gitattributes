@@ -1,2 +1,6 @@
 # Declare files that will always have LF line endings on checkout.
 *.sh text eol=lf
+# Shell scripts require LF
+*.sh    text eol=lf
+# Batch scripts require CRLF
+*.bat   text eol=crlf
