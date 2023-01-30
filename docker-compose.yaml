@@ -26,13 +26,13 @@ services:
       EDGE_PORT: 4566
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./init-scripts:/etc/localstack/init/ready.d"
+      - "./init-scripts/localstack:/etc/localstack/init/ready.d"
     networks:
       - online-store-network
     profiles:
-      - prod
+      - dev
       - test
-      - prod-with-monitoring
+      - prod
 
   #
   # Mongo Database
@@ -51,9 +51,9 @@ services:
     networks:
       - online-store-network
     profiles:
-      - prod
+      - dev
       - test
-      - prod-with-monitoring
+      - prod
 
   #
   # Online Store App
@@ -82,8 +82,8 @@ services:
     networks:
       - online-store-network
     profiles:
-      - prod
-      - prod-with-monitoring
+      - dev
+      - test
 
   # The 'setup' service runs a one-off script which initializes users inside
   # Elasticsearch — such as 'logstash_internal' and 'kibana_system' — with the
@@ -118,7 +118,7 @@ services:
        online-store-app:
           condition: service_healthy
     profiles:
-      - prod-with-monitoring
+      - prod
 
   #
   # ELASTICSEARCH
@@ -142,7 +142,7 @@ services:
     networks:
       - online-store-network
     profiles:
-      - prod-with-monitoring
+      - prod
 
   #
   # LOGSTASH
@@ -168,8 +168,7 @@ services:
     depends_on:
       - elasticsearch
     profiles:
-      - prod-with-monitoring
-
+      - prod
 
   #
   # KIBANA
@@ -190,7 +189,7 @@ services:
     depends_on:
       - elasticsearch
     profiles:
-      - prod-with-monitoring
+      - prod
 
 networks:
   online-store-network:
