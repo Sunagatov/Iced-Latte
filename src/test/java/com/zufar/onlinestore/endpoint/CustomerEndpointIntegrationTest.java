@@ -4,7 +4,7 @@ import com.zufar.onlinestore.customer.dto.AddressDto;
 import com.zufar.onlinestore.customer.dto.CustomerDto;
 import com.zufar.onlinestore.customer.entity.Address;
 import com.zufar.onlinestore.customer.entity.Customer;
-import com.zufar.onlinestore.repository.CrudRepository;
+import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

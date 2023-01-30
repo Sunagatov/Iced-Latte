@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.repository;
+package com.zufar.onlinestore.customer.repository.dynamodb;
 
 import java.util.Collection;
 import java.util.Optional;

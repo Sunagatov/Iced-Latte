@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.customer.repository.dynamodb.client;
 
 import com.zufar.onlinestore.customer.repository.dynamodb.client.model.CustomerClientEntity;
-import com.zufar.onlinestore.repository.CrudRepository;
+import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
