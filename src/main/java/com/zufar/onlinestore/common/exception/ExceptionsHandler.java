@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.exception;
+package com.zufar.onlinestore.common.exception;
 
 import com.amazonaws.util.StringUtils;
 import org.springframework.http.ResponseEntity;
