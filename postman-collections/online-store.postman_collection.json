@@ -55,7 +55,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NDQ3NDY0MywiZXhwIjoxNjc0NDgwNjg3fQ.UwKerKgAYT-nkIzuxa4oQCisQmSAdN4s-CVf7n7EKdI",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA4OTg2OCwiZXhwIjoxNjc1MDk1OTEzfQ.V_93mI2ApOV_dcZlchwdIZxRZ7YNPMo3EwMXUoCAWN8",
 							"type": "string"
 						}
 					]
@@ -63,16 +63,46 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/api/store/transactions",
+					"raw": "http://localhost:8083/api/store/transactions",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"store",
 						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all products",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJadWZhciIsImlhdCI6MTY3NTA5MDAzNiwiZXhwIjoxNjc1MDk2MDgxfQ.6KJh1Ve4DRzyob4ZRf_wWQ86tmanEPMXK-mNHBCXNMg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8083/api/products",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"api",
+						"products"
 					]
 				}
 			},
@@ -103,12 +133,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/customers",
+					"raw": "http://localhost:8083/api/customers",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"customers"
@@ -133,12 +163,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
+					"raw": "http://localhost:8083/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"customers",
@@ -164,12 +194,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/api/customers",
+					"raw": "http://localhost:8083/api/customers",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"customers"
@@ -184,12 +214,12 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/api/customers/1",
+					"raw": "http://localhost:8083/api/customers/1",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"customers",
@@ -224,12 +254,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
+					"raw": "http://localhost:8083/api/customers/9947489f-7bfe-4770-b892-3839f5f25046",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"customers",
@@ -254,12 +284,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/auth/register",
+					"raw": "http://localhost:8083/api/auth/register",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"auth",
@@ -284,12 +314,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/api/auth/authenticate",
+					"raw": "http://localhost:8083/api/auth/authenticate",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8081",
+					"port": "8083",
 					"path": [
 						"api",
 						"auth",
