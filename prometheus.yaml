@@ -16,6 +16,6 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['host.docker.internal:8081']
+      - targets: ['host.docker.internal:8083']
         labels:
           group: 'production'
