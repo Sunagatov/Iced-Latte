@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.sqs;
+package com.zufar.onlinestore.aws.sqs;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageBatchRequest;

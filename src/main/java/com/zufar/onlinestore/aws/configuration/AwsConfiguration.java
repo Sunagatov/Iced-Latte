@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.configuration.aws;
+package com.zufar.onlinestore.aws.configuration;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;

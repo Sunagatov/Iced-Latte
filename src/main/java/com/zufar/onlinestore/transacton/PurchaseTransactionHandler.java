@@ -3,7 +3,7 @@ package com.zufar.onlinestore.transacton;
 import com.zufar.onlinestore.transacton.converter.PurchaseTransactionDtoConverter;
 import com.zufar.onlinestore.transacton.dto.TransactionRequest;
 import com.zufar.onlinestore.transacton.dto.PurchaseTransactionDto;
-import com.zufar.onlinestore.sqs.SqsMessageReceiver;
+import com.zufar.onlinestore.aws.sqs.SqsMessageReceiver;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
