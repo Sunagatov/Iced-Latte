@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.service;
 
 import com.zufar.onlinestore.converter.PurchaseTransactionDtoConverter;
-import com.zufar.onlinestore.dto.PurchaseProductsRequest;
+import com.zufar.onlinestore.dto.TransactionRequest;
 import com.zufar.onlinestore.dto.PurchaseTransactionDto;
 import com.zufar.onlinestore.sqs.SqsMessageReceiver;
 
@@ -30,7 +30,7 @@ public class PurchaseTransactionHandler {
 	@Value("${cloud.aws.sns.topic.name}")
 	private String topicName;
 
-	public void processRequest(final PurchaseProductsRequest request) {
+	public void processRequest(final TransactionRequest request) {
 		log.info("Received request {}.", request);
 		PurchaseTransactionDto purchaseTransactionDto = purchaseTransactionConverter.convert(request);
 

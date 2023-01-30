@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PurchaseProductsRequest {
+public class TransactionRequest {
 
 	@NotBlank
 	private String customerId;

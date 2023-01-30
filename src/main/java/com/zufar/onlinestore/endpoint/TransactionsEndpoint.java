@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.endpoint;
 
-import com.zufar.onlinestore.dto.PurchaseProductsRequest;
+import com.zufar.onlinestore.dto.TransactionRequest;
 import com.zufar.onlinestore.service.PurchaseTransactionHandler;
 
 import org.springframework.http.HttpStatus;
@@ -23,13 +23,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = "/api/store")
-public class StoreEndpoint {
+public class TransactionsEndpoint {
 	private final PurchaseTransactionHandler purchaseTransactionHandler;
 
-	@PostMapping(value = "/products")
+	@PostMapping(value = "/transactions")
 	@ResponseBody
-	public ResponseEntity<Void> purchaseProduct(@RequestBody @Valid @NotNull(message = "PurchaseRequest is mandatory") final PurchaseProductsRequest purchaseProductsRequest) {
-		purchaseTransactionHandler.processRequest(purchaseProductsRequest);
+	public ResponseEntity<Void> makeTransaction(@RequestBody @Valid @NotNull(message = "TransactionRequest body is mandatory") final TransactionRequest transactionRequest) {
+		purchaseTransactionHandler.processRequest(transactionRequest);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.build();
 	}

@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.converter;
 
-import com.zufar.onlinestore.dto.PurchaseProductsRequest;
+import com.zufar.onlinestore.dto.TransactionRequest;
 import com.zufar.onlinestore.dto.PurchaseTransactionDto;
 import com.zufar.onlinestore.service.ProductsSumCalculator;
 
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class PurchaseTransactionDtoConverter {
 	private final ProductsSumCalculator productsSumCalculator;
 
-	public PurchaseTransactionDto convert(final PurchaseProductsRequest request) {
+	public PurchaseTransactionDto convert(final TransactionRequest request) {
 		BigDecimal totalSum = productsSumCalculator.calculate(request.getProducts());
 
 		return PurchaseTransactionDto.builder()
