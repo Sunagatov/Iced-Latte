@@ -34,12 +34,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8081/api/store/products",
+							"raw": "http://localhost:8083/api/store/products",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "8081",
+							"port": "8083",
 							"path": [
 								"api",
 								"store",
@@ -495,12 +495,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8081/api/auth/logout",
+							"raw": "http://localhost:8083/api/auth/logout",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "8081",
+							"port": "8083",
 							"path": [
 								"api",
 								"auth",
