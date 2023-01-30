@@ -1,8 +1,7 @@
-package com.zufar.onlinestore.configuration.mongo;
+package com.zufar.onlinestore.product.repository;
 
 import com.zufar.onlinestore.product.dto.PriceDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
-import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import java.math.BigDecimal;
 
 @Configuration
-public class MongoConfig {
+public class ProductsMongoDatabaseInitializer {
 
 	@Bean
 	CommandLineRunner commandLineRunner(ProductInfoRepository repository) {
