@@ -11,14 +11,18 @@
 ## Tech stack
 * Spring 
   * Boot 3
+  * Data
   * Security
 * Security
   * JWT
   * TLS
-* AWS 
-  * Dynamo Db
-  * SNS
-  * SQS
+* Databases
+  * Mongo DB
+  * AWS Dynamo DB
+* Queues
+  * AWS SQS
+* Topics
+  * AWS SNS
 * Containerisation
   * Docker
 * Monitoring
@@ -26,7 +30,10 @@
   * Logstash
   * Kibana
   * Filebeat
-
+* Logging
+  * Slf4j
+  * Logback
+  
 ## Docker
 Build the Docker image
 ```shell
