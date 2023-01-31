@@ -10,6 +10,8 @@ server:
     key-store-password: newpass
     key-alias: zufarkeystore
     enabled: false
+  tomcat:
+    accept-count: 100
 
 #
 # Spring Properties
