@@ -3,20 +3,89 @@
 
    <!--  CONSOLE LOGGING CONFIGURATION  -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d [%thread] %-5level %-50logger{40} - %msg%n</pattern>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version/>
+                <logLevel/>
+                <message/>
+                <loggerName/>
+                <threadName/>
+                <context/>
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        {
+                        "trace": {
+                        "trace_id": "%mdc{X-B3-TraceId}",
+                        "span_id": "%mdc{X-B3-SpanId}",
+                        "parent_span_id": "%mdc{X-B3-ParentSpanId}",
+                        "exportable": "%mdc{X-Span-Export}"
+                        }
+                        }
+                    </pattern>
+                </pattern>
+                <mdc>
+                    <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanExportable</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-TraceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-SpanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-ParentSpanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-Span-Export</excludeMdcKeyName>
+                </mdc>
+                <stackTrace/>
+            </providers>
         </encoder>
     </appender>
+
+    <springProperty scope="context" name="application_name" source="spring.application.name"/>
+
 
     <!--  FILE LOGGING CONFIGURATION  -->
     <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/online-store.log</file>
 
-        <encoder>
-            <pattern>%d [%thread] %-5level %-50logger{40} - %msg%n</pattern>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version/>
+                <logLevel/>
+                <message/>
+                <loggerName/>
+                <threadName/>
+                <context/>
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        {
+                        "trace": {
+                        "trace_id": "%mdc{X-B3-TraceId}",
+                        "span_id": "%mdc{X-B3-SpanId}",
+                        "parent_span_id": "%mdc{X-B3-ParentSpanId}",
+                        "exportable": "%mdc{X-Span-Export}"
+                        }
+                        }
+                    </pattern>
+                </pattern>
+                <mdc>
+                    <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanExportable</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-TraceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-SpanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-B3-ParentSpanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>X-Span-Export</excludeMdcKeyName>
+                </mdc>
+                <stackTrace/>
+            </providers>
         </encoder>
-
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/online-store-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
@@ -26,6 +95,8 @@
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
     </appender>
+
+
 
     <root level="INFO">
         <appender-ref ref="ConsoleAppender" />
