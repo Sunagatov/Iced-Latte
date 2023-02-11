@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment # Kubernetes resource kind we are creating
+metadata:
+  name: online-store-app
+spec:
+  replicas: 1 # Number of replicas that will be created for this deployment
+  selector:
+    matchLabels:
+      app: online-store-app
+  template:
+    metadata:
+      labels:
+        app: online-store-app
+    spec:
+      containers:
+        - name: online-store
+          image: zufarexplainedit/online-store:0.0.2 # Image that will be used to containers in the cluster
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083 # The port that the container is running on in the cluster
+          env:
+            - name: MONGO_URL
+              value: mongodb://mongo:27017/dev
+---
+apiVersion: v1 # Kubernetes API version
+kind: Service # Kubernetes resource kind we are creating
+metadata: # Metadata of the resource kind we are creating
+  name: online-store-app-service
+spec:
+  selector:
+    app: online-store-app
+  ports:
+    - protocol: TCP
+      port: 8083 # The port that the service is running on in the cluster
+      targetPort: 8083 # The port exposed by the service
