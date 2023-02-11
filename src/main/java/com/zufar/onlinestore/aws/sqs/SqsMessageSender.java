@@ -3,8 +3,11 @@ package com.zufar.onlinestore.aws.sqs;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+@Profile("Aws-Profile")
 @Service
 @RequiredArgsConstructor
 public class SqsMessageSender {

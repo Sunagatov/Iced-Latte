@@ -7,11 +7,13 @@ import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.Optional;
 
+@Profile("Aws-Profile")
 @Primary
 @Repository
 @RequiredArgsConstructor

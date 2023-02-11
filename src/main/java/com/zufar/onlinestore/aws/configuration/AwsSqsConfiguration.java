@@ -7,10 +7,12 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Profile("Aws-Profile")
 @Configuration
 @RequiredArgsConstructor
 @Getter

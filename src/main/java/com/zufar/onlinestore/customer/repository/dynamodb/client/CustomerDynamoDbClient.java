@@ -4,6 +4,8 @@ import com.zufar.onlinestore.customer.repository.dynamodb.client.model.CustomerC
 import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -18,6 +20,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 
+@Profile("Aws-Profile")
 @Repository
 @RequiredArgsConstructor
 public class CustomerDynamoDbClient implements CrudRepository<CustomerClientEntity> {

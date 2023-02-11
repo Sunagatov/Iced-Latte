@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -15,6 +16,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+@Profile("Aws-Profile")
 @Configuration
 @RequiredArgsConstructor
 public class AwsDynamoDbConfiguration {

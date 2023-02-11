@@ -6,6 +6,7 @@ import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
 
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Profile("Aws-Profile")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
