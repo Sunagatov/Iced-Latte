@@ -2,39 +2,6 @@ version: '3.9'
 services:
 
   #
-  # Localstack
-  #
-  localstack:
-    image: 'localstack/localstack:latest'
-    container_name: localstack
-    build:
-      context: ./
-      dockerfile: docker/localstack/Dockerfile
-    hostname: awslocal
-    ports:
-      - '4566:4566'
-      - '4510-4559:4510-4559'
-    user: root
-    environment:
-      DEBUG: 0
-      SERVICES: "sqs,sns,dynamodb"
-      HOSTNAME_EXTERNAL: awslocal
-      PERSISTENCE: "/var/lib/localstack/state"
-      AWS_DEFAULT_REGION: us-east-1
-      DYNAMODB_SHARE_DB: 1
-      DYNAMODB_IN_MEMORY: 1
-      EDGE_PORT: 4566
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./init-scripts/localstack:/etc/localstack/init/ready.d"
-    networks:
-      - online-store-network
-    profiles:
-      - dev
-      - test
-      - prod
-
-  #
   # Mongo Database
   #
   mongodb:
@@ -43,9 +10,6 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=rootuser
       - MONGO_INITDB_ROOT_PASSWORD=rootpass
-    depends_on:
-      localstack:
-        condition: service_healthy
     ports:
       - '27017:27017'
     networks:
@@ -82,7 +46,6 @@ services:
     networks:
       - online-store-network
     profiles:
-      - dev
       - test
 
   # The 'setup' service runs a one-off script which initializes users inside
@@ -190,6 +153,37 @@ services:
       - elasticsearch
     profiles:
       - prod
+
+  #
+  # Localstack
+  #
+  localstack:
+    image: 'localstack/localstack:latest'
+    container_name: localstack
+    build:
+      context: ./
+      dockerfile: docker/localstack/Dockerfile
+    hostname: awslocal
+    ports:
+      - '4566:4566'
+      - '4510-4559:4510-4559'
+    user: root
+    environment:
+      DEBUG: 0
+      SERVICES: "sqs,sns,dynamodb"
+      HOSTNAME_EXTERNAL: awslocal
+      PERSISTENCE: "/var/lib/localstack/state"
+      AWS_DEFAULT_REGION: us-east-1
+      DYNAMODB_SHARE_DB: 1
+      DYNAMODB_IN_MEMORY: 1
+      EDGE_PORT: 4566
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-scripts/localstack:/etc/localstack/init/ready.d"
+    networks:
+      - online-store-network
+    profiles:
+      - aws
 
 networks:
   online-store-network:
