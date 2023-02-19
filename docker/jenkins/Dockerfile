@@ -1,6 +1,10 @@
-FROM jenkins:1.565.3
-
-COPY https.pem /var/lib/jenkins/cert
-COPY https.key /var/lib/jenkins/pk
-ENV JENKINS_OPTS --httpPort=-1 --httpsPort=8083 --httpsCertificate=/var/lib/jenkins/cert --httpsPrivateKey=/var/lib/jenkins/pk
-EXPOSE 8083
+FROM centos
+ENV TOMCAT_DOWNLOAD_LINK=https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.5/bin/apache-tomcat-10.1.5.tar.gz
+RUN yum install java -y
+RUN mkdir /opt/tomcat/
+WORKDIR /opt/tomcat
+ADD $TOMCAT_DOWNLOAD_LINK /opt/tomcat
+RUN tar xvfz apache*.tar.gz
+RUN mv apache-tomcat-9.0.54/* /opt/tomcat
+EXPOSE 8080
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]
