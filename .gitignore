@@ -82,3 +82,6 @@ nb-configuration.xml
 ## OS X
 ##############################
 .DS_Store
+/.env.local
+/README.local.md
+/docker-compose.override.yaml

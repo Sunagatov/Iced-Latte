@@ -185,6 +185,27 @@ services:
     profiles:
       - aws
 
+  sonarqube:
+    image: sonarqube:latest
+    container_name: onlinestore-sonarqube
+    ports:
+      - "9000:9000"
+    networks:
+      - online-store-network
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+    profiles:
+      - dev
+
 networks:
   online-store-network:
     driver: bridge
+
+volumes:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_bundled-plugins:
