@@ -51,3 +51,25 @@ docker login --username=zufar_sunagatov
 docker tag zufar_sunagatov/online-store:v1 zufar_sunagatov/online-store:v1
 docker push zufar_sunagatov/online-store:v1
 ```
+
+## Getting the project up and running
+Get project running by
+```shell
+docker-compose --profile dev up
+```
+If this doesn't work use
+```shell
+docker compose --profile dev up
+```
+### Obtaining a token
+Using Postman get Bearer token by running 
+```shell
+http://localhost:8083/api/auth/register
+```
+Copy the token and insert into Auth tab
+### Testing authorisation
+Run this GET request to test authentication
+```shell 
+http://localhost:8083/api/products
+```
+
