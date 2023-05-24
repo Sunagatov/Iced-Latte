@@ -41,6 +41,7 @@ spring:
     hibernate:
       ddl-auto: update
     database: postgres
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 #
 # Management Properties
