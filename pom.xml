@@ -71,6 +71,7 @@
 		<jjwt-jackson.version>0.11.5</jjwt-jackson.version>
 		<logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
 		<sonar-qube-maven-plugin.version>3.8.0.2131</sonar-qube-maven-plugin.version>
+		<postgresql.version>42.6.0</postgresql.version>
 	</properties>
 
 	<dependencies>
@@ -229,6 +230,13 @@
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
