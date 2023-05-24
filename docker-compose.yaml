@@ -20,6 +20,24 @@ services:
       - prod
 
   #
+  # Postgresql Database
+  #
+  postgresdb:
+    image: 'postgres:13.11-bullseye'
+    container_name: postgresdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    networks:
+      - online-store-network
+    profiles:
+      - dev
+      - test
+      - prod
+
+  #
   # Online Store App
   #
   online-store-app:
