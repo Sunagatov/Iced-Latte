@@ -25,6 +25,10 @@ spring:
   output:
     ansi:
       enabled: detect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: postgres
+    password: postgres
   data:
     mongodb:
       host: localhost
@@ -33,6 +37,10 @@ spring:
       password: rootpass
       username: rootuser
       authentication-database: admin
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgres
 
 #
 # Management Properties
