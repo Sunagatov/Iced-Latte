@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.product.dto;
 
+import com.zufar.onlinestore.review.dto.ReviewDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -28,4 +31,6 @@ public class ProductInfoDto {
 	@NotBlank(message = "Category is mandatory")
 	@Size(max = 55, message = "Category length must be less than 55 characters")
 	private String category;
+
+	private List<ReviewDto> reviews;
 }

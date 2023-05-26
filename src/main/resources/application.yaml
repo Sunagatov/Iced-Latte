@@ -2,6 +2,7 @@
 #
 # Server Properties
 #
+
 server:
   port: 8083
   ssl:
@@ -17,6 +18,8 @@ server:
 # Spring Properties
 #
 spring:
+#  profiles:
+#    active: Aws-Profile
   application:
     name: Online Store Application
   banner:
@@ -33,6 +36,7 @@ spring:
       password: rootpass
       username: rootuser
       authentication-database: admin
+      auto-index-creation: true
 
 #
 # Management Properties
