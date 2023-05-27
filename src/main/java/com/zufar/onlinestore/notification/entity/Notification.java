@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.notification.entity;
 
-import com.zufar.onlinestore.product.dto.PriceDto;
+import com.zufar.onlinestore.customer.entity.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +25,6 @@ public class Notification {
     private int id;
 
     private String message;
-    private PriceDto recipient;
+    private Customer recipient;
 }
 
