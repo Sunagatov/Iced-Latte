@@ -4,7 +4,7 @@ import com.zufar.onlinestore.customer.dto.AddressDto;
 import com.zufar.onlinestore.customer.dto.CustomerDto;
 import com.zufar.onlinestore.customer.entity.Address;
 import com.zufar.onlinestore.customer.entity.Customer;
-import com.zufar.onlinestore.customer.repository.dynamodb.CrudRepository;
+import com.zufar.onlinestore.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class CustomerEndpointIntegrationTest {
 
     @MockBean
-    private CrudRepository<Customer> customerCrudRepository;
+    private CustomerRepository customerCrudRepository;
 
     @Value(value="${local.server.port}")
     private int port;
@@ -84,7 +84,7 @@ class CustomerEndpointIntegrationTest {
     @Test
     @DisplayName("CustomerEndpoint returns Customer when CustomerEndpoint.getCustomerById was called")
     void returnsCustomerWhenGetCustomerByIdWasCalled() {
-        Mockito.when(customerCrudRepository.getById(CUSTOMER_ID))
+        Mockito.when(customerCrudRepository.findById(Long.parseLong(CUSTOMER_ID)))
                 .thenReturn(Optional.of(CUSTOMER));
 
         String url = String.format("http://localhost:%s/api/customers/%s", port, CUSTOMER_ID);
