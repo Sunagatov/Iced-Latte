@@ -29,6 +29,11 @@ spring:
     url: jdbc:postgresql://localhost:5432/testdb
     username: postgres
     password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
   data:
     mongodb:
       host: localhost
@@ -37,11 +42,6 @@ spring:
       password: rootpass
       username: rootuser
       authentication-database: admin
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 #
 # Management Properties
