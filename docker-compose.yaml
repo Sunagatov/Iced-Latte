@@ -20,6 +20,27 @@ services:
       - prod
 
   #
+  # Postgresql Database
+  #
+  postgresdb:
+    image: 'postgres:13.11-bullseye'
+    container_name: postgresdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=testdb
+    ports:
+      - '5432:5432'
+    networks:
+      - online-store-network
+    profiles:
+      - dev
+      - test
+      - prod
+    volumes:
+      - 'db:/var/lib/postgresql/data'
+
+  #
   # Online Store App
   #
   online-store-app:
@@ -209,3 +230,4 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_bundled-plugins:
+  db:

@@ -25,6 +25,15 @@ spring:
   output:
     ansi:
       enabled: detect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
   data:
     mongodb:
       host: localhost
