@@ -37,6 +37,8 @@ services:
       - dev
       - test
       - prod
+    volumes:
+      - 'db:/var/lib/postgresql/data'
 
   #
   # Online Store App
@@ -228,3 +230,4 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_bundled-plugins:
+  db:
