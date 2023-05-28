@@ -39,8 +39,8 @@ spring:
       authentication-database: admin
   jpa:
     hibernate:
-      ddl-auto: update
-    database: postgres
+      ddl-auto: validate
+    database: POSTGRESQL
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 #
