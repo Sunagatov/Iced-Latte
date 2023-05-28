@@ -2,12 +2,12 @@ package com.zufar.onlinestore.review.converter;
 
 import com.zufar.onlinestore.review.dto.ReviewDto;
 import com.zufar.onlinestore.review.entity.Review;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@Component
 public class ReviewDtoConverter {
 
     public ReviewDto convertToDto(Review review) {

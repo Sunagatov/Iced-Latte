@@ -1,4 +1,3 @@
-
 #
 # Server Properties
 #
@@ -18,10 +17,8 @@ server:
 # Spring Properties
 #
 spring:
-#  profiles:
-#    active: Aws-Profile
   application:
-    name: Online Store Application
+  name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
@@ -33,8 +30,8 @@ spring:
       host: localhost
       port: 27017
       database: data
-      password: rootpass
       username: rootuser
+      password: rootpass
       authentication-database: admin
       auto-index-creation: true
 

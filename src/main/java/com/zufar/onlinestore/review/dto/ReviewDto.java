@@ -1,9 +1,6 @@
 package com.zufar.onlinestore.review.dto;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReviewDto {
 
-
     private String id;
 
     @NotBlank(message = "Review text is mandatory")
@@ -25,15 +21,12 @@ public class ReviewDto {
 
     @Min(value = 1, message = "Rating should be at least 1")
     @Max(value = 5, message = "Rating should not exceed 5")
-    @NotBlank(message = "Rating is mandatory")
+    @NotNull(message = "Rating is mandatory")
     private int rating;
 
+    @NotBlank(message = "Product ID is mandatory")
     private String productId;
 
+    @NotBlank(message = "Customer ID is mandatory")
     private String customerId;
-
-
-
-
-
 }
