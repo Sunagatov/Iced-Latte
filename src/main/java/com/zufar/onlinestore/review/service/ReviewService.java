@@ -27,27 +27,17 @@ public class ReviewService {
     }
 
     public Optional<ReviewDto> findReview(String reviewId) {
-        Optional<Review> review = reviewRepository.findById(reviewId);
-        return review.map(reviewDtoConverter::convertToDto);
+        return reviewRepository.findById(reviewId).map(reviewDtoConverter::convertToDto);
     }
 
     public List<ReviewDto> getProductReviews(String productId) {
-        List<Review> reviews = reviewRepository.findAllByProductId(productId);
-        return reviewDtoConverter.convertToDtoList(reviews);
+        return reviewDtoConverter.convertToDtoList(reviewRepository.findAllByProductId(productId));
     }
 
     @Transactional
     public String deleteReview(String reviewId) {
-        AtomicReference<String> deletedId = new AtomicReference<>();
-        reviewRepository.findById(reviewId).ifPresentOrElse(
-                review -> {
-                    reviewRepository.deleteById(reviewId);
-                    deletedId.set(reviewId);
-                },
-                () -> {
-                    throw new ReviewNotFoundException(reviewId);
-                }
-        );
-        return deletedId.get();
+        reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        reviewRepository.deleteById(reviewId);
+        return reviewId;
     }
 }

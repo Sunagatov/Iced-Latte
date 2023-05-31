@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.review.controller;
 
 import com.zufar.onlinestore.review.dto.ReviewDto;
+import com.zufar.onlinestore.review.exception.ReviewNotFoundException;
 import com.zufar.onlinestore.review.service.ReviewService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -17,12 +18,12 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping(ReviewController.BASE_URL)
+@RequestMapping(ReviewController.REVIEW_URL)
 @Validated
 @RequiredArgsConstructor
 public class ReviewController {
 
-    public static final String BASE_URL = "/api/products";
+    public static final String REVIEW_URL = "/api/products";
     private final ReviewService reviewService;
 
     @PostMapping("/{productId}/reviews")
@@ -80,34 +81,24 @@ public class ReviewController {
 
     @PutMapping("/reviews/{reviewId}")
     public ResponseEntity<ApiResponse<ReviewDto>> editReview(@PathVariable String reviewId,
-                                                          @RequestBody @Valid @NotNull(message = "Request body is mandatory") ReviewDto request) {
+                                                             @RequestBody @Valid @NotNull(message = "Request body is mandatory") ReviewDto request) {
         log.info("Received request to edit the review with id - {}, request - {}.", reviewId, request);
-        Optional<ReviewDto> optionalReviewDto = reviewService.findReview(reviewId);
-        if (optionalReviewDto.isPresent()) {
-            ReviewDto existingReviewDto = optionalReviewDto.get();
-            existingReviewDto.setText(request.getText());
-            existingReviewDto.setRating(request.getRating());
-            existingReviewDto = reviewService.addReview(existingReviewDto);
-            log.info("The review with id - {} was edited.", existingReviewDto.getId());
 
-            ApiResponse<ReviewDto> apiResponse = ApiResponse.<ReviewDto>builder()
-                    .data(existingReviewDto)
-                    .message("The review with id " + existingReviewDto.getId() + " was  edited.")
-                    .timeStamp(LocalDateTime.now())
-                    .status(HttpStatus.OK.value())
-                    .build();
+        ReviewDto existingReviewDto = reviewService.findReview(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            log.info("The review with id - {} was not found.", reviewId);
+        existingReviewDto.setText(request.getText());
+        existingReviewDto.setRating(request.getRating());
+        existingReviewDto = reviewService.addReview(existingReviewDto);
+        log.info("The review with id - {} was edited.", existingReviewDto.getId());
 
-            ApiResponse<ReviewDto> apiResponse = ApiResponse.<ReviewDto>builder()
-                    .message("The review with id " + reviewId + " not found!")
-                    .timeStamp(LocalDateTime.now())
-                    .status(HttpStatus.NOT_FOUND.value())
-                    .build();
+        ApiResponse<ReviewDto> apiResponse = ApiResponse.<ReviewDto>builder()
+                .data(existingReviewDto)
+                .message("The review with id " + existingReviewDto.getId() + " was edited.")
+                .timeStamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .build();
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
-        }
+        return ResponseEntity.ok(apiResponse);
     }
 }

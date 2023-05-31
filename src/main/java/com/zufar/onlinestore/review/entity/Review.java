@@ -84,57 +84,16 @@ public class Review {
         this.date = date;
     }
 
-    public boolean equals(final Object o) {
-        if (o == this) return true;
-        if (!(o instanceof final Review other)) return false;
-        if (!other.canEqual(this)) return false;
-        final Object this$id = this.getId();
-        final Object other$id = other.getId();
-        if (!Objects.equals(this$id, other$id)) return false;
-        final Object this$productId = this.getProductId();
-        final Object other$productId = other.getProductId();
-        if (!Objects.equals(this$productId, other$productId)) return false;
-        final Object this$customerId = this.getCustomerId();
-        final Object other$customerId = other.getCustomerId();
-        if (!Objects.equals(this$customerId, other$customerId))
-            return false;
-        final Object this$text = this.getText();
-        final Object other$text = other.getText();
-        if (!Objects.equals(this$text, other$text)) return false;
-        if (this.getRating() != other.getRating()) return false;
-        final Object this$date = this.getDate();
-        final Object other$date = other.getDate();
-        return Objects.equals(this$date, other$date);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Review review = (Review) o;
+        return rating == review.rating && id.equals(review.id) && productId.equals(review.productId) && customerId.equals(review.customerId) && text.equals(review.text) && date.equals(review.date);
     }
 
-    protected boolean canEqual(final Object other) {
-        return other instanceof Review;
-    }
-
+    @Override
     public int hashCode() {
-        final int PRIME = 59;
-        int result = 1;
-        final Object $id = this.getId();
-        result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-        final Object $productId = this.getProductId();
-        result = result * PRIME + ($productId == null ? 43 : $productId.hashCode());
-        final Object $customerId = this.getCustomerId();
-        result = result * PRIME + ($customerId == null ? 43 : $customerId.hashCode());
-        final Object $text = this.getText();
-        result = result * PRIME + ($text == null ? 43 : $text.hashCode());
-        result = result * PRIME + this.getRating();
-        final Object $date = this.getDate();
-        result = result * PRIME + ($date == null ? 43 : $date.hashCode());
-        return result;
-    }
-
-    public String toString() {
-        return "Review(id=" +
-                this.getId() + ", productId=" +
-                this.getProductId() + ", customerId=" +
-                this.getCustomerId() + ", text=" +
-                this.getText() + ", rating=" +
-                this.getRating() + ", date=" +
-                this.getDate() + ")";
+        return Objects.hash(id, productId, customerId, text, rating, date);
     }
 }
