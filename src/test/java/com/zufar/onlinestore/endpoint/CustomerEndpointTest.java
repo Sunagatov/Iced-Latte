@@ -10,7 +10,6 @@ import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -21,7 +20,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.Optional;
 
-@Profile("Aws-Profile")
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+@Profile("Aws-Profile") //TODO remove
 @WebMvcTest(CustomerEndpoint.class)
 class CustomerEndpointTest {
 
@@ -76,15 +79,15 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'Created' when CustomerEndpoint.saveCustomer was executed successfully")
     void returnsHttpStatusCreatedWhenSaveCustomerWasCalled() throws Exception {
-        Mockito.doNothing()
+        doNothing()
                 .when(customerCrudRepository).save(CUSTOMER);
 
-        Mockito.when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
+        when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
                 .thenReturn(CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/customers")
-                        .contentType("application/json")
+                        .contentType(APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsBytes(CUSTOMER_DTO)))
                 .andExpect(MockMvcResultMatchers.status().isCreated());
     }
@@ -92,15 +95,15 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns Customer when CustomerEndpoint.getCustomerById was called")
     void returnsCustomerWhenGetCustomerByIdWasCalled() throws Exception {
-        Mockito.when(customerCrudRepository.findById(Long.parseLong(CUSTOMER_ID)))
+        when(customerCrudRepository.findById(Long.parseLong(CUSTOMER_ID)))
                 .thenReturn(Optional.of(CUSTOMER));
 
-        Mockito.when(customerDtoConverter.convertToDto(CUSTOMER))
+        when(customerDtoConverter.convertToDto(CUSTOMER))
                 .thenReturn(CUSTOMER_DTO);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/customers/{id}", CUSTOMER_ID)
-                        .contentType("application/json"))
+                        .contentType(APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.customerId").value(CUSTOMER_ID))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.firstName").value(FIRST_NAME))
@@ -114,41 +117,41 @@ class CustomerEndpointTest {
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'NotFound' when CustomerEndpoint.getCustomerById was called and returned null")
     void returnsNotFoundWhenGetCustomerByIdReturnsNull() throws Exception {
-        Mockito.when(customerCrudRepository.findById(Long.parseLong(CUSTOMER_ID)))
+        when(customerCrudRepository.findById(Long.parseLong(CUSTOMER_ID)))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/customers/{id}", CUSTOMER_ID)
-                        .contentType("application/json"))
+                        .contentType(APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'OK' when CustomerEndpoint.deleteCustomerById was called")
     void returnsHttpStatusOkWhenDeleteCustomerByIdWasCalled() throws Exception {
-        Mockito.doNothing()
+        doNothing()
                 .when(customerCrudRepository).deleteById(Long.parseLong(CUSTOMER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/customers/{id}", CUSTOMER_ID)
-                        .contentType("application/json"))
+                        .contentType(APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     @DisplayName("CustomerEndpoint returns HttpStatus 'OK' when CustomerEndpoint.updateCustomer was called")
     void returnsHttpStatusOkWhenUpdateCustomerWasCalled() throws Exception {
-        Mockito.when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
+        when(customerDtoConverter.convertToEntity(CUSTOMER_DTO))
                 .thenReturn(CUSTOMER);
 
         CUSTOMER.setCustomerId(CUSTOMER_ID);
 
-        Mockito.doNothing()
+        doNothing()
                 .when(customerCrudRepository).save(CUSTOMER);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .put("/api/customers/{id}", CUSTOMER_ID)
-                        .contentType("application/json")
+                        .contentType(APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsBytes(CUSTOMER_DTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }

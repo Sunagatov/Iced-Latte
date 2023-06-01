@@ -4,45 +4,35 @@ import com.zufar.onlinestore.customer.converter.CustomerDtoConverter;
 import com.zufar.onlinestore.customer.dto.CustomerDto;
 import com.zufar.onlinestore.customer.entity.Customer;
 import com.zufar.onlinestore.customer.repository.CustomerRepository;
-
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import static com.zufar.onlinestore.customer.endpoint.UrlConstants.API_CUSTOMERS;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/api/customers")
+@RequestMapping(value = API_CUSTOMERS)
 public class CustomerEndpoint {
     private final CustomerRepository customerCrudRepository;
     private final CustomerDtoConverter customerDtoConverter;
 
     @PostMapping
-    @ResponseBody
-    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid final CustomerDto request) {
-        log.info("Received request to create Customer - {}.", request);
-        Customer customerEntity = customerDtoConverter.convertToEntity(request);
+    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid final CustomerDto saveCustomerRequest) {
+        log.info("Received saveCustomerRequest to create Customer - {}.", saveCustomerRequest);
+        Customer customerEntity = customerDtoConverter.convertToEntity(saveCustomerRequest);
         customerCrudRepository.save(customerEntity);
         log.info("The Customer was created");
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -50,7 +40,6 @@ public class CustomerEndpoint {
     }
 
     @GetMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") @NotBlank final String customerId) {
         log.info("Received request to get the Customer with id - {}.", customerId);
         Optional<Customer> customer = customerCrudRepository.findById(Long.parseLong(customerId));
@@ -66,7 +55,6 @@ public class CustomerEndpoint {
     }
 
     @GetMapping
-    @ResponseBody
     public ResponseEntity<Collection<CustomerDto>> getAllCustomers() {
         log.info("Received request to get all customers");
         List<Customer> customerEntities = customerCrudRepository.findAll();
@@ -85,7 +73,6 @@ public class CustomerEndpoint {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<Void> deleteCustomerById(@PathVariable("id") @NotBlank final String customerId) {
         log.info("Received request to delete the Customer with id - {}.", customerId);
         customerCrudRepository.deleteById(Long.parseLong(customerId));
@@ -95,11 +82,10 @@ public class CustomerEndpoint {
     }
 
     @PutMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<Void> updateCustomer(@PathVariable("id") @NotBlank final String customerId,
-                                               @RequestBody @Valid @NotNull final CustomerDto request) {
-        log.info("Received request to update the Customer with id - {}, request - {}.", customerId, request);
-        Customer customerEntity = customerDtoConverter.convertToEntity(request);
+                                               @RequestBody @Valid @NotNull final CustomerDto updateCustomerRequest) {
+        log.info("Received updateCustomerRequest to update the Customer with id - {}, updateCustomerRequest - {}.", customerId, updateCustomerRequest);
+        Customer customerEntity = customerDtoConverter.convertToEntity(updateCustomerRequest);
         customerEntity.setCustomerId(customerId);
         customerCrudRepository.save(customerEntity);
         log.info("the Customer with id - {} was updated.", customerId);
