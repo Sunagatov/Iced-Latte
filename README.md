@@ -43,6 +43,20 @@ If this doesn't work use
 ```shell
 docker compose --profile dev up
 ```
+### Working with REST API
+For retrieving Open API schema in json use
+```shell
+http://localhost:8083/api/docs
+```
+For retrieving Open API schema in yaml use
+```shell
+http://localhost:8083/api/docs.yaml
+```
+Swagger UI page
+```shell
+http://localhost:8083/api/docs/swagger-ui
+```
+
 ### Obtaining a token
 Using Postman get Bearer token by running
 ```shell
