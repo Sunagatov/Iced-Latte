@@ -75,22 +75,6 @@
 	</properties>
 
 	<dependencies>
-		<!--  Swagger dependencies -->
-		<dependency>
-			<groupId>io.swagger.core.v3</groupId>
-			<artifactId>swagger-annotations</artifactId>
-			<version>${swagger-core-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>${springfox.swagger.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>${springfox.swagger.version}</version>
-		</dependency>
 
 		<!-- Keycloak dependencies -->
 		<dependency>
@@ -110,7 +94,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--  Spring dependencies -->
+		<!-- Spring dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -149,7 +133,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!--  JWT dependencies -->
+		<!-- Spring doc dependencies -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.1.0</version>
+        </dependency>
+
+		<!-- JWT dependencies -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -167,7 +158,7 @@
 		</dependency>
 
 
-		<!--  Utility dependencies -->
+		<!-- Utility dependencies -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
