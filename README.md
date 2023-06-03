@@ -73,4 +73,9 @@ docker tag zufar_sunagatov/online-store:v1 zufar_sunagatov/online-store:v1
 docker push zufar_sunagatov/online-store:v1
 ```
 
-
+Override our code style
+```shell
+1. Press ⌘ + , or Ctrl+Alt+S to open the IDE settings and select Editor | Code Style.
+2. Check the box Enable EditorConfig support.
+3. Apply the changes and close the dialog.
+```
