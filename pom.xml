@@ -61,11 +61,11 @@
 		<jackson-core.version>2.14.0</jackson-core.version>
 		<springfox.swagger.version>3.0.0</springfox.swagger.version>
 		<swagger-core-version>2.2.6</swagger-core-version>
-		<version.keycloak>19.0.3</version.keycloak>
+		<version.keycloak>21.1.0</version.keycloak>
 		<spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-		<jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+		<jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
 		<jjwt-impl.version>0.11.5</jjwt-impl.version>
 		<jjwt-api.version>0.11.5</jjwt-api.version>
 		<jjwt-jackson.version>0.11.5</jjwt-jackson.version>
