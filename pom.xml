@@ -59,10 +59,9 @@
 		<junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
 		<junit-jupiter.version>5.9.0</junit-jupiter.version>
 		<jackson-core.version>2.14.0</jackson-core.version>
-		<springfox.swagger.version>3.0.0</springfox.swagger.version>
-		<swagger-core-version>2.2.6</swagger-core-version>
 		<version.keycloak>19.0.3</version.keycloak>
 		<spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
+        <spring-doc.version>2.1.0</spring-doc.version>
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
 		<jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
@@ -75,24 +74,7 @@
 	</properties>
 
 	<dependencies>
-		<!--  Swagger dependencies -->
-		<dependency>
-			<groupId>io.swagger.core.v3</groupId>
-			<artifactId>swagger-annotations</artifactId>
-			<version>${swagger-core-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>${springfox.swagger.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>${springfox.swagger.version}</version>
-		</dependency>
-
-		<!-- Keycloak dependencies -->
+        <!-- Keycloak dependencies -->
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-authz-client</artifactId>
@@ -110,7 +92,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--  Spring dependencies -->
+		<!-- Spring dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -149,7 +131,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!--  JWT dependencies -->
+        <!-- SpringDoc dependencies -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${spring-doc.version}</version>
+        </dependency>
+
+		<!-- JWT dependencies -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -166,8 +155,7 @@
 			<version>${jjwt-jackson.version}</version>
 		</dependency>
 
-
-		<!--  Utility dependencies -->
+		<!-- Utility dependencies -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
