@@ -89,11 +89,11 @@ public class Review {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Review review = (Review) o;
-        return rating == review.rating && id.equals(review.id) && productId.equals(review.productId) && customerId.equals(review.customerId) && text.equals(review.text) && date.equals(review.date);
+        return id.equals(review.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, productId, customerId, text, rating, date);
+        return Objects.hash(id);
     }
 }

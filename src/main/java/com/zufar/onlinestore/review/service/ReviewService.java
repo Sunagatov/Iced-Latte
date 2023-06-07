@@ -1,17 +1,17 @@
 package com.zufar.onlinestore.review.service;
 
+import com.zufar.onlinestore.review.converter.ReviewDtoConverter;
 import com.zufar.onlinestore.review.dto.ReviewDto;
 import com.zufar.onlinestore.review.entity.Review;
+import com.zufar.onlinestore.review.exception.ReviewDeleteFailedException;
 import com.zufar.onlinestore.review.exception.ReviewNotFoundException;
 import com.zufar.onlinestore.review.repository.ReviewRepository;
-import com.zufar.onlinestore.review.converter.ReviewDtoConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +27,9 @@ public class ReviewService {
     }
 
     public Optional<ReviewDto> findReview(String reviewId) {
-        return reviewRepository.findById(reviewId).map(reviewDtoConverter::convertToDto);
+        return Optional.ofNullable(reviewRepository.findById(reviewId)
+                .map(reviewDtoConverter::convertToDto)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId)));
     }
 
     public List<ReviewDto> getProductReviews(String productId) {
@@ -38,6 +40,11 @@ public class ReviewService {
     public String deleteReview(String reviewId) {
         reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         reviewRepository.deleteById(reviewId);
+
+        if (reviewRepository.existsById(reviewId)) {
+            throw new ReviewDeleteFailedException(reviewId);
+        }
+
         return reviewId;
     }
 }

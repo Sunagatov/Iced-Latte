@@ -71,7 +71,8 @@ public class ReviewController {
         log.info("The Review with id - {} was deleted.", reviewId);
 
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
-                .message("Review successfully deleted")
+                .data(reviewId)
+                .message("The Review with id - " + reviewId + " was deleted.")
                 .timeStamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
                 .build();
@@ -89,16 +90,17 @@ public class ReviewController {
 
         existingReviewDto.setText(request.getText());
         existingReviewDto.setRating(request.getRating());
-        existingReviewDto = reviewService.addReview(existingReviewDto);
-        log.info("The review with id - {} was edited.", existingReviewDto.getId());
+
+        ReviewDto updatedReviewDto = reviewService.addReview(existingReviewDto);
+
+        log.info("The review with id - {} was edited.", updatedReviewDto.getId());
 
         ApiResponse<ReviewDto> apiResponse = ApiResponse.<ReviewDto>builder()
-                .data(existingReviewDto)
-                .message("The review with id " + existingReviewDto.getId() + " was edited.")
+                .data(updatedReviewDto)
+                .message("The review with id " + updatedReviewDto.getId() + " was edited.")
                 .timeStamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
                 .build();
-
         return ResponseEntity.ok(apiResponse);
     }
 }

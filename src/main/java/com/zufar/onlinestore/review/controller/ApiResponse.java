@@ -1,15 +1,21 @@
 package com.zufar.onlinestore.review.controller;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Builder
 public class ApiResponse<T> {
+    @JsonProperty("data")
     private T data;
+    @JsonProperty("message")
     private String message;
+    @JsonProperty("status")
     private int status;
+    @JsonProperty("time_stamp")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timeStamp;
 
     public T getData() {
@@ -42,21 +48,5 @@ public class ApiResponse<T> {
 
     public void setTimeStamp(LocalDateTime timeStamp) {
         this.timeStamp = timeStamp;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;if (o == null || getClass() != o.getClass()) return false;
-        ApiResponse<?> that = (ApiResponse<?>) o;
-        return status == that.status && data.equals(that.data) && message.equals(that.message) && timeStamp.equals(that.timeStamp);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(data, message, status, timeStamp);
-    }
-
-    public String toString() {
-        return "ApiResponse(data=" + this.getData() + ", message=" + this.getMessage() + ", status=" + this.getStatus() + ", timeStamp=" + this.getTimeStamp() + ")";
     }
 }
