@@ -31,9 +31,12 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update # set to none with liquibase
     database: POSTGRESQL
     database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog/db.changelog-master.xml
   data:
     mongodb:
       host: localhost
