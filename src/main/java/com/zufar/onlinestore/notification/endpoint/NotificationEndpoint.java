@@ -45,7 +45,7 @@ public class NotificationEndpoint {
     @ResponseBody
     public ResponseEntity<NotificationDto> getNotificationById(@PathVariable("id") String id) {
         log.info("Received request to get the Notification with id - {}.", id);
-        Optional<Notification> notification = notificationRepository.findById(Integer.parseInt(id));
+        Optional<Notification> notification = notificationRepository.findById(Long.getLong(id));
         if (notification.isEmpty()) {
             log.info("the Notification with id - {} is absent.", id);
             return ResponseEntity.notFound()
@@ -75,7 +75,7 @@ public class NotificationEndpoint {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateNotification(@PathVariable("id") String id, @RequestBody @Valid @NotNull(message = "Notification is mandatory") final NotificationDto request) {
         log.info("Received request to update the Notification with id - {}.", id);
-        Optional<Notification> notification = notificationRepository.findById(Integer.parseInt(id));
+        Optional<Notification> notification = notificationRepository.findById(Long.getLong(id));
         if (notification.isEmpty()) {
             log.info("The Notification with id - {} is absent.", id);
             return ResponseEntity.notFound()
@@ -91,7 +91,7 @@ public class NotificationEndpoint {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotification(@PathVariable("id") String id) {
         log.info("Received request to delete the Notification with id - {}.", id);
-        notificationRepository.deleteById(Integer.parseInt(id));
+        notificationRepository.deleteById(Long.getLong(id));
         log.info("The Notification with id - {} was deleted.", id);
         return ResponseEntity.ok().build();
     }

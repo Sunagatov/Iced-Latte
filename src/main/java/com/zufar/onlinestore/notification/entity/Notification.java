@@ -1,30 +1,34 @@
 package com.zufar.onlinestore.notification.entity;
 
 import com.zufar.onlinestore.customer.entity.Customer;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author Alex Zarubin
  * created on 24.05.2023
  */
 
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document
+@Entity
+@Table(name = "notification")
 public class Notification {
 
     @Id
-    private int id;
+    @Column(nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private long id;
 
+    @Column(name = "message", nullable = false)
     private String message;
-    private Customer recipient;
+    @ManyToOne(fetch = FetchType.LAZY)
+    public Customer recipient;
+
 }
 
