@@ -1,7 +1,11 @@
 package com.zufar.onlinestore.customer.entity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,15 +15,20 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamoDBDocument
+@Entity
+@Table(name = "addresses")
 public class Address {
 
-    @DynamoDBAttribute
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @Column(name = "line", nullable = false)
     private String line;
 
-    @DynamoDBAttribute
+    @Column(name = "city", nullable = false)
     private  String city;
 
-    @DynamoDBAttribute
+    @Column(name = "country", nullable = false)
     private  String country;
 }
