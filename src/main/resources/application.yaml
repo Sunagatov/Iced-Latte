@@ -44,6 +44,15 @@ spring:
       authentication-database: admin
 
 #
+# Spring Doc Properties
+#
+springdoc:
+  api-docs:
+    path: /api/docs/schema
+  swagger-ui:
+    path: /api/docs/swagger-ui
+
+#
 # Management Properties
 #
 management:
