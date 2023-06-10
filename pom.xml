@@ -283,6 +283,37 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.36.0</version>
+				<configuration>
+					<images>
+						<image>
+							<name>online-store/online-store</name>
+							<build>
+								<dockerFileDir>docker/online-store-app</dockerFileDir>
+								<tags>
+									<tag>${project.version}</tag>
+									<tag>latest</tag>
+								</tags>
+								<assembly>
+									<descriptorRef>artifact</descriptorRef>
+								</assembly>
+							</build>
+							<run>
+								<ports>
+									<port>8083:8083</port>
+								</ports>
+								<env>
+									<AWS_ENDPOINT_URL>http://awslocal:4566</AWS_ENDPOINT_URL>
+								</env>
+							</run>
+						</image>
+					</images>
+				</configuration>
+
+			</plugin>
 		</plugins>
 	</build>
 
