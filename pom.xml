@@ -286,33 +286,60 @@
 			<plugin>
 				<groupId>io.fabric8</groupId>
 				<artifactId>docker-maven-plugin</artifactId>
-				<version>0.36.0</version>
-				<configuration>
-					<images>
-						<image>
-							<name>online-store/online-store</name>
-							<build>
-								<dockerFileDir>docker/online-store-app</dockerFileDir>
-								<tags>
-									<tag>${project.version}</tag>
-									<tag>latest</tag>
-								</tags>
-								<assembly>
-									<descriptorRef>artifact</descriptorRef>
-								</assembly>
-							</build>
-							<run>
-								<ports>
-									<port>8083:8083</port>
-								</ports>
-								<env>
-									<AWS_ENDPOINT_URL>http://awslocal:4566</AWS_ENDPOINT_URL>
-								</env>
-							</run>
-						</image>
-					</images>
-				</configuration>
-
+				<version>0.38.1</version>
+				<executions>
+					<execution>
+						<id>localstack</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<images>
+								<image>
+									<name>${project.artifactId}-localstack:${project.version}</name>
+									<build>
+										<dockerFileDir>${project.basedir}/docker/localstack</dockerFileDir>
+									</build>
+								</image>
+							</images>
+						</configuration>
+					</execution>
+					<execution>
+						<id>online-store-app</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<images>
+								<image>
+									<name>${project.artifactId}-online-store-app:${project.version}</name>
+									<build>
+										<dockerFileDir>${project.basedir}/docker/online-store-app</dockerFileDir>
+									</build>
+								</image>
+							</images>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tomcat</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<images>
+								<image>
+									<name>${project.artifactId}-tomcat:${project.version}</name>
+									<build>
+										<dockerFileDir>${project.basedir}/docker/tomcat</dockerFileDir>
+									</build>
+								</image>
+							</images>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
