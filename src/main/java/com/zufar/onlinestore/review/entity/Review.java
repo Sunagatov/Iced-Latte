@@ -1,20 +1,22 @@
 package com.zufar.onlinestore.review.entity;
 
+import jakarta.persistence.*;
 import lombok.Builder;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Builder
-@Document(collection = "review")
+@Entity
+@Table(name = "review")
 public class Review {
-
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
     private String productId;
     private String customerId;
     private String text;
@@ -24,7 +26,7 @@ public class Review {
     @Field("date")
     private LocalDate date;
 
-    public Review(String id, String productId, String customerId, String text, int rating, LocalDate date) {
+    public Review(Long id, String productId, String customerId, String text, int rating, LocalDate date) {
         this.id = id;
         this.productId = productId;
         this.customerId = customerId;
@@ -36,9 +38,8 @@ public class Review {
     public Review() {
     }
 
-    public String getId() {
-        return this.id;
-    }
+
+    public Long getId() { return id; }
 
     public String getProductId() {
         return this.productId;
@@ -60,9 +61,7 @@ public class Review {
         return this.date;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public void setId(Long id) { this.id = id; }
 
     public void setProductId(String productId) {
         this.productId = productId;

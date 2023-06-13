@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public class ReviewDeleteFailedException extends RuntimeException {
-    private final String reviewId;
+    private final Long reviewId;
 
-    public ReviewDeleteFailedException(String reviewId) {
+    public ReviewDeleteFailedException(Long reviewId) {
         super(String.format("Failed to delete review with id %s.", reviewId));
         this.reviewId = reviewId;
     }

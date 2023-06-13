@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReviewDto {
 
-    private String id;
+    private Long id;
 
     @NotBlank(message = "Review text is mandatory")
     @Size(min = 30, message = "Review text length must be more than 30 characters")

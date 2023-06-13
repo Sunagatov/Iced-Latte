@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public class ReviewNotFoundException extends RuntimeException {
-    private final String reviewId;
+    private final Long reviewId;
 
-    public ReviewNotFoundException(String reviewId) {
+    public ReviewNotFoundException(Long reviewId) {
         super(String.format("Review with id %s not found.", reviewId));
         this.reviewId = reviewId;
     }

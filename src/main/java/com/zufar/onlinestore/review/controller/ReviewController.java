@@ -64,13 +64,13 @@ public class ReviewController {
     }
 
     @DeleteMapping("/reviews/{reviewId}")
-    public ResponseEntity<ApiResponse<String>> deleteReview(@PathVariable String reviewId) {
+    public ResponseEntity<ApiResponse<String>> deleteReview(@PathVariable Long reviewId) {
         log.info("Received request to delete the Review with id - {}.", reviewId);
         reviewService.deleteReview(reviewId);
         log.info("The Review with id - {} was deleted.", reviewId);
 
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
-                .data(reviewId)
+                .data(String.valueOf(reviewId))
                 .message(String.format("The Review with id %s was deleted.", reviewId))
                 .timeStamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
@@ -80,7 +80,7 @@ public class ReviewController {
     }
 
     @PutMapping("/reviews/{reviewId}")
-    public ResponseEntity<ApiResponse<ReviewDto>> editReview(@PathVariable String reviewId,
+    public ResponseEntity<ApiResponse<ReviewDto>> editReview(@PathVariable Long reviewId,
                                                              @RequestBody @Valid @NotNull(message = "Request body is mandatory") ReviewDto request) {
         log.info("Received request to edit the review with id - {}, request - {}.", reviewId, request);
 

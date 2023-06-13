@@ -26,7 +26,7 @@ public class ReviewService {
         return reviewDtoConverter.convertToDto(savedReview);
     }
 
-    public Optional<ReviewDto> findReview(String reviewId) {
+    public Optional<ReviewDto> findReview(Long reviewId) {
         return Optional.ofNullable(reviewRepository.findById(reviewId)
                 .map(reviewDtoConverter::convertToDto)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId)));
@@ -37,7 +37,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public String deleteReview(String reviewId) {
+    public Long deleteReview(Long reviewId) {
         reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         reviewRepository.deleteById(reviewId);
 
