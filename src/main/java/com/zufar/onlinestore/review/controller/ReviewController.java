@@ -71,7 +71,7 @@ public class ReviewController {
 
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .data(reviewId)
-                .message("The Review with id - " + reviewId + " was deleted.")
+                .message(String.format("The Review with id %s was deleted.", reviewId))
                 .timeStamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
                 .build();
@@ -96,7 +96,7 @@ public class ReviewController {
 
         ApiResponse<ReviewDto> apiResponse = ApiResponse.<ReviewDto>builder()
                 .data(updatedReviewDto)
-                .message("The review with id " + updatedReviewDto.getId() + " was edited.")
+                .message(String.format("The review with id %s was edited.", updatedReviewDto.getId()))
                 .timeStamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
                 .build();
