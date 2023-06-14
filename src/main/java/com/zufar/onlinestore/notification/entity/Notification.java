@@ -27,6 +27,7 @@ public class Notification {
 
     @Column(name = "message", nullable = false)
     private String message;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     public Customer recipient;
 
