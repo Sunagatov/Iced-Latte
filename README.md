@@ -34,7 +34,44 @@
   * Slf4j
   * Logback
   
-## Docker
+## Getting the project up and running
+Get project running by
+```shell
+docker-compose --profile dev up
+```
+If this doesn't work use
+```shell
+docker compose --profile dev up
+```
+### Working with REST API
+* #### OpenAPI Schema
+
+  Schema in json
+    ```shell
+    http://localhost:8083/api/docs/schema
+    ```
+    Schema in yaml
+    ```shell
+    http://localhost:8083/api/docs/schema.yaml
+    ```
+* #### Swagger UI page
+    ```shell
+    http://localhost:8083/api/docs/swagger-ui
+    ```
+
+### Obtaining a token
+Using Postman get Bearer token by running
+```shell
+http://localhost:8083/api/auth/register
+```
+Copy the token and insert into Auth tab
+### Testing authorisation
+Run this GET request to test authentication
+```shell 
+http://localhost:8083/api/products
+```
+
+## Docker (Should be fixed)
 Build the Docker image
 ```shell
 docker build -t zufar_sunagatov/online-store:v1 .
@@ -50,4 +87,11 @@ Push the image to Docker
 docker login --username=zufar_sunagatov
 docker tag zufar_sunagatov/online-store:v1 zufar_sunagatov/online-store:v1
 docker push zufar_sunagatov/online-store:v1
+```
+
+Override our code style
+```shell
+1. Press ⌘ + , or Ctrl+Alt+S to open the IDE settings and select Editor | Code Style.
+2. Check the box Enable EditorConfig support.
+3. Apply the changes and close the dialog.
 ```

@@ -25,6 +25,18 @@ spring:
   output:
     ansi:
       enabled: detect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update # set to none with liquibase
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog/db.changelog-master.xml
   data:
     mongodb:
       host: localhost
@@ -34,6 +46,15 @@ spring:
       password: rootpass
       authentication-database: admin
       auto-index-creation: true
+
+#
+# Spring Doc Properties
+#
+springdoc:
+  api-docs:
+    path: /api/docs/schema
+  swagger-ui:
+    path: /api/docs/swagger-ui
 
 #
 # Management Properties
