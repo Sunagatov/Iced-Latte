@@ -1,7 +1,7 @@
-
 #
 # Server Properties
 #
+
 server:
   port: 8083
   ssl:
@@ -18,7 +18,7 @@ server:
 #
 spring:
   application:
-    name: Online Store Application
+  name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
@@ -42,9 +42,10 @@ spring:
       host: localhost
       port: 27017
       database: data
-      password: rootpass
       username: rootuser
+      password: rootpass
       authentication-database: admin
+      auto-index-creation: true
 
 #
 # Spring Doc Properties

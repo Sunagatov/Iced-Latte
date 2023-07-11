@@ -38,7 +38,8 @@ public class ProductsEndpoint {
 
 	@PostMapping
 	@ResponseBody
-	public ResponseEntity<Void> saveProduct(@RequestBody @Valid @NotNull(message = "Request body is mandatory") final ProductInfoDto request) {
+	public ResponseEntity<Void> saveProduct(@RequestBody @Valid @NotNull(message = "Request body is mandatory")
+												final ProductInfoDto request) {
 		log.info("Received request to create ProductInfo - {}.", request);
 		ProductInfo productInfo = productInfoDtoConverter.convertToEntity(request);
 		productInfoRepository.save(productInfo);
@@ -104,4 +105,5 @@ public class ProductsEndpoint {
 		return ResponseEntity.ok()
 				.build();
 	}
+
 }
