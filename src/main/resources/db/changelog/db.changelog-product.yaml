@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - logicalFilePath: db/changelog/db.changelog-product.yaml
+  - changeSet:
+      id: 1
+      author: MarshalauU
+      changes:
+        - createTable:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(64)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: price
+                  type: numeric
+                  constraints:
+                    nullable: false
+                    checkConstraint: price > 0
+              - column:
+                  name: currency
+                  type: varchar
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: int
+                  constraints:
+                    nullable: false
+                    checkConstraint: quantity >= 0
+              - column:
+                  name: active
+                  type: boolean
+                  constraints:
+                    nullable: false
