@@ -61,35 +61,24 @@
         <jackson-core.version>2.14.0</jackson-core.version>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.6</swagger-core-version>
-        <version.keycloak>19.0.3</version.keycloak>
+        <version.keycloak>21.1.0</version.keycloak>
         <spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
+        <spring-doc.version>2.1.0</spring-doc.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
         <logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
+        <sonar-qube-maven-plugin.version>3.8.0.2131</sonar-qube-maven-plugin.version>
+        <postgresql.version>42.6.0</postgresql.version>
+        <liquibase.version>4.18.0</liquibase.version>
+        <liquibase-hibernate6.version>4.18.0</liquibase-hibernate6.version>
+        <stripe.version>22.15.0</stripe.version>
     </properties>
+
     <dependencies>
-
-        <!--  Swagger dependencies -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-core-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <version>${springfox.swagger.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
-            <version>${springfox.swagger.version}</version>
-        </dependency>
-
         <!-- Keycloak dependencies -->
         <dependency>
             <groupId>org.keycloak</groupId>
@@ -108,7 +97,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!--  Spring dependencies -->
+        <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -146,12 +135,15 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- SpringDoc dependencies -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${spring-doc.version}</version>
         </dependency>
 
-        <!--  JWT dependencies -->
+        <!-- JWT dependencies -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -168,7 +160,7 @@
             <version>${jjwt-jackson.version}</version>
         </dependency>
 
-        <!--  Utility dependencies -->
+        <!-- Utility dependencies -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -227,6 +219,17 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb</artifactId>
         </dependency>
+
+        <!-- Database dependencies -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -237,7 +240,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.0.0</version>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -247,6 +249,31 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-qube-maven-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
 </project>
