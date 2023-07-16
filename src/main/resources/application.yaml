@@ -31,11 +31,11 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update # set to none with liquibase
+      ddl-auto: validate
     database: POSTGRESQL
     database-platform: org.hibernate.dialect.PostgreSQL92Dialect
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
   data:
     mongodb:
