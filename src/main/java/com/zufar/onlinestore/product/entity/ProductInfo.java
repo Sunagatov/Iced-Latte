@@ -1,101 +1,136 @@
 package com.zufar.onlinestore.product.entity;
 
-import com.zufar.onlinestore.product.dto.PriceDto;
 import lombok.Builder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.UUID;
 
 @Builder
 @Document
 public class ProductInfo {
 
-	@Id
-	private int id;
+    @Id
+    private UUID id;
 
-	private String name;
+    private String name;
 
-	private PriceDto price;
+    private String description;
 
-	private String category;
+    private BigDecimal price;
 
-	public ProductInfo(int id, String name, PriceDto price, String category) {
-		this.id = id;
-		this.name = name;
-		this.price = price;
-		this.category = category;
-	}
+    private String currency;
 
-	public ProductInfo() {
-	}
+    private Integer quantity;
 
-	public int getId() {
-		return this.id;
-	}
+    private boolean active;
 
-	public String getName() {
-		return this.name;
-	}
+    public ProductInfo(UUID id,
+                       String name,
+                       String description,
+                       BigDecimal price,
+                       String currency,
+                       Integer quantity,
+                       boolean active) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.currency = currency;
+        this.quantity = quantity;
+        this.active = active;
+    }
 
-	public PriceDto getPrice() {
-		return this.price;
-	}
+    public ProductInfo() {
+    }
 
-	public String getCategory() {
-		return this.category;
-	}
+    public UUID getId() {
+        return id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setPrice(PriceDto price) {
-		this.price = price;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setCategory(String category) {
-		this.category = category;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public boolean equals(final Object o) {
-		if (o == this) return true;
-		if (!(o instanceof final ProductInfo other)) return false;
-		if (!other.canEqual(this)) return false;
-		if (this.getId() != other.getId()) return false;
-		final Object this$name = this.getName();
-		final Object other$name = other.getName();
-		if (!Objects.equals(this$name, other$name)) return false;
-		final Object this$price = this.getPrice();
-		final Object other$price = other.getPrice();
-		if (!Objects.equals(this$price, other$price)) return false;
-		final Object this$category = this.getCategory();
-		final Object other$category = other.getCategory();
-		return Objects.equals(this$category, other$category);
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	protected boolean canEqual(final Object other) {
-		return other instanceof ProductInfo;
-	}
+    public BigDecimal getPrice() {
+        return price;
+    }
 
-	public int hashCode() {
-		final int PRIME = 59;
-		int result = 1;
-		result = result * PRIME + this.getId();
-		final Object $name = this.getName();
-		result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-		final Object $price = this.getPrice();
-		result = result * PRIME + ($price == null ? 43 : $price.hashCode());
-		final Object $category = this.getCategory();
-		result = result * PRIME + ($category == null ? 43 : $category.hashCode());
-		return result;
-	}
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
 
-	public String toString() {
-		return "ProductInfo(id=" + this.getId() + ", name=" + this.getName() + ", price=" + this.getPrice() + ", category=" + this.getCategory() + ")";
-	}
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProductInfo that = (ProductInfo) o;
+        return active == that.active &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(price, that.price) &&
+                Objects.equals(currency, that.currency) &&
+                Objects.equals(quantity, that.quantity);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description, price, currency, quantity, active);
+    }
+
+    @Override
+    public String toString() {
+        return "ProductInfo{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                ", currency='" + currency + '\'' +
+                ", quantity=" + quantity +
+                ", active=" + active +
+                '}';
+    }
 }

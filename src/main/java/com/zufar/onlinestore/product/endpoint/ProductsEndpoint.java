@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.UUID;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -99,7 +100,7 @@ public class ProductsEndpoint {
 	                                              @RequestBody @Valid @NotNull final ProductInfoDto request) {
 		log.info("Received request to update the ProductInfo with id - {}, request - {}.", id, request);
 		ProductInfo productInfo = productInfoDtoConverter.convertToEntity(request);
-		productInfo.setId(Integer.parseInt(id));
+		productInfo.setId(UUID.fromString(id));
 		productInfoRepository.save(productInfo);
 		log.info("the ProductInfo with id - {} was updated.", id);
 		return ResponseEntity.ok()
