@@ -199,8 +199,6 @@
             <version>${liquibase.verson}</version>
         </dependency>
     </dependencies>
-
-
     <build>
         <plugins>
             <plugin>
