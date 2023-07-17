@@ -19,10 +19,10 @@ public class ProductInfoDtoConverter {
 
     public ProductInfo convertToEntity(final ProductInfoDto dto) {
         return ProductInfo.builder()
-                .description(dto.getDescription())
-                .name(dto.getName())
-                .price(dto.getPrice())
-                .currency(dto.getCurrency())
+                .description(dto.description())
+                .name(dto.name())
+                .price(dto.price())
+                .currency(dto.currency())
                 .build();
     }
 }
