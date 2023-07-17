@@ -1,30 +1,47 @@
 package com.zufar.onlinestore.product.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Builder;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
+@Entity
 @Builder
-@Document
+@Getter
+@Setter
+@Table(name = "product")
 public class ProductInfo {
 
     @Id
+    @Column(unique = true, nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private UUID id;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "description")
     private String description;
 
+    @Column(name = "price")
     private BigDecimal price;
 
+    @Column(name = "currency")
     private String currency;
 
+    @Column(name = "quantity")
     private Integer quantity;
 
+    @Column(name = "active")
     private boolean active;
 
     public ProductInfo(UUID id,
@@ -44,62 +61,7 @@ public class ProductInfo {
     }
 
     public ProductInfo() {
-    }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 
     @Override
