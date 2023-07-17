@@ -2,24 +2,6 @@ version: '3.9'
 services:
 
   #
-  # Mongo Database
-  #
-  mongodb:
-    image: "mongo:latest"
-    container_name: mongodb
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=rootuser
-      - MONGO_INITDB_ROOT_PASSWORD=rootpass
-    ports:
-      - '27017:27017'
-    networks:
-      - online-store-network
-    profiles:
-      - dev
-      - test
-      - prod
-
-  #
   # Postgresql Database
   #
   postgresdb:
@@ -60,8 +42,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-    depends_on:
-      - mongodb
     deploy:
       replicas: 1
     networks:

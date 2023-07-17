@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.zufar.onlinestore.customer.endpoint.UrlConstants.API_CUSTOMERS;
 
@@ -86,7 +87,7 @@ public class CustomerEndpoint {
                                                @RequestBody @Valid @NotNull final CustomerDto updateCustomerRequest) {
         log.info("Received updateCustomerRequest to update the Customer with id - {}, updateCustomerRequest - {}.", customerId, updateCustomerRequest);
         Customer customerEntity = customerDtoConverter.convertToEntity(updateCustomerRequest);
-        customerEntity.setCustomerId(customerId);
+        customerEntity.setId(UUID.fromString(customerId));
         customerCrudRepository.save(customerEntity);
         log.info("the Customer with id - {} was updated.", customerId);
         return ResponseEntity.ok()

@@ -1,7 +1,6 @@
 #
 # Server Properties
 #
-
 server:
   port: 8083
   ssl:
@@ -18,7 +17,7 @@ server:
 #
 spring:
   application:
-  name: Online Store Application
+    name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
@@ -28,24 +27,18 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/testdb
     username: postgres
-    password: postgres
+    password: root
   jpa:
     hibernate:
       ddl-auto: validate
     database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.xml
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: data
-      username: rootuser
-      password: rootpass
-      authentication-database: admin
-      auto-index-creation: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    url: jdbc:postgresql://localhost:5432/testdb
+    user: postgres
+    password: root
 
 #
 # Spring Doc Properties
@@ -111,6 +104,8 @@ jwt:
 # Logging Properties
 #
 logging:
+  level:
+    root: DEBUG
   pattern:
     file: online-store-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml

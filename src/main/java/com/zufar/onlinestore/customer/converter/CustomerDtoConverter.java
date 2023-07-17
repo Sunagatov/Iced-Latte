@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
 
+import java.util.UUID;
+
 @Service
 @AllArgsConstructor
 public class CustomerDtoConverter {
@@ -17,7 +19,7 @@ public class CustomerDtoConverter {
 	public CustomerDto convertToDto(final Customer entity) {
 		AddressDto addressDto = addressDtoConverter.convertToDto(entity.getAddress());
 		return CustomerDto.builder()
-				.customerId(entity.getCustomerId())
+				.customerId(entity.getId().toString())
 				.firstName(entity.getFirstName())
 				.lastName(entity.getLastName())
 				.email(entity.getEmail())
@@ -28,7 +30,7 @@ public class CustomerDtoConverter {
 	public Customer convertToEntity(final CustomerDto dto) {
 		Address addressDto = addressDtoConverter.convertToEntity(dto.getAddress());
 		return Customer.builder()
-				.customerId(dto.getCustomerId())
+				.id(UUID.fromString(dto.getCustomerId()))
 				.firstName(dto.getFirstName())
 				.lastName(dto.getLastName())
 				.email(dto.getEmail())

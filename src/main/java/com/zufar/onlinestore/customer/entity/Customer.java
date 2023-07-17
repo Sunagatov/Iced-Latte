@@ -14,19 +14,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "customers")
+@Table(name = "customer")
 public class Customer {
 
     @Id
     @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private String customerId;
+    private UUID id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;

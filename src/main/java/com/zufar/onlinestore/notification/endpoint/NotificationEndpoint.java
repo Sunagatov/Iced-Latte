@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Alex Zarubin
@@ -82,7 +83,7 @@ public class NotificationEndpoint {
                     .build();
         }
         Notification notificationToUpdate = notificationDtoConverter.convertToEntity(request);
-        notificationToUpdate.setId(Integer.parseInt(id));
+        notificationToUpdate.setId(UUID.fromString(id));
         notificationRepository.save(notificationToUpdate);
         log.info("The Notification with id - {} was updated.", id);
         return ResponseEntity.ok().build();
