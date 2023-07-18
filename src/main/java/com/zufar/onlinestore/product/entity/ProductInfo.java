@@ -14,61 +14,45 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
-@Entity
 @Builder
 @Getter
 @Setter
+@Entity
 @Table(name = "product")
 public class ProductInfo {
 
     @Id
-    @Column(unique = true, nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "price")
+    @Column(name = "price", nullable = false)
     private BigDecimal price;
 
-    @Column(name = "currency")
+    @Column(name = "currency", nullable = false)
     private String currency;
 
-    @Column(name = "quantity")
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "active")
-    private boolean active;
-
-    public ProductInfo(UUID id,
-                       String name,
-                       String description,
-                       BigDecimal price,
-                       String currency,
-                       Integer quantity,
-                       boolean active) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.currency = currency;
-        this.quantity = quantity;
-        this.active = active;
-    }
+    @Column(name = "active", nullable = false)
+    private Boolean active;
 
     public ProductInfo() {
-
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ProductInfo that = (ProductInfo) o;
+    public boolean equals(Object object) {
+        if (this == object)
+            return true;
+        if (object == null || getClass() != object.getClass())
+            return false;
+        ProductInfo that = (ProductInfo) object;
         return active == that.active &&
                 Objects.equals(id, that.id) &&
                 Objects.equals(name, that.name) &&
@@ -85,7 +69,7 @@ public class ProductInfo {
 
     @Override
     public String toString() {
-        return "ProductInfo{" +
+        return "ProductInfo {" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
