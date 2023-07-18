@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: ../sql/address-and-customer-and-notification-and-product-and-review.sql
+      relativeToChangelogFile: true
