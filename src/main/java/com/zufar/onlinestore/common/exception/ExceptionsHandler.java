@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.common.exception;
 
-import com.amazonaws.util.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,7 +23,7 @@ public class ExceptionsHandler {
                 .collect(Collectors.toMap(error -> ((FieldError) error).getField(),
                         error -> {
                             String errorMessage = error.getDefaultMessage();
-                            if (StringUtils.isNullOrEmpty(errorMessage)) {
+                            if (errorMessage == null || errorMessage.isBlank()) {
                                 errorMessage = "ErrorMessage is empty";
                             }
                             return errorMessage;

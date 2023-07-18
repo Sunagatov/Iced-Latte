@@ -57,6 +57,7 @@
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
         <spring-boot-maven-plugin.version>3.0.0</spring-boot-maven-plugin.version>
+        <postgresql.version>42.6.0</postgresql.version>
     </properties>
     <dependencies>
 
@@ -187,6 +188,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
     </dependencies>
 
