@@ -80,26 +80,6 @@ management:
       application: ${spring.application.name}
 
 #
-# AWS Properties
-#
-cloud:
-  aws:
-    service:
-      endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
-    region:
-      static: us-east-1
-    credentials:
-      access-key: aws_access_key_id
-      secret-key: aws_secret_access_key
-    sqs:
-      queue:
-        purchase-transactions-sqs-queue-url: ${cloud.aws.service.endpoint}/000000000000/purchase-transactions-sqs-queue
-    sns:
-      topic:
-        name: purchase-transactions-sns-topic
-        url: ${cloud.aws.service.endpoint}
-
-#
 # JWT Security Properties
 #
 jwt:
