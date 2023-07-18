@@ -18,7 +18,7 @@ server:
 #
 spring:
   application:
-  name: Online Store Application
+    name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
