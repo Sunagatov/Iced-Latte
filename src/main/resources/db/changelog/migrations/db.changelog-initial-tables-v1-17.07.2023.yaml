@@ -1,4 +1,4 @@
 databaseChangeLog:
   - include:
-      file: product.sql
+      file: ../sql/initialSQL.sql
       relativeToChangelogFile: true
