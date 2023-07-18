@@ -1,7 +1,7 @@
+
 #
 # Server Properties
 #
-
 server:
   port: 8083
   ssl:
