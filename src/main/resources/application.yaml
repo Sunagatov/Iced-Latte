@@ -31,21 +31,13 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update # set to none with liquibase
-    database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+      ddl-auto: validate
   liquibase:
-    enabled: false
-    change-log: classpath:db/changelog/db.changelog-master.xml
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: data
-      username: rootuser
-      password: rootpass
-      authentication-database: admin
-      auto-index-creation: true
+    enabled: true
+    change-log: classpath:db/db.changelog-master.yaml
+    url: jdbc:postgresql://localhost:5432/testdb
+    user: postgres
+    password: postgres
 
 #
 # Spring Doc Properties

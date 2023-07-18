@@ -37,7 +37,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <slf4j-api.version>2.0.5</slf4j-api.version>
         <jackson-databind.version>2.15.1</jackson-databind.version>
-        <dynamodb-enhanced.version>2.19.8</dynamodb-enhanced.version>
         <modelmapper.version>3.1.1</modelmapper.version>
         <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
         <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
@@ -48,7 +47,6 @@
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.8</swagger-core-version>
         <version.keycloak>21.0.1</version.keycloak>
-        <spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
