@@ -70,6 +70,8 @@
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
         <logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
+        <postgres.verson>42.5.4</postgres.verson>
+        <liquibase.verson>4.23.0</liquibase.verson>
     </properties>
     <dependencies>
 
@@ -236,12 +238,12 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.5.4</version>
+            <version>${postgres.verson}</version>
         </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.23.0</version>
+            <version>${liquibase.verson}</version>
         </dependency>
     </dependencies>
     <build>
