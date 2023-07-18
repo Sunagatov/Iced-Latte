@@ -2,31 +2,42 @@ package com.zufar.onlinestore.review.entity;
 
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID;
 
-@Builder
 @Entity
+@Builder
+@Getter
+@Setter
 @Table(name = "review")
 public class Review {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
-    private Long id;
+    private UUID id;
 
+    @Column(name = "product_id")
     private String productId;
+
+    @Column(name = "customer_id")
     private String customerId;
+
+    @Column(name = "text")
     private String text;
+
+    @Column(name = "rating")
     private int rating;
 
     @CreatedDate
-    @Field("date")
+    @Column(name = "date")
     private LocalDate date;
 
-    public Review(Long id, String productId, String customerId, String text, int rating, LocalDate date) {
+    public Review(UUID id, String productId, String customerId, String text, int rating, LocalDate date) {
         this.id = id;
         this.productId = productId;
         this.customerId = customerId;
@@ -36,51 +47,6 @@ public class Review {
     }
 
     public Review() {
-    }
-
-
-    public Long getId() { return id; }
-
-    public String getProductId() {
-        return this.productId;
-    }
-
-    public String getCustomerId() {
-        return this.customerId;
-    }
-
-    public String getText() {
-        return this.text;
-    }
-
-    public int getRating() {
-        return this.rating;
-    }
-
-    public LocalDate getDate() {
-        return this.date;
-    }
-
-    public void setId(Long id) { this.id = id; }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
-
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public void setRating(int rating) {
-        this.rating = rating;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
     }
 
     @Override
@@ -94,5 +60,17 @@ public class Review {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Review{" +
+                "id=" + id +
+                ", productId='" + productId + '\'' +
+                ", customerId='" + customerId + '\'' +
+                ", text='" + text + '\'' +
+                ", rating=" + rating +
+                ", date=" + date +
+                '}';
     }
 }

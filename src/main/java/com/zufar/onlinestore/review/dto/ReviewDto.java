@@ -6,13 +6,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReviewDto {
 
-    private Long id;
+    private UUID id;
 
     @NotBlank(message = "Review text is mandatory")
     @Size(min = 30, message = "Review text length must be more than 30 characters")
