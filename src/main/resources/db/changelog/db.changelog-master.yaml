@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - logicalFilePath: db/changelog/db.changelog-master.yaml
-  - includeAll:
-      path: /migrations
-      relativeToChangelogFile: true
-#  - include:
-#      file: db.changelog-product-table-v1-17.07.2023.yaml
-#      relativeToChangelogFile: true

@@ -12,7 +12,7 @@ public class ProductsSumCalculator {
 
 	public BigDecimal calculate(final Collection<ProductInfoDto> products) {
 		return products.stream()
-				.map(ProductInfoDto::price)
+				.map(productInfo -> productInfo.priceDetails().price())
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 }
