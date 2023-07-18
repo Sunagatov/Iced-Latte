@@ -1,7 +1,7 @@
+
 #
 # Server Properties
 #
-
 server:
   port: 8083
   ssl:
@@ -18,7 +18,7 @@ server:
 #
 spring:
   application:
-  name: Online Store Application
+    name: Online Store Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
@@ -31,21 +31,13 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update # set to none with liquibase
-    database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+      ddl-auto: validate
   liquibase:
-    enabled: false
-    change-log: classpath:db/changelog/db.changelog-master.xml
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: data
-      username: rootuser
-      password: rootpass
-      authentication-database: admin
-      auto-index-creation: true
+    enabled: true
+    change-log: classpath:db/db.changelog-master.yaml
+    url: jdbc:postgresql://localhost:5432/testdb
+    user: postgres
+    password: postgres
 
 #
 # Spring Doc Properties
@@ -78,26 +70,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
-#
-# AWS Properties
-#
-cloud:
-  aws:
-    service:
-      endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
-    region:
-      static: us-east-1
-    credentials:
-      access-key: aws_access_key_id
-      secret-key: aws_secret_access_key
-    sqs:
-      queue:
-        purchase-transactions-sqs-queue-url: ${cloud.aws.service.endpoint}/000000000000/purchase-transactions-sqs-queue
-    sns:
-      topic:
-        name: purchase-transactions-sns-topic
-        url: ${cloud.aws.service.endpoint}
 
 #
 # JWT Security Properties
