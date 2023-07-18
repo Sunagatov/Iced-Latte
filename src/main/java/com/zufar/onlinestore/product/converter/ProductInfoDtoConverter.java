@@ -10,6 +10,7 @@ public class ProductInfoDtoConverter {
 
     public ProductInfoDto convertToDto(final ProductInfo entity) {
         PriceDetailsDto priceDetailsDto = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
+
         return new ProductInfoDto(
                 entity.getId(),
                 entity.getDescription(),
