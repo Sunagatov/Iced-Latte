@@ -4,7 +4,7 @@ import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSession;
-import com.zufar.onlinestore.cart.dto.UpdateProductAmountInShoppingSessionItemRequest;
+import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 
 public interface CartApi {
 
@@ -17,7 +17,7 @@ public interface CartApi {
     ShoppingSession getShoppingSession(final GetShoppingSessionRequest getShoppingSessionRequest);
 
     /**
-     * Метод добавление нового item в покупочную сессию (в корзины)
+     * Метод добавления нового item в покупочную сессию (в корзину)
      *
      * @param addNewItemToShoppingSessionRequest запрос на добавление нового item в покупочную сессию (в корзины)
      * @return покупочная сессия (текущее состояние корзины)
@@ -35,8 +35,8 @@ public interface CartApi {
     /**
      * Метод изменения количества продуктов в определенном item в покупочной сессии (в корзине)
      *
-     * @param updateProductAmountInShoppingSessionItemRequest запрос на изменение количества продуктов в определенном item в покупочной сессии (в корзине)
+     * @param updateProductsQuantityInShoppingSessionItemRequest запрос на изменение количества продуктов в определенном item в покупочной сессии (в корзине)
      * @return покупочная сессия (текущее состояние корзины)
      * */
-    ShoppingSession updateProductAmountInShoppingSessionItem(final UpdateProductAmountInShoppingSessionItemRequest updateProductAmountInShoppingSessionItemRequest);
+    ShoppingSession updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest);
 }
