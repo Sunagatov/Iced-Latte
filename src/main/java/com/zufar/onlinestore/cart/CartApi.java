@@ -3,7 +3,7 @@ package com.zufar.onlinestore.cart;
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.ShoppingSession;
+import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 
 public interface CartApi {
@@ -14,7 +14,7 @@ public interface CartApi {
      * @param getShoppingSessionRequest запрос на получение покупочной сессии (текущее состояние корзины)
      * @return покупочная сессия (текущее состояние корзины)
      * */
-    ShoppingSession getShoppingSession(final GetShoppingSessionRequest getShoppingSessionRequest);
+    ShoppingSessionDto getShoppingSession(final GetShoppingSessionRequest getShoppingSessionRequest);
 
     /**
      * Метод добавления нового item в покупочную сессию (в корзину)
@@ -22,7 +22,7 @@ public interface CartApi {
      * @param addNewItemToShoppingSessionRequest запрос на добавление нового item в покупочную сессию (в корзины)
      * @return покупочная сессия (текущее состояние корзины)
      * */
-    ShoppingSession addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest addNewItemToShoppingSessionRequest);
+    ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest addNewItemToShoppingSessionRequest);
 
     /**
      * Метод удаления существующего item в покупочной сессии (в корзине)
@@ -30,7 +30,7 @@ public interface CartApi {
      * @param removeItemFromShoppingSessionRequest запрос на удаления существующего item в покупочной сессии (в корзине)
      * @return покупочная сессия (текущее состояние корзины)
      * */
-    ShoppingSession removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest);
+    ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest);
 
     /**
      * Метод изменения количества продуктов в определенном item в покупочной сессии (в корзине)
@@ -38,5 +38,5 @@ public interface CartApi {
      * @param updateProductsQuantityInShoppingSessionItemRequest запрос на изменение количества продуктов в определенном item в покупочной сессии (в корзине)
      * @return покупочная сессия (текущее состояние корзины)
      * */
-    ShoppingSession updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest);
+    ShoppingSessionDto updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest);
 }

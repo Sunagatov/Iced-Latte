@@ -1,0 +1,38 @@
+package com.zufar.onlinestore.cart.converter;
+
+import com.zufar.onlinestore.cart.dto.ShoppingSessionItemDto;
+import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
+import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
+import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
+import com.zufar.onlinestore.product.entity.ProductInfo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class ShoppingSessionItemDtoConverter {
+
+    private final ProductInfoDtoConverter productInfoDtoConverter;
+
+    public ShoppingSessionItemDto convertToDto(final ShoppingSessionItem entity) {
+        ProductInfoFullDto productInfo = productInfoDtoConverter.convertToFullDto(entity.getProductInfo());
+
+        return new ShoppingSessionItemDto(
+                entity.getId(),
+                entity.getCart(),
+                productInfo,
+                entity.getProductsQuantity()
+        );
+    }
+
+    public ShoppingSessionItem convertToEntity(final ShoppingSessionItemDto dto) {
+        ProductInfo productInfo = productInfoDtoConverter.convertToEntity(dto.productInfo());
+
+        return new ShoppingSessionItem(
+                dto.id(),
+                dto.cart(),
+                productInfo,
+                dto.productsQuantity()
+        );
+    }
+}
