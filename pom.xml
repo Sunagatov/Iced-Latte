@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -56,6 +56,7 @@
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
         <spring-boot-maven-plugin.version>3.0.0</spring-boot-maven-plugin.version>
         <postgresql.version>42.6.0</postgresql.version>
+        <liquibase.verson>4.23.0</liquibase.verson>
     </properties>
     <dependencies>
 
@@ -192,7 +193,13 @@
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.verson}</version>
+        </dependency>
     </dependencies>
+
 
     <build>
         <plugins>
