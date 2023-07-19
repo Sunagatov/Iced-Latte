@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS cart_item
+CREATE TABLE IF NOT EXISTS shopping_session_item
 (
     id                 UUID        PRIMARY KEY,
     cart_id            UUID        NOT NULL,
