@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.product;
 
-import com.zufar.onlinestore.product.dto.PriceDto;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 
 import org.springframework.stereotype.Service;
@@ -13,8 +12,7 @@ public class ProductsSumCalculator {
 
 	public BigDecimal calculate(final Collection<ProductInfoDto> products) {
 		return products.stream()
-				.map(ProductInfoDto::getPrice)
-				.map(PriceDto::getAmount)
+				.map(productInfo -> productInfo.priceDetails().price())
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 }
