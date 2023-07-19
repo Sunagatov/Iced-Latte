@@ -1,3 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/19.07.2023.product-table-was-created.sql
