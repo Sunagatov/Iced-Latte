@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/version-1.0/20.07.2023.part1.create-shopping-session-table.sql
   - include:
       file: db/changelog/version-1.0/20.07.2023.part2.create-shopping-session-item-table.sql
+  - include:
+      file: db/changelog/version-1.0/20.07.2023.сreate-payment-table.sql
