@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.cart;
+package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
@@ -8,7 +8,7 @@ import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
-import com.zufar.onlinestore.cart.api.ShoppingSessionRepository;
+import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;

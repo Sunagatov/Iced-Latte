@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.cart.api;
+package com.zufar.onlinestore.cart.repository;
 
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.cart;
+package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;

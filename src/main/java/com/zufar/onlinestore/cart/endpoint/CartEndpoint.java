@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.cart.endpoint;
 
-import com.zufar.onlinestore.cart.CartApi;
+import com.zufar.onlinestore.cart.api.CartApi;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import jakarta.validation.Valid;
