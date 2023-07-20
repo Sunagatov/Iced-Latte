@@ -8,25 +8,25 @@ import java.util.UUID;
 
 public record ShoppingSessionDto(
 
-        @NotNull(message = "Id is mandatory")
+        @NotNull(message = "Id is the mandatory attribute")
         UUID id,
 
-        @NotNull(message = "UserId is mandatory")
+        @NotNull(message = "UserId is the mandatory attribute")
         UUID userId,
 
-        @NotNull(message = "Items are mandatory")
+        @NotNull(message = "Items is the mandatory attribute")
         Collection<ShoppingSessionItemDto> items,
 
-        @NotNull(message = "ItemsQuantity is mandatory")
+        @NotNull(message = "ItemsQuantity is the mandatory attribute")
         Integer itemsQuantity,
 
-        @NotNull(message = "ProductsQuantity is mandatory")
+        @NotNull(message = "ProductsQuantity is the mandatory attribute")
         Integer productsQuantity,
 
-        @NotNull(message = "CreatedAt is mandatory")
+        @NotNull(message = "CreatedAt is the mandatory attribute")
         LocalDateTime createdAt,
 
-        @NotNull(message = "ClosedAt is mandatory")
+        @NotNull(message = "ClosedAt is the mandatory attribute")
         LocalDateTime closedAt
 ) {
 }
