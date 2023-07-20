@@ -5,9 +5,9 @@ import lombok.Getter;
 @Getter
 public class PaymentNotFoundException extends RuntimeException {
 
-    private final String paymentId;
+    private final Long paymentId;
 
-    public PaymentNotFoundException(String paymentId) {
+    public PaymentNotFoundException(Long paymentId) {
         super(String.format("Payment with id %s not found.", paymentId));
         this.paymentId = paymentId;
     }

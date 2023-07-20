@@ -5,11 +5,12 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
-import com.zufar.onlinestore.payment.config.StripeTemplate;
+import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.model.Payment;
-import com.zufar.onlinestore.payment.model.PaymentDetails;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
@@ -19,28 +20,26 @@ import java.math.BigDecimal;
 public class PaymentProcessor {
 
     public static final String PAYMENT_MESSAGE = "Payment made by user: %s, using the payment method: %s.";
-    private final StripeTemplate stripeTemplate;
+    public static final Integer PAYMENT_DELIMITER = 100;
 
+    private final StripeConfiguration stripeConfig;
 
-    public PaymentDetails process(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
-        Stripe.apiKey = stripeTemplate.secretKey();
-
+    public Pair<String, Payment> process(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
         PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
         PaymentIntentCreateParams params = getPaymentParams(paymentMethod, totalPrice, currency);
-        log.debug("Params for Payment Intent create {}.", params);
+        log.info("process: get payment intent params for payment creation: params: {}.", params);
         PaymentIntent paymentIntent = PaymentIntent.create(params);
-        log.debug("Payment Intent created with id {}.", paymentIntent.getId());
+        log.info("process: payment intent successfully created: paymentIntentId: {}.", paymentIntent.getId());
+        String paymentToken = paymentIntent.getClientSecret();
+        Payment payment = getProcessedPayment(paymentIntent);
 
-        return PaymentDetails.builder()
-                .paymentToken(paymentIntent.getClientSecret())
-                .payment(getProcessedPayment(paymentIntent))
-                .build();
+        return Pair.of(paymentToken, payment);
     }
 
-    private static PaymentIntentCreateParams getPaymentParams(PaymentMethod paymentMethod, BigDecimal totalPrice, String currency) {
+    private PaymentIntentCreateParams getPaymentParams(PaymentMethod paymentMethod, BigDecimal totalPrice, String currency) {
         String email = paymentMethod.getBillingDetails().getEmail();
         return PaymentIntentCreateParams.builder()
-                .setAmount(totalPrice.longValue() * 100)
+                .setAmount(totalPrice.longValue() * PAYMENT_DELIMITER)
                 .setCurrency(currency)
                 .setPaymentMethod(paymentMethod.getId())
                 .setReceiptEmail(email)
@@ -50,11 +49,16 @@ public class PaymentProcessor {
 
     private Payment getProcessedPayment(PaymentIntent paymentIntent) {
         return Payment.builder()
-                .totalPrice(BigDecimal.valueOf(paymentIntent.getAmount()))
+                .itemsTotalPrice(BigDecimal.valueOf(paymentIntent.getAmount()/PAYMENT_DELIMITER))
                 .currency(paymentIntent.getCurrency())
                 .description(paymentIntent.getDescription())
                 .status(paymentIntent.getStatus())
                 .build();
+    }
+
+    @PostConstruct
+    private void init() {
+        Stripe.apiKey = stripeConfig.secretKey();
     }
 
 }

@@ -1,23 +1,12 @@
 package com.zufar.onlinestore.payment.config;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@PropertySource("classpath:stripe.properties")
-@RequiredArgsConstructor
-@Configuration
-public class StripeConfiguration {
-
-    private final Environment env;
-
-    @Bean
-    public StripeTemplate stripeTemplate() {
-        String pubKey = env.getProperty("stripe.publishable.key");
-        String secKey = env.getProperty("stripe.secret.key");
-        return new StripeTemplate(pubKey, secKey);
-    }
-
-}
+/**
+ * This record responsible for displaying the Stripe Api configuration in Spring as a bean.
+ * Configuration stores special keys with which Stripe controls data security.
+ * @param secretKey used to work with the Stripe Api from the backend side.
+ * @param publishableKey used to work with the Stripe Api from the frontend side.
+ * */
+@ConfigurationProperties(prefix = "stripe")
+public record StripeConfiguration(String secretKey, String publishableKey) {}

@@ -1,8 +1,6 @@
 package com.zufar.onlinestore.payment.enums;
 
-import lombok.Getter;
-
-@Getter
 public enum PaymentStatus {
-    SUCCESSFUL, FAILED
+    REQUIRES_PAYMENT_METHOD, REQUIRES_CONFIRMATION, REQUIRES_ACTION,
+    PROCESSING, REQUIRES_CAPTURE, CANCELED, SUCCEEDED
 }
