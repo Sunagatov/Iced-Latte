@@ -15,9 +15,9 @@ public class ShoppingSessionDtoConverter {
 
     private final ShoppingSessionItemDtoConverter shoppingSessionItemDtoConverter;
 
-    public ShoppingSessionDto convertToDto(final ShoppingSession entity) {
+    public ShoppingSessionDto toDto(final ShoppingSession entity) {
         Collection<ShoppingSessionItemDto> items = entity.getItems().stream()
-                .map(shoppingSessionItemDtoConverter::convertToDto)
+                .map(shoppingSessionItemDtoConverter::toDto)
                 .toList();
 
         return new ShoppingSessionDto(
@@ -31,9 +31,9 @@ public class ShoppingSessionDtoConverter {
         );
     }
 
-    public ShoppingSession convertToEntity(final ShoppingSessionDto dto) {
+    public ShoppingSession toEntity(final ShoppingSessionDto dto) {
         Collection<ShoppingSessionItem> items = dto.items().stream()
-                .map(shoppingSessionItemDtoConverter::convertToEntity)
+                .map(shoppingSessionItemDtoConverter::toEntity)
                 .toList();
 
         return new ShoppingSession(

@@ -14,7 +14,7 @@ public class ShoppingSessionItemDtoConverter {
 
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
-    public ShoppingSessionItemDto convertToDto(final ShoppingSessionItem entity) {
+    public ShoppingSessionItemDto toDto(final ShoppingSessionItem entity) {
         ProductInfoFullDto productInfo = productInfoDtoConverter.convertToFullDto(entity.getProductInfo());
 
         return new ShoppingSessionItemDto(
@@ -25,7 +25,7 @@ public class ShoppingSessionItemDtoConverter {
         );
     }
 
-    public ShoppingSessionItem convertToEntity(final ShoppingSessionItemDto dto) {
+    public ShoppingSessionItem toEntity(final ShoppingSessionItemDto dto) {
         ProductInfo productInfo = productInfoDtoConverter.convertToEntity(dto.productInfo());
 
         return new ShoppingSessionItem(

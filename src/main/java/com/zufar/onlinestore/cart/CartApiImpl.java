@@ -55,6 +55,6 @@ public class CartApiImpl implements CartApi {
 
         shoppingSessionRepository.save(shoppingSession);
 
-        return shoppingSessionDtoConverter.convertToDto(shoppingSession);
+        return shoppingSessionDtoConverter.toDto(shoppingSession);
     }
 }
