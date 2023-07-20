@@ -1,27 +1,26 @@
 package com.zufar.onlinestore.payment.mapper;
 
-import com.zufar.onlinestore.payment.dto.PaymentResponseDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.model.Payment;
 import org.springframework.stereotype.Component;
-
 
 @Component
 public class PaymentConverter {
 
-    public PaymentResponseDto toDto(Payment entity) {
-        return PaymentResponseDto.builder()
+    public PaymentDetailsDto toDto(Payment entity) {
+        return PaymentDetailsDto.builder()
                 .paymentId(entity.getPaymentId())
-                .totalPrice(entity.getTotalPrice())
+                .totalPrice(entity.getItemsTotalPrice())
                 .currency(entity.getCurrency())
                 .description(entity.getDescription())
                 .status(entity.getStatus())
                 .build();
     }
 
-    public Payment toEntity(PaymentResponseDto dto) {
+    public Payment toEntity(PaymentDetailsDto dto) {
         return Payment.builder()
                 .paymentId(dto.paymentId())
-                .totalPrice(dto.totalPrice())
+                .itemsTotalPrice(dto.totalPrice())
                 .currency(dto.currency())
                 .description(dto.description())
                 .status(dto.status())
