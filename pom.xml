@@ -36,14 +36,14 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <slf4j-api.version>2.0.5</slf4j-api.version>
-        <jackson-databind.version>2.15.1</jackson-databind.version>
+        <jackson-databind.version>2.14.0</jackson-databind.version>
         <modelmapper.version>3.1.1</modelmapper.version>
         <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
         <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <jackson-core.version>2.14.2</jackson-core.version>
+        <jackson-core.version>2.14.0</jackson-core.version>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.8</swagger-core-version>
         <version.keycloak>21.0.1</version.keycloak>
@@ -54,9 +54,11 @@
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
-        <spring-boot-maven-plugin.version>3.0.0</spring-boot-maven-plugin.version>
+        <spring-boot-maven-plugin.version>3.1.0</spring-boot-maven-plugin.version>
         <postgresql.version>42.6.0</postgresql.version>
         <liquibase.verson>4.23.0</liquibase.verson>
+        <stripe.version>22.15.0</stripe.version>
+        <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
     </properties>
     <dependencies>
 
@@ -198,15 +200,27 @@
             <artifactId>liquibase-core</artifactId>
             <version>${liquibase.verson}</version>
         </dependency>
-    </dependencies>
 
+        <!-- Stripe Api -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>${stripe.version}</version>
+        </dependency>
+
+        <!-- Apache Commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache-commons-lang3.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot-maven-plugin.version}</version>
                 <configuration>
                     <excludes>
                         <exclude>
