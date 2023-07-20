@@ -40,32 +40,4 @@ public class Payment {
     @Column(name = "description")
     private String description;
 
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Payment)) {
-            return false;
-        }
-        Payment that = (Payment) obj;
-        EqualsBuilder eb = new EqualsBuilder();
-        eb.append(paymentId, that.paymentId);
-        return eb.isEquals();
-    }
-
-    public int hashCode() {
-        HashCodeBuilder hcb = new HashCodeBuilder();
-        hcb.append(paymentId);
-        return hcb.toHashCode();
-    }
-
-    public String toString() {
-        return new ToStringBuilder(this)
-                .append("paymentId", paymentId)
-                .append("currency", currency)
-                .append("itemsTotalPrice", itemsTotalPrice)
-                .append("status", status)
-                .append("description", description)
-                .toString();
-    }
 }

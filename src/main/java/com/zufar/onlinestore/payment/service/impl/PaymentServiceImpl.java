@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.payment.service.impl;
 
 import com.stripe.exception.StripeException;
-import com.zufar.onlinestore.payment.dto.PaymentWithTokenDetailsDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.model.Payment;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
@@ -24,19 +24,20 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
-    public PaymentWithTokenDetailsDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
+    public PaymentDetailsWithTokenDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
         Pair<String, Payment> paymentWithTokenDetails = paymentProcessor.process(paymentMethodId, totalPrice, currency);
         log.info("create payment: payment successfully processed: paymentWithTokenDetails: {}.", paymentWithTokenDetails);
         Payment savedPayment = paymentRepository.save(paymentWithTokenDetails.getValue());
         log.info("create payment: payment successfully saved: savedPayment: {}.", savedPayment);
-        return PaymentWithTokenDetailsDto.builder()
+        return PaymentDetailsWithTokenDto.builder()
                 .paymentToken(paymentWithTokenDetails.getKey())
                 .paymentDetailsDto((paymentConverter.toDto(savedPayment)))
                 .build();
     }
 
     public PaymentDetailsDto getPayment(Long paymentId) {
-        return paymentRepository.findById(paymentId).map(paymentConverter::toDto)
+        return paymentRepository.findById(paymentId)
+                .map(paymentConverter::toDto)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
     }
 }

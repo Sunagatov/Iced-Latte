@@ -49,16 +49,11 @@ public class PaymentProcessor {
 
     private Payment getProcessedPayment(PaymentIntent paymentIntent) {
         return Payment.builder()
-                .itemsTotalPrice(BigDecimal.valueOf(paymentIntent.getAmount()/PAYMENT_DELIMITER))
+                .itemsTotalPrice(BigDecimal.valueOf(paymentIntent.getAmount() / PAYMENT_DELIMITER))
                 .currency(paymentIntent.getCurrency())
                 .description(paymentIntent.getDescription())
                 .status(paymentIntent.getStatus())
                 .build();
-    }
-
-    @PostConstruct
-    private void init() {
-        Stripe.apiKey = stripeConfig.secretKey();
     }
 
 }
