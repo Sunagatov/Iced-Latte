@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "shopping_session")
 public class ShoppingSession {
@@ -45,16 +47,6 @@ public class ShoppingSession {
 
     @Column(name = "closed_at", nullable = false)
     private LocalDateTime closedAt;
-
-    public ShoppingSession(UUID id, UUID userId, Collection<ShoppingSessionItem> items, Integer itemsQuantity, Integer productsQuantity, LocalDateTime createdAt, LocalDateTime closedAt) {
-        this.id = id;
-        this.userId = userId;
-        this.items = items;
-        this.itemsQuantity = itemsQuantity;
-        this.productsQuantity = productsQuantity;
-        this.createdAt = createdAt;
-        this.closedAt = closedAt;
-    }
 
     @Override
     public boolean equals(Object o) {
