@@ -8,6 +8,8 @@ import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
+import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
+import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,14 +43,14 @@ public class CartApiImpl implements CartApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest request) {
+    public ShoppingSessionDto updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
         ShoppingSession shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId())
-                .orElseThrow();
+                .orElseThrow(() -> new ShoppingSessionNotFoundException(request.shoppingSessionId()));
 
         ShoppingSessionItem shoppingSessionItem = shoppingSession.getItems().stream()
                 .filter(item -> Objects.equals(item.getId(), request.shoppingSessionItemId()))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId()));
 
         Integer newProductsQuantity = shoppingSessionItem.getProductsQuantity() + request.productsQuantityChange();
         shoppingSessionItem.setProductsQuantity(newProductsQuantity);
