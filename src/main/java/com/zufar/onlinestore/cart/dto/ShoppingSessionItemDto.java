@@ -11,8 +11,8 @@ public record ShoppingSessionItemDto(
         @NotNull(message = "Id is the mandatory attribute")
         UUID id,
 
-        @NotNull(message = "Cart is the mandatory attribute")
-        ShoppingSession cart,
+        @NotNull(message = "ShoppingSession is the mandatory attribute")
+        ShoppingSession shoppingSession,
 
         @NotNull(message = "ProductInfo is the mandatory attribute")
         ProductInfoFullDto productInfo,

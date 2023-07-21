@@ -33,7 +33,7 @@ public class ShoppingSession {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "shoppingSession", cascade = CascadeType.ALL)
     private Collection<ShoppingSessionItem> items;
 
     @Column(name = "items_quantity", nullable = false)

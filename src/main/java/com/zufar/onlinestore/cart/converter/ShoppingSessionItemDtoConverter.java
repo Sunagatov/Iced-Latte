@@ -19,7 +19,7 @@ public class ShoppingSessionItemDtoConverter {
 
         return new ShoppingSessionItemDto(
                 entity.getId(),
-                entity.getCart(),
+                entity.getShoppingSession(),
                 productInfo,
                 entity.getProductsQuantity()
         );
@@ -30,7 +30,7 @@ public class ShoppingSessionItemDtoConverter {
 
         return new ShoppingSessionItem(
                 dto.id(),
-                dto.cart(),
+                dto.shoppingSession(),
                 productInfo,
                 dto.productsQuantity()
         );

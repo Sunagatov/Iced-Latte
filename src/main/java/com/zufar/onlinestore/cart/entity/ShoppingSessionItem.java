@@ -30,8 +30,8 @@ public class ShoppingSessionItem {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "cart_id", nullable = false)
-    private ShoppingSession cart;
+    @JoinColumn(name = "shopping_session_id", nullable = false)
+    private ShoppingSession shoppingSession;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
@@ -48,21 +48,21 @@ public class ShoppingSessionItem {
             return false;
         ShoppingSessionItem that = (ShoppingSessionItem) object;
         return Objects.equals(id, that.id) &&
-                Objects.equals(cart, that.cart) &&
+                Objects.equals(shoppingSession, that.shoppingSession) &&
                 Objects.equals(productInfo, that.productInfo) &&
                 Objects.equals(productsQuantity, that.productsQuantity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, cart, productInfo, productsQuantity);
+        return Objects.hash(id, shoppingSession, productInfo, productsQuantity);
     }
 
     @Override
     public String toString() {
         return "ShoppingSessionItem{" +
                 "id=" + id +
-                ", cart=" + cart +
+                ", shoppingSession=" + shoppingSession +
                 ", productInfo=" + productInfo +
                 ", productsQuantity=" + productsQuantity +
                 '}';
