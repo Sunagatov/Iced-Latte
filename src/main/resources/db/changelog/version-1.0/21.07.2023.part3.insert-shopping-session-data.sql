@@ -3,7 +3,7 @@ INSERT INTO shopping_session (id, user_id, items_quantity, products_quantity, cr
 VALUES ('b84e857f-132c-4f9d-8ed1-ae9ee759145b',
         'f1672d34-6b04-4f78-bad1-9a3831e7415a',
         6,
-        13,
+        10,
         '2023-07-21 10:00:00+00',
         '2023-07-21 12:00:00+00');
 
