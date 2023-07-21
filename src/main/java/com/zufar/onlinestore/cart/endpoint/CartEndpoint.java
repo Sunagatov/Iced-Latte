@@ -19,7 +19,7 @@ public class CartEndpoint {
 
     private final CartApi cartApi;
 
-    @PostMapping
+    @PatchMapping
     @ResponseBody
     public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
         log.info("Received request to update productsQuantity in shoppingSession item with id - {}.", request.shoppingSessionItemId());
