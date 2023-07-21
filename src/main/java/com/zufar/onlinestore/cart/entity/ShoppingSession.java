@@ -49,12 +49,12 @@ public class ShoppingSession {
     private LocalDateTime closedAt;
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object object) {
+        if (this == object)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (object == null || getClass() != object.getClass())
             return false;
-        ShoppingSession that = (ShoppingSession) o;
+        ShoppingSession that = (ShoppingSession) object;
         return Objects.equals(itemsQuantity, that.itemsQuantity) &&
                 Objects.equals(productsQuantity, that.productsQuantity) &&
                 Objects.equals(id, that.id) &&
@@ -71,14 +71,14 @@ public class ShoppingSession {
 
     @Override
     public String toString() {
-        return "ShoppingSession{" +
-                "id=" + id +
-                ", userId=" + userId +
-                ", itemsQuantity=" + itemsQuantity +
-                ", productsQuantity=" + productsQuantity +
-                ", createdAt=" + createdAt +
-                ", closedAt=" + closedAt +
-                ", items=" + items +
+        return "ShoppingSession {" +
+                "id = " + id +
+                ", userId = " + userId +
+                ", itemsQuantity = " + itemsQuantity +
+                ", productsQuantity = " + productsQuantity +
+                ", createdAt = " + createdAt +
+                ", closedAt = " + closedAt +
+                ", items = " + items +
                 '}';
     }
 }

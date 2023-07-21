@@ -60,11 +60,11 @@ public class ShoppingSessionItem {
 
     @Override
     public String toString() {
-        return "ShoppingSessionItem{" +
-                "id=" + id +
-                ", shoppingSession=" + shoppingSession +
-                ", productInfo=" + productInfo +
-                ", productsQuantity=" + productsQuantity +
+        return "ShoppingSessionItem {" +
+                "id = " + id +
+                ", shoppingSession = " + shoppingSession +
+                ", productInfo = " + productInfo +
+                ", productsQuantity = " + productsQuantity +
                 '}';
     }
 }
