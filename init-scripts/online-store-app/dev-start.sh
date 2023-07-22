@@ -8,7 +8,8 @@ export DOCKER_COMPOSE_PROFILE=dev
 
 echo "PROJECT_NAME                   = ${PROJECT_NAME}"
 echo "DOCKER_COMPOSE_YAML_FILE_PATH  = ${DOCKER_COMPOSE_YAML_FILE_PATH}"
-echo "DOCKER_COMPOSE_PROFILE         = ${DOCKER_COMPOSE_PROFILE}"
+echo "DOCKER_COMPOSE_PROFILE         = ${DOCKER_COMPOSE_PROFILE
+}"
 
 echo "-----------------------------------------------------------------------------------"
 echo "########### Building docker compose images ###########"
