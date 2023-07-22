@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 
 public interface PaymentApi {
 
-    ResponseEntity<PaymentDetailsWithTokenDto> paymentProcess(CreatePaymentDto paymentDto) throws StripeException;
+    ResponseEntity<PaymentDetailsWithTokenDto> paymentProcess(CreatePaymentDto paymentDto);
 
     ResponseEntity<PaymentDetailsDto> getPaymentDetails(Long paymentId) throws PaymentNotFoundException;
 

@@ -1,13 +1,11 @@
 package com.zufar.onlinestore.payment.processor;
 
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
-import com.zufar.onlinestore.payment.config.StripeConfiguration;
+import com.zufar.onlinestore.payment.exception.PaymentProcessingException;
 import com.zufar.onlinestore.payment.model.Payment;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,13 +20,17 @@ public class PaymentProcessor {
     public static final String PAYMENT_MESSAGE = "Payment made by user: %s, using the payment method: %s.";
     public static final Integer PAYMENT_DELIMITER = 100;
 
-    private final StripeConfiguration stripeConfig;
-
-    public Pair<String, Payment> process(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
-        PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
-        PaymentIntentCreateParams params = getPaymentParams(paymentMethod, totalPrice, currency);
-        log.info("process: get payment intent params for payment creation: params: {}.", params);
-        PaymentIntent paymentIntent = PaymentIntent.create(params);
+    public Pair<String, Payment> process(String paymentMethodId, BigDecimal totalPrice, String currency) {
+        PaymentIntent paymentIntent;
+        try {
+            PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
+            PaymentIntentCreateParams params = getPaymentParams(paymentMethod, totalPrice, currency);
+            log.info("process: get payment intent params for payment creation: params: {}.", params);
+            paymentIntent = PaymentIntent.create(params);
+        } catch (StripeException e) {
+            log.error("Error during Payment processing", e);
+            throw new PaymentProcessingException(paymentMethodId);
+        }
         log.info("process: payment intent successfully created: paymentIntentId: {}.", paymentIntent.getId());
         String paymentToken = paymentIntent.getClientSecret();
         Payment payment = getProcessedPayment(paymentIntent);

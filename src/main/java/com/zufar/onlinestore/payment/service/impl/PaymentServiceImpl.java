@@ -1,11 +1,10 @@
 package com.zufar.onlinestore.payment.service.impl;
 
-import com.stripe.exception.StripeException;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.model.Payment;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import com.zufar.onlinestore.payment.mapper.PaymentConverter;
+import com.zufar.onlinestore.payment.model.Payment;
 import com.zufar.onlinestore.payment.processor.PaymentProcessor;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import com.zufar.onlinestore.payment.service.PaymentService;
@@ -24,7 +23,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
-    public PaymentDetailsWithTokenDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
+    public PaymentDetailsWithTokenDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) {
         Pair<String, Payment> paymentWithTokenDetails = paymentProcessor.process(paymentMethodId, totalPrice, currency);
         log.info("create payment: payment successfully processed: paymentWithTokenDetails: {}.", paymentWithTokenDetails);
         Payment savedPayment = paymentRepository.save(paymentWithTokenDetails.getValue());

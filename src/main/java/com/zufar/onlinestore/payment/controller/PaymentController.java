@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.payment.controller;
 
-import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.PaymentApi;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
@@ -27,7 +26,7 @@ public class PaymentController implements PaymentApi {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<PaymentDetailsWithTokenDto> paymentProcess(@RequestBody @Valid CreatePaymentDto paymentRequest) throws StripeException {
+    public ResponseEntity<PaymentDetailsWithTokenDto> paymentProcess(@RequestBody @Valid CreatePaymentDto paymentRequest) {
         log.info("payment process: receive request to create payment: paymentRequest: {}.", paymentRequest);
         PriceDetailsDto priceDetails = paymentRequest.priceDetails();
         PaymentDetailsWithTokenDto processedPayment = paymentService.createPayment(paymentRequest.paymentMethodId(),
