@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -32,9 +34,9 @@ public class ShoppingSessionDtoConverter {
     }
 
     public ShoppingSession toEntity(final ShoppingSessionDto dto) {
-        Collection<ShoppingSessionItem> items = dto.items().stream()
+        Set<ShoppingSessionItem> items = dto.items().stream()
                 .map(shoppingSessionItemDtoConverter::toEntity)
-                .toList();
+                .collect(Collectors.toUnmodifiableSet());
 
         return new ShoppingSession(
                 dto.id(),

@@ -8,22 +8,27 @@ import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
+import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.onlinestore.cart.repository.ShoppingSessionItemRepository;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CartApiImpl implements CartApi {
-    
+
     private final ShoppingSessionRepository shoppingSessionRepository;
+    private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
     @Override
@@ -43,20 +48,34 @@ public class CartApiImpl implements CartApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
-        ShoppingSession shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId())
-                .orElseThrow(() -> new ShoppingSessionNotFoundException(request.shoppingSessionId()));
+    public ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
+        ShoppingSessionItem updatedItem =
+                shoppingSessionItemRepository.updateProductsQuantityInShoppingSessionItem(request.shoppingSessionItemId(), request.productsQuantityChange());
 
-        ShoppingSessionItem shoppingSessionItem = shoppingSession.getItems().stream()
-                .filter(item -> Objects.equals(item.getId(), request.shoppingSessionItemId()))
-                .findFirst()
-                .orElseThrow(() -> new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId()));
+        if (updatedItem == null) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
-        Integer newProductsQuantity = shoppingSessionItem.getProductsQuantity() + request.productsQuantityChange();
-        shoppingSessionItem.setProductsQuantity(newProductsQuantity);
+            throw new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
+        }
 
-        shoppingSessionRepository.save(shoppingSession);
+        Optional<ShoppingSession> shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId());
+        if (shoppingSession.isEmpty()) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
-        return shoppingSessionDtoConverter.toDto(shoppingSession);
+            throw new ShoppingSessionNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
+        }
+
+        if (request.shoppingSessionId() != updatedItem.getShoppingSession().getId()) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
+
+            throw new InvalidShoppingSessionIdInUpdateProductsQuantityRequestException(request.shoppingSessionId());
+        }
+
+        return shoppingSessionDtoConverter.toDto(shoppingSession.get());
     }
+
+
 }

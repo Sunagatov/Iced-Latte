@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -34,7 +34,7 @@ public class ShoppingSession {
     private UUID userId;
 
     @OneToMany(mappedBy = "shoppingSession", cascade = CascadeType.ALL)
-    private Collection<ShoppingSessionItem> items;
+    private Set<ShoppingSessionItem> items;
 
     @Column(name = "items_quantity", nullable = false)
     private Integer itemsQuantity;
@@ -55,30 +55,18 @@ public class ShoppingSession {
         if (object == null || getClass() != object.getClass())
             return false;
         ShoppingSession that = (ShoppingSession) object;
-        return Objects.equals(itemsQuantity, that.itemsQuantity) &&
-                Objects.equals(productsQuantity, that.productsQuantity) &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(userId, that.userId) &&
-                Objects.equals(createdAt, that.createdAt) &&
-                Objects.equals(closedAt, that.closedAt) &&
-                Objects.equals(items, that.items);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, userId, itemsQuantity, productsQuantity, createdAt, closedAt, items);
+        return Objects.hash(id);
     }
 
     @Override
     public String toString() {
         return "ShoppingSession {" +
                 "id = " + id +
-                ", userId = " + userId +
-                ", itemsQuantity = " + itemsQuantity +
-                ", productsQuantity = " + productsQuantity +
-                ", createdAt = " + createdAt +
-                ", closedAt = " + closedAt +
-                ", items = " + items +
                 '}';
     }
 }

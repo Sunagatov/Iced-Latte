@@ -42,6 +42,6 @@ public interface CartApi {
      * @throws ShoppingSessionNotFoundException if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItemNotFoundException in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest
      * */
-    ShoppingSessionDto updateProductAmountInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest)
+    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest)
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException;
 }

@@ -28,8 +28,10 @@ public class CartEndpoint {
     @PatchMapping
     @ResponseBody
     public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
-        log.info("Received request to update productsQuantity in shoppingSession item with id - {}.", request.shoppingSessionItemId());
-        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductAmountInShoppingSessionItem(request);
+        log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
+
+        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(request);
         log.info("ProductsQuantity was updated in shoppingSession item");
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
