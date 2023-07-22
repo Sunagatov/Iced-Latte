@@ -1,24 +1,80 @@
 package com.zufar.onlinestore.product.entity;
 
-import com.zufar.onlinestore.product.dto.PriceDto;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Document
+import java.math.BigDecimal;
+import java.util.Objects;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "product")
 public class ProductInfo {
 
-	@Id
-	private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-	private String name;
-	private PriceDto price;
-	private String category;
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "description", nullable = false)
+    private String description;
+
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
+
+    @Column(name = "currency", nullable = false)
+    private String currency;
+
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active;
+
+    public ProductInfo() {
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object)
+            return true;
+        if (object == null || getClass() != object.getClass())
+            return false;
+        ProductInfo that = (ProductInfo) object;
+        return active == that.active &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(price, that.price) &&
+                Objects.equals(currency, that.currency) &&
+                Objects.equals(quantity, that.quantity);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description, price, currency, quantity, active);
+    }
+
+    @Override
+    public String toString() {
+        return "ProductInfo {" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                ", currency='" + currency + '\'' +
+                ", quantity=" + quantity +
+                ", active=" + active +
+                '}';
+    }
 }

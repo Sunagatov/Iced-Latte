@@ -31,17 +31,18 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update
-    database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: data
-      password: rootpass
-      username: rootuser
-      authentication-database: admin
+      ddl-auto: validate
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-master.yaml
+    url: jdbc:postgresql://localhost:5432/testdb
+    user: postgres
+    password: postgres
+#
+# Stripe Api Properties
+#
+  config:
+    import: optional:stripe.yaml
 
 #
 # Spring Doc Properties
@@ -74,26 +75,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
-#
-# AWS Properties
-#
-cloud:
-  aws:
-    service:
-      endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
-    region:
-      static: us-east-1
-    credentials:
-      access-key: aws_access_key_id
-      secret-key: aws_secret_access_key
-    sqs:
-      queue:
-        purchase-transactions-sqs-queue-url: ${cloud.aws.service.endpoint}/000000000000/purchase-transactions-sqs-queue
-    sns:
-      topic:
-        name: purchase-transactions-sns-topic
-        url: ${cloud.aws.service.endpoint}
 
 #
 # JWT Security Properties

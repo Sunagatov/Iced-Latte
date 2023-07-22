@@ -1,31 +1,24 @@
 package com.zufar.onlinestore.product.dto;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class ProductInfoDto {
+import java.util.UUID;
 
-	private int id;
+public record ProductInfoDto(
+        @NotNull(message = "Id is mandatory")
+        UUID id,
 
-	@NotBlank(message = "Name is mandatory")
-	@Size(max = 55, message = "Name length must be less than 55 characters")
-	private String name;
+        @NotBlank(message = "Name is mandatory")
+        @Size(max = 100, message = "Name length must be less than 100 characters")
+        String name,
 
-	@Valid
-	@NotNull(message = "Price is mandatory")
-	private PriceDto price;
+        @NotBlank(message = "Description is mandatory")
+        @Size(max = 1000, message = "Description length must be less than 1000 characters")
+        String description,
 
-	@NotBlank(message = "Category is mandatory")
-	@Size(max = 55, message = "Category length must be less than 55 characters")
-	private String category;
+        @NotNull(message = "Price details is mandatory")
+        PriceDetailsDto priceDetails
+) {
 }
