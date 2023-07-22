@@ -59,6 +59,8 @@
         <liquibase.verson>4.23.0</liquibase.verson>
         <stripe.version>22.15.0</stripe.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
+        <docker-maven-plugin-version>0.41.0</docker-maven-plugin-version>
+        <docker.hub.username>zufarexplainedit</docker.hub.username>
     </properties>
     <dependencies>
 
@@ -218,6 +220,7 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -230,6 +233,40 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-plugin-version}</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${docker.hub.username}/${project.artifactId}</name>
+                            <build>
+                                <dockerFileDir>${project.basedir}</dockerFileDir>
+                                <assembly>
+                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
+                                </assembly>
+                                <tags>
+                                    <tag>latest</tag>
+                                </tags>
+                            </build>
+                            <registry>docker.io</registry>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build-and-push</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 </project>
