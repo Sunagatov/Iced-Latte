@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Past;
 import java.time.Instant;
 
 public record ReservationDto(
+
         @NotNull(message = "ReservationId is the mandatory attribute")
         Integer reservationId,
 
@@ -17,8 +18,8 @@ public record ReservationDto(
         @NotNull(message = "ReservedQuantity is the mandatory attribute")
         Integer reservedQuantity,
 
-        @NotNull(message = "CreatedAt is the mandatory attribute")
         @Past
+        @NotNull(message = "CreatedAt is the mandatory attribute")
         Instant createdAt,
 
         @NotBlank(message = "Status is the mandatory attribute")
