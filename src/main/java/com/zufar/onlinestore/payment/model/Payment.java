@@ -1,10 +1,13 @@
 package com.zufar.onlinestore.payment.model;
 
+import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -25,6 +28,9 @@ public class Payment {
     @Column(name = "payment_id")
     private Long paymentId;
 
+    @Column(nullable = false, unique = true, name = "payment_intent_id")
+    private String paymentIntentId;
+
     @Column(nullable = false, name = "currency")
     private String currency;
 
@@ -32,7 +38,8 @@ public class Payment {
     private BigDecimal itemsTotalPrice;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(value = EnumType.STRING)
+    private PaymentStatus status;
 
     @Column(name = "description")
     private String description;

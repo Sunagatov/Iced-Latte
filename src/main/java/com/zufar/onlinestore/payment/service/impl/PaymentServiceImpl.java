@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.payment.service.impl;
 
 import com.stripe.exception.StripeException;
+import com.stripe.model.Event;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.model.Payment;
@@ -25,7 +26,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentConverter paymentConverter;
 
     public PaymentDetailsWithTokenDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
-        Pair<String, Payment> paymentWithTokenDetails = paymentProcessor.process(paymentMethodId, totalPrice, currency);
+        Pair<String, Payment> paymentWithTokenDetails = paymentProcessor.processPayment(paymentMethodId, totalPrice, currency);
         log.info("create payment: payment successfully processed: paymentWithTokenDetails: {}.", paymentWithTokenDetails);
         Payment savedPayment = paymentRepository.save(paymentWithTokenDetails.getValue());
         log.info("create payment: payment successfully saved: savedPayment: {}.", savedPayment);

@@ -7,7 +7,6 @@ import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.model.Payment;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,10 +20,11 @@ public class PaymentProcessor {
 
     public static final String PAYMENT_MESSAGE = "Payment made by user: %s, using the payment method: %s.";
     public static final Integer PAYMENT_DELIMITER = 100;
+    public final StripeConfiguration stripeConfiguration;
 
-    private final StripeConfiguration stripeConfig;
 
-    public Pair<String, Payment> process(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
+    public Pair<String, Payment> processPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException {
+        Stripe.apiKey = stripeConfiguration.secretKey();
         PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
         PaymentIntentCreateParams params = getPaymentParams(paymentMethod, totalPrice, currency);
         log.info("process: get payment intent params for payment creation: params: {}.", params);
@@ -50,9 +50,8 @@ public class PaymentProcessor {
     private Payment getProcessedPayment(PaymentIntent paymentIntent) {
         return Payment.builder()
                 .itemsTotalPrice(BigDecimal.valueOf(paymentIntent.getAmount() / PAYMENT_DELIMITER))
+                .paymentIntentId(paymentIntent.getId())
                 .currency(paymentIntent.getCurrency())
-                .description(paymentIntent.getDescription())
-                .status(paymentIntent.getStatus())
                 .build();
     }
 

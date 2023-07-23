@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.payment.dto;
 
+import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import lombok.Builder;
 import java.math.BigDecimal;
 
@@ -7,5 +8,5 @@ import java.math.BigDecimal;
 public record PaymentDetailsDto(Long paymentId,
                                 BigDecimal totalPrice,
                                 String currency,
-                                String status,
+                                PaymentStatus status,
                                 String description) {}
