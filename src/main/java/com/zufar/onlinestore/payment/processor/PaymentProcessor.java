@@ -1,17 +1,16 @@
 package com.zufar.onlinestore.payment.processor;
 
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.model.Payment;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 
 @Slf4j
@@ -55,5 +54,4 @@ public class PaymentProcessor {
                 .status(paymentIntent.getStatus())
                 .build();
     }
-
 }

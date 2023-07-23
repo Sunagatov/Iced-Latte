@@ -12,5 +12,4 @@ public interface PaymentApi {
     ResponseEntity<PaymentDetailsWithTokenDto> paymentProcess(CreatePaymentDto paymentDto) throws StripeException;
 
     ResponseEntity<PaymentDetailsDto> getPaymentDetails(Long paymentId) throws PaymentNotFoundException;
-
 }
