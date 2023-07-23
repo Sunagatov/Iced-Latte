@@ -29,7 +29,6 @@ public class ProductsEndpoint {
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @GetMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") final String id) {
         log.info("Received request to get the ProductInfo with id - {}.", id);
         Optional<ProductInfo> ProductInfo = productInfoRepository.findById(Integer.parseInt(id));
@@ -45,7 +44,6 @@ public class ProductsEndpoint {
     }
 
     @GetMapping
-    @ResponseBody
     public ResponseEntity<Collection<ProductInfoDto>> getAllProducts() {
         log.info("Received request to get all ProductInfos");
         Collection<ProductInfo> productInfoCollection = productInfoRepository.findAll();

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "product")
 public class ProductInfo {
@@ -42,16 +44,6 @@ public class ProductInfo {
 
     @Column(name = "active", nullable = false)
     private Boolean active;
-
-    public ProductInfo(UUID id, String name, String description, BigDecimal price, String currency, Integer quantity, Boolean active) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.currency = currency;
-        this.quantity = quantity;
-        this.active = active;
-    }
 
     @Override
     public boolean equals(Object object) {

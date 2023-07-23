@@ -7,18 +7,18 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record ProductInfoDto(
-        @NotNull(message = "Id is mandatory")
+        @NotNull(message = "Id is the mandatory attribute")
         UUID id,
 
-        @NotBlank(message = "Name is mandatory")
+        @NotBlank(message = "Name is the mandatory attribute")
         @Size(max = 100, message = "Name length must be less than 100 characters")
         String name,
 
-        @NotBlank(message = "Description is mandatory")
+        @NotBlank(message = "Description is the mandatory attribute")
         @Size(max = 1000, message = "Description length must be less than 1000 characters")
         String description,
 
-        @NotNull(message = "Price details is mandatory")
+        @NotNull(message = "Price details is the mandatory attribute")
         PriceDetailsDto priceDetails
 ) {
 }
