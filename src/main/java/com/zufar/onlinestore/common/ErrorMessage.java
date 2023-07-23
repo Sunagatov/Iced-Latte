@@ -17,6 +17,6 @@ public enum ErrorMessage {
 
     private final String cause;
 
-    private final String message;
+    private final String description;
 
 }

@@ -35,28 +35,30 @@ public class GlobalExceptionHandler {
 
     private String resolveErrorMessage(ObjectError error) {
         String errorMessage = error.getDefaultMessage();
-        return (errorMessage == null || errorMessage.isBlank()) ? ERROR_MESSAGE_IS_EMPTY.getMessage() : errorMessage;
+        return (errorMessage == null || errorMessage.isBlank()) ? ERROR_MESSAGE_IS_EMPTY.getDescription() : errorMessage;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleHttpMessageNotReadableException() {
         var errors = new HashMap<String, String>();
-        errors.put(REQUEST_BODY_ERROR.getCause(), REQUEST_BODY_ERROR.getMessage());
+        errors.put(REQUEST_BODY_ERROR.getCause(), REQUEST_BODY_ERROR.getDescription());
         return errors;
     }
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
-        log.error(PAYMENT_NOT_FOUND_ERROR.getMessage(), exception);
-        return new ApiResponse(exception.getMessage(), false);
+        String message = exception.getMessage();
+        log.error("handlePaymentNotFoundException: failed: exception = {}", message, exception);
+        return new ApiResponse(message, PAYMENT_NOT_FOUND_ERROR.getDescription(), false);
     }
 
     @ExceptionHandler(PaymentProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse handlePaymentNotFoundException(final PaymentProcessingException exception) {
-        log.error(PAYMENT_PROCESSING_ERROR.getMessage(), exception);
-        return new ApiResponse(exception.getMessage(), false);
+    public ApiResponse handlePaymentProcessingException(final PaymentProcessingException exception) {
+        String message = exception.getMessage();
+        log.error("handlePaymentProcessingException: failed: exception = {}", message, exception);
+        return new ApiResponse(message, PAYMENT_PROCESSING_ERROR.getDescription(), false);
     }
 }
