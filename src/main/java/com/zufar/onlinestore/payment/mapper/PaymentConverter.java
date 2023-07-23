@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.payment.mapper;
 
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.model.Payment;
+import com.zufar.onlinestore.payment.entity.Payment;
 import org.springframework.stereotype.Component;
 
 @Component

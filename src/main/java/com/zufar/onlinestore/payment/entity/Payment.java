@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.model;
+package com.zufar.onlinestore.payment.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
