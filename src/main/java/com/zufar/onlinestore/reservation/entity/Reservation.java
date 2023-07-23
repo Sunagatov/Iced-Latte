@@ -1,17 +1,58 @@
 package com.zufar.onlinestore.reservation.entity;
 
-import lombok.Builder;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 
-@Builder
-public record Reservation(
+@Entity
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "reservation")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Reservation {
+
     @Id
-    int reservationId,
-    int productId,
-    int reservedQuantity,
-    LocalDateTime createdAt,
-    String reservationStatus
-) {}
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
 
+    @Column(name = "reservation_id", nullable = false)
+    private UUID reservationId;
+
+    @Column(name = "product_id", nullable = false)
+    private UUID productId;
+
+    @Column(name = "reserved_quantity", nullable = false)
+    private Integer reservedQuantity;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ReservationStatus status;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Reservation that = (Reservation) o;
+        return reservationId.equals(that.reservationId) && productId.equals(that.productId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reservationId, productId);
+    }
+}

@@ -6,4 +6,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/20.07.2023.part2.create-shopping-session-item-table.sql
   - include:
-      file: db/changelog/version-1.0/20.07.2023.сreate-payment-table.sql
+      file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
+  - include:
+      file: db/changelog/version-1.0/22.07.2023.create-reservation-table.sql
