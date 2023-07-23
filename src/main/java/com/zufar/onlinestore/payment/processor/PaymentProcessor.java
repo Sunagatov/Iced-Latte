@@ -5,7 +5,7 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
-import com.zufar.onlinestore.payment.model.Payment;
+import com.zufar.onlinestore.payment.entity.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
