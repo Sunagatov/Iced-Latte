@@ -12,4 +12,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-session-item-data.sql
   - include:
-      file: db/changelog/version-1.0/20.07.2023.сreate-payment-table.sql
+      file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
+  - include:
+      file: db/changelog/version-1.0/22.07.2023.create-reservation-table.sql
