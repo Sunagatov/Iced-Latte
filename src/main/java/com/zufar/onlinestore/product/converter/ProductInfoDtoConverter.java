@@ -3,6 +3,7 @@ package com.zufar.onlinestore.product.converter;
 import com.zufar.onlinestore.product.dto.PriceDetailsDto;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
+import com.zufar.onlinestore.product.dto.ProductInfoRequestResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,18 @@ public class ProductInfoDtoConverter {
                 priceDetails,
                 entity.getQuantity(),
                 entity.getActive()
+        );
+    }
+
+    public ProductInfoRequestResponseDto convertToRequestResponseDto(final ProductInfo entity) {
+        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
+
+        return new ProductInfoRequestResponseDto(
+                entity.getId(),
+                entity.getDescription(),
+                entity.getName(),
+                priceDetails,
+                entity.getQuantity()
         );
     }
 
