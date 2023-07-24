@@ -25,44 +25,44 @@ If the client sends an valid request, 200 HTTP OK and ShoppingSession as HTTP re
 
 ### ShoppingSession
 
-| Parameter          | Type      | Required | Description                   |
-|--------------------|-----------|----------|-------------------------------|
-| shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsAmount        | integer   | true | The amount of items          |
-| totalPrice         | number    | true | The total price of all items |
-| itemList           | item list | true | The item list                |
+| Parameter     | Type      | Required | Description                    |
+|---------------|------------|----------|--------------------------------|
+| shoppingSessionId   | string    | true     | The identifier of the shopping session (the cart info)   |
+| itemsQuantity | integer   | true     | The quantity of items          |
+| totalPrice    | number    | true     | The total price of all items   |
+| items      | item list | true     | The item list                  |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| itemId             | integer   | true | The identifier of the item    |
-| productsAmount     | integer   | true | The amount of products      |
-| totalProductsPrice | integer   | true | The total products price     |
-| product            | integer   | true | The product description       |
+| shoppingSessionItemId                 | integer   | true     | The identifier of the item    |
+| productsQuantity   | integer   | true     | The quantity of products      |
+| totalProductsPrice | integer   | true     | The total products price      |
+| productInfo            | integer   | true     | The product info       |
 
 **Response Example:**
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemsAmount": "2",
+    "itemsQuantity": "2",
     "totalPrice": "3200",
-    "itemList": [
+    "items": [
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "2",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "2",
             "totalProductsPrice": "1500",
-            "product": {
-                "productData": "productData"
+            "productInfo": {
+                "productInfo": "productData"
             }
         },
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "3",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "3",
             "totalProductsPrice": "1700",
-            "product": {
-                "productData": "productData"
+            "productInfo": {
+                "productInfo": "productData"
             }
         }
     ]
@@ -85,7 +85,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 {
     "message": "The 'shoppingSessionId' cannot be empty.",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 12
+    "code": 12 // TODO Create errorCode hierachy
 }
 ```
 
@@ -93,7 +93,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 {
     "message": "Invalid 'shoppingSessionId' value.",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 13
+    "code": 13 // TODO Create errorCode hierachy
 }
 ```
 
@@ -101,7 +101,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ## 2. Add a new item to the cart
 
-### HTTP POST .../api/v1/cart/items/
+### HTTP POST .../api/v1/cart/items/ 
 
 **Summary:**  
 Returns 200 OK as the confirmation of adding a new item to the cart.
@@ -116,7 +116,7 @@ adding a new item to the cart.
 | Parameter | In | Type  | Required | Description                 |
 |-----------|----|-------|----------|-----------------------------|
 | shoppingSessionId | body | string | true | The identifier of the cart |
-| itemId | body | string | true | The identifier of the item |
+| shoppingSessionItemId | body | string | true | The identifier of the item |
 
 **Request Example:**
 
@@ -125,7 +125,7 @@ POST /cart/items/
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
+    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
 }
 ```
 
@@ -139,41 +139,41 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsAmount        | integer   | true | The amount of items          |
-| totalPrice         | number    | true | The total price of all items |
-| itemList           | item list | true | The item list                |
+| shoppingSessionId                 | string    | true     | The identifier of the shopping session (the cart info)   |
+| itemsQuantity      | integer   | true     | The quantity of items          |
+| totalPrice         | number    | true     | The total price of all items |
+| items           | item list | true     | The item list                |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| itemId             | integer   | true | The identifier of the item    |
-| productsAmount     | integer   | true | The amount of products      |
-| totalProductsPrice | integer   | true | The total products price     |
-| product            | integer   | true | The product description       |
+| shoppingSessionItemId                 | integer   | true     | The identifier of the item    |
+| productsQuantity   | integer   | true     | The quantity of products      |
+| totalProductsPrice | integer   | true     | The total products price      |
+| productInfo          | integer   | true     | The product description       |
 
 **Response Example:**
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemsAmount": "2",
+    "itemsQuantity": "2",
     "totalPrice": "3200",
-    "itemList": [
+    "items": [
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "2",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "2",
             "totalProductsPrice": "1500",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         },
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "3",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "3",
             "totalProductsPrice": "1700",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         }
@@ -195,33 +195,33 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ```json
 {
-    "message": "The 'shoppingSessionId' cannot be empty.",
+    "message": "The 'shoppingSessionId' cannot be empty",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 12
+    "code": 12 // TODO Create errorCode hierachy
 }
 ```
 
 ```json
 {
-    "message": "Invalid 'shoppingSessionId' value.",
+    "message": "Invalid 'shoppingSessionId' value",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 14
+    "code": 14 // TODO Create errorCode hierachy
 }
 ```
 
 ```json
 {
-    "message": "The 'itemId' cannot be empty.",
+    "message": "The 'itemId' cannot be empty",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 15
+    "code": 15 // TODO Create errorCode hierachy
 }
 ```
 
 ```json
 {
-    "message": "Invalid 'itemId' value.",
+    "message": "Invalid 'itemId' value",
     "timestamp": "2023-06-04 18:24:54",
-    "code": 16
+    "code": 16 // TODO Create errorCode hierachy
 }
 ```
 
@@ -229,36 +229,35 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ## 3. Remove the item in the cart
 
-### HTTP DELETE .../api/v1/cart/items/
+### HTTP DELETE .../api/v1/cart/{shoppingSessionId}/items/
 
 **Summary:**  
 Returns 200 OK as the confirmation of deleting the specified item in the cart.
 
 **Description:**
 
-This API receives a JSON object containing a shoppingSessionId and an itemList. Returns 200 OK as the confirmation of
-deleting the given itemList in the cart.
+This API receives a JSON object containing a shoppingSessionId and an items. Returns 200 OK as the confirmation of
+deleting the given items in the cart.
 
 ### Request:
 
 | Parameter         | In | Type      | Required | Description                 |
 |-------------------|----|-----------|----------|-----------------------------|
-| shoppingSessionId | body | string    | true | The identifier of the cart |
-| itemList          | body | item list | true | The item identifiers list  |
+| shoppingSessionId | url query attribute | string    | true | The identifier of the cart |
+| items             | body | item list | true | The item identifiers list  |
 
 **Request Example:**
 
-POST /cart/items/
+DELETE /cart/items/
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemList": [
+    "items": [
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
         },
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
         }
     ]
 }
@@ -268,47 +267,47 @@ POST /cart/items/
 
 **200 OK**
 
-If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as HTTP response should be returned.
+If the client sends a valid request, 200 HTTP OK and updated ShoppingSession as HTTP response should be returned.
 
 ### ShoppingSession
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
 | shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsAmount        | integer   | true | The amount of items          |
+| itemsQuantity      | integer   | true | The quantity of items          |
 | totalPrice         | number    | true | The total price of all items |
-| itemList           | item list | true | The item list                |
+| items           | item list | true | The item list                |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| itemId             | integer   | true | The identifier of the item    |
-| productsAmount     | integer   | true | The amount of products      |
+| shoppingSessionItemId             | integer   | true | The identifier of the item    |
+| productsQuantity     | integer   | true | The quantity of products      |
 | totalProductsPrice | integer   | true | The total products price     |
-| product            | integer   | true | The product description       |
+| productInfo          | integer   | true | The product description       |
 
 **Response Example:**
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemsAmount": "2",
+    "itemsQuantity": "2",
     "totalPrice": "3200",
-    "itemList": [
+    "items": [
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "2",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "2",
             "totalProductsPrice": "1500",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         },
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "3",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "3",
             "totalProductsPrice": "1700",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         }
@@ -346,7 +345,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ```json
 {
-    "message": "The 'itemList' cannot be empty.",
+    "message": "The 'items' cannot be empty.",
     "timestamp": "2023-06-04 18:24:54",
     "code": 14
 }
@@ -354,7 +353,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ```json
 {
-    "message": "Invalid 'itemList' value.",
+    "message": "Invalid 'items' value.",
     "timestamp": "2023-06-04 18:24:54",
     "code": 15
 }
@@ -364,7 +363,7 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ## 4. Update the amount of the specified item products in the cart
 
-### HTTP POST .../api/v1/cart/items/amount
+### PATCH POST .../api/v1/cart/{shoppingSessionId}/items/{itemId}/amount
 
 **Summary:**  
 Returns 200 OK as the confirmation of changing The amount of the specified item products in the cart
@@ -378,43 +377,43 @@ Returns 200 OK as the confirmation of changing The amount of the specified item 
 
 | Parameter         | In | Type  | Required | Description                                            |
 |-------------------|----|-------|----------|--------------------------------------------------------|
-| shoppingSessionId | body | string | true | The identifier of the cart                            |
-| itemId            | body | string | true | The identifier of the item                            |
-| change            | body | string | true | The amount of the specified item products in the cart |
+| shoppingSessionId | url query attribute | string | true | The identifier of the cart                            |
+| shoppingSessionItemId   | url query attribute | string | true | The identifier of the item                            |
+| productsQuantityChange     | body | string | true | The amount of the specified item products in the cart |
 
 **Request Example:**
 
-POST /cart/items/
+PATCH .../api/v1/cart/items/{itemId}/amount
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-    "change": "-1"
+    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+    "productsQuantityChange": "-1"
 }
 ```
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-    "change": "-7"
+    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+    "productsQuantityChange": "-7"
 }
 ```
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-    "change": "+1"
+    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+    "productsQuantityChange": "+1"
 }
 ```
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-    "change": "+6"
+    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+    "productsQuantityChange": "+6"
 }
 ```
 
@@ -429,40 +428,40 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
 | shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsAmount        | integer   | true | The amount of items          |
+| itemsQuantity        | integer   | true | The quantity of items          |
 | totalPrice         | number    | true | The total price of all items |
-| itemList           | item list | true | The item list                |
+| items           | item list | true | The item list                |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| itemId             | integer   | true | The identifier of the item    |
-| productsAmount     | integer   | true | The amount of products      |
+| shoppingSessionItemId             | integer   | true | The identifier of the item    |
+| productsQuantity     | integer   | true | The quantity of products      |
 | totalProductsPrice | integer   | true | The total products price     |
-| product            | integer   | true | The product description       |
+| productInfo          | integer   | true | The product description       |
 
-**Response Example:**
+**Response Example:** 
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "itemsAmount": "2",
+    "itemsQuantity": "2",
     "totalPrice": "3200",
-    "itemList": [
+    "items": [
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "2",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "2",
             "totalProductsPrice": "1500",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         },
         {
-            "itemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
-            "productsAmount": "3",
+            "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
+            "productsQuantity": "3",
             "totalProductsPrice": "1700",
-            "product": {
+            "productInfo": {
                 "productData": "productData"
             }
         }
