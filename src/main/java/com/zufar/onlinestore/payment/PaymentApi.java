@@ -7,8 +7,6 @@ import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 public interface PaymentApi {
 
@@ -16,6 +14,6 @@ public interface PaymentApi {
 
     ResponseEntity<PaymentDetailsDto> getPaymentDetails(Long paymentId) throws PaymentNotFoundException;
 
-    ResponseEntity<Void> paymentEventsProcess(String payload, String header) throws SignatureVerificationException;
+    ResponseEntity<Void> paymentEventsProcess(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException;
 
 }

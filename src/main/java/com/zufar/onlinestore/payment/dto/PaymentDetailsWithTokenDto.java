@@ -4,5 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record PaymentDetailsWithTokenDto(String paymentToken,
-                                         PaymentDetailsDto paymentDetailsDto) {
-}
+                                         PaymentDetailsDto paymentDetailsDto) {}

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 @Builder
 public record PaymentDetailsDto(Long paymentId,
                                 BigDecimal totalPrice,
+                                String paymentIntentId,
                                 String currency,
                                 PaymentStatus status,
                                 String description) {}

@@ -13,6 +13,8 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Getter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import java.math.BigDecimal;
 
 @Getter
@@ -43,4 +45,23 @@ public class Payment {
 
     @Column(name = "description")
     private String description;
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Payment payment)) {
+            return false;
+        }
+        EqualsBuilder eb = new EqualsBuilder();
+        eb.append(paymentIntentId, payment.paymentId);
+        return eb.isEquals();
+    }
+
+    public int hashCode() {
+        HashCodeBuilder hcb = new HashCodeBuilder();
+        hcb.append(paymentIntentId);
+        return hcb.toHashCode();
+    }
+
 }
