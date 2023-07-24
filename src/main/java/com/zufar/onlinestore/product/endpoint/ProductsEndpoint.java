@@ -7,6 +7,7 @@ import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
 import com.zufar.onlinestore.product.service.ProductInfoService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,9 +49,9 @@ public class ProductsEndpoint {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<ProductInfoRequestResponseDto>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ProductInfoRequestResponseDto>> getAllProducts(Pageable pageable) {
         log.info("Received request to get all ProductInfos (controller): {}", pageable);
-        Collection<ProductInfoRequestResponseDto> productInfoCollection = productInfoService.getAllProducts(pageable);
+        Page<ProductInfoRequestResponseDto> productInfoCollection = productInfoService.getAllProducts(pageable);
         if (productInfoCollection.isEmpty()) {
             log.info("All ProductInfos are absent.");
             return ResponseEntity.notFound()

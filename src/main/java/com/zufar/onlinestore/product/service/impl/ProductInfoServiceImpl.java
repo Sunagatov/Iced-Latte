@@ -6,10 +6,9 @@ import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 import com.zufar.onlinestore.product.service.ProductInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.Collection;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,10 +19,9 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @Override
-    public Collection<ProductInfoRequestResponseDto> getAllProducts(Pageable pageable) {
+    public Page<ProductInfoRequestResponseDto> getAllProducts(Pageable pageable) {
         log.info("Received request to get all ProductInfos (service)");
-        return productInfoRepository.findAll().stream()
-                .map(productInfoDtoConverter::convertToRequestResponseDto)
-                .toList();
+        return productInfoRepository.findAll(pageable)
+                .map(productInfoDtoConverter::convertToRequestResponseDto);
     }
 }
