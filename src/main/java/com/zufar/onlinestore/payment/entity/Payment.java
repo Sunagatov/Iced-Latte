@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.model;
+package com.zufar.onlinestore.payment.entity;
 
 import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import jakarta.persistence.Entity;
@@ -43,5 +43,4 @@ public class Payment {
 
     @Column(name = "description")
     private String description;
-
 }

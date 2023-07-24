@@ -4,7 +4,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.model.Payment;
+import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import com.zufar.onlinestore.payment.mapper.PaymentConverter;
 import com.zufar.onlinestore.payment.processor.PaymentProcessor;

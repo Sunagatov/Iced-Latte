@@ -9,9 +9,10 @@ import java.math.BigDecimal;
 
 public interface PaymentService {
 
-    PaymentDetailsWithTokenDto createPayment(String paymentMethodId, BigDecimal totalPrice, String currency) throws StripeException;
+    PaymentDetailsWithTokenDto createPayment(String paymentMethodId,
+                                             BigDecimal totalPrice,
+                                             String currency) throws StripeException;
 
     PaymentDetailsDto getPayment(Long paymentId) throws PaymentNotFoundException;
-
 }
 

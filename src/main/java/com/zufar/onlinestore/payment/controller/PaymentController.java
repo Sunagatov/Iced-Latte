@@ -40,11 +40,12 @@ public class PaymentController implements PaymentApi {
         }
         log.info("payment process: receive request to create payment: paymentRequest: {}.", paymentRequest);
         PriceDetailsDto priceDetails = paymentRequest.priceDetails();
-        PaymentDetailsWithTokenDto processedPayment = paymentService.createPayment(paymentRequest.paymentMethodId(),
-                priceDetails.totalPrice(), priceDetails.currency());
+        PaymentDetailsWithTokenDto processedPayment =
+                paymentService.createPayment(paymentRequest.paymentMethodId(), priceDetails.totalPrice(), priceDetails.currency());
         log.info("payment process: payment successfully processed: processedPayment: {}.", processedPayment);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(processedPayment);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(processedPayment);
     }
 
     @GetMapping("/{paymentId}")
@@ -53,11 +54,13 @@ public class PaymentController implements PaymentApi {
         PaymentDetailsDto retrievedPayment = paymentService.getPayment(paymentId);
         if (retrievedPayment == null) {
             log.info("get payment details: not found payment details by id: paymentId: {}.", paymentId);
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound()
+                    .build();
         }
         log.info("get payment details: payment successfully retrieved: retrievedPayment: {}.", retrievedPayment);
 
-        return ResponseEntity.ok().body(retrievedPayment);
+        return ResponseEntity.ok()
+                .body(retrievedPayment);
     }
 
     @PostMapping("/events")
