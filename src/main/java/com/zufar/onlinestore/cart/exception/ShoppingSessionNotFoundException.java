@@ -8,12 +8,9 @@ import java.util.UUID;
 public class ShoppingSessionNotFoundException extends RuntimeException {
 
     private final UUID shoppingSessionId;
-    private final UUID shoppingSessionItemId;
 
-    public ShoppingSessionNotFoundException(final UUID shoppingSessionId, final UUID shoppingSessionItemId) {
-        super(String.format("The shopping session with shoppingSessionItemId = %s and shoppingSessionId = %s  is not found.",
-                shoppingSessionItemId, shoppingSessionId));
+    public ShoppingSessionNotFoundException(final UUID shoppingSessionId) {
+        super(String.format("The shopping session with shoppingSessionId = %s is not found.", shoppingSessionId));
         this.shoppingSessionId = shoppingSessionId;
-        this.shoppingSessionItemId = shoppingSessionItemId;
     }
 }
