@@ -3,15 +3,13 @@ package com.zufar.onlinestore.cart.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.Version;
 
 import java.util.Objects;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor

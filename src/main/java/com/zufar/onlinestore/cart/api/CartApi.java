@@ -8,6 +8,7 @@ import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionIte
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 
 public interface CartApi {
 
@@ -24,8 +25,12 @@ public interface CartApi {
      *
      * @param addNewItemToShoppingSessionRequest the request to add a new item into the shopping session (the cart details)
      * @return ShoppingSessionDto (the cart details)
+     * @throws ShoppingSessionNotFoundException if there is no shoppingSession in the database with the provided shoppingSessionId from addNewItemToShoppingSessionRequest
+     * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewItemToShoppingSessionRequest
+     * @throws ProductNotFoundException if there is no product in the database with the provided productId from addNewItemToShoppingSessionRequest
      * */
-    ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest addNewItemToShoppingSessionRequest);
+    ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest addNewItemToShoppingSessionRequest)
+            throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException;
 
     /**
      * Enables to remove the specific item from the shopping session (the cart details)

@@ -10,6 +10,7 @@ import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionIte
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,11 +31,11 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest request) {
-        UUID shoppingSessionId = request.shoppingSessionId();
-        UUID shoppingSessionItemId = request.shoppingSessionItemId();
-        UUID productId = request.productId();
-        return shoppingSessionItemSaver.save(shoppingSessionId, shoppingSessionItemId, productId);
+    public ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
+        final UUID shoppingSessionItemId = request.shoppingSessionItemId();
+        final UUID shoppingSessionId = request.shoppingSessionId();
+        final Integer productId = request.productId();
+        return shoppingSessionItemSaver.save(shoppingSessionItemId, shoppingSessionId, productId);
     }
 
     @Override
