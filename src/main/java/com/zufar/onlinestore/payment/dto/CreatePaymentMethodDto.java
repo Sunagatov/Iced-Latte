@@ -5,14 +5,16 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreatePaymentMethodDto (
 
-        @NotBlank(message = "cardNumber is the mandatory attribute")
+        @NotBlank(message = "CardNumber is the mandatory attribute")
         String cardNumber,
 
-        @NotBlank(message = "expMonth is the mandatory attribute")
+        @NotNull(message = "ExpMonth is the mandatory attribute")
         Long expMonth,
 
-        @NotBlank(message = "expYear is the mandatory attribute")
+        @NotNull(message = "ExpYear is the mandatory attribute")
         Long expYear,
 
-        @NotNull(message = "cvc is the mandatory attribute")
-        String cvc) {}
+        @NotNull(message = "Cvc is the mandatory attribute")
+        String cvc
+) {
+}

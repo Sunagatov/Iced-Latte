@@ -10,13 +10,13 @@ public enum PaymentStatus {
     PAYMENT_METHOD_IS_REQUIRED("payment_intent.requires_payment_method",
             "Payment method is required"),
 
-    CONFIRMATION_IS_REQUIRED("payment_intent.requires_confirmation",
+    PAYMENT_CONFIRMATION_IS_REQUIRED("payment_intent.requires_confirmation",
             "Payment confirmation is required"),
 
-    CAPTURE_IS_REQUIRED("payment_intent.requires_capture",
+    PAYMENT_CAPTURE_IS_REQUIRED("payment_intent.requires_capture",
             "Payment capture is required"),
 
-    ACTION_IS_REQUIRED("payment_intent.requires_action",
+    PAYMENT_ACTION_IS_REQUIRED("payment_intent.requires_action",
             "Additional action is required to complete payment"),
 
     PAYMENT_IS_FAILED("payment_intent.payment_failed",
@@ -29,9 +29,9 @@ public enum PaymentStatus {
             "Payment is canceled"),
 
     PAYMENT_IS_SUCCEEDED("payment_intent.succeeded",
-            "Payment in succeeded");
+            "Payment is succeeded");
 
     private final String status;
-    private final String message;
+    private final String description;
 }
 

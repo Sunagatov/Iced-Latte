@@ -3,7 +3,6 @@ package com.zufar.onlinestore.payment.service;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,16 +12,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class PaymentEventProcessor {
 
-    private final PaymentEventRetriever paymentEventRetriever;
+    private final PaymentEventCreator paymentEventCreator;
     private final PaymentEventParser paymentEventParser;
-    private final PaymentEventHandler paymentEventHandler;
+    private final PaymentEventCatcher paymentEventCatcher;
 
     public void processPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
-        log.info("process payment event: preparation for payment event processing: paymentIntentPayload: {}," +
+        log.info("Process payment event: start payment event processing: input params paymentIntentPayload: {}," +
                 "stripeSignatureHeader: {}.", paymentIntentPayload, stripeSignatureHeader);
-        Event event = paymentEventRetriever.retrievePaymentEvent(paymentIntentPayload, stripeSignatureHeader);
+        Event event = paymentEventCreator.createPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
         PaymentIntent paymentIntent = paymentEventParser.parseEventToPaymentIntent(event);
-        paymentEventHandler.handleEvent(event, paymentIntent);
+        paymentEventCatcher.catchPaymentEventType(event, paymentIntent);
+        log.info("Process payment event: event successfully processed");
     }
 
 }

@@ -15,6 +15,8 @@ import lombok.Setter;
 import lombok.Getter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.math.BigDecimal;
 
 @Getter
@@ -39,11 +41,11 @@ public class Payment {
     @Column(nullable = false, name = "items_total_price")
     private BigDecimal itemsTotalPrice;
 
-    @Column(name = "status")
+    @Column(nullable = true, name = "status")
     @Enumerated(value = EnumType.STRING)
     private PaymentStatus status;
 
-    @Column(name = "description")
+    @Column(nullable = true, name = "description")
     private String description;
 
     public boolean equals(Object obj) {
@@ -64,4 +66,10 @@ public class Payment {
         return hcb.toHashCode();
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("paymentIntentId", paymentIntentId)
+                .toString();
+    }
 }

@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class PaymentEventRetriever {
+public class PaymentEventCreator {
 
     private final StripeConfiguration stripeConfig;
 
-    public Event retrievePaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
-        log.info("retrieve payment event: preparation for payment event construct:" +
+    public Event createPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
+        log.info("Create payment event: start payment event creation:" +
                 " paymentIntentPayload: {}, stripeSignatureHeader: {}.", paymentIntentPayload, stripeSignatureHeader);
         return Webhook.constructEvent(paymentIntentPayload, stripeSignatureHeader, stripeConfig.webHookSecretKey());
     }
