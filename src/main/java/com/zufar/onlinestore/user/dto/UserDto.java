@@ -1,19 +1,19 @@
 package com.zufar.onlinestore.user.dto;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Builder
 public record UserDto(
 
-        @Nullable
         UUID userId,
 
         @NotBlank(message = "FirstName is the mandatory attribute")
@@ -24,9 +24,17 @@ public record UserDto(
         @Size(max = 55, message = "LastName length must be less than 55 characters")
         String lastName,
 
+        @NotBlank(message = "UserName is the mandatory attribute")
+        @Size(max = 55, message = "UserName length must be less than 55 characters")
+        String userName,
+
         @Email(message = "Email should be valid")
         @NotBlank(message = "Email is the mandatory attribute")
         String email,
+
+        @Email(message = "Password should be valid")
+        @NotBlank(message = "Password is the mandatory attribute")
+        String password,
 
         @Valid
         @NotNull(message = "Address is mandatory")

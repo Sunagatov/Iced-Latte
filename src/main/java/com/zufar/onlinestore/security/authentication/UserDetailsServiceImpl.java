@@ -1,23 +1,23 @@
 package com.zufar.onlinestore.security.authentication;
 
-import com.zufar.onlinestore.security.repository.UserDetailsRepository;
-
-import org.springframework.security.core.userdetails.UserDetails;
+import com.zufar.onlinestore.user.api.UserApi;
+import com.zufar.onlinestore.user.converter.UserDtoConverter;
+import com.zufar.onlinestore.user.dto.UserDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
-	private final UserDetailsRepository userDetailsRepository;
+	private final UserApi userApi;
+    private final UserDtoConverter userDtoConverter;
 
-	@Override
-	public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-		return userDetailsRepository
-				.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("User doesn't exists"));
-	}
+    @Override
+    public User loadUserByUsername(final String userName) throws UsernameNotFoundException {
+        UserDto userDto = userApi.getUserByUserName(userName);
+        return userDtoConverter.toUser(userDto);
+    }
 }

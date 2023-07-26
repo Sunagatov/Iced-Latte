@@ -25,7 +25,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "user")
-public class User {
+public class UserEntity {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -38,8 +38,14 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "user_name", nullable = false)
+    private String userName;
+
     @Column(name = "email", nullable = false)
     private String email;
+
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
@@ -51,7 +57,7 @@ public class User {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        User user = (User) o;
+        UserEntity user = (UserEntity) o;
         return new EqualsBuilder()
                 .append(userId, user.userId)
                 .isEquals();

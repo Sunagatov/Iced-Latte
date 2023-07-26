@@ -2,13 +2,14 @@ package com.zufar.onlinestore.user.endpoint;
 
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.dto.UserDto;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -24,20 +25,11 @@ public class UserEndpoint {
 
     private final UserApi userApi;
 
-    @PostMapping
-    public ResponseEntity<UserDto> saveUser(@RequestBody @Valid final UserDto saveUserRequest) {
-        log.info("Received saveUserRequest to create User - {}.", saveUserRequest);
-        UserDto userDto = userApi.saveUser(saveUserRequest);
-        log.info("The User was created");
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userDto);
-    }
-
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable("userId") final String userId) {
-        log.info("Received request to get the User with id - {}.", userId);
+        log.info("Received the request to get the User with userId - {}.", userId);
         UserDto UserDto = userApi.getUserById(UUID.fromString(userId));
-        log.info("the User with id - {} was retrieved - {}.", userId, UserDto);
+        log.info("The user with userName - {} was retrieved.", userId);
         return ResponseEntity.ok()
                 .body(UserDto);
     }

@@ -19,4 +19,11 @@ public interface UserApi {
      * @throws UserNotFoundException if there is no user in the database with the provided userId
      */
     UserDto getUserById(final UUID userId) throws UserNotFoundException;
+
+    /**
+     * @param userName the id to get a specific user
+     * @return UserDto the information about user with given userName
+     * @throws UserNotFoundException if there is no user in the database with the provided userName
+     */
+    UserDto getUserByUserName(final String userName) throws UserNotFoundException;
 }
