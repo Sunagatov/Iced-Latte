@@ -18,4 +18,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/28.07.2023.part1.create-address-table.sql
   - include:
-      file: db/changelog/version-1.0/28.07.2023.part2.create-user-details-table.sql
+      file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
+  - include:
+      file: db/changelog/version-1.0/28.07.2023.part3.create-user-details-table.sql
+  - include:
+      file: db/changelog/version-1.0/28.07.2023.part4.insert-user-details-table-data.sql
