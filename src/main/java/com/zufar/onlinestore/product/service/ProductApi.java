@@ -4,7 +4,7 @@ import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface ProductInfoService {
+public interface ProductApi {
 
-    Page<ProductResponseDto> getAllProducts(Pageable pageable);
+    Page<ProductResponseDto> getProducts(Pageable pageable);
 }

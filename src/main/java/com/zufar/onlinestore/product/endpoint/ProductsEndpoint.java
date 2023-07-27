@@ -6,7 +6,7 @@ import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
-import com.zufar.onlinestore.product.service.ProductInfoService;
+import com.zufar.onlinestore.product.service.ProductApi;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +31,7 @@ public class ProductsEndpoint {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductInfoService productInfoService;
+    private final ProductApi productInfoService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") final String id) {
@@ -51,7 +51,7 @@ public class ProductsEndpoint {
     @GetMapping
     public ResponseEntity<Page<ProductResponseDto>> getAllProducts(Pageable pageable) {
         log.info("Received request to get all ProductInfos (controller): {}", pageable);
-        Page<ProductResponseDto> productInfoCollection = productInfoService.getAllProducts(pageable);
+        Page<ProductResponseDto> productInfoCollection = productInfoService.getProducts(pageable);
         if (productInfoCollection.isEmpty()) {
             log.info("All ProductInfos are absent.");
             return ResponseEntity.notFound()
