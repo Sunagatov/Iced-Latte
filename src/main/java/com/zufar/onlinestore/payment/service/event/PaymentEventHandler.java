@@ -31,10 +31,7 @@ public class PaymentEventHandler {
             executors.stream()
                     .filter(executor -> executor.supports(event))
                     .findFirst()
-                    .ifPresentOrElse(executor -> executor.execute(paymentIntent),
-                            () -> {
-                                throw new UnsupportedScenarioExecutorException(event);
-                            });
+                    .ifPresent(executor -> executor.execute(paymentIntent));
 
             log.info("Handle payment event method: finish of handling payment event");
         }

@@ -32,20 +32,20 @@ public class Payment {
     @Column(name = "payment_id")
     private Long paymentId;
 
-    @Column(nullable = false, unique = true, name = "payment_intent_id")
+    @Column(name = "payment_intent_id", nullable = false, unique = true)
     private String paymentIntentId;
 
-    @Column(nullable = false, name = "currency")
+    @Column(name = "currency", nullable = false)
     private String currency;
 
-    @Column(nullable = false, name = "items_total_price")
+    @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;
 
-    @Column(nullable = true, name = "status")
+    @Column(name = "status", nullable = true)
     @Enumerated(value = EnumType.STRING)
     private PaymentStatus status;
 
-    @Column(nullable = true, name = "description")
+    @Column(name = "description", nullable = true)
     private String description;
 
     public boolean equals(Object obj) {
