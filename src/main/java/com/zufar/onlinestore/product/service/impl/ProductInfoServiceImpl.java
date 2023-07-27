@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.product.service.impl;
 
-import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
+import com.zufar.onlinestore.product.mapper.ProductInfoDtoConverter;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 import com.zufar.onlinestore.product.service.ProductInfoService;
@@ -22,6 +22,6 @@ public class ProductInfoServiceImpl implements ProductInfoService {
     public Page<ProductResponseDto> getAllProducts(Pageable pageable) {
         log.info("Received request to get all ProductInfos (service)");
         return productInfoRepository.findAll(pageable)
-                .map(productInfoDtoConverter::convertToRequestResponseDto);
+                .map(productInfoDtoConverter::toResponseDto);
     }
 }

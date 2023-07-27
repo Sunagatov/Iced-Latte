@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.product.endpoint;
 
-import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
+import com.zufar.onlinestore.product.mapper.ProductInfoDtoConverter;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
@@ -42,7 +42,7 @@ public class ProductsEndpoint {
             return ResponseEntity.notFound()
                     .build();
         }
-        ProductInfoDto ProductInfoDto = productInfoDtoConverter.convertToDto(ProductInfo.get());
+        ProductInfoDto ProductInfoDto = productInfoDtoConverter.toDto(ProductInfo.get());
         log.info("the ProductInfo with id - {} was retrieved - {}.", id, ProductInfoDto);
         return ResponseEntity.ok()
                 .body(ProductInfoDto);

@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.product.converter;
+package com.zufar.onlinestore.product.mapper;
 
 import com.zufar.onlinestore.product.dto.PriceDetailsDto;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductInfoDtoConverter {
 
-    public ProductInfoDto convertToDto(final ProductInfo entity) {
+    public ProductInfoDto toDto(final ProductInfo entity) {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
 
         return new ProductInfoDto(
@@ -21,7 +21,7 @@ public class ProductInfoDtoConverter {
         );
     }
 
-    public ProductInfoFullDto convertToFullDto(final ProductInfo entity) {
+    public ProductInfoFullDto toFullDto(final ProductInfo entity) {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
 
         return new ProductInfoFullDto(
@@ -34,7 +34,7 @@ public class ProductInfoDtoConverter {
         );
     }
 
-    public ProductResponseDto convertToRequestResponseDto(final ProductInfo entity) {
+    public ProductResponseDto toResponseDto(final ProductInfo entity) {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
 
         return new ProductResponseDto(
@@ -46,7 +46,7 @@ public class ProductInfoDtoConverter {
         );
     }
 
-    public ProductInfo convertToEntity(final ProductInfoFullDto dto) {
+    public ProductInfo toEntity(final ProductInfoFullDto dto) {
         return new ProductInfo(
                 dto.id(),
                 dto.name(),
