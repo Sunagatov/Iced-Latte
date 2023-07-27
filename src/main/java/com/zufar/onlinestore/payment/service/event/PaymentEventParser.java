@@ -1,10 +1,14 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.event;
 
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+/**
+ * This class is responsible for parsing payment event to payment intent object.
+ * */
 
 @Slf4j
 @Service

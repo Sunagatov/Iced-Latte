@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+/**
+ * This class is responsible for retrieving relevant payment details from database
+ * */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service

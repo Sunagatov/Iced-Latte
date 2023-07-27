@@ -1,11 +1,19 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.event;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
+import com.zufar.onlinestore.payment.service.event.PaymentEventCatcher;
+import com.zufar.onlinestore.payment.service.event.PaymentEventCreator;
+import com.zufar.onlinestore.payment.service.event.PaymentEventParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+/**
+ * This class is responsible for processing payment event to transfer it to the responsibility area
+ * of class that is engaged in catching event types.
+ * */
 
 @Slf4j
 @RequiredArgsConstructor

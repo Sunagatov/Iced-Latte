@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.event;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -7,6 +7,10 @@ import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+/**
+ * This class is responsible for payment event (stripe object) creation.
+ * */
 
 @Slf4j
 @RequiredArgsConstructor

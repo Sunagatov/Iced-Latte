@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.scenario;
 
 import com.stripe.model.PaymentIntent;
 

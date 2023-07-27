@@ -11,6 +11,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is responsible for converting passed parameters and creating based
+ * on their payment method (stripe object). Payment method is secondary object for
+ * creating and processing payment by Stripe API.
+ * */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service

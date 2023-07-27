@@ -1,14 +1,21 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.event;
 
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import com.zufar.onlinestore.payment.exception.UnexpectedPaymentStatusException;
+import com.zufar.onlinestore.payment.service.scenario.PaymentFailedScenarioHandler;
+import com.zufar.onlinestore.payment.service.scenario.PaymentScenarioHandler;
+import com.zufar.onlinestore.payment.service.scenario.PaymentSuccessfulScenarioHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
 import java.util.Objects;
+
+/**
+ * This class is responsible for catching payment event type, comparing it with existing
+ * payment statuses and based on their correspondence, calling the desired scenario handler.
+ * */
 
 @Slf4j
 @Service

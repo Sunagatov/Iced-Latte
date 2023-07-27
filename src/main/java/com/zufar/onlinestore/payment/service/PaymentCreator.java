@@ -12,6 +12,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is responsible for filling payment entity based on payment intent stripe object,
+ * saving payment entity in database and for transferring payment token, which using on the front-end
+ * and Stripe API sides to process payment.
+ * */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service

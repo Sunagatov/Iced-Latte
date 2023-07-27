@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.service.scenario;
 
 import com.stripe.model.PaymentIntent;
 import com.zufar.onlinestore.payment.entity.Payment;
@@ -8,6 +8,11 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+/**
+ * This class is responsible for handling the fail scenario and updating
+ * in database record of payment, with the relevant status and description
+ * */
 
 @Slf4j
 @AllArgsConstructor

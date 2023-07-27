@@ -6,7 +6,7 @@ import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.dto.*;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import com.zufar.onlinestore.payment.service.PaymentCreator;
-import com.zufar.onlinestore.payment.service.PaymentEventProcessor;
+import com.zufar.onlinestore.payment.service.event.PaymentEventProcessor;
 import com.zufar.onlinestore.payment.service.PaymentMethodCreator;
 import com.zufar.onlinestore.payment.service.PaymentRetriever;
 import lombok.RequiredArgsConstructor;
@@ -34,12 +34,12 @@ public class PaymentApiImpl implements PaymentApi {
     }
 
     @Override
-    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
+    public PaymentDetailsDto getPaymentDetails(final Long paymentId) throws PaymentNotFoundException {
         return paymentRetriever.getPaymentDetails(paymentId);
     }
 
     @Override
-    public void paymentEventProcess(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
+    public void paymentEventProcess(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentEventProcessor.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
     }
 }
