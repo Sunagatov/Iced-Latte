@@ -6,9 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Set;
 import java.util.UUID;
 
 @Builder
@@ -24,9 +22,9 @@ public record UserDto(
         @Size(max = 55, message = "LastName length must be less than 55 characters")
         String lastName,
 
-        @NotBlank(message = "UserName is the mandatory attribute")
-        @Size(max = 55, message = "UserName length must be less than 55 characters")
-        String userName,
+        @NotBlank(message = "Username is the mandatory attribute")
+        @Size(max = 55, message = "Username length must be less than 55 characters")
+        String username,
 
         @Email(message = "Email should be valid")
         @NotBlank(message = "Email is the mandatory attribute")

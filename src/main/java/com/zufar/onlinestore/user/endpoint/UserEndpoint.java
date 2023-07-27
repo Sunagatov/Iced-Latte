@@ -26,10 +26,10 @@ public class UserEndpoint {
     private final UserApi userApi;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable("userId") final String userId) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable final String userId) {
         log.info("Received the request to get the User with userId - {}.", userId);
         UserDto UserDto = userApi.getUserById(UUID.fromString(userId));
-        log.info("The user with userName - {} was retrieved.", userId);
+        log.info("The user with username - {} was retrieved.", userId);
         return ResponseEntity.ok()
                 .body(UserDto);
     }

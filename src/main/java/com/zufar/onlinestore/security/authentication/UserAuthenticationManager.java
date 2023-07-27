@@ -32,7 +32,7 @@ public class UserAuthenticationManager {
 	private final AuthenticationManager authenticationManager;
 
 	public AuthenticationResponse register(final RegistrationRequest request) {
-		log.info("Received registration request from {}.", request.userName());
+		log.info("Received registration request from {}.", request.username());
 
         final UserDto userDto = registrationDtoConverter.toDto(request);
         userApi.saveUser(userDto);
@@ -41,7 +41,7 @@ public class UserAuthenticationManager {
 
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
 
-        log.info("Registration was successful for {}.", request.userName());
+        log.info("Registration was successful for {}.", request.username());
 
         return AuthenticationResponse.builder()
 				.token(jwtToken)

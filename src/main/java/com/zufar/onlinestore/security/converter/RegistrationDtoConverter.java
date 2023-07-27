@@ -17,17 +17,14 @@ public class RegistrationDtoConverter {
 
     private final PasswordEncoder passwordEncoder;
 
-
     public UserDto toDto(final RegistrationRequest registrationRequest) {
-        String encodedPassword = passwordEncoder.encode(registrationRequest.password());
-
         return new UserDto(
                 null,
                 registrationRequest.firstName(),
                 registrationRequest.lastName(),
-                registrationRequest.userName(),
+                registrationRequest.username(),
                 registrationRequest.email(),
-                encodedPassword,
+                registrationRequest.password(),
                 registrationRequest.address()
         );
     }
@@ -36,7 +33,7 @@ public class RegistrationDtoConverter {
         SimpleGrantedAuthority userAuthority = new SimpleGrantedAuthority("User");
         final Set<GrantedAuthority> authorities = Set.of(userAuthority);
         return new User(
-                registrationRequest.userName(),
+                registrationRequest.username(),
                 passwordEncoder.encode(registrationRequest.password()),
                 authorities
         );

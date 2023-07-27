@@ -1,12 +1,16 @@
 package com.zufar.onlinestore.user.entity;
 
+import com.zufar.onlinestore.reservation.entity.ReservationStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -15,7 +19,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -25,7 +31,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_details")
-public class UserEntity {
+public class UserEntity implements UserDetails {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -39,7 +45,7 @@ public class UserEntity {
     private String lastName;
 
     @Column(name = "user_name", nullable = false)
-    private String userName;
+    private String username;
 
     @Column(name = "email", nullable = false)
     private String email;
@@ -50,6 +56,21 @@ public class UserEntity {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<UserGrantedAuthority> authorities;
+
+    @Column(name = "account_non_expired", nullable = false)
+    private boolean accountNonExpired;
+
+    @Column(name = "account_non_locked", nullable = false)
+    private boolean accountNonLocked;
+
+    @Column(name = "credentials_non_expired", nullable = false)
+    private boolean credentialsNonExpired;
+
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
 
     @Override
     public boolean equals(Object o) {

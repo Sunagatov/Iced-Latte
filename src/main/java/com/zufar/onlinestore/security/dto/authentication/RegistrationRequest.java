@@ -20,7 +20,7 @@ public record RegistrationRequest(
 
         @NotBlank(message = "Username is the mandatory attribute")
         @Size(max = 55, message = "Username length must be less than 55 characters")
-        String userName,
+        String username,
 
         @Email(message = "Email should be valid")
         @NotBlank(message = "Email is the mandatory attribute")
