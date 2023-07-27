@@ -7,7 +7,9 @@ import com.zufar.onlinestore.security.dto.authentication.AuthenticationRequest;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationResponse;
 
 import com.zufar.onlinestore.user.api.UserApi;
+import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -29,6 +30,7 @@ public class UserAuthenticationManager {
     private final UserApi userApi;
     private final UserDetailsService userDetailsService;
     private final RegistrationDtoConverter registrationDtoConverter;
+    private final UserDtoConverter userDtoConverter;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final AuthenticationManager authenticationManager;
 
@@ -36,10 +38,8 @@ public class UserAuthenticationManager {
 		log.info("Received registration request from {}.", request.username());
 
         final UserDto userDto = registrationDtoConverter.toDto(request);
-        userApi.saveUser(userDto);
-
-        User userDetails = registrationDtoConverter.toUser(request);
-
+        final UserDto userDtoWithId = userApi.saveUser(userDto);
+        UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
 
         log.info("Registration was successful for {}.", request.username());
