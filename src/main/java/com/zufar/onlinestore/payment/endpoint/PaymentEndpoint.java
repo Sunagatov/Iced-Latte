@@ -5,6 +5,7 @@ import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.dto.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -67,12 +68,12 @@ public class PaymentEndpoint {
 
     @PostMapping("/event")
     public ResponseEntity<Void> paymentEventsProcess(
-            @RequestBody @Valid @NotEmpty String paymentIntentPayload,
-            @RequestHeader("Stripe-Signature") @Valid @NotEmpty String stripeSignatureHeader) throws SignatureVerificationException {
+            @RequestBody @Valid @NotEmpty @NotNull String paymentIntentPayload,
+            @RequestHeader("Stripe-Signature") @Valid @NotEmpty @NotNull String stripeSignatureHeader) throws SignatureVerificationException {
         if (Objects.isNull(paymentIntentPayload) || Objects.isNull(stripeSignatureHeader)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        paymentApi.paymentEventProcess(paymentIntentPayload, stripeSignatureHeader);
+        paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
         return ResponseEntity.ok()
                 .build();

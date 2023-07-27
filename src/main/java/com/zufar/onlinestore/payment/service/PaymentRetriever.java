@@ -7,6 +7,9 @@ import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
@@ -22,6 +25,7 @@ public class PaymentRetriever {
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public PaymentDetailsDto getPaymentDetails(Long paymentId) {
         Objects.requireNonNull(paymentId);
         log.info("Get payment details: start payment details retrieve by payment id: {}.", paymentId);

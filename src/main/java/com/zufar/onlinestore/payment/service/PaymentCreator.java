@@ -11,6 +11,9 @@ import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * This class is responsible for filling payment entity based on payment intent stripe object,
@@ -28,6 +31,7 @@ public class PaymentCreator {
     private final PaymentIntentConverter paymentIntentConverter;
     private final PaymentConverter paymentConverter;
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException {
         PaymentIntent paymentIntent = paymentIntentCreator.createPaymentIntent(createPaymentDto);
         log.info("Create payment: payment intent: {} successfully created.", paymentIntent);

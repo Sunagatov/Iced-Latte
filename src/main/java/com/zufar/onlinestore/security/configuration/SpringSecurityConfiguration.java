@@ -36,6 +36,7 @@ public class SpringSecurityConfiguration {
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
+                .requestMatchers("/api/v1/payment/event").permitAll()
                 .requestMatchers(API_DOCS_URL_PREFIX).permitAll()
                 .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
                 .anyRequest().authenticated()

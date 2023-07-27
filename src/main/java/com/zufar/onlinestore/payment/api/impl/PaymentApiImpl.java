@@ -39,7 +39,7 @@ public class PaymentApiImpl implements PaymentApi {
     }
 
     @Override
-    public void paymentEventProcess(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException {
+    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentEventProcessor.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
     }
 }

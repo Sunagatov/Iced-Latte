@@ -23,5 +23,4 @@ public record StripeConfiguration(String secretKey,
     private void init() {
         Stripe.apiKey = secretKey;
     }
-
 }

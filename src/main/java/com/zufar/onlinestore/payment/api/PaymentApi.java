@@ -44,6 +44,6 @@ public interface PaymentApi {
      * @param stripeSignatureHeader this param it is a string describing of the stripe signature, which provide safe work with Stripe API webhooks mechanism
      * @throws SignatureVerificationException this exception throw then stripe signature verification problem was occurred
      * */
-    void paymentEventProcess(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException;
+    void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException;
 
 }
