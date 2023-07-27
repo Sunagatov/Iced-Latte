@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Service;
@@ -34,12 +33,17 @@ public class UserAuthenticationManager {
 
 	public AuthenticationResponse register(final RegistrationRequest request) {
 		log.info("Received registration request from {}.", request.userName());
-		final UserDto userDetails = registrationDtoConverter.toDto(request);
-        userApi.saveUser(userDetails);
-        User user = registrationDtoConverter.toUser(request);
-        final String jwtToken = jwtTokenProvider.generateToken(user);
-		log.info("Registration was successful for {}.", request.userName());
-		return AuthenticationResponse.builder()
+
+        final UserDto userDto = registrationDtoConverter.toDto(request);
+        userApi.saveUser(userDto);
+
+        User userDetails = registrationDtoConverter.toUser(request);
+
+        final String jwtToken = jwtTokenProvider.generateToken(userDetails);
+
+        log.info("Registration was successful for {}.", request.userName());
+
+        return AuthenticationResponse.builder()
 				.token(jwtToken)
 				.build();
 	}
@@ -48,9 +52,11 @@ public class UserAuthenticationManager {
 		authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
 		);
-        UserDetails user = userDetailsService.loadUserByUsername(request.getUsername());
-		var jwtToken = jwtTokenProvider.generateToken(user);
-		return AuthenticationResponse.builder()
+        var user = userDetailsService.loadUserByUsername(request.getUsername());
+
+        var jwtToken = jwtTokenProvider.generateToken(user);
+
+        return AuthenticationResponse.builder()
 				.token(jwtToken)
 				.build();
 	}

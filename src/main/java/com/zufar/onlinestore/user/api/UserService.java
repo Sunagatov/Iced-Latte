@@ -29,23 +29,11 @@ public class UserService implements UserApi {
 
     @Override
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
-        Optional<UserEntity> user = userCrudRepository.findById(userId);
-        if (user.isEmpty()) {
+        Optional<UserEntity> userEntity = userCrudRepository.findById(userId);
+        if (userEntity.isEmpty()) {
             log.warn("Failed to get the user with the userId = {}.", userId);
             throw new UserNotFoundException(userId);
         }
-        return userDtoConverter.toDto(user.get());
+        return userDtoConverter.toDto(userEntity.get());
     }
-
-    @Override
-    public UserDto getUserByUserName(final String userName) throws UserNotFoundException {
-        UserEntity user = userCrudRepository.findUserByUserName(userName);
-        if (user == null) {
-            log.warn("Failed to get the user with the userName = {}.", userName);
-            throw new UserNotFoundException(userName);
-        }
-        return userDtoConverter.toDto(user);
-    }
-
-
 }

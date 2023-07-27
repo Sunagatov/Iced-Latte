@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.UUID;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -22,8 +24,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class Address {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID addressId;
 
     @Column(name = "line", nullable = false)
     private String line;
@@ -42,21 +45,21 @@ public class Address {
             return false;
         Address address = (Address) o;
         return new EqualsBuilder()
-                .append(id, address.id)
+                .append(addressId, address.addressId)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(id)
+                .append(addressId)
                 .toHashCode();
     }
 
     @Override
     public String toString() {
         return "Address{" +
-                "id=" + id +
+                "id=" + addressId +
                 '}';
     }
 }

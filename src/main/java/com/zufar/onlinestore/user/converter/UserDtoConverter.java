@@ -4,22 +4,13 @@ import com.zufar.onlinestore.user.dto.AddressDto;
 import com.zufar.onlinestore.user.dto.UserDto;
 import com.zufar.onlinestore.user.entity.Address;
 import com.zufar.onlinestore.user.entity.UserEntity;
-
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import lombok.AllArgsConstructor;
-
-import java.util.Set;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class UserDtoConverter {
     private final AddressDtoConverter addressDtoConverter;
-    private final PasswordEncoder passwordEncoder;
 
     public UserDto toDto(final UserEntity entity) {
         AddressDto addressDto = addressDtoConverter.toDto(entity.getAddress());
@@ -43,15 +34,5 @@ public class UserDtoConverter {
                 .email(dto.email())
                 .address(address)
                 .build();
-    }
-
-    public User toUser(final UserDto dto) {
-        SimpleGrantedAuthority userAuthority = new SimpleGrantedAuthority("User");
-        final Set<GrantedAuthority> authorities = Set.of(userAuthority);
-        return new User(
-                dto.userName(),
-                passwordEncoder.encode(dto.password()),
-                authorities
-        );
     }
 }
