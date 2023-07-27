@@ -21,8 +21,8 @@ public class UserService implements UserApi {
     private final UserDtoConverter userDtoConverter;
 
     @Override
-    public UserDto saveUser(final UserDto saveUserRequest) {
-        UserEntity userEntity = userDtoConverter.toEntity(saveUserRequest);
+    public UserDto saveUser(final UserDto userDto) {
+        UserEntity userEntity = userDtoConverter.toEntity(userDto);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
         return userDtoConverter.toDto(userEntityWithId);
     }

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Service;
@@ -52,9 +53,9 @@ public class UserAuthenticationManager {
 		authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
 		);
-        var user = userDetailsService.loadUserByUsername(request.getUsername());
+        UserDetails user = userDetailsService.loadUserByUsername(request.getUsername());
 
-        var jwtToken = jwtTokenProvider.generateToken(user);
+        String jwtToken = jwtTokenProvider.generateToken(user);
 
         return AuthenticationResponse.builder()
 				.token(jwtToken)
