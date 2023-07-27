@@ -2,7 +2,7 @@ package com.zufar.onlinestore.product.endpoint;
 
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductInfoRequestResponseDto;
+import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
@@ -49,9 +49,9 @@ public class ProductsEndpoint {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductInfoRequestResponseDto>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseDto>> getAllProducts(Pageable pageable) {
         log.info("Received request to get all ProductInfos (controller): {}", pageable);
-        Page<ProductInfoRequestResponseDto> productInfoCollection = productInfoService.getAllProducts(pageable);
+        Page<ProductResponseDto> productInfoCollection = productInfoService.getAllProducts(pageable);
         if (productInfoCollection.isEmpty()) {
             log.info("All ProductInfos are absent.");
             return ResponseEntity.notFound()
