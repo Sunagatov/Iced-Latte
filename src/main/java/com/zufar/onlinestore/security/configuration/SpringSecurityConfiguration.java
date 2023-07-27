@@ -26,6 +26,7 @@ public class SpringSecurityConfiguration {
     private static final String API_AUTH_URL_PREFIX = "/api/auth/**";
     private static final String API_DOCS_URL_PREFIX = "/api/docs/**";
     public static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
+    public static final String WEBHOOK_PAYMENT_EVENT_ENDPOINT = "/api/v1/payment/event";
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthenticationFilter jwtTokenFilter;
@@ -36,7 +37,7 @@ public class SpringSecurityConfiguration {
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
-                .requestMatchers("/api/v1/payment/event").permitAll()
+                .requestMatchers(WEBHOOK_PAYMENT_EVENT_ENDPOINT).permitAll()
                 .requestMatchers(API_DOCS_URL_PREFIX).permitAll()
                 .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
                 .anyRequest().authenticated()
