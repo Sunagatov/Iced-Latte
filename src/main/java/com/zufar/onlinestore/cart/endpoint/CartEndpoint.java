@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.cart.endpoint;
 
 import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.AddNewProductToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import jakarta.validation.Valid;
@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -23,13 +25,15 @@ public class CartEndpoint {
     private final CartApi cartApi;
 
     @PostMapping(value = "/api/v1/cart/items/")
-    public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody @Valid final AddNewItemToShoppingSessionRequest request) {
-        log.warn("Received the request to add a new shoppingSessionItem with id: {} to the shoppingSession with the id = {}.",
-                request.shoppingSessionId(), request.shoppingSessionId());
+    public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody @Valid final AddNewProductToShoppingSessionRequest request) {
+        final UUID userId = request.userId();
+        final UUID productId = UUID.fromString(request.productId());
 
-        ShoppingSessionDto shoppingSessionDto = cartApi.addNewItemToShoppingSession(request);
-        log.info("ShoppingSessionItem with id={} was added to the shoppingSession with id={}",
-                request.shoppingSessionItemId(), request.shoppingSessionId());
+        log.warn("Received the request to add a new product with id: {} to the shoppingSession for the user with the id = {}.",
+                productId, userId);
+
+        ShoppingSessionDto shoppingSessionDto = cartApi.addNewProductToShoppingSession(userId, productId);
+        log.info("ShoppingSessionItem was added to the shoppingSession with id={}", shoppingSessionDto.id());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }

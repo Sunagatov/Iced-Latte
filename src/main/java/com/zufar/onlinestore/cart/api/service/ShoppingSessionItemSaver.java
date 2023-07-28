@@ -11,6 +11,8 @@ import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
+import com.zufar.onlinestore.user.api.UserApi;
+import com.zufar.onlinestore.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,18 +34,18 @@ public class ShoppingSessionItemSaver {
     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ProductInfoRepository productInfoRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
+    private final UserApi userApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto save(UUID shoppingSessionItemId, UUID shoppingSessionId, Integer productId) {
-        ShoppingSessionItem shoppingSessionItemEntity;
-        if (shoppingSessionItemId == null) {
-            shoppingSessionItemEntity = createShoppingSessionItemEntity(shoppingSessionItemId, shoppingSessionId, productId);
-        } else {
-            shoppingSessionItemEntity = getShoppingSessionItemEntityFromDatabase(shoppingSessionItemId, shoppingSessionId);
+    public ShoppingSessionDto save(UUID userId, UUID productId) {
+        UserDto userDto = userApi.getUserById(userId);
+
+        ShoppingSession shoppingSession = shoppingSessionRepository.findShoppingSessionByUserId(userId);
+        if (shoppingSession == null) {
+            ShoppingSession newShoppingSession = new ShoppingSession();
         }
-        shoppingSessionItemRepository.save(shoppingSessionItemEntity);
-        ShoppingSession updatedShoppingSessionEntity = getShoppingSessionEntityFromDatabase(shoppingSessionItemId, shoppingSessionId);
-        return shoppingSessionDtoConverter.toDto(updatedShoppingSessionEntity);
+
+      throw new UnsupportedOperationException();
     }
 
     private ShoppingSessionItem createShoppingSessionItemEntity(UUID shoppingSessionItemId, UUID shoppingSessionId, Integer productId) {

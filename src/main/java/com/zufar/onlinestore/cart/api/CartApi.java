@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.AddNewProductToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
@@ -9,6 +9,8 @@ import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProd
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.product.exception.ProductNotFoundException;
+
+import java.util.UUID;
 
 public interface CartApi {
 
@@ -23,13 +25,14 @@ public interface CartApi {
     /**
      * Enables to add a new item into the shopping session (the cart details)
      *
-     * @param addNewItemToShoppingSessionRequest the request to add a new item into the shopping session (the cart details)
+     * @param userId the userId of the user for whom we add the new product to his/her shoppingSession
+     * @param productId the productId whicn we would like to the shoppingSession of the user
      * @return ShoppingSessionDto (the cart details)
-     * @throws ShoppingSessionNotFoundException if there is no shoppingSession in the database with the provided shoppingSessionId from addNewItemToShoppingSessionRequest
-     * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewItemToShoppingSessionRequest
-     * @throws ProductNotFoundException if there is no product in the database with the provided productId from addNewItemToShoppingSessionRequest
+     * @throws ShoppingSessionNotFoundException if there is no shoppingSession in the database with the provided shoppingSessionId from addNewProductToShoppingSessionRequest
+     * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewProductToShoppingSessionRequest
+     * @throws ProductNotFoundException if there is no product in the database with the provided productId from addNewProductToShoppingSessionRequest
      * */
-    ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest addNewItemToShoppingSessionRequest)
+    ShoppingSessionDto addNewProductToShoppingSession(final UUID userId, final UUID productId)
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException;
 
     /**

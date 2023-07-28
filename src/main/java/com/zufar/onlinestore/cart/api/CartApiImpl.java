@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.api.service.ProductsQuantityItemUpdater;
 import com.zufar.onlinestore.cart.api.service.ShoppingSessionItemSaver;
-import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.AddNewProductToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
@@ -31,11 +31,8 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto addNewItemToShoppingSession(final AddNewItemToShoppingSessionRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
-        final UUID shoppingSessionItemId = request.shoppingSessionItemId();
-        final UUID shoppingSessionId = request.shoppingSessionId();
-        final Integer productId = request.productId();
-        return shoppingSessionItemSaver.save(shoppingSessionItemId, shoppingSessionId, productId);
+    public ShoppingSessionDto addNewProductToShoppingSession(final UUID userId, final UUID productId) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
+        return shoppingSessionItemSaver.save(userId, productId);
     }
 
     @Override
