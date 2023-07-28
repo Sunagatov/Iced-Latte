@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,17 +40,34 @@ public class ShoppingSessionItemSaver {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingSessionDto save(UUID userId, UUID productId) {
-        UserDto userDto = userApi.getUserById(userId);
+        userApi.getUserById(userId);
+
+        ProductInfo productInfo = productInfoRepository.findById(productId).get();
 
         ShoppingSession shoppingSession = shoppingSessionRepository.findShoppingSessionByUserId(userId);
         if (shoppingSession == null) {
-            ShoppingSession newShoppingSession = new ShoppingSession();
+            createNewShoppingSession(userId, productInfo);
         }
 
       throw new UnsupportedOperationException();
     }
 
-    private ShoppingSessionItem createShoppingSessionItemEntity(UUID shoppingSessionItemId, UUID shoppingSessionId, Integer productId) {
+    private void createNewShoppingSession(UUID userId, ProductInfo productInfo) {
+        ShoppingSessionItem newShoppingSessionItem = ShoppingSessionItem.builder()
+                .productInfo(productInfo)
+                .productsQuantity(1)
+                .build();
+
+        ShoppingSession newShoppingSession = ShoppingSession.builder()
+                .userId(userId)
+                .itemsQuantity(1)
+                .productsQuantity(1)
+                .items(Collections.singleton(newShoppingSessionItem))
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    private ShoppingSessionItem createShoppingSessionItemEntity(UUID shoppingSessionItemId, UUID shoppingSessionId, UUID productId) {
         ShoppingSession shoppingSessionEntity = getShoppingSessionEntityFromDatabase(shoppingSessionItemId, shoppingSessionId);
         ProductInfo productInfo = getProductInfoEntityFromDatabase(productId);
 
@@ -69,11 +88,11 @@ public class ShoppingSessionItemSaver {
         return shoppingSession.get();
     }
 
-    private ProductInfo getProductInfoEntityFromDatabase(final Integer productId) {
+    private ProductInfo getProductInfoEntityFromDatabase(final UUID productId) {
         Optional<ProductInfo> productInfo = productInfoRepository.findById(productId);
         if (productInfo.isEmpty()) {
             log.warn("Failed to add a new shoppingSessionItem to the shoppingSession because the product with the id = {} is absent", productId);
-            throw new ProductNotFoundException(productId);
+//            throw new ProductNotFoundException(productId);
         }
         return productInfo.get();
     }
