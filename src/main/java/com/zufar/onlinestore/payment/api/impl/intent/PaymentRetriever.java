@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.api.impl.intent;
 
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;

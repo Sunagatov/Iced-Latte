@@ -2,10 +2,10 @@ package com.zufar.onlinestore.payment.api.impl;
 
 import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.dto.*;
-import com.zufar.onlinestore.payment.service.PaymentCreator;
-import com.zufar.onlinestore.payment.service.event.PaymentEventProcessor;
-import com.zufar.onlinestore.payment.service.PaymentMethodCreator;
-import com.zufar.onlinestore.payment.service.PaymentRetriever;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentCreator;
+import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentMethodCreator;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentRetriever;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

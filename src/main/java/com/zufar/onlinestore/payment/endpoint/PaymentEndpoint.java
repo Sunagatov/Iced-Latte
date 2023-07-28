@@ -39,7 +39,7 @@ public class PaymentEndpoint {
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull Long paymentId) {
+    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull final Long paymentId) {
         PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
         if (Objects.isNull(retrievedPayment)) {
             log.info("Get payment details: not found payment details by id: {}.", paymentId);
@@ -65,8 +65,8 @@ public class PaymentEndpoint {
 
     @PostMapping("/event")
     public ResponseEntity<Void> paymentEventsProcess(
-            @RequestBody @Valid @NotEmpty @NotNull String paymentIntentPayload,
-            @RequestHeader("Stripe-Signature") @Valid @NotEmpty @NotNull String stripeSignatureHeader) {
+            @RequestBody @Valid @NotEmpty @NotNull final String paymentIntentPayload,
+            @RequestHeader("Stripe-Signature") @Valid @NotEmpty @NotNull final String stripeSignatureHeader) {
         if (Objects.isNull(paymentIntentPayload) || Objects.isNull(stripeSignatureHeader)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

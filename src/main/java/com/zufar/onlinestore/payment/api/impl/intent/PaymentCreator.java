@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.api.impl.intent;
 
 import com.stripe.model.PaymentIntent;
 import com.zufar.onlinestore.payment.converter.PaymentIntentConverter;

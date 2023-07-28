@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service.event;
+package com.zufar.onlinestore.payment.api.impl.event;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;

@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.api.impl.intent;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;

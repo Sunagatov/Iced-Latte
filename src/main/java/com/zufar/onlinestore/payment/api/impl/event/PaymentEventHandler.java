@@ -1,8 +1,8 @@
-package com.zufar.onlinestore.payment.service.event;
+package com.zufar.onlinestore.payment.api.impl.event;
 
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.zufar.onlinestore.payment.service.scenario.PaymentScenarioExecutor;
+import com.zufar.onlinestore.payment.api.impl.scenario.PaymentScenarioExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
