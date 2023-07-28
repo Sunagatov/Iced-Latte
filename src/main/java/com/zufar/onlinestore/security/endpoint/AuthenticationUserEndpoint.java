@@ -3,8 +3,8 @@ package com.zufar.onlinestore.security.endpoint;
 import com.zufar.onlinestore.security.authentication.UserAuthenticationManager;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationRequest;
 import com.zufar.onlinestore.security.dto.authentication.AuthenticationResponse;
-import com.zufar.onlinestore.security.dto.authentication.RegisterRequest;
 
+import com.zufar.onlinestore.security.dto.authentication.RegistrationRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +28,7 @@ public class AuthenticationUserEndpoint {
 	private final UserAuthenticationManager userAuthenticationManager;
 
 	@PostMapping("/register")
-	public ResponseEntity<AuthenticationResponse> register(@RequestBody @NotNull @Valid final RegisterRequest request) {
+	public ResponseEntity<AuthenticationResponse> register(@RequestBody @NotNull @Valid final RegistrationRequest request) {
 		AuthenticationResponse authenticationResponse = userAuthenticationManager.register(request);
 		return ResponseEntity
 				.ok(authenticationResponse);
