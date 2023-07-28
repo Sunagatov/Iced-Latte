@@ -1,14 +1,14 @@
 package com.zufar.onlinestore;
 
+import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@EnableMongoRepositories
-@EnableMongoAuditing
 @SpringBootApplication
+@EnableConfigurationProperties(StripeConfiguration.class)
 public class OnlineStoreApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(OnlineStoreApplication.class, args);
     }

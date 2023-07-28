@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,20 +13,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.11.106</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>software.amazon.awssdk</groupId>
-                <artifactId>bom</artifactId>
-                <version>2.17.230</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-bom</artifactId>
@@ -41,7 +27,7 @@
     <artifactId>online-store</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Online Store</name>
-    <description>AWS Microservice for learning purpose</description>
+    <description>Online-store project for learning purpose</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -51,25 +37,28 @@
         <maven.compiler.target>17</maven.compiler.target>
         <slf4j-api.version>2.0.5</slf4j-api.version>
         <jackson-databind.version>2.14.0</jackson-databind.version>
-        <dynamodb-enhanced.version>2.19.8</dynamodb-enhanced.version>
         <modelmapper.version>3.1.1</modelmapper.version>
         <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
         <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
-        <junit-jupiter.version>5.9.0</junit-jupiter.version>
+        <junit-jupiter.version>5.9.2</junit-jupiter.version>
         <jackson-core.version>2.14.0</jackson-core.version>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
-        <swagger-core-version>2.2.6</swagger-core-version>
-        <version.keycloak>19.0.3</version.keycloak>
-        <spring-cloud-aws-messaging.version>2.4.2</spring-cloud-aws-messaging.version>
+        <swagger-core-version>2.2.8</swagger-core-version>
+        <version.keycloak>21.0.1</version.keycloak>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
-        <logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
+        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
+        <spring-boot-maven-plugin.version>3.1.0</spring-boot-maven-plugin.version>
+        <postgresql.version>42.6.0</postgresql.version>
+        <liquibase.verson>4.23.0</liquibase.verson>
+        <stripe.version>22.15.0</stripe.version>
+        <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
     </properties>
     <dependencies>
 
@@ -146,10 +135,6 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
 
         <!--  JWT dependencies -->
         <dependency>
@@ -188,7 +173,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- jackson dependencies -->
+        <!-- Jackson dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -200,44 +185,42 @@
             <version>${jackson-databind.version}</version>
         </dependency>
 
-        <!-- AWS dependencies -->
-        <dependency>
-            <groupId>io.awspring.cloud</groupId>
-            <artifactId>spring-cloud-aws-messaging</artifactId>
-            <version>${spring-cloud-aws-messaging.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-sqs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-dynamodb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>dynamodb-enhanced</artifactId>
-            <version>${dynamodb-enhanced.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>kms</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>dynamodb</artifactId>
-        </dependency>
+        <!-- Database dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.verson}</version>
+        </dependency>
+
+        <!-- Stripe Api -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>${stripe.version}</version>
+        </dependency>
+
+        <!-- Apache Commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${apache-commons-lang3.version}</version>
+        </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.0.0</version>
                 <configuration>
                     <excludes>
                         <exclude>
