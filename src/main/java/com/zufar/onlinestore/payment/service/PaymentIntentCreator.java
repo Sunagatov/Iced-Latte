@@ -7,6 +7,7 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.converter.PaymentIntentConverter;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
+import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,13 +26,18 @@ public class PaymentIntentCreator {
     private final StripeConfiguration stripeConfig;
     private final PaymentIntentConverter paymentIntentConverter;
 
-    public PaymentIntent createPaymentIntent(final CreatePaymentDto createPaymentDto) throws StripeException {
+    public PaymentIntent createPaymentIntent(final CreatePaymentDto createPaymentDto) {
         Stripe.apiKey = stripeConfig.secretKey();
 
         PaymentIntentCreateParams params = paymentIntentConverter.toPaymentIntentParams(createPaymentDto);
         log.info("Create payment intent: payment intent params: {} for creation.", params);
 
-        return PaymentIntent.create(params);
+        try {
+            return PaymentIntent.create(params);
+        } catch (StripeException ex) {
+            log.error("Error during Payment processing", ex);
+            throw new PaymentIntentProcessingException(params.getPaymentMethod());
+        }
     }
 
 }

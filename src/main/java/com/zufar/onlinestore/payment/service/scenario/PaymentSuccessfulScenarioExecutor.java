@@ -2,11 +2,8 @@ package com.zufar.onlinestore.payment.service.scenario;
 
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

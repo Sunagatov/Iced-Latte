@@ -2,7 +2,6 @@ package com.zufar.onlinestore.payment.service.event;
 
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.zufar.onlinestore.payment.exception.UnsupportedScenarioExecutorException;
 import com.zufar.onlinestore.payment.service.scenario.PaymentScenarioExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

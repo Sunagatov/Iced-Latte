@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.payment.service;
 
-import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.zufar.onlinestore.payment.converter.PaymentIntentConverter;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
@@ -32,7 +31,7 @@ public class PaymentCreator {
     private final PaymentConverter paymentConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException {
+    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) {
         PaymentIntent paymentIntent = paymentIntentCreator.createPaymentIntent(createPaymentDto);
         log.info("Create payment: payment intent: {} successfully created.", paymentIntent);
         String paymentToken = paymentIntent.getClientSecret();
