@@ -25,7 +25,7 @@ public class PaymentSuccessfulScenarioExecutor implements PaymentScenarioExecuto
 
     private final PaymentRepository paymentRepository;
 
-    private static final PaymentStatus paymentStatus = PaymentStatus.PAYMENT_IS_SUCCEEDED;;
+    private static final PaymentStatus paymentStatus = PaymentStatus.PAYMENT_IS_SUCCEEDED;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void execute(PaymentIntent paymentIntent) {
