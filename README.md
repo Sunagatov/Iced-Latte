@@ -1,6 +1,6 @@
 # Online-Store
 * Rest API which simulates the work of an online store. <br />
-* Based on AWS Services and Spring Boot ecosystem technologies. <br />
+* Based on Spring Boot ecosystem technologies and PostgreSQL database. <br />
 * Created for learning purposes. 
 
 ## Prerequisites
@@ -17,12 +17,7 @@
   * JWT
   * TLS
 * Databases
-  * Mongo DB
-  * AWS Dynamo DB
-* Queues
-  * AWS SQS
-* Topics
-  * AWS SNS
+  * PostgreSQL
 * Containerisation
   * Docker
 * Monitoring
@@ -31,8 +26,7 @@
   * Kibana
   * Filebeat
 * Logging
-  * Slf4j
-  * Logback
+  * Log4j2
   
 ## Getting the project up and running
 Get project running by
