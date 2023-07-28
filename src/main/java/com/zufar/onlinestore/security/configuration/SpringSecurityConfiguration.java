@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.security.configuration;
 
-import com.zufar.onlinestore.security.authentication.UserDetailsServiceImpl;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationFilter;
 
 import org.springframework.context.annotation.Bean;
@@ -12,6 +11,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,11 +28,9 @@ public class SpringSecurityConfiguration {
     public static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
     public static final String WEBHOOK_PAYMENT_EVENT_ENDPOINT = "/api/v1/payment/event";
 
-    private final UserDetailsServiceImpl userDetailsService;
-    private final JwtAuthenticationFilter jwtTokenFilter;
-
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
+                                                   final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
         return httpSecurity
                 .csrf().disable()
                 .authorizeHttpRequests()
@@ -49,7 +47,7 @@ public class SpringSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
@@ -59,7 +57,7 @@ public class SpringSecurityConfiguration {
     @Bean
     public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
                                                        final PasswordEncoder passwordEncoder,
-                                                       final UserDetailsServiceImpl userDetailService) throws Exception {
+                                                       final UserDetailsService userDetailService) throws Exception {
         return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class)
                 .userDetailsService(userDetailService)
                 .passwordEncoder(passwordEncoder)
