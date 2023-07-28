@@ -1,10 +1,7 @@
 package com.zufar.onlinestore.common.exception;
 
-import com.zufar.onlinestore.common.ApiResponse;
-import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
+import com.zufar.onlinestore.common.ErrorApiResponse;
+import com.zufar.onlinestore.payment.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -37,57 +34,73 @@ public class GlobalExceptionHandler {
 
     private String resolveErrorMessage(ObjectError error) {
         String errorMessage = error.getDefaultMessage();
-        return (errorMessage == null || errorMessage.isBlank()) ? ERROR_MESSAGE_IS_EMPTY.getMessage() : errorMessage;
+        return (errorMessage == null || errorMessage.isBlank()) ? ERROR_MESSAGE_IS_EMPTY.getDescription() : errorMessage;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleHttpMessageNotReadableException() {
         var errors = new HashMap<String, String>();
-        errors.put(REQUEST_BODY_ERROR.getCause(), REQUEST_BODY_ERROR.getMessage());
+        errors.put(REQUEST_BODY_ERROR.getCause(), REQUEST_BODY_ERROR.getDescription());
         return errors;
     }
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
-        log.error(PAYMENT_NOT_FOUND_ERROR.getMessage(), exception);
-        return ApiResponse.builder()
-                .data(exception.getMessage())
-                .success(false)
+    public ErrorApiResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
+        String message = exception.getMessage();
+        log.error("Handle payment not found exception: failed: exception = {}", message);
+        return ErrorApiResponse.builder()
+                .message(exception.getMessage())
+                .description(PAYMENT_NOT_FOUND_ERROR.getDescription())
                 .time(Instant.now())
                 .build();
     }
 
     @ExceptionHandler(PaymentEventProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
-        log.error(PAYMENT_EVENT_PROCESSING_ERROR.getMessage(), exception);
-        return ApiResponse.builder()
-                .data(exception.getMessage())
-                .success(false)
+    public ErrorApiResponse handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
+        String message = exception.getMessage();
+        log.error("Handle payment event processing exception: failed: exception = {}", message);
+        return ErrorApiResponse.builder()
+                .message(exception.getMessage())
+                .description(PAYMENT_EVENT_PROCESSING_ERROR.getDescription())
                 .time(Instant.now())
                 .build();
     }
 
     @ExceptionHandler(PaymentIntentProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse handlePaymentIntentProcessingException(final PaymentIntentProcessingException exception) {
-        log.error(PAYMENT_INTENT_PROCESSING_ERROR.getMessage(), exception);
-        return ApiResponse.builder()
-                .data(exception.getMessage())
-                .success(false)
+    public ErrorApiResponse handlePaymentIntentProcessingException(final PaymentIntentProcessingException exception) {
+        String message = exception.getMessage();
+        log.error("Handle payment intent processing exception: failed: exception = {}", message);
+        return ErrorApiResponse.builder()
+                .message(exception.getMessage())
+                .description(PAYMENT_INTENT_PROCESSING_ERROR.getDescription())
                 .time(Instant.now())
                 .build();
     }
 
     @ExceptionHandler(PaymentMethodProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse handlePaymentMethodProcessingException(final PaymentMethodProcessingException exception) {
-        log.error(PAYMENT_METHOD_PROCESSING_ERROR.getMessage(), exception);
-        return ApiResponse.builder()
-                .data(exception.getMessage())
-                .success(false)
+    public ErrorApiResponse handlePaymentMethodProcessingException(final PaymentMethodProcessingException exception) {
+        String message = exception.getMessage();
+        log.error("Handle payment method processing exception: failed: exception = {}", message);
+        return ErrorApiResponse.builder()
+                .message(exception.getMessage())
+                .description(PAYMENT_METHOD_PROCESSING_ERROR.getDescription())
+                .time(Instant.now())
+                .build();
+    }
+
+    @ExceptionHandler(PaymentEventParsingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorApiResponse handlePaymentEventParsingException(final PaymentEventParsingException exception) {
+        String message = exception.getMessage();
+        log.error("Handle payment event parsing exception: failed: exception = {}", message);
+        return ErrorApiResponse.builder()
+                .message(exception.getMessage())
+                .description(PAYMENT_EVENT_PARSING_ERROR.getDescription())
                 .time(Instant.now())
                 .build();
     }

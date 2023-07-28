@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import java.util.Objects;
-
 @Slf4j
 @Validated
 @RequiredArgsConstructor
@@ -41,13 +39,7 @@ public class PaymentEndpoint {
     @GetMapping("/{paymentId}")
     public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull final Long paymentId) {
         PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
-        if (Objects.isNull(retrievedPayment)) {
-            log.info("Get payment details: not found payment details by id: {}.", paymentId);
-            return ResponseEntity.notFound()
-                    .build();
-        }
         log.info("Get payment details: payment details: {} successfully retrieved.", retrievedPayment);
-
         return ResponseEntity.ok()
                 .body(retrievedPayment);
     }
@@ -65,13 +57,9 @@ public class PaymentEndpoint {
 
     @PostMapping("/event")
     public ResponseEntity<Void> paymentEventsProcess(
-            @RequestBody @Valid @NotEmpty @NotNull final String paymentIntentPayload,
-            @RequestHeader("Stripe-Signature") @Valid @NotEmpty @NotNull final String stripeSignatureHeader) {
-        if (Objects.isNull(paymentIntentPayload) || Objects.isNull(stripeSignatureHeader)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+            @RequestBody @Valid @NotEmpty final String paymentIntentPayload,
+            @RequestHeader("Stripe-Signature") @Valid @NotEmpty final String stripeSignatureHeader) {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
-
         return ResponseEntity.ok()
                 .build();
     }

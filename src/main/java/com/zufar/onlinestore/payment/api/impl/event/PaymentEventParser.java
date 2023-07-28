@@ -3,6 +3,7 @@ package com.zufar.onlinestore.payment.api.impl.event;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
+import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,6 @@ public class PaymentEventParser {
         return dataObjectDeserializer.getObject()
                 .filter(PaymentIntent.class::isInstance)
                 .map(PaymentIntent.class::cast)
-                .orElse(new PaymentIntent());
+                .orElseThrow(PaymentEventParsingException::new);
     }
 }

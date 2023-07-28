@@ -17,11 +17,13 @@ public enum ErrorMessage {
 
     PAYMENT_EVENT_PROCESSING_ERROR("Error", "Failed to Process a Payment Event"),
 
-    PAYMENT_METHOD_PROCESSING_ERROR("Error", "Failed to Process a Payment Method");
+    PAYMENT_METHOD_PROCESSING_ERROR("Error", "Failed to Process a Payment Method"),
+
+    PAYMENT_EVENT_PARSING_ERROR("Error", "Failed to Parse a Payment Event");
 
 
     private final String cause;
 
-    private final String message;
+    private final String description;
 
 }
