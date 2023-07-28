@@ -2,20 +2,20 @@
 
 ## 1. Get the shopping session (the cart info)
 
-### HTTP GET .../api/v1/cart/{shoppingSessionId}
+### HTTP GET .../api/v1/users/{userId}/cart/
 
 **Summary:**  
 Returns the shopping session (the cart info).
 
 **Description:**
 
-This API receives a JSON object containing a shoppingSessionId. Returns the shopping session (the cart info).
+This API receives userId as the url query attribute. Returns the shopping session (the cart info).
 
 ### Request:
 
 | Parameter | In | Type  | Required | Description                                            |
 |-----------|----|-------|----------|--------------------------------------------------------|
-| shoppingSessionId   | url query attribute | string | true | The identifier of the cart |
+| userId   | url query attribute | string | true | The identifier of the user |
 
 ### Responses:
 
@@ -29,16 +29,17 @@ If the client sends an valid request, 200 HTTP OK and ShoppingSession as HTTP re
 |---------------|------------|----------|--------------------------------|
 | shoppingSessionId   | string    | true     | The identifier of the shopping session (the cart info)   |
 | itemsQuantity | integer   | true     | The quantity of items          |
-| totalPrice    | number    | true     | The total price of all items   |
+| productsQuantity | integer   | true     | The quantity of products         |
+| createdAt    | timestamp    | true     | The time when shoppingSession was created at   |
+| closedAt    | timestamp    | true     | The time when shoppingSession was closed at  |
 | items      | item list | true     | The item list                  |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| shoppingSessionItemId                 | integer   | true     | The identifier of the item    |
+| shoppingSessionItemId  | integer   | true     | The identifier of the item    |
 | productsQuantity   | integer   | true     | The quantity of products      |
-| totalProductsPrice | integer   | true     | The total products price      |
 | productInfo            | integer   | true     | The product info       |
 
 **Response Example:**
@@ -47,7 +48,9 @@ If the client sends an valid request, 200 HTTP OK and ShoppingSession as HTTP re
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "itemsQuantity": "2",
-    "totalPrice": "3200",
+    "productsQuantity": "5",
+    "createdAt": "2023-06-04 18:24:54",
+    "closedAt": "2023-06-05 00:00:00",
     "items": [
         {
             "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
@@ -69,34 +72,6 @@ If the client sends an valid request, 200 HTTP OK and ShoppingSession as HTTP re
 }
 ```
 
-**400 Bad Request**
-
-If the client sends an invalid request, a 400 Bad Request should be returned.
-
-| Parameter | Type      | Required | Description                                         |
-|-----------|-----------|----------|-----------------------------------------------------|
-| message | string    | true | Error message indicating the reason for the failure |
-| timestamp | timestamp | true | Indicating the failure time                        |
-| code | integer   | true | Error code    |
-
-**Response Examples:**
-
-```json
-{
-    "message": "The 'shoppingSessionId' cannot be empty.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 12 // TODO Create errorCode hierachy
-}
-```
-
-```json
-{
-    "message": "Invalid 'shoppingSessionId' value.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 13 // TODO Create errorCode hierachy
-}
-```
-
 --------------------------------------------------------------------------
 
 ## 2. Add a new item to the cart
@@ -104,19 +79,19 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 ### HTTP POST .../api/v1/cart/items/ 
 
 **Summary:**  
-Returns 200 OK as the confirmation of adding a new item to the cart.
+Returns 200 OK and the updated shoppingSession (the cart) as the confirmation of adding a new product to the cart.
 
 **Description:**
 
-This API receives a JSON object containing a shoppingSessionId and an itemId. Returns 200 OK as the confirmation of
-adding a new item to the cart.
+This API receives a JSON object containing a shoppingSessionId and an productId. Returns 200 OK and the updated 
+shoppingSession (the cart) as the confirmation of adding a new product to the cart.
 
 ### Request:
 
 | Parameter | In | Type  | Required | Description                 |
 |-----------|----|-------|----------|-----------------------------|
-| shoppingSessionId | body | string | true | The identifier of the cart |
-| shoppingSessionItemId | body | string | true | The identifier of the item |
+| userId | body | string | true | The identifier of the user |
+| productId | body | string | true | The identifier of the product |
 
 **Request Example:**
 
@@ -124,8 +99,8 @@ POST /cart/items/
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
-    "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
+    "userId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
+    "productId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd"
 }
 ```
 
@@ -137,21 +112,22 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
 
 ### ShoppingSession
 
-| Parameter          | Type      | Required | Description                   |
-|--------------------|-----------|----------|-------------------------------|
-| shoppingSessionId                 | string    | true     | The identifier of the shopping session (the cart info)   |
-| itemsQuantity      | integer   | true     | The quantity of items          |
-| totalPrice         | number    | true     | The total price of all items |
-| items           | item list | true     | The item list                |
+| Parameter     | Type      | Required | Description                    |
+|---------------|------------|----------|--------------------------------|
+| shoppingSessionId   | string    | true     | The identifier of the shopping session (the cart info)   |
+| itemsQuantity | integer   | true     | The quantity of items          |
+| productsQuantity | integer   | true     | The quantity of products         |
+| createdAt    | timestamp    | true     | The time when shoppingSession was created at   |
+| closedAt    | timestamp    | true     | The time when shoppingSession was closed at  |
+| items      | item list | true     | The item list                  |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| shoppingSessionItemId                 | integer   | true     | The identifier of the item    |
+| shoppingSessionItemId  | integer   | true     | The identifier of the item    |
 | productsQuantity   | integer   | true     | The quantity of products      |
-| totalProductsPrice | integer   | true     | The total products price      |
-| productInfo          | integer   | true     | The product description       |
+| productInfo            | integer   | true     | The product info       |
 
 **Response Example:**
 
@@ -159,14 +135,16 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "itemsQuantity": "2",
-    "totalPrice": "3200",
+    "productsQuantity": "5",
+    "createdAt": "2023-06-04 18:24:54",
+    "closedAt": "2023-06-05 00:00:00",
     "items": [
         {
             "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
             "productsQuantity": "2",
             "totalProductsPrice": "1500",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         },
         {
@@ -174,54 +152,10 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
             "productsQuantity": "3",
             "totalProductsPrice": "1700",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         }
     ]
-}
-```
-
-**400 Bad Request**
-
-If the client sends an invalid request, a 400 Bad Request should be returned.
-
-| Parameter | Type      | Required | Description                                         |
-|-----------|-----------|----------|-----------------------------------------------------|
-| message | string    | true | Error message indicating the reason for the failure. |
-| timestamp | timestamp | true | Indicating the failure time.                        |
-| code | integer   | true | Error code.    |
-
-**Response Examples:**
-
-```json
-{
-    "message": "The 'shoppingSessionId' cannot be empty",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 12 // TODO Create errorCode hierachy
-}
-```
-
-```json
-{
-    "message": "Invalid 'shoppingSessionId' value",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 14 // TODO Create errorCode hierachy
-}
-```
-
-```json
-{
-    "message": "The 'itemId' cannot be empty",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 15 // TODO Create errorCode hierachy
-}
-```
-
-```json
-{
-    "message": "Invalid 'itemId' value",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 16 // TODO Create errorCode hierachy
 }
 ```
 
@@ -271,21 +205,22 @@ If the client sends a valid request, 200 HTTP OK and updated ShoppingSession as 
 
 ### ShoppingSession
 
-| Parameter          | Type      | Required | Description                   |
-|--------------------|-----------|----------|-------------------------------|
-| shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsQuantity      | integer   | true | The quantity of items          |
-| totalPrice         | number    | true | The total price of all items |
-| items           | item list | true | The item list                |
+| Parameter     | Type      | Required | Description                    |
+|---------------|------------|----------|--------------------------------|
+| shoppingSessionId   | string    | true     | The identifier of the shopping session (the cart info)   |
+| itemsQuantity | integer   | true     | The quantity of items          |
+| productsQuantity | integer   | true     | The quantity of products         |
+| createdAt    | timestamp    | true     | The time when shoppingSession was created at   |
+| closedAt    | timestamp    | true     | The time when shoppingSession was closed at  |
+| items      | item list | true     | The item list                  |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| shoppingSessionItemId             | integer   | true | The identifier of the item    |
-| productsQuantity     | integer   | true | The quantity of products      |
-| totalProductsPrice | integer   | true | The total products price     |
-| productInfo          | integer   | true | The product description       |
+| shoppingSessionItemId  | integer   | true     | The identifier of the item    |
+| productsQuantity   | integer   | true     | The quantity of products      |
+| productInfo            | integer   | true     | The product info       |
 
 **Response Example:**
 
@@ -293,14 +228,16 @@ If the client sends a valid request, 200 HTTP OK and updated ShoppingSession as 
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "itemsQuantity": "2",
-    "totalPrice": "3200",
+    "productsQuantity": "5",
+    "createdAt": "2023-06-04 18:24:54",
+    "closedAt": "2023-06-05 00:00:00",
     "items": [
         {
             "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
             "productsQuantity": "2",
             "totalProductsPrice": "1500",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         },
         {
@@ -308,54 +245,10 @@ If the client sends a valid request, 200 HTTP OK and updated ShoppingSession as 
             "productsQuantity": "3",
             "totalProductsPrice": "1700",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         }
     ]
-}
-```
-
-**400 Bad Request**
-
-If the client sends an invalid request, a 400 Bad Request should be returned.
-
-| Parameter | Type      | Required | Description                                         |
-|-----------|-----------|----------|-----------------------------------------------------|
-| message | string    | true | Error message indicating the reason for the failure. |
-| timestamp | timestamp | true | Indicating the failure time.                        |
-| code | integer   | true | Error code.    |
-
-**Response Examples:**
-
-```json
-{
-    "message": "The 'shoppingSessionId' cannot be empty.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 12
-}
-```
-
-```json
-{
-    "message": "Invalid 'shoppingSessionId' value.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 13
-}
-```
-
-```json
-{
-    "message": "The 'items' cannot be empty.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 14
-}
-```
-
-```json
-{
-    "message": "Invalid 'items' value.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 15
 }
 ```
 
@@ -363,21 +256,23 @@ If the client sends an invalid request, a 400 Bad Request should be returned.
 
 ## 4. Update the amount of the specified item products in the cart
 
-### PATCH POST .../api/v1/cart/{shoppingSessionId}/items/{itemId}/amount
+### PATCH POST .../api/v1/cart/items/{itemId}/amount
 
 **Summary:**  
-Returns 200 OK as the confirmation of changing The amount of the specified item products in the cart
+Returns 200 OK and the updated shoppingSession (the cart) 
+as the confirmation of updating the amount of the specified item products in the cart
 
 **Description:**
 
-This API receives a JSON object containing a shoppingSessionId, an itemId and the change of products amount in the item.
-Returns 200 OK as the confirmation of changing The amount of the specified item products in the cart
+This API receives a JSON object containing a userId, an itemId and the change of products amount in the item.
+Returns 200 OK and the updated shoppingSession (the cart)
+as the confirmation of updating the amount of the specified item products in the cart
 
 ### Request:
 
 | Parameter         | In | Type  | Required | Description                                            |
 |-------------------|----|-------|----------|--------------------------------------------------------|
-| shoppingSessionId | url query attribute | string | true | The identifier of the cart                            |
+| userId | body| string | true | The identifier of the user                            |
 | shoppingSessionItemId   | url query attribute | string | true | The identifier of the item                            |
 | productsQuantityChange     | body | string | true | The amount of the specified item products in the cart |
 
@@ -387,7 +282,7 @@ PATCH .../api/v1/cart/items/{itemId}/amount
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
+    "userId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
     "productsQuantityChange": "-1"
 }
@@ -395,7 +290,7 @@ PATCH .../api/v1/cart/items/{itemId}/amount
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
+    "userId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
     "productsQuantityChange": "-7"
 }
@@ -403,7 +298,7 @@ PATCH .../api/v1/cart/items/{itemId}/amount
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
+    "userId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
     "productsQuantityChange": "+1"
 }
@@ -411,7 +306,7 @@ PATCH .../api/v1/cart/items/{itemId}/amount
 
 ```json
 {
-    "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
+    "userId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
     "productsQuantityChange": "+6"
 }
@@ -425,36 +320,39 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
 
 ### ShoppingSession
 
-| Parameter          | Type      | Required | Description                   |
-|--------------------|-----------|----------|-------------------------------|
-| shoppingSessionId  | string    | true | The identifier of the shopping session (the cart info)   |
-| itemsQuantity        | integer   | true | The quantity of items          |
-| totalPrice         | number    | true | The total price of all items |
-| items           | item list | true | The item list                |
+| Parameter     | Type      | Required | Description                    |
+|---------------|------------|----------|--------------------------------|
+| shoppingSessionId   | string    | true     | The identifier of the shopping session (the cart info)   |
+| itemsQuantity | integer   | true     | The quantity of items          |
+| productsQuantity | integer   | true     | The quantity of products         |
+| createdAt    | timestamp    | true     | The time when shoppingSession was created at   |
+| closedAt    | timestamp    | true     | The time when shoppingSession was closed at  |
+| items      | item list | true     | The item list                  |
 
 ### Item
 
 | Parameter          | Type      | Required | Description                   |
 |--------------------|-----------|----------|-------------------------------|
-| shoppingSessionItemId             | integer   | true | The identifier of the item    |
-| productsQuantity     | integer   | true | The quantity of products      |
-| totalProductsPrice | integer   | true | The total products price     |
-| productInfo          | integer   | true | The product description       |
+| shoppingSessionItemId  | integer   | true     | The identifier of the item    |
+| productsQuantity   | integer   | true     | The quantity of products      |
+| productInfo            | integer   | true     | The product info       |
 
-**Response Example:** 
+**Response Example:**
 
 ```json
 {
     "shoppingSessionId": "fddfgd-fdgdfgdfh-hdfhdfh-436346dfhd-hdfhdf",
     "itemsQuantity": "2",
-    "totalPrice": "3200",
+    "productsQuantity": "5",
+    "createdAt": "2023-06-04 18:24:54",
+    "closedAt": "2023-06-05 00:00:00",
     "items": [
         {
             "shoppingSessionItemId": "463463gfd-436fdhtgery3-hdhgdfghdgh46-hdhdghd",
             "productsQuantity": "2",
             "totalProductsPrice": "1500",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         },
         {
@@ -462,53 +360,9 @@ If the client sends an valid request, 200 HTTP OK and updated ShoppingSession as
             "productsQuantity": "3",
             "totalProductsPrice": "1700",
             "productInfo": {
-                "productData": "productData"
+                "productInfo": "productData"
             }
         }
     ]
-}
-```
-
-**400 Bad Request**
-
-If the client sends an invalid request, a 400 Bad Request should be returned.
-
-| Parameter | Type      | Required | Description                                         |
-|-----------|-----------|----------|-----------------------------------------------------|
-| message | string    | true | Error message indicating the reason for the failure. |
-| timestamp | timestamp | true | Indicating the failure time.                        |
-| code | integer   | true | Error code.    |
-
-**Response Examples:**
-
-```json
-{
-    "message": "The 'shoppingSessionId' cannot be empty.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 12
-}
-```
-
-```json
-{
-    "message": "Invalid 'shoppingSessionId' value.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 13
-}
-```
-
-```json
-{
-    "message": "The 'itemId' cannot be empty.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 14
-}
-```
-
-```json
-{
-    "message": "Invalid 'itemId' value.",
-    "timestamp": "2023-06-04 18:24:54",
-    "code": 15
 }
 ```
