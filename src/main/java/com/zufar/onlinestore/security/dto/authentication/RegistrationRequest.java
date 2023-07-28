@@ -26,7 +26,8 @@ public record RegistrationRequest(
         @NotBlank(message = "Email is the mandatory attribute")
         String email,
 
-        @NotBlank(message = "Email is the mandatory attribute")
+        @NotBlank(message = "Password is the mandatory attribute")
+        @Size(max = 55, message = "Password length must be less than 55 characters")
         String password,
 
         @Valid
