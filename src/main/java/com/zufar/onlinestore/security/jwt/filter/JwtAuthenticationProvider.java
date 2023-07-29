@@ -51,7 +51,6 @@ public class JwtAuthenticationProvider {
 			//Try to retrieve userDetails from system
 			UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-
 			//Create authToken
 			UsernamePasswordAuthenticationToken authToken =
 					new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
