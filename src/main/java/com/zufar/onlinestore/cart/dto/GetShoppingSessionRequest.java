@@ -1,4 +1,12 @@
 package com.zufar.onlinestore.cart.dto;
 
-public record GetShoppingSessionRequest() {
+import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
+
+public record GetShoppingSessionRequest(
+
+        @NotNull(message = "UserId is the mandatory attribute")
+        UUID userId
+) {
 }
