@@ -1,10 +1,13 @@
 package com.zufar.onlinestore.product.service;
 
-import com.zufar.onlinestore.product.dto.ProductResponseDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.zufar.onlinestore.product.dto.ProductPaginationDto;
+
+import java.util.UUID;
 
 public interface ProductApi {
 
-    Page<ProductResponseDto> getProducts(Pageable pageable);
+    ProductPaginationDto getProducts(Integer page,
+                                     Integer size,
+                                     String sortAttribute,
+                                     String sortDirection);
 }
