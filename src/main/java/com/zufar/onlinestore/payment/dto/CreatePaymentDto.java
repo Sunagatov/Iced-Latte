@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreatePaymentDto(
 
-        @NotBlank(message = "paymentMethodId is the mandatory attribute")
+        @NotBlank(message = "PaymentMethodId is the mandatory attribute")
         String paymentMethodId,
 
         @NotNull(message = "PriceDetails is the mandatory attribute")
-        PriceDetailsDto priceDetails) {
+        PriceDetailsDto priceDetails
+) {
 }

@@ -13,5 +13,6 @@ public record PriceDetailsDto(
 
         @NotBlank(message = "Currency is mandatory attribute")
         @Size(min = 3, max = 3, message = "Currency value must be only 3 characters long")
-        String currency) {
+        String currency
+) {
 }
