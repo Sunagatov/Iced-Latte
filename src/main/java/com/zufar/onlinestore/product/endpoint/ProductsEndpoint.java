@@ -1,19 +1,18 @@
 package com.zufar.onlinestore.product.endpoint;
 
+import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 import com.zufar.onlinestore.product.mapper.ProductInfoDtoConverter;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
 import com.zufar.onlinestore.product.service.ProductApi;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
@@ -49,17 +48,27 @@ public class ProductsEndpoint {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDto>> getAllProducts(Pageable pageable) {
-        log.info("Received request to get all ProductInfos (controller): {}", pageable);
-        Page<ProductResponseDto> productInfoCollection = productInfoService.getProducts(pageable);
-        if (productInfoCollection.isEmpty()) {
+    public ResponseEntity<ProductPaginationDto> getAllProducts(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
+            @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
+        log.info("Received request to get all Products (controller): " +
+                        "page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                page, size, sortAttribute, sortDirection);
+        ProductPaginationDto productPaginationDto = productInfoService.getProducts(
+                page,
+                size,
+                sortAttribute,
+                sortDirection);
+        if (productPaginationDto.products().isEmpty()) {
             log.info("All ProductInfos are absent.");
             return ResponseEntity.notFound()
                     .build();
         }
-        log.info("All ProductInfos were retrieved - {}.", productInfoCollection);
+        log.info("All Products were retrieved - {}.", productPaginationDto);
         return ResponseEntity.ok()
-                .body(productInfoCollection);
+                .body(productPaginationDto);
     }
 
 }
