@@ -4,6 +4,7 @@ import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
@@ -32,7 +33,7 @@ public class CartApiImpl implements CartApi {
     private final ShoppingSessionProvider shoppingSessionProvider;
 
     @Override
-    public ShoppingSessionDto getShoppingSession(final UUID userId) {
+    public ShoppingSessionDto getShoppingSession(final UUID userId) throws ShoppingSessionNotFoundException {
         return shoppingSessionProvider.getByUserId(userId);
     }
 
@@ -48,37 +49,33 @@ public class CartApiImpl implements CartApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID userId,
-                                                                          final UUID shoppingSessionItemId,
-                                                                          final Integer productsQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdInUpdateProductsQuantityRequestException {
-        ShoppingSessionDto shoppingSession = shoppingSessionProvider.getByUserId(userId);
+    public ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest request) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdInUpdateProductsQuantityRequestException {
+        ShoppingSessionItem updatedItem =
+                shoppingSessionItemRepository.updateProductsQuantityInShoppingSessionItem(request.shoppingSessionItemId(), request.productsQuantityChange());
 
-        Integer updatedRowsQuantity =
-                shoppingSessionItemRepository.updateProductsQuantityInShoppingSessionItem(shoppingSessionItemId, productsQuantityChange);
+        if (updatedItem == null) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
-        if (updatedRowsQuantity == null || updatedRowsQuantity == 0) {
-            log.error("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                    productsQuantityChange, shoppingSessionItemId, shoppingSession.id());
-            throw new ShoppingSessionItemNotFoundException(shoppingSession.id(), shoppingSessionItemId);
-        }
-        Optional<ShoppingSessionItem> shoppingSessionItem = shoppingSessionItemRepository.findById(shoppingSessionItemId);
-        if (shoppingSessionItem.isEmpty()) {
-            log.error("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                    productsQuantityChange, shoppingSessionItemId, shoppingSession.id());
-            throw new ShoppingSessionItemNotFoundException(shoppingSession.id(), shoppingSessionItemId);
-        }
-        ShoppingSessionItem updatedItem = shoppingSessionItem.get();
-
-        ShoppingSession updatedShoppingSession = updatedItem.getShoppingSession();
-
-        if (shoppingSession.id() != updatedShoppingSession.getId()) {
-            log.error("Failed to update the productsQuantity with the change = {} in the shoppingSession with id: {} of the shoppingSession with the id = {}.",
-                    productsQuantityChange, shoppingSession.id(), shoppingSessionItemId);
-
-            throw new InvalidShoppingSessionIdInUpdateProductsQuantityRequestException(shoppingSessionItemId);
+            throw new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
         }
 
-        return shoppingSessionDtoConverter.toDto(updatedShoppingSession);
+        Optional<ShoppingSession> shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId());
+        if (shoppingSession.isEmpty()) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
+
+            throw new ShoppingSessionNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
+        }
+
+        if (request.shoppingSessionId() != updatedItem.getShoppingSession().getId()) {
+            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+                    request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
+
+            throw new InvalidShoppingSessionIdInUpdateProductsQuantityRequestException(request.shoppingSessionId());
+        }
+
+        return shoppingSessionDtoConverter.toDto(shoppingSession.get());
     }
 
 

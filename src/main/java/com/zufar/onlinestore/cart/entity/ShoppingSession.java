@@ -3,6 +3,7 @@ package com.zufar.onlinestore.cart.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -33,7 +34,7 @@ public class ShoppingSession {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "shoppingSession", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "shoppingSession", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<ShoppingSessionItem> items;
 
     @Column(name = "items_quantity", nullable = false)

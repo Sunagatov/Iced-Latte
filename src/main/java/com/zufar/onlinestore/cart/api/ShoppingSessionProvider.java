@@ -22,8 +22,8 @@ public class ShoppingSessionProvider {
     private final ShoppingSessionRepository shoppingSessionRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto getByUserId(final UUID userId) {
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public ShoppingSessionDto getByUserId(final UUID userId) throws ShoppingSessionNotFoundException {
         ShoppingSession shoppingSession = shoppingSessionRepository.findShoppingSessionByUserId(userId);
         if (shoppingSession == null) {
             log.error("The shopping session for the user with id = {} is not found.", userId);

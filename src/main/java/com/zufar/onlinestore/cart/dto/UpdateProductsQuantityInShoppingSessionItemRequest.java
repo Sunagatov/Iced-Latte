@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public record UpdateProductsQuantityInShoppingSessionItemRequest(
 
-        @NotNull(message = "UserId is the mandatory attribute")
-        UUID userId,
+        @NotNull(message = "ShoppingSessionId is the mandatory attribute")
+        UUID shoppingSessionId,
 
         @NotNull(message = "ShoppingSessionItemId is the mandatory attribute")
         UUID shoppingSessionItemId,

@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
@@ -16,10 +15,10 @@ public interface CartApi {
     /**
      * Enables to get ShoppingSession (the cart details)
      *
-     * @param userId the identifier of the user for whom the shopping session is returned
+     * @param userId is the identifier of the user for whom the shopping session is returned
      * @return ShoppingSessionDto (the cart details)
      * */
-    ShoppingSessionDto getShoppingSession(final UUID userId);
+    ShoppingSessionDto getShoppingSession(final UUID userId) throws ShoppingSessionNotFoundException;
 
     /**
      * Enables to add a new item into the shopping session (the cart details)
@@ -40,16 +39,12 @@ public interface CartApi {
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
      *
-     * @param userId the identifier of the user for whom the products' quantity of the shopping session item was updated
-     * @param shoppingSessionItemId the identifier of the shoppingSessionItem which is going to be updated
-     * @param productsQuantityChange the change which we applied for the products' quantity of the shopping session item
+     * @param updateProductsQuantityInShoppingSessionItemRequest the request to change the product's quantity in the specific item of the shopping session (the cart details)
      * @return ShoppingSessionDto (the cart details)
      * @throws ShoppingSessionNotFoundException if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItem in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws InvalidShoppingSessionIdInUpdateProductsQuantityRequestException if ShoppingSessionId in UpdateProductsQuantityRequest and ShoppingSessionId of Item with id from request are not equal
      * */
-    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID userId,
-                                                                   final UUID shoppingSessionItemId,
-                                                                   final Integer productsQuantityChange)
+    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest)
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
 }
