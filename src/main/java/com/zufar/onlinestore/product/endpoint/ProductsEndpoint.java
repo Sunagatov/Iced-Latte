@@ -50,7 +50,7 @@ public class ProductsEndpoint {
     @GetMapping
     public ResponseEntity<ProductPaginationDto> getAllProducts(
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "size", defaultValue = "50") int size,
             @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
             @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
         log.info("Received request to get all Products (controller): " +
