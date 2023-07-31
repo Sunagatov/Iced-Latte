@@ -32,10 +32,10 @@ public class ProductService implements ProductApi {
                 Sort.by(Sort.Direction.fromString(sortDirection), sortAttribute));
         Page<ProductResponseDto> pageProductResponseDto = productInfoRepository.findAll(pageable)
                 .map(productInfoDtoConverter::toResponseDto);
-        return AddToProductPaginationDto(pageProductResponseDto);
+        return addToProductPaginationDto(pageProductResponseDto);
     }
 
-    private ProductPaginationDto AddToProductPaginationDto(Page<ProductResponseDto> pageProductResponseDto) {
+    private ProductPaginationDto addToProductPaginationDto(Page<ProductResponseDto> pageProductResponseDto) {
         return new ProductPaginationDto(
                 pageProductResponseDto.getContent(),
                 pageProductResponseDto.getNumber(),
