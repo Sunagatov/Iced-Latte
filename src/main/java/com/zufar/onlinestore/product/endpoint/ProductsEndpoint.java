@@ -40,8 +40,11 @@ public class ProductsEndpoint {
                                                                         @RequestParam(name = "size", defaultValue = "50") int size,
                                                                         @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
                                                                         @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
-        log.info("Received the request to get products: page - {}, size - {}, sort_attribute - {}, sort_direction - {}", page, size, sortAttribute, sortDirection);
+        log.info("Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                page, size, sortAttribute, sortDirection);
         ProductListWithPaginationInfoDto productPaginationDto = productApi.getProducts(page, size, sortAttribute, sortDirection);
+        log.info("Products were retrieved successfully with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                page, size, sortAttribute, sortDirection);
         return ResponseEntity.ok()
                 .body(productPaginationDto);
     }
