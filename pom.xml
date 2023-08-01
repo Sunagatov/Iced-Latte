@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.2</version>
         <relativePath/>
     </parent>
 
@@ -54,7 +54,7 @@
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
-        <spring-boot-maven-plugin.version>3.1.0</spring-boot-maven-plugin.version>
+        <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
         <postgresql.version>42.6.0</postgresql.version>
         <liquibase.verson>4.23.0</liquibase.verson>
         <stripe.version>22.15.0</stripe.version>
