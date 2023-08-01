@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class GetProducts {
+public class GetAllProducts {
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
