@@ -10,19 +10,20 @@ public interface ProductApi {
     /**
      * Enables to get the product list with pagination and sorting features
      *
-     * @param page is the number of pages
-     * @param size is the products' quantity which are returned in a response object
-     * @param sortAttribute is the attribute which is used for pages sorting
-     * @param sortDirection is the direction of the pages sorting
-     * @return ProductPaginationDto
+     * @param page page number in order (starting from 0)
+     * @param size number of products in the output
+     * @param sortAttribute the name of the product field by which they should be sorted
+     * @param sortDirection sorting direction (DESC or ASC)
+     * @return ProductPaginationDto the sorted list of products includes:
+     * page number, number of products per page, total number of products, total number of pages.
      */
-    ProductListWithPaginationInfoDto getProducts(Integer page,
-                                                 Integer size,
-                                                 String sortAttribute,
-                                                 String sortDirection);
+    ProductPaginationDto getAllProducts(Integer page,
+                                        Integer size,
+                                        String sortAttribute,
+                                        String sortDirection);
 
     /**
-     * Enables to get ProductInfo
+     * Enables to get a product by its id.
      *
      * @param productId the identifier of the product which is returned as the return value
      * @return ProductInfoDto the product details
