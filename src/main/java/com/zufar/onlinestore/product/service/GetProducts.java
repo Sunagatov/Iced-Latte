@@ -15,12 +15,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ProductService implements ProductApi {
-
+public class GetProducts {
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
-    @Override
     public ProductPaginationDto getProducts(Integer page,
                                             Integer size,
                                             String sortAttribute,

@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.product.service;
+package com.zufar.onlinestore.product.api;
 
 import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 

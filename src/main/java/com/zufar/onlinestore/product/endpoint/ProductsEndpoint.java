@@ -6,7 +6,7 @@ import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 
-import com.zufar.onlinestore.product.service.ProductApi;
+import com.zufar.onlinestore.product.api.ProductApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
