@@ -10,10 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,14 +41,5 @@ public class GetAllProducts {
                 pageProductResponseDto.getTotalElements(),
                 pageProductResponseDto.getTotalPages()
         );
-    }
-
-    @Override
-    public ProductResponseDto getProduct(UUID id) {
-        log.info("Received request to get Product (service)");
-        return productInfoDtoConverter.toResponseDto(productInfoRepository.findById(id)
-                .orElseThrow(() -> new HttpMessageNotReadableException(    //PLS correct me ;)
-                        String.format("Course with id=%s not found", id)
-                )));
     }
 }

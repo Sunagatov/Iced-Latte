@@ -1,9 +1,10 @@
 package com.zufar.onlinestore.product.endpoint;
 
+import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
-
-import com.zufar.onlinestore.product.api.ProductApi;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -29,8 +27,9 @@ public class ProductsEndpoint {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable("id") final String id) {
         log.info("Received request to get the Product with id - {}.", id);
+        UUID convertedId = UUID.fromString(id);
         return ResponseEntity.ok()
-                .body(productInfoService.getProduct(UUID.fromString(id)));
+                .body(productInfoService.getProduct(convertedId));
     }
 
     @GetMapping
@@ -42,7 +41,7 @@ public class ProductsEndpoint {
         log.info("Received request to get all Products (controller): " +
                         "page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
                 page, size, sortAttribute, sortDirection);
-        ProductPaginationDto productPaginationDto = productInfoService.getProducts(
+        ProductPaginationDto productPaginationDto = productInfoService.getAllProducts(
                 page,
                 size,
                 sortAttribute,

@@ -7,10 +7,10 @@ import java.util.UUID;
 
 public interface ProductApi {
 
-    ProductPaginationDto getProducts(Integer page,
-                                     Integer size,
-                                     String sortAttribute,
-                                     String sortDirection);
+    ProductPaginationDto getAllProducts(Integer page,
+                                        Integer size,
+                                        String sortAttribute,
+                                        String sortDirection);
 
     ProductResponseDto getProduct(UUID id);
 }
