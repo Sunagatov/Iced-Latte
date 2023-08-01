@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.cart.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,7 +29,6 @@ public class ShoppingSessionItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @JsonIgnore
     @Version
     private Integer version; // Adding version field for optimistic locking
 

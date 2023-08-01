@@ -18,7 +18,7 @@ public interface CartApi {
      * @param userId is the identifier of the user for whom the shopping session is returned
      * @return ShoppingSessionDto (the cart details)
      * */
-    ShoppingSessionDto getShoppingSession(final UUID userId) throws ShoppingSessionNotFoundException;
+    ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException;
 
     /**
      * Enables to add a new item into the shopping session (the cart details)

@@ -33,7 +33,7 @@ public class CartApiImpl implements CartApi {
     private final ShoppingSessionProvider shoppingSessionProvider;
 
     @Override
-    public ShoppingSessionDto getShoppingSession(final UUID userId) throws ShoppingSessionNotFoundException {
+    public ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException {
         return shoppingSessionProvider.getByUserId(userId);
     }
 
