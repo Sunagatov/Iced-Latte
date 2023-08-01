@@ -15,7 +15,7 @@ public class ProductInfoDtoConverter {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
 
         return new ProductInfoDto(
-                entity.getId(),
+                entity.getProductId(),
                 entity.getDescription(),
                 entity.getName(),
                 priceDetails,
@@ -27,7 +27,7 @@ public class ProductInfoDtoConverter {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
 
         return new ProductInfoFullDto(
-                entity.getId(),
+                entity.getProductId(),
                 entity.getDescription(),
                 entity.getName(),
                 priceDetails,
