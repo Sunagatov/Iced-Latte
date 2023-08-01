@@ -3,7 +3,7 @@ package com.zufar.onlinestore.product.endpoint;
 import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
 
-import com.zufar.onlinestore.product.service.ProductApi;
+import com.zufar.onlinestore.product.api.ProductApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
