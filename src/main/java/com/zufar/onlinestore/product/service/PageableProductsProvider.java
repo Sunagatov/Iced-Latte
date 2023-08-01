@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class GetAllProducts {
+public class PageableProductsProvider {
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
@@ -30,16 +30,6 @@ public class GetAllProducts {
                 Sort.by(Sort.Direction.fromString(sortDirection), sortAttribute));
         Page<ProductResponseDto> pageProductResponseDto = productInfoRepository.findAll(pageable)
                 .map(productInfoDtoConverter::toResponseDto);
-        return addToProductPaginationDto(pageProductResponseDto);
-    }
-
-    private ProductPaginationDto addToProductPaginationDto(Page<ProductResponseDto> pageProductResponseDto) {
-        return new ProductPaginationDto(
-                pageProductResponseDto.getContent(),
-                pageProductResponseDto.getNumber(),
-                pageProductResponseDto.getSize(),
-                pageProductResponseDto.getTotalElements(),
-                pageProductResponseDto.getTotalPages()
-        );
+        return productInfoDtoConverter.addToProductPaginationDto(pageProductResponseDto);
     }
 }

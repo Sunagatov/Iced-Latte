@@ -3,8 +3,8 @@ package com.zufar.onlinestore.product.api.impl;
 import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
-import com.zufar.onlinestore.product.service.GetAllProducts;
-import com.zufar.onlinestore.product.service.GetProduct;
+import com.zufar.onlinestore.product.service.PageableProductsProvider;
+import com.zufar.onlinestore.product.service.SingleProductProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,8 +16,8 @@ import java.util.UUID;
 @Service
 public class ProductApiImpl implements ProductApi {
 
-    private final GetAllProducts getAllProducts;
-    private final GetProduct getProduct;
+    private final PageableProductsProvider getAllProducts;
+    private final SingleProductProvider getProduct;
 
     @Override
     public ProductPaginationDto getAllProducts(Integer page,

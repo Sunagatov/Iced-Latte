@@ -3,8 +3,10 @@ package com.zufar.onlinestore.product.mapper;
 import com.zufar.onlinestore.product.dto.PriceDetailsDto;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
+import com.zufar.onlinestore.product.dto.ProductPaginationDto;
 import com.zufar.onlinestore.product.dto.ProductResponseDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -55,6 +57,16 @@ public class ProductInfoDtoConverter {
                 dto.priceDetails().currency(),
                 dto.quantity(),
                 dto.active()
+        );
+    }
+
+    public ProductPaginationDto addToProductPaginationDto(Page<ProductResponseDto> pageProductResponseDto) {
+        return new ProductPaginationDto(
+                pageProductResponseDto.getContent(),
+                pageProductResponseDto.getNumber(),
+                pageProductResponseDto.getSize(),
+                pageProductResponseDto.getTotalElements(),
+                pageProductResponseDto.getTotalPages()
         );
     }
 }

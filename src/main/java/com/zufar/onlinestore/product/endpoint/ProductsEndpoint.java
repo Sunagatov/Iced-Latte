@@ -19,17 +19,18 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/api/products")
+@RequestMapping(value = "/api/v1/products")
 public class ProductsEndpoint {
 
     private final ProductApi productInfoService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable("id") final String id) {
-        log.info("Received request to get the Product with id - {}.", id);
-        UUID convertedId = UUID.fromString(id);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable final String productId) {
+        log.info("Received request to get the product with productId - {}.", productId);
+        UUID convertedId = UUID.fromString(productId);
+        ProductResponseDto product = productInfoService.getProduct(convertedId);
         return ResponseEntity.ok()
-                .body(productInfoService.getProduct(convertedId));
+                .body(product);
     }
 
     @GetMapping
@@ -38,7 +39,7 @@ public class ProductsEndpoint {
             @RequestParam(name = "size", defaultValue = "50") int size,
             @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
             @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
-        log.info("Received request to get all Products (controller): " +
+        log.info("Received request to get all products (controller): " +
                         "page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
                 page, size, sortAttribute, sortDirection);
         ProductPaginationDto productPaginationDto = productInfoService.getAllProducts(
