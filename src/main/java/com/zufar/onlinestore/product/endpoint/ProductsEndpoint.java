@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.product.endpoint;
 
 import com.zufar.onlinestore.product.api.ProductApi;
-import com.zufar.onlinestore.product.dto.ProductPaginationDto;
-import com.zufar.onlinestore.product.dto.ProductResponseDto;
+import com.zufar.onlinestore.product.dto.ProductInfoDto;
+import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,41 +19,30 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/api/products")
+@RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)
 public class ProductsEndpoint {
 
-    private final ProductApi productInfoService;
+    public static final String PRODUCTS_URL = "/api/v1/products";
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable("id") final String id) {
-        log.info("Received request to get the Product with id - {}.", id);
-        UUID convertedId = UUID.fromString(id);
+    private final ProductApi productApi;
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final String productId) {
+        log.info("Received the request to get the product with productId - {}.", productId);
+        ProductInfoDto product = productApi.getProduct(UUID.fromString(productId));
+        log.info("The product with productId: {} was retrieved successfully", productId);
         return ResponseEntity.ok()
-                .body(productInfoService.getProduct(convertedId));
+                .body(product);
     }
 
     @GetMapping
-    public ResponseEntity<ProductPaginationDto> getAllProducts(
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "50") int size,
-            @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
-            @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
-        log.info("Received request to get all Products (controller): " +
-                        "page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
-                page, size, sortAttribute, sortDirection);
-        ProductPaginationDto productPaginationDto = productInfoService.getAllProducts(
-                page,
-                size,
-                sortAttribute,
-                sortDirection);
-        if (productPaginationDto.products().isEmpty()) {
-            log.info("All ProductInfos are absent.");
-            return ResponseEntity.notFound()
-                    .build();
-        }
-        log.info("All Products were retrieved - {}.", productPaginationDto);
+    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                        @RequestParam(name = "size", defaultValue = "50") int size,
+                                                                        @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
+                                                                        @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
+        log.info("Received the request to get products: page - {}, size - {}, sort_attribute - {}, sort_direction - {}", page, size, sortAttribute, sortDirection);
+        ProductListWithPaginationInfoDto productPaginationDto = productApi.getProducts(page, size, sortAttribute, sortDirection);
         return ResponseEntity.ok()
                 .body(productPaginationDto);
     }
-
 }
