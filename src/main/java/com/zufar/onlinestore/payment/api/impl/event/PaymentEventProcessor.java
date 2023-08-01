@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.payment.api.impl.event;
 
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class PaymentEventProcessor {
     private final PaymentEventParser paymentEventParser;
     private final PaymentEventHandler paymentEventHandler;
 
-    public void processPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) {
+    public void processPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
         log.info("Process payment event: start payment event processing: input params paymentIntentPayload: {}," +
                 "stripeSignatureHeader: {}.", paymentIntentPayload, stripeSignatureHeader);
         Event event = paymentEventCreator.createPaymentEvent(paymentIntentPayload, stripeSignatureHeader);

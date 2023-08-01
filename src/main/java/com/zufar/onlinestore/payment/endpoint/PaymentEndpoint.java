@@ -1,7 +1,10 @@
 package com.zufar.onlinestore.payment.endpoint;
 
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.dto.*;
+import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -30,14 +33,14 @@ public class PaymentEndpoint {
     private final PaymentApi paymentApi;
 
     @PostMapping
-    public ResponseEntity<PaymentDetailsWithTokenDto> createPayment(@RequestBody @Valid final CreatePaymentDto createPaymentDto) {
+    public ResponseEntity<PaymentDetailsWithTokenDto> createPayment(@RequestBody @Valid final CreatePaymentDto createPaymentDto) throws StripeException {
         PaymentDetailsWithTokenDto createdPayment = paymentApi.createPayment(createPaymentDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdPayment);
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull final Long paymentId) {
+    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull final Long paymentId) throws PaymentNotFoundException {
         PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
         log.info("Get payment details: payment details: {} successfully retrieved.", retrievedPayment);
         return ResponseEntity.ok()
@@ -49,16 +52,15 @@ public class PaymentEndpoint {
      * It will come in handy for testing the API.
      */
     @PostMapping("/method")
-    public ResponseEntity<String> getPaymentMethod(@RequestBody @Valid final CreatePaymentMethodDto createPaymentMethodDto) {
+    public ResponseEntity<String> getPaymentMethod(@RequestBody @Valid final CreatePaymentMethodDto createPaymentMethodDto) throws StripeException {
         String paymentMethodId = paymentApi.createPaymentMethod(createPaymentMethodDto);
         return ResponseEntity.ok()
                 .body(paymentMethodId);
     }
 
     @PostMapping("/event")
-    public ResponseEntity<Void> paymentEventsProcess(
-            @RequestBody @Valid @NotEmpty final String paymentIntentPayload,
-            @RequestHeader("Stripe-Signature") @Valid @NotEmpty final String stripeSignatureHeader) {
+    public ResponseEntity<Void> paymentEventsProcess(@RequestBody @Valid @NotEmpty final String paymentIntentPayload,
+                                                     @RequestHeader("Stripe-Signature") @Valid @NotEmpty final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
         return ResponseEntity.ok()
                 .build();

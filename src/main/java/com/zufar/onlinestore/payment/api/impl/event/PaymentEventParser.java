@@ -21,6 +21,6 @@ public class PaymentEventParser {
         return dataObjectDeserializer.getObject()
                 .filter(PaymentIntent.class::isInstance)
                 .map(PaymentIntent.class::cast)
-                .orElseThrow(PaymentEventParsingException::new);
+                .orElseThrow(() -> new PaymentEventParsingException(event.getType()));
     }
 }

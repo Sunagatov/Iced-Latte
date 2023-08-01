@@ -1,11 +1,14 @@
 package com.zufar.onlinestore.payment.api.impl;
 
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.dto.*;
 import com.zufar.onlinestore.payment.api.impl.intent.PaymentCreator;
 import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
 import com.zufar.onlinestore.payment.api.impl.intent.PaymentMethodCreator;
 import com.zufar.onlinestore.payment.api.impl.intent.PaymentRetriever;
+import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,22 +24,22 @@ public class PaymentApiImpl implements PaymentApi {
     private final PaymentEventProcessor paymentEventProcessor;
 
     @Override
-    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) {
+    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException {
         return paymentCreator.createPayment(createPaymentDto);
     }
 
     @Override
-    public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) {
+    public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws StripeException {
         return paymentMethodCreator.createPaymentMethod(createPaymentMethodDto);
     }
 
     @Override
-    public PaymentDetailsDto getPaymentDetails(final Long paymentId) {
+    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
         return paymentRetriever.getPaymentDetails(paymentId);
     }
 
     @Override
-    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) {
+    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentEventProcessor.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
     }
 }

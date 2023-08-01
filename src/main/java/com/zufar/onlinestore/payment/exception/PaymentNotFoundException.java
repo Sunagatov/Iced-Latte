@@ -7,8 +7,8 @@ public class PaymentNotFoundException extends RuntimeException {
 
     private final Long paymentId;
 
-    public PaymentNotFoundException(Long paymentId) {
-        super(String.format("Payment with id %s not found.", paymentId));
+    public PaymentNotFoundException(final Long paymentId) {
+        super(String.format("The payment with paymentId = %s is not found", paymentId));
         this.paymentId = paymentId;
     }
 }

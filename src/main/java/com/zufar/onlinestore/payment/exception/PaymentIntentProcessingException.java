@@ -5,10 +5,10 @@ import lombok.Getter;
 @Getter
 public class PaymentIntentProcessingException extends RuntimeException{
 
-    private final String paymentId;
+    private final String paymentMethodId;
 
     public PaymentIntentProcessingException(String paymentMethodId) {
-        super(String.format("Cannot process payment intent with payment method Id: %s ", paymentMethodId));
-        this.paymentId = paymentMethodId;
+        super(String.format("Payment intent with the paymentMethodID: %s cannot be processed.", paymentMethodId));
+        this.paymentMethodId = paymentMethodId;
     }
 }

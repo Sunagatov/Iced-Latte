@@ -7,8 +7,8 @@ public class PaymentEventProcessingException extends RuntimeException {
 
     private final String stripeSignature;
 
-    public PaymentEventProcessingException(String stripeSignatureHeader) {
-        super(String.format("Payment event with stripe signature %s, can't be processed.", stripeSignatureHeader));
-        this.stripeSignature = stripeSignatureHeader;
+    public PaymentEventProcessingException(String stripeSignature) {
+        super(String.format("Payment event with the stripe signature '%s' cannot be processed.", stripeSignature));
+        this.stripeSignature = stripeSignature;
     }
 }
