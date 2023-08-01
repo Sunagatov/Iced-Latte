@@ -56,16 +56,16 @@ public class ProductInfo {
         if (!(object instanceof ProductInfo productInfo)) {
             return false;
         }
-        EqualsBuilder eb = new EqualsBuilder();
-        eb.append(productId, productInfo.productId);
-        return eb.isEquals();
+        return new EqualsBuilder()
+                .append(productId, productInfo.productId)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hcb = new HashCodeBuilder();
-        hcb.append(productId);
-        return hcb.toHashCode();
+        return new HashCodeBuilder()
+                .append(productId)
+                .toHashCode();
     }
 
     @Override
