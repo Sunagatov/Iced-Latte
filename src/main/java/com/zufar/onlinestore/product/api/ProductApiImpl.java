@@ -26,6 +26,6 @@ public class ProductApiImpl implements ProductApi {
 
     @Override
     public ProductInfoDto getProduct(final UUID productId) {
-        return singleProductProvider.getProduct(productId);
+        return singleProductProvider.getProductById(productId);
     }
 }
