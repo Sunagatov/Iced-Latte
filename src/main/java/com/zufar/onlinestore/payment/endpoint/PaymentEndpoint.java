@@ -3,7 +3,10 @@ package com.zufar.onlinestore.payment.endpoint;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.dto.*;
+import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
+import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -40,7 +43,7 @@ public class PaymentEndpoint {
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull final Long paymentId) throws PaymentNotFoundException {
+    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @NotNull final Long paymentId) throws PaymentNotFoundException {
         PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
         log.info("Get payment details: payment details: {} successfully retrieved.", retrievedPayment);
         return ResponseEntity.ok()
@@ -59,8 +62,8 @@ public class PaymentEndpoint {
     }
 
     @PostMapping("/event")
-    public ResponseEntity<Void> paymentEventsProcess(@RequestBody @Valid @NotEmpty final String paymentIntentPayload,
-                                                     @RequestHeader("Stripe-Signature") @Valid @NotEmpty final String stripeSignatureHeader) throws SignatureVerificationException {
+    public ResponseEntity<Void> paymentEventsProcess(@RequestBody @NotEmpty final String paymentIntentPayload,
+                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
         return ResponseEntity.ok()
                 .build();

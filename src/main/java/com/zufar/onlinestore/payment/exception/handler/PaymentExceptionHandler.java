@@ -1,9 +1,14 @@
 package com.zufar.onlinestore.payment.exception.handler;
 
 import com.zufar.onlinestore.common.response.ApiResponse;
-import com.zufar.onlinestore.payment.exception.*;
+import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
+import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -14,7 +19,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @RestControllerAdvice
 @Slf4j
-public class PaymentExceptionsHandler {
+public class PaymentExceptionHandler {
 
     private final String DESCRIPTION_TEMPLATE = "Operation was failed in method: %s from the class: %s.";
 
@@ -73,6 +78,6 @@ public class PaymentExceptionsHandler {
         return Arrays.stream(exception.getStackTrace())
                 .findFirst()
                 .map(topElement -> DESCRIPTION_TEMPLATE.formatted(topElement.getMethodName(), topElement.getClassName()))
-                .orElseGet(String::new);
+                .orElse(StringUtils.EMPTY);
     }
 }
