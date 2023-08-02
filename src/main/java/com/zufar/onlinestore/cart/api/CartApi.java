@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
@@ -9,15 +8,17 @@ import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProd
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 
+import java.util.UUID;
+
 public interface CartApi {
 
     /**
      * Enables to get ShoppingSession (the cart details)
      *
-     * @param getShoppingSessionRequest the request to get the shopping session (the cart details)
+     * @param userId is the identifier of the user for whom the shopping session is returned
      * @return ShoppingSessionDto (the cart details)
      * */
-    ShoppingSessionDto getShoppingSession(final GetShoppingSessionRequest getShoppingSessionRequest);
+    ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException;
 
     /**
      * Enables to add a new item into the shopping session (the cart details)

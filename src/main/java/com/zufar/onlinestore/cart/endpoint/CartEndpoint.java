@@ -8,11 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -25,8 +28,16 @@ public class CartEndpoint {
 
     private final CartApi cartApi;
 
+    @GetMapping
+    public ResponseEntity<ShoppingSessionDto> getShoppingSession(@RequestParam final String userId) {
+        log.info("Received the request to get the shoppingSession for the user with id: {}", userId);
+        ShoppingSessionDto shoppingSessionDto = cartApi.getShoppingSessionByUserId(UUID.fromString(userId));
+        log.info("The shoppingSession for the user with id: {} was retrieved successfully", shoppingSessionDto.userId());
+        return ResponseEntity.ok()
+                .body(shoppingSessionDto);
+    }
+
     @PatchMapping
-    @ResponseBody
     public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
         log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
                 request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
