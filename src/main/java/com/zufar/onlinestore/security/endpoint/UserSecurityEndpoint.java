@@ -23,11 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping(value = AuthenticationUserEndpoint.USER_AUTH_API_URL)
+@RequestMapping(value = UserSecurityEndpoint.USER_SECURITY_API_URL)
 @RequiredArgsConstructor
-public class AuthenticationUserEndpoint {
+public class UserSecurityEndpoint {
 
-    public static final String USER_AUTH_API_URL = "/api/v1/auth/";
+    public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
 
     private final UserSecurityManager userSecurityManager;
 

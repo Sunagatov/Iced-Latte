@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.security.configuration;
 
-import com.zufar.onlinestore.security.endpoint.AuthenticationUserEndpoint;
+import com.zufar.onlinestore.security.endpoint.UserSecurityEndpoint;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationFilter;
 
 import com.zufar.onlinestore.user.entity.UserEntity;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final String API_AUTH_URL_PREFIX = AuthenticationUserEndpoint.USER_AUTH_API_URL + "**";
+    private static final String API_AUTH_URL_PREFIX = UserSecurityEndpoint.USER_SECURITY_API_URL + "**";
     private static final String API_DOCS_URL_PREFIX = "/api/docs/**";
 
     public static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
