@@ -1,10 +1,11 @@
 package com.zufar.onlinestore.security.endpoint;
 
-import com.zufar.onlinestore.security.authentication.UserAuthenticationManager;
-import com.zufar.onlinestore.security.dto.authentication.AuthenticationRequest;
-import com.zufar.onlinestore.security.dto.authentication.AuthenticationResponse;
+import com.zufar.onlinestore.security.api.UserSecurityManager;
 
-import com.zufar.onlinestore.security.dto.authentication.RegistrationRequest;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
+import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
+import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,21 +23,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping(value = "/api/auth")
+@RequestMapping(value = AuthenticationUserEndpoint.USER_AUTH_API_URL)
 @RequiredArgsConstructor
 public class AuthenticationUserEndpoint {
-	private final UserAuthenticationManager userAuthenticationManager;
+
+    public static final String USER_AUTH_API_URL = "/api/v1/auth/";
+
+    private final UserSecurityManager userSecurityManager;
 
 	@PostMapping("/register")
-	public ResponseEntity<AuthenticationResponse> register(@RequestBody @NotNull @Valid final RegistrationRequest request) {
-		AuthenticationResponse authenticationResponse = userAuthenticationManager.register(request);
+	public ResponseEntity<UserRegistrationResponse> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
+        UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
 		return ResponseEntity
 				.ok(authenticationResponse);
 	}
 
 	@PostMapping("/authenticate")
-	public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @NotNull @Valid final AuthenticationRequest request) {
-		AuthenticationResponse authenticationResponse = userAuthenticationManager.authenticate(request);
+	public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
+        UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
 		return ResponseEntity
 				.ok(authenticationResponse);
 	}
@@ -44,7 +48,7 @@ public class AuthenticationUserEndpoint {
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(final HttpServletRequest request,
 	                                   final HttpServletResponse response) {
-		userAuthenticationManager.logout(request, response);
+		userSecurityManager.logout(request, response);
 		return ResponseEntity.ok()
 				.build();
 	}
