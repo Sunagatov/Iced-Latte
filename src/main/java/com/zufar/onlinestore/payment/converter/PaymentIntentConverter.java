@@ -5,39 +5,29 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.calculator.PaymentPriceCalculator;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.entity.Payment;
-import org.mapstruct.Mapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-@Mapper
-public interface PaymentIntentConverter {
+@RequiredArgsConstructor
+@Component
+public class PaymentIntentConverter {
 
-    PaymentPriceCalculator paymentPriceCalculator = new PaymentPriceCalculator();
+    private final PaymentPriceCalculator paymentPriceCalculator;
 
-    default Payment toPayment(final PaymentIntent paymentIntent) {
-        if (paymentIntent == null) {
-            return null;
-        }
-
-        Payment.PaymentBuilder builder = Payment.builder();
-
-        builder.itemsTotalPrice(paymentPriceCalculator.calculatePriceForPayment(paymentIntent.getAmount()));
-        builder.paymentIntentId(paymentIntent.getId());
-        builder.currency(paymentIntent.getCurrency());
-
-        return builder.build();
+    public Payment toPayment(final PaymentIntent paymentIntent) {
+        return Payment.builder()
+                .itemsTotalPrice(paymentPriceCalculator.calculatePriceForPayment(paymentIntent.getAmount()))
+                .paymentIntentId(paymentIntent.getId())
+                .currency(paymentIntent.getCurrency())
+                .build();
     }
 
-    default PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto) {
-        if (createPaymentDto == null) {
-            return null;
-        }
-
-        PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder();
-
-        builder.setAmount(paymentPriceCalculator.calculatePriceForPaymentIntent(
-                createPaymentDto.priceDetails().itemsTotalPrice()));
-        builder.setCurrency(createPaymentDto.priceDetails().currency());
-        builder.setPaymentMethod(createPaymentDto.paymentMethodId());
-
-        return builder.build();
+    public PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto) {
+        return PaymentIntentCreateParams.builder()
+                .setAmount(paymentPriceCalculator.calculatePriceForPaymentIntent(
+                        createPaymentDto.priceDetails().totalPrice()))
+                .setCurrency( createPaymentDto.priceDetails().currency())
+                .setPaymentMethod(createPaymentDto.paymentMethodId())
+                .build();
     }
 }

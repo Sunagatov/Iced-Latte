@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public record PriceDetailsDto(
 
         @NotNull(message = "Total price is mandatory attribute")
-        BigDecimal itemsTotalPrice,
+        BigDecimal totalPrice,
 
         @NotBlank(message = "Currency is mandatory attribute")
         @Size(min = 3, max = 3, message = "Currency value must be only 3 characters long")
