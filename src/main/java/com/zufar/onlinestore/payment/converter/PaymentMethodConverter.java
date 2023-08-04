@@ -2,22 +2,27 @@ package com.zufar.onlinestore.payment.converter;
 
 import com.stripe.param.PaymentMethodCreateParams;
 import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
 
-@Component
-public class PaymentMethodConverter {
+@Mapper
+public interface PaymentMethodConverter {
 
-    public PaymentMethodCreateParams toPaymentMethodParams(final CreatePaymentMethodDto createPaymentMethodDto) {
-        PaymentMethodCreateParams.CardDetails cardDetails = PaymentMethodCreateParams.CardDetails.builder()
-                .setNumber(createPaymentMethodDto.cardNumber())
-                .setExpMonth(createPaymentMethodDto.expMonth())
-                .setExpYear(createPaymentMethodDto.expYear())
-                .setCvc(createPaymentMethodDto.cvc())
-                .build();
+    default PaymentMethodCreateParams toPaymentMethodParams(final CreatePaymentMethodDto createPaymentMethodDto) {
+        if (createPaymentMethodDto == null) {
+            return null;
+        }
 
-        return PaymentMethodCreateParams.builder()
-                .setCard(cardDetails)
-                .setType(PaymentMethodCreateParams.Type.CARD)
-                .build();
+        PaymentMethodCreateParams.CardDetails.Builder cardDetails = PaymentMethodCreateParams.CardDetails.builder();
+        cardDetails.setNumber(createPaymentMethodDto.cardNumber());
+        cardDetails.setExpMonth(createPaymentMethodDto.expMonth());
+        cardDetails.setExpYear(createPaymentMethodDto.expYear());
+        cardDetails.setCvc(createPaymentMethodDto.cvc());
+
+        PaymentMethodCreateParams.Builder builder = PaymentMethodCreateParams.builder();
+
+        builder.setCard(cardDetails.build());
+        builder.setType(PaymentMethodCreateParams.Type.CARD);
+
+        return builder.build();
     }
 }
