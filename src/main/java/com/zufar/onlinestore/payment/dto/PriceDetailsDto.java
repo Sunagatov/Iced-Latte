@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 public record PriceDetailsDto(
 
-        @NotNull(message = "Total price is mandatory attribute")
+        @NotNull(message = "ItemsTotalPrice price is mandatory attribute")
         BigDecimal itemsTotalPrice,
 
         @NotBlank(message = "Currency is mandatory attribute")

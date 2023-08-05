@@ -5,39 +5,25 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.calculator.PaymentPriceCalculator;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.entity.Payment;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Mapper
+
+
+@Mapper(uses = PaymentPriceCalculator.class)
 public interface PaymentIntentConverter {
 
-    PaymentPriceCalculator paymentPriceCalculator = new PaymentPriceCalculator();
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "paymentIntentId", source = "paymentIntent.id")
+    @Mapping(target = "currency", source = "paymentIntent.currency")
+    @Mapping(target = "itemsTotalPrice", source = "paymentIntent.amount", qualifiedByName = {"calculateForPayment"})
+    Payment toPayment(final PaymentIntent paymentIntent);
 
-    default Payment toPayment(final PaymentIntent paymentIntent) {
-        if (paymentIntent == null) {
-            return null;
-        }
-
-        Payment.PaymentBuilder builder = Payment.builder();
-
-        builder.itemsTotalPrice(paymentPriceCalculator.calculatePriceForPayment(paymentIntent.getAmount()));
-        builder.paymentIntentId(paymentIntent.getId());
-        builder.currency(paymentIntent.getCurrency());
-
-        return builder.build();
-    }
-
-    default PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto) {
-        if (createPaymentDto == null) {
-            return null;
-        }
-
-        PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder();
-
-        builder.setAmount(paymentPriceCalculator.calculatePriceForPaymentIntent(
-                createPaymentDto.priceDetails().itemsTotalPrice()));
-        builder.setCurrency(createPaymentDto.priceDetails().currency());
-        builder.setPaymentMethod(createPaymentDto.paymentMethodId());
-
-        return builder.build();
-    }
+    @Mapping(target = "currency", source = "createPaymentDto.priceDetails.currency")
+    @Mapping(target = "paymentMethod", source = "createPaymentDto.paymentMethodId")
+    @Mapping(target = "amount",
+            source = "createPaymentDto.priceDetails.itemsTotalPrice",
+            qualifiedByName = {"calculateForPaymentIntent"})
+    PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto);
 }
