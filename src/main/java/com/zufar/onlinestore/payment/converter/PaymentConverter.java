@@ -8,6 +8,4 @@ import org.mapstruct.Mapper;
 public interface PaymentConverter {
 
     PaymentDetailsDto toDto(final Payment entity);
-
-    Payment toEntity(final PaymentDetailsDto dto);
 }
