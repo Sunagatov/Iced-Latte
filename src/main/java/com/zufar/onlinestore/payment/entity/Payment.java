@@ -18,6 +18,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -34,6 +35,9 @@ public class Payment {
 
     @Column(name = "payment_intent_id", nullable = false, unique = true)
     private String paymentIntentId;
+
+    @Column(name = "shopping_session_id", nullable = false, unique = true)
+    private UUID shoppingSessionId;
 
     @Column(name = "currency", nullable = false)
     private String currency;

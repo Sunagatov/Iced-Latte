@@ -1,11 +1,8 @@
 package com.zufar.onlinestore.payment.api.impl.intent;
 
-import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
-import com.zufar.onlinestore.payment.converter.PaymentConverter;
-import com.zufar.onlinestore.payment.converter.PaymentIntentConverter;
-import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
+import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,23 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentCreator {
 
     private final PaymentRepository paymentRepository;
-    private final PaymentIntentCreator paymentIntentCreator;
-    private final PaymentIntentConverter paymentIntentConverter;
-    private final PaymentConverter paymentConverter;
+    private final StripePaymentIntentConverter stripePaymentIntentConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException {
-        PaymentIntent paymentIntent = paymentIntentCreator.createPaymentIntent(createPaymentDto);
-        log.info("Create payment: payment intent: {} successfully created.", paymentIntent);
-        String paymentToken = paymentIntent.getClientSecret();
-        Payment payment = paymentIntentConverter.toPayment(paymentIntent);
+    public Payment createPayment(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession) {
+        log.info("Create payment intent: in progress: creation payment with stripe payment intent Id: {}", paymentIntent.getId());
+        Payment payment = stripePaymentIntentConverter.toEntity(paymentIntent, shoppingSession);
         Payment savedPayment = paymentRepository.save(payment);
-        log.info("Create payment: payment {} successfully saved.", savedPayment);
-
-        return PaymentDetailsWithTokenDto.builder()
-                .paymentToken(paymentToken)
-                .paymentDetailsDto((paymentConverter.toDto(savedPayment)))
-                .build();
+        log.info("Create payment intent: successful: payment was created with id: {}", paymentIntent.getId());
+        return savedPayment;
     }
 
 }

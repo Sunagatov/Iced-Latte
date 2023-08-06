@@ -1,11 +1,7 @@
 package com.zufar.onlinestore.payment.exception.handler;
 
 import com.zufar.onlinestore.common.response.ApiResponse;
-import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
-import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
+import com.zufar.onlinestore.payment.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -56,12 +52,19 @@ public class PaymentExceptionHandler {
         return apiResponse;
     }
 
-
     @ExceptionHandler(PaymentEventParsingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<String> handlePaymentEventParsingException(final PaymentEventParsingException exception) {
         ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.error("Handle payment event parsing exception: failed: message: {}, description: {}.", apiResponse.message(), apiResponse.data());
+        return apiResponse;
+    }
+
+    @ExceptionHandler(StripeCustomerCreationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<String> handleStripeCustomerCreationException(final StripeCustomerCreationException exception) {
+        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle stripe customer creation exception: failed: message: {}, description: {}.", apiResponse.message(), apiResponse.data());
         return apiResponse;
     }
 

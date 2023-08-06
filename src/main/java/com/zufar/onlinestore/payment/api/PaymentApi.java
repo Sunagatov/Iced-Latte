@@ -2,10 +2,9 @@ package com.zufar.onlinestore.payment.api;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
-import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
-import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessPaymentDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 
 public interface PaymentApi {
@@ -13,18 +12,10 @@ public interface PaymentApi {
     /**
      * This method allows to create a payment object
      *
-     * @param createPaymentDto the request dto to create a payment object
+     * @param processPaymentDto the request dto to create a payment object
      * @return PaymentDetailsWithTokenDto combines payment details and a payment token for payment processing on the front end side
      * */
-    PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException;
-
-    /**
-     * This method allows to create a payment method object
-     *
-     * @param createPaymentMethodDto the request dto to create a payment method object
-     * @return String payment method identifier, for secure method transfer using the Stripe API
-     * */
-    String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws StripeException;
+    ProcessedPaymentWithClientSecretDto processPayment(final ProcessPaymentDto processPaymentDto) throws StripeException;
 
     /**
      * This method allows to create a payment method object
@@ -32,7 +23,7 @@ public interface PaymentApi {
      * @param paymentId the payment identifier to search payment details
      * @return PaymentDetailsDto these are payment details
      * */
-    PaymentDetailsDto getPaymentDetails(final Long paymentId) throws PaymentNotFoundException;
+    ProcessedPaymentDetailsDto getPaymentDetails(final Long paymentId) throws PaymentNotFoundException;
 
     /**
      * This method allows to create a payment method object
