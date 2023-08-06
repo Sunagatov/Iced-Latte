@@ -20,7 +20,6 @@ public class UserDtoConverter {
     public UserDto toDto(final UserEntity entity) {
         AddressDto addressDto = addressDtoConverter.toDto(entity.getAddress());
         return new UserDto(
-                entity.getUserId(),
                 entity.getFirstName(),
                 entity.getLastName(),
                 entity.getUsername(),
@@ -31,10 +30,12 @@ public class UserDtoConverter {
     }
 
     public UserEntity toEntity(final UserDto dto) {
-        Address address = addressDtoConverter.toEntity(dto.address());
+        Address address = null;
+        if (dto.address() != null) {
+            address = addressDtoConverter.toEntity(dto.address());
+        }
 
         UserEntity userEntity = UserEntity.builder()
-                .userId(dto.userId())
                 .firstName(dto.firstName())
                 .lastName(dto.lastName())
                 .email(dto.email())

@@ -6,7 +6,6 @@ import java.util.UUID;
 
 @Builder
 public record UserDto(
-        UUID userId,
         String firstName,
         String lastName,
         String username,
