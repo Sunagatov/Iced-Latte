@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +30,9 @@ public class ProductsEndpoint {
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") final String id) {
+    public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") final UUID id) {
         log.info("Received request to get the ProductInfo with id - {}.", id);
-        Optional<ProductInfo> ProductInfo = productInfoRepository.findById(Integer.parseInt(id));
+        Optional<ProductInfo> ProductInfo = productInfoRepository.findById(id);
         if (ProductInfo.isEmpty()) {
             log.info("the ProductInfo with id - {} is absent.", id);
             return ResponseEntity.notFound()
