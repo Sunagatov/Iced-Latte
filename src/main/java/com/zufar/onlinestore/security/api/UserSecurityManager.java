@@ -1,10 +1,9 @@
 package com.zufar.onlinestore.security.api;
 
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
-import com.zufar.onlinestore.user.dto.UserDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserSecurityManager {
 
-    private final UserFromSecurityContextProvider userFromSecurityContextProvider;
     private final UserAuthenticationService userAuthenticationService;
     private final UserRegistrationService userRegistrationService;
 
@@ -25,10 +23,6 @@ public class UserSecurityManager {
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         return userAuthenticationService.authenticate(request);
-    }
-
-    public UserDto getUserFromSecurityContext() {
-        return userFromSecurityContextProvider.getUser();
     }
 
     public void logout(final HttpServletRequest request,

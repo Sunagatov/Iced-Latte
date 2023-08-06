@@ -11,13 +11,12 @@ public class RegistrationDtoConverter {
 
     public UserDto toDto(final UserRegistrationRequest userRegistrationRequest) {
         return new UserDto(
-                null,
                 userRegistrationRequest.firstName(),
                 userRegistrationRequest.lastName(),
                 userRegistrationRequest.username(),
                 userRegistrationRequest.email(),
                 userRegistrationRequest.password(),
-                userRegistrationRequest.address()
+                null
         );
     }
 }
