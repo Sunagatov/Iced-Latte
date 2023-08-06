@@ -26,7 +26,7 @@ public class PaymentRetriever {
     private final PaymentConverter paymentConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public PaymentDetailsDto getPaymentDetails(Long paymentId) {
+    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
         Objects.requireNonNull(paymentId);
         log.info("Get payment details: start payment details retrieve by payment id: {}.", paymentId);
 

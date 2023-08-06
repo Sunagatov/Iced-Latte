@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Slf4j
 public class PaymentExceptionHandler {
 
-    private final String DESCRIPTION_TEMPLATE = "Operation was failed in method: %s from the class: %s.";
+    private final String DESCRIPTION_TEMPLATE = "Error message: %s. Operation was failed in method: %s at line number: %d from the class: %s.";
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -67,17 +67,17 @@ public class PaymentExceptionHandler {
 
     private ApiResponse<String> buildResponse(Exception exception, HttpStatus httpStatus) {
         return ApiResponse.<String>builder()
-                .data(getExceptionDescription(exception))
-                .message(exception.getMessage())
+                .message(getErrorMessage(exception))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(httpStatus.value())
                 .build();
     }
 
-    private String getExceptionDescription(Exception exception) {
+    private String getErrorMessage(Exception exception) {
         return Arrays.stream(exception.getStackTrace())
                 .findFirst()
-                .map(topElement -> DESCRIPTION_TEMPLATE.formatted(topElement.getMethodName(), topElement.getClassName()))
+                .map(topElement -> DESCRIPTION_TEMPLATE.formatted(exception.getMessage(), topElement.getMethodName(),
+                        topElement.getLineNumber(), topElement.getClassName()))
                 .orElse(StringUtils.EMPTY);
     }
 }
