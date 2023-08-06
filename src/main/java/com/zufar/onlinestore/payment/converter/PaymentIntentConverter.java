@@ -5,29 +5,25 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.calculator.PaymentPriceCalculator;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.entity.Payment;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@RequiredArgsConstructor
-@Component
-public class PaymentIntentConverter {
 
-    private final PaymentPriceCalculator paymentPriceCalculator;
 
-    public Payment toPayment(final PaymentIntent paymentIntent) {
-        return Payment.builder()
-                .itemsTotalPrice(paymentPriceCalculator.calculatePriceForPayment(paymentIntent.getAmount()))
-                .paymentIntentId(paymentIntent.getId())
-                .currency(paymentIntent.getCurrency())
-                .build();
-    }
+@Mapper(uses = PaymentPriceCalculator.class)
+public interface PaymentIntentConverter {
 
-    public PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto) {
-        return PaymentIntentCreateParams.builder()
-                .setAmount(paymentPriceCalculator.calculatePriceForPaymentIntent(
-                        createPaymentDto.priceDetails().totalPrice()))
-                .setCurrency( createPaymentDto.priceDetails().currency())
-                .setPaymentMethod(createPaymentDto.paymentMethodId())
-                .build();
-    }
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "paymentIntentId", source = "paymentIntent.id")
+    @Mapping(target = "currency", source = "paymentIntent.currency")
+    @Mapping(target = "itemsTotalPrice", source = "paymentIntent.amount", qualifiedByName = {"calculateForPayment"})
+    Payment toPayment(final PaymentIntent paymentIntent);
+
+    @Mapping(target = "currency", source = "createPaymentDto.priceDetails.currency")
+    @Mapping(target = "paymentMethod", source = "createPaymentDto.paymentMethodId")
+    @Mapping(target = "amount",
+            source = "createPaymentDto.priceDetails.itemsTotalPrice",
+            qualifiedByName = {"calculateForPaymentIntent"})
+    PaymentIntentCreateParams toPaymentIntentParams(final CreatePaymentDto createPaymentDto);
 }

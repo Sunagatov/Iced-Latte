@@ -1,8 +1,8 @@
-package com.zufar.onlinestore.payment.service;
+package com.zufar.onlinestore.payment.api.impl.intent;
 
+import com.zufar.onlinestore.payment.converter.PaymentConverter;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
-import com.zufar.onlinestore.payment.converter.PaymentConverter;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +25,8 @@ public class PaymentRetriever {
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public PaymentDetailsDto getPaymentDetails(Long paymentId) {
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
         Objects.requireNonNull(paymentId);
         log.info("Get payment details: start payment details retrieve by payment id: {}.", paymentId);
 
