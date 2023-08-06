@@ -8,16 +8,23 @@ import org.springframework.stereotype.Component;
 public class PaymentMethodConverter {
 
     public PaymentMethodCreateParams toPaymentMethodParams(final CreatePaymentMethodDto createPaymentMethodDto) {
-        PaymentMethodCreateParams.CardDetails cardDetails = PaymentMethodCreateParams.CardDetails.builder()
-                .setNumber(createPaymentMethodDto.cardNumber())
-                .setExpMonth(createPaymentMethodDto.expMonth())
-                .setExpYear(createPaymentMethodDto.expYear())
-                .setCvc(createPaymentMethodDto.cvc())
-                .build();
+        PaymentMethodCreateParams.Builder paymentMethod = PaymentMethodCreateParams.builder();
+        PaymentMethodCreateParams.CardDetails cardDetails = getCardDetails(createPaymentMethodDto);
 
-        return PaymentMethodCreateParams.builder()
-                .setCard(cardDetails)
-                .setType(PaymentMethodCreateParams.Type.CARD)
-                .build();
+        paymentMethod.setCard(cardDetails);
+        paymentMethod.setType(PaymentMethodCreateParams.Type.CARD);
+
+        return paymentMethod.build();
+    }
+
+    private PaymentMethodCreateParams.CardDetails getCardDetails(final CreatePaymentMethodDto createPaymentMethodDto) {
+        PaymentMethodCreateParams.CardDetails.Builder cardDetails = PaymentMethodCreateParams.CardDetails.builder();
+
+        cardDetails.setNumber(createPaymentMethodDto.cardNumber());
+        cardDetails.setExpYear(createPaymentMethodDto.expYear());
+        cardDetails.setExpMonth(createPaymentMethodDto.expMonth());
+        cardDetails.setCvc(createPaymentMethodDto.cvc());
+
+        return cardDetails.build();
     }
 }
