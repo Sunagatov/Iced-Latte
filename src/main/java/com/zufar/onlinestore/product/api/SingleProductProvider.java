@@ -23,6 +23,7 @@ public class SingleProductProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductInfoDto getProductById(final UUID productId) {
+        log.info("The single product provider a get product by id method is called");
         return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)
                 .orElseThrow(() -> {
