@@ -15,7 +15,7 @@ import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservat
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ReservationService implements ReservationApi {
+public class ReservationApiImpl implements ReservationApi {
 
     private final ReservationCreator reservationCreator;
 
