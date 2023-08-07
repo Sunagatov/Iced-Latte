@@ -15,6 +15,8 @@ public interface ShoppingSessionItemRepository extends JpaRepository<ShoppingSes
             nativeQuery = true)
     ShoppingSessionItem updateProductsQuantityInShoppingSessionItem(@Param("shopping_session_item_id") UUID shoppingSessionItemId,
                                                                     @Param("products_quantity_change") Integer productsQuantityChange);
-    @Query(value = "DELETE FROM shopping_session_item WHERE id = :shopping_session_item_id RETURNING *", nativeQuery = true)
-    ShoppingSessionItem deleteShoppingSessionItemById(@Param("shopping_session_item_id") UUID shoppingSessionItemId);
+
+    @Modifying
+    @Query(value = "DELETE FROM shopping_session_item WHERE id = :shopping_session_item_id", nativeQuery = true)
+    Integer deleteShoppingSessionItemById(@Param("shopping_session_item_id") UUID shoppingSessionItemId);
 }
