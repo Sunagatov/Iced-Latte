@@ -21,11 +21,13 @@ public class ProductApiImpl implements ProductApi {
                                                         final Integer size,
                                                         final String sortAttribute,
                                                         final String sortDirection) {
+        log.info("The product service a get products method is called");
         return pageableProductsProvider.getProducts(page, size, sortAttribute, sortDirection);
     }
 
     @Override
     public ProductInfoDto getProduct(final UUID productId) {
+        log.info("The product service a get single product method is called");
         return singleProductProvider.getProductById(productId);
     }
 }
