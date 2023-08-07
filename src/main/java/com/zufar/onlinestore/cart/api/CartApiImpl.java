@@ -43,7 +43,15 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest) {
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest request) {
+        ShoppingSessionItem deletedItem = shoppingSessionItemRepository.deleteShoppingSessionItemById(request.shoppingSessionItemId());
+        if (deletedItem == null) {
+            log.warn("The shoppingSessionItem with id: {} does not exist",
+                    request.shoppingSessionItemId());
+
+            throw new ShoppingSessionItemNotFoundException(request.shoppingSessionItemId());
+        }
         return null;
     }
 

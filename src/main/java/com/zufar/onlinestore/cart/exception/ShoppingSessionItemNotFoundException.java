@@ -16,4 +16,11 @@ public class ShoppingSessionItemNotFoundException extends RuntimeException {
         this.shoppingSessionId = shoppingSessionId;
         this.shoppingSessionItemId = shoppingSessionItemId;
     }
+
+    public ShoppingSessionItemNotFoundException(final UUID shoppingSessionItemId) {
+        super(String.format("The shoppingSessionItem with id = %s is not found.",
+                shoppingSessionItemId));
+        this.shoppingSessionId = null;
+        this.shoppingSessionItemId = shoppingSessionItemId;
+    }
 }

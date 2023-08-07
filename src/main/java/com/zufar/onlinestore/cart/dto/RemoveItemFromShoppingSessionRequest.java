@@ -1,4 +1,11 @@
 package com.zufar.onlinestore.cart.dto;
 
-public record RemoveItemFromShoppingSessionRequest() {
+import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
+
+public record RemoveItemFromShoppingSessionRequest(
+        @NotNull(message = "ShoppingSessionItemId is the mandatory attribute")
+        UUID shoppingSessionItemId
+) {
 }

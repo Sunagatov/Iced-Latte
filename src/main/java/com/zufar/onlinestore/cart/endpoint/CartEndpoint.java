@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.cart.endpoint;
 
 import com.zufar.onlinestore.cart.api.CartApi;
+import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import jakarta.validation.Valid;
@@ -8,12 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -44,6 +40,17 @@ public class CartEndpoint {
 
         ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(request);
         log.info("ProductsQuantity was updated in shoppingSession item");
+        return ResponseEntity.ok()
+                .body(shoppingSessionDto);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ShoppingSessionDto> deleteItemInShoppingSession (@RequestBody @Valid final RemoveItemFromShoppingSessionRequest request) {
+        log.warn("Received the request to delete the shoppingSessionItem with id: {}.",
+                request.shoppingSessionItemId());
+        ShoppingSessionDto shoppingSessionDto = cartApi.removeItemFromShoppingSession(request);
+        log.info("The shoppingSessionItem with id = {} was deleted.",
+                request.shoppingSessionItemId());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }
