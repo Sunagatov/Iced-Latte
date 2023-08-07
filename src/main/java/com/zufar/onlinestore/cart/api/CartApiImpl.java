@@ -65,7 +65,7 @@ public class CartApiImpl implements CartApi {
             log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
-            throw new ShoppingSessionNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
+            throw new ShoppingSessionNotFoundException(request.shoppingSessionId());
         }
 
         if (request.shoppingSessionId() != updatedItem.getShoppingSession().getId()) {

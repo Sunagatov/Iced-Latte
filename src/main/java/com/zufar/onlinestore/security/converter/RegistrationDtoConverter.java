@@ -10,13 +10,12 @@ import org.springframework.stereotype.Service;
 public class RegistrationDtoConverter {
 
     public UserDto toDto(final UserRegistrationRequest userRegistrationRequest) {
-        return new UserDto(
-                userRegistrationRequest.firstName(),
-                userRegistrationRequest.lastName(),
-                userRegistrationRequest.username(),
-                userRegistrationRequest.email(),
-                userRegistrationRequest.password(),
-                null
-        );
+        return UserDto.builder()
+                .firstName(userRegistrationRequest.firstName())
+                .lastName(userRegistrationRequest.lastName())
+                .username(userRegistrationRequest.username())
+                .email(userRegistrationRequest.email())
+                .password(userRegistrationRequest.password())
+                .build();
     }
 }
