@@ -51,11 +51,12 @@ public class CartEndpoint {
     }
 
     @DeleteMapping
-    public ResponseEntity<ShoppingSessionDto> deleteItemInShoppingSession (@RequestBody @Valid final RemoveItemFromShoppingSessionRequest request) {
-        log.info("Received the request to delete the shoppingSessionItem with id: {}.",
+    public ResponseEntity<ShoppingSessionDto> deleteItemInShoppingSession (
+            @RequestBody @Valid final RemoveItemFromShoppingSessionRequest request) {
+        log.info("Received the request to delete the shopping session items with ids: {}.",
                 request.shoppingSessionItemId());
         ShoppingSessionDto shoppingSessionDto = cartApi.removeItemFromShoppingSession(request);
-        log.info("The shoppingSessionItem with id = {} was deleted.",
+        log.info("The shopping session items with ids = {} was deleted.",
                 request.shoppingSessionItemId());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);

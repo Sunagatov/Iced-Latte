@@ -33,16 +33,17 @@ public class ShoppingSessionProvider {
             log.error("The shopping session for the user with id = {} is not found.", userId);
             throw new ShoppingSessionNotFoundException(userId);
         }
-        return shoppingSessionDtoConverter.toDto(shoppingSession);
+        return shoppingSessionDtoConverter.toDto(shoppingSession); //ToDo think about return type
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest request) {
-        Integer deletedItem = shoppingSessionItemRepository.deleteShoppingSessionItemById(request.shoppingSessionItemId());
-        if (deletedItem == null) {
-            log.error("The shoppingSessionItem with id: {} does not exist", request.shoppingSessionItemId());
+        Integer deletedItems = shoppingSessionItemRepository.deleteShoppingSessionItemById(request.shoppingSessionItemId());
+        if (deletedItems < request.shoppingSessionItemId().size()) {
+            log.error("The list of shopping session items with ids: {} does not exist.", request.shoppingSessionItemId());
             throw new ShoppingSessionItemNotFoundException(request.shoppingSessionItemId());
         }
+        //ToDo update list before making an exception, show only invalid ids
 
         ShoppingSession shoppingSession = shoppingSessionRepository.findShoppingSessionByUserId(request.userId());
         if (shoppingSession == null) {
