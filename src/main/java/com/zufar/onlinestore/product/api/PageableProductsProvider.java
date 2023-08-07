@@ -28,7 +28,7 @@ public class PageableProductsProvider {
                                                         final Integer size,
                                                         final String sortAttribute,
                                                         final String sortDirection) {
-        log.info("The ProductListWithPaginationInfoDto is called");
+        log.info("The pageable products provider a get products method is called");
         Pageable pageable = createPageableObject(page, size, sortAttribute, sortDirection);
         log.info("The pageable object has been created");
 
