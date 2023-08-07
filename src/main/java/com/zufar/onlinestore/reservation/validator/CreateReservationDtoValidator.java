@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.reservation.validator;
 
+import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationDto;
 import com.zufar.onlinestore.reservation.api.dto.creation.ProductReservation;
-import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationRequest;
 import org.springframework.stereotype.Component;
 
 import static com.zufar.onlinestore.reservation.api.dto.creation.ProductReservation.MAX_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER;
@@ -9,24 +9,24 @@ import static com.zufar.onlinestore.reservation.api.dto.creation.ProductReservat
 import static java.util.stream.Collectors.toSet;
 
 @Component
-public class CreateReservationDtoValidator implements IncomingDtoValidator<CreateReservationRequest> {
+public class CreateReservationDtoValidator implements IncomingDtoValidator<CreateReservationDto> {
 
     @Override
-    public boolean isValid(final CreateReservationRequest dto) {
-        boolean containsQuantityLessThanMin = dto.productReservations()
-                .stream()
+    public boolean isValid(final CreateReservationDto dto) {
+        boolean containsInvalidQuantity = dto.productReservations().stream()
                 .anyMatch(
                         product -> product.quantity() < MIN_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER
                                 || product.quantity() > MAX_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER
                 );
 
-        if (containsQuantityLessThanMin) {
+        if (containsInvalidQuantity) {
             return false;
         }
+
         return productIdMustNotBeDuplicated(dto);
     }
 
-    private boolean productIdMustNotBeDuplicated(final CreateReservationRequest dto) {
+    private boolean productIdMustNotBeDuplicated(final CreateReservationDto dto) {
         int productIdsSize = dto
                 .productReservations()
                 .stream()

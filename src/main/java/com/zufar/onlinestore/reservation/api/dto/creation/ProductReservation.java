@@ -22,4 +22,8 @@ public record ProductReservation(
 ) {
     public static final int MIN_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER = 1;
     public static final int MAX_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER = 10;
+
+    public static ProductReservation outOfStockProductReservation(UUID productId) {
+        return new ProductReservation(productId, 0);
+    }
 }

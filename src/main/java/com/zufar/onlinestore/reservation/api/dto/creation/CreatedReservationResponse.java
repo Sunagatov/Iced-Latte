@@ -1,8 +1,5 @@
 package com.zufar.onlinestore.reservation.api.dto.creation;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.Instant;
 import java.util.List;
 
@@ -19,13 +16,10 @@ import static java.util.Collections.emptyList;
  */
 public record CreatedReservationResponse(
 
-        @NotNull
         CreatedReservationStatus status,
 
-        @NotNull
         List<ProductReservation> reservations,
 
-        @Nullable
         Instant expiredAt
 ) {
 

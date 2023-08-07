@@ -5,8 +5,6 @@ import com.zufar.onlinestore.reservation.api.dto.cancellation.CancelledReservati
 import com.zufar.onlinestore.reservation.api.dto.confirmation.ConfirmedReservationResponse;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationRequest;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse;
-import com.zufar.onlinestore.reservation.exception.ReservationAbortedException;
-import com.zufar.onlinestore.reservation.validator.IncomingDtoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,33 +17,31 @@ import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservat
 @Service
 public class ReservationService implements ReservationApi {
 
-    private final IncomingDtoValidator<CreateReservationRequest> validator;
     private final ReservationCreator reservationCreator;
 
     @Override
     public CreatedReservationResponse createReservation(final CreateReservationRequest request) {
-        var valid = validator.isValid(request);
-        if (!valid) {
-            return failedReservation();
-        }
-
         try {
             return reservationCreator.tryToCreateReservation(request);
-        } catch (ReservationAbortedException abortedException) {
+        } catch (RuntimeException rollbackException) {
             return failedReservation();
         }
     }
 
     @Override
     public ConfirmedReservationResponse confirmReservation() {
-        // UPDATE reservation SET status = CONFIRMED where reservation_id = ?
+        // TODO: UPDATE reservation SET status = 'CONFIRMED' where status = 'CREATED' and reservation_id = ?
+        //  we can confirm reservation only from status CREATED
+        //  CONFIRMED is a final status and you should not change it to any other status
         return null;
     }
 
     @Transactional
     @Override
     public CancelledReservationResponse cancelReservation() {
-        // UPDATE reservation SET status = CANCELLED where reservation_id = ?
+        // TODO: UPDATE reservation SET status = 'CANCELLED' status = 'CREATED' where reservation_id = ?
+        //  we can cancel reservation only from status CREATED
+        //  CANCELLED is a final status and you should not change it to any other status
         return null;
     }
 }
