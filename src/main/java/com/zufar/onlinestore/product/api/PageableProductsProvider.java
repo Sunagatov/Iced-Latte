@@ -28,11 +28,14 @@ public class PageableProductsProvider {
                                                         final Integer size,
                                                         final String sortAttribute,
                                                         final String sortDirection) {
+        log.info("The ProductListWithPaginationInfoDto is called");
         Pageable pageable = createPageableObject(page, size, sortAttribute, sortDirection);
+        log.info("The pageable object has been created");
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
                 .map(productInfoDtoConverter::toDto);
+        log.info("All products are found in the database given");
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }
