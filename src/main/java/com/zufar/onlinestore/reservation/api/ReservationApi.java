@@ -1,5 +1,7 @@
 package com.zufar.onlinestore.reservation.api;
 
+import com.zufar.onlinestore.reservation.api.dto.cancellation.CancelReservationRequest;
+import com.zufar.onlinestore.reservation.api.dto.confirmation.ConfirmReservationRequest;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationRequest;
 import com.zufar.onlinestore.reservation.api.dto.cancellation.CancelledReservationResponse;
 import com.zufar.onlinestore.reservation.api.dto.confirmation.ConfirmedReservationResponse;
@@ -35,7 +37,7 @@ public interface ReservationApi {
      *
      * @return the status of the confirmed reservation
      */
-    ConfirmedReservationResponse confirmReservation();
+    ConfirmedReservationResponse confirmReservation(final ConfirmReservationRequest confirmReservation);
 
 
     /**
@@ -43,5 +45,5 @@ public interface ReservationApi {
      *
      * @return the status of the cancelled reservation
      */
-    CancelledReservationResponse cancelReservation();
+    CancelledReservationResponse cancelReservation(final CancelReservationRequest cancelReservation);
 }
