@@ -1,8 +1,7 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.RemoveItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.exception.FailedDeletingShoppingSessionItemsException;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionItemRepository;
 import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import com.zufar.onlinestore.user.dto.UserDto;
@@ -19,25 +18,20 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ShoppingSessionItemRemover {
+public class ShoppingSessionItemsDeleter {
 
     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ShoppingSessionProvider shoppingSessionProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto remove(final RemoveItemsFromShoppingSessionRequest request) throws FailedDeletingShoppingSessionItemsException {
+    public ShoppingSessionDto delete(final DeleteItemsFromShoppingSessionRequest request) {
         List<UUID> itemIds = request.shoppingSessionItemIds();
-
-        Integer deletedItemsQuantity = shoppingSessionItemRepository.deleteShoppingSessionItemByIds(itemIds);
-
-        if (deletedItemsQuantity < itemIds.size()) {
-            log.error("Deleting the list of the shopping session items with ids = '{}' were failed.", itemIds);
-            throw new FailedDeletingShoppingSessionItemsException(itemIds);
-        }
+        shoppingSessionItemRepository.deleteAllByIdInBatch(itemIds);
 
         UserDto userDto = securityPrincipalProvider.get();
         UUID userId = userDto.userId();
+
         return shoppingSessionProvider.getByUserId(userId);
     }
 }
