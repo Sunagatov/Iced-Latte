@@ -3,9 +3,12 @@ package com.zufar.onlinestore.payment.endpoint;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.dto.*;
+import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
+import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
+import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
-
-import java.util.Objects;
 
 @Slf4j
 @Validated
@@ -42,15 +43,9 @@ public class PaymentEndpoint {
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @Valid @NotNull Long paymentId) {
+    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @NotNull final Long paymentId) throws PaymentNotFoundException {
         PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
-        if (Objects.isNull(retrievedPayment)) {
-            log.info("Get payment details: not found payment details by id: {}.", paymentId);
-            return ResponseEntity.notFound()
-                    .build();
-        }
         log.info("Get payment details: payment details: {} successfully retrieved.", retrievedPayment);
-
         return ResponseEntity.ok()
                 .body(retrievedPayment);
     }
@@ -67,14 +62,9 @@ public class PaymentEndpoint {
     }
 
     @PostMapping("/event")
-    public ResponseEntity<Void> paymentEventsProcess(
-            @RequestBody @Valid @NotEmpty @NotNull String paymentIntentPayload,
-            @RequestHeader("Stripe-Signature") @Valid @NotEmpty @NotNull String stripeSignatureHeader) throws SignatureVerificationException {
-        if (Objects.isNull(paymentIntentPayload) || Objects.isNull(stripeSignatureHeader)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<Void> paymentEventsProcess(@RequestBody @NotEmpty final String paymentIntentPayload,
+                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) throws SignatureVerificationException {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
-
         return ResponseEntity.ok()
                 .build();
     }

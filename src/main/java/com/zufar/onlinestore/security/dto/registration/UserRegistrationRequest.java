@@ -1,14 +1,11 @@
-package com.zufar.onlinestore.security.dto.authentication;
+package com.zufar.onlinestore.security.dto.registration;
 
-import com.zufar.onlinestore.user.dto.AddressDto;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 
-public record RegistrationRequest(
+public record UserRegistrationRequest(
 
         @NotBlank(message = "FirstName is the mandatory attribute")
         @Size(max = 55, message = "FirstName length must be less than 55 characters")
@@ -28,10 +25,6 @@ public record RegistrationRequest(
 
         @NotBlank(message = "Password is the mandatory attribute")
         @Size(max = 55, message = "Password length must be less than 55 characters")
-        String password,
-
-        @Valid
-        @NotNull(message = "Address is mandatory")
-        AddressDto address
+        String password
 ) {
 }
