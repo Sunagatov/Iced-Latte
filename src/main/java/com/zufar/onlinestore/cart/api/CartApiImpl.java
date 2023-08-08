@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.RemoveItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
@@ -31,6 +31,7 @@ public class CartApiImpl implements CartApi {
     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
     private final ShoppingSessionProvider shoppingSessionProvider;
+    private final ShoppingSessionItemRemover shoppingSessionItemRemover;
 
     @Override
     public ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException {
@@ -43,9 +44,8 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest request) throws
-            ShoppingSessionItemNotFoundException, ShoppingSessionNotFoundException {
-        return shoppingSessionProvider.removeItemFromShoppingSession(request);
+    public ShoppingSessionDto removeItemsFromShoppingSession(final RemoveItemsFromShoppingSessionRequest request) throws ShoppingSessionItemNotFoundException, ShoppingSessionNotFoundException {
+        return shoppingSessionItemRemover.remove(request);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.cart.endpoint;
 
 import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.RemoveItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.user.entity.UserEntity;
@@ -54,13 +54,10 @@ public class CartEndpoint {
     }
 
     @DeleteMapping
-    public ResponseEntity<ShoppingSessionDto> deleteItemInShoppingSession (
-            @RequestBody @Valid final RemoveItemFromShoppingSessionRequest request) {
-        log.info("Received the request to delete the shopping session items with ids: {}.",
-                request.shoppingSessionItemId());
-        ShoppingSessionDto shoppingSessionDto = cartApi.removeItemFromShoppingSession(request);
-        log.info("The shopping session items with ids = {} was deleted.",
-                request.shoppingSessionItemId());
+    public ResponseEntity<ShoppingSessionDto> deleteItemsInShoppingSession(@RequestBody @Valid final RemoveItemsFromShoppingSessionRequest request) {
+        log.info("Received the request to delete the shopping session items with ids: {}.", request.shoppingSessionItemIds());
+        ShoppingSessionDto shoppingSessionDto = cartApi.removeItemsFromShoppingSession(request);
+        log.info("The shopping session items with ids = {} were deleted.", request.shoppingSessionItemIds());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }

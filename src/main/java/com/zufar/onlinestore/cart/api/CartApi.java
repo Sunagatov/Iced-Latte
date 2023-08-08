@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.RemoveItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
@@ -31,10 +31,10 @@ public interface CartApi {
     /**
      * Enables to remove the specific item from the shopping session (the cart details)
      *
-     * @param removeItemFromShoppingSessionRequest the request to remove the specific item from the shopping session (the cart details)
+     * @param removeItemsFromShoppingSessionRequest the request to remove the specific item from the shopping session (the cart details)
      * @return ShoppingSessionDto (the shoppingSession details)
      * */
-    ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest);
+    ShoppingSessionDto removeItemsFromShoppingSession(final RemoveItemsFromShoppingSessionRequest removeItemsFromShoppingSessionRequest);
 
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
