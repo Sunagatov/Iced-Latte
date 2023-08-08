@@ -195,7 +195,7 @@ public class ReservationCreator {
         var productsReleasingBatch = deletingReservations.stream().map(this::buildProductReleasingBatchItem).toList();
         jdbcTemplate.batchUpdate(PRODUCT_QUANTITY_RELEASING_SQL, productsReleasingBatch);
         reservationRepository.deleteAllInBatch(deletingReservations);
-        // TODO: optimize in single-query style like queries above
+        // TODO: (not mandatory) optimize in single-query style like queries above
     }
 
     private Object[] buildProductReleasingBatchItem(final Reservation reservation) {
