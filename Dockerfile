@@ -11,7 +11,7 @@ WORKDIR $HOME
 
 ADD pom.xml $HOME
 RUN mvn verify --fail-never
-ADD . $HOME
+ADD docker/online-store-app $HOME
 RUN mvn package -DskipTests
 
 #

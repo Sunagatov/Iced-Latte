@@ -30,7 +30,7 @@ services:
     container_name: online-store-app
     build:
       context: ./
-      dockerfile: docker/online-store-app/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - '8083:8083'
     user: root
