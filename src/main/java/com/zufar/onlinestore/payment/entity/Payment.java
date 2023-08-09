@@ -35,9 +35,6 @@ public class Payment {
     @Column(name = "payment_intent_id", nullable = false, unique = true)
     private String paymentIntentId;
 
-    @Column(name = "currency", nullable = false)
-    private String currency;
-
     @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;
 
