@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Slf4j
 public class PaymentExceptionHandler {
 
-    private final String DESCRIPTION_TEMPLATE = "Error message: %s. Operation was failed in method: %s at line number: %d from the class: %s.";
+    private static final String DESCRIPTION_TEMPLATE = "Error message: %s. Operation was failed in method: %s at line number: %d from the class: %s.";
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
