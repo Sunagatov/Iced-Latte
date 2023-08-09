@@ -2,16 +2,18 @@ package com.zufar.onlinestore.security.configuration;
 
 import com.zufar.onlinestore.security.endpoint.UserSecurityEndpoint;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationFilter;
-
 import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,9 +21,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-
-import lombok.RequiredArgsConstructor;
 
 @Slf4j
 @Configuration
@@ -37,7 +36,14 @@ public class SpringSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
-                                                   final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
+                                                   final JwtAuthenticationFilter jwtTokenFilter,
+                                                   final PasswordEncoder passwordEncoder,
+                                                   final UserDetailsService userDetailService) throws Exception {
+
+        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder);
+        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+
         return httpSecurity
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
@@ -47,6 +53,7 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
                         .anyRequest().authenticated()
                 )
+                .authenticationManager(authenticationManager)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -58,7 +65,7 @@ public class SpringSecurityConfiguration {
             UserEntity user = userRepository.findUserByUsername(username);
             if (user == null) {
                 log.warn("Failed to get the user with the username = {}.", username);
-                throw new UsernameNotFoundException(username);
+                throw new BadCredentialsException("Bad credentials");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             return user;
@@ -72,18 +79,6 @@ public class SpringSecurityConfiguration {
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
-                                                       final PasswordEncoder passwordEncoder,
-                                                       final UserDetailsService userDetailService) throws Exception {
-        return httpSecurity
-                .getSharedObject(AuthenticationManagerBuilder.class)
-                .userDetailsService(userDetailService)
-                .passwordEncoder(passwordEncoder)
-                .and()
-                .build();
     }
 
     @Bean
