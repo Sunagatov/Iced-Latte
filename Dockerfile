@@ -11,8 +11,8 @@ WORKDIR $HOME
 
 ADD pom.xml $HOME
 RUN mvn verify --fail-never
-ADD docker/online-store-app $HOME
-RUN mvn package -DskipTests
+ADD ./ $HOME
+RUN mvn package
 
 #
 # RUN APPLICATION ARTIFACT STAGE
