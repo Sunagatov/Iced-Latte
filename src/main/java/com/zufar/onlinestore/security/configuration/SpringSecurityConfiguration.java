@@ -38,7 +38,6 @@ public class SpringSecurityConfiguration {
                                                    final JwtAuthenticationFilter jwtTokenFilter,
                                                    final PasswordEncoder passwordEncoder,
                                                    final UserDetailsService userDetailService) throws Exception {
-
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder);
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
