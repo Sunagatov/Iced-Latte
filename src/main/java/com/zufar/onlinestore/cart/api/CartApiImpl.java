@@ -27,6 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CartApiImpl implements CartApi {
 
+    private static final String FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY = "Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.";
+
     private final ShoppingSessionRepository shoppingSessionRepository;
     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
@@ -55,7 +57,7 @@ public class CartApiImpl implements CartApi {
                 shoppingSessionItemRepository.updateProductsQuantityInShoppingSessionItem(request.shoppingSessionItemId(), request.productsQuantityChange());
 
         if (updatedItem == null) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
             throw new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
@@ -63,14 +65,14 @@ public class CartApiImpl implements CartApi {
 
         Optional<ShoppingSession> shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId());
         if (shoppingSession.isEmpty()) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
             throw new ShoppingSessionNotFoundException(request.shoppingSessionId());
         }
 
         if (request.shoppingSessionId() != updatedItem.getShoppingSession().getId()) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
             throw new InvalidShoppingSessionIdInUpdateProductsQuantityRequestException(request.shoppingSessionId());

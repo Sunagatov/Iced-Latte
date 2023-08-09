@@ -1,11 +1,14 @@
 package com.zufar.onlinestore.payment.api;
 
-import com.stripe.exception.SignatureVerificationException;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
 import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
-import com.zufar.onlinestore.payment.exception.*;
+import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
+import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 
 public interface PaymentApi {
 
