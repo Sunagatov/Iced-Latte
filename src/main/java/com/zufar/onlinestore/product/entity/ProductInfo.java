@@ -10,9 +10,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 import java.util.UUID;
 
 @Getter
@@ -25,7 +27,8 @@ public class ProductInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "id", nullable = false)
+    private UUID productId;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -47,35 +50,28 @@ public class ProductInfo {
 
     @Override
     public boolean equals(Object object) {
-        if (this == object)
+        if (this == object) {
             return true;
-        if (object == null || getClass() != object.getClass())
+        }
+        if (!(object instanceof ProductInfo productInfo)) {
             return false;
-        ProductInfo that = (ProductInfo) object;
-        return active == that.active &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(price, that.price) &&
-                Objects.equals(currency, that.currency) &&
-                Objects.equals(quantity, that.quantity);
+        }
+        return new EqualsBuilder()
+                .append(productId, productInfo.productId)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, price, currency, quantity, active);
+        return new HashCodeBuilder()
+                .append(productId)
+                .toHashCode();
     }
 
     @Override
     public String toString() {
-        return "ProductInfo {" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", price=" + price +
-                ", currency='" + currency + '\'' +
-                ", quantity=" + quantity +
-                ", active=" + active +
-                '}';
+        return new ToStringBuilder(this)
+                .append("productId", productId)
+                .toString();
     }
 }

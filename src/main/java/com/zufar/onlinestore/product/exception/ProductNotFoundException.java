@@ -7,10 +7,10 @@ import java.util.UUID;
 @Getter
 public class ProductNotFoundException extends RuntimeException {
 
-    private final Integer productId;
+    private final UUID productId;
 
-    public ProductNotFoundException(final Integer productId) {
-        super(String.format("The product with id = %s is not found.", productId));
+    public ProductNotFoundException(final UUID productId) {
+        super(String.format("The product with productId = %s  is not found.",productId));
         this.productId = productId;
     }
 }

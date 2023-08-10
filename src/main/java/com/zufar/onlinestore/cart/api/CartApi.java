@@ -1,5 +1,7 @@
 package com.zufar.onlinestore.cart.api;
 
+import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.AddNewProductToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
@@ -12,15 +14,17 @@ import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 
 import java.util.UUID;
 
+import java.util.UUID;
+
 public interface CartApi {
 
     /**
      * Enables to get ShoppingSession (the cart details)
      *
-     * @param getShoppingSessionRequest the request to get the shopping session (the cart details)
+     * @param userId is the identifier of the user for whom the shopping session is returned
      * @return ShoppingSessionDto (the cart details)
      * */
-    ShoppingSessionDto getShoppingSession(final GetShoppingSessionRequest getShoppingSessionRequest);
+    ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException;
 
     /**
      * Enables to add a new item into the shopping session (the cart details)
@@ -38,10 +42,10 @@ public interface CartApi {
     /**
      * Enables to remove the specific item from the shopping session (the cart details)
      *
-     * @param removeItemFromShoppingSessionRequest the request to remove the specific item from the shopping session (the cart details)
+     * @param deleteItemsFromShoppingSessionRequest the request to delete the specific items from the shopping session (the cart details)
      * @return ShoppingSessionDto (the shoppingSession details)
      * */
-    ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest);
+    ShoppingSessionDto deleteItemsFromShoppingSession(final DeleteItemsFromShoppingSessionRequest deleteItemsFromShoppingSessionRequest);
 
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)

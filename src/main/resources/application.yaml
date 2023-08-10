@@ -26,18 +26,18 @@ spring:
     ansi:
       enabled: detect
   datasource:
-    url: jdbc:postgresql://localhost:5432/testdb
-    username: postgres
-    password: postgres
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/testdb}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: jdbc:postgresql://localhost:5432/testdb
-    user: postgres
-    password: postgres
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/testdb}
+    user: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
 #
 # Stripe Api Properties
 #

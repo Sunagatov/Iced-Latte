@@ -1,12 +1,13 @@
 package com.zufar.onlinestore.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 
 import java.util.UUID;
 
 @Builder
 public record UserDto(
-        UUID userId,
+        @JsonIgnore UUID userId,
         String firstName,
         String lastName,
         String username,
