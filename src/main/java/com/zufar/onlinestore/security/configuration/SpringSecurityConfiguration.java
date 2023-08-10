@@ -14,7 +14,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,9 +31,9 @@ public class SpringSecurityConfiguration {
 
     private static final String API_AUTH_URL_PREFIX = UserSecurityEndpoint.USER_SECURITY_API_URL + "**";
     private static final String API_DOCS_URL_PREFIX = "/api/docs/**";
-    public static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
-    public static final String WEBHOOK_PAYMENT_EVENT_URL_PREFIX = "/api/v1/payment/event";
-    public static final String PRODUCTS_API_URL_PREFIX = "/api/v1/products/**";
+    private static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
+    private static final String WEBHOOK_PAYMENT_EVENT_URL_PREFIX = "/api/v1/payment/event";
+    private static final String PRODUCTS_API_URL_PREFIX = "/api/v1/products/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -83,9 +84,15 @@ public class SpringSecurityConfiguration {
     public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
                                                        final PasswordEncoder passwordEncoder,
                                                        final UserDetailsService userDetailService) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder);
-        return authenticationManagerBuilder.build();
+        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity
+                .getSharedObject(AuthenticationManagerBuilder.class);
+
+        authenticationManagerBuilder
+                .userDetailsService(userDetailService)
+                .passwordEncoder(passwordEncoder);
+
+        return authenticationManagerBuilder
+                .build();
     }
 
 
