@@ -14,7 +14,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,23 +36,22 @@ public class SpringSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
-                                                   final JwtAuthenticationFilter jwtTokenFilter,
-                                                   final PasswordEncoder passwordEncoder,
-                                                   final UserDetailsService userDetailService) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder);
-        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
-
+                                                   final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
         return httpSecurity
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
-                        .requestMatchers(WEBHOOK_PAYMENT_EVENT_URL_PREFIX).permitAll()
-                        .requestMatchers(PRODUCTS_API_URL_PREFIX).permitAll()
-                        .requestMatchers(API_DOCS_URL_PREFIX).permitAll()
-                        .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
-                        .anyRequest().authenticated()
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
+                                .requestMatchers(WEBHOOK_PAYMENT_EVENT_URL_PREFIX).permitAll()
+                                .requestMatchers(PRODUCTS_API_URL_PREFIX).permitAll()
+                                .requestMatchers(API_DOCS_URL_PREFIX).permitAll()
+                                .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
+                                .anyRequest().authenticated()
                 )
-                .authenticationManager(authenticationManager)
+                .sessionManagement(sessionManagement ->
+                        sessionManagement
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -78,6 +78,16 @@ public class SpringSecurityConfiguration {
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
+                                                       final PasswordEncoder passwordEncoder,
+                                                       final UserDetailsService userDetailService) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder);
+        return authenticationManagerBuilder.build();
+    }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
