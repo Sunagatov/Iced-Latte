@@ -95,7 +95,6 @@ public class SpringSecurityConfiguration {
                 .build();
     }
 
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
