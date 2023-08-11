@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PaymentConstants {
+public enum PaymentStatus {
 
     PAYMENT_METHOD_IS_REQUIRED("payment_intent.requires_payment_method",
             "Payment method is required"),
@@ -30,8 +30,6 @@ public enum PaymentConstants {
 
     PAYMENT_IS_SUCCEEDED("payment_intent.succeeded",
             "Payment is succeeded");
-
-    public static final String CURRENCY = "usd";
 
     private final String status;
     private final String description;
