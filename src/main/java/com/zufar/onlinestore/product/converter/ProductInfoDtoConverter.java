@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ProductInfoDtoConverter {
 
     public ProductInfoDto toDto(final ProductInfo entity) {
-        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
+        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice());
 
         return new ProductInfoDto(
                 entity.getProductId(),
@@ -24,7 +24,7 @@ public class ProductInfoDtoConverter {
     }
 
     public ProductInfoFullDto toFullDto(final ProductInfo entity) {
-        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
+        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice());
 
         return new ProductInfoFullDto(
                 entity.getProductId(),
