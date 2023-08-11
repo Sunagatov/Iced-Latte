@@ -30,10 +30,15 @@ services:
     container_name: online-store-app
     build:
       context: ./
-      dockerfile: docker/online-store-app/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - '8083:8083'
     user: root
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/testdb
+      - DATASOURCE_USERNAME=postgres
+      - DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
     healthcheck:
       test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
       interval: 20s
@@ -60,7 +65,7 @@ services:
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
     profiles:
-      - prod
+      - sonar
 
 networks:
   online-store-network:

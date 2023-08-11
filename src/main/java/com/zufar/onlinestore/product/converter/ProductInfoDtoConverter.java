@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.product.converter;
 
-import com.zufar.onlinestore.product.dto.PriceDetailsDto;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
@@ -12,25 +11,21 @@ import org.springframework.stereotype.Component;
 public class ProductInfoDtoConverter {
 
     public ProductInfoDto toDto(final ProductInfo entity) {
-        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
-
         return new ProductInfoDto(
                 entity.getProductId(),
                 entity.getDescription(),
                 entity.getName(),
-                priceDetails,
+                entity.getPrice(),
                 entity.getQuantity()
         );
     }
 
     public ProductInfoFullDto toFullDto(final ProductInfo entity) {
-        PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice(), entity.getCurrency());
-
         return new ProductInfoFullDto(
                 entity.getProductId(),
                 entity.getDescription(),
                 entity.getName(),
-                priceDetails,
+                entity.getPrice(),
                 entity.getQuantity(),
                 entity.getActive()
         );

@@ -35,10 +35,10 @@ public class ShoppingSession {
     private UUID userId;
 
     @OneToMany(mappedBy = "shoppingSession",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, //TODO Think about CascadeType and choose appropriate one
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE,
                     CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
             orphanRemoval = true,
-            fetch = FetchType.EAGER) //TODO Think about FetchType better
+            fetch = FetchType.EAGER)
     private Set<ShoppingSessionItem> items;
 
     @Column(name = "items_quantity", nullable = false)

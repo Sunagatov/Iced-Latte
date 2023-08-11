@@ -20,7 +20,7 @@ public class PaymentEventCreator {
 
     private final StripeConfiguration stripeConfig;
 
-    public Event createPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws SignatureVerificationException {
+    public Event createPaymentEvent(String paymentIntentPayload, String stripeSignatureHeader) throws PaymentEventProcessingException {
         log.info("Create payment event: start payment event creation:" +
                 " paymentIntentPayload: {}, stripeSignatureHeader: {}.", paymentIntentPayload, stripeSignatureHeader);
         try {

@@ -8,7 +8,7 @@ public class PaymentEventParsingException extends RuntimeException {
     private final String eventType;
 
     public PaymentEventParsingException(String eventType) {
-        super(String.format("Payment event with '%s' cannot be parsed.", eventType));
+        super(String.format("PaymentEvent = '%s' cannot be parsed.", eventType));
         this.eventType = eventType;
     }
 }

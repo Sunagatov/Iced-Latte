@@ -2,6 +2,7 @@ package com.zufar.onlinestore.cart.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
@@ -19,6 +20,9 @@ public record ShoppingSessionDto(
 
         @NotNull(message = "ItemsQuantity is the mandatory attribute")
         Integer itemsQuantity,
+
+        @NotNull(message = "ItemsTotalPrice is the mandatory attribute")
+        BigDecimal itemsTotalPrice,
 
         @NotNull(message = "ProductsQuantity is the mandatory attribute")
         Integer productsQuantity,

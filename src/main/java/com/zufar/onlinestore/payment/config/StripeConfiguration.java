@@ -21,6 +21,10 @@ public record StripeConfiguration(String secretKey,
 
     @PostConstruct
     private void init() {
-        Stripe.apiKey = secretKey;
+        setStripeKey(secretKey);
+    }
+
+    public static synchronized void setStripeKey(String stripeKey) {
+        Stripe.apiKey = stripeKey;
     }
 }

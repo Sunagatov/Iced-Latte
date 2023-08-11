@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS product
     name        VARCHAR(64) NOT NULL,
     description TEXT,
     price       DECIMAL     NOT NULL CHECK (price > 0),
-    currency    VARCHAR     NOT NULL,
     quantity    INT         NOT NULL CHECK (quantity >= 0),
     active      BOOLEAN     NOT NULL,
     PRIMARY KEY (id)
