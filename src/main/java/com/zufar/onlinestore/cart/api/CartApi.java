@@ -1,18 +1,12 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.AddNewProductToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.GetShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.product.exception.ProductNotFoundException;
-
-import java.util.UUID;
 
 import java.util.UUID;
 
@@ -36,7 +30,7 @@ public interface CartApi {
      * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewProductToShoppingSessionRequest
      * @throws ProductNotFoundException if there is no product in the database with the provided productId from addNewProductToShoppingSessionRequest
      * */
-    ShoppingSessionDto addNewProductToShoppingSession(final UUID userId, final UUID productId)
+    ShoppingSessionDto addItemsToShoppingSession(final UUID productId)
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException;
 
     /**
