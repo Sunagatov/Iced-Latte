@@ -6,7 +6,7 @@ CREATE TABLE user_details
     user_name               VARCHAR(55) NOT NULL,
     email                   VARCHAR(55) NOT NULL,
     password                VARCHAR(55) NOT NULL,
-    address_id              UUID        NOT NULL,
+    address_id              UUID,
     account_non_expired     BOOLEAN     NOT NULL,
     account_non_locked      BOOLEAN     NOT NULL,
     credentials_non_expired BOOLEAN     NOT NULL,
