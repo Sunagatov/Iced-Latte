@@ -39,9 +39,6 @@ public class ProductInfo {
     @Column(name = "price", nullable = false)
     private BigDecimal price;
 
-    @Column(name = "currency", nullable = false)
-    private String currency;
-
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 

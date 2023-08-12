@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.payment.repository;
 
 import com.zufar.onlinestore.payment.entity.Payment;
-import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;

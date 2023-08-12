@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.AddNewItemToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.RemoveItemFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
@@ -27,10 +27,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CartApiImpl implements CartApi {
 
+    private static final String FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY = "Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.";
+
     private final ShoppingSessionRepository shoppingSessionRepository;
     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
     private final ShoppingSessionProvider shoppingSessionProvider;
+    private final ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
 
     @Override
     public ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException {
@@ -43,8 +46,8 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto removeItemFromShoppingSession(final RemoveItemFromShoppingSessionRequest removeItemFromShoppingSessionRequest) {
-        return null;
+    public ShoppingSessionDto deleteItemsFromShoppingSession(final DeleteItemsFromShoppingSessionRequest deleteItemsFromShoppingSessionRequest) {
+        return shoppingSessionItemsDeleter.delete(deleteItemsFromShoppingSessionRequest);
     }
 
     @Override
@@ -54,7 +57,7 @@ public class CartApiImpl implements CartApi {
                 shoppingSessionItemRepository.updateProductsQuantityInShoppingSessionItem(request.shoppingSessionItemId(), request.productsQuantityChange());
 
         if (updatedItem == null) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
             throw new ShoppingSessionItemNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
@@ -62,14 +65,14 @@ public class CartApiImpl implements CartApi {
 
         Optional<ShoppingSession> shoppingSession = shoppingSessionRepository.findById(request.shoppingSessionId());
         if (shoppingSession.isEmpty()) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
-            throw new ShoppingSessionNotFoundException(request.shoppingSessionId(), request.shoppingSessionItemId());
+            throw new ShoppingSessionNotFoundException(request.shoppingSessionId());
         }
 
         if (request.shoppingSessionId() != updatedItem.getShoppingSession().getId()) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn(FAILED_TO_UPDATE_THE_PRODUCTS_QUANTITY,
                     request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
 
             throw new InvalidShoppingSessionIdInUpdateProductsQuantityRequestException(request.shoppingSessionId());

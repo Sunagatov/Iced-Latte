@@ -16,7 +16,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import java.math.BigDecimal;
 
 @Getter
@@ -34,9 +33,6 @@ public class Payment {
 
     @Column(name = "payment_intent_id", nullable = false, unique = true)
     private String paymentIntentId;
-
-    @Column(name = "currency", nullable = false)
-    private String currency;
 
     @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;
