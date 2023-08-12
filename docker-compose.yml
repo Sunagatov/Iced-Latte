@@ -18,8 +18,6 @@ services:
     ports:
       - '8083:8083'
     user: root
-    environment:
-      AWS_ENDPOINT_URL: http://awslocal:4566
     healthcheck:
       test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
       interval: 20s
