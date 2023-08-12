@@ -1,13 +1,14 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
-import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
+import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CartApi {
@@ -30,7 +31,7 @@ public interface CartApi {
      * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewProductToShoppingSessionRequest
      * @throws ProductNotFoundException if there is no product in the database with the provided productId from addNewProductToShoppingSessionRequest
      * */
-    ShoppingSessionDto addItemsToShoppingSession(final UUID productId)
+    ShoppingSessionDto addItemsToShoppingSession(final List<NewShoppingSessionItemDto> items )
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException;
 
     /**
@@ -44,12 +45,12 @@ public interface CartApi {
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
      *
-     * @param updateProductsQuantityInShoppingSessionItemRequest the request to change the product's quantity in the specific item of the shopping session (the cart details)
      * @return ShoppingSessionDto (the cart details)
      * @throws ShoppingSessionNotFoundException if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItem in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest
-     * @throws InvalidShoppingSessionIdInUpdateProductsQuantityRequestException if ShoppingSessionId in UpdateProductsQuantityRequest and ShoppingSessionId of Item with id from request are not equal
+     * @throws InvalidShoppingSessionIdException if ShoppingSessionId in UpdateProductsQuantityRequest and ShoppingSessionId of Item with id from request are not equal
      * */
-    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UpdateProductsQuantityInShoppingSessionItemRequest updateProductsQuantityInShoppingSessionItemRequest)
-            throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdInUpdateProductsQuantityRequestException;
+    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+                                                                   final int productsQuantityChange)
+            throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException;
 }

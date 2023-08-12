@@ -26,31 +26,22 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingSessionCreator {
 
-    private static final int DEFAULT_PRODUCTS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED = 1;
+    private static final int DEFAULT_PRODUCTS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED = 0;
+    private static final int DEFAULT_ITEMS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED = 0;
 
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
-    private final ProductApi productApi;
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public ShoppingSessionDto create(final UUID productId) throws ShoppingSessionNotFoundException {
-        ProductInfoDto productInfo = productApi.getProduct(productId);
-        productInfoDtoConverter.toDto(productInfo);
-
-        ShoppingSessionItem newShoppingSessionItem = ShoppingSessionItem.builder()
-                .productInfo(productInfo)
-                .productsQuantity(1)
-                .build();
-
+    public ShoppingSessionDto create() throws ShoppingSessionNotFoundException {
         UserDto userDto = securityPrincipalProvider.get();
         UUID userId = userDto.userId();
 
         ShoppingSession newShoppingSession = ShoppingSession.builder()
                 .userId(userId)
-                .itemsQuantity(DEFAULT_PRODUCTS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED)
+                .itemsQuantity(DEFAULT_ITEMS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED)
                 .productsQuantity(DEFAULT_PRODUCTS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED)
-                .items(Collections.singleton(newShoppingSessionItem))
+                .items(Collections.emptySet())
                 .createdAt(LocalDateTime.now())
                 .build();
         return shoppingSessionDtoConverter.toDto(newShoppingSession);

@@ -1,7 +1,11 @@
 package com.zufar.onlinestore.cart.endpoint;
 
 import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.cart.dto.*;
+import com.zufar.onlinestore.cart.dto.AddNewItemsToShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
+import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +40,7 @@ public class CartEndpoint {
     public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody @Valid final AddNewItemsToShoppingSessionRequest request) {
         log.warn("Received the request to add a new items to the shoppingSession");
         List<NewShoppingSessionItemDto> items = request.items();
-
-        ShoppingSessionDto shoppingSessionDto = cartApi.addItemsToShoppingSession(BreakIteratorquest);
+        ShoppingSessionDto shoppingSessionDto = cartApi.addItemsToShoppingSession(items);
         log.info("ShoppingSessionItem was added to the shoppingSession with id={}", shoppingSessionDto.id());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
@@ -55,10 +58,12 @@ public class CartEndpoint {
 
     @PatchMapping
     public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
+        UUID shoppingSessionId = request.shoppingSessionId();
+        UUID shoppingSessionItemId = request.shoppingSessionItemId();
+        Integer productsQuantityChange = request.productsQuantityChange();
         log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                request.productsQuantityChange(), request.shoppingSessionItemId(), request.shoppingSessionId());
-
-        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(request);
+                productsQuantityChange, shoppingSessionItemId, shoppingSessionId);
+        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(shoppingSessionItemId, productsQuantityChange);
         log.info("ProductsQuantity was updated in shoppingSession item");
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
