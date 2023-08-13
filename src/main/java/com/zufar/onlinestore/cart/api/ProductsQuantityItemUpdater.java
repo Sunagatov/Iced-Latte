@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.api.ShoppingSessionProvider;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.cart.exception.InvalidItemProductsQuantityException;
@@ -44,7 +43,6 @@ public class ProductsQuantityItemUpdater {
                     productsQuantityChange, shoppingSessionItemId, shoppingSession.id());
             throw new InvalidShoppingSessionIdException(shoppingSession.id());
         }
-
         return shoppingSession;
     }
 
@@ -57,8 +55,8 @@ public class ProductsQuantityItemUpdater {
     }
 
     private ShoppingSessionItem updateItemProductQuantity(final UUID shoppingSessionItemId,
-                                       int productsQuantityChange,
-                                       ShoppingSessionItem item) {
+                                                          int productsQuantityChange,
+                                                          ShoppingSessionItem item) {
         int newQuantity = item.getProductsQuantity() + productsQuantityChange;
         if (newQuantity < 0) {
             log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingSessionItemId);
@@ -75,4 +73,3 @@ public class ProductsQuantityItemUpdater {
         return shoppingSessionProvider.getByUserId(userId);
     }
 }
-

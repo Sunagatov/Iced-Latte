@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,20 +27,21 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AddItemsToShoppingSessionHelper {
 
+    public static final int DEFAULT_PRODUCT_QUANTITY = 0;
+
     private final ShoppingSessionRepository shoppingSessionRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductInfoRepository productInfoRepository;
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto add(final List<NewShoppingSessionItemDto> items) {
+    public ShoppingSessionDto add(final Set<NewShoppingSessionItemDto> items) {
         Map<UUID, Integer> productsWithQuantity = items
                 .stream()
                 .collect(Collectors.toMap(NewShoppingSessionItemDto::productId, NewShoppingSessionItemDto::productsQuantity));
         Set<UUID> productIds = productsWithQuantity.keySet();
 
-        Set<ShoppingSessionItem> shoppingSessionItems = productInfoRepository
-                .findAllById(productIds).stream()
+        Set<ShoppingSessionItem> shoppingSessionItems = productInfoRepository.findAllById(productIds).stream()
                 .map(productInfo -> ShoppingSessionItem.builder()
                         .productsQuantity(productsWithQuantity.get(productInfo.getProductId()))
                         .productInfo(productInfo)
@@ -48,24 +49,39 @@ public class AddItemsToShoppingSessionHelper {
                 .collect(Collectors.toSet());
 
         UUID userId = securityPrincipalProvider.getUserId();
-        int itemsQuantity = shoppingSessionItems.size();
-        int productsQuantity = productIds.size();
 
-        ShoppingSession shoppingSession = shoppingSessionRepository.findShoppingSessionByUserId(userId);
-        if (shoppingSession == null) {
-            shoppingSession = ShoppingSession.builder()
-                    .userId(userId)
-                    .itemsQuantity(itemsQuantity)
-                    .productsQuantity(productsQuantity)
-                    .items(shoppingSessionItems)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-        } else {
-            shoppingSession.setItemsQuantity(shoppingSession.getItemsQuantity() + itemsQuantity);
-            shoppingSession.setProductsQuantity(shoppingSession.getProductsQuantity() + productsQuantity);
-        }
+        ShoppingSession shoppingSession = Optional.ofNullable(shoppingSessionRepository.findShoppingSessionByUserId(userId))
+                .map(existingShoppingSession -> updateExistingShoppingSession(existingShoppingSession, shoppingSessionItems))
+                .orElseGet(() -> createNewShoppingSession(userId, shoppingSessionItems));
 
-        ShoppingSession updatedShoppingSession = shoppingSessionRepository.save(shoppingSession);
-        return shoppingSessionDtoConverter.toDto(updatedShoppingSession);
+        ShoppingSession persistedShoppingSession = shoppingSessionRepository.save(shoppingSession);
+        return shoppingSessionDtoConverter.toDto(persistedShoppingSession);
+    }
+
+    private static ShoppingSession updateExistingShoppingSession(ShoppingSession existingShoppingSession, Set<ShoppingSessionItem> shoppingSessionItems) {
+        int productsQuantity = shoppingSessionItems.stream()
+                .map(ShoppingSessionItem::getProductsQuantity)
+                .reduce(Integer::sum)
+                .orElse(DEFAULT_PRODUCT_QUANTITY);
+
+        existingShoppingSession.setItemsQuantity(existingShoppingSession.getItemsQuantity() + shoppingSessionItems.size());
+        existingShoppingSession.setProductsQuantity(existingShoppingSession.getProductsQuantity() + productsQuantity);
+        existingShoppingSession.getItems().addAll(shoppingSessionItems);
+        return existingShoppingSession;
+    }
+
+    private static ShoppingSession createNewShoppingSession(UUID userId, Set<ShoppingSessionItem> shoppingSessionItems) {
+        int productsQuantity = shoppingSessionItems.stream()
+                .map(ShoppingSessionItem::getProductsQuantity)
+                .reduce(Integer::sum)
+                .orElse(DEFAULT_PRODUCT_QUANTITY);
+
+        return ShoppingSession.builder()
+                .userId(userId)
+                .itemsQuantity(shoppingSessionItems.size())
+                .productsQuantity(productsQuantity)
+                .items(shoppingSessionItems)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 }

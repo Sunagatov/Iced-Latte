@@ -11,13 +11,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CartApiImpl implements CartApi {
+public class ShoppingCartManager implements CartApi {
 
     private final AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
     private final ProductsQuantityItemUpdater productsQuantityItemUpdater;
@@ -30,7 +30,7 @@ public class CartApiImpl implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto addItemsToShoppingSession(final List<NewShoppingSessionItemDto> items) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
+    public ShoppingSessionDto addItemsToShoppingSession(final Set<NewShoppingSessionItemDto> items) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
         return addItemsToShoppingSessionHelper.add(items);
     }
 
