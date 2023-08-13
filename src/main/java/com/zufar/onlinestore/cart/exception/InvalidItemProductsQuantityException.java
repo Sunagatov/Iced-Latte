@@ -2,8 +2,6 @@ package com.zufar.onlinestore.cart.exception;
 
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
 public class InvalidItemProductsQuantityException extends RuntimeException {
 
