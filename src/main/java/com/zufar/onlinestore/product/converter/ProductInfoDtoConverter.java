@@ -5,6 +5,7 @@ import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
+import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -16,20 +17,21 @@ public class ProductInfoDtoConverter {
 
         return new ProductInfoDto(
                 entity.getProductId(),
-                entity.getDescription(),
                 entity.getName(),
+                entity.getDescription(),
                 priceDetails,
                 entity.getQuantity()
         );
     }
 
+    @Named("toProductInfoFullDto")
     public ProductInfoFullDto toFullDto(final ProductInfo entity) {
         PriceDetailsDto priceDetails = new PriceDetailsDto(entity.getPrice());
 
         return new ProductInfoFullDto(
                 entity.getProductId(),
-                entity.getDescription(),
                 entity.getName(),
+                entity.getDescription(),
                 priceDetails,
                 entity.getQuantity(),
                 entity.getActive()
