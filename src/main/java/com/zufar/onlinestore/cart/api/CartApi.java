@@ -24,8 +24,7 @@ public interface CartApi {
     /**
      * Enables to add a new item into the shopping session (the cart details)
      *
-     * @param userId the userId of the user for whom we add the new product to his/her shoppingSession
-     * @param productId the productId whicn we would like to the shoppingSession of the user
+     * @param items which we would like to add to the shoppingSession of the user
      * @return ShoppingSessionDto (the cart details)
      * @throws ShoppingSessionNotFoundException if there is no shoppingSession in the database with the provided shoppingSessionId from addNewProductToShoppingSessionRequest
      * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewProductToShoppingSessionRequest
@@ -45,6 +44,8 @@ public interface CartApi {
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
      *
+     * @param shoppingSessionItemId we use this id to decrease or increase productsQuantity of the item with the id = shoppingSessionItemId
+     * @param productsQuantityChange we use this data to decrease or increase productsQuantity of the item with the id = shoppingSessionItemId
      * @return ShoppingSessionDto (the cart details)
      * @throws ShoppingSessionNotFoundException if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItem in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest

@@ -26,8 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingSessionCreator {
 
-    private static final int DEFAULT_PRODUCTS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED = 0;
-    private static final int DEFAULT_ITEMS_QUANTITY_WHEN_NEW_ITEM_IS_CREATED = 0;
+
 
     private final ShoppingSessionDtoConverter shoppingSessionDtoConverter;
     private final SecurityPrincipalProvider securityPrincipalProvider;

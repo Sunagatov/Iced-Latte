@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class SecurityPrincipalProvider {
@@ -19,5 +21,13 @@ public class SecurityPrincipalProvider {
                 .getAuthentication()
                 .getPrincipal();
          return userDtoConverter.toDto(userEntity);
+    }
+
+    public UUID getUserId() {
+        UserEntity userEntity = (UserEntity) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return userEntity.getUserId();
     }
 }

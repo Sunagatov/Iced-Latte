@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CartApiImpl implements CartApi {
 
-    private final AddItemToShoppingSessionHelper addItemToShoppingSessionHelper;
+    private final AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
     private final ProductsQuantityItemUpdater productsQuantityItemUpdater;
     private final ShoppingSessionProvider shoppingSessionProvider;
     private final ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
@@ -31,7 +31,7 @@ public class CartApiImpl implements CartApi {
 
     @Override
     public ShoppingSessionDto addItemsToShoppingSession(final List<NewShoppingSessionItemDto> items) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
-        return addItemToShoppingSessionHelper.add(items);
+        return addItemsToShoppingSessionHelper.add(items);
     }
 
     @Override
