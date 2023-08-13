@@ -14,14 +14,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-public class ShoppingSessionItemDtoConverterTest {
+class ShoppingSessionItemDtoConverterTest {
 
     @Autowired
     private ShoppingSessionItemDtoConverter converter
             = Mappers.getMapper(ShoppingSessionItemDtoConverter.class);
 
     @Test
-    public void mapping_ShoppingSessionItem_to_ShoppingSessionItemDto() {
+    void mapping_ShoppingSessionItem_to_ShoppingSessionItemDto() {
         ShoppingSessionItem shoppingSessionItem = Instancio.create(ShoppingSessionItem.class);
 
         ShoppingSessionItemDto dto = converter.toDto(shoppingSessionItem);
