@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -37,7 +36,7 @@ public class CartEndpoint {
 
     private final CartApi cartApi;
 
-    @PostMapping(value = CART_URL + "/items/")
+    @PostMapping(value = "/items")
     public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody @Valid final AddNewItemsToShoppingSessionRequest request) {
         log.warn("Received the request to add a new items to the shoppingSession");
         Set<NewShoppingSessionItemDto> items = request.items();
@@ -57,13 +56,12 @@ public class CartEndpoint {
                 .body(shoppingSessionDto);
     }
 
-    @PatchMapping
+    @PatchMapping(value = "/items")
     public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
-        UUID shoppingSessionId = request.shoppingSessionId();
         UUID shoppingSessionItemId = request.shoppingSessionItemId();
         Integer productsQuantityChange = request.productsQuantityChange();
-        log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                productsQuantityChange, shoppingSessionItemId, shoppingSessionId);
+        log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {}.",
+                productsQuantityChange, shoppingSessionItemId);
         ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(shoppingSessionItemId, productsQuantityChange);
         log.info("ProductsQuantity was updated in shoppingSession item");
         return ResponseEntity.ok()
