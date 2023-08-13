@@ -15,9 +15,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Version;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Builder
@@ -58,15 +59,24 @@ public class ShoppingSessionItem {
     public boolean equals(Object object) {
         if (this == object)
             return true;
+
         if (object == null || getClass() != object.getClass())
             return false;
+
         ShoppingSessionItem that = (ShoppingSessionItem) object;
-        return Objects.equals(id, that.id);
+
+        return new EqualsBuilder()
+                .append(id, that.id)
+                .append(productInfo, that.productInfo)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(productInfo)
+                .toHashCode();
     }
 
     @Override

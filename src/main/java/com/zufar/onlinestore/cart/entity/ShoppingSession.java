@@ -55,6 +55,19 @@ public class ShoppingSession {
     @Column(name = "closed_at", nullable = false)
     private LocalDateTime closedAt;
 
+    private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+
+    public Integer getItemsQuantity() {
+        return this.items.size();
+    }
+
+    public Integer getProductsQuantity() {
+        return this.items.stream()
+                .map(ShoppingSessionItem::getProductsQuantity)
+                .reduce(Integer::sum)
+                .orElse(DEFAULT_PRODUCTS_QUANTITY);
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object)
