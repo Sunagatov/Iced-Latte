@@ -27,7 +27,9 @@ public class PaymentMethodCreator {
     private final PaymentMethodConverter paymentMethodConverter;
 
     public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws PaymentMethodProcessingException{
-        Stripe.apiKey = stripeConfig.publishableKey();
+        String stripeKey = stripeConfig.publishableKey();
+        StripeConfiguration.setStripeKey(stripeKey);
+
         PaymentMethod paymentMethod;
         PaymentMethodCreateParams params = paymentMethodConverter.toPaymentMethodParams(createPaymentMethodDto);
         try {

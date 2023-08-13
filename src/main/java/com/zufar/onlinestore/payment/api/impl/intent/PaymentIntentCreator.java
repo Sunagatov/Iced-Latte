@@ -27,7 +27,8 @@ public class PaymentIntentCreator {
     private final PaymentIntentConverter paymentIntentConverter;
 
     public PaymentIntent createPaymentIntent(final CreatePaymentDto createPaymentDto) throws PaymentIntentProcessingException {
-        Stripe.apiKey = stripeConfig.secretKey();
+        String stripeKey = stripeConfig.secretKey();
+        StripeConfiguration.setStripeKey(stripeKey);
 
         PaymentIntentCreateParams params = paymentIntentConverter.toPaymentIntentParams(createPaymentDto);
         log.info("Create payment intent: payment intent params: {} for creation.", params);
