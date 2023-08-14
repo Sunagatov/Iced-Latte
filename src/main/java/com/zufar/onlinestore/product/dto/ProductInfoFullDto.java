@@ -1,12 +1,13 @@
 package com.zufar.onlinestore.product.dto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public record ProductInfoFullDto(
         UUID id,
         String name,
         String description,
-        PriceDetailsDto priceDetails,
+        BigDecimal price,
         Integer quantity,
         Boolean active
 ) {
