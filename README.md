@@ -37,21 +37,6 @@ If this doesn't work use
 ```shell
 docker compose --profile dev up
 ```
-### Working with REST API
-* #### OpenAPI Schema
-
-  Schema in json
-    ```shell
-    http://localhost:8083/api/docs/schema
-    ```
-    Schema in yaml
-    ```shell
-    http://localhost:8083/api/docs/schema.yaml
-    ```
-* #### Swagger UI page
-    ```shell
-    http://localhost:8083/api/docs/swagger-ui
-    ```
 
 ### Obtaining a token
 Using Postman get Bearer token by running
@@ -62,7 +47,7 @@ Copy the token and insert into Auth tab
 ### Testing authorisation
 Run this GET request to test authentication
 ```shell 
-http://localhost:8083/api/products
+http://localhost:8083/api/v1/products/a3c4d3f7-1172-4fb2-90a9-59b13b35dfc6
 ```
 
 ## Docker (Should be fixed)
