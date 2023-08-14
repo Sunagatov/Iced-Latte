@@ -5,7 +5,6 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.payment.calculator.PaymentPriceCalculator;
 import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
 import com.zufar.onlinestore.payment.entity.Payment;
-import com.zufar.onlinestore.payment.enums.PaymentCurrency;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -18,7 +17,7 @@ public interface PaymentIntentConverter {
     @Mapping(target = "itemsTotalPrice", source = "paymentIntent.amount", qualifiedByName = {"calculateForPayment"})
     Payment toPayment(final PaymentIntent paymentIntent);
 
-    @Mapping(target = "currency", constant = PaymentCurrency.CURRENCY)
+    @Mapping(target = "currency", constant = "usd")
     @Mapping(target = "paymentMethod", source = "createPaymentDto.paymentMethodId")
     @Mapping(target = "amount",
             source = "createPaymentDto.itemsTotalPrice",
