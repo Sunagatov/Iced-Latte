@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 
-@Mapper(uses = ShoppingSessionItemDtoConverter.class)
+@Mapper(componentModel = "spring", uses = ShoppingSessionItemDtoConverter.class)
 public interface ShoppingSessionDtoConverter {
 
     @Mapping(target = "items", source = "entity.items", qualifiedByName = {"toShoppingSessionItemDto"})

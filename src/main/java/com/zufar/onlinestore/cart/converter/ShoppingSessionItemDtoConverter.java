@@ -7,7 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-@Mapper(uses = ProductInfoDtoConverter.class)
+
+@Mapper(componentModel = "spring", uses = ProductInfoDtoConverter.class)
 public interface ShoppingSessionItemDtoConverter {
 
     @Named("toShoppingSessionItemDto")
