@@ -1,0 +1,30 @@
+version: '3.9'
+
+networks:
+  online-store-network:
+    name: online-store-network
+    external: true
+
+services:
+  #
+  # Online Store App
+  #
+  online-store-app:
+    image: 'online-store/online-store:latest'
+    container_name: online-store-app
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - '8083:8083'
+    user: root
+    healthcheck:
+      test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    deploy:
+      replicas: 1
+    networks:
+      - online-store-network

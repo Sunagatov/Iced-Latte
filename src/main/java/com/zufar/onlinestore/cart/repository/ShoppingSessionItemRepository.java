@@ -13,6 +13,6 @@ public interface ShoppingSessionItemRepository extends JpaRepository<ShoppingSes
     @Modifying
     @Query(value = "UPDATE shopping_session_item SET products_quantity = products_quantity + :products_quantity_change WHERE id = :shopping_session_item_id RETURNING *",
             nativeQuery = true)
-    ShoppingSessionItem updateProductsQuantityInShoppingSessionItem(@Param("shopping_session_item_id") UUID shoppingSessionItemId,
-                                                                    @Param("products_quantity_change") Integer productsQuantityChange);
+    Integer updateProductsQuantityInShoppingSessionItem(@Param("shopping_session_item_id") UUID shoppingSessionItemId,
+                                                        @Param("products_quantity_change") Integer productsQuantityChange);
 }
