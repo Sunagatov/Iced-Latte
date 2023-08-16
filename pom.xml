@@ -63,6 +63,7 @@
         <lombok.version>1.18.24</lombok.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
+        <instancio-junit.version>3.0.1</instancio-junit.version>
         <spring-retry.version>2.0.2</spring-retry.version>
     </properties>
     <dependencies>
@@ -178,6 +179,12 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.instancio</groupId>
+            <artifactId>instancio-junit</artifactId>
+            <version>${instancio-junit.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- junit dependencies -->
