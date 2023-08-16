@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
@@ -52,6 +54,19 @@ public class ShoppingSession {
 
     @Column(name = "closed_at", nullable = false)
     private LocalDateTime closedAt;
+
+    private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+
+    public Integer getItemsQuantity() {
+        return this.items.size();
+    }
+
+    public Integer getProductsQuantity() {
+        return this.items.stream()
+                .map(ShoppingSessionItem::getProductsQuantity)
+                .reduce(Integer::sum)
+                .orElse(DEFAULT_PRODUCTS_QUANTITY);
+    }
 
     @Override
     public boolean equals(Object object) {

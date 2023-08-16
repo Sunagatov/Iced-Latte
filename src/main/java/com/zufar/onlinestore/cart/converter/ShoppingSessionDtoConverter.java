@@ -6,9 +6,8 @@ import com.zufar.onlinestore.cart.dto.ShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
-import java.util.Collection;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -18,7 +17,7 @@ public class ShoppingSessionDtoConverter {
     private final ItemsTotalPriceCalculator itemsTotalPriceCalculator;
 
     public ShoppingSessionDto toDto(final ShoppingSession entity) {
-        Collection<ShoppingSessionItemDto> items = entity.getItems().stream()
+        List<ShoppingSessionItemDto> items = entity.getItems().stream()
                 .map(shoppingSessionItemDtoConverter::toDto)
                 .toList();
 
