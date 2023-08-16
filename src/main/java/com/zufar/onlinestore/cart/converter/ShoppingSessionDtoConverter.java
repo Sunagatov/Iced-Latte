@@ -1,37 +1,14 @@
 package com.zufar.onlinestore.cart.converter;
 
-import com.zufar.onlinestore.cart.api.ItemsTotalPriceCalculator;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.util.List;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-@RequiredArgsConstructor
-public class ShoppingSessionDtoConverter {
 
-    private final ShoppingSessionItemDtoConverter shoppingSessionItemDtoConverter;
-    private final ItemsTotalPriceCalculator itemsTotalPriceCalculator;
+@Mapper(componentModel = "spring", uses = ShoppingSessionItemDtoConverter.class)
+public interface ShoppingSessionDtoConverter {
 
-    public ShoppingSessionDto toDto(final ShoppingSession entity) {
-        List<ShoppingSessionItemDto> items = entity.getItems().stream()
-                .map(shoppingSessionItemDtoConverter::toDto)
-                .toList();
-
-        BigDecimal itemsTotalPrice = itemsTotalPriceCalculator.calculate(items);
-
-        return new ShoppingSessionDto(
-                entity.getId(),
-                entity.getUserId(),
-                items,
-                entity.getItemsQuantity(),
-                itemsTotalPrice,
-                entity.getProductsQuantity(),
-                entity.getCreatedAt(),
-                entity.getClosedAt()
-        );
-    }
+    @Mapping(target = "items", source = "entity.items", qualifiedByName = {"toShoppingSessionItemDto"})
+    ShoppingSessionDto toDto(final ShoppingSession entity);
 }
