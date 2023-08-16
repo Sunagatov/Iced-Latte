@@ -24,8 +24,8 @@ public class PaymentApiImpl implements PaymentApi {
     private final PaymentEventProcessor paymentEventProcessor;
 
     @Override
-    public ProcessedPaymentWithClientSecretDto processPayment(final ProcessPaymentDto processPaymentDto) throws StripeException {
-        return paymentProcessor.processPayment(processPaymentDto);
+    public ProcessedPaymentWithClientSecretDto processPayment(final String cardInfoTokenId) throws StripeException {
+        return paymentProcessor.processPayment(cardInfoTokenId);
     }
 
     @Override

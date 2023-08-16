@@ -2,7 +2,6 @@ package com.zufar.onlinestore.payment.api;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
-import com.zufar.onlinestore.payment.api.dto.ProcessPaymentDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
@@ -10,12 +9,12 @@ import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 public interface PaymentApi {
 
     /**
-     * This method allows to create a payment object
+     * This method is responsible for the processing of the payment
      *
-     * @param processPaymentDto the request dto to create a payment object
+     * @param cardInfoTokenId
      * @return PaymentDetailsWithTokenDto combines payment details and a payment token for payment processing on the front end side
      * */
-    ProcessedPaymentWithClientSecretDto processPayment(final ProcessPaymentDto processPaymentDto) throws StripeException;
+    ProcessedPaymentWithClientSecretDto processPayment(final String cardInfoTokenId) throws StripeException;
 
     /**
      * This method allows to create a payment method object

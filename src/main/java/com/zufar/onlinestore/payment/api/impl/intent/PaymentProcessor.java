@@ -11,6 +11,7 @@ import com.zufar.onlinestore.payment.api.impl.customer.StripeCustomerCreator;
 import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
 import com.zufar.onlinestore.payment.exception.StripeCustomerCreationException;
+import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,10 +28,9 @@ public class PaymentProcessor {
     private final StripePaymentIntentCreator stripePaymentIntentCreator;
     private final PaymentCreator paymentCreator;
 
-    public ProcessedPaymentWithClientSecretDto processPayment(final ProcessPaymentDto processPaymentDto) throws StripeCustomerCreationException, StripeCustomerCreationException, PaymentIntentProcessingException {
-        log.info("Process payment: starting: processing payment with card info token: {}.", processPaymentDto.cardInfoToken());
-        UUID customerId = processPaymentDto.customerId();
-        Customer stripeCustomer = stripeCustomerCreator.createStripeCustomer(customerId);
+    public ProcessedPaymentWithClientSecretDto processPayment(final String cardInfoTokenId) throws StripeCustomerCreationException, StripeCustomerCreationException, PaymentIntentProcessingException {
+        log.info("Process payment: starting: processing payment with cardInfoTokenId = {}.", cardInfoTokenId);
+        Customer stripeCustomer = stripeCustomerCreator.createStripeCustomer();
         ShoppingSessionDto shoppingSession = cartApi.getShoppingSessionByUserId(customerId);
         PaymentMethod stripePaymentMethod = stripePaymentMethodCreator.createStripePaymentMethod(processPaymentDto.cardInfoToken());
         stripePaymentMethod.setCustomer(stripeCustomer.getId());
