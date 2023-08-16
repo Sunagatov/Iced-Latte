@@ -31,8 +31,9 @@ public class PaymentProcessor {
     public ProcessedPaymentWithClientSecretDto processPayment(final String cardInfoTokenId) throws StripeCustomerCreationException, StripeCustomerCreationException, PaymentIntentProcessingException {
         log.info("Process payment: starting: processing payment with cardInfoTokenId = {}.", cardInfoTokenId);
         Customer stripeCustomer = stripeCustomerCreator.createStripeCustomer();
-        ShoppingSessionDto shoppingSession = cartApi.getShoppingSessionByUserId(customerId);
-        PaymentMethod stripePaymentMethod = stripePaymentMethodCreator.createStripePaymentMethod(processPaymentDto.cardInfoToken());
+        UUID authorizedUserId = UUID.fromString(stripeCustomer.getMetadata().get("authorizedUserId"));
+        ShoppingSessionDto shoppingSession = cartApi.getShoppingSessionByUserId(authorizedUserId);
+        PaymentMethod stripePaymentMethod = stripePaymentMethodCreator.createStripePaymentMethod(cardInfoTokenId);
         stripePaymentMethod.setCustomer(stripeCustomer.getId());
         PaymentIntent paymentIntent = stripePaymentIntentCreator.createStripePaymentIntent(stripePaymentMethod, shoppingSession);
         Payment savedPayment = paymentCreator.createPayment(paymentIntent, shoppingSession);

@@ -2,14 +2,14 @@ package com.zufar.onlinestore.payment.api.impl.intent;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentMethod;
+import com.stripe.model.Token;
 import com.stripe.param.PaymentMethodCreateParams;
+import com.zufar.onlinestore.payment.converter.StripePaymentMethodConverter;
 import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
-
-import static com.stripe.param.PaymentMethodCreateParams.Token;
-import static com.stripe.param.PaymentMethodCreateParams.Type;
 
 /**
  * This class is responsible for converting passed parameters and creating based
@@ -22,22 +22,22 @@ import static com.stripe.param.PaymentMethodCreateParams.Type;
 @Service
 public class StripePaymentMethodCreator {
 
-    public PaymentMethod createStripePaymentMethod(final String cardDetailsToken) throws PaymentMethodProcessingException {
-        PaymentMethodCreateParams paymentMethodCreateParams = PaymentMethodCreateParams.builder()
-                .setType(Type.CARD)
-                .setCard(Token.builder()
-                        .setToken(cardDetailsToken)
-                        .build())
-                .build();
-        String paymentMethodType = paymentMethodCreateParams.getType().getValue();
-        log.info("Create payment method: in progress: creation stripe payment method with type: {}.", paymentMethodType);
+    private final StripePaymentMethodConverter stripePaymentMethodConverter;
+
+    public PaymentMethod createStripePaymentMethod(final String cardDetailsTokenId) throws PaymentMethodProcessingException {
+        String paymentMethodType = Strings.EMPTY;
         try {
+            Token retrievedCardDetailsToken = Token.retrieve(cardDetailsTokenId);
+            PaymentMethodCreateParams paymentMethodCreateParams = stripePaymentMethodConverter.toStripeObject(retrievedCardDetailsToken);
+            paymentMethodType = paymentMethodCreateParams.getType().getValue();
+            log.info("Create payment method: in progress: creation stripe payment method with type = {}.", paymentMethodType);
+
             PaymentMethod paymentMethod = PaymentMethod.create(paymentMethodCreateParams);
-            log.info("Create payment method: successful: stripe payment method was created with id: {}.", paymentMethod.getId());
+            log.info("Create payment method: successful: stripe payment method was created with id = {}.", paymentMethod.getId());
             return paymentMethod;
         } catch (StripeException ex) {
             log.info("Create payment method: failed: stripe payment method was not created.");
-            throw new PaymentMethodProcessingException(paymentMethodCreateParams.getType().getValue());
+            throw new PaymentMethodProcessingException(paymentMethodType);
         }
     }
 }

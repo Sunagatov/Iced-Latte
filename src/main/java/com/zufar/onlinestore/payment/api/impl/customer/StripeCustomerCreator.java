@@ -32,10 +32,10 @@ public class StripeCustomerCreator {
         UserDto authorizedUser = securityPrincipalProvider.get();
         CustomerCreateParams customerCreateParams = stripeCustomerConverter.toStripeObject(authorizedUser);
         String customerEmail = customerCreateParams.getEmail();
-        log.info("Create stripe customer: in progress: creation stripe customer with email: {}.", customerEmail);
+        log.info("Create stripe customer: in progress: creation stripe customer with email = {}.", customerEmail);
         try {
             Customer customer = Customer.create(customerCreateParams);
-            log.info("Create stripe customer: successful: stripe customer was created with id: {}.", customer.getId());
+            log.info("Create stripe customer: successful: stripe customer was created with id = {}.", customer.getId());
             return customer;
         } catch (StripeException e) {
             log.error("Create stripe customer: failed: stripe customer was not created");

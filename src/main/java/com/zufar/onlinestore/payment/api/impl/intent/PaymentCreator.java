@@ -28,10 +28,10 @@ public class PaymentCreator {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public Payment createPayment(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession) {
-        log.info("Create payment intent: in progress: creation payment with stripe payment intent Id: {}", paymentIntent.getId());
+        log.info("Create payment intent: in progress: creation payment with stripe paymentIntentId = {}", paymentIntent.getId());
         Payment payment = stripePaymentIntentConverter.toEntity(paymentIntent, shoppingSession);
         Payment savedPayment = paymentRepository.save(payment);
-        log.info("Create payment intent: successful: payment was created with id: {}", paymentIntent.getId());
+        log.info("Create payment intent: successful: payment was created with paymentId = {}", savedPayment.getPaymentId());
         return savedPayment;
     }
 

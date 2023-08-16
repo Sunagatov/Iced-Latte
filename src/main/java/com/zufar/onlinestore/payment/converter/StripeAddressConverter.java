@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface StripeAddressConverter {
 
-    @Named("www")
+    @Named("toStripeObject")
     @Mapping(target = "city", source = "address.city")
     @Mapping(target = "country", source = "address.country")
     @Mapping(target = "line1", source = "address.line")
