@@ -1,4 +1,4 @@
-package com.zufar.onlinestore;
+package com.zufar.onlinestore.product;
 
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;

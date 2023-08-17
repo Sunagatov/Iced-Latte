@@ -1,4 +1,4 @@
-package com.zufar.onlinestore;
+package com.zufar.onlinestore.cart;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
