@@ -25,6 +25,7 @@ public class StripePaymentIntentCreator {
     private final StripePaymentIntentConverter stripePaymentIntentConverter;
 
     public PaymentIntent createStripePaymentIntent(final PaymentMethod paymentMethod, ShoppingSessionDto shoppingSession) throws PaymentIntentProcessingException {
+        log.info("Create payment intent: starting: creation of payment intent was started");
         PaymentIntentCreateParams paymentIntentCreateParams = stripePaymentIntentConverter.toStripeObject(paymentMethod, shoppingSession);
         String paymentMethodId = paymentIntentCreateParams.getPaymentMethod();
         log.info("Create payment intent: in progress: creation stripe payment intent with payment method Id: {}", paymentMethodId);
@@ -34,7 +35,7 @@ public class StripePaymentIntentCreator {
             return paymentIntent;
         } catch (StripeException ex) {
             log.error("Create payment intent: failed: stripe payment intent was not created");
-            throw new PaymentIntentProcessingException(paymentIntentCreateParams.getPaymentMethod());
+            throw new PaymentIntentProcessingException(paymentMethodId);
         }
     }
 }

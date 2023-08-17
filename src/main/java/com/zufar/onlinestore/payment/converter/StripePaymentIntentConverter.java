@@ -9,13 +9,13 @@ import com.zufar.onlinestore.payment.entity.Payment;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
-@Mapper(uses = PaymentPriceCalculator.class)
+@Mapper(uses = PaymentPriceCalculator.class, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface StripePaymentIntentConverter {
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "paymentIntentId", source = "paymentIntent.id")
-    @Mapping(target = "currency", source = "paymentIntent.currency")
     @Mapping(target = "shoppingSessionId", source = "shoppingSession.id")
     @Mapping(target = "itemsTotalPrice", source = "paymentIntent.amount", qualifiedByName = {"calculateForPayment"})
     Payment toEntity(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession);
