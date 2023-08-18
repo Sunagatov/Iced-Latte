@@ -20,8 +20,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-session-item-data.sql
   - include:
-      file: db/changelog/version-1.0/22.07.2023.create-reservation-table.sql
-  - include:
       file: db/changelog/version-1.0/28.07.2023.part1.create-address-table.sql
   - include:
       file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
@@ -32,4 +30,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/28.07.2023.part5.insert-user-details-table-data.sql
   - include:
-      file: db/changelog/version-1.0/18.08.2023.create-user-reservation-history-table.sql
+      file: db/changelog/version-1.0/18.08.2023.part1.create-user-reservation-history-table.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part2.create-reservation-table.sql

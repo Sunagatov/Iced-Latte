@@ -3,11 +3,10 @@ package com.zufar.onlinestore.reservation.api.dto.cancellation;
 import java.util.UUID;
 
 /**
- * @param reservationId ID of reservation for cancellation
+ * @param userId ID of user who wants to cancel created reservation
  */
-
 public record CancelReservationRequest(
 
-        UUID reservationId
+        UUID userId
 ) {
 }

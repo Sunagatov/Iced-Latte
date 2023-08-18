@@ -3,11 +3,10 @@ package com.zufar.onlinestore.reservation.api.dto.confirmation;
 import java.util.UUID;
 
 /**
- * @param reservationId ID of reservation for confirmation
+ * @param userId ID of user who wants to confirm created reservation
  */
-
 public record ConfirmReservationRequest(
 
-        UUID reservationId
+        UUID userId
 ) {
 }

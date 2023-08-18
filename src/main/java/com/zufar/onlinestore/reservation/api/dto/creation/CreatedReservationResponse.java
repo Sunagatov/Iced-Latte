@@ -3,16 +3,16 @@ package com.zufar.onlinestore.reservation.api.dto.creation;
 import java.time.Instant;
 import java.util.List;
 
-import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.FAILED_RESERVATION;
-import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.SUCCESSFUL_RESERVATION;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.NOTHING_RESERVED;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.RESERVED;
 import static java.util.Collections.emptyList;
 
 /**
  * @param status       Status of reservation
  * @param reservations The list of products that are reserved
- *                     May be empty in case of {@link CreatedReservationStatus#FAILED_RESERVATION}
+ *                     May be empty in case of {@link CreatedReservationStatus#NOTHING_RESERVED}
  * @param expiredAt    The time moment in UTC when the created reservation will be expired
- *                     May be NULL in case of {@link CreatedReservationStatus#FAILED_RESERVATION}
+ *                     May be NULL in case of {@link CreatedReservationStatus#NOTHING_RESERVED}
  */
 public record CreatedReservationResponse(
 
@@ -23,11 +23,11 @@ public record CreatedReservationResponse(
         Instant expiredAt
 ) {
 
-    public static CreatedReservationResponse successfulReservation(final List<ProductReservation> reservations, final Instant expiredAt) {
-        return new CreatedReservationResponse(SUCCESSFUL_RESERVATION, reservations, expiredAt);
+    public static CreatedReservationResponse reserved(final List<ProductReservation> reservations, final Instant expiredAt) {
+        return new CreatedReservationResponse(RESERVED, reservations, expiredAt);
     }
 
-    public static CreatedReservationResponse failedReservation() {
-        return new CreatedReservationResponse(FAILED_RESERVATION, emptyList(), null);
+    public static CreatedReservationResponse nothingReserved() {
+        return new CreatedReservationResponse(NOTHING_RESERVED, emptyList(), null);
     }
 }

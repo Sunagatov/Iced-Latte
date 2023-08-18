@@ -12,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.failedReservation;
+import static com.zufar.onlinestore.reservation.api.dto.cancellation.CancelledReservationResponse.notCancelled;
+import static com.zufar.onlinestore.reservation.api.dto.confirmation.ConfirmedReservationResponse.notConfirmed;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.nothingReserved;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,40 +22,35 @@ import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservat
 public class ReservationApiImpl implements ReservationApi {
 
     private final ReservationCreator reservationCreator;
+    private final ReservationConfirmer reservationConfirmer;
+    private final ReservationCanceller reservationCanceller;
 
     @Override
     public CreatedReservationResponse createReservation(final CreateReservationRequest request) {
         try {
-            return reservationCreator.tryToCreateReservation(request);
+            return reservationCreator.createReservation(request);
         } catch (RuntimeException rollbackException) {
-            return failedReservation();
+            return nothingReserved();
         }
     }
 
     @Override
-    public ConfirmedReservationResponse confirmReservation(final ConfirmReservationRequest confirmReservation) {
-        // TODO:
-        //  UPDATE reservation SET status = 'CONFIRMED' where status = 'CREATED' and reservation_id = ?
-        //  ---
-        //  we can confirm reservation only from status CREATED
-        //  CONFIRMED is a final status and you should not change it to any other status
-        return null;
+    public ConfirmedReservationResponse confirmReservation(final ConfirmReservationRequest request) {
+        try {
+            return reservationConfirmer.confirmReservation(request);
+        } catch (RuntimeException rollbackException) {
+            return notConfirmed();
+        }
     }
 
     @Transactional
     @Override
-    public CancelledReservationResponse cancelReservation(final CancelReservationRequest cancelReservation) {
-        // TODO:
-        //  WITH cancelled_reservations AS (
-        //   UPDATE reservation r SET status = 'CANCELLED' where reservation_id = ? AND status = 'CREATED'
-        //   RETURNING r.product_id, r.reserved_quantity
-        //  )
-        //  UPDATE product p SET quantity = p.quantity + cancelled_reservations.reserved_quantity
-        //  WHERE id = cancelled_reservations.product_id
-        //  ---
-        //  we can cancel reservation only from status CREATED
-        //  CANCELLED is a final status and you should not change it to any other status
-        return null;
+    public CancelledReservationResponse cancelReservation(final CancelReservationRequest request) {
+        try {
+            return reservationCanceller.cancelReservation(request);
+        } catch (RuntimeException rollbackException) {
+            return notCancelled();
+        }
     }
 }
 

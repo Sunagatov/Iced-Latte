@@ -7,15 +7,17 @@ import com.zufar.onlinestore.reservation.config.ReservationTimeoutConfiguration;
 import com.zufar.onlinestore.reservation.entity.Reservation;
 import com.zufar.onlinestore.reservation.repository.ReservationRepository;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.successfulReservation;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.nothingReserved;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.reserved;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -33,12 +35,12 @@ public class ReservationCreator {
     private static final String PRODUCTS_RESERVING_SQL = """
             WITH updated_warehouse AS (
              UPDATE warehouse w SET tmp_quantity = w.quantity, quantity = w.quantity - LEAST(w.quantity, reservation.quantity)
-             FROM (SELECT unnest(?) AS warehouse_item_id, unnest(?) AS quantity) AS reservation
+             FROM (SELECT unnest(:warehouse_item_id) AS warehouse_item_id, unnest(:quantity) AS quantity) AS reservation
              WHERE w.id = reservation.warehouse_item_id
              RETURNING w.item_id, (w.tmp_quantity - w.quantity) AS reserved_quantity
             )
             INSERT INTO reservation (reservation_id, warehouse_item_id, reserved_quantity)
-            SELECT ?, updated_warehouse.item_id, updated_warehouse.reserved_quantity)
+            SELECT :reservation_id, updated_warehouse.item_id, updated_warehouse.reserved_quantity)
             FROM updated_warehouse
             WHERE updated_warehouse.reserved_quantity > 0
             ON CONFLICT DO NOTHING
@@ -48,31 +50,30 @@ public class ReservationCreator {
     private static final String UPDATE_RESERVED_PRODUCTS_SQL = """
             WITH updated_warehouse AS (
              UPDATE warehouse w SET tmp_quantity = w.quantity, quantity = w.quantity - LEAST(w.quantity, reservation.quantity)
-             FROM (SELECT unnest(?) AS warehouse_item_id, unnest(?) AS quantity) AS reservation
+             FROM (SELECT unnest(:warehouse_item_id) AS warehouse_item_id, unnest(:quantity) AS quantity) AS reservation
              WHERE w.item_id = reservation.warehouse_item_id
              RETURNING w.item_id, (w.tmp_quantity - w.quantity) AS reserved_quantity
             )
             UPDATE reservation r
             SET reserved_quantity = r.reserved_quantity + updated_warehouse.reserved_quantity
             FROM updated_warehouse
-            WHERE reservation_id = ? AND r.warehouse_item_id = updated_warehouse.item_id
+            WHERE reservation_id = :reservation_id AND r.warehouse_item_id = updated_warehouse.item_id
             RETURNING r.%s, r.%s;
             """.formatted(WAREHOUSE_ITEM_ID, RESERVED_QUANTITY);
 
     private static final String PRODUCT_QUANTITY_RELEASING_SQL = """
-            UPDATE warehouse SET quantity = quantity + ?
-            WHERE item_id = ?;
+            UPDATE warehouse SET quantity = quantity + :reserved_quantity
+            WHERE item_id = :warehouse_item_id;
             """;
 
+    private final UserReservationService userReservationService;
     private final ReservationRepository reservationRepository;
-    private final UserReservationHistoryService reservationHistoryService;
     private final ReservationTimeoutConfiguration timeoutConfiguration;
-    private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public CreatedReservationResponse tryToCreateReservation(final CreateReservationRequest request) {
-        reservationHistoryService.createReservationIfNotExistsByUserId(request.userId());
-        var reservationInfo = reservationHistoryService.getReservationByUserIdForUpdate(request.userId());
+    public CreatedReservationResponse createReservation(final CreateReservationRequest request) {
+        var reservationInfo = userReservationService.getCurrentReservationForUpdate(request.userId());
         var reservationId = reservationInfo.reservationId();
         var newReservations = request.reservations();
         var reservationExpiredAt = reservationInfo.createdAt().plus(timeoutConfiguration.defaultTimeout());
@@ -87,7 +88,11 @@ public class ReservationCreator {
         var insertedReservations = insertReservations(insertingReservations, reservationId);
         deleteReservations(deletingReservations);
 
-        return successfulReservation(union(insertedReservations, updatedReservations), reservationExpiredAt);
+        var createdReservations = union(insertedReservations, updatedReservations);
+        if (createdReservations.isEmpty()) {
+            return nothingReserved();
+        }
+        return reserved(createdReservations, reservationExpiredAt);
     }
 
     private List<ProductReservation> getUpdatingReservations(final List<ProductReservation> newReservations, final List<Reservation> oldReservations) {
@@ -136,12 +141,13 @@ public class ReservationCreator {
                 .filter(reservation -> reservation.quantity() != 0)
                 .toList();
 
-        var updatedProductsResultSet = jdbcTemplate.queryForList(
-                UPDATE_RESERVED_PRODUCTS_SQL,
-                productDiffReservations.stream().map(ProductReservation::warehouseItemId).toArray(UUID[]::new),
-                productDiffReservations.stream().map(ProductReservation::quantity).toArray(Integer[]::new),
-                reservationId
+        var sqlParams = Map.of(
+                "warehouse_item_id", productDiffReservations.stream().map(ProductReservation::warehouseItemId).toArray(UUID[]::new),
+                "quantity", productDiffReservations.stream().map(ProductReservation::quantity).toArray(Integer[]::new),
+                "reservation_id", reservationId
         );
+
+        var updatedProductsResultSet = jdbcTemplate.queryForList(UPDATE_RESERVED_PRODUCTS_SQL, sqlParams);
 
         var updatedProducts = updatedProductsResultSet.stream()
                 .map(updatedProductRow -> new ProductReservation(
@@ -164,12 +170,13 @@ public class ReservationCreator {
         if (insertingReservations.isEmpty()) {
             return emptyList();
         }
-        var reservedProductsResultSet = jdbcTemplate.queryForList(
-                PRODUCTS_RESERVING_SQL,
-                insertingReservations.stream().map(ProductReservation::warehouseItemId).toArray(UUID[]::new),
-                insertingReservations.stream().map(ProductReservation::quantity).toArray(Integer[]::new),
-                reservationId
+        var sqlParams = Map.of(
+                "warehouse_item_id", insertingReservations.stream().map(ProductReservation::warehouseItemId).toArray(UUID[]::new),
+                "quantity", insertingReservations.stream().map(ProductReservation::quantity).toArray(Integer[]::new),
+                "reservation_id", reservationId
         );
+
+        var reservedProductsResultSet = jdbcTemplate.queryForList(PRODUCTS_RESERVING_SQL, sqlParams);
 
         var reservedProducts = reservedProductsResultSet.stream()
                 .map(reservedProductRow -> new ProductReservation(
@@ -190,13 +197,15 @@ public class ReservationCreator {
         if (deletingReservations.isEmpty()) {
             return;
         }
-        var productsReleasingBatch = deletingReservations.stream().map(this::buildProductReleasingBatchItem).toList();
+        @SuppressWarnings("unchecked")
+        Map<String, ?>[] productsReleasingBatch = deletingReservations.stream().map(this::buildProductReleasingBatchItem).toArray(Map[]::new);
         jdbcTemplate.batchUpdate(PRODUCT_QUANTITY_RELEASING_SQL, productsReleasingBatch);
         reservationRepository.deleteAllInBatch(deletingReservations);
     }
 
-    private Object[] buildProductReleasingBatchItem(final Reservation reservation) {
-        return new Object[]{reservation.getReservedQuantity(), reservation.getWarehouseItemId()};
+    private Map<String, ?> buildProductReleasingBatchItem(final Reservation reservation) {
+        return Map.of("reserved_quantity", reservation.getReservedQuantity(),
+                "warehouse_item_id", reservation.getWarehouseItemId());
     }
 }
 
