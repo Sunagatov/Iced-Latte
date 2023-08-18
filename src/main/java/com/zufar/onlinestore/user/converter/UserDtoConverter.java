@@ -1,65 +1,28 @@
 package com.zufar.onlinestore.user.converter;
 
-import com.zufar.onlinestore.user.dto.AddressDto;
 import com.zufar.onlinestore.user.dto.UserDto;
-import com.zufar.onlinestore.user.entity.Address;
-import com.zufar.onlinestore.user.entity.Authority;
 import com.zufar.onlinestore.user.entity.UserEntity;
-import com.zufar.onlinestore.user.entity.UserGrantedAuthority;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-import java.util.Collections;
-import java.util.Set;
+@Mapper(componentModel = "spring", uses = AddressDtoConverter.class)
+public interface UserDtoConverter {
 
-@Service
-@AllArgsConstructor
-public class UserDtoConverter {
-    private final AddressDtoConverter addressDtoConverter;
+    @Mapping(target = "address", source = "entity.address", qualifiedByName = "toAddressDto")
+    UserDto toDto(final UserEntity entity);
 
-    public UserDto toDto(final UserEntity entity) {
-        AddressDto addressDto = null;
-        if (entity.getAddress() != null) {
-            addressDto = addressDtoConverter.toDto(entity.getAddress());
-        }
-        return new UserDto(
-                entity.getUserId(),
-                entity.getFirstName(),
-                entity.getLastName(),
-                entity.getUsername(),
-                entity.getEmail(),
-                entity.getPassword(),
-                addressDto
-        );
-    }
-
-    public UserEntity toEntity(final UserDto dto) {
-        Address address = null;
-        if (dto.address() != null) {
-            address = addressDtoConverter.toEntity(dto.address());
-        }
-
-        UserEntity userEntity = UserEntity.builder()
-                .firstName(dto.firstName())
-                .lastName(dto.lastName())
-                .email(dto.email())
-                .username(dto.username())
-                .password(dto.password())
-                .address(address)
-                .accountNonExpired(true)
-                .accountNonLocked(true)
-                .credentialsNonExpired(true)
-                .enabled(true)
-                .build();
-
-        Set<UserGrantedAuthority> authorities = Collections
-                .singleton(UserGrantedAuthority.builder()
-                        .authority(Authority.USER)
-                        .user(userEntity)
-                        .build());
-
-        userEntity.setAuthorities(authorities);
-
-        return userEntity;
-    }
+    @Mapping(target = "accountNonExpired", constant = "true")
+    @Mapping(target = "accountNonLocked", constant = "true")
+    @Mapping(target = "credentialsNonExpired", constant = "true")
+    @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "address", source = "dto.address", qualifiedByName = "toAddress")
+    @Mapping(target = "authorities",
+            expression = "java(java.util.Collections.singleton(com.zufar.onlinestore.user.entity.UserGrantedAuthority" +
+                    ".builder().authority(com.zufar.onlinestore.user.entity.Authority.USER)" +
+                    ".user(com.zufar.onlinestore.user.entity.UserEntity" +
+                    ".builder().firstName(dto.firstName()).lastName(dto.lastName()).email(dto.email())" +
+                    ".username(dto.username()).password(dto.password())" +
+                    ".address(new AddressDtoConverterImpl().toEntity((dto.address()))).accountNonExpired(true)" +
+                    ".accountNonLocked(true).credentialsNonExpired(true).enabled(true).build()).build()))")
+    UserEntity toEntity(final UserDto dto);
 }
