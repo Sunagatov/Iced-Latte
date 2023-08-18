@@ -39,12 +39,6 @@ public class ProductInfo {
     @Column(name = "currency", nullable = false)
     private String currency;
 
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
-
-    @Column(name = "active", nullable = false)
-    private Boolean active;
-
     @Override
     public boolean equals(Object object) {
         if (this == object)
@@ -52,30 +46,16 @@ public class ProductInfo {
         if (object == null || getClass() != object.getClass())
             return false;
         ProductInfo that = (ProductInfo) object;
-        return active == that.active &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(price, that.price) &&
-                Objects.equals(currency, that.currency) &&
-                Objects.equals(quantity, that.quantity);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, price, currency, quantity, active);
+        return Objects.hash(id);
     }
 
     @Override
     public String toString() {
-        return "ProductInfo {" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", price=" + price +
-                ", currency='" + currency + '\'' +
-                ", quantity=" + quantity +
-                ", active=" + active +
-                '}';
+        return "ProductInfo { id = " + id + "}";
     }
 }

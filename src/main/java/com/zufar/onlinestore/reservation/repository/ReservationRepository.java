@@ -11,6 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
 
-    @Query(value = "SELECT * FROM reservation WHERE reservation_id = :id AND status = 'CREATED' FOR UPDATE", nativeQuery = true)
-    List<Reservation> findAllByReservationIdForUpdate(@Param("id") UUID reservationId);
+    @Query(value = "SELECT * FROM reservation WHERE reservation_id = :id", nativeQuery = true)
+    List<Reservation> findAllByReservationId(@Param("id") UUID reservationId);
 }

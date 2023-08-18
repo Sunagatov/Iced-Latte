@@ -20,12 +20,6 @@ public record ProductInfoFullDto(
         String description,
 
         @NotNull(message = "PriceDetails is the mandatory attribute")
-        PriceDetailsDto priceDetails,
-
-        @NotNull(message = "Quantity  is the mandatory attribute")
-        Integer quantity,
-
-        @NotNull(message = "Active is the mandatory attribute")
-        Boolean active
+        PriceDetailsDto priceDetails
 ) {
 }

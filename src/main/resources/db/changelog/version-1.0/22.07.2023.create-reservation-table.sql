@@ -1,12 +1,9 @@
-CREATE TYPE RESERVATION_STATUS AS ENUM ('CREATED', 'CONFIRMED', 'CANCELLED');
-
 CREATE TABLE IF NOT EXISTS reservation
 (
-    id                SERIAL PRIMARY KEY,
-    reservation_id    UUID                     NOT NULL,
-    product_id        UUID                     NOT NULL,
-    reserved_quantity INT                      NOT NULL CHECK (reserved_quantity > 0),
-    created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status            RESERVATION_STATUS       NOT NULL,
-    UNIQUE(reservation_id, product_id)
+    id                          SERIAL                   PRIMARY KEY,
+    reservation_id              UUID                     NOT NULL,
+    warehouse_item_id           UUID                     NOT NULL,
+    reserved_quantity           INT                      NOT NULL CHECK (reserved_quantity > 0),
+    FOREIGN KEY (warehouse_item_id) REFERENCES warehouse(item_id),
+    UNIQUE(reservation_id, warehouse_item_id)
 );

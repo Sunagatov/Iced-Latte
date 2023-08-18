@@ -13,7 +13,7 @@ public class CreateReservationDtoValidator implements IncomingDtoValidator<Creat
 
     @Override
     public boolean isValid(final CreateReservationDto dto) {
-        boolean containsInvalidQuantity = dto.productReservations().stream()
+        boolean containsInvalidQuantity = dto.reservations().stream()
                 .anyMatch(
                         product -> product.quantity() < MIN_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER
                                 || product.quantity() > MAX_RESERVATION_QUANTITY_FOR_PRODUCT_PER_USER
@@ -28,11 +28,11 @@ public class CreateReservationDtoValidator implements IncomingDtoValidator<Creat
 
     private boolean productIdMustNotBeDuplicated(final CreateReservationDto dto) {
         int productIdsSize = dto
-                .productReservations()
+                .reservations()
                 .stream()
-                .map(ProductReservation::productId)
+                .map(ProductReservation::warehouseItemId)
                 .collect(toSet())
                 .size();
-        return productIdsSize == dto.productReservations().size();
+        return productIdsSize == dto.reservations().size();
     }
 }
