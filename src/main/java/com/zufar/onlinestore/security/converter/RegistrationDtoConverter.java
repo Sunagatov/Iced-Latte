@@ -2,20 +2,10 @@ package com.zufar.onlinestore.security.converter;
 
 import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.user.dto.UserDto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.mapstruct.Mapper;
 
-@Service
-@RequiredArgsConstructor
-public class RegistrationDtoConverter {
+@Mapper(componentModel = "spring")
+public interface RegistrationDtoConverter {
 
-    public UserDto toDto(final UserRegistrationRequest userRegistrationRequest) {
-        return UserDto.builder()
-                .firstName(userRegistrationRequest.firstName())
-                .lastName(userRegistrationRequest.lastName())
-                .username(userRegistrationRequest.username())
-                .email(userRegistrationRequest.email())
-                .password(userRegistrationRequest.password())
-                .build();
-    }
+    UserDto toDto(final UserRegistrationRequest userRegistrationRequest);
 }
