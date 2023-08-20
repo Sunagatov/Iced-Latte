@@ -49,7 +49,7 @@ spring:
 #
 application:
   reservation:
-    default-timeout: "PT15M"
+    default-timeout: "PT30M"
 #
 # Spring Doc Properties
 #

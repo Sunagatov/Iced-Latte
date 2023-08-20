@@ -23,16 +23,16 @@ public class CreateReservationDtoValidator implements IncomingDtoValidator<Creat
             return false;
         }
 
-        return productIdMustNotBeDuplicated(dto);
+        return warehouseItemIdMustNotBeDuplicated(dto);
     }
 
-    private boolean productIdMustNotBeDuplicated(final CreateReservationDto dto) {
-        int productIdsSize = dto
+    private boolean warehouseItemIdMustNotBeDuplicated(final CreateReservationDto dto) {
+        int uniqueWarehouseItemsSize = dto
                 .reservations()
                 .stream()
                 .map(ProductReservation::warehouseItemId)
                 .collect(toSet())
                 .size();
-        return productIdsSize == dto.reservations().size();
+        return uniqueWarehouseItemsSize == dto.reservations().size();
     }
 }

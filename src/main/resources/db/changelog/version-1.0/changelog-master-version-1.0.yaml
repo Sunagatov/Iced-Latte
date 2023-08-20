@@ -33,3 +33,9 @@ databaseChangeLog:
       file: db/changelog/version-1.0/18.08.2023.part1.create-user-reservation-history-table.sql
   - include:
       file: db/changelog/version-1.0/18.08.2023.part2.create-reservation-table.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part3.insert-city-dictionary-data.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part4.insert-store-data.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part5.insert-warehouse-data.sql

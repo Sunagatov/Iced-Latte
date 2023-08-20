@@ -3,7 +3,6 @@ package com.zufar.onlinestore.reservation.service;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationRequest;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse;
 import com.zufar.onlinestore.reservation.api.dto.creation.ProductReservation;
-import com.zufar.onlinestore.reservation.config.ReservationTimeoutConfiguration;
 import com.zufar.onlinestore.reservation.entity.Reservation;
 import com.zufar.onlinestore.reservation.repository.ReservationRepository;
 import java.util.List;
@@ -36,11 +35,11 @@ public class ReservationCreator {
             WITH updated_warehouse AS (
              UPDATE warehouse w SET tmp_quantity = w.quantity, quantity = w.quantity - LEAST(w.quantity, reservation.quantity)
              FROM (SELECT unnest(:warehouse_item_id) AS warehouse_item_id, unnest(:quantity) AS quantity) AS reservation
-             WHERE w.id = reservation.warehouse_item_id
+             WHERE w.item_id = reservation.warehouse_item_id
              RETURNING w.item_id, (w.tmp_quantity - w.quantity) AS reserved_quantity
             )
             INSERT INTO reservation (reservation_id, warehouse_item_id, reserved_quantity)
-            SELECT :reservation_id, updated_warehouse.item_id, updated_warehouse.reserved_quantity)
+            SELECT :reservation_id, updated_warehouse.item_id, updated_warehouse.reserved_quantity
             FROM updated_warehouse
             WHERE updated_warehouse.reserved_quantity > 0
             ON CONFLICT DO NOTHING
@@ -66,17 +65,15 @@ public class ReservationCreator {
             WHERE item_id = :warehouse_item_id;
             """;
 
-    private final UserReservationService userReservationService;
+    private final UserReservationHistoryService userReservationHistoryService;
     private final ReservationRepository reservationRepository;
-    private final ReservationTimeoutConfiguration timeoutConfiguration;
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public CreatedReservationResponse createReservation(final CreateReservationRequest request) {
-        var reservationInfo = userReservationService.getReservationInfoForUpdate(request.userId());
-        var reservationId = reservationInfo.reservationId();
+        var activeReservation = userReservationHistoryService.getActiveReservationForUpdate(request.userId());
+        var reservationId = activeReservation.reservationId();
         var newReservations = request.reservations();
-        var reservationExpiredAt = reservationInfo.createdAt().plus(timeoutConfiguration.defaultTimeout());
 
         var oldReservations = reservationRepository.findAllByReservationId(reservationId);
 
@@ -88,11 +85,11 @@ public class ReservationCreator {
         var insertedReservations = insertReservations(insertingReservations, reservationId);
         deleteReservations(deletingReservations);
 
-        var createdReservations = union(insertedReservations, updatedReservations);
-        if (createdReservations.isEmpty()) {
+        var reservations = union(insertedReservations, updatedReservations);
+        if (reservations.isEmpty()) {
             return nothingReserved();
         }
-        return reserved(createdReservations, reservationExpiredAt);
+        return reserved(reservations, activeReservation.expiredAt());
     }
 
     private List<ProductReservation> getUpdatingReservations(final List<ProductReservation> newReservations, final List<Reservation> oldReservations) {

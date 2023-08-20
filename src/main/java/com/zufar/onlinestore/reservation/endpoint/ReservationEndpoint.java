@@ -9,9 +9,8 @@ import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationDto;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreateReservationRequest;
 import com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse;
 import com.zufar.onlinestore.reservation.api.dto.creation.ProductReservation;
-import com.zufar.onlinestore.reservation.config.ReservationTimeoutConfiguration;
 import com.zufar.onlinestore.reservation.repository.ReservationRepository;
-import com.zufar.onlinestore.reservation.service.UserReservationService;
+import com.zufar.onlinestore.reservation.service.UserReservationHistoryService;
 import com.zufar.onlinestore.reservation.validator.IncomingDtoValidator;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -46,18 +45,15 @@ public class ReservationEndpoint {
     private final ReservationApi reservationApi;
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
-    private final UserReservationService userReservationService;
-    private final ReservationTimeoutConfiguration timeoutConfiguration;
+    private final UserReservationHistoryService userReservationHistoryService;
 
     @GetMapping
     @ResponseBody
     public ResponseEntity<CreatedReservationResponse> findAllReservedProducts(@AuthenticationPrincipal UserDetails userDetails) {
         var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
         log.info("Received the request to get all reserved products for userId = {}", userId);
-        var reservationInfo = userReservationService.getReservationInfoForUpdate(userId);
-        var reservationExpiredAt = reservationInfo.createdAt().plus(timeoutConfiguration.defaultTimeout());
-        var reservations = reservationRepository.findAllByReservationId(reservationInfo.reservationId());
-
+        var activeReservation = userReservationHistoryService.getActiveReservationForUpdate(userId);
+        var reservations = reservationRepository.findAllByReservationId(activeReservation.reservationId());
         if (reservations.isEmpty()) {
             return ResponseEntity.ok(nothingReserved());
         }
@@ -68,7 +64,7 @@ public class ReservationEndpoint {
                                 reservation.getReservedQuantity()
                         )
                 ).toList();
-        return ResponseEntity.ok(reserved(productReservations, reservationExpiredAt));
+        return ResponseEntity.ok(reserved(productReservations, activeReservation.expiredAt()));
     }
 
     @PutMapping

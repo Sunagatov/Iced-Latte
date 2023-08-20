@@ -1,9 +1,7 @@
 package com.zufar.onlinestore;
 
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
-import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 import com.zufar.onlinestore.reservation.config.ReservationTimeoutConfiguration;
-import com.zufar.onlinestore.reservation.service.ReservationCreator;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,9 +11,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @AllArgsConstructor
 @EnableConfigurationProperties(value = {StripeConfiguration.class, ReservationTimeoutConfiguration.class})
 public class OnlineStoreApplication {
-
-    private final ReservationCreator reservationCreator;
-    private final ProductInfoRepository productInfoRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(OnlineStoreApplication.class, args);
