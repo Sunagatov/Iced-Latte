@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @Getter
 @Setter
@@ -51,7 +53,6 @@ public class ProductInfo {
         if (!(object instanceof ProductInfo productInfo)) {
             return false;
         }
-        ProductInfo that = (ProductInfo) object;
         return new EqualsBuilder()
                 .append(productId, productInfo.productId)
                 .isEquals();
@@ -59,7 +60,6 @@ public class ProductInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
         return new HashCodeBuilder()
                 .append(productId)
                 .toHashCode();
