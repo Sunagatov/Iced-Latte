@@ -54,7 +54,7 @@ public class ReservationEndpoint {
     public ResponseEntity<CreatedReservationResponse> findAllReservedProducts(@AuthenticationPrincipal UserDetails userDetails) {
         var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
         log.info("Received the request to get all reserved products for userId = {}", userId);
-        var reservationInfo = userReservationService.getCurrentReservationForUpdate(userId);
+        var reservationInfo = userReservationService.getReservationInfoForUpdate(userId);
         var reservationExpiredAt = reservationInfo.createdAt().plus(timeoutConfiguration.defaultTimeout());
         var reservations = reservationRepository.findAllByReservationId(reservationInfo.reservationId());
 

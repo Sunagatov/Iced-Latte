@@ -73,7 +73,7 @@ public class ReservationCreator {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public CreatedReservationResponse createReservation(final CreateReservationRequest request) {
-        var reservationInfo = userReservationService.getCurrentReservationForUpdate(request.userId());
+        var reservationInfo = userReservationService.getReservationInfoForUpdate(request.userId());
         var reservationId = reservationInfo.reservationId();
         var newReservations = request.reservations();
         var reservationExpiredAt = reservationInfo.createdAt().plus(timeoutConfiguration.defaultTimeout());

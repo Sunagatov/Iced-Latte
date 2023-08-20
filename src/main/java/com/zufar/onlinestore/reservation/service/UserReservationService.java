@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.reservation.service;
 
 import com.zufar.onlinestore.reservation.entity.ReservationInfo;
-import com.zufar.onlinestore.reservation.exception.ConcurrentReservationRollbackException;
+import com.zufar.onlinestore.reservation.exception.ReservationRollbackException;
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public class UserReservationService {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Transactional
-    public ReservationInfo getCurrentReservationForUpdate(UUID userId) {
+    public ReservationInfo getReservationInfoForUpdate(UUID userId) throws ReservationRollbackException {
         var sqlParams = Map.of("user_id", userId);
         var currentReservation = jdbcTemplate.queryForMap(SELECT_RESERVATION_SQL, sqlParams);
         if (currentReservation.isEmpty()) {

@@ -2,9 +2,9 @@ package com.zufar.onlinestore.reservation.exception;
 
 import java.util.UUID;
 
-public class ConcurrentReservationRollbackException extends RuntimeException {
+public class ReservationRollbackException extends RuntimeException {
 
-    public ConcurrentReservationRollbackException(UUID userId) {
+    public ReservationRollbackException(UUID userId) {
         super("Reservation has been aborted due to concurrent reservation for user = %s".formatted(userId));
     }
 }
