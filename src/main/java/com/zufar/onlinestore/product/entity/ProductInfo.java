@@ -25,7 +25,8 @@ public class ProductInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "id", nullable = false)
+    private UUID productId;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -36,26 +37,38 @@ public class ProductInfo {
     @Column(name = "price", nullable = false)
     private BigDecimal price;
 
-    @Column(name = "currency", nullable = false)
-    private String currency;
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active;
 
     @Override
     public boolean equals(Object object) {
-        if (this == object)
+        if (this == object) {
             return true;
-        if (object == null || getClass() != object.getClass())
+        }
+        if (!(object instanceof ProductInfo productInfo)) {
             return false;
+        }
         ProductInfo that = (ProductInfo) object;
-        return Objects.equals(id, that.id);
+        return new EqualsBuilder()
+                .append(productId, productInfo.productId)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id);
+        return new HashCodeBuilder()
+                .append(productId)
+                .toHashCode();
     }
 
     @Override
     public String toString() {
-        return "ProductInfo { id = " + id + "}";
+        return new ToStringBuilder(this)
+                .append("productId", productId)
+                .toString();
     }
 }

@@ -3,12 +3,14 @@ package com.zufar.onlinestore.cart.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,7 +36,11 @@ public class ShoppingSession {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "shoppingSession", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "shoppingSession",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE,
+                    CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
+            orphanRemoval = true,
+            fetch = FetchType.EAGER)
     private Set<ShoppingSessionItem> items;
 
     @Column(name = "items_quantity", nullable = false)
@@ -47,6 +54,19 @@ public class ShoppingSession {
 
     @Column(name = "closed_at", nullable = false)
     private LocalDateTime closedAt;
+
+    private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+
+    public Integer getItemsQuantity() {
+        return this.items.size();
+    }
+
+    public Integer getProductsQuantity() {
+        return this.items.stream()
+                .map(ShoppingSessionItem::getProductsQuantity)
+                .reduce(Integer::sum)
+                .orElse(DEFAULT_PRODUCTS_QUANTITY);
+    }
 
     @Override
     public boolean equals(Object object) {

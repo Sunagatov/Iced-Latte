@@ -1,19 +1,30 @@
 package com.zufar.onlinestore.cart.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zufar.onlinestore.product.entity.ProductInfo;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Version;
 
-import java.util.Objects;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "shopping_session_item")
@@ -23,9 +34,8 @@ public class ShoppingSessionItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @JsonIgnore
     @Version
-    private Long version; // Adding version field for optimistic locking
+    private Integer version; // Adding version field for optimistic locking
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shopping_session_id", nullable = false)
@@ -49,15 +59,24 @@ public class ShoppingSessionItem {
     public boolean equals(Object object) {
         if (this == object)
             return true;
+
         if (object == null || getClass() != object.getClass())
             return false;
+
         ShoppingSessionItem that = (ShoppingSessionItem) object;
-        return Objects.equals(id, that.id);
+
+        return new EqualsBuilder()
+                .append(id, that.id)
+                .append(productInfo, that.productInfo)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(productInfo)
+                .toHashCode();
     }
 
     @Override

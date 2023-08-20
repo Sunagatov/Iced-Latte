@@ -1,0 +1,49 @@
+version: '3.9'
+
+networks:
+  online-store-network:
+    name: online-store-network
+
+services:
+  #
+  # Postgresql Database
+  #
+  postgresdb:
+    image: 'postgres:13.11-bullseye'
+    container_name: postgresdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=testdb
+    ports:
+      - '5432:5432'
+    networks:
+      - online-store-network
+    profiles:
+      - dev
+      - test
+      - prod
+    volumes:
+      - 'db:/var/lib/postgresql/data'
+
+  sonarqube:
+    image: sonarqube:latest
+    container_name: onlinestore-sonarqube
+    ports:
+      - "9000:9000"
+    networks:
+      - online-store-network
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+    profiles:
+      - dev
+
+volumes:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_bundled-plugins:
+  db:

@@ -90,3 +90,4 @@ nb-configuration.xml
 ## Logs
 ##############################
 **/*.log
+/src/main/resources/stripe.yaml

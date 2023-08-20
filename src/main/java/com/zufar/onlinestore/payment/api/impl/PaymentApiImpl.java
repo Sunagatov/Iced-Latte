@@ -1,14 +1,19 @@
 package com.zufar.onlinestore.payment.api.impl;
 
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.dto.*;
+import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentCreator;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentMethodCreator;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentRetriever;
+import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
+import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
+import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
+import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
+import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
+import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
-import com.zufar.onlinestore.payment.service.PaymentCreator;
-import com.zufar.onlinestore.payment.service.event.PaymentEventProcessor;
-import com.zufar.onlinestore.payment.service.PaymentMethodCreator;
-import com.zufar.onlinestore.payment.service.PaymentRetriever;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,22 +29,22 @@ public class PaymentApiImpl implements PaymentApi {
     private final PaymentEventProcessor paymentEventProcessor;
 
     @Override
-    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws StripeException {
+    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws PaymentIntentProcessingException {
         return paymentCreator.createPayment(createPaymentDto);
     }
 
     @Override
-    public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws StripeException {
+    public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws PaymentMethodProcessingException {
         return paymentMethodCreator.createPaymentMethod(createPaymentMethodDto);
     }
 
     @Override
-    public PaymentDetailsDto getPaymentDetails(final Long paymentId) throws PaymentNotFoundException {
+    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
         return paymentRetriever.getPaymentDetails(paymentId);
     }
 
     @Override
-    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws SignatureVerificationException {
+    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws PaymentEventProcessingException, PaymentEventParsingException {
         paymentEventProcessor.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
     }
 }
