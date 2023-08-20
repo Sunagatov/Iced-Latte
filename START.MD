@@ -1,25 +1,25 @@
 ### service containers:
 ```bash
-docker-compose -f docker-compose.services.yml -p online-store-services up -d
+docker compose -f docker-compose.services.yml -p online-store-services up -d
 ```
 
-### php and nginx containers:
+### app containers:
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### build
 ```bash
-docker-compose build
+docker compose build
 ```
 
 ### push
 ```bash
-docker-compose push
+docker compose push
 ```
 
 ### restart
 ```bash
-docker-compose pull \
-&& docker-compose down && docker-compose up -d
+docker compose pull \
+&& docker compose down && docker compose up -d
 ```
