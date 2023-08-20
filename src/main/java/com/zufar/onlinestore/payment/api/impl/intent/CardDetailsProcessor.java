@@ -12,7 +12,6 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Deprecated
 public class CardDetailsProcessor {
 
     private final StripeConfiguration stripeConfiguration;

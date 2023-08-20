@@ -72,7 +72,7 @@ public class AddItemsToShoppingSessionHelper {
                         .productsQuantity(productsWithQuantity.get(productInfo.getProductId()))
                         .productInfo(productInfo)
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static ShoppingSession updateExistingShoppingSession(ShoppingSession existingShoppingSession,

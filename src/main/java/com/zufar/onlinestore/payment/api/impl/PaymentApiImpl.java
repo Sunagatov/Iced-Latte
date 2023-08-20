@@ -45,7 +45,6 @@ public class PaymentApiImpl implements PaymentApi {
     }
 
     @Override
-    @Deprecated
     public String processCardDetailsToken(CreateCardDetailsTokenDto createCardDetailsTokenDto) throws StripeException {
         return cardDetailsProcessor.processCardDetails(createCardDetailsTokenDto);
     }

@@ -50,6 +50,5 @@ public interface PaymentApi {
      * @param createCardDetailsTokenDto object that contains data about customer payment card.
      * @return returns card details token in string form
      * */
-    @Deprecated
     String processCardDetailsToken(final CreateCardDetailsTokenDto createCardDetailsTokenDto) throws StripeException;
 }

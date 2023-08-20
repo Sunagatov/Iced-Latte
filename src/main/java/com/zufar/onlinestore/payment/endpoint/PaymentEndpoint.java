@@ -82,7 +82,6 @@ public class PaymentEndpoint {
                 .body(apiResponse);
     }
 
-    @Deprecated
     @PostMapping("/card")
     public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenDto createCardDetailsTokenDto) throws StripeException {
 
