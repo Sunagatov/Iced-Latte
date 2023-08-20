@@ -1,2 +1,5 @@
 ./env.local
+.idea
+.github
+.editorconfig
 docker-compose.override.yaml
