@@ -4,6 +4,7 @@ import com.stripe.model.PaymentIntent;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.entity.Payment;
+import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,11 @@ public class PaymentCreator {
     public Payment createPayment(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession) {
         log.info("Create payment intent: in progress: creation payment with stripe paymentIntentId = {}", paymentIntent.getId());
         Payment payment = stripePaymentIntentConverter.toEntity(paymentIntent, shoppingSession);
+        PaymentStatus isProcessing = PaymentStatus.PAYMENT_IS_PROCESSING;
+        payment.setStatus(isProcessing);
+        payment.setDescription(isProcessing.getDescription());
         Payment savedPayment = paymentRepository.save(payment);
         log.info("Create payment intent: successful: payment was created with paymentId = {}", savedPayment.getPaymentId());
         return savedPayment;
     }
-
 }

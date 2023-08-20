@@ -5,10 +5,11 @@ import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 
 
-@Mapper(componentModel = "spring", uses = ProductInfoDtoConverter.class)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = ProductInfoDtoConverter.class)
 public interface ShoppingSessionItemDtoConverter {
 
     @Named("toShoppingSessionItemDto")

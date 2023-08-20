@@ -5,6 +5,7 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +24,18 @@ import org.springframework.stereotype.Service;
 public class StripePaymentIntentCreator {
 
     private final StripePaymentIntentConverter stripePaymentIntentConverter;
+    private final StripeConfiguration stripeConfiguration;
 
     public PaymentIntent createStripePaymentIntent(final PaymentMethod paymentMethod, ShoppingSessionDto shoppingSession) throws PaymentIntentProcessingException {
         log.info("Create payment intent: starting: creation of payment intent was started");
-        PaymentIntentCreateParams paymentIntentCreateParams = stripePaymentIntentConverter.toStripeObject(paymentMethod, shoppingSession);
+        String currency = stripeConfiguration.currency();
+        PaymentIntentCreateParams paymentIntentCreateParams = stripePaymentIntentConverter.toStripeObject(paymentMethod, shoppingSession, currency);
         String paymentMethodId = paymentIntentCreateParams.getPaymentMethod();
-        log.info("Create payment intent: in progress: creation stripe payment intent with payment method Id: {}", paymentMethodId);
+
+        log.info("Create payment intent: in progress: creation stripe payment intent with payment method Id = {}", paymentMethodId);
         try {
             PaymentIntent paymentIntent = PaymentIntent.create(paymentIntentCreateParams);
-            log.info("Create payment intent: successful: stripe payment intent was created with Id: {}", paymentIntent.getId());
+            log.info("Create payment intent: successful: stripe payment intent was created with Id = {}", paymentIntent.getId());
             return paymentIntent;
         } catch (StripeException ex) {
             log.error("Create payment intent: failed: stripe payment intent was not created");

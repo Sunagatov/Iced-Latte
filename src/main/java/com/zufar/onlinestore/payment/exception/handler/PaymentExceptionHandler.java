@@ -60,9 +60,9 @@ public class PaymentExceptionHandler {
         return apiResponse;
     }
 
-    @ExceptionHandler(StripeCustomerCreationException.class)
+    @ExceptionHandler(StripeCustomerProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<String> handleStripeCustomerCreationException(final StripeCustomerCreationException exception) {
+    public ApiResponse<String> handleStripeCustomerCreationException(final StripeCustomerProcessingException exception) {
         ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.error("Handle stripe customer creation exception: failed: message: {}, description: {}.", apiResponse.message(), apiResponse.data());
         return apiResponse;

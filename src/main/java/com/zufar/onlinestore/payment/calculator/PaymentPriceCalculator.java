@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Component
 public class PaymentPriceCalculator {
 
-    private static final Long COIN_TO_CURRENCY_CONVERSION_VALUE = 100L;
+    private static final Double COIN_TO_CURRENCY_CONVERSION_VALUE = 100.0;
 
     @Named("calculateForPayment")
     public BigDecimal calculatePriceForPayment(Long totalPrice) {
@@ -19,6 +19,6 @@ public class PaymentPriceCalculator {
 
     @Named("calculateForPaymentIntent")
     public Long calculatePriceForPaymentIntent(BigDecimal totalPrice) {
-        return totalPrice.longValue() * COIN_TO_CURRENCY_CONVERSION_VALUE;
+        return totalPrice.multiply(BigDecimal.valueOf(COIN_TO_CURRENCY_CONVERSION_VALUE)).longValue();
     }
 }

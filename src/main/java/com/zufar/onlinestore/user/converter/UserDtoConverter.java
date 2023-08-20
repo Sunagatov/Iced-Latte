@@ -26,6 +26,7 @@ public class UserDtoConverter {
                 entity.getUserId(),
                 entity.getFirstName(),
                 entity.getLastName(),
+                entity.getStripeCustomerId(),
                 entity.getUsername(),
                 entity.getEmail(),
                 entity.getPassword(),

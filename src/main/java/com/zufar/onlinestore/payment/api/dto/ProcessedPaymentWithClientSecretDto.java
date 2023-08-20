@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record ProcessedPaymentWithClientSecretDto(
-        String clientSecret,
-        Long paymentId
+        Long paymentId,
+        String clientSecret
 ) {
 }

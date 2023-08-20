@@ -39,9 +39,6 @@ public class Payment {
     @Column(name = "shopping_session_id", nullable = false, unique = true)
     private UUID shoppingSessionId;
 
-    @Column(name = "currency", nullable = false)
-    private String currency;
-
     @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;
 

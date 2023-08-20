@@ -1,42 +1,44 @@
 package com.zufar.onlinestore.payment.converter;
 
 import com.stripe.param.CustomerCreateParams;
-import com.zufar.onlinestore.user.dto.AddressDto;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.user.entity.Address;
+import com.zufar.onlinestore.user.entity.UserEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.springframework.stereotype.Component;
 import java.util.Map;
-import java.util.UUID;
-
-import static com.stripe.param.CustomerCreateParams.Address;
 
 @Component
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface StripeCustomerConverter {
 
-    @Mapping(target = "address", expression = "java(toAddress(authorizedUser.address))")
+    @Mapping(target = "putAllExtraParam", ignore = true)
+    @Mapping(target = "cashBalance", ignore = true)
+    @Mapping(target = "invoiceSettings", ignore = true)
+    @Mapping(target = "putAllMetadata", ignore = true)
+    @Mapping(target = "tax", ignore = true)
+    @Mapping(target = "address", expression = "java(toAddress(authorizedUser.getAddress()))")
     @Mapping(target = "name", expression = "java(toFullName(authorizedUser))")
-    @Mapping(target = "metadata", expression = "java(toMetadata(authorizedUser.userId))")
+    @Mapping(target = "metadata", source = "metadata")
     @Mapping(target = "email", source = "authorizedUser.email")
-    CustomerCreateParams toStripeObject(UserDto authorizedUser);
+    CustomerCreateParams toStripeObject(UserEntity authorizedUser, Map<String, String> metadata);
 
-    default Address toAddress(AddressDto address) {
-        return Address.builder()
-                .setCountry(address.country())
-                .setCity(address.city())
-                .setLine1(address.line())
-                .build();
+    default CustomerCreateParams.Address toAddress(Address address) {
+        CustomerCreateParams.Address stripeAddress = null;
+        if (address != null) {
+            stripeAddress = CustomerCreateParams.Address.builder()
+                    .setCountry(address.getCountry())
+                    .setCity(address.getCity())
+                    .setLine1(address.getLine())
+                    .build();
+        }
+        return stripeAddress;
     }
 
-    default Map<String, String> toMetadata(UUID authorizedUserId) {
-        return Map.of("authorizedUserId", authorizedUserId.toString());
-    }
-
-    default String toFullName(UserDto authorizedUser) {
-        return StringUtils.join(authorizedUser.firstName(), Character.SPACE_SEPARATOR, authorizedUser.lastName());
+    default String toFullName(UserEntity authorizedUser) {
+        return StringUtils.join(authorizedUser.getFirstName(), Character.SPACE_SEPARATOR, authorizedUser.getLastName());
     }
 }
 

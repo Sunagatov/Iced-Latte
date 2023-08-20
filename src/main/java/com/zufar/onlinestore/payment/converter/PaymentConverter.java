@@ -1,23 +1,19 @@
 package com.zufar.onlinestore.payment.converter;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionItemDtoConverter;
-import com.zufar.onlinestore.cart.repository.ShoppingSessionItemRepository;
+import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.entity.Payment;
-import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.stereotype.Component;
+import org.mapstruct.MappingConstants;
 
-@RequiredArgsConstructor
-@Component
-@Mapper(componentModel = "spring")
-public abstract class PaymentConverter {
+import java.util.Set;
 
-    private final ShoppingSessionItemRepository shoppingSessionItemRepository;
-    private final ShoppingSessionItemDtoConverter shoppingSessionItemDtoConverter;
+@Mapper(uses = ShoppingSessionItemDtoConverter.class , componentModel = MappingConstants.ComponentModel.SPRING)
+public interface PaymentConverter {
 
-    @Mapping(target = "items", expression = "java(shoppingSessionItemRepository.findAll().stream().map(shoppingSessionItemDtoConverter::toDto).toList())")
-    public abstract ProcessedPaymentDetailsDto toDto(final Payment payment);
+    @Mapping(target = "items", source = "shoppingSessionItems", qualifiedByName = {"toShoppingSessionItemDto"})
+    ProcessedPaymentDetailsDto toDto(final Payment payment, final Set<ShoppingSessionItem> shoppingSessionItems);
 
 }
