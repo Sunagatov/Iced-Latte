@@ -6,25 +6,16 @@ networks:
     external: true
 
 services:
-  #
-  # Online Store App
-  #
   online-store-app:
-    image: 'online-store/online-store:latest'
+    image: '${HUB}/online-store:${TAG}'
     container_name: online-store-app
+    env_file:
+      - .env
     build:
-      context: ./
-      dockerfile: Dockerfile
+      context: .
     ports:
       - '8083:8083'
-    user: root
-    healthcheck:
-      test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
-      interval: 20s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-    deploy:
-      replicas: 1
     networks:
       - online-store-network
+    environment:
+      DATASOURCE_URL: ${DATASOURCE_URL}
