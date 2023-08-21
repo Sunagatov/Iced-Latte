@@ -13,8 +13,6 @@ import static com.zufar.onlinestore.reservation.api.dto.cancellation.CancelledRe
 @Service
 public class ReservationCanceller {
 
-    private static final int EXACTLY_ONE_UPDATED_ROW = 1;
-
     private static final String CANCEL_RESERVATION_SQL = """
             WITH cancelled_reservation AS (
              UPDATE user_reservation_history
