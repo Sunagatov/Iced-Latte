@@ -42,7 +42,6 @@ public class ReservationCreator {
             SELECT :reservation_id, updated_warehouse.item_id, updated_warehouse.reserved_quantity
             FROM updated_warehouse
             WHERE updated_warehouse.reserved_quantity > 0
-            ON CONFLICT DO NOTHING
             RETURNING %s, %s;
             """.formatted(WAREHOUSE_ITEM_ID, RESERVED_QUANTITY);
 
