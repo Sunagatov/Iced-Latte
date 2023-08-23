@@ -9,19 +9,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Table(name = "reservation")
 @Getter
 @Setter
@@ -37,19 +38,11 @@ public class Reservation {
     @Column(name = "reservation_id", nullable = false)
     private UUID reservationId;
 
-    @Column(name = "product_id", nullable = false)
-    private UUID productId;
+    @Column(name = "warehouse_item_id", nullable = false)
+    private UUID warehouseItemId;
 
     @Column(name = "reserved_quantity", nullable = false)
     private Integer reservedQuantity;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private ReservationStatus status;
 
     @Override
     public boolean equals(Object object) {
@@ -58,11 +51,11 @@ public class Reservation {
         if (object == null || getClass() != object.getClass())
             return false;
         Reservation that = (Reservation) object;
-        return reservationId.equals(that.reservationId) && productId.equals(that.productId);
+        return reservationId.equals(that.reservationId) && warehouseItemId.equals(that.warehouseItemId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reservationId, productId);
+        return Objects.hash(reservationId, warehouseItemId);
     }
 }

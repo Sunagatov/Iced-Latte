@@ -16,8 +16,7 @@ public class ProductInfoDtoConverter {
                 entity.getProductId(),
                 entity.getName(),
                 entity.getDescription(),
-                entity.getPrice(),
-                entity.getQuantity()
+                entity.getPrice()
         );
     }
 
@@ -27,9 +26,7 @@ public class ProductInfoDtoConverter {
                 entity.getProductId(),
                 entity.getName(),
                 entity.getDescription(),
-                entity.getPrice(),
-                entity.getQuantity(),
-                entity.getActive()
+                entity.getPrice()
         );
     }
 

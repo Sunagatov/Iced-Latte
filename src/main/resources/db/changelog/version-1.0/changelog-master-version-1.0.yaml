@@ -1,8 +1,14 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/version-1.0/19.07.2023.part1.create-product-table.sql
+      file: db/changelog/version-1.0/19.07.2023.part1.create-city-dictionary.sql
   - include:
-      file: db/changelog/version-1.0/19.07.2023.part2.insert-product-data.sql
+      file: db/changelog/version-1.0/19.07.2023.part2.create-store-table.sql
+  - include:
+      file: db/changelog/version-1.0/19.07.2023.part3.create-product-table.sql
+  - include:
+      file: db/changelog/version-1.0/19.07.2023.part4.create-warehouse-table.sql
+  - include:
+      file: db/changelog/version-1.0/19.07.2023.part5.insert-product-data.sql
   - include:
       file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
   - include:
@@ -14,8 +20,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-session-item-data.sql
   - include:
-      file: db/changelog/version-1.0/22.07.2023.create-reservation-table.sql
-  - include:
       file: db/changelog/version-1.0/28.07.2023.part1.create-address-table.sql
   - include:
       file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
@@ -25,3 +29,13 @@ databaseChangeLog:
       file: db/changelog/version-1.0/28.07.2023.part4.create-user-details-table.sql
   - include:
       file: db/changelog/version-1.0/28.07.2023.part5.insert-user-details-table-data.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part1.create-user-reservation-history-table.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part2.create-reservation-table.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part3.insert-city-dictionary-data.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part4.insert-store-data.sql
+  - include:
+      file: db/changelog/version-1.0/18.08.2023.part5.insert-warehouse-data.sql

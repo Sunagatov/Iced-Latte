@@ -7,8 +7,6 @@ public record ProductInfoFullDto(
         UUID id,
         String name,
         String description,
-        BigDecimal price,
-        Integer quantity,
-        Boolean active
+        BigDecimal price
 ) {
 }
