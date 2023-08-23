@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.nothingReserved;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.partiallyReserved;
 import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationResponse.reserved;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
@@ -87,6 +88,10 @@ public class ReservationCreator {
         var reservations = union(insertedReservations, updatedReservations);
         if (reservations.isEmpty()) {
             return nothingReserved();
+        }
+        boolean hasNotReservedProduct = reservations.stream().anyMatch(reservation -> reservation.quantity() == 0);
+        if (hasNotReservedProduct) {
+            return partiallyReserved(reservations, activeReservation.expiredAt());
         }
         return reserved(reservations, activeReservation.expiredAt());
     }

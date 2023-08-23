@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.NOTHING_RESERVED;
+import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.PARTIALLY_RESERVED;
 import static com.zufar.onlinestore.reservation.api.dto.creation.CreatedReservationStatus.RESERVED;
 import static java.util.Collections.emptyList;
 
@@ -25,6 +26,10 @@ public record CreatedReservationResponse(
 
     public static CreatedReservationResponse reserved(final List<ProductReservation> reservations, final Instant expiredAt) {
         return new CreatedReservationResponse(RESERVED, reservations, expiredAt);
+    }
+
+    public static CreatedReservationResponse partiallyReserved(final List<ProductReservation> reservations, final Instant expiredAt) {
+        return new CreatedReservationResponse(PARTIALLY_RESERVED, reservations, expiredAt);
     }
 
     public static CreatedReservationResponse nothingReserved() {

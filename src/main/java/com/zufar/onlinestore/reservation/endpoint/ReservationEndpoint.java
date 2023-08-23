@@ -12,6 +12,7 @@ import com.zufar.onlinestore.reservation.api.dto.creation.ProductReservation;
 import com.zufar.onlinestore.reservation.repository.ReservationRepository;
 import com.zufar.onlinestore.reservation.service.UserReservationHistoryService;
 import com.zufar.onlinestore.reservation.validator.IncomingDtoValidator;
+import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,14 +44,14 @@ public class ReservationEndpoint {
 
     private final IncomingDtoValidator<CreateReservationDto> validator;
     private final ReservationApi reservationApi;
-    private final UserRepository userRepository;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ReservationRepository reservationRepository;
     private final UserReservationHistoryService userReservationHistoryService;
 
     @GetMapping
     @ResponseBody
-    public ResponseEntity<CreatedReservationResponse> findAllReservedProducts(@AuthenticationPrincipal UserDetails userDetails) {
-        var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
+    public ResponseEntity<CreatedReservationResponse> findAllReservedProducts() {
+        var userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get all reserved products for userId = {}", userId);
         var activeReservation = userReservationHistoryService.getActiveReservationForUpdate(userId);
         var reservations = reservationRepository.findAllByReservationId(activeReservation.reservationId());
@@ -69,15 +70,12 @@ public class ReservationEndpoint {
 
     @PutMapping
     @ResponseBody
-    public ResponseEntity<CreatedReservationResponse> createReservation(
-            @RequestBody @Valid CreateReservationDto reservationDto,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+    public ResponseEntity<CreatedReservationResponse> createReservation(@RequestBody @Valid CreateReservationDto reservationDto) {
         var valid = validator.isValid(reservationDto);
         if (!valid) {
             return ResponseEntity.badRequest().body(nothingReserved());
         }
-        var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
+        var userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to reserve products for userId = {}", userId);
         var createdReservationResponse = reservationApi.createReservation(
                 new CreateReservationRequest(userId, reservationDto.reservations())
@@ -87,10 +85,8 @@ public class ReservationEndpoint {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<ConfirmedReservationResponse> confirmReservation(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
+    public ResponseEntity<ConfirmedReservationResponse> confirmReservation() {
+        var userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to confirm reservation of products for userId = {}", userId);
         var confirmedReservationResponse = reservationApi.confirmReservation(new ConfirmReservationRequest(userId));
         return ResponseEntity.ok(confirmedReservationResponse);
@@ -98,10 +94,8 @@ public class ReservationEndpoint {
 
     @DeleteMapping
     @ResponseBody
-    public ResponseEntity<CancelledReservationResponse> cancelReservation(
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        var userId = userRepository.findUserIdByUsername(userDetails.getUsername());
+    public ResponseEntity<CancelledReservationResponse> cancelReservation() {
+        var userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to cancel reservation of products for userId = {}", userId);
         var cancelledReservationResponse = reservationApi.cancelReservation(new CancelReservationRequest(userId));
         return ResponseEntity.ok(cancelledReservationResponse);
