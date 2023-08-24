@@ -41,11 +41,11 @@ public interface UserDtoConverter {
                 .enabled(true)
                 .build();
 
-        Set<UserGrantedAuthority> authorities = Collections
-                .singleton(UserGrantedAuthority.builder()
-                        .authority(Authority.USER)
-                        .user(userEntity)
-                        .build());
+        Set<UserGrantedAuthority> authorities = Collections.singleton(UserGrantedAuthority
+                .builder()
+                .authority(Authority.USER)
+                .user(userEntity)
+                .build());
 
         userEntity.setAuthorities(authorities);
 
