@@ -3,9 +3,10 @@ package com.zufar.onlinestore.user.converter;
 import com.zufar.onlinestore.user.dto.AddressDto;
 import com.zufar.onlinestore.user.entity.Address;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface AddressDtoConverter {
 
     @Named("toAddressDto")
