@@ -3,8 +3,9 @@ package com.zufar.onlinestore.security.converter;
 import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.user.dto.UserDto;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface RegistrationDtoConverter {
 
     UserDto toDto(final UserRegistrationRequest userRegistrationRequest);
