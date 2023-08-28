@@ -1,13 +1,20 @@
+# Build stage with Maven
 FROM maven:3.8.3-openjdk-17 as maven_build
-ENV HOME=/opt/app
-RUN mkdir -p $HOME
-WORKDIR $HOME
-ADD pom.xml $HOME
-RUN mvn verify --fail-never
-ADD ./ $HOME
-RUN mvn package
 
-FROM eclipse-temurin:17-jre-jammy
+ENV HOME=/opt/app
 WORKDIR $HOME
-COPY --from=maven_build /opt/app/target/online-store-0.0.1-SNAPSHOT.jar /opt/app/online-store-0.0.1-SNAPSHOT.jar
-ENTRYPOINT ["java", "-jar", "/opt/app/online-store-0.0.1-SNAPSHOT.jar" ]
+
+COPY . ./
+
+RUN export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
+    export APP_VERSION=$(grep APP_VERSION .env | cut -d '=' -f2) && \
+    mvn dependency:go-offline -P${APP_ENV} && \
+    mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
+    mvn package -P${APP_ENV}
+
+# Package stage with JRE only
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /opt/app
+COPY --from=maven_build /opt/app/target/*.jar /opt/app/app.jar
+ENTRYPOINT ["java", "-jar", "/opt/app/app.jar"]
