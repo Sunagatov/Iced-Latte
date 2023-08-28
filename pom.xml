@@ -147,6 +147,10 @@
             <artifactId>spring-retry</artifactId>
             <version>${spring-retry.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -207,10 +211,6 @@
                     <groupId>org.springframework.security</groupId>
                     <artifactId>spring-security-test</artifactId>
                     <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-actuator</artifactId>
                 </dependency>
             </dependencies>
         </profile>
