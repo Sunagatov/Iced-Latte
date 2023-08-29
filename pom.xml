@@ -36,14 +36,14 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <slf4j-api.version>2.0.5</slf4j-api.version>
-        <jackson-databind.version>2.14.0</jackson-databind.version>
+        <jackson-databind.version>2.15.2</jackson-databind.version>
+        <jackson-core.version>2.15.2</jackson-core.version>
         <modelmapper.version>3.1.1</modelmapper.version>
         <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
         <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <jackson-core.version>2.14.0</jackson-core.version>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.8</swagger-core-version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
