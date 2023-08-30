@@ -21,41 +21,51 @@ public class PaymentExceptionHandler extends GlobalExceptionHandler {
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<String> handlePaymentNotFoundException(final PaymentNotFoundException exception) {
-        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle payment not found exception: failed: message: {}.", apiResponse.message());
+    public ApiResponse<Void> handlePaymentNotFoundException(final PaymentNotFoundException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.NOT_FOUND);
+        log.error("Handle payment not found exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
         return apiResponse;
     }
 
     @ExceptionHandler(PaymentEventProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<String> handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
-        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event processing exception: failed: message: {}.", apiResponse.message());
+    public ApiResponse<Void> handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment event processing exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
         return apiResponse;
     }
 
     @ExceptionHandler(PaymentIntentProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<String> handlePaymentIntentProcessingException(final PaymentIntentProcessingException exception) {
-        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment intent processing exception: failed: message: {}.", apiResponse.message());
+    public ApiResponse<Void> handlePaymentIntentProcessingException(final PaymentIntentProcessingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment intent processing exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
         return apiResponse;
     }
 
     @ExceptionHandler(PaymentMethodProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<String> handlePaymentMethodProcessingException(final PaymentMethodProcessingException exception) {
-        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment method processing exception: failed: message: {}.", apiResponse.message());
+    public ApiResponse<Void> handlePaymentMethodProcessingException(final PaymentMethodProcessingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment method processing exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
         return apiResponse;
     }
 
     @ExceptionHandler(PaymentEventParsingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<String> handlePaymentEventParsingException(final PaymentEventParsingException exception) {
-        ApiResponse<String> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event parsing exception: failed: message: {}.", apiResponse.message());
+    public ApiResponse<Void> handlePaymentEventParsingException(final PaymentEventParsingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment event parsing exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
         return apiResponse;
     }
 }
