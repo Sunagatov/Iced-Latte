@@ -5,12 +5,9 @@ networks:
     name: online-store-network
 
 services:
-  #
-  # Postgresql Database
-  #
   postgresdb:
     image: 'postgres:13.11-bullseye'
-    container_name: postgresdb
+    container_name: online-store-postgresdb
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -19,10 +16,6 @@ services:
       - '5432:5432'
     networks:
       - online-store-network
-    profiles:
-      - dev
-      - test
-      - prod
     volumes:
       - 'db:/var/lib/postgresql/data'
 
@@ -30,7 +23,7 @@ services:
     image: sonarqube:latest
     container_name: onlinestore-sonarqube
     ports:
-      - "9000:9000"
+      - "9011:9011"
     networks:
       - online-store-network
     volumes:
@@ -38,8 +31,6 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
-    profiles:
-      - dev
 
 volumes:
   sonarqube_conf:
