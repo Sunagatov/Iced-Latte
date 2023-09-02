@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Validated
@@ -40,7 +41,7 @@ public class PaymentEndpoint {
 
         ApiResponse<ProcessedPaymentWithClientSecretDto> apiResponse = ApiResponse.<ProcessedPaymentWithClientSecretDto>builder()
                 .data(processedPayment)
-                .message("Payment successfully processed")
+                .messages(List.of("Payment successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.CREATED.value())
                 .build();
@@ -55,7 +56,7 @@ public class PaymentEndpoint {
 
         ApiResponse<ProcessedPaymentDetailsDto> apiResponse = ApiResponse.<ProcessedPaymentDetailsDto>builder()
                 .data(retrievedPayment)
-                .message("Payment successfully retrieved")
+                .messages(List.of("Payment successfully retrieved"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.OK.value())
                 .build();
@@ -71,7 +72,7 @@ public class PaymentEndpoint {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
         ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
-                .message("Payment event successfully processed")
+                .messages(List.of("Payment event successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.OK.value())
                 .build();
@@ -86,7 +87,7 @@ public class PaymentEndpoint {
         String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenDto);
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .data(cardDetailsTokenId)
-                .message("Card details token successfully processed")
+                .messages(List.of("Card details token successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.CREATED.value())
                 .build();
