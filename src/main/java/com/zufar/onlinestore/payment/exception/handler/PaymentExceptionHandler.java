@@ -2,11 +2,7 @@ package com.zufar.onlinestore.payment.exception.handler;
 
 import com.zufar.onlinestore.common.exception.handler.GlobalExceptionHandler;
 import com.zufar.onlinestore.common.response.ApiResponse;
-import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
-import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
+import com.zufar.onlinestore.payment.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -64,6 +60,66 @@ public class PaymentExceptionHandler extends GlobalExceptionHandler {
     public ApiResponse<Void> handlePaymentEventParsingException(final PaymentEventParsingException exception) {
         ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.error("Handle payment event parsing exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(CardTokenCreationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleCardTokenCreationException(final CardTokenCreationException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle card token creation exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(CardTokenRetrievingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleCardTokenRetrievingException(final CardTokenRetrievingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle card token retrieving exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(CustomerRetrievingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleCustomerRetrievingException(final CustomerRetrievingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle customer retrieving exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(PaymentMethodNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<Void> handlePaymentMethodNotFoundException(final PaymentMethodNotFoundException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment method not found exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(PaymentMethodRetrievingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handlePaymentMethodRetrievingException(final PaymentMethodRetrievingException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle payment method retrieving exception: failed: messages: {}, description: {}.",
+                apiResponse.messages(), apiResponse.description());
+
+        return apiResponse;
+    }
+
+    @ExceptionHandler(ShoppingSessionAlreadyPaidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleShoppingSessionAlreadyPaidException(final ShoppingSessionAlreadyPaidException exception) {
+        ApiResponse<Void> apiResponse = buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle shopping session already paid exception: failed: messages: {}, description: {}.",
                 apiResponse.messages(), apiResponse.description());
 
         return apiResponse;
