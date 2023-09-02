@@ -21,7 +21,6 @@ public interface StripePaymentIntentConverter {
     Payment toEntity(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession);
 
     @Mapping(target = "customer", source = "paymentMethod.customer")
-    @Mapping(target = "currency", source = "currency")
     @Mapping(target = "paymentMethod", source = "paymentMethod.id")
     @Mapping(target = "amount",
             source = "shoppingSession.itemsTotalPrice",

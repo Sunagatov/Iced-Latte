@@ -10,7 +10,7 @@ public record UserDto(
         @JsonIgnore UUID userId,
         String firstName,
         String lastName,
-        String stripeCustomerId,
+        String stripeCustomerToken,
         String username,
         String email,
         String password,

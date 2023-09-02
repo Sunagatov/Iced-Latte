@@ -3,7 +3,7 @@ CREATE TABLE user_details
     id                      UUID        NOT NULL PRIMARY KEY,
     first_name              VARCHAR(55) NOT NULL,
     last_name               VARCHAR(55) NOT NULL,
-    stripe_customer_id      VARCHAR(64)  UNIQUE,
+    stripe_customer_token   VARCHAR(64) UNIQUE,
     user_name               VARCHAR(55) NOT NULL,
     email                   VARCHAR(55) NOT NULL,
     password                VARCHAR(55) NOT NULL,

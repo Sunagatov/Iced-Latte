@@ -8,7 +8,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.springframework.stereotype.Component;
-import java.util.Map;
 
 @Component
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
@@ -21,9 +20,9 @@ public interface StripeCustomerConverter {
     @Mapping(target = "tax", ignore = true)
     @Mapping(target = "address", expression = "java(toAddress(authorizedUser.getAddress()))")
     @Mapping(target = "name", expression = "java(toFullName(authorizedUser))")
-    @Mapping(target = "metadata", source = "metadata")
     @Mapping(target = "email", source = "authorizedUser.email")
-    CustomerCreateParams toStripeObject(UserEntity authorizedUser, Map<String, String> metadata);
+    @Mapping(target = "paymentMethod", source = "paymentMethodToken")
+    CustomerCreateParams toStripeObject(UserEntity authorizedUser, String paymentMethodToken);
 
     default CustomerCreateParams.Address toAddress(Address address) {
         CustomerCreateParams.Address stripeAddress = null;

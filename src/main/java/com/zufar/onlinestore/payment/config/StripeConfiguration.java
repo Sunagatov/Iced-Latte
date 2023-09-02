@@ -28,5 +28,4 @@ public record StripeConfiguration(String secretKey,
     public static synchronized void setStripeKey(String stripeKey) {
         Stripe.apiKey = stripeKey;
     }
-
 }

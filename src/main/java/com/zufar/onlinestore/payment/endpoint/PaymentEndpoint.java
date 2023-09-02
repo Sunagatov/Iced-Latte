@@ -1,12 +1,10 @@
 package com.zufar.onlinestore.payment.endpoint;
 
-import com.stripe.exception.StripeException;
 import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.payment.api.PaymentApi;
 import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
-import com.zufar.onlinestore.payment.exception.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -37,7 +35,7 @@ public class PaymentEndpoint {
     private final PaymentApi paymentApi;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProcessedPaymentWithClientSecretDto>> processPayment(@RequestParam @NotEmpty final String cardDetailsTokenId) throws PaymentMethodProcessingException, StripeCustomerProcessingException, PaymentIntentProcessingException {
+    public ResponseEntity<ApiResponse<ProcessedPaymentWithClientSecretDto>> processPayment(@RequestParam @NotEmpty final String cardDetailsTokenId) {
         ProcessedPaymentWithClientSecretDto processedPayment = paymentApi.processPayment(cardDetailsTokenId);
 
         ApiResponse<ProcessedPaymentWithClientSecretDto> apiResponse = ApiResponse.<ProcessedPaymentWithClientSecretDto>builder()
@@ -52,7 +50,7 @@ public class PaymentEndpoint {
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<ApiResponse<ProcessedPaymentDetailsDto>> getPaymentDetails(@PathVariable @NotNull final Long paymentId) throws PaymentNotFoundException {
+    public ResponseEntity<ApiResponse<ProcessedPaymentDetailsDto>> getPaymentDetails(@PathVariable @NotNull final Long paymentId) {
         ProcessedPaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
 
         ApiResponse<ProcessedPaymentDetailsDto> apiResponse = ApiResponse.<ProcessedPaymentDetailsDto>builder()
@@ -68,7 +66,7 @@ public class PaymentEndpoint {
 
     @PostMapping("/event")
     public ResponseEntity<ApiResponse<Void>> paymentEventProcess(@RequestBody @NotEmpty final String paymentIntentPayload,
-                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) throws PaymentEventProcessingException, PaymentEventParsingException {
+                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) {
 
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
@@ -83,7 +81,7 @@ public class PaymentEndpoint {
     }
 
     @PostMapping("/card")
-    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenDto createCardDetailsTokenDto) throws StripeException {
+    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenDto createCardDetailsTokenDto) {
 
         String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenDto);
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()

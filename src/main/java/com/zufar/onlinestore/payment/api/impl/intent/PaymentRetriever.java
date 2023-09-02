@@ -28,8 +28,8 @@ public class PaymentRetriever {
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public ProcessedPaymentDetailsDto getPaymentDetails(Long paymentId) {
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ProcessedPaymentDetailsDto getPaymentDetails(final Long paymentId) {
         Objects.requireNonNull(paymentId);
         log.info("Get payment details: starting: payment details retrieve by payment id = {}.", paymentId);
 
