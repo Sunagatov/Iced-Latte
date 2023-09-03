@@ -2,7 +2,7 @@ package com.zufar.onlinestore.payment.endpoint;
 
 import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenDto;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import jakarta.validation.Valid;
@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Validated
@@ -41,7 +40,6 @@ public class PaymentEndpoint {
 
         ApiResponse<ProcessedPaymentWithClientSecretDto> apiResponse = ApiResponse.<ProcessedPaymentWithClientSecretDto>builder()
                 .data(processedPayment)
-                .messages(List.of("Payment successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.CREATED.value())
                 .build();
@@ -56,7 +54,6 @@ public class PaymentEndpoint {
 
         ApiResponse<ProcessedPaymentDetailsDto> apiResponse = ApiResponse.<ProcessedPaymentDetailsDto>builder()
                 .data(retrievedPayment)
-                .messages(List.of("Payment successfully retrieved"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.OK.value())
                 .build();
@@ -66,13 +63,10 @@ public class PaymentEndpoint {
     }
 
     @PostMapping("/event")
-    public ResponseEntity<ApiResponse<Void>> paymentEventProcess(@RequestBody @NotEmpty final String paymentIntentPayload,
-                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) {
-
+    public ResponseEntity<ApiResponse<Void>> paymentEventProcess(@RequestBody @NotEmpty final String paymentIntentPayload, @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
         ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
-                .messages(List.of("Payment event successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.OK.value())
                 .build();
@@ -82,12 +76,11 @@ public class PaymentEndpoint {
     }
 
     @PostMapping("/card")
-    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenDto createCardDetailsTokenDto) {
+    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
+        String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenRequest);
 
-        String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenDto);
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .data(cardDetailsTokenId)
-                .messages(List.of("Card details token successfully processed"))
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(HttpStatus.CREATED.value())
                 .build();

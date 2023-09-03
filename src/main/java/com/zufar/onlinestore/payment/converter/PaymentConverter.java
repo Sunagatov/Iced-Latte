@@ -14,6 +14,7 @@ import java.util.Set;
 public interface PaymentConverter {
 
     @Mapping(target = "items", source = "shoppingSessionItems", qualifiedByName = {"toShoppingSessionItemDto"})
-    ProcessedPaymentDetailsDto toDto(final Payment payment, final Set<ShoppingSessionItem> shoppingSessionItems);
+    ProcessedPaymentDetailsDto toDto(final Payment payment,
+                                     final Set<ShoppingSessionItem> shoppingSessionItems);
 
 }

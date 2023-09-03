@@ -20,7 +20,6 @@ import java.util.UUID;
  * This class responsible for Stipe customer creation. It needed in order to connect
  * customer with payment intent, this will ensure the correct management of payment by Stripe API
  */
-
 @Slf4j
 @RequiredArgsConstructor
 @Service

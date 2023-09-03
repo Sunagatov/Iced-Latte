@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.payment.api.impl;
 
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenDto;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
@@ -38,7 +38,7 @@ public class PaymentApiImpl implements PaymentApi {
     }
 
     @Override
-    public String processCardDetailsToken(CreateCardDetailsTokenDto createCardDetailsTokenDto) {
-        return cardDetailsProcessor.processCardDetails(createCardDetailsTokenDto);
+    public String processCardDetailsToken(CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
+        return cardDetailsProcessor.processCardDetails(createCardDetailsTokenRequest);
     }
 }

@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.payment.api;
 
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenDto;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 
@@ -34,8 +34,8 @@ public interface PaymentApi {
      *  This method is a temporary solution until the front-end goes functional to pass us a token with payment card details.
      *  In the meantime, this method serves to test the payment api.
      *
-     * @param createCardDetailsTokenDto object that contains data about customer payment card.
+     * @param createCardDetailsTokenRequest object that contains data about customer payment card.
      * @return returns card details token in string form
      * */
-    String processCardDetailsToken(final CreateCardDetailsTokenDto createCardDetailsTokenDto);
+    String processCardDetailsToken(final CreateCardDetailsTokenRequest createCardDetailsTokenRequest);
 }

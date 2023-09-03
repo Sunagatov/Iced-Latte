@@ -3,7 +3,7 @@ package com.zufar.onlinestore.payment.api.dto;
 import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 
-public record ProcessPaymentDto(
+public record ProcessPaymentRequest(
 
         @NotBlank(message = "CardInfoToken is the mandatory attribute")
         String cardInfoToken,

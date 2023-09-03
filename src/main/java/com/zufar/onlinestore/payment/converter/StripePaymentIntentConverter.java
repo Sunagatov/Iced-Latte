@@ -18,12 +18,14 @@ public interface StripePaymentIntentConverter {
     @Mapping(target = "paymentIntentId", source = "paymentIntent.id")
     @Mapping(target = "shoppingSessionId", source = "shoppingSession.id")
     @Mapping(target = "itemsTotalPrice", source = "paymentIntent.amount", qualifiedByName = {"calculateForPayment"})
-    Payment toEntity(final PaymentIntent paymentIntent, final ShoppingSessionDto shoppingSession);
+    Payment toEntity(final PaymentIntent paymentIntent,
+                     final ShoppingSessionDto shoppingSession);
 
     @Mapping(target = "customer", source = "paymentMethod.customer")
     @Mapping(target = "paymentMethod", source = "paymentMethod.id")
     @Mapping(target = "amount",
             source = "shoppingSession.itemsTotalPrice",
             qualifiedByName = {"calculateForPaymentIntent"})
-    PaymentIntentCreateParams toStripeObject(final PaymentMethod paymentMethod, final ShoppingSessionDto shoppingSession, final String currency);
+    PaymentIntentCreateParams toStripeObject(final PaymentMethod paymentMethod,
+                                             final ShoppingSessionDto shoppingSession, final String currency);
 }
