@@ -1,0 +1,118 @@
+openapi: "3.0.3"
+info:
+  title: "Online_Store API"
+  version: "1.0.0"
+servers:
+  - url: "http://localhost:8083"
+tags:
+  - name: Product API
+    description: An API for managing and retrieving product information
+paths:
+  /api/v1/products/{productId}:
+    get:
+      tags:
+        - Product API
+      summary: "Getting a product by its ID"
+      operationId: "getProductById"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductInfoDto"
+  /api/v1/products:
+    get:
+      tags:
+        - Product API
+      summary: "Getting a list of products by filter"
+      operationId: "getProducts"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: "0"
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: "50"
+        - name: "sort_attribute"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "name"
+        - name: "sort_direction"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "desc"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
+components:
+  schemas:
+    ProductInfoDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "decimal"
+        quantity:
+          type: "integer"
+          format: "int32"
+    ProductListWithPaginationInfoDto:
+      type: "object"
+      properties:
+        products:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProductInfoDto"
+        page:
+          type: "integer"
+          format: "int32"
+        size:
+          type: "integer"
+          format: "int32"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+          format: "int32"
+    ApiResponse:
+      type: "object"
+      properties:
+        data:
+          type: "object"
+        message:
+          type: "string"
+        httpStatusCode:
+          type: "integer"
+        timestamp:
+          type: "string"
+          format: "date-time"
