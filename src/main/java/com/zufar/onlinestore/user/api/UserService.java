@@ -21,6 +21,7 @@ public class UserService implements UserApi {
 
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
+    private final AuthorityService authorityService;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {

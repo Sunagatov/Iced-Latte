@@ -19,10 +19,9 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
-
 
 @Builder
 @Getter
@@ -71,6 +70,27 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
+    public void addAuthority(UserGrantedAuthority authority) {
+        this.authorities.add(authority);
+        authority.setUser(this);
+    }
+
+    public void removeAuthority(UserGrantedAuthority authority) {
+        authority.setUser(null);
+        this.authorities.remove(authority);
+    }
+
+    public void removeAuthorities() {
+        Iterator<UserGrantedAuthority> iterator = this.authorities.iterator();
+
+        while (iterator.hasNext()){
+            UserGrantedAuthority authority = iterator.next();
+
+            authority.setUser(null);
+            iterator.remove();
+        }
+    }
 
     @Override
     public boolean equals(Object o) {
