@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.common.exception.handler;
 
 import com.zufar.onlinestore.common.response.ApiResponse;
+import com.zufar.onlinestore.user.exception.UserAlreadyRegisteredException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -40,12 +41,19 @@ public class GlobalExceptionHandler {
     }
 
     private List<String> collectErrorMessages(Exception exception) {
-        return exception instanceof MethodArgumentNotValidException methodArgumentNotValidException ?
-                methodArgumentNotValidException
-                        .getBindingResult()
-                        .getAllErrors().stream()
-                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                        .toList() : List.of(exception.getMessage());
+        if (exception instanceof UserAlreadyRegisteredException userAlreadyRegisteredException) {
+            return userAlreadyRegisteredException.getErrors();
+        }
+
+        if (exception instanceof MethodArgumentNotValidException methodArgumentNotValidException) {
+            return methodArgumentNotValidException
+                    .getBindingResult()
+                    .getAllErrors().stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .toList();
+        }
+
+        return List.of(exception.getMessage());
     }
 
     private String buildErrorDescription(Exception exception) {
