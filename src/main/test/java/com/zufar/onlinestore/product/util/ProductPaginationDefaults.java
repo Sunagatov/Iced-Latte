@@ -8,7 +8,7 @@ public enum ProductPaginationDefaults {
     PAGE(1),
     SIZE(10),
     SORT_ATTRIBUTE("name"),
-    SORT_DIRECTION("ASC");
+    SORT_DIRECTION("asc");
 
     private final int intValue;
 
