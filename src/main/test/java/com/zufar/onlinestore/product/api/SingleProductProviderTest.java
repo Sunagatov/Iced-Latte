@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -54,16 +54,16 @@ class SingleProductProviderTest {
 
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
-        ProductInfoDto retrievedProduct;
+        ProductNotFoundException thrownException = assertThrows(
+                ProductNotFoundException.class,
+                () -> productProvider.getProductById(productId)
+        );
 
-        try {
-            retrievedProduct = productProvider.getProductById(productId);
-            if (retrievedProduct == null) {
-                fail("Expected ProductNotFoundException to be thrown");
-            }
-        } catch (ProductNotFoundException e) {
-            assertEquals(String.format("The product with productId = %s  is not found.", productId), e.getMessage());
-        }
+        assertEquals(
+                String.format("The product with productId = %s  is not found.", productId),
+                thrownException.getMessage()
+        );
+
         verify(productRepository, times(1)).findById(productId);
     }
 }

@@ -14,14 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 
-import static com.zufar.onlinestore.product.util.ProductPaginationDefaults.PAGE;
-import static com.zufar.onlinestore.product.util.ProductPaginationDefaults.SIZE;
-import static com.zufar.onlinestore.product.util.ProductPaginationDefaults.SORT_ATTRIBUTE;
-import static com.zufar.onlinestore.product.util.ProductPaginationDefaults.SORT_DIRECTION;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -51,13 +49,18 @@ class PageableProductsProviderTest {
     @Test
     void shouldFetchProductsUsingPageAttributes() {
         Page<ProductInfo> page = new PageImpl<>(products);
+        final int pageNumber = 1;
+        final int size = 10;
+        final String sortAttribute = "name";
 
-        when(productRepository.findAll(any(Pageable.class))).thenReturn(page);
+        Pageable pageRequest = PageRequest.of(pageNumber, size, Sort.Direction.ASC, sortAttribute);
+
+        when(productRepository.findAll(pageRequest)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
 
-        ProductListWithPaginationInfoDto productList = productsProvider.getProducts(PAGE.getIntValue(), SIZE.getIntValue(),
-                SORT_ATTRIBUTE.getStringValue(), SORT_DIRECTION.getStringValue()
+        ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageNumber, size,
+                sortAttribute, Sort.Direction.ASC.name()
         );
 
         assertNotNull(productList);
