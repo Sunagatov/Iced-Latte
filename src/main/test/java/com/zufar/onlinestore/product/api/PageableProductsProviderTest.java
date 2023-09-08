@@ -65,7 +65,7 @@ class PageableProductsProviderTest {
 
         assertNotNull(productList);
 
-        verify(productRepository, times(1)).findAll(any(Pageable.class));
+        verify(productRepository, times(1)).findAll(pageRequest);
         verify(productInfoConverter, times(1)).toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any());
     }
 }
