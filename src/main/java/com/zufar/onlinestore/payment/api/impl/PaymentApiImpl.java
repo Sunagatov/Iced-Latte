@@ -1,19 +1,13 @@
 package com.zufar.onlinestore.payment.api.impl;
 
 import com.zufar.onlinestore.payment.api.PaymentApi;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
-import com.zufar.onlinestore.payment.api.impl.intent.PaymentCreator;
-import com.zufar.onlinestore.payment.api.impl.intent.PaymentMethodCreator;
+import com.zufar.onlinestore.payment.api.impl.customer.CardDetailsProcessor;
+import com.zufar.onlinestore.payment.api.impl.intent.PaymentProcessor;
 import com.zufar.onlinestore.payment.api.impl.intent.PaymentRetriever;
-import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
-import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
-import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
-import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,27 +18,27 @@ import org.springframework.stereotype.Service;
 public class PaymentApiImpl implements PaymentApi {
 
     private final PaymentRetriever paymentRetriever;
-    private final PaymentCreator paymentCreator;
-    private final PaymentMethodCreator paymentMethodCreator;
+    private final PaymentProcessor paymentProcessor;
     private final PaymentEventProcessor paymentEventProcessor;
+    private final CardDetailsProcessor cardDetailsProcessor;
 
     @Override
-    public PaymentDetailsWithTokenDto createPayment(final CreatePaymentDto createPaymentDto) throws PaymentIntentProcessingException {
-        return paymentCreator.createPayment(createPaymentDto);
+    public ProcessedPaymentWithClientSecretDto processPayment(final String cardDetailsTokenId) {
+        return paymentProcessor.processPayment(cardDetailsTokenId);
     }
 
     @Override
-    public String createPaymentMethod(final CreatePaymentMethodDto createPaymentMethodDto) throws PaymentMethodProcessingException {
-        return paymentMethodCreator.createPaymentMethod(createPaymentMethodDto);
-    }
-
-    @Override
-    public PaymentDetailsDto getPaymentDetails(Long paymentId) throws PaymentNotFoundException {
+    public ProcessedPaymentDetailsDto getPaymentDetails(final Long paymentId) {
         return paymentRetriever.getPaymentDetails(paymentId);
     }
 
     @Override
-    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) throws PaymentEventProcessingException, PaymentEventParsingException {
+    public void processPaymentEvent(final String paymentIntentPayload, final String stripeSignatureHeader) {
         paymentEventProcessor.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
+    }
+
+    @Override
+    public String processCardDetailsToken(CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
+        return cardDetailsProcessor.processCardDetails(createCardDetailsTokenRequest);
     }
 }

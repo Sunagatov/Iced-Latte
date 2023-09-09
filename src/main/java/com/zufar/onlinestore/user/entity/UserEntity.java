@@ -47,6 +47,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "user_name", nullable = false)
     private String username;
 
+    @Column(name = "stripe_customer_token", nullable = true, unique = true)
+    private String stripeCustomerToken;
+
     @Column(name = "email", nullable = false)
     private String email;
 
