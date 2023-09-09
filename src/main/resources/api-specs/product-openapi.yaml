@@ -1,12 +1,16 @@
 openapi: "3.0.3"
+
 info:
   title: "Online_Store API"
   version: "1.0.0"
+
 servers:
   - url: "http://localhost:8083"
+
 tags:
   - name: "Product"
     description: "An API for managing and retrieving product information"
+
 paths:
   /api/v1/products/{productId}:
     get:
@@ -28,6 +32,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ProductInfoDto"
+
   /api/v1/products:
     get:
       tags:
@@ -72,6 +77,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
+
 components:
   schemas:
     ProductInfoDto:
@@ -90,6 +96,7 @@ components:
         quantity:
           type: "integer"
           format: "int32"
+
     ProductListWithPaginationInfoDto:
       type: "object"
       properties:
@@ -109,6 +116,7 @@ components:
         totalPages:
           type: "integer"
           format: "int32"
+
     ApiResponse:
       type: "object"
       properties:
