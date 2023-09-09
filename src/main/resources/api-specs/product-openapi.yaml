@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online_Store API"
+  title: "Online-Store API"
   version: "1.0.0"
 
 servers:
