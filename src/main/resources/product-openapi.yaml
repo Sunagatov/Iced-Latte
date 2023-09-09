@@ -5,17 +5,18 @@ info:
 servers:
   - url: "http://localhost:8083"
 tags:
-  - name: Product API
-    description: An API for managing and retrieving product information
+  - name: "Product"
+    description: "An API for managing and retrieving product information"
 paths:
   /api/v1/products/{productId}:
     get:
       tags:
-        - Product API
-      summary: "Getting a product by its ID"
+        - "Product"
+      summary: "Enables to get a product by its id"
       operationId: "getProductById"
       parameters:
         - name: "productId"
+          description: "the identifier of the product which is returned as the return value"
           in: "path"
           required: true
           schema:
@@ -30,11 +31,12 @@ paths:
   /api/v1/products:
     get:
       tags:
-        - Product API
-      summary: "Getting a list of products by filter"
+        - "Product"
+      summary: "Enables to get the product list with pagination and sorting features"
       operationId: "getProducts"
       parameters:
         - name: "page"
+          description: "page number in order (starting from 0)"
           in: "query"
           required: false
           schema:
@@ -42,6 +44,7 @@ paths:
             format: "int32"
             default: "0"
         - name: "size"
+          description: "number of products in the output"
           in: "query"
           required: false
           schema:
@@ -49,12 +52,14 @@ paths:
             format: "int32"
             default: "50"
         - name: "sort_attribute"
+          description: "the name of the product field by which they should be sorted"
           in: "query"
           required: false
           schema:
             type: "string"
             default: "name"
         - name: "sort_direction"
+          description: "sorting direction (DESC or ASC)"
           in: "query"
           required: false
           schema:
