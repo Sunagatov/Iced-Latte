@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -45,7 +46,7 @@ public class GlobalExceptionHandler {
                         .getBindingResult()
                         .getAllErrors().stream()
                         .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                        .toList() : List.of(exception.getMessage());
+                        .toList() : Collections.singletonList(exception.getMessage());
     }
 
     private String buildErrorDescription(Exception exception) {
