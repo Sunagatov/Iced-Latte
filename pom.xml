@@ -65,7 +65,7 @@
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <spring-retry.version>2.0.2</spring-retry.version>
-        <openapi-generator-maven-plugin.version>5.3.0</openapi-generator-maven-plugin.version>
+        <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
         <jackson-databind-nullable.version>0.2.1</jackson-databind-nullable.version>
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
         <validation-api.version>2.0.1.Final</validation-api.version>
@@ -334,6 +334,7 @@
                             <generateModels>false</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
                             </configOptions>
                         </configuration>
                     </execution>
