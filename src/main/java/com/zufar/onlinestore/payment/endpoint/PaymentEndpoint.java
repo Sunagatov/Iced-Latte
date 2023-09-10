@@ -1,15 +1,10 @@
 package com.zufar.onlinestore.payment.endpoint;
 
+import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.dto.CreatePaymentDto;
-import com.zufar.onlinestore.payment.dto.CreatePaymentMethodDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsDto;
-import com.zufar.onlinestore.payment.dto.PaymentDetailsWithTokenDto;
-import com.zufar.onlinestore.payment.exception.PaymentEventParsingException;
-import com.zufar.onlinestore.payment.exception.PaymentEventProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentMethodProcessingException;
-import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -18,13 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Validated
@@ -38,36 +35,57 @@ public class PaymentEndpoint {
     private final PaymentApi paymentApi;
 
     @PostMapping
-    public ResponseEntity<PaymentDetailsWithTokenDto> createPayment(@RequestBody @Valid final CreatePaymentDto createPaymentDto) throws PaymentIntentProcessingException {
-        PaymentDetailsWithTokenDto createdPayment = paymentApi.createPayment(createPaymentDto);
+    public ResponseEntity<ApiResponse<ProcessedPaymentWithClientSecretDto>> processPayment(@RequestParam @NotEmpty final String cardDetailsTokenId) {
+        ProcessedPaymentWithClientSecretDto processedPayment = paymentApi.processPayment(cardDetailsTokenId);
+
+        ApiResponse<ProcessedPaymentWithClientSecretDto> apiResponse = ApiResponse.<ProcessedPaymentWithClientSecretDto>builder()
+                .data(processedPayment)
+                .timestamp(LocalDateTime.now())
+                .httpStatusCode(HttpStatus.CREATED.value())
+                .build();
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(createdPayment);
+                .body(apiResponse);
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDetailsDto> getPaymentDetails(@PathVariable @NotNull final Long paymentId) throws PaymentNotFoundException {
-        PaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
-        log.info("Get payment details: payment details: {} successfully retrieved.", retrievedPayment);
-        return ResponseEntity.ok()
-                .body(retrievedPayment);
-    }
+    public ResponseEntity<ApiResponse<ProcessedPaymentDetailsDto>> getPaymentDetails(@PathVariable @NotNull final Long paymentId) {
+        ProcessedPaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
 
-    /**
-     * This endpoint is used only until we have an implementation of this logic on the frontend side.
-     * It will come in handy for testing the API.
-     */
-    @PostMapping("/method")
-    public ResponseEntity<String> getPaymentMethod(@RequestBody @Valid final CreatePaymentMethodDto createPaymentMethodDto) throws PaymentMethodProcessingException {
-        String paymentMethodId = paymentApi.createPaymentMethod(createPaymentMethodDto);
-        return ResponseEntity.ok()
-                .body(paymentMethodId);
+        ApiResponse<ProcessedPaymentDetailsDto> apiResponse = ApiResponse.<ProcessedPaymentDetailsDto>builder()
+                .data(retrievedPayment)
+                .timestamp(LocalDateTime.now())
+                .httpStatusCode(HttpStatus.OK.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(apiResponse);
     }
 
     @PostMapping("/event")
-    public ResponseEntity<Void> paymentEventsProcess(@RequestBody @NotEmpty final String paymentIntentPayload,
-                                                     @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) throws PaymentEventProcessingException, PaymentEventParsingException {
+    public ResponseEntity<ApiResponse<Void>> paymentEventProcess(@RequestBody @NotEmpty final String paymentIntentPayload, @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
-        return ResponseEntity.ok()
+
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .timestamp(LocalDateTime.now())
+                .httpStatusCode(HttpStatus.OK.value())
                 .build();
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(apiResponse);
+    }
+
+    @PostMapping("/card")
+    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
+        String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenRequest);
+
+        ApiResponse<String> apiResponse = ApiResponse.<String>builder()
+                .data(cardDetailsTokenId)
+                .timestamp(LocalDateTime.now())
+                .httpStatusCode(HttpStatus.CREATED.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(apiResponse);
     }
 }

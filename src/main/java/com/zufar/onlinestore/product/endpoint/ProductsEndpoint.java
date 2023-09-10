@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.product.endpoint;
 
+import com.zufar.onlinestore.openapi.api.ApiApi;
 import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)
-public class ProductsEndpoint {
+public class ProductsEndpoint implements ApiApi {
 
     public static final String PRODUCTS_URL = "/api/v1/products";
 

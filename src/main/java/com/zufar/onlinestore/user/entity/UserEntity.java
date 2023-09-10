@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
+
 @Builder
 @Getter
 @Setter
@@ -45,6 +46,9 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "user_name", nullable = false, unique = true)
     private String username;
+
+    @Column(name = "stripe_customer_token", nullable = true, unique = true)
+    private String stripeCustomerToken;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
