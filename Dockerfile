@@ -2,21 +2,23 @@
 FROM maven:3.8.3-openjdk-17 as maven_build
 ENV HOME=/opt/app
 WORKDIR $HOME
+COPY pom.xml ./
+COPY .env ./
+RUN set -ex; \
+    export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
+    mvn dependency:go-offline -P${APP_ENV}
 COPY . ./
-RUN export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
-    export APP_VERSION=$(grep APP_VERSION .env | cut -d '=' -f2) && \
-    mvn dependency:go-offline -P${APP_ENV} && \
+RUN chmod +x /opt/app/mvnw
+RUN set -ex; \
+    export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
     mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
-    mvn package -P${APP_ENV}
+    mvn package -P${APP_ENV} -DskipTests
 
-# Package stage with JRE only
-FROM eclipse-temurin:17-jre-jammy
+# Production stage
+FROM eclipse-temurin:17-jre-jammy as prod
 WORKDIR /opt/app
-
-# Install netcat
-RUN apt-get update && apt-get install -y netcat
-
-# Copy the JAR file and .env from the Maven build stage
+RUN apt-get update && apt-get install -y netcat && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY --from=maven_build /opt/app/target/*.jar /opt/app/app.jar
 COPY --from=maven_build /opt/app/.env /opt/app/.env
 COPY --from=maven_build /opt/app/docker/docker-entrypoint.sh /opt/app/docker-entrypoint.sh

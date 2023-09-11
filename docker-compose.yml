@@ -17,5 +17,3 @@ services:
       - '8083:8083'
     networks:
       - online-store-network
-    environment:
-      DATASOURCE_URL: ${DATASOURCE_URL}

@@ -9,8 +9,17 @@ export APP_ENV
 export APP_VERSION
 export DATASOURCE_URL
 
+retries=0
+max_retries=20
+
 while ! nc -z postgresdb 5432; do
-  echo "Waiting for PostgresDB..."
+  retries=$((retries + 1))
+  if [ $retries -ge $max_retries ]; then
+    echo "PostgresDB is not reachable. Exiting after $max_retries retries."
+    exit 1
+  fi
+
+  echo "Waiting for PostgresDB... Retry $retries"
   sleep 3
 done
 

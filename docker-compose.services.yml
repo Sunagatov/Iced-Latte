@@ -18,12 +18,17 @@ services:
       - online-store-network
     volumes:
       - 'db:/var/lib/postgresql/data'
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   sonarqube:
     image: sonarqube:latest
     container_name: onlinestore-sonarqube
     ports:
-      - "9011:9011"
+      - "9000:9000"
     networks:
       - online-store-network
     volumes:
