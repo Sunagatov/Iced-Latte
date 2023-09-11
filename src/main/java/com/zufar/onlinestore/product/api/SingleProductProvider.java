@@ -27,7 +27,7 @@ public class SingleProductProvider {
                 .map(productInfoDtoConverter::toDto)
                 .orElseThrow(() -> {
                     log.error("The product with id = {} is not found.", productId);
-                    throw new ProductNotFoundException(productId);
+                    return new ProductNotFoundException(productId);
                 });
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 public record ApiResponse<T>(
@@ -12,7 +13,10 @@ public record ApiResponse<T>(
         T data,
 
         @JsonProperty("message")
-        String message,
+        List<String> messages,
+
+        @JsonProperty("description")
+        String description,
 
         @JsonProperty("httpStatusCode")
         Integer httpStatusCode,

@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.product.endpoint;
 
+import com.zufar.onlinestore.openapi.api.ProductsApi;
 import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
@@ -20,12 +21,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)
-public class ProductsEndpoint {
+public class ProductsEndpoint implements ProductsApi {
 
     public static final String PRODUCTS_URL = "/api/v1/products";
 
     private final ProductApi productApi;
 
+    @Override
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final String productId) {
         log.info("Received the request to get the product with productId - {}.", productId);
@@ -35,9 +37,10 @@ public class ProductsEndpoint {
                 .body(product);
     }
 
+    @Override
     @GetMapping
-    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") int page,
-                                                                        @RequestParam(name = "size", defaultValue = "50") int size,
+    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                                        @RequestParam(name = "size", defaultValue = "50") Integer size,
                                                                         @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
                                                                         @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
         log.info("Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
