@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AppHealthCheckTest {
 
     @Test
-    public void checkHealth() throws Exception {
+    public void shouldReturnHttpOkForHealthCheck() throws Exception {
         URI uri = new URI("http://localhost:8083/api/v1/products/1e5b295f-8f50-4425-90e9-8b590a27b3a9");
         URL url = uri.toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
