@@ -1,0 +1,251 @@
+openapi: "3.0.3"
+
+info:
+  title: "Online-Store API"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:8083"
+
+tags:
+  - name: "Payments"
+    description: "An API for managing and retrieving payment information"
+
+paths:
+  /api/v1/payment:
+    post:
+      tags:
+        - "Payments"
+      summary: "Enables payment processing using a card details token ID"
+      operationId: "processPayment"
+      parameters:
+        - name: "cardDetailsTokenId"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /api/v1/payment/{paymentId}:
+    get:
+      tags:
+        - "Payments"
+      summary: "Enables to get a payment details by payment id"
+      operationId: "getPaymentDetails"
+      parameters:
+        - name: "paymentId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+
+  /api/v1/payment/event:
+    post:
+      tags:
+        - "Payments"
+      summary: "Enables payment event processing"
+      operationId: "paymentEventProcess"
+      parameters:
+        - name: "Stripe-Signature"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "string"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Void"
+
+  /api/v1/payment/card:
+    post:
+      summary: "POST api/v1/payment/card"
+      operationId: "processCardDetailsToken"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCardDetailsTokenRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+components:
+  schemas:
+    ProcessedPaymentWithClientSecretDto:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+#      allOf:
+#        - $ref: "#/components/schemas/ApiResponse"
+      type: "object"
+      properties:
+        paymentId:
+          type: "integer"
+          format: "int64"
+        clientSecret:
+          type: "string"
+
+    ProductInfoFullDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "decimal"
+        quantity:
+          type: "integer"
+          format: "int32"
+        active:
+          type: "boolean"
+
+    ShoppingSessionItemDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productInfo:
+          $ref: "#/components/schemas/ProductInfoFullDto"
+        productsQuantity:
+          type: "integer"
+          format: "int32"
+
+    ProcessedPaymentDetailsDto:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+      type: "object"
+      properties:
+        paymentId:
+          type: "integer"
+          format: "int64"
+        itemsTotalPrice:
+          type: "number"
+          format: "decimal"
+        paymentIntentId:
+          type: "string"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ShoppingSessionItemDto"
+        status:
+          type: "string"
+          enum:
+            - "PAYMENT_METHOD_IS_REQUIRED"
+            - "PAYMENT_CONFIRMATION_IS_REQUIRED"
+            - "PAYMENT_CAPTURE_IS_REQUIRED"
+            - "PAYMENT_ACTION_IS_REQUIRED"
+            - "PAYMENT_IS_FAILED"
+            - "PAYMENT_IS_PROCESSING"
+            - "PAYMENT_IS_CANCELED"
+            - "PAYMENT_IS_SUCCEEDED"
+        description:
+          type: "string"
+
+    Void:
+      type: "object"
+      properties: { }
+    CreateCardDetailsTokenRequest:
+      type: "object"
+      properties:
+        cardNumber:
+          type: "string"
+        expMonth:
+          type: "string"
+        expYear:
+          type: "string"
+        cvc:
+          type: "string"
+
+    ApiResponse:
+      type: "object"
+#      required:
+#        - data
+      properties:
+        data:
+          type: "object"
+          oneOf:
+            - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+            - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
+          discriminator:
+            propertyName: "data"
+            mapping:
+              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
+
+
+#          type: "object"
+#          discriminator:
+#            propertyName: "data"
+#            mapping:
+#              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+#              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
+
+
+#              discriminator:
+#                propertyName: data
+#                mapping:
+#                  ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+#                  ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
+#              anyOf:
+#                - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+#                - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
+
+
+#oneOf:
+#  - $ref: '#/components/schemas/Object1'
+#  - $ref: '#/components/schemas/Object2'
+#  - $ref: 'sysObject.json#/sysObject'
+#  discriminator:
+#    propertyName: objectType
+#    mapping:
+#      obj1: '#/components/schemas/Object1'
+#  obj2: '#/components/schemas/Object2'
+#    system: 'sysObject.json#/sysObject'
+
+
+                #          type: "object"
+        messages:
+          type: "array"
+          items:
+            format: "string"
+        description:
+          type: "string"
+        httpStatusCode:
+          type: "integer"
+          format: "int32"
+        timestamp:
+          type: "string"
+          format: "date-time"
