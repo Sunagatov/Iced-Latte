@@ -8,9 +8,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-public class ProductUtilStub {
+public class ProductStub {
 
     public static ProductListWithPaginationInfoDto buildSampleProducts(Integer page, Integer size, String sortAttribute, Sort.Direction sortDirection) {
         List<ProductInfoDto> products = generateSampleProducts();
@@ -65,13 +66,18 @@ public class ProductUtilStub {
     }
 
     private static List<ProductInfoDto> sortProducts(List<ProductInfoDto> products, String sortAttribute, Sort.Direction direction) {
-        Comparator<ProductInfoDto> comparator = switch (sortAttribute.toLowerCase()) {
-            case "name" -> Comparator.comparing(ProductInfoDto::name);
-            case "description" -> Comparator.comparing(ProductInfoDto::description);
-            case "price" -> Comparator.comparing(ProductInfoDto::price);
-            case "quantity" -> Comparator.comparing(ProductInfoDto::quantity);
-            default -> throw new IllegalArgumentException("Unsupported sort attribute: " + sortAttribute);
-        };
+        Map<String, Comparator<ProductInfoDto>> attributeToComparator = Map.of(
+                "name", Comparator.comparing(ProductInfoDto::name),
+                "description", Comparator.comparing(ProductInfoDto::description),
+                "price", Comparator.comparing(ProductInfoDto::price),
+                "quantity", Comparator.comparing(ProductInfoDto::quantity)
+        );
+
+        Comparator<ProductInfoDto> comparator = attributeToComparator.getOrDefault(sortAttribute.toLowerCase(), null);
+
+        if (comparator == null) {
+            throw new IllegalArgumentException("Unsupported sort attribute: " + sortAttribute);
+        }
 
         if (direction == Sort.Direction.DESC) {
             comparator = comparator.reversed();
@@ -80,6 +86,6 @@ public class ProductUtilStub {
     }
 
     private static Integer calculateTotalPages(Integer totalElements, Integer size) {
-        return (int) Math.ceil((double) totalElements / size);
+        return (totalElements + size - 1) / size;
     }
 }

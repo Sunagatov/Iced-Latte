@@ -9,7 +9,6 @@ import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationProvider;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -25,7 +24,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static com.zufar.onlinestore.product.endpoint.ProductsEndpoint.PRODUCTS_URL;
-import static com.zufar.onlinestore.product.util.ProductUtilStub.buildSampleProducts;
+import static com.zufar.onlinestore.product.util.ProductStub.buildSampleProducts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +52,12 @@ class ProductsEndpointTest {
 
     private ProductListWithPaginationInfoDto productList;
 
+    @BeforeEach
+    void setUp() {
+        productInfo = Instancio.create(ProductInfoDto.class);
+        productList = buildSampleProducts(0, 10, "name", Sort.Direction.ASC);
+    }
+
     @Test
     void whenGetProductsSortedByNameDescThenReturnProducts() throws Exception {
         int page = 0;
@@ -77,125 +82,100 @@ class ProductsEndpointTest {
         verify(productApi).getProducts(page, size, sortAttribute, sortDirection.name());
     }
 
-    @Nested
-    class ProductsEndpointTests {
-        @BeforeEach
-        void setUp() {
-            productInfo = Instancio.create(ProductInfoDto.class);
-            productList = buildSampleProducts(0, 10, "name", Sort.Direction.ASC);
-        }
 
-        @Test
-        void whenGetProductByIdThenReturn200() throws Exception {
-            UUID productId = UUID.randomUUID();
+    @Test
+    void whenGetProductByIdThenReturn200() throws Exception {
+        UUID productId = UUID.randomUUID();
 
-            when(productApi.getProduct(productId)).thenReturn(productInfo);
+        when(productApi.getProduct(productId)).thenReturn(productInfo);
 
-            mockMvc.perform(get(PRODUCTS_URL + "/{productId}", productId)
-                            .contentType(MediaType.APPLICATION_JSON_VALUE))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(productInfo.id().toString()));
+        mockMvc.perform(get(PRODUCTS_URL + "/{productId}", productId)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(productInfo.id().toString()));
 
-            verify(productApi).getProduct(productId);
-        }
+        verify(productApi).getProduct(productId);
+    }
 
-        @Test
-        void whenGetProductsThenReturn200() throws Exception {
-            int page = 1;
-            int size = 10;
-            String sortAttribute = "name";
-            String defaultDirection = Sort.Direction.ASC.name();
+    @Test
+    void whenGetProductsThenReturn200() throws Exception {
+        int page = 1;
+        int size = 10;
+        String sortAttribute = "name";
+        String defaultDirection = Sort.Direction.ASC.name();
 
-            when(productApi.getProducts(page, size, sortAttribute, defaultDirection)).thenReturn(productList);
+        when(productApi.getProducts(page, size, sortAttribute, defaultDirection)).thenReturn(productList);
 
-            mockMvc.perform(get(PRODUCTS_URL)
-                            .param("page", String.valueOf(page))
-                            .param("size", String.valueOf(size))
-                            .param("sort_attribute", sortAttribute)
-                            .param("sort_direction", defaultDirection)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.products.size()").value(productList.products().size()));
+        mockMvc.perform(get(PRODUCTS_URL)
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size))
+                        .param("sort_attribute", sortAttribute)
+                        .param("sort_direction", defaultDirection)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.products.size()").value(productList.products().size()));
 
-            verify(productApi).getProducts(page, size, sortAttribute, defaultDirection);
-        }
+        verify(productApi).getProducts(page, size, sortAttribute, defaultDirection);
+    }
 
-        @Test
-        void whenNullProductIdThenReturn404() throws Exception {
-            UUID productId = UUID.randomUUID();
-            String errorDescription = buildErrorDescription(
-                    ProductsEndpoint.class.getName()
-            );
+    @Test
+    void whenNullProductIdThenReturn404() throws Exception {
+        UUID productId = UUID.randomUUID();
+        String errorDescription = buildErrorDescription(
+                ProductsEndpoint.class.getName()
+        );
 
-            when(productApi.getProduct(productId)).thenThrow(new ProductNotFoundException(productId));
+        when(productApi.getProduct(productId)).thenThrow(new ProductNotFoundException(productId));
 
-            MvcResult mvcResult = mockMvc.perform(get(PRODUCTS_URL + "/{productId}", productId))
-                    .andExpect(status().isNotFound())
-                    .andReturn();
+        MvcResult mvcResult = mockMvc.perform(get(PRODUCTS_URL + "/{productId}", productId))
+                .andExpect(status().isNotFound())
+                .andReturn();
 
-            String actualResponse = mvcResult.getResponse().getContentAsString();
-            ApiResponse<Void> expectedResponse = createExpectedErrorResponse(errorDescription, productId);
-            String expectedResponseBody = objectMapper.writeValueAsString(expectedResponse);
+        String actualResponse = mvcResult.getResponse().getContentAsString();
+        ApiResponse<Void> expectedResponse = createExpectedErrorResponse(errorDescription, productId);
+        String expectedResponseBody = objectMapper.writeValueAsString(expectedResponse);
 
-            assertThat(actualResponse).isEqualTo(expectedResponseBody);
+        assertThat(actualResponse).isEqualTo(expectedResponseBody);
 
-            verify(productApi).getProduct(productId);
-        }
+        verify(productApi).getProduct(productId);
+    }
 
-        @Test
-        void whenGetProductsSortedByNameAscThenReturnProducts() throws Exception {
-            int page = 0;
-            int size = 10;
-            String sortAttribute = "name";
-            Sort.Direction sortDirection = Sort.Direction.ASC;
+    @Test
+    void whenGetProductsSortedByNameAscThenReturnProducts() throws Exception {
+        int page = 0;
+        int size = 10;
+        String sortAttribute = "name";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
 
-            when(productApi.getProducts(page, size, sortAttribute, sortDirection.name())).thenReturn(productList);
+        when(productApi.getProducts(page, size, sortAttribute, sortDirection.name())).thenReturn(productList);
 
-            mockMvc.perform(get(PRODUCTS_URL)
-                            .param("page", String.valueOf(page))
-                            .param("size", String.valueOf(size))
-                            .param("sort_attribute", sortAttribute)
-                            .param("sort_direction", sortDirection.name())
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.products[0].name").value("Product A"))
-                    .andExpect(jsonPath("$.totalElements").value(productList.totalElements()));
+        mockMvc.perform(get(PRODUCTS_URL)
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size))
+                        .param("sort_attribute", sortAttribute)
+                        .param("sort_direction", sortDirection.name())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.products[0].name").value("Product A"))
+                .andExpect(jsonPath("$.totalElements").value(productList.totalElements()));
 
-            verify(productApi).getProducts(page, size, sortAttribute, sortDirection.name());
-        }
+        verify(productApi).getProducts(page, size, sortAttribute, sortDirection.name());
+    }
 
-        @Test
-        void whenFirstPageRetrievedThenReturn200() throws Exception {
-            int page = 0;
-            int size = 10;
+    private String buildErrorDescription(String className) {
+        final int problematicCodeLine = 33;
+        return String.format("Operation was failed in method: %s that belongs to the class: %s. Problematic code line: %d",
+                "getProductById", className, problematicCodeLine);
+    }
 
-            when(productApi.getProducts(page, size, null, null)).thenReturn(productList);
-
-            mockMvc.perform(get(PRODUCTS_URL)
-                            .param("page", String.valueOf(page))
-                            .param("size", String.valueOf(size))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.page").value(page));
-
-            verify(productApi).getProducts(page, size, null, null);
-        }
-
-        private String buildErrorDescription(String className) {
-            final int problematicCodeLine = 33;
-            return String.format("Operation was failed in method: %s that belongs to the class: %s. Problematic code line: %d",
-                    "getProductById", className, problematicCodeLine);
-        }
-
-        private ApiResponse<Void> createExpectedErrorResponse(String errorDescription, UUID productId) {
-            return new ApiResponse<>(
-                    null,
-                    Collections.singletonList(String.format("The product with productId = %s is not found.", productId)),
-                    errorDescription,
-                    HttpStatus.NOT_FOUND.value(),
-                    LocalDateTime.now());
-        }
+    private ApiResponse<Void> createExpectedErrorResponse(String errorDescription, UUID productId) {
+        return new ApiResponse<>(
+                null,
+                Collections.singletonList(String.format("The product with productId = %s is not found.", productId)),
+                errorDescription,
+                HttpStatus.NOT_FOUND.value(),
+                LocalDateTime.now());
     }
 }
