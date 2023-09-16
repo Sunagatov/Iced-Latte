@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.product.endpoint;
 
-import com.zufar.onlinestore.openapi.api.ProductsApi;
+import com.zufar.onlinestore.openapi.product.api.ProductsApi;
 import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;

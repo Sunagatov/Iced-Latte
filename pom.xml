@@ -320,17 +320,32 @@
                 <version>${openapi-generator-maven-plugin.version}</version>
                 <executions>
                     <execution>
+                        <id>generate-from-product-openapi-spec</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/product-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.zufar.onlinestore.openapi.api</apiPackage>
+                            <apiPackage>com.zufar.onlinestore.openapi.product.api</apiPackage>
                             <modelPackage>com.zufar.onlinestore.product.dto</modelPackage>
-                            <supportingFilesToGenerate>
-                                ApiUtil.java
-                            </supportingFilesToGenerate>
+                            <generateModels>false</generateModels>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-from-user-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/user-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.zufar.onlinestore.openapi.user.api</apiPackage>
+                            <modelPackage>com.zufar.onlinestore.user.dto</modelPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
