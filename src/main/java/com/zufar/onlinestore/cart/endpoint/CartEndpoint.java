@@ -6,7 +6,6 @@ import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
-import com.zufar.onlinestore.openapi.cart.api.CartsApi;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = CartEndpoint.CART_URL)
-public class CartEndpoint implements CartsApi {
+public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.CartApi {
 
     public static final String CART_URL = "/api/v1/cart";
 

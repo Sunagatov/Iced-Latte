@@ -9,14 +9,14 @@ servers:
   - url: "http://localhost:8083"
 
 tags:
-  - name: "Carts"
+  - name: "Cart"
     description: "An API for managing and retrieving cart information"
 
 paths:
   /api/v1/cart/items:
     post:
       tags:
-        - "Carts"
+        - "Cart"
       summary: "Add a list of new products to the cart"
       operationId: "addNewItemToShoppingSession"
       requestBody:
@@ -36,7 +36,7 @@ paths:
 
     patch:
       tags:
-        - "Carts"
+        - "Cart"
       summary: "Update the item in the cart"
       operationId: "updateProductsQuantityInShoppingSessionItem"
       requestBody:
@@ -56,7 +56,7 @@ paths:
 
     delete:
       tags:
-        - "Carts"
+        - "Cart"
       summary: "Delete list of items from the cart"
       operationId: "deleteItemsFromShoppingSession"
       requestBody:
@@ -77,7 +77,7 @@ paths:
   /api/v1/cart:
     get:
       tags:
-        - "Carts"
+        - "Cart"
       summary: "Get the cart of authorized user"
       description: "Get the cart of authorized user"
       operationId: "getShoppingSession"
