@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.user.endpoint;
 
-import com.zufar.onlinestore.openapi.user.api.UsersApi;
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = UserEndpoint.API_CUSTOMERS)
-public class UserEndpoint implements UsersApi {
+public class UserEndpoint implements com.zufar.onlinestore.openapi.user.api.UserApi {
 
     public static final String API_CUSTOMERS = "/api/v1/users";
 
