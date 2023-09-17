@@ -1,0 +1,192 @@
+openapi: "3.0.3"
+
+info:
+  title: "Online_Store API"
+  description: "Online_Store API for Cart package"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:8083"
+
+tags:
+  - name: "Carts"
+    description: "An API for managing and retrieving cart information"
+
+paths:
+  /api/v1/cart/items:
+    post:
+      tags:
+        - "Carts"
+      summary: "Add a list of new products to the cart"
+      operationId: "addNewItemToShoppingSession"
+      requestBody:
+        description: "Add a list of new products to the cart by productIds and productsQuantity"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewItemsToShoppingSessionRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShoppingSessionDto"
+
+    patch:
+      tags:
+        - "Carts"
+      summary: "Update the item in the cart"
+      operationId: "updateProductsQuantityInShoppingSessionItem"
+      requestBody:
+        description: "Change the quantity of the item in the cart by shoppingSessionItemId and productsQuantityChange (example: '1' will increase the value by one, '-1' will reduce by one)"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductsQuantityInShoppingSessionItemRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShoppingSessionDto"
+
+    delete:
+      tags:
+        - "Carts"
+      summary: "Delete list of items from the cart"
+      operationId: "deleteItemsFromShoppingSession"
+      requestBody:
+        description: "Delete list of items from the cart by list of shoppingSessionItemIds"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteItemsFromShoppingSessionRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShoppingSessionDto"
+
+  /api/v1/cart:
+    get:
+      tags:
+        - "Carts"
+      summary: "Get the cart of authorized user"
+      description: "Get the cart of authorized user"
+      operationId: "getShoppingSession"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ShoppingSessionDto"
+
+components:
+  schemas:
+    NewShoppingSessionItemDto:
+      type: "object"
+      properties:
+        productId:
+          type: "string"
+          format: "uuid"
+        productsQuantity:
+          type: "integer"
+          format: "int32"
+
+    AddNewItemsToShoppingSessionRequest:
+      type: "object"
+      properties:
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/NewShoppingSessionItemDto"
+
+    ShoppingSessionDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        userId:
+          type: "string"
+          format: "uuid"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ShoppingSessionItemDto"
+        itemsQuantity:
+          type: "integer"
+          format: "int32"
+        itemsTotalPrice:
+          type: "number"
+          format: "decimal"
+        productsQuantity:
+          type: "integer"
+          format: "int32"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        closedAt:
+          type: "string"
+          format: "date-time"
+
+    ShoppingSessionItemDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productInfo:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProductInfoFullDto"
+        productsQuantity:
+          type: "integer"
+          format: "int32"
+
+    ProductInfoFullDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "decimal"
+        quantity:
+          type: "integer"
+          format: "int32"
+        active:
+          type: "boolean"
+          format: "yes"
+
+    UpdateProductsQuantityInShoppingSessionItemRequest:
+      type: "object"
+      properties:
+        shoppingSessionItemId:
+          type: "string"
+          format: "uuid"
+        productsQuantityChange:
+          type: "integer"
+          format: "int32"
+
+    DeleteItemsFromShoppingSessionRequest:
+      type: "object"
+      properties:
+        shoppingSessionItemIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
