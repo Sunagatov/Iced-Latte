@@ -8,14 +8,14 @@ servers:
   - url: "http://localhost:8083"
 
 tags:
-  - name: "Products"
+  - name: "Product"
     description: "An API for managing and retrieving product information"
 
 paths:
   /api/v1/products/{productId}:
     get:
       tags:
-        - "Products"
+        - "Product"
       summary: "Enables to get a product by its id"
       operationId: "getProductById"
       parameters:
@@ -36,7 +36,7 @@ paths:
   /api/v1/products:
     get:
       tags:
-        - "Products"
+        - "Product"
       summary: "Enables to get the product list with pagination and sorting features"
       operationId: "getProducts"
       parameters:

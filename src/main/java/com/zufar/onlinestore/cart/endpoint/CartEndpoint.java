@@ -6,13 +6,10 @@ import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
-import com.zufar.onlinestore.user.entity.UserEntity;
-import jakarta.validation.Valid;
+import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,14 +27,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = CartEndpoint.CART_URL)
-public class CartEndpoint {
+public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.CartApi {
 
     public static final String CART_URL = "/api/v1/cart";
 
     private final CartApi cartApi;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
 
+    @Override
     @PostMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody @Valid final AddNewItemsToShoppingSessionRequest request) {
+    public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody final AddNewItemsToShoppingSessionRequest request) {
         log.warn("Received the request to add a new items to the shoppingSession");
         Set<NewShoppingSessionItemDto> items = request.items();
         ShoppingSessionDto shoppingSessionDto = cartApi.addItemsToShoppingSession(items);
@@ -46,9 +45,10 @@ public class CartEndpoint {
                 .body(shoppingSessionDto);
     }
 
+    @Override
     @GetMapping
-    public ResponseEntity<ShoppingSessionDto> getShoppingSession(@AuthenticationPrincipal UserDetails userDetails) {
-        UUID userId = ((UserEntity) userDetails).getUserId();
+    public ResponseEntity<ShoppingSessionDto> getShoppingSession() {
+        UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the shoppingSession for the user with id: {}", userId);
         ShoppingSessionDto shoppingSessionDto = cartApi.getShoppingSessionByUserId(userId);
         log.info("The shoppingSession for the user with id: {} was retrieved successfully", shoppingSessionDto.userId());
@@ -56,8 +56,9 @@ public class CartEndpoint {
                 .body(shoppingSessionDto);
     }
 
+    @Override
     @PatchMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody @Valid final UpdateProductsQuantityInShoppingSessionItemRequest request) {
+    public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody final UpdateProductsQuantityInShoppingSessionItemRequest request) {
         UUID shoppingSessionItemId = request.shoppingSessionItemId();
         Integer productsQuantityChange = request.productsQuantityChange();
         log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {}.",
@@ -68,8 +69,9 @@ public class CartEndpoint {
                 .body(shoppingSessionDto);
     }
 
+    @Override
     @DeleteMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> deleteItemsFromShoppingSession(@RequestBody @Valid final DeleteItemsFromShoppingSessionRequest request) {
+    public ResponseEntity<ShoppingSessionDto> deleteItemsFromShoppingSession(@RequestBody final DeleteItemsFromShoppingSessionRequest request) {
         log.info("Received the request to delete the shopping session items with ids: {}.", request.shoppingSessionItemIds());
         ShoppingSessionDto shoppingSessionDto = cartApi.deleteItemsFromShoppingSession(request);
         log.info("The shopping session items with ids = {} were deleted.", request.shoppingSessionItemIds());

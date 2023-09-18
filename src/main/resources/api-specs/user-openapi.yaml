@@ -1,0 +1,64 @@
+openapi: "3.0.3"
+
+info:
+  title: "Online-Store API"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:8083"
+
+tags:
+  - name: "User"
+    description: "An API for getting user information"
+
+paths:
+  /api/v1/users/{userId}:
+    get:
+      tags:
+        - "User"
+      summary: "Enables to get a user by its id"
+      operationId: "getUserById"
+      parameters:
+        - name: "userId"
+          description: "the identifier of the user which is returned as the return value"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserDto"
+
+components:
+  schemas:
+    AddressDto:
+      type: "object"
+      properties:
+        line:
+          type: "string"
+        city:
+          type: "string"
+        country:
+          type: "string"
+
+    UserDto:
+      type: "object"
+      properties:
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        stripeCustomerToken:
+          type: "string"
+        username:
+          type: "string"
+        email:
+          type: "string"
+        password:
+          type: "string"
+        address:
+          $ref: "#/components/schemas/AddressDto"
