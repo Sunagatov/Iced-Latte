@@ -40,8 +40,8 @@ public class ShoppingCartManager implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
-                                                                          final int productsQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
-        return productsQuantityItemUpdater.update(shoppingSessionItemId, productsQuantityChange);
+    public ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+                                                                          final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
+        return productsQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange);
     }
 }

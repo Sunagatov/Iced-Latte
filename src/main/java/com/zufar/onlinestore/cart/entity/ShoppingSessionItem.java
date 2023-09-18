@@ -46,13 +46,13 @@ public class ShoppingSessionItem {
     private ProductInfo productInfo;
 
     @Column(name = "products_quantity", nullable = false)
-    private Integer productsQuantity;
+    private Integer productQuantity;
 
-    public ShoppingSessionItem(UUID id, ShoppingSession shoppingSession, ProductInfo productInfo, Integer productsQuantity) {
+    public ShoppingSessionItem(UUID id, ShoppingSession shoppingSession, ProductInfo productInfo, Integer productQuantity) {
         this.id = id;
         this.shoppingSession = shoppingSession;
         this.productInfo = productInfo;
-        this.productsQuantity = productsQuantity;
+        this.productQuantity = productQuantity;
     }
 
     @Override

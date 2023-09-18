@@ -39,7 +39,7 @@ public class ProductsQuantityItemUpdater {
         ShoppingSessionDto shoppingSession = getShoppingSession();
 
         if (shoppingSession.id() != updatedItem.getShoppingSession().getId()) {
-            log.warn("Failed to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+            log.warn("Failed to update the productQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
                     productsQuantityChange, shoppingSessionItemId, shoppingSession.id());
             throw new InvalidShoppingSessionIdException(shoppingSession.id());
         }
@@ -57,12 +57,12 @@ public class ProductsQuantityItemUpdater {
     private ShoppingSessionItem updateItemProductQuantity(final UUID shoppingSessionItemId,
                                                           int productsQuantityChange,
                                                           ShoppingSessionItem item) {
-        int newQuantity = item.getProductsQuantity() + productsQuantityChange;
+        int newQuantity = item.getProductQuantity() + productsQuantityChange;
         if (newQuantity < 0) {
             log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingSessionItemId);
             throw new InvalidItemProductsQuantityException(newQuantity);
         }
-        item.setProductsQuantity(newQuantity);
+        item.setProductQuantity(newQuantity);
 
         return shoppingSessionItemRepository.save(item);
     }

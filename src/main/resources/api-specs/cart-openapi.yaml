@@ -38,13 +38,13 @@ paths:
       tags:
         - "Cart"
       summary: "Update the item in the cart"
-      operationId: "updateProductsQuantityInShoppingSessionItem"
+      operationId: "updateProductQuantityInShoppingSessionItem"
       requestBody:
-        description: "Change the quantity of the item in the cart by shoppingSessionItemId and productsQuantityChange (example: '1' will increase the value by one, '-1' will reduce by one)"
+        description: "Change the quantity of the item in the cart by shoppingSessionItemId and productQuantityChange (example: '1' will increase the value by one, '-1' will reduce by one)"
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateProductsQuantityInShoppingSessionItemRequest"
+              $ref: "#/components/schemas/UpdateProductQuantityInShoppingSessionItemRequest"
         required: true
       responses:
         "200":
@@ -97,7 +97,7 @@ components:
         productId:
           type: "string"
           format: "uuid"
-        productsQuantity:
+        productQuantity:
           type: "integer"
           format: "int32"
 
@@ -148,7 +148,7 @@ components:
           type: "array"
           items:
             $ref: "#/components/schemas/ProductInfoFullDto"
-        productsQuantity:
+        productQuantity:
           type: "integer"
           format: "int32"
 
@@ -172,13 +172,13 @@ components:
           type: "boolean"
           format: "yes"
 
-    UpdateProductsQuantityInShoppingSessionItemRequest:
+    UpdateProductQuantityInShoppingSessionItemRequest:
       type: "object"
       properties:
         shoppingSessionItemId:
           type: "string"
           format: "uuid"
-        productsQuantityChange:
+        productQuantityChange:
           type: "integer"
           format: "int32"
 
