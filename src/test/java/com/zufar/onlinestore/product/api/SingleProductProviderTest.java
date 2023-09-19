@@ -60,7 +60,7 @@ class SingleProductProviderTest {
         );
 
         assertEquals(
-                String.format("The product with productId = %s  is not found.", productId),
+                String.format("The product with productId = %s is not found.", productId),
                 thrownException.getMessage()
         );
 
