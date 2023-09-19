@@ -4,12 +4,12 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public record UpdateProductsQuantityInShoppingSessionItemRequest(
+public record UpdateProductQuantityInShoppingSessionItemRequest(
 
         @NotNull(message = "ShoppingSessionItemId is the mandatory attribute")
         UUID shoppingSessionItemId,
 
         @NotNull(message = "Change is the mandatory attribute")
-        Integer productsQuantityChange
+        Integer productQuantityChange
 ) {
 }

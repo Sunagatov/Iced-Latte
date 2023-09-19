@@ -55,7 +55,7 @@ public class AddItemsToShoppingSessionHelper {
 
     private List<ShoppingSessionItem> createItems(Set<NewShoppingSessionItemDto> itemsToAdd, ShoppingSession shoppingSession) {
         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
-                .collect(Collectors.toMap(NewShoppingSessionItemDto::productId, NewShoppingSessionItemDto::productsQuantity));
+                .collect(Collectors.toMap(NewShoppingSessionItemDto::productId, NewShoppingSessionItemDto::productQuantity));
 
         Set<UUID> existedProductIds = shoppingSession.getItems().stream()
                 .map(ShoppingSessionItem::getProductInfo)
@@ -69,7 +69,7 @@ public class AddItemsToShoppingSessionHelper {
         return productInfoRepository.findAllById(newProductIds).stream()
                 .map(productInfo -> ShoppingSessionItem.builder()
                         .shoppingSession(shoppingSession)
-                        .productsQuantity(productsWithQuantity.get(productInfo.getProductId()))
+                        .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
                         .productInfo(productInfo)
                         .build())
                 .collect(Collectors.toList());
@@ -78,7 +78,7 @@ public class AddItemsToShoppingSessionHelper {
     private static ShoppingSession updateExistingShoppingSession(ShoppingSession existingShoppingSession,
                                                                  List<ShoppingSessionItem> shoppingSessionItems) {
         int productsQuantity = shoppingSessionItems.stream()
-                .map(ShoppingSessionItem::getProductsQuantity)
+                .map(ShoppingSessionItem::getProductQuantity)
                 .reduce(Integer::sum)
                 .orElse(DEFAULT_PRODUCTS_QUANTITY);
 

@@ -5,7 +5,7 @@ import com.zufar.onlinestore.cart.dto.AddNewItemsToShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.dto.UpdateProductsQuantityInShoppingSessionItemRequest;
+import com.zufar.onlinestore.cart.dto.UpdateProductQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,12 +58,12 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
 
     @Override
     @PatchMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> updateProductsQuantityInShoppingSessionItem(@RequestBody final UpdateProductsQuantityInShoppingSessionItemRequest request) {
+    public ResponseEntity<ShoppingSessionDto> updateProductQuantityInShoppingSessionItem(@RequestBody final UpdateProductQuantityInShoppingSessionItemRequest request) {
         UUID shoppingSessionItemId = request.shoppingSessionItemId();
-        Integer productsQuantityChange = request.productsQuantityChange();
-        log.warn("Received the request to update the productsQuantity with the change = {} in the shoppingSessionItem with id: {}.",
-                productsQuantityChange, shoppingSessionItemId);
-        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductsQuantityInShoppingSessionItem(shoppingSessionItemId, productsQuantityChange);
+        Integer productQuantityChange = request.productQuantityChange();
+        log.warn("Received the request to update the productQuantity with the change = {} in the shoppingSessionItem with id: {}.",
+                productQuantityChange, shoppingSessionItemId);
+        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductQuantityInShoppingSessionItem(shoppingSessionItemId, productQuantityChange);
         log.info("ProductsQuantity was updated in shoppingSession item");
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
