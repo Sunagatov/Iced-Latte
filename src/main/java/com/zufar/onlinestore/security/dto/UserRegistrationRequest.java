@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.security.dto.registration;
+package com.zufar.onlinestore.security.dto;
 
 import com.zufar.onlinestore.common.validation.email.UniqueEmail;
 import com.zufar.onlinestore.common.validation.username.UniqueUsername;
