@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.security.dto.registration;
 
+import com.zufar.onlinestore.user.validation.annotation.UniqueEmail;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -19,6 +20,7 @@ public record UserRegistrationRequest(
         @Size(max = 55, message = "Username length must be less than 55 characters")
         String username,
 
+        @UniqueEmail(message = "This email is alredy registered")
         @Email(message = "Email should be valid")
         @NotBlank(message = "Email is the mandatory attribute")
         String email,

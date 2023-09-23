@@ -23,12 +23,10 @@ public class UserService implements UserApi {
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
     private final AuthorityService authorityService;
-    private final UserDataValidator userDataValidator;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
-        userDataValidator.validate(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
         authorityService.setDefaultAuthority(userEntityWithId);
 
