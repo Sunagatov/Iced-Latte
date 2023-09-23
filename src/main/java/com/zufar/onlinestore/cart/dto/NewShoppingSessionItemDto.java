@@ -10,6 +10,6 @@ public record NewShoppingSessionItemDto(
         UUID productId,
 
         @NotNull(message = "ProductsQuantity is the mandatory attribute")
-        Integer productsQuantity
+        Integer productQuantity
 ) {
 }

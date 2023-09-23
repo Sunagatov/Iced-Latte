@@ -11,8 +11,8 @@ import java.util.UUID;
 public interface ShoppingSessionItemRepository extends JpaRepository<ShoppingSessionItem, UUID> {
 
     @Modifying
-    @Query(value = "UPDATE shopping_session_item SET products_quantity = products_quantity + :products_quantity_change WHERE id = :shopping_session_item_id RETURNING *",
+    @Query(value = "UPDATE shopping_session_item SET products_quantity = products_quantity + :product_quantity_change WHERE id = :shopping_session_item_id RETURNING *",
             nativeQuery = true)
     Integer updateProductsQuantityInShoppingSessionItem(@Param("shopping_session_item_id") UUID shoppingSessionItemId,
-                                                        @Param("products_quantity_change") Integer productsQuantityChange);
+                                                        @Param("product_quantity_change") Integer productQuantityChange);
 }

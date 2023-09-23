@@ -20,7 +20,7 @@ import java.util.UUID;
 public class ShoppingCartManager implements CartApi {
 
     private final AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
-    private final ProductsQuantityItemUpdater productsQuantityItemUpdater;
+    private final ProductQuantityItemUpdater productQuantityItemUpdater;
     private final ShoppingSessionProvider shoppingSessionProvider;
     private final ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
 
@@ -40,8 +40,8 @@ public class ShoppingCartManager implements CartApi {
     }
 
     @Override
-    public ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
-                                                                          final int productsQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
-        return productsQuantityItemUpdater.update(shoppingSessionItemId, productsQuantityChange);
+    public ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+                                                                          final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
+        return productQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange);
     }
 }

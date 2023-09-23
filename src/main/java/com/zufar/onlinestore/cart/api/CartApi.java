@@ -44,14 +44,14 @@ public interface CartApi {
     /**
      * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
      *
-     * @param shoppingSessionItemId  we use this id to decrease or increase productsQuantity of the item with the id = shoppingSessionItemId
-     * @param productsQuantityChange we use this data to decrease or increase productsQuantity of the item with the id = shoppingSessionItemId
+     * @param shoppingSessionItemId  we use this id to decrease or increase productQuantity of the item with the id = shoppingSessionItemId
+     * @param productQuantityChange we use this data to decrease or increase productQuantity of the item with the id = shoppingSessionItemId
      * @return ShoppingSessionDto (the cart details)
      * @throws ShoppingSessionNotFoundException     if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItem in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest
      * @throws InvalidShoppingSessionIdException    if ShoppingSessionId in UpdateProductsQuantityRequest and ShoppingSessionId of Item with id from request are not equal
      */
-    ShoppingSessionDto updateProductsQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
-                                                                   final int productsQuantityChange)
+    ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+                                                                   final int productQuantityChange)
             throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException;
 }

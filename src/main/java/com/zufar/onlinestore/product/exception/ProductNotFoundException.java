@@ -10,7 +10,7 @@ public class ProductNotFoundException extends RuntimeException {
     private final UUID productId;
 
     public ProductNotFoundException(final UUID productId) {
-        super(String.format("The product with productId = %s  is not found.",productId));
+        super(String.format("The product with productId = %s is not found.", productId));
         this.productId = productId;
     }
 }
