@@ -16,7 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface UniqueUsername {
 
-    String message() default "";
+    String message() default "Username must be unique";
 
     Class<?>[] groups() default {};
 
