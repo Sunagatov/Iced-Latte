@@ -6,7 +6,7 @@ import com.zufar.onlinestore.user.entity.UserGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DefaultUserAuthoritySetter {
+public class DefaultUserEntityValuesSetter {
 
     private static final Authority DEFAULT_USER_AUTHORITY = Authority.USER;
     private static final boolean DEFAULT_ACCOUNT_NON_EXPIRED = true;

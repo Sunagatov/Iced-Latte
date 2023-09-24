@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.product.api;
 
-import com.zufar.onlinestore.user.api.DefaultUserAuthoritySetter;
+import com.zufar.onlinestore.user.api.DefaultUserEntityValuesSetter;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
@@ -19,12 +19,12 @@ public class SaveUserOperationPerformer {
 
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
-    private final DefaultUserAuthoritySetter defaultUserAuthoritySetter;
+    private final DefaultUserEntityValuesSetter defaultUserEntityValuesSetter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
-        defaultUserAuthoritySetter.setDefaultValues(userEntity);
+        defaultUserEntityValuesSetter.setDefaultValues(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
         return userDtoConverter.toDto(userEntityWithId);
     }
