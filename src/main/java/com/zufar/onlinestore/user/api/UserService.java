@@ -19,12 +19,12 @@ public class UserService implements UserApi {
 
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
-    private final AuthorityService authorityService;
+    private final DefaultUserAuthoritySetter defaultUserAuthoritySetter;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
-        authorityService.setDefaultAuthority(userEntity);
+        defaultUserAuthoritySetter.setDefaultAuthority(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
 
         return userDtoConverter.toDto(userEntityWithId);

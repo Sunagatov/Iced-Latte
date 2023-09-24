@@ -6,12 +6,14 @@ import com.zufar.onlinestore.user.entity.UserGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthorityService {
+public class DefaultUserAuthoritySetter {
 
-    public void setDefaultAuthority(UserEntity savedUserEntity) {
+    private static final Authority DEFAULT_USER_AUTHORITY = Authority.USER;
+
+    public void setDefaultAuthority(final UserEntity savedUserEntity) {
         UserGrantedAuthority defaultAuthority = UserGrantedAuthority
                 .builder()
-                .authority(Authority.USER)
+                .authority(DEFAULT_USER_AUTHORITY)
                 .build();
 
         savedUserEntity.addAuthority(defaultAuthority);
