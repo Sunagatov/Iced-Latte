@@ -1,11 +1,17 @@
 package com.zufar.onlinestore.security.endpoint;
 
+import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.security.api.UserSecurityManager;
-
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -14,12 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Validated
@@ -33,16 +34,30 @@ public class UserSecurityEndpoint {
     private final UserSecurityManager userSecurityManager;
 
 	@PostMapping("/register")
-	public ResponseEntity<UserRegistrationResponse> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
+	public ResponseEntity<ApiResponse<UserRegistrationResponse>> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
         UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
-		return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
+
+		ApiResponse<UserRegistrationResponse> apiResponse = ApiResponse.<UserRegistrationResponse>builder()
+				.data(authenticationResponse)
+				.timestamp(LocalDateTime.now())
+				.httpStatusCode(HttpStatus.CREATED.value())
+				.build();
+
+		return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
 	@PostMapping("/authenticate")
-	public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
+	public ResponseEntity<ApiResponse<UserAuthenticationResponse>> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
         UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
+
+		ApiResponse<UserAuthenticationResponse> apiResponse = ApiResponse.<UserAuthenticationResponse>builder()
+				.data(authenticationResponse)
+				.timestamp(LocalDateTime.now())
+				.httpStatusCode(HttpStatus.OK.value())
+				.build();
+
 		return ResponseEntity
-				.ok(authenticationResponse);
+				.ok(apiResponse);
 	}
 
 	@PostMapping("/logout")
