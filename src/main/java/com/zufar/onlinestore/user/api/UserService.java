@@ -20,24 +20,18 @@ public class UserService implements UserApi {
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
     private final DefaultUserAuthoritySetter defaultUserAuthoritySetter;
+    private final SingleUserProvider singleUserProvider;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
         defaultUserAuthoritySetter.setDefaultAuthority(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
-
         return userDtoConverter.toDto(userEntityWithId);
     }
 
     @Override
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
-        Optional<UserEntity> userEntity = userCrudRepository.findById(userId);
-        if (userEntity.isEmpty()) {
-            log.warn("Failed to get the user with the userId = {}.", userId);
-            throw new UserNotFoundException(userId);
-        }
-        return userDtoConverter.toDto(userEntity.get());
+        return singleUserProvider.getUserById(userId);
     }
-
 }
