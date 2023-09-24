@@ -12,7 +12,7 @@ CREATE TABLE user_details
     account_non_locked      BOOLEAN     NOT NULL,
     credentials_non_expired BOOLEAN     NOT NULL,
     enabled                 BOOLEAN     NOT NULL,
-    UNIQUE(stripe_customer_token),
+    UNIQUE (user_name, email, stripe_customer_token),
     CONSTRAINT fk_address
         FOREIGN KEY (address_id)
             REFERENCES address (id)

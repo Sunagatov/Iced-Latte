@@ -19,11 +19,14 @@ public class UserService implements UserApi {
 
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
+    private final AuthorityService authorityService;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
+        authorityService.setDefaultAuthority(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
+
         return userDtoConverter.toDto(userEntityWithId);
     }
 
@@ -36,4 +39,5 @@ public class UserService implements UserApi {
         }
         return userDtoConverter.toDto(userEntity.get());
     }
+
 }
