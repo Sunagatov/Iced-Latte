@@ -9,13 +9,18 @@ import org.springframework.stereotype.Service;
 public class DefaultUserAuthoritySetter {
 
     private static final Authority DEFAULT_USER_AUTHORITY = Authority.USER;
+    private static final boolean DEFAULT_ACCOUNT_NON_EXPIRED = true;
+    private static final boolean DEFAULT_ACCOUNT_NON_LOCKED = true;
+    private static final boolean DEFAULT_CREDENTIALS_NON_EXPIRED = true;
+    private static final boolean DEFAULT_ENABLED = true;
 
-    public void setDefaultAuthority(final UserEntity savedUserEntity) {
-        UserGrantedAuthority defaultAuthority = UserGrantedAuthority
-                .builder()
+    public void setDefaultValues(final UserEntity savedUserEntity) {
+        savedUserEntity.addAuthority(UserGrantedAuthority.builder()
                 .authority(DEFAULT_USER_AUTHORITY)
-                .build();
-
-        savedUserEntity.addAuthority(defaultAuthority);
+                .build());
+        savedUserEntity.setAccountNonExpired(DEFAULT_ACCOUNT_NON_EXPIRED);
+        savedUserEntity.setAccountNonLocked(DEFAULT_ACCOUNT_NON_LOCKED);
+        savedUserEntity.setCredentialsNonExpired(DEFAULT_CREDENTIALS_NON_EXPIRED);
+        savedUserEntity.setEnabled(DEFAULT_ENABLED);
     }
 }

@@ -12,11 +12,6 @@ public interface UserDtoConverter {
     @Mapping(target = "address", source = "entity.address", qualifiedByName = "toAddressDto")
     UserDto toDto(final UserEntity entity);
 
-    @Mapping(target = "accountNonExpired", constant = "true")
-    @Mapping(target = "accountNonLocked", constant = "true")
-    @Mapping(target = "credentialsNonExpired", constant = "true")
-    @Mapping(target = "enabled", constant = "true")
     @Mapping(target = "address", source = "dto.address", qualifiedByName = "toAddress")
     UserEntity toEntity(final UserDto dto);
-
 }
