@@ -1,12 +1,16 @@
 package com.zufar.onlinestore.security.endpoint;
 
-import com.zufar.onlinestore.openapi.security.api.SecurityApi;
 import com.zufar.onlinestore.security.api.UserSecurityManager;
-
-import com.zufar.onlinestore.security.dto.UserRegistrationRequest;
-import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
-import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
-import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
+import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
+import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
+import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -14,12 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
