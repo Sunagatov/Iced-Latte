@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.security.endpoint;
 
-import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.security.api.UserSecurityManager;
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Validated
 @RestController
@@ -34,30 +31,16 @@ public class UserSecurityEndpoint {
     private final UserSecurityManager userSecurityManager;
 
 	@PostMapping("/register")
-	public ResponseEntity<ApiResponse<UserRegistrationResponse>> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
+	public ResponseEntity<UserRegistrationResponse> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
         UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
-
-		ApiResponse<UserRegistrationResponse> apiResponse = ApiResponse.<UserRegistrationResponse>builder()
-				.data(authenticationResponse)
-				.timestamp(LocalDateTime.now())
-				.httpStatusCode(HttpStatus.CREATED.value())
-				.build();
-
-		return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
+		return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
     }
 
 	@PostMapping("/authenticate")
-	public ResponseEntity<ApiResponse<UserAuthenticationResponse>> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
+	public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
         UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
-
-		ApiResponse<UserAuthenticationResponse> apiResponse = ApiResponse.<UserAuthenticationResponse>builder()
-				.data(authenticationResponse)
-				.timestamp(LocalDateTime.now())
-				.httpStatusCode(HttpStatus.OK.value())
-				.build();
-
 		return ResponseEntity
-				.ok(apiResponse);
+				.ok(authenticationResponse);
 	}
 
 	@PostMapping("/logout")
