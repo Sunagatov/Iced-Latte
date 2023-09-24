@@ -47,10 +47,6 @@ public class UserSecurityEndpoint implements SecurityApi {
 				.ok(authenticationResponse);
 	}
 
-
-
-
-
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(final HttpServletRequest request,
 									   final HttpServletResponse response) {

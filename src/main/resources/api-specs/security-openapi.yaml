@@ -58,25 +58,6 @@ paths:
         - "Security"
       summary: "Logout a user"
       operationId: "logout"
-#      requestBody:
-#        required: true
-#      parameters:
-#        - name: "request"
-#          description: "the identifier of the product which is returned as the return value"
-#          in: "path"
-#          required: true
-#          schema:
-#            type: "object"
-#      requestBody:
-#        content:
-#          application/json:
-#            schema:
-#              type: "object"
-#              properties:
-#                request:
-#                  type: "object"
-#                response:
-#                  type: "object"
       responses:
         "200":
           description: "OK"
