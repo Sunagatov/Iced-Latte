@@ -3,15 +3,12 @@ package com.zufar.onlinestore.user.api;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
-import com.zufar.onlinestore.user.exception.UserAlreadyRegisteredException;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import com.zufar.onlinestore.user.repository.UserRepository;
-import com.zufar.onlinestore.user.validation.UserDataValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,8 +24,8 @@ public class UserService implements UserApi {
     @Override
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
+        authorityService.setDefaultAuthority(userEntity);
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
-        authorityService.setDefaultAuthority(userEntityWithId);
 
         return userDtoConverter.toDto(userEntityWithId);
     }

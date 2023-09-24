@@ -90,4 +90,4 @@ jwt:
 logging:
   pattern:
     file: online-store-%d{yyyy-MM-dd}.%i.log
-  config: classpath:logback-spring.xmlzz
+  config: classpath:logback-spring.xml
