@@ -24,28 +24,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = UserSecurityEndpoint.USER_SECURITY_API_URL)
 @RequiredArgsConstructor
-public class UserSecurityEndpoint {
+public class UserSecurityEndpoint implements SecurityApi {
 
-    public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
+	public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
 
-    private final UserSecurityManager userSecurityManager;
+	private final UserSecurityManager userSecurityManager;
 
+	@Override
 	@PostMapping("/register")
-	public ResponseEntity<UserRegistrationResponse> register(@RequestBody @NotNull @Valid final UserRegistrationRequest request) {
-        UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
+	public ResponseEntity<UserRegistrationResponse> register(@RequestBody @NotNull final UserRegistrationRequest request) {
+		UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
 		return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
-    }
+	}
 
+	@Override
 	@PostMapping("/authenticate")
-	public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody @NotNull @Valid final UserAuthenticationRequest request) {
-        UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
+	public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody @NotNull final UserAuthenticationRequest request) {
+		UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
 		return ResponseEntity
 				.ok(authenticationResponse);
 	}
 
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(final HttpServletRequest request,
-	                                   final HttpServletResponse response) {
+									   final HttpServletResponse response) {
 		userSecurityManager.logout(request, response);
 		return ResponseEntity.ok()
 				.build();

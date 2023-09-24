@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.security.api;
 
 import com.zufar.onlinestore.security.converter.RegistrationDtoConverter;
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
+import com.zufar.onlinestore.security.dto.UserRegistrationRequest;
+import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;

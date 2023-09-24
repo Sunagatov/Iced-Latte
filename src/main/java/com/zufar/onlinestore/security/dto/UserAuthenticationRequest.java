@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.security.dto.authentication;
+package com.zufar.onlinestore.security.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
