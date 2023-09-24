@@ -1,6 +1,5 @@
-package com.zufar.onlinestore.common.validation.validator;
+package com.zufar.onlinestore.common.validation.username;
 
-import com.zufar.onlinestore.common.validation.annotation.UniqueUsername;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

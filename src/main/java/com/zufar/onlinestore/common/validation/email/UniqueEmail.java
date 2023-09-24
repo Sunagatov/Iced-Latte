@@ -1,6 +1,6 @@
-package com.zufar.onlinestore.common.validation.annotation;
+package com.zufar.onlinestore.common.validation.email;
 
-import com.zufar.onlinestore.common.validation.validator.UniqueEmailValidator;
+import com.zufar.onlinestore.common.validation.email.UniqueEmailValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

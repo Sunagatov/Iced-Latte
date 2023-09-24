@@ -1,7 +1,6 @@
-package com.zufar.onlinestore.common.validation.validator;
+package com.zufar.onlinestore.common.validation.email;
 
 import com.zufar.onlinestore.user.repository.UserRepository;
-import com.zufar.onlinestore.common.validation.annotation.UniqueEmail;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;

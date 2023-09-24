@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.security.dto.registration;
 
-import com.zufar.onlinestore.common.validation.annotation.UniqueEmail;
-import com.zufar.onlinestore.common.validation.annotation.UniqueUsername;
+import com.zufar.onlinestore.common.validation.email.UniqueEmail;
+import com.zufar.onlinestore.common.validation.username.UniqueUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
