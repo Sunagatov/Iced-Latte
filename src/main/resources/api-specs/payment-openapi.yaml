@@ -196,14 +196,16 @@ components:
       properties:
         data:
           type: "object"
-          oneOf:
-            - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-            - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
-          discriminator:
-            propertyName: "data"
-            mapping:
-              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
+          x-java-type: ${com.}
+
+#          oneOf:
+#            - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+#            - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
+#          discriminator:
+#            propertyName: "data"
+#            mapping:
+#              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+#              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
 
 
 #          type: "object"
