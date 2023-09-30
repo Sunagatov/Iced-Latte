@@ -29,66 +29,114 @@
     <description>Online-store project for learning purpose</description>
 
     <properties>
+        <!-- Project Version -->
         <project.version>${project.version}</project.version>
+
+        <!-- Encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Java Version -->
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+
+        <!-- Logging and Serialization Dependencies Versions -->
         <slf4j-api.version>2.0.5</slf4j-api.version>
         <jackson-core.version>2.15.2</jackson-core.version>
         <jackson-databind.version>2.15.2</jackson-databind.version>
-        <modelmapper.version>3.1.1</modelmapper.version>
+        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
+        <jackson-databind-nullable.version>0.2.1</jackson-databind-nullable.version>
+
+        <!-- Testing Dependencies Versions -->
         <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
         <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <springfox.swagger.version>3.0.0</springfox.swagger.version>
-        <swagger-core-version>2.2.8</swagger-core-version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
+        <instancio-junit.version>3.0.1</instancio-junit.version>
+
+        <!-- Spring Dependencies Versions -->
+        <spring-retry.version>2.0.2</spring-retry.version>
+        <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
+
+        <!-- JWT Dependencies Versions -->
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
-        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
-        <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
+        
+        <!-- Validation Dependencies Versions -->
+        <validation-api.version>2.0.1.Final</validation-api.version>
+
+        <modelmapper.version>3.1.1</modelmapper.version>
+
+        <!-- Swagger and OpenAPI Dependencies Versions -->
+        <springfox.swagger.version>3.0.0</springfox.swagger.version>
+        <swagger-core-version>2.2.8</swagger-core-version>
+        <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
+
+        <!-- Database Dependencies Versions -->
         <postgresql.version>42.6.0</postgresql.version>
         <liquibase.version>4.23.1</liquibase.version>
-        <stripe.version>22.15.0</stripe.version>
-        <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
-        <lombok.version>1.18.24</lombok.version>
-        <mapstruct.version>1.5.3.Final</mapstruct.version>
+
+        <!-- Apache Maven Plugin Dependencies Versions -->
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
-        <instancio-junit.version>3.0.1</instancio-junit.version>
-        <spring-retry.version>2.0.2</spring-retry.version>
+        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
-        <jackson-databind-nullable.version>0.2.1</jackson-databind-nullable.version>
-        <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
-        <validation-api.version>2.0.1.Final</validation-api.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+
+        <!-- Java EE Annotations Versions -->
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <servlet-api.version>2.5</servlet-api.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
+
+        <!-- Other Dependencies Versions -->
+        <stripe.version>22.15.0</stripe.version>
+        <lombok.version>1.18.24</lombok.version>
+        <mapstruct.version>1.5.3.Final</mapstruct.version>
+        <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
     </properties>
 
+    <!-- Dependencies -->
     <dependencies>
+
+        <!-- Spring Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>3.1.3</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+            <version>${spring-retry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Project Lombok -->
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
         </dependency>
+
+        <!-- Validation Dependencies -->
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -98,10 +146,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+
+        <!-- JWT Dependencies -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -117,11 +163,8 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt-jackson.version}</version>
         </dependency>
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-            <version>${logstash-logback-encoder.version}</version>
-        </dependency>
+
+        <!-- Logging Dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -137,6 +180,8 @@
             <artifactId>jackson-databind-nullable</artifactId>
             <version>${jackson-databind-nullable.version}</version>
         </dependency>
+
+        <!-- Spring Data JPA and Database Driver -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -146,30 +191,29 @@
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
+
+        <!-- Liquibase for Database Migrations -->
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
             <version>${liquibase.version}</version>
         </dependency>
+
+        <!-- Stripe Java Library -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>${stripe.version}</version>
         </dependency>
+
+        <!-- Apache Commons Lang -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${apache-commons-lang3.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.retry</groupId>
-            <artifactId>spring-retry</artifactId>
-            <version>${spring-retry.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+
+        <!-- Java EE Annotations -->
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
@@ -184,6 +228,7 @@
     </dependencies>
 
     <profiles>
+        <!-- Production Profile -->
         <profile>
             <id>prod</id>
             <dependencies>
@@ -194,6 +239,7 @@
             </dependencies>
         </profile>
 
+        <!-- Development Profile -->
         <profile>
             <id>dev</id>
             <activation>
@@ -203,6 +249,7 @@
                 </property>
             </activation>
             <dependencies>
+                <!-- Swagger and OpenAPI Dependencies -->
                 <dependency>
                     <groupId>io.swagger.core.v3</groupId>
                     <artifactId>swagger-annotations</artifactId>
@@ -223,6 +270,8 @@
                     <artifactId>springdoc-openapi-ui</artifactId>
                     <version>${springdoc-openapi-ui.version}</version>
                 </dependency>
+
+                <!-- Testing Dependencies -->
                 <dependency>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-test</artifactId>
@@ -269,6 +318,7 @@
 
     <build>
         <plugins>
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -294,6 +344,8 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -306,16 +358,21 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- SonarQube Scanner Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>${sonar-maven-plugin.version}</version>
             </plugin>
+
+            <!-- OpenAPI Generator Plugin -->
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>${openapi-generator-maven-plugin.version}</version>
                 <executions>
+                    <!-- Generate from Product OpenAPI Spec -->
                     <execution>
                         <id>generate-from-product-openapi-spec</id>
                         <goals>
@@ -350,6 +407,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <!-- Generate from Cart OpenAPI Spec -->
                     <execution>
                         <id>generate-from-cart-openapi-spec</id>
                         <goals>
@@ -367,6 +425,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <!-- Generate from Security OpenAPI Spec -->
                     <execution>
                         <id>generate-from-security-openapi-spec</id>
                         <goals>
