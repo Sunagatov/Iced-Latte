@@ -14,7 +14,7 @@ RUN chmod +x /opt/app/mvnw
 RUN set -ex; \
     export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
     mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
-    mvn package -P${APP_ENV} -DskipTests
+    mvn package -P${APP_ENV}
 
 #
 # Production stage
