@@ -1,0 +1,93 @@
+
+#
+# Server Properties
+#
+server:
+  port: ${SERVER_PORT}
+  ssl:
+    key-store-type: PKCS12
+    key-store: certs/zufarkeystore.p12
+    key-store-password: newpass
+    key-alias: zufarkeystore
+    enabled: false
+  tomcat:
+    accept-count: 100
+
+#
+# Spring Properties
+#
+spring:
+  application:
+    name: Online Store Application
+  banner:
+    charset: UTF-8
+    location: classpath:banner.txt
+  output:
+    ansi:
+      enabled: detect
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-master.yaml
+    url: ${DATASOURCE_URL}
+    user: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+#
+# Stripe Api Properties
+#
+  config:
+    import: optional:stripe.yaml
+
+#
+# Spring Doc Properties
+#
+springdoc:
+  api-docs:
+    path: /api/docs/schema
+  swagger-ui:
+    path: /api/docs/swagger-ui
+
+#
+# Management Properties
+#
+management:
+  server:
+    port: ${SERVER_PORT}
+  endpoint:
+    prometheus:
+      enabled: false
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health, shutdown, prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+#
+# JWT Security Properties
+#
+jwt:
+  header: Authorization
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 6044800
+
+#
+# Logging Properties
+#
+logging:
+  pattern:
+    file: online-store-%d{yyyy-MM-dd}.%i.log
+  config: classpath:logback-spring.xml
