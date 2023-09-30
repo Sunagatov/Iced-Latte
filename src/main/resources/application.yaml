@@ -3,7 +3,7 @@
 # Server Properties
 #
 server:
-  port: 8083
+  port: ${SERVER_PORT}
   ssl:
     key-store-type: PKCS12
     key-store: certs/zufarkeystore.p12
@@ -26,18 +26,18 @@ spring:
     ansi:
       enabled: detect
   datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/testdb}
-    username: ${DATASOURCE_USERNAME:postgres}
-    password: ${DATASOURCE_PASSWORD:postgres}
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/testdb}
-    user: ${DATASOURCE_USERNAME:postgres}
-    password: ${DATASOURCE_PASSWORD:postgres}
+    url: ${DATASOURCE_URL}
+    user: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
 #
 # Stripe Api Properties
 #
@@ -58,7 +58,7 @@ springdoc:
 #
 management:
   server:
-    port: 8083
+    port: ${SERVER_PORT}
   endpoint:
     prometheus:
       enabled: false
