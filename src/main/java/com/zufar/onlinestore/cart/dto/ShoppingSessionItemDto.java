@@ -14,6 +14,6 @@ public record ShoppingSessionItemDto(
         ProductInfoFullDto productInfo,
 
         @NotNull(message = "ProductsQuantity is the mandatory attribute")
-        Integer productsQuantity
+        Integer productQuantity
 ) {
 }

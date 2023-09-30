@@ -1,0 +1,107 @@
+openapi: "3.0.3"
+
+info:
+  title: "Online-Store API"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:8083"
+
+tags:
+  - name: "Security"
+    description: "An API for user registration and authentication"
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - "Security"
+      summary: "Register a user"
+      operationId: "register"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserRegistrationResponse"
+
+  /api/v1/auth/authenticate:
+    post:
+      tags:
+        - "Security"
+      summary: "Authenticate a user"
+      operationId: "authenticate"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAuthenticationRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserAuthenticationResponse"
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - "Security"
+      summary: "Logout a user"
+      operationId: "logout"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Void"
+
+components:
+  schemas:
+    UserRegistrationRequest:
+      type: "object"
+      properties:
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        username:
+          type: "string"
+        email:
+          type: "string"
+        password:
+          type: "string"
+
+    UserRegistrationResponse:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+
+    UserAuthenticationRequest:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+
+    UserAuthenticationResponse:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+
+    Void:
+      type: "object"
+      properties: { }

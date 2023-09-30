@@ -19,12 +19,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = UserEndpoint.API_CUSTOMERS)
-public class UserEndpoint {
+public class UserEndpoint implements com.zufar.onlinestore.openapi.user.api.UserApi {
 
     public static final String API_CUSTOMERS = "/api/v1/users";
 
     private final UserApi userApi;
 
+    @Override
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable final String userId) {
         log.info("Received the request to get the User with userId - {}.", userId);

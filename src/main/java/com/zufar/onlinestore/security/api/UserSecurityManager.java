@@ -1,9 +1,9 @@
 package com.zufar.onlinestore.security.api;
 
-import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationRequest;
-import com.zufar.onlinestore.security.dto.authentication.UserAuthenticationResponse;
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationRequest;
-import com.zufar.onlinestore.security.dto.registration.UserRegistrationResponse;
+import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
+import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
+import com.zufar.onlinestore.security.dto.UserRegistrationRequest;
+import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

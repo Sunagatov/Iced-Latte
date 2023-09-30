@@ -19,10 +19,10 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
-
 
 @Builder
 @Getter
@@ -44,13 +44,13 @@ public class UserEntity implements UserDetails {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "user_name", nullable = false)
+    @Column(name = "user_name", nullable = false, unique = true)
     private String username;
 
     @Column(name = "stripe_customer_token", nullable = true, unique = true)
     private String stripeCustomerToken;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "password", nullable = false)
@@ -60,8 +60,9 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private transient Address address;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private Set<UserGrantedAuthority> authorities;
+    private Set<UserGrantedAuthority> authorities = new HashSet<>();
 
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;
@@ -74,6 +75,21 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
+    public void addAuthority(UserGrantedAuthority authority) {
+        this.authorities.add(authority);
+        authority.setUser(this);
+    }
+
+    public void removeAuthority(UserGrantedAuthority authority) {
+        authority.setUser(null);
+        this.authorities.remove(authority);
+    }
+
+    public void removeAuthorities() {
+        authorities.forEach(authority -> authority.setUser(null));
+        authorities.clear();
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -63,7 +63,7 @@ public class ShoppingSession {
 
     public Integer getProductsQuantity() {
         return this.items.stream()
-                .map(ShoppingSessionItem::getProductsQuantity)
+                .map(ShoppingSessionItem::getProductQuantity)
                 .reduce(Integer::sum)
                 .orElse(DEFAULT_PRODUCTS_QUANTITY);
     }
