@@ -1,0 +1,13 @@
+
+#
+# Server Properties
+#
+server:
+  port: ${SERVER_PORT}
+
+#
+# Management Properties
+#
+management:
+  server:
+    port: ${SERVER_PORT}
