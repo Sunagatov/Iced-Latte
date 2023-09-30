@@ -3,11 +3,11 @@
 # Server Properties
 #
 server:
-  port: ${SERVER_PORT}
+  port: 8083
 
 #
 # Management Properties
 #
 management:
   server:
-    port: ${SERVER_PORT}
+    port: 8083
