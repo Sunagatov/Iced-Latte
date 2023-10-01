@@ -11,7 +11,6 @@ public record UserDto(
         String firstName,
         String lastName,
         String stripeCustomerToken,
-        String username,
         String email,
         String password,
         AddressDto address

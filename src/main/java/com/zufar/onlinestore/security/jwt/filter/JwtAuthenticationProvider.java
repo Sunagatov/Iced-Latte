@@ -43,7 +43,7 @@ public class JwtAuthenticationProvider {
 			}
 
 			//Try to retrieve userEmail from jwtToken
-			final String userEmail = jwtClaimExtractor.extractUsername(jwtToken);
+			final String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
 			if (userEmail == null || SecurityContextHolder.getContext().getAuthentication() != null) {
 				return Optional.empty();
 			}

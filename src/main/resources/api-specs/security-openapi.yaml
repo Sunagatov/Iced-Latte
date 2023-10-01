@@ -75,8 +75,6 @@ components:
           type: "string"
         lastName:
           type: "string"
-        username:
-          type: "string"
         email:
           type: "string"
         password:
@@ -91,7 +89,7 @@ components:
     UserAuthenticationRequest:
       type: "object"
       properties:
-        username:
+        email:
           type: "string"
         password:
           type: "string"

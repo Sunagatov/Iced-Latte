@@ -19,13 +19,13 @@ public class JwtTokenValidator {
 
 	public boolean isValid(final String jwtToken) {
 		try {
-			final String username = jwtClaimExtractor.extractUsername(jwtToken);
+			final String email = jwtClaimExtractor.extractEmail(jwtToken);
 
-			final String usernameFromSystem = userDetailsService.loadUserByUsername(username).getUsername();
-			final String usernameFromJwtToken = jwtClaimExtractor.extractUsername(jwtToken);
+			final String emailFromSystem = userDetailsService.loadUserByUsername(email).getUsername();
+			final String emailFromJwtToken = jwtClaimExtractor.extractEmail(jwtToken);
 
 			return !isTokenExpired(jwtToken)
-					&& usernameFromJwtToken.equals(usernameFromSystem);
+					&& emailFromJwtToken.equals(emailFromSystem);
 		} catch (Exception exception) {
 			log.error("Jwt token validation error", exception);
 			throw new JwtTokenException(exception);
