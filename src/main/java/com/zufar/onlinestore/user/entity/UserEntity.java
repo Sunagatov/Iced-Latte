@@ -44,9 +44,6 @@ public class UserEntity implements UserDetails {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "user_name", nullable = false, unique = true)
-    private String username;
-
     @Column(name = "stripe_customer_token", nullable = true, unique = true)
     private String stripeCustomerToken;
 
@@ -75,6 +72,11 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
     public void addAuthority(UserGrantedAuthority authority) {
         this.authorities.add(authority);

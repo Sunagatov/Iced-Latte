@@ -23,12 +23,12 @@ public class UserRegistrationService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public UserRegistrationResponse register(final UserRegistrationRequest request) {
-        log.info("Received registration request from {}.", request.username());
+        log.info("Received registration request from {}.", request.email());
         final UserDto userDto = registrationDtoConverter.toDto(request);
         final UserDto userDtoWithId = userApi.saveUser(userDto);
         UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
-        log.info("Registration was successful for {}.", request.username());
+        log.info("Registration was successful for {}.", request.email());
         return new UserRegistrationResponse(jwtToken);
     }
 }

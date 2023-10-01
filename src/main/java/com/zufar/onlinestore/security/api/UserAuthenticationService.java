@@ -22,9 +22,9 @@ public class UserAuthenticationService {
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
-        UserDetails user = userDetailsService.loadUserByUsername(request.username());
+        UserDetails user = userDetailsService.loadUserByUsername(request.email());
 
         String jwtToken = jwtTokenProvider.generateToken(user);
 
