@@ -1,0 +1,29 @@
+version: "3.9"
+
+networks:
+  services:
+    name: services
+    external: true
+
+services:
+  online-store-app:
+    image: '${HUB}/online-store:${TAG}'
+    container_name: online-store-app
+    env_file:
+      - .env
+    build:
+      context: .
+    ports:
+      - '8083:8083'
+    networks:
+      - services
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.online-store-app.middlewares=forwardedProto@file
+      - traefik.http.routers.online-store-app.rule=Host(`online-store.com`)
+      - traefik.http.routers.online-store-app.tls=true
+      - traefik.http.services.online-store-app.loadbalancer.server.port=8083
+    volumes:
+      - ./src:/opt/app/src
+      - ./logs:/srv/app/logs:rw
+      - ${HOME}/.m2:/root/.m2

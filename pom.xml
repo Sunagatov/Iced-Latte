@@ -82,7 +82,6 @@
 
         <!-- Apache Maven Plugin Dependencies Versions -->
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
