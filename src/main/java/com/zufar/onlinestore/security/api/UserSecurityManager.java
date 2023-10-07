@@ -4,6 +4,7 @@ import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.dto.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
+import com.zufar.onlinestore.security.signin.UserAuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

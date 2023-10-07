@@ -1,8 +1,9 @@
-package com.zufar.onlinestore.security.api;
+package com.zufar.onlinestore.security.signin;
 
 import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
+import com.zufar.onlinestore.security.signin.attempts.LoginAttemptManager;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

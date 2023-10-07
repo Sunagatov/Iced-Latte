@@ -1,8 +1,8 @@
-package com.zufar.onlinestore.security.api;
+package com.zufar.onlinestore.security.signin.attempts;
 
-import com.zufar.onlinestore.security.entity.LoginAttemptEntity;
+import com.zufar.onlinestore.security.signin.attempts.entity.LoginAttemptEntity;
 import com.zufar.onlinestore.security.exception.AccountLockedException;
-import com.zufar.onlinestore.security.repository.LoginAttemptRepository;
+import com.zufar.onlinestore.security.signin.attempts.repository.LoginAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

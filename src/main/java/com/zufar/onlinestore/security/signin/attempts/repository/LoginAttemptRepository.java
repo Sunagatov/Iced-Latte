@@ -1,6 +1,6 @@
-package com.zufar.onlinestore.security.repository;
+package com.zufar.onlinestore.security.signin.attempts.repository;
 
-import com.zufar.onlinestore.security.entity.LoginAttemptEntity;
+import com.zufar.onlinestore.security.signin.attempts.entity.LoginAttemptEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
