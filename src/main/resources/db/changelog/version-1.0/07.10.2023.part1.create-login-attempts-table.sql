@@ -1,13 +1,13 @@
-CREATE TABLE user_attempts
+CREATE TABLE login_attempts
 (
     id                  UUID        NOT NULL PRIMARY KEY,
-    user_id             UUID        NOT NULL,
+    user_email          VARCHAR(55) NOT NULL UNIQUE,
     attempts            INTEGER     NOT NULL CHECK (attempts >= 0),
     is_user_locked      BOOLEAN     NOT NULL,
-    expiration_datetime TIMESTAMPTZ CHECK (last_modified <= NOW()),
-    lastModified        TIMESTAMPTZ NOT NULL CHECK (last_modified <= NOW()),
+    expiration_datetime TIMESTAMPTZ CHECK (expiration_datetime <= NOW()),
+    last_modified       TIMESTAMPTZ NOT NULL CHECK (last_modified <= NOW()),
     CONSTRAINT fk_user_id
-        FOREIGN KEY (username)
-            REFERENCES user_details (id)
+        FOREIGN KEY (user_email)
+            REFERENCES user_details (email)
             ON DELETE CASCADE
 );
