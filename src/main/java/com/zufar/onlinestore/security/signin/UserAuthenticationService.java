@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
-    private final UserDetailsService userDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LoginAttemptManager loginAttemptManager;
@@ -28,11 +29,13 @@ public class UserAuthenticationService {
 
         loginAttemptManager.validateUserLoginLockout(email);
 
+        Authentication authentication;
         try {
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email, password);
 
-            authenticationManager.authenticate(authenticationToken);
-        } catch (Exception exception) {
+            authentication = authenticationManager.authenticate(
+                    authenticationToken
+            );        } catch (Exception exception) {
             // Authentication failed, increment login attempts and lock the account if necessary
             loginAttemptManager.handleFailedLogin(email);
             throw exception;
@@ -41,9 +44,9 @@ public class UserAuthenticationService {
         // Authentication succeeded, reset login attempts
         loginAttemptManager.resetFailedLoginAttempts(email);
 
-        UserEntity user = (UserEntity) userDetailsService.loadUserByUsername(email);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        String jwtToken = jwtTokenProvider.generateToken(user);
+        String jwtToken = jwtTokenProvider.generateToken(userDetails);
 
         return new UserAuthenticationResponse(jwtToken);
     }
