@@ -31,11 +31,10 @@ public class UserAuthenticationService {
 
         Authentication authentication;
         try {
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email, password);
-
             authentication = authenticationManager.authenticate(
-                    authenticationToken
-            );        } catch (Exception exception) {
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (Exception exception) {
             // Authentication failed, increment login attempts and lock the account if necessary
             loginAttemptManager.handleFailedLogin(email);
             throw exception;
