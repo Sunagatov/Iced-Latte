@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
-import static com.zufar.onlinestore.payment.enums.PaymentStatus.PAYMENT_IS_SUCCEEDED;
+import static com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto.StatusEnum.IS_SUCCEEDED;
 
 /**
  * This class is responsible for handling the successful scenario and updating
@@ -28,10 +28,10 @@ public class PaymentSuccessfulScenarioExecutor implements PaymentScenarioExecuto
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void execute(PaymentIntent paymentIntent) {
         log.info("Handle payment scenario method: start of handling payment intent: {} by successful scenario.", paymentIntent);
-        paymentRepository.updateStatusAndDescriptionInPayment(paymentIntent.getId(), PAYMENT_IS_SUCCEEDED.toString(), PAYMENT_IS_SUCCEEDED.getDescription());
+        paymentRepository.updateStatusAndDescriptionInPayment(paymentIntent.getId(), IS_SUCCEEDED.toString(), IS_SUCCEEDED.getValue());
         log.info("Handle payment scenario method: finish of handling payment intent: {} by successful scenario.", paymentIntent);
     }
 
     @Override
-    public boolean supports(Event event) {return Objects.equals(PAYMENT_IS_SUCCEEDED.getStatus(), event.getType());}
+    public boolean supports(Event event) {return Objects.equals(IS_SUCCEEDED.getValue(), event.getType());}
 }

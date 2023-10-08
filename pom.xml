@@ -395,6 +395,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <!-- Generate from User OpenAPI Spec -->
                     <execution>
                         <id>generate-from-user-openapi-spec</id>
                         <goals>
@@ -443,6 +444,23 @@
                             <generateModels>false</generateModels>
                             <configOptions>
                                 <modelPackage>com.zufar.onlinestore.security.dto</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Payment OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-payment-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <apiPackage>com.zufar.onlinestore.openapi.payment.api</apiPackage>
+                                <modelPackage>com.zufar.onlinestore.openapi.payment.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>

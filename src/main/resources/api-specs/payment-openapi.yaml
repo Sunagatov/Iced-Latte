@@ -8,14 +8,14 @@ servers:
   - url: "http://localhost:8083"
 
 tags:
-  - name: "Payments"
+  - name: "Payment"
     description: "An API for managing and retrieving payment information"
 
 paths:
   /api/v1/payment:
     post:
       tags:
-        - "Payments"
+        - "Payment"
       summary: "Enables payment processing using a card details token ID"
       operationId: "processPayment"
       parameters:
@@ -24,18 +24,46 @@ paths:
           required: true
           schema:
             type: "string"
+            minLength: 1
       responses:
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+        "400":
+          description: "Cannot retrieve stripe customer by stripeCustomerId = {stripeCustomerId}. 
+          Cannot retrieve payment method associated with stripe customer, stripeCustomerId = {stripeCustomerId}. 
+          The payment associated with customer is not found, stripeCustomerId = {stripeCustomerId}. 
+          Shopping session with shoppingSessionId = %s is already paid"
+          content:
+            application/json:
+              example:
+                messages: ["incompatible types -- expected type"]
+                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+        "404":
+          description: "User with id = {userId} is not found."
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "NOT_FOUND"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
 
   /api/v1/payment/{paymentId}:
     get:
       tags:
-        - "Payments"
+        - "Payment"
       summary: "Enables to get a payment details by payment id"
       operationId: "getPaymentDetails"
       parameters:
@@ -51,13 +79,25 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
-
+                $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
+        "404":
+          description: "The payment with paymentId = {paymentId} is not found. 
+          The shopping session for the user with id = {userId} is not found."
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: getPaymentDetails that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "NOT_FOUND"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
 
   /api/v1/payment/event:
     post:
       tags:
-        - "Payments"
+        - "Payment"
       summary: "Enables payment event processing"
       operationId: "paymentEventProcess"
       parameters:
@@ -66,23 +106,37 @@ paths:
           required: true
           schema:
             type: "string"
+            minLength: 1
       requestBody:
         content:
           application/json:
             schema:
               type: "string"
+              minLength: 1
         required: true
       responses:
         "200":
           description: "OK"
+        "400":
+          description: "Payment event with the stripe signature = {stripe signature} cannot be processed. 
+          PaymentEvent = {PaymentEvent} cannot be parsed."
           content:
-            '*/*':
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: paymentEventProcess that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
               schema:
-                $ref: "#/components/schemas/Void"
+                $ref: "#/components/schemas/ErrorHandler"
 
   /api/v1/payment/card:
     post:
-      summary: "POST api/v1/payment/card"
+      tags:
+        - "Payment"
+      summary: "This method is a temporary solution until the front-end goes functional to pass us a token with payment card details.
+      In the meantime, this method serves to test the payment api"
       operationId: "processCardDetailsToken"
       requestBody:
         content:
@@ -94,16 +148,25 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            text/plain:
               schema:
                 type: "string"
+        "400":
+          description: "Card token with cardNumber = {cardNumber} cannot create"
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: processCardDetailsToken that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+
 components:
   schemas:
     ProcessedPaymentWithClientSecretDto:
-      allOf:
-        - $ref: "#/components/schemas/ApiResponse"
-#      allOf:
-#        - $ref: "#/components/schemas/ApiResponse"
       type: "object"
       properties:
         paymentId:
@@ -142,10 +205,12 @@ components:
         productsQuantity:
           type: "integer"
           format: "int32"
+      required:
+        - id
+        - productInfo
+        - productsQuantity
 
     ProcessedPaymentDetailsDto:
-      allOf:
-        - $ref: "#/components/schemas/ApiResponse"
       type: "object"
       properties:
         paymentId:
@@ -158,6 +223,7 @@ components:
           type: "string"
         items:
           type: "array"
+          uniqueItems: true
           items:
             $ref: "#/components/schemas/ShoppingSessionItemDto"
         status:
@@ -174,71 +240,25 @@ components:
         description:
           type: "string"
 
-    Void:
-      type: "object"
-      properties: { }
     CreateCardDetailsTokenRequest:
       type: "object"
       properties:
         cardNumber:
           type: "string"
+          minLength: 1
         expMonth:
           type: "string"
+          minLength: 1
         expYear:
           type: "string"
+          minLength: 1
         cvc:
           type: "string"
+          minLength: 1
 
-    ApiResponse:
+    ErrorHandler:
       type: "object"
-#      required:
-#        - data
       properties:
-        data:
-          type: "object"
-          x-java-type: ${com.}
-
-#          oneOf:
-#            - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-#            - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
-#          discriminator:
-#            propertyName: "data"
-#            mapping:
-#              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-#              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
-
-
-#          type: "object"
-#          discriminator:
-#            propertyName: "data"
-#            mapping:
-#              ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-#              ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
-
-
-#              discriminator:
-#                propertyName: data
-#                mapping:
-#                  ProcessedPaymentWithClientSecretDto: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-#                  ProcessedPaymentDetailsDto: "#/components/schemas/ProcessedPaymentDetailsDto"
-#              anyOf:
-#                - $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
-#                - $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
-
-
-#oneOf:
-#  - $ref: '#/components/schemas/Object1'
-#  - $ref: '#/components/schemas/Object2'
-#  - $ref: 'sysObject.json#/sysObject'
-#  discriminator:
-#    propertyName: objectType
-#    mapping:
-#      obj1: '#/components/schemas/Object1'
-#  obj2: '#/components/schemas/Object2'
-#    system: 'sysObject.json#/sysObject'
-
-
-                #          type: "object"
         messages:
           type: "array"
           items:

@@ -3,7 +3,7 @@ package com.zufar.onlinestore.payment.api.impl.intent;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
 import com.zufar.onlinestore.payment.converter.PaymentConverter;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.exception.PaymentNotFoundException;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;

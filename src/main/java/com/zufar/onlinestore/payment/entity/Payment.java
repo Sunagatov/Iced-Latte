@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.payment.entity;
 
-import com.zufar.onlinestore.payment.enums.PaymentStatus;
+import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,7 +44,7 @@ public class Payment {
 
     @Column(name = "status", nullable = true)
     @Enumerated(value = EnumType.STRING)
-    private PaymentStatus status;
+    private ProcessedPaymentDetailsDto.StatusEnum status;
 
     @Column(name = "description", nullable = true)
     private String description;
