@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.product.converter;
 
 import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.openapi.payment.dto.ProductInfoFullDto;
+import com.zufar.onlinestore.payment.api.dto.ProductInfoFullDto;
 import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import org.mapstruct.Mapper;

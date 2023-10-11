@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.cart.converter;
 
-import com.zufar.onlinestore.openapi.payment.dto.ShoppingSessionItemDto;
+import com.zufar.onlinestore.payment.api.dto.ShoppingSessionItemDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
 import org.mapstruct.Mapper;

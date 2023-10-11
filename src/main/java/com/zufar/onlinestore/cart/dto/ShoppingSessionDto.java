@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.cart.dto;
 
-import com.zufar.onlinestore.openapi.payment.dto.ShoppingSessionItemDto;
+import com.zufar.onlinestore.payment.api.dto.ShoppingSessionItemDto;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;

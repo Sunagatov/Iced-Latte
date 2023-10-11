@@ -1,9 +1,9 @@
 package com.zufar.onlinestore.payment.api.impl;
 
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.openapi.payment.dto.CreateCardDetailsTokenRequest;
-import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto;
-import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentWithClientSecretDto;
+import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.api.impl.event.PaymentEventProcessor;
 import com.zufar.onlinestore.payment.api.impl.customer.CardDetailsProcessor;
 import com.zufar.onlinestore.payment.api.impl.intent.PaymentProcessor;

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
-import static com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto.StatusEnum.IS_SUCCEEDED;
+import static com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto.StatusEnum.IS_SUCCEEDED;
 
 /**
  * This class is responsible for handling the successful scenario and updating

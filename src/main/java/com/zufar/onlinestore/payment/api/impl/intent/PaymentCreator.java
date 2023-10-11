@@ -4,7 +4,7 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.zufar.onlinestore.cart.api.CartApi;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.exception.ShoppingSessionAlreadyPaidException;

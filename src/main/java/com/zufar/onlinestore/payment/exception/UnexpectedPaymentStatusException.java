@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.payment.exception;
 
-import com.zufar.onlinestore.openapi.payment.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
 import lombok.Getter;
 
 @Getter
