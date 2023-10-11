@@ -5,6 +5,9 @@ APP_ENV=$(grep APP_ENV /opt/app/.env | cut -d '=' -f2)
 APP_VERSION=$(grep APP_VERSION /opt/app/.env | cut -d '=' -f2)
 DATASOURCE_URL=$(grep DATASOURCE_URL /opt/app/.env | cut -d '=' -f2)
 
+setfacl -R -m u:"$(whoami)":rwX /opt/app
+setfacl -dR -m u:"$(whoami)":rwX /opt/app
+
 export APP_ENV
 export APP_VERSION
 export DATASOURCE_URL
