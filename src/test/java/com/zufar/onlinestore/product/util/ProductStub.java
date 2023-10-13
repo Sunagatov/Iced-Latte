@@ -57,7 +57,6 @@ public class ProductStub {
         productD.setDescription("Description for Product D");
         productD.setPrice(BigDecimal.valueOf(5.25));
         productD.setQuantity(40);
-        ;
 
         ProductInfoDto productE = new ProductInfoDto();
         productE.setId(UUID.randomUUID());
