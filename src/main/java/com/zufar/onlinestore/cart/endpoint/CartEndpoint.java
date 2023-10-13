@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.cart.endpoint;
 
+import com.zufar.onlinestore.cart.api.CartApi;
 import com.zufar.onlinestore.openapi.dto.AddNewItemsToShoppingSessionRequest;
 import com.zufar.onlinestore.openapi.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.openapi.dto.NewShoppingSessionItemDto;
@@ -30,7 +31,7 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
 
     public static final String CART_URL = "/api/v1/cart";
 
-    private final com.zufar.onlinestore.cart.api.CartApi cartApi;
+    private final CartApi cartApi;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
