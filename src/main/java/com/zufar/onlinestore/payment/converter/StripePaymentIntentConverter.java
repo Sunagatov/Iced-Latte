@@ -3,7 +3,7 @@ package com.zufar.onlinestore.payment.converter;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.payment.calculator.PaymentPriceCalculator;
 import com.zufar.onlinestore.payment.entity.Payment;;
 import org.mapstruct.BeanMapping;

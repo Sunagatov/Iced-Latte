@@ -24,6 +24,6 @@ public class SecurityPrincipalProvider {
     }
 
     public UUID getUserId() {
-        return get().userId();
+        return get().getId();
     }
 }

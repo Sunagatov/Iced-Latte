@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.cart.exception.InvalidItemProductQuantityException;
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdException;
@@ -38,10 +38,10 @@ public class ProductQuantityItemUpdater {
         ShoppingSessionItem updatedItem = updateItemProductQuantity(shoppingSessionItemId, productQuantityChange, item);
         ShoppingSessionDto shoppingSession = getShoppingSession();
 
-        if (shoppingSession.id() != updatedItem.getShoppingSession().getId()) {
+        if (shoppingSession.getId() != updatedItem.getShoppingSession().getId()) {
             log.warn("Failed to update the productQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                    productQuantityChange, shoppingSessionItemId, shoppingSession.id());
-            throw new InvalidShoppingSessionIdException(shoppingSession.id());
+                    productQuantityChange, shoppingSessionItemId, shoppingSession.getId());
+            throw new InvalidShoppingSessionIdException(shoppingSession.getId());
         }
         return shoppingSession;
     }
@@ -73,7 +73,7 @@ public class ProductQuantityItemUpdater {
 
     private ShoppingSessionDto getShoppingSession() throws ShoppingSessionNotFoundException {
         UserDto userDto = securityPrincipalProvider.get();
-        UUID userId = userDto.userId();
+        UUID userId = userDto.getId();
         return shoppingSessionProvider.getByUserId(userId);
     }
 }

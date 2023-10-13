@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.product.api;
 
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import com.zufar.onlinestore.product.repository.ProductInfoRepository;
 import org.instancio.Instancio;
