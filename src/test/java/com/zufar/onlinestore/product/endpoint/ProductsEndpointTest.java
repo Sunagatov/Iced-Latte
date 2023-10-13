@@ -3,8 +3,8 @@ package com.zufar.onlinestore.product.endpoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.product.api.ProductApi;
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.exception.ProductNotFoundException;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationProvider;
 import org.instancio.Instancio;
@@ -25,7 +25,6 @@ import java.util.UUID;
 
 import static com.zufar.onlinestore.product.endpoint.ProductsEndpoint.PRODUCTS_URL;
 import static com.zufar.onlinestore.product.util.ProductStub.buildSampleProducts;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -77,7 +76,7 @@ class ProductsEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.products[0].name").value("Product E"))
-                .andExpect(jsonPath("$.totalElements").value(products.totalElements()));
+                .andExpect(jsonPath("$.totalElements").value(products.getTotalElements()));
 
         verify(productApi).getProducts(page, size, sortAttribute, sortDirection.name());
     }
@@ -92,7 +91,7 @@ class ProductsEndpointTest {
         mockMvc.perform(get(PRODUCTS_URL + "/{productId}", productId)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(productInfo.id().toString()));
+                .andExpect(jsonPath("$.id").value(productInfo.getId().toString()));
 
         verify(productApi).getProduct(productId);
     }
@@ -114,7 +113,7 @@ class ProductsEndpointTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.products.size()").value(productList.products().size()));
+                .andExpect(jsonPath("$.products.size()").value(productList.getProducts().size()));
 
         verify(productApi).getProducts(page, size, sortAttribute, defaultDirection);
     }
@@ -159,7 +158,7 @@ class ProductsEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.products[0].name").value("Product A"))
-                .andExpect(jsonPath("$.totalElements").value(productList.totalElements()));
+                .andExpect(jsonPath("$.totalElements").value(productList.getTotalElements()));
 
         verify(productApi).getProducts(page, size, sortAttribute, sortDirection.name());
     }

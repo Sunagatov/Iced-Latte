@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.cart.converter;
 
 import com.zufar.onlinestore.cart.api.ItemsTotalPriceCalculator;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

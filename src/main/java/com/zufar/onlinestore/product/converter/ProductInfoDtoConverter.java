@@ -1,23 +1,20 @@
 package com.zufar.onlinestore.product.converter;
 
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductInfoFullDto;
-import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductInfoDtoConverter {
 
+    @Named("toProductInfoDto")
     @Mapping(target = "id", source = "entity.productId")
     ProductInfoDto toDto(final ProductInfo entity);
-
-    @Named("toProductInfoFullDto")
-    @Mapping(target = "id", source = "entity.productId")
-    ProductInfoFullDto toFullDto(final ProductInfo entity);
 
     @Mapping(target = "products", source = "pageProductResponseDto.content")
     @Mapping(target = "page", source = "pageProductResponseDto.number")

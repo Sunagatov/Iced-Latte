@@ -4,7 +4,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.exception.PaymentIntentProcessingException;

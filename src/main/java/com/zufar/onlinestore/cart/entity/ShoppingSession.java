@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -50,10 +50,10 @@ public class ShoppingSession {
     private Integer productsQuantity;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "closed_at", nullable = false)
-    private LocalDateTime closedAt;
+    private OffsetDateTime closedAt;
 
     private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
 
