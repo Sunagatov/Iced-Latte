@@ -175,41 +175,6 @@ components:
         clientSecret:
           type: "string"
 
-    ProductInfoFullDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        name:
-          type: "string"
-        description:
-          type: "string"
-        price:
-          type: "number"
-          format: "decimal"
-        quantity:
-          type: "integer"
-          format: "int32"
-        active:
-          type: "boolean"
-
-    ShoppingSessionItemDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        productInfo:
-          $ref: "#/components/schemas/ProductInfoFullDto"
-        productsQuantity:
-          type: "integer"
-          format: "int32"
-      required:
-        - id
-        - productInfo
-        - productsQuantity
-
     ProcessedPaymentDetailsDto:
       type: "object"
       properties:
@@ -225,7 +190,7 @@ components:
           type: "array"
           uniqueItems: true
           items:
-            $ref: "#/components/schemas/ShoppingSessionItemDto"
+            $ref: "cart-openapi.yaml#/components/schemas/ShoppingSessionItemDto"
         status:
           type: "string"
           enum:

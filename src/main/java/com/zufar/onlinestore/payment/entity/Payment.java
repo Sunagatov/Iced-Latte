@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.payment.entity;
 
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentDetailsDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

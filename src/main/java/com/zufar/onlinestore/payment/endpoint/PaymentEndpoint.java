@@ -1,9 +1,9 @@
 package com.zufar.onlinestore.payment.endpoint;
 
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
+import com.zufar.onlinestore.openapi.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentWithClientSecretDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

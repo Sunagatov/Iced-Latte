@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.payment.api.impl.intent;
 
 import com.stripe.model.PaymentMethod;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.onlinestore.payment.api.impl.customer.StripeCustomerDataProcessor;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.entity.Payment;

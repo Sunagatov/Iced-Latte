@@ -2,7 +2,7 @@ package com.zufar.onlinestore.payment.api.impl.customer;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Token;
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.openapi.dto.CreateCardDetailsTokenRequest;
 import com.zufar.onlinestore.payment.config.StripeConfiguration;
 import com.zufar.onlinestore.payment.exception.CardTokenCreationException;
 import lombok.RequiredArgsConstructor;

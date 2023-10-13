@@ -460,7 +460,7 @@
                             <generatorName>spring</generatorName>
                             <configOptions>
                                 <apiPackage>com.zufar.onlinestore.openapi.payment.api</apiPackage>
-                                <modelPackage>com.zufar.onlinestore.payment.api.dto</modelPackage>
+                                <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
