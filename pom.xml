@@ -72,6 +72,8 @@
         <modelmapper.version>3.1.1</modelmapper.version>
 
         <!-- Swagger and OpenAPI Dependencies Versions -->
+        <openapi-package>com.zufar.onlinestore.openapi</openapi-package>
+        <openapi-package-with-dto>${openapi-package}.dto</openapi-package-with-dto>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.8</swagger-core-version>
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
@@ -386,8 +388,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/product-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.zufar.onlinestore.openapi.product.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <apiPackage>${openapi-package}.product.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
@@ -404,8 +406,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/user-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.zufar.onlinestore.openapi.user.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <apiPackage>${openapi-package}.user.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
@@ -422,8 +424,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/cart-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.zufar.onlinestore.openapi.cart.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <apiPackage>${openapi-package}.cart.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
@@ -440,7 +442,7 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/security-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.zufar.onlinestore.openapi.security.api</apiPackage>
+                            <apiPackage>${openapi-package}.security.api</apiPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
                                 <modelPackage>com.zufar.onlinestore.security.dto</modelPackage>
@@ -459,8 +461,8 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
-                                <apiPackage>com.zufar.onlinestore.openapi.payment.api</apiPackage>
-                                <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                                <apiPackage>${openapi-package}.payment.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>

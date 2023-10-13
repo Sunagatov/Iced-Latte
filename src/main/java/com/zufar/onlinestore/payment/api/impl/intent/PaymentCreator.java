@@ -3,10 +3,10 @@ package com.zufar.onlinestore.payment.api.impl.intent;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.openapi.dto.ProcessedPaymentDetailsDto;
 import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.entity.Payment;
+import com.zufar.onlinestore.payment.enums.PaymentStatus;
 import com.zufar.onlinestore.payment.exception.ShoppingSessionAlreadyPaidException;
 import com.zufar.onlinestore.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +59,8 @@ public class PaymentCreator {
     private Payment fillPaymentDetails(ShoppingSessionDto shoppingSession, PaymentIntent stripePaymentIntent) {
         log.info("Fill payment details: starting: start payment object filling");
         Payment payment = stripePaymentIntentConverter.toEntity(stripePaymentIntent, shoppingSession);
-        payment.setStatus(ProcessedPaymentDetailsDto.StatusEnum.IS_PROCESSING);
-        payment.setDescription(ProcessedPaymentDetailsDto.StatusEnum.IS_PROCESSING.getValue());
+        payment.setStatus(PaymentStatus.PAYMENT_IS_PROCESSING);
+        payment.setDescription(PaymentStatus.PAYMENT_IS_PROCESSING.getDescription());
         log.info("Fill payment details: finished: payment object was filled");
 
         return payment;
