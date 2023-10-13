@@ -387,8 +387,8 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/product-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <apiPackage>com.zufar.onlinestore.openapi.product.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.product.dto</modelPackage>
-                            <generateModels>false</generateModels>
+                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
@@ -405,8 +405,8 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/user-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <apiPackage>com.zufar.onlinestore.openapi.user.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.user.dto</modelPackage>
-                            <generateModels>false</generateModels>
+                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
@@ -423,8 +423,8 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/cart-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <apiPackage>com.zufar.onlinestore.openapi.cart.api</apiPackage>
-                            <modelPackage>com.zufar.onlinestore.cart.dto</modelPackage>
-                            <generateModels>false</generateModels>
+                            <modelPackage>com.zufar.onlinestore.openapi.dto</modelPackage>
+                            <generateModels>true</generateModels>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
