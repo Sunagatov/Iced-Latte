@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.DeleteItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.openapi.dto.NewShoppingSessionItemDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
