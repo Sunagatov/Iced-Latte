@@ -25,7 +25,6 @@ import java.util.UUID;
 
 import static com.zufar.onlinestore.product.endpoint.ProductsEndpoint.PRODUCTS_URL;
 import static com.zufar.onlinestore.product.util.ProductStub.buildSampleProducts;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

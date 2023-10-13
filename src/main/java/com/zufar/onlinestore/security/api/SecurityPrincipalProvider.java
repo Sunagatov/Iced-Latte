@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.security.api;
 
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;

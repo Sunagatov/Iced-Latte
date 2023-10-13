@@ -4,7 +4,7 @@ import com.zufar.onlinestore.openapi.dto.DeleteItemsFromShoppingSessionRequest;
 import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionItemRepository;
 import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
