@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.user.api;
 
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 
 import java.util.UUID;

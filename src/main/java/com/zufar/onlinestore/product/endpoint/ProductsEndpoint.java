@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.product.endpoint;
 
 import com.zufar.onlinestore.product.api.ProductApi;
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

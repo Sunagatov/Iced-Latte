@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.user.endpoint;
 
 import com.zufar.onlinestore.user.api.UserApi;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
