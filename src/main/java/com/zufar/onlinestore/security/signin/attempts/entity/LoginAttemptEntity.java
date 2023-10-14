@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,4 +44,7 @@ public class LoginAttemptEntity {
 
     @Column(name = "last_modified", nullable = false)
     private LocalDateTime lastModified;
+
+    @Version
+    private Long version;
 }

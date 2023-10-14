@@ -6,6 +6,7 @@ import com.zufar.onlinestore.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -39,7 +40,7 @@ public class JwtAuthenticationProvider {
 			}
 
 			final String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
-			if (userEmail == null) {
+			if (StringUtils.isEmpty(userEmail)) {
 				throw new JwtTokenException("User email not found in jwtToken");
 			}
 
@@ -52,7 +53,7 @@ public class JwtAuthenticationProvider {
 
 			return Optional.of(authToken);
 
-		} catch (Exception exception) {
+		} catch (JwtTokenException exception) {
 			log.error("Jwt token validation error", exception);
 			throw new JwtTokenException("Jwt token validation error", exception);
 		}
