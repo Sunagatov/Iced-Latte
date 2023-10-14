@@ -1,6 +1,7 @@
 package com.zufar.onlinestore.security.signin.attempts;
 
 import com.zufar.onlinestore.security.signin.attempts.entity.LoginAttemptEntity;
+import com.zufar.onlinestore.security.signin.attempts.exception.LoginAttemptNotFoundException;
 import com.zufar.onlinestore.security.signin.attempts.repository.LoginAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,13 +23,14 @@ public class ResetLoginAttemptsService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
-        LoginAttemptEntity newLoginAttempt = new LoginAttemptEntity();
-        newLoginAttempt.setUserEmail(userEmail);
-        newLoginAttempt.setAttempts(initialLoginAttemptsCount);
-        newLoginAttempt.setIsUserLocked(false);
-        newLoginAttempt.setExpirationDatetime(null);
-        newLoginAttempt.setLastModified(LocalDateTime.now());
+        LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
+                .orElseThrow(() -> new LoginAttemptNotFoundException(String.format("LoginAttempt for user with the email = '%s' is not found", userEmail)));
 
-        loginAttemptRepository.save(newLoginAttempt);
+        loginAttempt.setAttempts(initialLoginAttemptsCount);
+        loginAttempt.setIsUserLocked(false);
+        loginAttempt.setExpirationDatetime(null);
+        loginAttempt.setLastModified(LocalDateTime.now());
+
+        loginAttemptRepository.save(loginAttempt);
     }
 }
