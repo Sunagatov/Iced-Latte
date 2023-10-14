@@ -36,7 +36,7 @@ public class FailedLoginHandler {
                     return newLoginAttempt;
                 });
 
-        loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
+        loginAttempt.incrementAttempts();
         loginAttempt.setLastModified(LocalDateTime.now());
 
         if (loginAttempt.getAttempts() >= maxLoginAttempts) {

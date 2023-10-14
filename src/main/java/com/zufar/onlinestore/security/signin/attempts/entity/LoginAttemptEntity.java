@@ -15,6 +15,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Setter
 @Getter
@@ -34,7 +35,7 @@ public class LoginAttemptEntity {
     private String userEmail;
 
     @Column(name = "attempts", nullable = false)
-    private Integer attempts;
+    private AtomicInteger attempts;
 
     @Column(name = "expiration_datetime", nullable = true)
     private LocalDateTime expirationDatetime;
@@ -47,4 +48,19 @@ public class LoginAttemptEntity {
 
     @Version
     private Long version;
+
+    public void incrementAttempts() {
+        if (this.attempts == null) {
+            this.attempts = new AtomicInteger(0);
+        }
+        this.attempts.incrementAndGet();
+    }
+
+    public void setAttempts(int initialLoginAttemptsCount) {
+        this.attempts = new AtomicInteger(initialLoginAttemptsCount);
+    }
+
+    public int getAttempts() {
+        return this.attempts.get();
+    }
 }
