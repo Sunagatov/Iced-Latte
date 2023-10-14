@@ -63,7 +63,7 @@ public class SpringSecurityConfiguration {
         return email -> {
             UserEntity user = userRepository.findByEmail(email)
                     .orElseThrow(() -> {
-                        log.warn("Failed to get the user with the email = {}.", email);
+                        log.error("Failed to get the user with the email = {}.", email);
                         return new BadCredentialsException(String.format("Retrieve the user details with the email = %s: Failed: Bad credentials", email));
                     });
             user.setPassword(passwordEncoder.encode(user.getPassword()));
