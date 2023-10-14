@@ -6,7 +6,7 @@ import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

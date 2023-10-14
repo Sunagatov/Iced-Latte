@@ -106,6 +106,7 @@ components:
       properties:
         items:
           type: "array"
+          uniqueItems: true
           items:
             $ref: "#/components/schemas/NewShoppingSessionItemDto"
 
@@ -145,32 +146,10 @@ components:
           type: "string"
           format: "uuid"
         productInfo:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ProductInfoFullDto"
+          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
         productQuantity:
           type: "integer"
           format: "int32"
-
-    ProductInfoFullDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        name:
-          type: "string"
-        description:
-          type: "string"
-        price:
-          type: "number"
-          format: "decimal"
-        quantity:
-          type: "integer"
-          format: "int32"
-        active:
-          type: "boolean"
-          format: "yes"
 
     UpdateProductQuantityInShoppingSessionItemRequest:
       type: "object"

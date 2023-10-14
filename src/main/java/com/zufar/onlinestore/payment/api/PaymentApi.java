@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.payment.api;
 
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
+import com.zufar.onlinestore.openapi.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentWithClientSecretDto;
 
 public interface PaymentApi {
 

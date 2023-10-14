@@ -96,6 +96,9 @@ components:
         quantity:
           type: "integer"
           format: "int32"
+        active:
+          type: "boolean"
+          format: "yes"
 
     ProductListWithPaginationInfoDto:
       type: "object"
@@ -116,16 +119,3 @@ components:
         totalPages:
           type: "integer"
           format: "int32"
-
-    ApiResponse:
-      type: "object"
-      properties:
-        data:
-          type: "object"
-        message:
-          type: "string"
-        httpStatusCode:
-          type: "integer"
-        timestamp:
-          type: "string"
-          format: "date-time"

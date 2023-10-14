@@ -1,11 +1,10 @@
 package com.zufar.onlinestore.cart.endpoint;
 
-import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.cart.dto.AddNewItemsToShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.dto.UpdateProductQuantityInShoppingSessionItemRequest;
+import com.zufar.onlinestore.openapi.dto.AddNewItemsToShoppingSessionRequest;
+import com.zufar.onlinestore.openapi.dto.DeleteItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.openapi.dto.NewShoppingSessionItemDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.UpdateProductQuantityInShoppingSessionItemRequest;
 import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +30,16 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
 
     public static final String CART_URL = "/api/v1/cart";
 
-    private final CartApi cartApi;
+    private final com.zufar.onlinestore.cart.api.CartApi cartApi;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
     @PostMapping(value = "/items")
     public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody final AddNewItemsToShoppingSessionRequest request) {
         log.warn("Received the request to add a new items to the shoppingSession");
-        Set<NewShoppingSessionItemDto> items = request.items();
+        Set<NewShoppingSessionItemDto> items = request.getItems();
         ShoppingSessionDto shoppingSessionDto = cartApi.addItemsToShoppingSession(items);
-        log.info("ShoppingSessionItem was added to the shoppingSession with id={}", shoppingSessionDto.id());
+        log.info("ShoppingSessionItem was added to the shoppingSession with id={}", shoppingSessionDto.getId());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }
@@ -51,7 +50,7 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the shoppingSession for the user with id: {}", userId);
         ShoppingSessionDto shoppingSessionDto = cartApi.getShoppingSessionByUserId(userId);
-        log.info("The shoppingSession for the user with id: {} was retrieved successfully", shoppingSessionDto.userId());
+        log.info("The shoppingSession for the user with id: {} was retrieved successfully", shoppingSessionDto.getUserId());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }
@@ -59,8 +58,8 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
     @Override
     @PatchMapping(value = "/items")
     public ResponseEntity<ShoppingSessionDto> updateProductQuantityInShoppingSessionItem(@RequestBody final UpdateProductQuantityInShoppingSessionItemRequest request) {
-        UUID shoppingSessionItemId = request.shoppingSessionItemId();
-        Integer productQuantityChange = request.productQuantityChange();
+        UUID shoppingSessionItemId = request.getShoppingSessionItemId();
+        Integer productQuantityChange = request.getProductQuantityChange();
         log.warn("Received the request to update the productQuantity with the change = {} in the shoppingSessionItem with id: {}.",
                 productQuantityChange, shoppingSessionItemId);
         ShoppingSessionDto shoppingSessionDto = cartApi.updateProductQuantityInShoppingSessionItem(shoppingSessionItemId, productQuantityChange);
@@ -72,9 +71,9 @@ public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.Cart
     @Override
     @DeleteMapping(value = "/items")
     public ResponseEntity<ShoppingSessionDto> deleteItemsFromShoppingSession(@RequestBody final DeleteItemsFromShoppingSessionRequest request) {
-        log.info("Received the request to delete the shopping session items with ids: {}.", request.shoppingSessionItemIds());
+        log.info("Received the request to delete the shopping session items with ids: {}.", request.getShoppingSessionItemIds());
         ShoppingSessionDto shoppingSessionDto = cartApi.deleteItemsFromShoppingSession(request);
-        log.info("The shopping session items with ids = {} were deleted.", request.shoppingSessionItemIds());
+        log.info("The shopping session items with ids = {} were deleted.", request.getShoppingSessionItemIds());
         return ResponseEntity.ok()
                 .body(shoppingSessionDto);
     }

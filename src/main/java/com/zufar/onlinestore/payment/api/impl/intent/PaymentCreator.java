@@ -3,7 +3,7 @@ package com.zufar.onlinestore.payment.api.impl.intent;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.zufar.onlinestore.cart.api.CartApi;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.payment.converter.StripePaymentIntentConverter;
 import com.zufar.onlinestore.payment.entity.Payment;
 import com.zufar.onlinestore.payment.enums.PaymentStatus;
@@ -52,7 +52,7 @@ public class PaymentCreator {
             return Pair.of(stripePaymentIntent.getClientSecret(), savedPayment);
 
         } catch (DataIntegrityViolationException e) {
-           throw new ShoppingSessionAlreadyPaidException(shoppingSession.id());
+           throw new ShoppingSessionAlreadyPaidException(shoppingSession.getId());
         }
     }
 

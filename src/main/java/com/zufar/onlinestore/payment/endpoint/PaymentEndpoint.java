@@ -1,18 +1,13 @@
 package com.zufar.onlinestore.payment.endpoint;
 
-import com.zufar.onlinestore.common.response.ApiResponse;
 import com.zufar.onlinestore.payment.api.PaymentApi;
-import com.zufar.onlinestore.payment.api.dto.CreateCardDetailsTokenRequest;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentDetailsDto;
-import com.zufar.onlinestore.payment.api.dto.ProcessedPaymentWithClientSecretDto;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import com.zufar.onlinestore.openapi.dto.CreateCardDetailsTokenRequest;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentDetailsDto;
+import com.zufar.onlinestore.openapi.dto.ProcessedPaymentWithClientSecretDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,71 +16,49 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import java.time.LocalDateTime;
 
 @Slf4j
-@Validated
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(PaymentEndpoint.PAYMENT_URL)
-public class PaymentEndpoint {
+public class PaymentEndpoint implements com.zufar.onlinestore.openapi.payment.api.PaymentApi {
 
     public static final String PAYMENT_URL = "/api/v1/payment";
 
     private final PaymentApi paymentApi;
 
+    @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<ProcessedPaymentWithClientSecretDto>> processPayment(@RequestParam @NotEmpty final String cardDetailsTokenId) {
+    public ResponseEntity<ProcessedPaymentWithClientSecretDto> processPayment(@RequestParam final String cardDetailsTokenId) {
         ProcessedPaymentWithClientSecretDto processedPayment = paymentApi.processPayment(cardDetailsTokenId);
 
-        ApiResponse<ProcessedPaymentWithClientSecretDto> apiResponse = ApiResponse.<ProcessedPaymentWithClientSecretDto>builder()
-                .data(processedPayment)
-                .timestamp(LocalDateTime.now())
-                .httpStatusCode(HttpStatus.CREATED.value())
-                .build();
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(apiResponse);
+                .body(processedPayment);
     }
 
+    @Override
     @GetMapping("/{paymentId}")
-    public ResponseEntity<ApiResponse<ProcessedPaymentDetailsDto>> getPaymentDetails(@PathVariable @NotNull final Long paymentId) {
+    public ResponseEntity<ProcessedPaymentDetailsDto> getPaymentDetails(@PathVariable final Long paymentId) {
         ProcessedPaymentDetailsDto retrievedPayment = paymentApi.getPaymentDetails(paymentId);
 
-        ApiResponse<ProcessedPaymentDetailsDto> apiResponse = ApiResponse.<ProcessedPaymentDetailsDto>builder()
-                .data(retrievedPayment)
-                .timestamp(LocalDateTime.now())
-                .httpStatusCode(HttpStatus.OK.value())
-                .build();
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(apiResponse);
+                .body(retrievedPayment);
     }
 
+    @Override
     @PostMapping("/event")
-    public ResponseEntity<ApiResponse<Void>> paymentEventProcess(@RequestBody @NotEmpty final String paymentIntentPayload, @RequestHeader("Stripe-Signature") @NotEmpty final String stripeSignatureHeader) {
+    public ResponseEntity<Void> paymentEventProcess(@RequestBody final String paymentIntentPayload, @RequestHeader("Stripe-Signature") final String stripeSignatureHeader) {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
-        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
-                .timestamp(LocalDateTime.now())
-                .httpStatusCode(HttpStatus.OK.value())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(apiResponse);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @Override
     @PostMapping("/card")
-    public ResponseEntity<ApiResponse<String>> processCardDetailsToken(@RequestBody @Valid final CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
+    public ResponseEntity<String> processCardDetailsToken(@RequestBody final CreateCardDetailsTokenRequest createCardDetailsTokenRequest) {
         String cardDetailsTokenId = paymentApi.processCardDetailsToken(createCardDetailsTokenRequest);
 
-        ApiResponse<String> apiResponse = ApiResponse.<String>builder()
-                .data(cardDetailsTokenId)
-                .timestamp(LocalDateTime.now())
-                .httpStatusCode(HttpStatus.CREATED.value())
-                .build();
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(apiResponse);
+                .body(cardDetailsTokenId);
     }
 }
