@@ -7,14 +7,14 @@ networks:
 
 services:
   online-store-app:
-    image: '${HUB}/online-store:${TAG}'
+    image: '${DOCKER_HUB}/online-store:${DOCKER_TAG}'
     container_name: online-store-app
     env_file:
       - .env
     build:
       context: .
     ports:
-      - '8083:8083'
+      - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
     networks:
       - services
     labels:
@@ -22,7 +22,7 @@ services:
       - traefik.http.routers.online-store-app.middlewares=forwardedProto@file
       - traefik.http.routers.online-store-app.rule=Host(`online-store.com`)
       - traefik.http.routers.online-store-app.tls=true
-      - traefik.http.services.online-store-app.loadbalancer.server.port=8083
+      - traefik.http.services.online-store-app.loadbalancer.server.port=${APP_SERVER_PORT}
     volumes:
       - ./src:/opt/app/src
       - ./logs:/srv/app/logs:rw

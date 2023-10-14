@@ -2,18 +2,18 @@ version: '3.9'
 
 networks:
   online-store-network:
-    name: online-store-network
+    name: '${DOCKER_COMPOSE_NETWORK}'
     external: true
 
 services:
   online-store-app:
-    image: '${HUB}/online-store:${TAG}'
+    image: '${DOCKER_HUB}/online-store:${DOCKER_TAG}'
     container_name: online-store-app
     env_file:
       - .env
     build:
       context: .
     ports:
-      - '8083:8083'
+      - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
     networks:
-      - online-store-network
+      - '${DOCKER_COMPOSE_NETWORK}'

@@ -2,20 +2,20 @@ version: '3.9'
 
 networks:
   online-store-network:
-    name: online-store-network
+    name: '${DOCKER_COMPOSE_NETWORK}'
 
 services:
   postgresdb:
     image: 'postgres:13.11-bullseye'
     container_name: online-store-postgresdb
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=testdb
+      - POSTGRES_USER=${DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${APP_SERVER_PORT}
     ports:
-      - '5432:5432'
+      - '${DATASOURCE_PORT}:${DATASOURCE_PORT}'
     networks:
-      - online-store-network
+      - '${DOCKER_COMPOSE_NETWORK}'
     volumes:
       - /opt/docker/online-store/postgresql:/var/lib/postgresql/data
     healthcheck:

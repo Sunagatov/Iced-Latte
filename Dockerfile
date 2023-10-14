@@ -8,7 +8,7 @@ COPY pom.xml ./
 COPY .env ./
 RUN set -ex; \
     export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
-    mvn dependency:go-offline -DskipTests -P${APP_ENV}
+    mvn dependency:go-offline -P${APP_ENV}
 COPY . ./
 RUN chmod +x /opt/app/mvnw
 RUN set -ex; \
