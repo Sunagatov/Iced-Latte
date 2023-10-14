@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.security.dto;
 
 import com.zufar.onlinestore.common.validation.email.UniqueEmail;
-import com.zufar.onlinestore.common.validation.username.UniqueUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -19,12 +18,6 @@ public record UserRegistrationRequest(
         @Size(min = 2, max = 128, message = "Last name should have a length between 2 and 128 characters")
         @Pattern(regexp = "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z\\s-]*$", message = "Last name can only contain Latin letters, spaces, and hyphens")
         String lastName,
-
-        @UniqueUsername(message = "Username must be unique")
-        @NotBlank(message = "Username is the mandatory attribute")
-        @Size(min = 2, max = 128, message = "Username should have a length between 2 and 128 characters")
-        @Pattern(regexp = "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z0-9@._\\-@$!%*?&]*$", message = "Username can only contain latin letters, digits, and may include special characters @$!%*?&")
-        String username,
 
         @UniqueEmail(message = "Email must be unique")
         @Email(message = "Email must be valid")

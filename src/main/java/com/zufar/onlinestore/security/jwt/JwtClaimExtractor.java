@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtClaimExtractor {
 	private final JwtSignKeyProvider jwtSignKeyProvider;
 
-	public String extractUsername(final String jwtToken) {
+	public String extractEmail(final String jwtToken) {
 		return extractAllClaims(jwtToken)
 				.getSubject();
 	}
