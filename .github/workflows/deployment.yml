@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - development
+      - Gusmanov
     types:
       - closed
 
@@ -21,5 +22,13 @@ jobs:
       packages: write
 
     steps:
-    - run: |
-        echo The PR was merged
+    - name: Step 1
+      run: echo STEP 1
+
+    - name: Step 2
+      run: exit 1
+      continue-on-error: true
+    
+    - name: Step 3
+      run: echo This is Step 3
+      if: ${{ failure() && steps.step2.conclusion == 'success' }}
