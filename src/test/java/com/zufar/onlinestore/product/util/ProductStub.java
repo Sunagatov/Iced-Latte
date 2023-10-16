@@ -27,6 +27,26 @@ public class ProductStub {
         return productList;
     }
 
+    public static ProductInfoDto generateProduct() {
+        ProductInfoDto product = new ProductInfoDto();
+        product.setId(UUID.randomUUID());
+        product.setName("Product A");
+        product.setDescription("Description for Product A");
+        product.setPrice(BigDecimal.valueOf(10.50));
+        product.setQuantity(10);
+        return product;
+    }
+
+    public static ProductInfoDto generateProductWithProductId(UUID productId) {
+        ProductInfoDto product = new ProductInfoDto();
+        product.setId(productId);
+        product.setName("Product A");
+        product.setDescription("Description for Product A");
+        product.setPrice(BigDecimal.valueOf(10.50));
+        product.setQuantity(10);
+        return product;
+    }
+
     private static List<ProductInfoDto> generateSampleProducts() {
         List<ProductInfoDto> products = new ArrayList<>();
 
@@ -57,7 +77,6 @@ public class ProductStub {
         productD.setDescription("Description for Product D");
         productD.setPrice(BigDecimal.valueOf(5.25));
         productD.setQuantity(40);
-        ;
 
         ProductInfoDto productE = new ProductInfoDto();
         productE.setId(UUID.randomUUID());
