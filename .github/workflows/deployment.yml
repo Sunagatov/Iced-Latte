@@ -1,6 +1,3 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
-
 name: Continius Integration Pipeline
 
 on:
@@ -11,24 +8,20 @@ on:
     types:
       - closed
 
-
 jobs:
   build:
     if: ${{ github.event.pull_request.merged }}
 
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-    - name: Step 1
-      run: echo STEP 1
+    - uses: actions/checkout@v1
 
-    - name: Step 2
-      run: exit 1
-      continue-on-error: true
-    
-    - name: Step 3
-      run: echo This is Step 3
-      if: ${{ failure() && steps.step2.conclusion == 'success' }}
+    - name: Build Docker Image
+      run: |
+        docker login
+        docker build -t .
+        docker-compose run
+        docker push ${image.name}
+
+  
