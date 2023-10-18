@@ -1,0 +1,26 @@
+name: Continius Integration Pipeline
+
+on:
+  pull_request:
+    branches:
+      - development
+      - Gusmanov
+    types:
+      - closed
+
+jobs:
+  build:
+    if: ${{ github.event.pull_request.merged }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build Docker Image
+      run: |
+        docker login -u zufar.sunagatov@gmail.com -p miffan-Mugha6-hiqwor
+        docker build -t zufarexplainedit/test_ci:latest .
+        docker push zufarexplainedit/test_ci:latest
+
+  
