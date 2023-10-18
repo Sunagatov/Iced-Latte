@@ -85,6 +85,7 @@ nb-configuration.xml
 /.env.local
 /README.local.md
 /docker-compose.override.yaml
+.env
 
 ##############################
 ## Logs
