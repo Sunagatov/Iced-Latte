@@ -1,31 +1,30 @@
 package com.zufar.onlinestore.user.api;
 
-import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import com.zufar.onlinestore.user.repository.UserRepository;
-import java.util.Optional;
-import java.util.UUID;
+import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-class SingleUserProviderTest {
+@ExtendWith(MockitoExtension.class)
+public class SingleUserProviderTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserRepository userCrudRepository;
 
     @Mock
     private UserDtoConverter userDtoConverter;
@@ -34,31 +33,31 @@ class SingleUserProviderTest {
     private SingleUserProvider singleUserProvider;
 
     @Test
-    void shouldReturnUserWhenUserIdExists() {
-        UUID userId = UUID.randomUUID();
+    @DisplayName("getUserById should return the correct UserDto when the user exists")
+    public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
+        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
+        UserEntity testUserEntity = UserDtoTestUtil.createUserEntity();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(mock(UserEntity.class)));
-        when(userDtoConverter.toDto(any(UserEntity.class))).thenReturn(mock(UserDto.class));
+        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(testUserEntity));
 
-        UserDto result = singleUserProvider.getUserById(userId);
+        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
+        when(userDtoConverter.toDto(testUserEntity)).thenReturn(expectedUserDto);
 
-        assertNotNull(result);
+        UserDto actualUserDto = singleUserProvider.getUserById(userId);
 
-        verify(userDtoConverter, times(1)).toDto(any(UserEntity.class));
+        assertEquals(expectedUserDto, actualUserDto);
+        verify(userCrudRepository).findById(userId);
+        verify(userDtoConverter).toDto(testUserEntity);
     }
 
     @Test
-    void shouldThrowUserNotFoundExceptionWhenUserIdNotExists() {
-        UUID userId = UUID.randomUUID();
+    @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
+    public void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+        UUID nonExistentUserId = UUID.randomUUID();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        when(userDtoConverter.toDto(any(UserEntity.class))).thenReturn(mock(UserDto.class));
+        when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());
 
-        assertThrows(
-                UserNotFoundException.class,
-                () -> singleUserProvider.getUserById(userId)
-        );
-
-        verify(userRepository, times(1)).findById(userId);
+        assertThrows(UserNotFoundException.class, () -> singleUserProvider.getUserById(nonExistentUserId));
+        verify(userCrudRepository).findById(nonExistentUserId);
     }
 }

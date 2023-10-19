@@ -1,21 +1,25 @@
 package com.zufar.onlinestore.user.api;
 
 import com.zufar.onlinestore.openapi.dto.UserDto;
-import java.util.UUID;
+import com.zufar.onlinestore.user.entity.UserEntity;
+import com.zufar.onlinestore.user.exception.UserNotFoundException;
+import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
-class UserServiceTest {
+@ExtendWith(MockitoExtension.class)
+public class UserServiceTest {
 
     @Mock
     private SaveUserOperationPerformer saveUserOperationPerformer;
@@ -27,31 +31,42 @@ class UserServiceTest {
     private UserService userService;
 
     @Test
-    void shouldReturnUser() {
-        UUID userId = UUID.randomUUID();
+    @DisplayName("saveUser should save the user and return the corresponding UserDto")
+    public void saveUser_ShouldSaveUserAndReturnUserDto() {
+        UserDto userDto = UserDtoTestUtil.createUserDto();
+        UserEntity userEntity = UserDtoTestUtil.createUserEntity();
+        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
 
-        when(singleUserProvider.getUserById(userId)).thenReturn(mock(UserDto.class));
+        when(saveUserOperationPerformer.saveUser(userDto)).thenReturn(expectedUserDto);
 
-        UserDto result = userService.getUserById(userId);
+        UserDto actualUserDto = userService.saveUser(userDto);
 
-        assertNotNull(result);
-
-        verify(singleUserProvider, times(1)).getUserById(userId);
+        assertEquals(expectedUserDto, actualUserDto);
+        verify(saveUserOperationPerformer).saveUser(userDto);
     }
 
     @Test
-    void shouldSaveUser() {
-        UserDto user = new UserDto();
-        user.setId(UUID.randomUUID());
-        user.setFirstName("Username");
-        user.setEmail("username@gmail.com");
+    @DisplayName("getUserById should return the correct UserDto when the user exists")
+    public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() throws UserNotFoundException {
+        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
+        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
 
-        when(saveUserOperationPerformer.saveUser(user)).thenReturn(mock(UserDto.class));
+        when(singleUserProvider.getUserById(userId)).thenReturn(expectedUserDto);
 
-        UserDto result = userService.saveUser(user);
+        UserDto actualUserDto = userService.getUserById(userId);
 
-        assertNotNull(result);
+        assertEquals(expectedUserDto, actualUserDto);
+        verify(singleUserProvider).getUserById(userId);
+    }
 
-        verify(saveUserOperationPerformer, times(1)).saveUser(user);
+    @Test
+    @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
+    public void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+        UUID nonExistentUserId = UUID.randomUUID();
+
+        when(singleUserProvider.getUserById(nonExistentUserId)).thenThrow(UserNotFoundException.class);
+
+        assertThrows(UserNotFoundException.class, () -> userService.getUserById(nonExistentUserId));
+        verify(singleUserProvider).getUserById(nonExistentUserId);
     }
 }
