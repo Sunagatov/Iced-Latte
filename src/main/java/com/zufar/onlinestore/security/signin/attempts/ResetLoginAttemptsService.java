@@ -24,7 +24,7 @@ public class ResetLoginAttemptsService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
         LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
-                .orElseThrow(() -> new LoginAttemptNotFoundException(String.format("LoginAttempt for user with the email = '%s' is not found", userEmail)));
+                .orElseThrow(() -> new LoginAttemptNotFoundException(userEmail));
 
         loginAttempt.setAttempts(initialLoginAttemptsCount);
         loginAttempt.setIsUserLocked(false);

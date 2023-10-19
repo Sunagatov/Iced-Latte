@@ -2,6 +2,9 @@ package com.zufar.onlinestore.security.jwt;
 
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 import io.jsonwebtoken.Claims;
@@ -19,9 +22,14 @@ public class JwtClaimExtractor {
 				.getSubject();
 	}
 
-	public Date extractExpiration(final String jwtToken) {
-		return extractAllClaims(jwtToken)
+	public LocalDateTime extractExpiration(final String jwtToken) {
+		Date expiration = extractAllClaims(jwtToken)
 				.getExpiration();
+
+		return Instant
+				.ofEpochMilli(expiration.getTime())
+				.atZone(ZoneId.systemDefault())
+				.toLocalDateTime();
 	}
 
 

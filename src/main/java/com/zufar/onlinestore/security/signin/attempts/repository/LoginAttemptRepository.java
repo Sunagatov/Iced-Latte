@@ -8,6 +8,4 @@ import java.util.Optional;
 public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity, String> {
 
     Optional<LoginAttemptEntity> findByUserEmail(String userEmail);
-
-    void deleteByUserEmail(String userEmail);
 }

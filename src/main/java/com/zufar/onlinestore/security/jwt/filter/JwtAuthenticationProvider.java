@@ -12,7 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
-
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 
@@ -25,17 +26,14 @@ public class JwtAuthenticationProvider {
 	private final UserDetailsService userDetailsService;
 
 	public Optional<UsernamePasswordAuthenticationToken> get(final HttpServletRequest httpRequest) {
-		Optional<String> jwtTokenOptional = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-		if (jwtTokenOptional.isEmpty()) {
+		final String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest).orElse(null);
+		if (StringUtils.isEmpty(jwtToken)) {
 			return Optional.empty();
 		}
 
-		final String jwtToken = jwtTokenOptional.get();
-
 		try {
-			Date expirationDate = jwtClaimExtractor.extractExpiration(jwtToken);
-			Date now = new Date();
-			if (expirationDate.before(now)) {
+			LocalDateTime expirationDate = jwtClaimExtractor.extractExpiration(jwtToken);
+			if (expirationDate.isBefore(LocalDateTime.now())) {
 				throw new JwtTokenException("Jwt token is expired");
 			}
 

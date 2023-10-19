@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +14,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Setter
 @Getter
@@ -35,7 +33,7 @@ public class LoginAttemptEntity {
     private String userEmail;
 
     @Column(name = "attempts", nullable = false)
-    private AtomicInteger attempts;
+    private Integer attempts;
 
     @Column(name = "expiration_datetime", nullable = true)
     private LocalDateTime expirationDatetime;
@@ -45,22 +43,4 @@ public class LoginAttemptEntity {
 
     @Column(name = "last_modified", nullable = false)
     private LocalDateTime lastModified;
-
-    @Version
-    private Long version;
-
-    public void incrementAttempts() {
-        if (this.attempts == null) {
-            this.attempts = new AtomicInteger(0);
-        }
-        this.attempts.incrementAndGet();
-    }
-
-    public void setAttempts(int initialLoginAttemptsCount) {
-        this.attempts = new AtomicInteger(initialLoginAttemptsCount);
-    }
-
-    public int getAttempts() {
-        return this.attempts.get();
-    }
 }

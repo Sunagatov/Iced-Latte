@@ -4,11 +4,13 @@ import com.zufar.onlinestore.security.exception.AccountLockedException;
 import com.zufar.onlinestore.security.signin.attempts.entity.LoginAttemptEntity;
 import com.zufar.onlinestore.security.signin.attempts.repository.LoginAttemptRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserLockoutValidator {
@@ -22,7 +24,8 @@ public class UserLockoutValidator {
                 .orElse(null);
 
         if (lockoutExpiration != null && LocalDateTime.now().isBefore(lockoutExpiration)) {
-            throw new AccountLockedException("Your account is locked.");
+            log.info("User with email = '{}' is locked. Login is not allowed until '{}'", userEmail, lockoutExpiration);
+            throw new AccountLockedException();
         }
     }
 }
