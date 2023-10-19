@@ -1,8 +1,7 @@
-package com.zufar.onlinestore.product.api;
+package com.zufar.onlinestore.user.api;
 
-import com.zufar.onlinestore.user.api.DefaultUserEntityValuesSetter;
-import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.openapi.dto.UserDto;
+import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

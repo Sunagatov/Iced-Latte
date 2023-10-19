@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.user.api;
 
-import com.zufar.onlinestore.product.api.SaveUserOperationPerformer;
 import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
