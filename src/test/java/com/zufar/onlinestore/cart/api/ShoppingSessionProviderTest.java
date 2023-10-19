@@ -1,4 +1,5 @@
 package com.zufar.onlinestore.cart.api;
+
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,21 +36,21 @@ class ShoppingSessionProviderTest {
     private ShoppingSessionProvider shoppingSessionProvider;
 
     @Test
-    void shouldReturnShoppingSessionDtoWhenUserIdExists() {
-        UUID userid = UUID.randomUUID();
+    void shouldReturnShoppingSessionDtoWhenUserIdValid() {
+        UUID userId = UUID.randomUUID();
+        ShoppingSession shoppingSession = mock(ShoppingSession.class);
+        shoppingSession.setUserId(userId);
 
-        when(shoppingSessionRepository.findShoppingSessionByUserId(userid)).thenReturn(mock(ShoppingSession.class));
-        when(shoppingSessionDtoConverter.toDto(any(ShoppingSession.class))).thenReturn(mock(ShoppingSessionDto.class));
+        when(shoppingSessionRepository.findShoppingSessionByUserId(userId)).thenReturn(shoppingSession);
+        when(shoppingSessionDtoConverter.toDto(shoppingSession)).thenReturn(mock(ShoppingSessionDto.class));
 
-        ShoppingSessionDto resultDto = shoppingSessionProvider.getByUserId(userid);
+        ShoppingSessionDto resultDto = shoppingSessionProvider.getByUserId(userId);
 
         assertNotNull(resultDto);
-
-        verify(shoppingSessionDtoConverter, times(1)).toDto(any(ShoppingSession.class));
     }
 
     @Test
-    void shouldThrowExceptionWhenUserIdNotExists() {
+    void shouldThrowExceptionWhenUserIdInvalid() {
         UUID userId = UUID.randomUUID();
 
         when(shoppingSessionRepository.findById(userId)).thenReturn(Optional.empty());
@@ -64,6 +65,6 @@ class ShoppingSessionProviderTest {
                 thrownException.getMessage()
         );
 
-        verify(shoppingSessionRepository, times(1)).findShoppingSessionByUserId(userId);
+        verify(shoppingSessionDtoConverter, never()).toDto(any(ShoppingSession.class));
     }
 }

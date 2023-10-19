@@ -22,7 +22,7 @@ class ItemsTotalPriceCalculatorTest {
     @Test
     void shouldReturnCorrectTotalPrice() {
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setPrice(BigDecimal.ONE);
+        productInfo.setPrice(BigDecimal.TEN);
 
         ShoppingSessionItem item = new ShoppingSessionItem();
         item.setProductInfo(productInfo);
@@ -32,7 +32,7 @@ class ItemsTotalPriceCalculatorTest {
         items.add(item);
 
         BigDecimal result = itemsTotalPriceCalculator.calculate(items);
-        BigDecimal expected = BigDecimal.valueOf(5);
+        BigDecimal expected = BigDecimal.valueOf(50);
 
         assertEquals(result, expected);
     }
