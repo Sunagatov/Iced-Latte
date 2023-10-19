@@ -1,14 +1,18 @@
 package com.zufar.onlinestore.product.endpoint.e2e;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.onlinestore.product.endpoint.ProductsEndpoint;
 import io.restassured.RestAssured;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MockServerContainer;
@@ -16,6 +20,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import java.io.IOException;
+import java.io.InputStream;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -39,6 +45,21 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
     @Rule
     public MockServerContainer mockServer = new MockServerContainer(MOCKSERVER_IMAGE);
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Value("classpath:product/model/product-base-model.json")
+    private Resource productResponseResource;
+
+    @Value("classpath:product/model/product-error-model.json")
+    private Resource errorResponseResource;
+
+    @Value("classpath:product/model/product-pagination-americano-model.json")
+    private Resource paginationAmericanoResponseResource;
+
+    @Value("classpath:product/model/product-pagination-macchiato-model.json")
+    private Resource paginationMacchiatoResponseResource;
+
     static MockServerClient mockServerClient;
 
     @BeforeEach
@@ -49,18 +70,9 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
     }
 
     @Test
-    void shouldRetrieveProductSuccessfullyById() {
+    void shouldRetrieveProductSuccessfullyById() throws IOException {
         String productId = "d2160f5d-b8e1-4cbe-8bb2-2f2f48484848";
-        String mockResponse = """
-                {
-                    "id": "%s",
-                    "name": "Test Product",
-                    "description": "Test Product Description",
-                    "price": 10.5,
-                    "quantity": 5,
-                    "active": true
-                }
-                """.formatted(productId);
+        String mockResponse = loadProductJsonResource(productResponseResource);
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.GET.name())
@@ -69,21 +81,13 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withStatusCode(HttpStatus.OK.value())
                         .withBody(mockResponse));
 
-        checkStatusCodeInResponse("/" + productId, HttpStatus.OK.value(), "model/product-schema.json");
+        checkStatusCodeInResponse("/" + productId, HttpStatus.OK.value(), "product/model/schema/product-schema.json");
     }
 
     @Test
-    void shouldReturnNotFoundForInvalidProductId() {
+    void shouldReturnNotFoundForInvalidProductId() throws IOException {
         String invalidProductId = "f1a1d5c1-a6f7-4e2b-8cfd-3d3f52e1abcd";
-        String mockErrorResponse = """
-                {
-                    "data": null,
-                    "message": ["Product not found"],
-                    "description": "The product with the given ID does not exist",
-                    "httpStatusCode": 404,
-                    "timestamp": "2023-10-15T18:30:00Z"
-                }
-                """;
+        String mockErrorResponse = loadProductJsonResource(errorResponseResource);
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.GET.name())
@@ -92,28 +96,12 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withStatusCode(HttpStatus.NOT_FOUND.value())
                         .withBody(mockErrorResponse));
 
-        baseNegativeCheck("/" + invalidProductId, "model/negative-response-schema.json");
+        baseNegativeCheck("/" + invalidProductId, "product/model/schema/product-failed-schema.json");
     }
 
     @Test
-    void shouldFetchProductsWithPaginationAndSorting() {
-        String mockResponse = """
-                {
-                    "products": [
-                        {
-                            "id": "46f97165-00a7-4b45-9e5c-09f8168b0047",
-                            "name": "Macchiato",
-                            "description": "Espresso with a Dash of Frothy Milk",
-                            "price": 3.99,
-                            "quantity": 90,
-                            "active": true
-                        }
-                    ],
-                    "page": 1,
-                    "size": 1,
-                    "totalElements": 6,
-                    "totalPages": 6
-                }""";
+    void shouldFetchProductsWithPaginationAndSorting() throws IOException {
+        String mockResponse = loadProductJsonResource(paginationMacchiatoResponseResource);
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.GET.name())
@@ -128,7 +116,7 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withStatusCode(HttpStatus.OK.value())
                         .withBody(mockResponse));
 
-        checkStatusCodeInResponse("?page=1&size=1&sort_attribute=name&sort_direction=desc", HttpStatus.OK.value(), "/model/product-list-pagination-schema.json");
+        checkStatusCodeInResponse("?page=1&size=1&sort_attribute=name&sort_direction=desc", HttpStatus.OK.value(), "product/model/schema/product-list-pagination-schema.json");
     }
 
     @Test
@@ -150,26 +138,9 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
     }
 
     @Test
-    void shouldContainProductWithNameAmericano() {
+    void shouldContainProductWithNameAmericano() throws IOException {
         String expectedProductName = "Americano";
-        String mockResponse = """
-                            {
-                                "products": [
-                                    {
-                                        "id": "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5",
-                                        "name": "Americano",
-                                        "description": "Espresso Diluted with Hot Water",
-                                        "price": 4.49,
-                                        "quantity": 70,
-                                        "active": true
-                                    }
-                                ],
-                                "page": 5,
-                                "size": 1,
-                                "totalElements": 6,
-                                "totalPages": 6
-                            }
-                """;
+        String mockResponse = loadProductJsonResource(paginationAmericanoResponseResource);
 
         mockServerClient.when(
                         request()
@@ -185,6 +156,12 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withBody(mockResponse)
                 );
 
-        basePositiveHasItemsCheck("products.name", expectedProductName, "?page=5&size=1&sort_attribute=name&sort_direction=desc", "model/products-pagination-schema.json");
+        basePositiveHasItemsCheck("products.name", expectedProductName, "?page=5&size=1&sort_attribute=name&sort_direction=desc", "product/model/schema/product-list-pagination-schema.json");
+    }
+
+    private String loadProductJsonResource(Resource resource) throws IOException {
+        try (InputStream inputStream = resource.getInputStream()) {
+            return objectMapper.readValue(inputStream, String.class);
+        }
     }
 }

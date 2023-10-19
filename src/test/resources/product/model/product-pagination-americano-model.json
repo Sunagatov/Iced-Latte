@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "id": "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5",
+      "name": "Americano",
+      "description": "Espresso Diluted with Hot Water",
+      "price": 4.49,
+      "quantity": 70,
+      "active": true
+    }
+  ],
+  "page": 5,
+  "size": 1,
+  "totalElements": 6,
+  "totalPages": 6
+}

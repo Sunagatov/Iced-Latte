@@ -1,0 +1,8 @@
+{
+  "id": "d2160f5d-b8e1-4cbe-8bb2-2f2f48484848",
+  "name": "Test Product",
+  "description": "Test Product Description",
+  "price": 10.5,
+  "quantity": 5,
+  "active": true
+}

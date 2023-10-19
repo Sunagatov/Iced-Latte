@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "id": "46f97165-00a7-4b45-9e5c-09f8168b0047",
+      "name": "Macchiato",
+      "description": "Espresso with a Dash of Frothy Milk",
+      "price": 3.99,
+      "quantity": 90,
+      "active": true
+    }
+  ],
+  "page": 1,
+  "size": 1,
+  "totalElements": 6,
+  "totalPages": 6
+}
