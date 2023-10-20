@@ -1,12 +1,13 @@
-name: Java CI with Maven
+name: Dev PR Build and Test Pipeline
 
 on:
   pull_request:
     branches:
-      - feature/ci-cd-pipeline-by-zufar
+      - development
 
 jobs:
   build:
+    name: Build Job
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +32,7 @@ jobs:
         run: mvn -B package -Pdev -DskipTests --file pom.xml
 
   test:
+    name: Test Job
     needs: build
     runs-on: ubuntu-latest
 
