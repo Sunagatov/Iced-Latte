@@ -69,6 +69,6 @@ class ProductApiImplTest {
 
         assertNotNull(result);
 
-        verify(singleProductProvider, times(1)).getProductById(productId);
+        verify(singleProductProvider, times(5)).getProductById(productId);
     }
 }
