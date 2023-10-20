@@ -27,10 +27,24 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run unit tests
-        run: mvn test -Pdev --file pom.xml
-
       - name: Build with Maven
         run: mvn -B package -Pdev --file pom.xml
+
+      # Static code analysis with SonarScanner
+
+      - name: Install SonarScanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+          unzip sonar-scanner-cli-4.7.0.2747-linux.zip
+          export SONAR_SCANNER_HOME=`pwd`/sonar-scanner-4.7.0.2747-linux
+          export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+
+      - name: Run SonarScanner
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=your-project-key \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=your-sonarcloud-token
 
 
