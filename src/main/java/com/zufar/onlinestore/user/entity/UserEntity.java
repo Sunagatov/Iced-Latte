@@ -20,7 +20,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,16 +35,13 @@ public class UserEntity implements UserDetails {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID userId;
+    private UUID id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
     @Column(name = "last_name", nullable = false)
     private String lastName;
-
-    @Column(name = "user_name", nullable = false, unique = true)
-    private String username;
 
     @Column(name = "stripe_customer_token", nullable = true, unique = true)
     private String stripeCustomerToken;
@@ -76,6 +72,11 @@ public class UserEntity implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
     public void addAuthority(UserGrantedAuthority authority) {
         this.authorities.add(authority);
         authority.setUser(this);
@@ -99,21 +100,21 @@ public class UserEntity implements UserDetails {
             return false;
         UserEntity user = (UserEntity) o;
         return new EqualsBuilder()
-                .append(userId, user.userId)
+                .append(id, user.id)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(userId)
+                .append(id)
                 .toHashCode();
     }
 
     @Override
     public String toString() {
         return "User{" +
-                "userId='" + userId + '\'' +
+                "userId='" + id + '\'' +
                 '}';
     }
 }

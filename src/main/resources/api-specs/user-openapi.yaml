@@ -57,8 +57,6 @@ components:
           type: "string"
         stripeCustomerToken:
           type: "string"
-        username:
-          type: "string"
         email:
           type: "string"
         password:
