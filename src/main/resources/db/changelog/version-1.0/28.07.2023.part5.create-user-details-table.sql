@@ -5,7 +5,7 @@ CREATE TABLE user_details
     last_name               VARCHAR(55) NOT NULL,
     stripe_customer_token   VARCHAR(64) UNIQUE,
     email                   VARCHAR(55) NOT NULL UNIQUE,
-    password                VARCHAR(55) NOT NULL,
+    password                VARCHAR(255) NOT NULL,
     address_id              UUID,
     account_non_expired     BOOLEAN     NOT NULL,
     account_non_locked      BOOLEAN     NOT NULL,

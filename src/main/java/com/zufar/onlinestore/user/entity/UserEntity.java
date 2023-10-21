@@ -56,7 +56,6 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private transient Address address;
 
-    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<UserGrantedAuthority> authorities = new HashSet<>();
 
@@ -78,6 +77,9 @@ public class UserEntity implements UserDetails {
     }
 
     public void addAuthority(UserGrantedAuthority authority) {
+        if (this.authorities == null) {
+            this.authorities = new HashSet<>();
+        }
         this.authorities.add(authority);
         authority.setUser(this);
     }

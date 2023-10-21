@@ -12,9 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Optional;
 
 @Slf4j

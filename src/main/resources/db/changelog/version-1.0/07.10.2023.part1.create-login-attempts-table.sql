@@ -4,8 +4,9 @@ CREATE TABLE login_attempts
     user_email          VARCHAR(55) NOT NULL UNIQUE,
     attempts            INTEGER     NOT NULL CHECK (attempts >= 0),
     is_user_locked      BOOLEAN     NOT NULL,
-    expiration_datetime TIMESTAMPTZ CHECK (expiration_datetime <= NOW()),
-    last_modified       TIMESTAMPTZ NOT NULL CHECK (last_modified <= NOW()),
+    expiration_datetime TIMESTAMPTZ,
+    last_modified       TIMESTAMPTZ NOT NULL,
+
     CONSTRAINT fk_user_id
         FOREIGN KEY (user_email)
             REFERENCES user_details (email)
