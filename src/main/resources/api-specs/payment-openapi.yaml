@@ -1,0 +1,255 @@
+openapi: "3.0.3"
+
+info:
+  title: "Online-Store API"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:8083"
+
+tags:
+  - name: "Payment"
+    description: "An API for managing and retrieving payment information"
+
+paths:
+  /api/v1/payment:
+    post:
+      tags:
+        - "Payment"
+      summary: "Enables payment processing using a card details token ID"
+      operationId: "processPayment"
+      parameters:
+        - name: "cardDetailsTokenId"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            minLength: 1
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
+        "400":
+          description: "Cannot retrieve stripe customer by stripeCustomerId = {stripeCustomerId}. 
+          Cannot retrieve payment method associated with stripe customer, stripeCustomerId = {stripeCustomerId}. 
+          The payment associated with customer is not found, stripeCustomerId = {stripeCustomerId}. 
+          Shopping session with shoppingSessionId = %s is already paid"
+          content:
+            application/json:
+              example:
+                messages: ["incompatible types -- expected type"]
+                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+        "404":
+          description: "User with id = {userId} is not found."
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "NOT_FOUND"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+
+  /api/v1/payment/{paymentId}:
+    get:
+      tags:
+        - "Payment"
+      summary: "Enables to get a payment details by payment id"
+      operationId: "getPaymentDetails"
+      parameters:
+        - name: "paymentId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
+        "404":
+          description: "The payment with paymentId = {paymentId} is not found. 
+          The shopping session for the user with id = {userId} is not found."
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: getPaymentDetails that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "NOT_FOUND"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+
+  /api/v1/payment/event:
+    post:
+      tags:
+        - "Payment"
+      summary: "Enables payment event processing"
+      operationId: "paymentEventProcess"
+      parameters:
+        - name: "Stripe-Signature"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+            minLength: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "string"
+              minLength: 1
+        required: true
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Payment event with the stripe signature = {stripe signature} cannot be processed. 
+          PaymentEvent = {PaymentEvent} cannot be parsed."
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: paymentEventProcess that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+
+  /api/v1/payment/card:
+    post:
+      tags:
+        - "Payment"
+      summary: "This method is a temporary solution until the front-end goes functional to pass us a token with payment card details.
+      In the meantime, this method serves to test the payment api"
+      operationId: "processCardDetailsToken"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCardDetailsTokenRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                type: "string"
+        "400":
+          description: "Card token with cardNumber = {cardNumber} cannot create"
+          content:
+            application/json:
+              example:
+                messages: [ "incompatible types -- expected type" ]
+                description: "Operation was failed in method: processCardDetailsToken that belongs to the class: PaymentEndpoint. 
+                Problematic code line: 4"
+                httpStatusCode: "BAD_REQUEST"
+                timestamp: "2023-01-15 09:10:50"
+              schema:
+                $ref: "#/components/schemas/ErrorHandler"
+
+components:
+  schemas:
+    PaymentStatus:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          enum:
+            - "PAYMENT_METHOD_IS_REQUIRED"
+            - "PAYMENT_CONFIRMATION_IS_REQUIRED"
+            - "PAYMENT_CAPTURE_IS_REQUIRED"
+            - "PAYMENT_ACTION_IS_REQUIRED"
+            - "PAYMENT_IS_FAILED"
+            - "PAYMENT_IS_PROCESSING"
+            - "PAYMENT_IS_CANCELED"
+            - "PAYMENT_IS_SUCCEEDED"
+        description:
+          type: "string"
+          enum:
+            - "Payment method is required"
+            - "Payment confirmation is required"
+            - "Payment capture is required"
+            - "Additional action is required to complete payment"
+            - "Payment processing error"
+            - "Payment in processing"
+            - "Payment is canceled"
+            - "Payment is succeeded"
+
+    ProcessedPaymentWithClientSecretDto:
+      type: "object"
+      properties:
+        paymentId:
+          type: "integer"
+          format: "int64"
+        clientSecret:
+          type: "string"
+
+    ProcessedPaymentDetailsDto:
+      type: "object"
+      properties:
+        paymentId:
+          type: "integer"
+          format: "int64"
+        itemsTotalPrice:
+          type: "number"
+          format: "decimal"
+        paymentIntentId:
+          type: "string"
+        items:
+          type: "array"
+          uniqueItems: true
+          items:
+            $ref: "cart-openapi.yaml#/components/schemas/ShoppingSessionItemDto"
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        description:
+          type: "string"
+
+    CreateCardDetailsTokenRequest:
+      type: "object"
+      properties:
+        cardNumber:
+          type: "string"
+          minLength: 1
+        expMonth:
+          type: "string"
+          minLength: 1
+        expYear:
+          type: "string"
+          minLength: 1
+        cvc:
+          type: "string"
+          minLength: 1
+
+    ErrorHandler:
+      type: "object"
+      properties:
+        messages:
+          type: "array"
+          items:
+            format: "string"
+        description:
+          type: "string"
+        httpStatusCode:
+          type: "integer"
+          format: "int32"
+        timestamp:
+          type: "string"
+          format: "date-time"

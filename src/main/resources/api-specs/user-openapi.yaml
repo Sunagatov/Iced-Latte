@@ -48,13 +48,14 @@ components:
     UserDto:
       type: "object"
       properties:
+        id:
+          type: "string"
+          format: "uuid"
         firstName:
           type: "string"
         lastName:
           type: "string"
         stripeCustomerToken:
-          type: "string"
-        username:
           type: "string"
         email:
           type: "string"

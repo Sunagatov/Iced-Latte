@@ -6,7 +6,7 @@ import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +23,12 @@ public class UserRegistrationService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public UserRegistrationResponse register(final UserRegistrationRequest request) {
-        log.info("Received registration request from {}.", request.username());
+        log.info("Received registration request from {}.", request.email());
         final UserDto userDto = registrationDtoConverter.toDto(request);
         final UserDto userDtoWithId = userApi.saveUser(userDto);
         UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
-        log.info("Registration was successful for {}.", request.username());
+        log.info("Registration was successful for {}.", request.email());
         return new UserRegistrationResponse(jwtToken);
     }
 }

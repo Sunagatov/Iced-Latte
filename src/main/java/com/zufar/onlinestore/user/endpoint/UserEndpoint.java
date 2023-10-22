@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.user.endpoint;
 
 import com.zufar.onlinestore.user.api.UserApi;
-import com.zufar.onlinestore.user.dto.UserDto;
+import com.zufar.onlinestore.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class UserEndpoint implements com.zufar.onlinestore.openapi.user.api.User
     public ResponseEntity<UserDto> getUserById(@PathVariable final String userId) {
         log.info("Received the request to get the User with userId - {}.", userId);
         UserDto userDto = userApi.getUserById(UUID.fromString(userId));
-        log.info("The user with username - {} was retrieved.", userId);
+        log.info("The user with userId - {} was retrieved.", userId);
         return ResponseEntity.ok()
                 .body(userDto);
     }

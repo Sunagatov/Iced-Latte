@@ -1,6 +1,6 @@
 package com.zufar.onlinestore.user.converter;
 
-import com.zufar.onlinestore.user.dto.AddressDto;
+import com.zufar.onlinestore.openapi.dto.AddressDto;
 import com.zufar.onlinestore.user.entity.Address;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;

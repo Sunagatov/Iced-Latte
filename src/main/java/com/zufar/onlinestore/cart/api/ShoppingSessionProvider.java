@@ -1,7 +1,7 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;

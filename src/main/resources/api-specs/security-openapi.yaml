@@ -52,20 +52,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
 
-  /api/v1/auth/logout:
-    post:
-      tags:
-        - "Security"
-      summary: "Logout a user"
-      operationId: "logout"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/Void"
-
 components:
   schemas:
     UserRegistrationRequest:
@@ -74,8 +60,6 @@ components:
         firstName:
           type: "string"
         lastName:
-          type: "string"
-        username:
           type: "string"
         email:
           type: "string"
@@ -91,7 +75,7 @@ components:
     UserAuthenticationRequest:
       type: "object"
       properties:
-        username:
+        email:
           type: "string"
         password:
           type: "string"
@@ -101,7 +85,3 @@ components:
       properties:
         token:
           type: "string"
-
-    Void:
-      type: "object"
-      properties: { }

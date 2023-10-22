@@ -1,8 +1,8 @@
 package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
-import com.zufar.onlinestore.cart.dto.NewShoppingSessionItemDto;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+import com.zufar.onlinestore.openapi.dto.NewShoppingSessionItemDto;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class AddItemsToShoppingSessionHelper {
 
     private List<ShoppingSessionItem> createItems(Set<NewShoppingSessionItemDto> itemsToAdd, ShoppingSession shoppingSession) {
         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
-                .collect(Collectors.toMap(NewShoppingSessionItemDto::productId, NewShoppingSessionItemDto::productQuantity));
+                .collect(Collectors.toMap(NewShoppingSessionItemDto::getProductId, NewShoppingSessionItemDto::getProductQuantity));
 
         Set<UUID> existedProductIds = shoppingSession.getItems().stream()
                 .map(ShoppingSessionItem::getProductInfo)
@@ -94,7 +94,7 @@ public class AddItemsToShoppingSessionHelper {
                 .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
                 .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
                 .items(Collections.emptySet())
-                .createdAt(LocalDateTime.now())
+                .createdAt(OffsetDateTime.now())
                 .build();
     }
 }
