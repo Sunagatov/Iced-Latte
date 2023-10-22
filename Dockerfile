@@ -2,15 +2,27 @@
 # Build stage with Maven
 #
 FROM maven:3.8.3-openjdk-17 as maven_build
-ENV HOME=/opt/app
-WORKDIR $HOME
-COPY pom.xml ./
-COPY .env ./
-RUN set -ex; \
-    export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
+
+# Create builder user
+RUN groupadd -r builder && useradd -r -g builder builder
+
+WORKDIR /opt/app
+
+# Ensure that the builder user has a maven repository directory
+RUN mkdir -p /home/builder/.m2 && chown -R builder:builder /home/builder/.m2
+
+# Copy only necessary files for dependency resolution
+COPY pom.xml .env ./
+
+# Set user to builder for safety
+USER builder
+
+# Resolve dependencies
+RUN export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
     mvn dependency:go-offline -P${APP_ENV}
-COPY . ./
-RUN chmod +x /opt/app/mvnw
+
+# Copy the source and build the application
+COPY --chown=builder:builder . ./
 RUN set -ex; \
     export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
     mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
@@ -21,20 +33,22 @@ RUN set -ex; \
 #
 FROM eclipse-temurin:17-jre-jammy as prod
 WORKDIR /opt/app
+
+# Install necessary dependencies and cleanup
 RUN apt-get update && \
     apt-get install -y netcat acl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-RUN apt-get update && \
-    apt-get install -y netcat && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-COPY --from=maven_build /opt/app/target/*.jar /opt/app/app.jar
-COPY --from=maven_build /opt/app/.env /opt/app/.env
-COPY --from=maven_build /opt/app/docker/docker-entrypoint.sh /opt/app/docker-entrypoint.sh
-RUN chmod +x /opt/app/docker-entrypoint.sh
+
+# Copy compiled JAR, environment file, and entrypoint script
+COPY --from=maven_build /opt/app/target/*.jar ./app.jar
+COPY --from=maven_build /opt/app/.env ./.env
+COPY --from=maven_build /opt/app/docker/docker-entrypoint.sh ./docker-entrypoint.sh
+
+# Set permissions for entrypoint script
+RUN chmod +x ./docker-entrypoint.sh
 
 #
 # Entrypoint
 #
-ENTRYPOINT ["/opt/app/docker-entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
