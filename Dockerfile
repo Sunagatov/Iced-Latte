@@ -22,6 +22,10 @@ RUN set -ex; \
 FROM eclipse-temurin:17-jre-jammy as prod
 WORKDIR /opt/app
 RUN apt-get update && \
+    apt-get install -y netcat acl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
     apt-get install -y netcat && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

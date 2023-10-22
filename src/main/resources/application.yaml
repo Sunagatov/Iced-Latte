@@ -3,7 +3,7 @@
 # Server Properties
 #
 server:
-  port: ${SERVER_PORT}
+  port: ${APP_SERVER_PORT}
   ssl:
     key-store-type: PKCS12
     key-store: certs/zufarkeystore.p12
@@ -58,7 +58,7 @@ springdoc:
 #
 management:
   server:
-    port: ${SERVER_PORT}
+    port: ${APP_SERVER_PORT}
   endpoint:
     prometheus:
       enabled: false

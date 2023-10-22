@@ -21,5 +21,6 @@ docker compose push
 ### restart
 ```bash
 docker compose pull \
-&& docker compose down && docker compose up -d
+&& docker compose down \
+&& docker compose up -d
 ```
