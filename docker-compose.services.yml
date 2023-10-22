@@ -11,15 +11,18 @@ services:
     environment:
       - POSTGRES_USER=${DATASOURCE_USERNAME}
       - POSTGRES_PASSWORD=${DATASOURCE_PASSWORD}
-      - POSTGRES_DB=${APP_SERVER_PORT}
+      - POSTGRES_DB=${DATASOURCE_NAME}
     ports:
       - '${DATASOURCE_PORT}:${DATASOURCE_PORT}'
     networks:
       - '${DOCKER_COMPOSE_NETWORK}'
     volumes:
-      - /opt/docker/online-store/postgresql:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s
       timeout: 10s
       retries: 5
+
+volumes:
+  pgdata:
