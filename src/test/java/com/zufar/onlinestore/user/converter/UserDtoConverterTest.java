@@ -2,7 +2,7 @@ package com.zufar.onlinestore.user.converter;
 
 import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
-import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import com.zufar.onlinestore.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class UserDtoConverterTest {
 
     @Autowired
-    UserDtoConverter userDtoConverter;
+    private UserDtoConverter userDtoConverter;
 
     @Configuration
     public static class Config {
@@ -36,7 +36,7 @@ public class UserDtoConverterTest {
     @Test
     @DisplayName("toDto should convert UserEntity to UserDto with complete user information")
     public void toDtoShouldConvertUserEntityToUserDtoWithCompleteUserInformation() {
-        UserEntity entity = UserDtoTestUtil.createUserEntity();
+        UserEntity entity = UserDtoTestStub.createUserEntity();
         UserDto dto = userDtoConverter.toDto(entity);
 
         assertEquals(entity.getId(), dto.getId());
@@ -53,7 +53,7 @@ public class UserDtoConverterTest {
     @Test
     @DisplayName("toEntity should convert UserDto to UserEntity with complete user information")
     public void toEntityShouldConvertUserDtoToUserEntityWithCompleteUserInformation() {
-        UserDto dto = UserDtoTestUtil.createUserDto();
+        UserDto dto = UserDtoTestStub.createUserDto();
         UserEntity entity = userDtoConverter.toEntity(dto);
 
         assertEquals(dto.getId(), entity.getId());

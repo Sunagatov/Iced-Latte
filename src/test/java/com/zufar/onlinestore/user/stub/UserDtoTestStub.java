@@ -7,18 +7,13 @@ import com.zufar.onlinestore.user.entity.UserEntity;
 
 import java.util.UUID;
 
-public class UserDtoTestUtil {
+public class UserDtoTestStub {
 
     public static UserEntity createUserEntity() {
-        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        Address address = Address.builder()
-                .addressId(UUID.randomUUID())
-                .line("123 Main St")
-                .city("Sample City")
-                .country("Sample Country")
-                .build();
+        Address address = AddressDtoTestStub.createAddressEntity();
+
         UserEntity entity = new UserEntity();
-        entity.setId(userId);
+        entity.setId(UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3"));
         entity.setFirstName("John");
         entity.setLastName("Doe");
         entity.setEmail("johndoe@example.com");
@@ -28,15 +23,12 @@ public class UserDtoTestUtil {
         return entity;
     }
 
+
     public static UserDto createUserDto() {
-        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        AddressDto addressDto = new AddressDto();
-        addressDto.setLine("456 Elm St");
-        addressDto.setCity("Test City");
-        addressDto.setCountry("Test Country");
+        AddressDto addressDto = AddressDtoTestStub.createAddressDto();
 
         UserDto dto = new UserDto();
-        dto.setId(userId);
+        dto.setId(UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3"));
         dto.setFirstName("John");
         dto.setLastName("Doe");
         dto.setEmail("johndoe@example.com");
