@@ -90,7 +90,6 @@ jwt:
 login-attempts:
   max-attempts: 5
   lockout-duration-minutes: 30
-  initial-attempts-count: 0
 
 #
 # Logging Properties

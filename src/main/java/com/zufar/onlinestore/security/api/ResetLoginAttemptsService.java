@@ -1,23 +1,18 @@
-package com.zufar.onlinestore.security.signin.attempts;
+package com.zufar.onlinestore.security.api;
 
-import com.zufar.onlinestore.security.signin.attempts.repository.LoginAttemptRepository;
+import com.zufar.onlinestore.security.entity.LoginAttemptEntity;
+import com.zufar.onlinestore.security.repository.LoginAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResetLoginAttemptsService {
-
-    @Value("${login-attempts.initial-attempts-count}")
-    private int initialLoginAttemptsCount;
 
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserAccountLocker userAccountLocker;
@@ -28,12 +23,10 @@ public class ResetLoginAttemptsService {
 
         loginAttemptRepository.findByUserEmail(userEmail)
                 .ifPresent(loginAttempt -> {
-                    loginAttempt.setAttempts(initialLoginAttemptsCount);
-                    loginAttempt.setIsUserLocked(false);
-                    loginAttempt.setExpirationDatetime(null);
-                    loginAttempt.setLastModified(LocalDateTime.now());
+                    LoginAttemptEntity newLoginAttempt = LoginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+                    newLoginAttempt.setId(loginAttempt.getId());
 
-                    loginAttemptRepository.save(loginAttempt);
+                    loginAttemptRepository.save(newLoginAttempt);
                     log.info("Login attempts reset for user {}.", userEmail);
                 });
     }

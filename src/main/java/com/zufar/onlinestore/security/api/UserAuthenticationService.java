@@ -1,13 +1,15 @@
-package com.zufar.onlinestore.security.signin;
+package com.zufar.onlinestore.security.api;
 
+import com.zufar.onlinestore.security.exception.UserAccountLockedException;
 import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
-import com.zufar.onlinestore.security.signin.attempts.FailedLoginAttemptHandler;
-import com.zufar.onlinestore.security.signin.attempts.ResetLoginAttemptsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -19,14 +21,14 @@ public class UserAuthenticationService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-    private final FailedLoginAttemptHandler failedLoginAttemptHandler;
+    private final LoginFailureHandler loginFailureHandler;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
-        log.info("Authenticating user with email = '{}'", request.email());
-
         String userEmail = request.email();
         String userPassword = request.password();
+
+        log.info("Authenticating user with email = '{}'", userEmail);
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -40,21 +42,20 @@ public class UserAuthenticationService {
 
             resetLoginAttemptsService.reset(userEmail);
 
-
             return new UserAuthenticationResponse(jwtToken);
 
-        } catch (LockedException exception) {
-            log.warn("Account is locked for email: {}", userEmail);
-            throw new UserAccountLockedException(userEmail);
-
         } catch (BadCredentialsException exception) {
-            failedLoginAttemptHandler.handle(userEmail);
-            throw exception;
+            log.error("Invalid credentials for user's account with email = '{}'", userEmail);
+            loginFailureHandler.handle(userEmail);
+            throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+
+        } catch (LockedException exception) {
+            log.error("User's account with email = '{}' is locked", userEmail);
+            throw new UserAccountLockedException(userEmail);
 
         } catch (Exception exception) {
             log.error("Error occurred during authentication", exception);
             throw exception;
-
         }
     }
 }

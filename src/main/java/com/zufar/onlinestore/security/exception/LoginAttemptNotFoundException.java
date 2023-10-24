@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.security.signin.attempts.exception;
+package com.zufar.onlinestore.security.exception;
 
 public class LoginAttemptNotFoundException extends RuntimeException {
 

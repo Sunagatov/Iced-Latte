@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.security.signin.attempts.entity;
+package com.zufar.onlinestore.security.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

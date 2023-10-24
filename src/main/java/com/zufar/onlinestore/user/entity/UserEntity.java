@@ -57,7 +57,7 @@ public class UserEntity implements UserDetails {
     private transient Address address;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private Set<UserGrantedAuthority> authorities = new HashSet<>();
+    private Set<UserGrantedAuthority> authorities;
 
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;
@@ -82,16 +82,6 @@ public class UserEntity implements UserDetails {
         }
         this.authorities.add(authority);
         authority.setUser(this);
-    }
-
-    public void removeAuthority(UserGrantedAuthority authority) {
-        authority.setUser(null);
-        this.authorities.remove(authority);
-    }
-
-    public void removeAuthorities() {
-        authorities.forEach(authority -> authority.setUser(null));
-        authorities.clear();
     }
 
     @Override

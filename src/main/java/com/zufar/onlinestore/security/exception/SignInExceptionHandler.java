@@ -1,8 +1,7 @@
-package com.zufar.onlinestore.security.signin.attempts.exception;
+package com.zufar.onlinestore.security.exception;
 
 import com.zufar.onlinestore.common.exception.handler.GlobalExceptionHandler;
 import com.zufar.onlinestore.common.response.ApiResponse;
-import com.zufar.onlinestore.security.signin.UserAccountLockedException;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

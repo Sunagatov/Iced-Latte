@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.security.signin;
+package com.zufar.onlinestore.security.exception;
 
 public class UserAccountLockedException extends RuntimeException {
 

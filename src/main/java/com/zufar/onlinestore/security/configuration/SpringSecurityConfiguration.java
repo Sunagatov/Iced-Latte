@@ -60,16 +60,11 @@ public class SpringSecurityConfiguration {
     @Bean
     public UserDetailsService userDetailsService(final UserRepository userRepository,
                                                  final PasswordEncoder passwordEncoder) {
-        return email -> {
-            UserEntity user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> {
-                        log.error("Failed to get the user with the email = {}.", email);
-                        return new BadCredentialsException(String.format("Retrieve the user details with the email = %s: Failed: Bad credentials", email));
-                    });
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            return user;
-        };
-
+        return email -> userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("Failed to get the user with the email = {}.", email);
+                    return new BadCredentialsException(String.format("Bad credentials. User with the email = '%s' does not exist", email));
+                });
     }
 
     @Bean

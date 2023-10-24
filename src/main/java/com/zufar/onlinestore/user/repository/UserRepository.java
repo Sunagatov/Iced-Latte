@@ -13,7 +13,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
     @Modifying
-    @Query(value = "UPDATE user_details SET account_non_locked = :accountLocked WHERE email = :email",
-            nativeQuery = true)
+    @Query(value = "UPDATE user_details SET account_non_locked = :accountLocked WHERE email = :email", nativeQuery = true)
     void setAccountLockedStatus(String email, boolean accountLocked);
 }
