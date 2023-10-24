@@ -32,23 +32,26 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/register")
     public ResponseEntity<UserRegistrationResponse> register(@RequestBody final UserRegistrationRequest request) {
-        UserRegistrationResponse authenticationResponse = userSecurityManager.register(request);
-        return new ResponseEntity<>(authenticationResponse, HttpStatus.CREATED);
+        log.info("Received registration request for user with email = '{}'", request.email());
+        UserRegistrationResponse registrationResponse = userSecurityManager.register(request);
+        log.info("Registration completed for user with email = '{}'", request.email());
+        return new ResponseEntity<>(registrationResponse, HttpStatus.CREATED);
     }
 
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody final UserAuthenticationRequest request) {
+        log.info("Received authentication request for user with email = '{}'", request.email());
         UserAuthenticationResponse authenticationResponse = userSecurityManager.authenticate(request);
-        return ResponseEntity
-                .ok(authenticationResponse);
+        log.info("Authentication completed for user with email = '{}'", request.email());
+        return ResponseEntity.ok(authenticationResponse);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(final HttpServletRequest request,
-                                       final HttpServletResponse response) {
+    public ResponseEntity<Void> logout(final HttpServletRequest request, final HttpServletResponse response) {
+        log.info("Received logout request.");
         userSecurityManager.logout(request, response);
-        return ResponseEntity.ok()
-                .build();
+        log.info("Logout completed.");
+        return ResponseEntity.ok().build();
     }
 }

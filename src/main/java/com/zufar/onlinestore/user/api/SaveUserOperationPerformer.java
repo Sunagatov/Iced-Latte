@@ -20,7 +20,7 @@ public class SaveUserOperationPerformer {
     private final UserDtoConverter userDtoConverter;
     private final DefaultUserEntityValuesSetter defaultUserEntityValuesSetter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto saveUser(final UserDto userDto) {
         UserEntity userEntity = userDtoConverter.toEntity(userDto);
         defaultUserEntityValuesSetter.setDefaultValues(userEntity);

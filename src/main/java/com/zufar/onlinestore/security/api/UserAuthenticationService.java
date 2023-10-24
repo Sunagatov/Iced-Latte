@@ -20,6 +20,7 @@ public class UserAuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
+        log.info("Authenticating user with email = '{}'", request.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
@@ -27,6 +28,7 @@ public class UserAuthenticationService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
         String jwtToken = jwtTokenProvider.generateToken(userDetails);
+        log.info("Generated JWT token for user with email = '{}'", request.email());
 
         return new UserAuthenticationResponse(jwtToken);
     }
