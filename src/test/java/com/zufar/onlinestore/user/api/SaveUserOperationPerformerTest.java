@@ -4,7 +4,7 @@ import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.repository.UserRepository;
-import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import com.zufar.onlinestore.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,12 +34,12 @@ public class SaveUserOperationPerformerTest {
     @Test
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
     public void saveUser_ShouldSaveUserAndReturnUserDto() {
-        UserDto userDto = UserDtoTestUtil.createUserDto();
-        UserEntity userEntity = UserDtoTestUtil.createUserEntity();
+        UserDto userDto = UserDtoTestStub.createUserDto();
+        UserEntity userEntity = UserDtoTestStub.createUserEntity();
 
         when(userDtoConverter.toEntity(userDto)).thenReturn(userEntity);
         when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
-        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
+        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
         when(userDtoConverter.toDto(userEntity)).thenReturn(expectedUserDto);
 
         UserDto actualUserDto = saveUserOperationPerformer.saveUser(userDto);

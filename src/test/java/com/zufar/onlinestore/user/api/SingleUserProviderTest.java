@@ -5,7 +5,7 @@ import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import com.zufar.onlinestore.user.repository.UserRepository;
-import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import com.zufar.onlinestore.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,11 +36,11 @@ public class SingleUserProviderTest {
     @DisplayName("getUserById should return the correct UserDto when the user exists")
     public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        UserEntity testUserEntity = UserDtoTestUtil.createUserEntity();
+        UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
         when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(testUserEntity));
 
-        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
+        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
         when(userDtoConverter.toDto(testUserEntity)).thenReturn(expectedUserDto);
 
         UserDto actualUserDto = singleUserProvider.getUserById(userId);

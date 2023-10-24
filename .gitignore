@@ -48,7 +48,6 @@ out/
 ## Eclipse
 ##############################
 .settings/
-bin/
 tmp/
 .metadata
 .classpath
@@ -65,7 +64,6 @@ local.properties
 ## NetBeans
 ##############################
 nbproject/private/
-build/
 nbbuild/
 dist/
 nbdist/
@@ -91,3 +89,4 @@ nb-configuration.xml
 ##############################
 **/*.log
 /src/main/resources/stripe.yaml
+/docker-compose.override.yml
