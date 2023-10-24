@@ -3,7 +3,7 @@ package com.zufar.onlinestore.security.signin;
 import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
-import com.zufar.onlinestore.security.signin.attempts.FailedLoginHandler;
+import com.zufar.onlinestore.security.signin.attempts.FailedLoginAttemptHandler;
 import com.zufar.onlinestore.security.signin.attempts.ResetLoginAttemptsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,46 +19,42 @@ public class UserAuthenticationService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-    private final FailedLoginHandler failedLoginHandler;
+    private final FailedLoginAttemptHandler failedLoginAttemptHandler;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
-        String jwtToken;
+        log.info("Authenticating user with email = '{}'", request.email());
+
+        String userEmail = request.email();
+        String userPassword = request.password();
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+                    new UsernamePasswordAuthenticationToken(userEmail, userPassword)
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            jwtToken = jwtTokenProvider.generateToken(userDetails);
+            String jwtToken = jwtTokenProvider.generateToken(userDetails);
+            log.info("Generated JWT token for user with email = '{}'", request.email());
 
-            // If authentication is successful, reset the login attempts for that user
-            resetLoginAttemptsService.reset(request.email());
+            resetLoginAttemptsService.reset(userEmail);
 
-            int i = 0;
+
+            return new UserAuthenticationResponse(jwtToken);
 
         } catch (LockedException exception) {
-
-            // Handle account locked situation
-            log.warn("Account is locked for email: {}", request.email());
-            throw new UserAccountLockedException(request.email() , exception);
+            log.warn("Account is locked for email: {}", userEmail);
+            throw new UserAccountLockedException(userEmail);
 
         } catch (BadCredentialsException exception) {
-
-            // Handle failed login attempt
-            failedLoginHandler.handle(request.email());
-            throw exception; // Re-throwing the exception to maintain existing flow
+            failedLoginAttemptHandler.handle(userEmail);
+            throw exception;
 
         } catch (Exception exception) {
-
-            // Handle other exceptions if needed
             log.error("Error occurred during authentication", exception);
             throw exception;
 
         }
-
-        return new UserAuthenticationResponse(jwtToken);
     }
 }

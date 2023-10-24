@@ -4,8 +4,9 @@ import com.zufar.onlinestore.security.signin.attempts.entity.LoginAttemptEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity, String> {
+public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity, UUID> {
 
     Optional<LoginAttemptEntity> findByUserEmail(String userEmail);
 }

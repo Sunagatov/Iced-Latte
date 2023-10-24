@@ -1,10 +1,8 @@
 package com.zufar.onlinestore.security.signin;
 
-import org.springframework.security.authentication.LockedException;
-
 public class UserAccountLockedException extends RuntimeException {
 
-    public UserAccountLockedException(String email, LockedException exception) {
-        super(String.format("User account with the email='%s' is locked.", email), exception);
+    public UserAccountLockedException(String email) {
+        super(String.format("User account with the email='%s' have been locked out due to multiple failed login attempts", email));
     }
 }

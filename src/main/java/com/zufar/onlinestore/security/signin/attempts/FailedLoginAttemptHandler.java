@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FailedLoginHandler {
+public class FailedLoginAttemptHandler {
 
     @Value("${login-attempts.max-attempts}")
     private int maxLoginAttempts;
@@ -27,6 +27,7 @@ public class FailedLoginHandler {
     private int initialLoginAttemptsCount;
 
     private final LoginAttemptRepository loginAttemptRepository;
+    private final UserAccountLocker userAccountLocker;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void handle(final String userEmail) {
@@ -35,22 +36,26 @@ public class FailedLoginHandler {
                     LoginAttemptEntity newLoginAttempt = new LoginAttemptEntity();
                     newLoginAttempt.setUserEmail(userEmail);
                     newLoginAttempt.setAttempts(initialLoginAttemptsCount);
+                    newLoginAttempt.setIsUserLocked(false);
                     return newLoginAttempt;
                 });
 
         Integer loginAttemptsCount = loginAttempt.getAttempts();
-
         loginAttempt.setAttempts(loginAttemptsCount + 1);
         loginAttempt.setLastModified(LocalDateTime.now());
-
-        log.warn("Failed login attempt for user {}, attempts: {}, remaining attempts: {}", userEmail, loginAttemptsCount, maxLoginAttempts - loginAttemptsCount);
 
         if (loginAttemptsCount >= maxLoginAttempts) {
             loginAttempt.setIsUserLocked(true);
             loginAttempt.setExpirationDatetime(LocalDateTime.now().plusMinutes(lockoutDurationMinutes));
             log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, lockoutDurationMinutes);
+
+            userAccountLocker.lockUserAccount(userEmail);
+        } else {
+            log.warn("Failed login attempt for user {}. Attempts so far: {}.", userEmail, loginAttemptsCount + 1);
         }
 
+        log.warn("Failed login attempt for user {}, attempts: {}, remaining attempts: {}", userEmail, loginAttemptsCount, maxLoginAttempts - loginAttemptsCount);
         loginAttemptRepository.save(loginAttempt);
     }
 }
+
