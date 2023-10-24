@@ -18,6 +18,7 @@ import lombok.Setter;
 import lombok.Builder;
 import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Builder
@@ -44,5 +45,20 @@ public class UserGrantedAuthority implements GrantedAuthority {
 
     public String getAuthority() {
         return authority.name();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UserGrantedAuthority that = (UserGrantedAuthority) o;
+        return authority == that.authority;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(authority);
     }
 }
