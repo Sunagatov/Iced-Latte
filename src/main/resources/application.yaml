@@ -81,8 +81,15 @@ management:
 #
 jwt:
   header: Authorization
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration: 6044800
+  secret: ${APP_JWT_SECRET}
+  expiration: ${APP_JWT_EXPIRATION_TIME}
+
+#
+# Login Attempts Properties
+#
+login-attempts:
+  max-attempts: 5
+  lockout-duration-minutes: 30
 
 #
 # Logging Properties

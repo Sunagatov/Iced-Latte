@@ -1,9 +1,8 @@
 package com.zufar.onlinestore.user.api;
 
 import com.zufar.onlinestore.openapi.dto.UserDto;
-import com.zufar.onlinestore.user.entity.UserEntity;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
-import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import com.zufar.onlinestore.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +32,8 @@ public class UserServiceTest {
     @Test
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
     public void saveUser_ShouldSaveUserAndReturnUserDto() {
-        UserDto userDto = UserDtoTestUtil.createUserDto();
-        UserEntity userEntity = UserDtoTestUtil.createUserEntity();
-        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
+        UserDto userDto = UserDtoTestStub.createUserDto();
+        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
 
         when(saveUserOperationPerformer.saveUser(userDto)).thenReturn(expectedUserDto);
 
@@ -49,7 +47,7 @@ public class UserServiceTest {
     @DisplayName("getUserById should return the correct UserDto when the user exists")
     public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() throws UserNotFoundException {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
+        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
 
         when(singleUserProvider.getUserById(userId)).thenReturn(expectedUserDto);
 

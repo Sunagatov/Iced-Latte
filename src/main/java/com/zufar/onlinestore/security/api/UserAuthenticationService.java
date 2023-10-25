@@ -1,11 +1,14 @@
 package com.zufar.onlinestore.security.api;
 
+import com.zufar.onlinestore.security.exception.UserAccountLockedException;
 import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,16 +21,41 @@ public class UserAuthenticationService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final LoginFailureHandler loginFailureHandler;
+    private final ResetLoginAttemptsService resetLoginAttemptsService;
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        String userEmail = request.email();
+        String userPassword = request.password();
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        log.info("Authenticating user with email = '{}'", userEmail);
 
-        String jwtToken = jwtTokenProvider.generateToken(userDetails);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(userEmail, userPassword)
+            );
 
-        return new UserAuthenticationResponse(jwtToken);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+            String jwtToken = jwtTokenProvider.generateToken(userDetails);
+            log.info("Generated JWT token for user with email = '{}'", request.email());
+
+            resetLoginAttemptsService.reset(userEmail);
+
+            return new UserAuthenticationResponse(jwtToken);
+
+        } catch (BadCredentialsException exception) {
+            log.error("Invalid credentials for user's account with email = '{}'", userEmail);
+            loginFailureHandler.handle(userEmail);
+            throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+
+        } catch (LockedException exception) {
+            log.error("User's account with email = '{}' is locked", userEmail);
+            throw new UserAccountLockedException(userEmail);
+
+        } catch (Exception exception) {
+            log.error("Error occurred during authentication", exception);
+            throw exception;
+        }
     }
 }

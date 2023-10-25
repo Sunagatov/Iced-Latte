@@ -6,13 +6,13 @@ import com.zufar.onlinestore.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -24,22 +24,19 @@ public class JwtAuthenticationProvider {
 	private final UserDetailsService userDetailsService;
 
 	public Optional<UsernamePasswordAuthenticationToken> get(final HttpServletRequest httpRequest) {
-		Optional<String> jwtTokenOptional = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-		if (jwtTokenOptional.isEmpty()) {
+		final String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest).orElse(null);
+		if (StringUtils.isEmpty(jwtToken)) {
 			return Optional.empty();
 		}
 
-		final String jwtToken = jwtTokenOptional.get();
-
 		try {
-			Date expirationDate = jwtClaimExtractor.extractExpiration(jwtToken);
-			Date now = new Date();
-			if (expirationDate.before(now)) {
+			LocalDateTime expirationDate = jwtClaimExtractor.extractExpiration(jwtToken);
+			if (expirationDate.isBefore(LocalDateTime.now())) {
 				throw new JwtTokenException("Jwt token is expired");
 			}
 
 			final String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
-			if (userEmail == null) {
+			if (StringUtils.isEmpty(userEmail)) {
 				throw new JwtTokenException("User email not found in jwtToken");
 			}
 
@@ -52,7 +49,7 @@ public class JwtAuthenticationProvider {
 
 			return Optional.of(authToken);
 
-		} catch (Exception exception) {
+		} catch (JwtTokenException exception) {
 			log.error("Jwt token validation error", exception);
 			throw new JwtTokenException("Jwt token validation error", exception);
 		}
