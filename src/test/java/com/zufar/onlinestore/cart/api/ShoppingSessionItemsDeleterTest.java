@@ -1,28 +1,32 @@
 package com.zufar.onlinestore.cart.api;
 
-import com.zufar.onlinestore.cart.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
-import com.zufar.onlinestore.cart.dto.ShoppingSessionItemDto;
+import com.zufar.onlinestore.cart.stub.CartDtoTestUtil;
+import com.zufar.onlinestore.openapi.dto.DeleteItemsFromShoppingSessionRequest;
+import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionItemRepository;
 import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
-import com.zufar.onlinestore.user.dto.UserDto;
-import org.junit.jupiter.api.BeforeEach;
+import com.zufar.onlinestore.openapi.dto.UserDto;
+import com.zufar.onlinestore.user.stub.UserDtoTestUtil;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@Transactional
 public class ShoppingSessionItemsDeleterTest {
+
     @InjectMocks
     private ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
 
@@ -35,91 +39,69 @@ public class ShoppingSessionItemsDeleterTest {
     @Mock
     private SecurityPrincipalProvider securityPrincipalProvider;
 
-    ShoppingSessionItemDto item1;
-
-    ShoppingSessionItemDto item2;
-
-    List<ShoppingSessionItemDto> initialItems;
-
-    UUID userId;
-
-    UUID item1Id;
-
-    UUID item2Id;
-
-    @BeforeEach
-    public void setUp() {
-        userId = UUID.randomUUID();
-        item1Id = UUID.randomUUID();
-        item2Id = UUID.randomUUID();
-
-        item1 = mock(ShoppingSessionItemDto.class);
-        when(item1.id()).thenReturn(item1Id);
-
-        item2 = mock(ShoppingSessionItemDto.class);
-        when(item1.id()).thenReturn(item2Id);
-
-        initialItems = List.of(item1, item2);
-
-        when(securityPrincipalProvider.get()).thenReturn(UserDto.builder().userId(userId).build());
-    }
-
     @Test
-    public void shouldItemsDeleteFromShoppingSessionWithValidItemsList() {
-        List<UUID> itemIds = List.of(item2Id);
-        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest(itemIds);
+    @DisplayName("delete should return the ShoppingSessionDto with correct list of items when the itemIdsForDelete list is valid")
+    public void delete_shouldItemsDeleteFromShoppingSessionDtoWithValidItemsList() {
+        List<UUID> itemIdsForDelete = List.of(UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
+        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
+        request.shoppingSessionItemIds(itemIdsForDelete);
+        UserDto userDto = UserDtoTestUtil.createUserDto();
+        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestUtil.createShoppingSessionDto();
 
-        ShoppingSessionDto initialShoppingSessionDto = mock(ShoppingSessionDto.class);
-        when(initialShoppingSessionDto.items()).thenReturn(initialItems);
-
-        List<ShoppingSessionItemDto> expectedItems = List.of(item1);
-
-        ShoppingSessionDto expectedShoppingSessionDto = mock(ShoppingSessionDto.class);
-        when(expectedShoppingSessionDto.items()).thenReturn(expectedItems);
-
-        when(shoppingSessionProvider.getByUserId(userId)).thenReturn(expectedShoppingSessionDto);
+        when(securityPrincipalProvider.get()).thenReturn(userDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
 
         ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
 
         assertEquals(expectedShoppingSessionDto, result);
-        assertNotEquals(initialShoppingSessionDto, result);
 
-        verify(shoppingSessionItemRepository).deleteAllByIdInBatch(itemIds);
+        verify(shoppingSessionItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).get();
+        verify(shoppingSessionProvider).getByUserId(userDto.getId());
     }
 
     @Test
-    public void shouldItemsNotDeleteFromShoppingSessionWithInvalidItemsList() {
-        UUID item3Id = UUID.randomUUID();
-        List<UUID> itemIds = List.of(item3Id);
-        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest(itemIds);
+    @DisplayName("delete should return the ShoppingSessionDto with empty list of items when the itemIdsForDelete list is valid")
+    public void delete_shouldDeleteAllItemsFromShoppingSessionDtoWithValidItemsList() {
+        List<UUID> itemIdsForDelete = List.of(
+                UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc"),
+                UUID.fromString("e5cadeb1-089c-430f-85d1-e18438167241"),
+                UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
+        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
+        request.shoppingSessionItemIds(itemIdsForDelete);
+        UserDto userDto = UserDtoTestUtil.createUserDto();
+        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestUtil.createEmptyShoppingSessionDto();
 
-        ShoppingSessionDto initialShoppingSessionDto = mock(ShoppingSessionDto.class);
-        when(initialShoppingSessionDto.items()).thenReturn(initialItems);
-
-        when(shoppingSessionProvider.getByUserId(userId)).thenReturn(initialShoppingSessionDto);
+        when(securityPrincipalProvider.get()).thenReturn(userDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
 
         ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
 
-        assertEquals(initialShoppingSessionDto, result);
+        assertEquals(expectedShoppingSessionDto, result);
+
+        verify(shoppingSessionItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).get();
+        verify(shoppingSessionProvider).getByUserId(userDto.getId());
     }
 
     @Test
-    public void shouldDeleteAllItemsFromShoppingSessionWithValidItemsList() {
-        List<UUID> itemIds = List.of(item1Id, item2Id);
-        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest(itemIds);
+    @DisplayName("delete should return the ShoppingSessionDto with list of items without change when the itemIdsForDelete list is valid")
+    public void delete_shouldDeleteNothingFromShoppingSessionDtoWithEmptyItemsList() {
+        List<UUID> itemIdsForDelete = new ArrayList<>();
+        DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
+        request.shoppingSessionItemIds(itemIdsForDelete);
+        UserDto userDto = UserDtoTestUtil.createUserDto();
+        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestUtil.createFullShoppingSessionDto();
 
-        ShoppingSessionDto initialShoppingSessionDto = mock(ShoppingSessionDto.class);
-        when(initialShoppingSessionDto.items()).thenReturn(initialItems);
-
-        List<ShoppingSessionItemDto> expectedItems = List.of();
-
-        ShoppingSessionDto expectedShoppingSessionDto = mock(ShoppingSessionDto.class);
-        when(expectedShoppingSessionDto.items()).thenReturn(expectedItems);
-
-        when(shoppingSessionProvider.getByUserId(userId)).thenReturn(expectedShoppingSessionDto);
+        when(securityPrincipalProvider.get()).thenReturn(userDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
 
         ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
 
-        assertTrue(result.items().isEmpty());
+        assertEquals(expectedShoppingSessionDto, result);
+
+        verify(shoppingSessionItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).get();
+        verify(shoppingSessionProvider).getByUserId(userDto.getId());
     }
 }
