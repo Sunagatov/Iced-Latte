@@ -1,39 +1,39 @@
 package com.zufar.onlinestore.user.repository;
 
 import com.zufar.onlinestore.user.entity.UserEntity;
-import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
+    /**
+     * Finds a user entity by its email.
+     *
+     * @param email The email of the user.
+     * @return An optional containing the user entity if found.
+     */
     Optional<UserEntity> findByEmail(String email);
 
+    /**
+     * Updates the locked status of a user based on the given email.
+     *
+     * @param email The email of the user.
+     * @param accountLocked The new locked status to set.
+     */
     @Modifying
-    @Query(value = "UPDATE user_details SET account_non_locked = :accountLocked WHERE email = :email", nativeQuery = true)
-    void setAccountLockedStatus(String email, boolean accountLocked);
+    @Query("UPDATE UserEntity u SET u.accountNonLocked = :accountLocked WHERE u.email = :email")
+    void setAccountLockedStatus(@Param("email") String email, @Param("accountLocked") boolean accountLocked);
 
+    /**
+     * Unlocks all users that have corresponding entries in the login_attempts table
+     * with is_user_locked set to false.
+     */
     @Modifying
-    @Query(value = """
-            UPDATE user_details
-            SET account_non_locked = true
-            WHERE account_non_locked = false AND email = ANY (
-                UPDATE login_attempts
-                SET attempts = 0,
-                    is_user_locked = false,
-                    expiration_datetime = NULL,
-                    last_modified = :last_modified
-                WHERE is_user_locked = true AND expiration_datetime > :now
-                RETURNING user_email
-            )
-            """, nativeQuery = true)
-    void unlockLockoutExpiredAccounts(
-            @Param("last_modified") LocalDateTime lastModified,
-            @Param("now") LocalDateTime now
-    );
+    @Query(value = "UPDATE UserEntity u SET u.accountNonLocked = true WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false)")
+    void unlockUsers();
 }

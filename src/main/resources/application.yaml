@@ -91,7 +91,7 @@ login-attempts:
   max-attempts: 5
   lockout-duration-minutes: 30
 
-unlock-account-scheduler-cron: 0 0/5 * * * *
+unlock-account-scheduler-cron: '0 0/5 * * * *'
 # every 5 minutes
 
 #
