@@ -7,11 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -26,6 +22,7 @@ public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.a
 
     private final ProductApi productApi;
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @Override
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final String productId) {
@@ -36,6 +33,7 @@ public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.a
                 .body(product);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @Override
     @GetMapping
     public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") Integer page,
