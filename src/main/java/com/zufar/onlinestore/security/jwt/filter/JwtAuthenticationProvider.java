@@ -49,9 +49,9 @@ public class JwtAuthenticationProvider {
 
 			return Optional.of(authToken);
 
-		} catch (JwtTokenException exception) {
+		} catch (Exception exception) {
 			log.error("Jwt token validation error", exception);
-			throw new JwtTokenException("Jwt token validation error", exception);
+			return Optional.empty();
 		}
 	}
 }

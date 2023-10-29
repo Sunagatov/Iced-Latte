@@ -2,15 +2,12 @@ package com.zufar.onlinestore.security.configuration;
 
 import com.zufar.onlinestore.security.endpoint.UserSecurityEndpoint;
 import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationFilter;
-import com.zufar.onlinestore.user.entity.UserEntity;
-import com.zufar.onlinestore.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,11 +26,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final String API_AUTH_URL_PREFIX = UserSecurityEndpoint.USER_SECURITY_API_URL + "**";
-    private static final String API_DOCS_URL_PREFIX = "/api/docs/**";
-    private static final String ACTUATOR_ENDPOINTS_URL_PREFIX = "/actuator/**";
-    private static final String WEBHOOK_PAYMENT_EVENT_URL_PREFIX = "/api/v1/payment/event";
-    private static final String PRODUCTS_API_URL_PREFIX = "/api/v1/products/**";
+    private static final String API_AUTH_URL = UserSecurityEndpoint.USER_SECURITY_API_URL + "**";
+    private static final String API_DOCS_URL = "/api/docs/**";
+    private static final String ACTUATOR_ENDPOINTS_URL = "/actuator/**";
+    private static final String WEBHOOK_PAYMENT_EVENT_URL = "/api/v1/payment/event";
+    private static final String PRODUCTS_API_URL = "/api/v1/products/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -42,11 +39,7 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(API_AUTH_URL_PREFIX).permitAll()
-                                .requestMatchers(WEBHOOK_PAYMENT_EVENT_URL_PREFIX).permitAll()
-                                .requestMatchers(PRODUCTS_API_URL_PREFIX).permitAll()
-                                .requestMatchers(API_DOCS_URL_PREFIX).permitAll()
-                                .requestMatchers(ACTUATOR_ENDPOINTS_URL_PREFIX).permitAll()
+                                .requestMatchers(API_AUTH_URL, WEBHOOK_PAYMENT_EVENT_URL, PRODUCTS_API_URL, API_DOCS_URL, ACTUATOR_ENDPOINTS_URL).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
@@ -55,16 +48,6 @@ public class SpringSecurityConfiguration {
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(final UserRepository userRepository,
-                                                 final PasswordEncoder passwordEncoder) {
-        return email -> userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.error("Failed to get the user with the email = {}.", email);
-                    return new BadCredentialsException(String.format("Bad credentials. User with the email = '%s' does not exist", email));
-                });
     }
 
     @Bean
