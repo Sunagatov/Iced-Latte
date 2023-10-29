@@ -21,7 +21,7 @@ class ItemsTotalPriceCalculatorTest {
     private ItemsTotalPriceCalculator itemsTotalPriceCalculator;
 
     @Test
-    @DisplayName("calculate should return the Total price of items in ShoppingSession")
+    @DisplayName("Calculate should return the Total price of items in ShoppingSession")
     public void shouldReturnCorrectTotalPrice() {
         ShoppingSession shoppingSession = CartDtoTestStub.createShoppingSession();
 

@@ -47,7 +47,7 @@ class AddItemsToShoppingSessionHelperTest {
     private ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
     @Test
-    @DisplayName("add should return the ShoppingSessionDto with increased list of items when the itemsToAdd set is valid")
+    @DisplayName("Add should return the ShoppingSessionDto with increased list of items when the itemsToAdd set is valid")
     public void shouldItemsAddToShoppingSessionDtoWithValidItemsSet() {
         UUID userId = UUID.randomUUID();
 
@@ -76,10 +76,10 @@ class AddItemsToShoppingSessionHelperTest {
 
         assertEquals(result, expectedShoppingSessionDto);
 
-        verify(securityPrincipalProvider).getUserId();
+        verify(securityPrincipalProvider, times(1)).getUserId();
         verify(shoppingSessionRepository, times(1)).findShoppingSessionByUserId(userId);
-        verify(shoppingSessionRepository).save(shoppingSession);
-        verify(shoppingSessionDtoConverter).toDto(updatedShoppingSession);
+        verify(shoppingSessionRepository, times(1)).save(shoppingSession);
+        verify(shoppingSessionDtoConverter, times(1)).toDto(updatedShoppingSession);
 
     }
 }

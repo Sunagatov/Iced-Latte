@@ -40,28 +40,29 @@ public class ShoppingSessionItemsDeleterTest {
     private SecurityPrincipalProvider securityPrincipalProvider;
 
     @Test
-    @DisplayName("delete should return the ShoppingSessionDto with correct list of items when the itemIdsForDelete list is valid")
+    @DisplayName("Delete should return the ShoppingSessionDto with correct list of items when the itemIdsForDelete list is valid")
     public void shouldItemsDeleteFromShoppingSessionDtoWithValidItemsList() {
         List<UUID> itemIdsForDelete = Collections.singletonList(UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
         DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
         request.shoppingSessionItemIds(itemIdsForDelete);
         UserDto userDto = UserDtoTestStub.createUserDto();
-        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestStub.createShoppingSessionDto();
+        ShoppingSessionDto expectedResult = CartDtoTestStub.createShoppingSessionDto();
+        expectedResult.setItems(CartDtoTestStub.createShoppingSessionDtoList());
 
         when(securityPrincipalProvider.get()).thenReturn(userDto);
-        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedResult);
 
-        ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
+        ShoppingSessionDto actualResult = shoppingSessionItemsDeleter.delete(request);
 
-        assertEquals(expectedShoppingSessionDto, result);
+        assertEquals(expectedResult, actualResult);
 
         verify(shoppingSessionItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
         verify(securityPrincipalProvider, times(1)).get();
-        verify(shoppingSessionProvider).getByUserId(userDto.getId());
+        verify(shoppingSessionProvider, times(1)).getByUserId(userDto.getId());
     }
 
     @Test
-    @DisplayName("delete should return the ShoppingSessionDto with empty list of items when the itemIdsForDelete list is valid")
+    @DisplayName("Delete should return the ShoppingSessionDto with empty list of items when the itemIdsForDelete list is valid")
     public void shouldDeleteAllItemsFromShoppingSessionDtoWithValidItemsList() {
         List<UUID> itemIdsForDelete = List.of(
                 UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc"),
@@ -70,38 +71,39 @@ public class ShoppingSessionItemsDeleterTest {
         DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
         request.shoppingSessionItemIds(itemIdsForDelete);
         UserDto userDto = UserDtoTestStub.createUserDto();
-        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestStub.createEmptyShoppingSessionDto();
+        ShoppingSessionDto expectedResult = CartDtoTestStub.createEmptyShoppingSessionDto();
 
         when(securityPrincipalProvider.get()).thenReturn(userDto);
-        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedResult);
 
-        ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
+        ShoppingSessionDto actualResult = shoppingSessionItemsDeleter.delete(request);
 
-        assertEquals(expectedShoppingSessionDto, result);
+        assertEquals(expectedResult, actualResult);
 
         verify(shoppingSessionItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
         verify(securityPrincipalProvider, times(1)).get();
-        verify(shoppingSessionProvider).getByUserId(userDto.getId());
+        verify(shoppingSessionProvider, times(1)).getByUserId(userDto.getId());
     }
 
     @Test
-    @DisplayName("delete should return the ShoppingSessionDto with list of items without change when the itemIdsForDelete list is valid")
+    @DisplayName("Delete should return the ShoppingSessionDto with list of items without change when the itemIdsForDelete list is valid")
     public void shouldDeleteNothingFromShoppingSessionDtoWithEmptyItemsList() {
         List<UUID> itemIdsForDelete = new ArrayList<>();
         DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
         request.shoppingSessionItemIds(itemIdsForDelete);
         UserDto userDto = UserDtoTestStub.createUserDto();
-        ShoppingSessionDto expectedShoppingSessionDto = CartDtoTestStub.createFullShoppingSessionDto();
+        ShoppingSessionDto expectedResult = CartDtoTestStub.createFullShoppingSessionDto();
+        expectedResult.setItems(CartDtoTestStub.createFullShoppingSessionDtoList());
 
         when(securityPrincipalProvider.get()).thenReturn(userDto);
-        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedShoppingSessionDto);
+        when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(expectedResult);
 
-        ShoppingSessionDto result = shoppingSessionItemsDeleter.delete(request);
+        ShoppingSessionDto actualResult = shoppingSessionItemsDeleter.delete(request);
 
-        assertEquals(expectedShoppingSessionDto, result);
+        assertEquals(expectedResult, actualResult);
 
         verify(shoppingSessionItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
         verify(securityPrincipalProvider, times(1)).get();
-        verify(shoppingSessionProvider).getByUserId(userDto.getId());
+        verify(shoppingSessionProvider, times(1)).getByUserId(userDto.getId());
     }
 }

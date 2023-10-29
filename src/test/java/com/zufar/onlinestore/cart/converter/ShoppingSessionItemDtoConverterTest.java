@@ -19,6 +19,7 @@ class ShoppingSessionItemDtoConverterTest {
 
     @Autowired
     ShoppingSessionItemDtoConverter shoppingSessionItemDtoConverter;
+
     @Configuration
     public static class Config {
 
@@ -34,7 +35,7 @@ class ShoppingSessionItemDtoConverterTest {
     }
 
     @Test
-    @DisplayName("toDto should convert ShoppingSessionItem to ShoppingSessionItemDto with complete shopping session item information")
+    @DisplayName("ToDto should convert ShoppingSessionItem to ShoppingSessionItemDto with complete shopping session item information")
     public void shouldConvertShoppingSessionItemToShoppingSessionItemDtoWithCompleteShoppingSessionInformation() {
         ShoppingSessionItem shoppingSessionItem = CartDtoTestStub.createShoppingSessionItem();
         ShoppingSessionItemDto shoppingSessionItemDto = shoppingSessionItemDtoConverter.toDto(shoppingSessionItem);

@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = {ShoppingSessionDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
 class ShoppingSessionDtoConverterTest {
+
     @Autowired
     ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
@@ -40,7 +41,7 @@ class ShoppingSessionDtoConverterTest {
     }
 
     @Test
-    @DisplayName("toDto should convert ShoppingSession to ShoppingSessionDto with complete shopping session information")
+    @DisplayName("ToDto should convert ShoppingSession to ShoppingSessionDto with complete shopping session information")
     public void shouldConvertShoppingSessionToShoppingSessionDtoWithCompleteShoppingSessionInformation() {
         ShoppingSession shoppingSession = CartDtoTestStub.createShoppingSession();
         ShoppingSessionDto shoppingSessionDto = shoppingSessionDtoConverter.toDto(shoppingSession);

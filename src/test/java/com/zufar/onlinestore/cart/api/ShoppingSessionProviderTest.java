@@ -17,6 +17,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +35,7 @@ class ShoppingSessionProviderTest {
     ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
     @Test
-    @DisplayName("getByUserId should return the correct ShoppingSessionDto when the user exists")
+    @DisplayName("GetByUserId should return the correct ShoppingSessionDto when the user exists")
     public void shouldReturnCorrectShoppingSessionDtoWhenUserExists() throws ShoppingSessionNotFoundException {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
         ShoppingSession expectedShoppingSession = CartDtoTestStub.createShoppingSession();
@@ -44,16 +46,18 @@ class ShoppingSessionProviderTest {
 
         assertEquals(shoppingSessionDtoConverter.toDto(expectedShoppingSession), actualShoppingSessionDto);
         verify(shoppingSessionRepository).findShoppingSessionByUserId(userId);
+        verify(shoppingSessionDtoConverter, times(2)).toDto(expectedShoppingSession);
     }
 
     @Test
-    @DisplayName("getByUserId should throw ShoppingSessionNotFoundException when the shopping session does not exist")
+    @DisplayName("GetByUserId should throw ShoppingSessionNotFoundException when the shopping session does not exist")
     public void shouldThrowShoppingSessionNotFoundExceptionWhenShoppingSessionDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(shoppingSessionRepository.findShoppingSessionByUserId(nonExistentUserId)).thenThrow(ShoppingSessionNotFoundException.class);
 
         assertThrows(ShoppingSessionNotFoundException.class, () -> shoppingSessionProvider.getByUserId(nonExistentUserId));
-        verify(shoppingSessionRepository).findShoppingSessionByUserId(nonExistentUserId);
+        verify(shoppingSessionRepository, times(1)).findShoppingSessionByUserId(nonExistentUserId);
+        verify(shoppingSessionDtoConverter, never()).toDto(new ShoppingSession());
     }
 }
