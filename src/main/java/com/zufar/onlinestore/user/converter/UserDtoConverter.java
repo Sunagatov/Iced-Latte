@@ -9,9 +9,9 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = AddressDtoConverter.class)
 public interface UserDtoConverter {
 
-    @Mapping(target = "address", source = "entity.address", qualifiedByName = "toAddressDto")
+    @Mapping(target = "address", source = "address", qualifiedByName = "toAddressDto")
     UserDto toDto(final UserEntity entity);
 
-    @Mapping(target = "address", source = "dto.address", qualifiedByName = "toAddress")
+    @Mapping(target = "address", source = "address", qualifiedByName = "toAddress")
     UserEntity toEntity(final UserDto dto);
 }

@@ -1,0 +1,2 @@
+ALTER TABLE user_details
+ALTER COLUMN password TYPE VARCHAR(75);

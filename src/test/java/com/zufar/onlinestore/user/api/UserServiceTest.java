@@ -27,6 +27,9 @@ public class UserServiceTest {
     @Mock
     private SingleUserProvider singleUserProvider;
 
+    @Mock
+    private GetPasswordByEmail getPasswordByEmail;
+
     @InjectMocks
     private UserService userService;
 
@@ -34,7 +37,6 @@ public class UserServiceTest {
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
     public void saveUser_ShouldSaveUserAndReturnUserDto() {
         UserDto userDto = UserDtoTestUtil.createUserDto();
-        UserEntity userEntity = UserDtoTestUtil.createUserEntity();
         UserDto expectedUserDto = UserDtoTestUtil.createUserDto();
 
         when(saveUserOperationPerformer.saveUser(userDto)).thenReturn(expectedUserDto);
@@ -68,5 +70,18 @@ public class UserServiceTest {
 
         assertThrows(UserNotFoundException.class, () -> userService.getUserById(nonExistentUserId));
         verify(singleUserProvider).getUserById(nonExistentUserId);
+    }
+
+    @Test
+    @DisplayName("getPasswordByEmail should return the correct password when the email exists")
+    public void getPasswordByEmail() {
+        String email = "true";
+        String expectedPassword = "password";
+        when(getPasswordByEmail.getPasswordByEmail(email))
+                .thenReturn(expectedPassword);
+
+        assertEquals(expectedPassword, getPasswordByEmail.getPasswordByEmail(email));
+        verify(getPasswordByEmail)
+                .getPasswordByEmail(email);
     }
 }

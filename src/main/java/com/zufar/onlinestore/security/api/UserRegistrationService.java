@@ -10,7 +10,9 @@ import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -21,10 +23,12 @@ public class UserRegistrationService {
     private final RegistrationDtoConverter registrationDtoConverter;
     private final UserDtoConverter userDtoConverter;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     public UserRegistrationResponse register(final UserRegistrationRequest request) {
         log.info("Received registration request from {}.", request.email());
         final UserDto userDto = registrationDtoConverter.toDto(request);
+        userDto.setPassword(passwordEncoder.encode(request.password()));
         final UserDto userDtoWithId = userApi.saveUser(userDto);
         UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);

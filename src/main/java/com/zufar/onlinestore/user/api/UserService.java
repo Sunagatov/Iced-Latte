@@ -15,6 +15,7 @@ public class UserService implements UserApi {
 
     private final SaveUserOperationPerformer saveUserOperationPerformer;
     private final SingleUserProvider singleUserProvider;
+    private final GetPasswordByEmail getEmail;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
@@ -24,5 +25,10 @@ public class UserService implements UserApi {
     @Override
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
         return singleUserProvider.getUserById(userId);
+    }
+
+    @Override
+    public String getPasswordByEmail(String email) {
+        return getEmail.getPasswordByEmail(email);
     }
 }
