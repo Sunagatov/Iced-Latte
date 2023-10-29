@@ -15,9 +15,7 @@ public class GetPasswordByEmail {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public String getPasswordByEmail(String email) {
-        String password = userRepository.findPasswordByEmail(email)
+        return userRepository.findPasswordByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        System.out.println(password);
-        return password;
     }
 }
