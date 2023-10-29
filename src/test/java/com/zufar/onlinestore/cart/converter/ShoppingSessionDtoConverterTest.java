@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.converter;
 
 import com.zufar.onlinestore.cart.api.ItemsTotalPriceCalculator;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
-import com.zufar.onlinestore.cart.stub.CartDtoTestUtil;
+import com.zufar.onlinestore.cart.stub.CartDtoTestStub;
 import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = {ShoppingSessionDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
-public class ShoppingSessionDtoConverterTest {
+class ShoppingSessionDtoConverterTest {
     @Autowired
     ShoppingSessionDtoConverter shoppingSessionDtoConverter;
 
@@ -41,8 +41,8 @@ public class ShoppingSessionDtoConverterTest {
 
     @Test
     @DisplayName("toDto should convert ShoppingSession to ShoppingSessionDto with complete shopping session information")
-    public void toDto_ShouldConvertShoppingSessionToShoppingSessionDtoWithCompleteShoppingSessionInformation() {
-        ShoppingSession shoppingSession = CartDtoTestUtil.createShoppingSession();
+    public void shouldConvertShoppingSessionToShoppingSessionDtoWithCompleteShoppingSessionInformation() {
+        ShoppingSession shoppingSession = CartDtoTestStub.createShoppingSession();
         ShoppingSessionDto shoppingSessionDto = shoppingSessionDtoConverter.toDto(shoppingSession);
 
         assertEquals(shoppingSession.getId(), shoppingSessionDto.getId());

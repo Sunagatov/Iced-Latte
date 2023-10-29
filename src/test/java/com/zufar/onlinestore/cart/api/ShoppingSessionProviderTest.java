@@ -4,7 +4,7 @@ import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
 import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
 import com.zufar.onlinestore.cart.repository.ShoppingSessionRepository;
-import com.zufar.onlinestore.cart.stub.CartDtoTestUtil;
+import com.zufar.onlinestore.cart.stub.CartDtoTestStub;
 import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ShoppingSessionProviderTest {
+class ShoppingSessionProviderTest {
 
     @InjectMocks
     ShoppingSessionProvider shoppingSessionProvider;
@@ -34,9 +34,9 @@ public class ShoppingSessionProviderTest {
 
     @Test
     @DisplayName("getByUserId should return the correct ShoppingSessionDto when the user exists")
-    public void getByUserId_ShouldReturnCorrectShoppingSessionDtoWhenUserExists() throws ShoppingSessionNotFoundException {
+    public void shouldReturnCorrectShoppingSessionDtoWhenUserExists() throws ShoppingSessionNotFoundException {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
-        ShoppingSession expectedShoppingSession = CartDtoTestUtil.createShoppingSession();
+        ShoppingSession expectedShoppingSession = CartDtoTestStub.createShoppingSession();
 
         when(shoppingSessionRepository.findShoppingSessionByUserId(userId)).thenReturn(expectedShoppingSession);
 
@@ -48,7 +48,7 @@ public class ShoppingSessionProviderTest {
 
     @Test
     @DisplayName("getByUserId should throw ShoppingSessionNotFoundException when the shopping session does not exist")
-    public void getByUserId_ShouldThrowShoppingSessionNotFoundExceptionWhenShoppingSessionDoesNotExist() {
+    public void shouldThrowShoppingSessionNotFoundExceptionWhenShoppingSessionDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(shoppingSessionRepository.findShoppingSessionByUserId(nonExistentUserId)).thenThrow(ShoppingSessionNotFoundException.class);

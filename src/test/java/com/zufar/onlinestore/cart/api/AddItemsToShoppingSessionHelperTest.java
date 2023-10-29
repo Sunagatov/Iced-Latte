@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.api;
 
 import com.zufar.onlinestore.cart.converter.ShoppingSessionDtoConverter;
 import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
-import com.zufar.onlinestore.cart.stub.CartDtoTestUtil;
+import com.zufar.onlinestore.cart.stub.CartDtoTestStub;
 import com.zufar.onlinestore.openapi.dto.NewShoppingSessionItemDto;
 import com.zufar.onlinestore.openapi.dto.ShoppingSessionDto;
 import com.zufar.onlinestore.cart.entity.ShoppingSession;
@@ -15,21 +15,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Transactional
-public class AddItemsToShoppingSessionHelperTest {
+class AddItemsToShoppingSessionHelperTest {
 
     @InjectMocks
     private AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
@@ -48,23 +48,23 @@ public class AddItemsToShoppingSessionHelperTest {
 
     @Test
     @DisplayName("add should return the ShoppingSessionDto with increased list of items when the itemsToAdd set is valid")
-    public void add_shouldItemsAddToShoppingSessionDtoWithValidItemsSet() {
+    public void shouldItemsAddToShoppingSessionDtoWithValidItemsSet() {
         UUID userId = UUID.randomUUID();
 
         ShoppingSession shoppingSession = new ShoppingSession();
         shoppingSession.setId(UUID.randomUUID());
         shoppingSession.setItems(new HashSet<>());
 
-        Set<NewShoppingSessionItemDto> newShoppingSessionItemDtoToAdd = Set.of(CartDtoTestUtil.createShoppingSessionItemDtoToAdd());
+        Set<NewShoppingSessionItemDto> newShoppingSessionItemDtoToAdd = Collections.singleton(CartDtoTestStub.createShoppingSessionItemDtoToAdd());
 
-        ShoppingSessionItem itemToAdd = CartDtoTestUtil.createShoppingSessionItem();
+        ShoppingSessionItem itemToAdd = CartDtoTestStub.createShoppingSessionItem();
 
         ShoppingSession updatedShoppingSession = new ShoppingSession();
         updatedShoppingSession.setId(shoppingSession.getId());
-        updatedShoppingSession.setItems(Set.of(itemToAdd));
+        updatedShoppingSession.setItems(Collections.singleton(itemToAdd));
 
         ShoppingSessionDto expectedShoppingSessionDto = new ShoppingSessionDto();
-        expectedShoppingSessionDto.setItems(List.of(CartDtoTestUtil.createShoppingSessionItemDto()));
+        expectedShoppingSessionDto.setItems(Collections.singletonList(CartDtoTestStub.createShoppingSessionItemDto()));
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingSessionRepository.findShoppingSessionByUserId(userId)).thenReturn(shoppingSession);
@@ -77,7 +77,7 @@ public class AddItemsToShoppingSessionHelperTest {
         assertEquals(result, expectedShoppingSessionDto);
 
         verify(securityPrincipalProvider).getUserId();
-        verify(shoppingSessionRepository).findShoppingSessionByUserId(userId);
+        verify(shoppingSessionRepository, times(1)).findShoppingSessionByUserId(userId);
         verify(shoppingSessionRepository).save(shoppingSession);
         verify(shoppingSessionDtoConverter).toDto(updatedShoppingSession);
 

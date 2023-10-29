@@ -16,11 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class CartDtoTestUtil {
+public class CartDtoTestStub {
 
     public static ShoppingSessionItem createShoppingSessionItem() {
         ShoppingSession shoppingSession = new ShoppingSession();
-        shoppingSession.setId(UUID.fromString("bf5d1780-e887-47bf-9535-c9219103f21b"));
 
         UUID productId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
         ProductInfo productInfo = new ProductInfo(

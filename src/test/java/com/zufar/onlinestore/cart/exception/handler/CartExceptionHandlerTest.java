@@ -18,7 +18,7 @@ public class CartExceptionHandlerTest {
     @BeforeEach
     void setUp() { cartExceptionHandler = new CartExceptionHandler(); }
     @Test
-    void handlerShoppingSessionNotFoundException_ShouldReturnApiResponseWithNotFoundStatus() {
+    void shouldReturnApiResponseWithNotFoundStatus() {
         UUID userId = UUID.randomUUID();
         ShoppingSessionNotFoundException exception = new ShoppingSessionNotFoundException(userId);
 
@@ -26,6 +26,6 @@ public class CartExceptionHandlerTest {
 
         assertEquals(HttpStatus.NOT_FOUND.value(), apiResponse.httpStatusCode());
         assertEquals("The shopping session for the user with id = " + userId + " is not found.", apiResponse.messages().get(0));
-        assertTrue(apiResponse.description().contains("Operation was failed in method: handlerShoppingSessionNotFoundException_ShouldReturnApiResponseWithNotFoundStatus that belongs to the class: com.zufar.onlinestore.cart.exception.handler.CartExceptionHandlerTest. Problematic code line: "));
+        assertTrue(apiResponse.description().contains("Operation was failed in method: shouldReturnApiResponseWithNotFoundStatus that belongs to the class: com.zufar.onlinestore.cart.exception.handler.CartExceptionHandlerTest. Problematic code line: "));
     }
 }
