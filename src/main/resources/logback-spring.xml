@@ -4,7 +4,7 @@
    <!--  CONSOLE LOGGING CONFIGURATION  -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-50logger{40} %X{user.id.key2value} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} %X{user.id.key2value} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -34,7 +34,8 @@
                         "trace_id": "%mdc{X-B3-TraceId}",
                         "span_id": "%mdc{X-B3-SpanId}",
                         "parent_span_id": "%mdc{X-B3-ParentSpanId}",
-                        "exportable": "%mdc{X-Span-Export}"
+                        "exportable": "%mdc{X-Span-Export}",
+                        "userId": "%X{user.id.key2value}"
                         }
                         }
                     </pattern>
