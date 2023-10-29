@@ -1,5 +1,6 @@
-package com.zufar.onlinestore.security.exception;
+package com.zufar.onlinestore.security.exception.handler;
 
+import com.zufar.onlinestore.security.exception.JwtTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

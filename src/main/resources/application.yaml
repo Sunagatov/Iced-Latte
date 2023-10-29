@@ -66,13 +66,6 @@ management:
       enabled: true
   endpoints:
     web:
-      cors:
-        allowed-headers: '*'
-        allowed-methods: '*'
-        allowed-origins: '*'
-        allow-credentials: false
-        max-age: 3600
-        exposed-headers: 'Authorization'
       exposure:
         include: health, shutdown, prometheus
   prometheus:

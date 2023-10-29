@@ -19,9 +19,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-
-import java.util.List;
 
 @Slf4j
 @Configuration
@@ -39,7 +36,6 @@ public class SpringSecurityConfiguration {
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
         return httpSecurity
-                .cors(cors -> cors.configurationSource(request -> getCorsConfiguration()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
@@ -52,16 +48,6 @@ public class SpringSecurityConfiguration {
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    private CorsConfiguration getCorsConfiguration() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        corsConfiguration.setAllowedOrigins(List.of("*"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PUT","OPTIONS","PATCH", "DELETE"));
-        corsConfiguration.setAllowCredentials(false);
-        corsConfiguration.setExposedHeaders(List.of("Authorization"));
-        return corsConfiguration;
     }
 
     @Bean
