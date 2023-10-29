@@ -1,5 +1,7 @@
 package com.zufar.onlinestore.security.jwt;
 
+import com.zufar.onlinestore.security.exception.JwtTokenHasNoUserEmailException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -15,34 +17,37 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class JwtClaimExtractor {
-	private final JwtSignKeyProvider jwtSignKeyProvider;
+    private final JwtSignKeyProvider jwtSignKeyProvider;
 
-	public String extractEmail(final String jwtToken) {
-		return extractAllClaims(jwtToken)
-				.getSubject();
-	}
+    public String extractEmail(final String jwtToken) {
+        String userEmail = extractAllClaims(jwtToken).getSubject();
 
-	public LocalDateTime extractExpiration(final String jwtToken) {
-		Date expiration = extractAllClaims(jwtToken)
-				.getExpiration();
+        if (StringUtils.isEmpty(userEmail))
+            throw new JwtTokenHasNoUserEmailException();
+        else
+            return userEmail;
+    }
 
-		return Instant
-				.ofEpochMilli(expiration.getTime())
-				.atZone(ZoneId.systemDefault())
-				.toLocalDateTime();
-	}
+    public LocalDateTime extractExpiration(final String jwtToken) {
+        Date expiration = extractAllClaims(jwtToken)
+                .getExpiration();
 
+        return Instant
+                .ofEpochMilli(expiration.getTime())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
 
-	private Claims extractAllClaims(final String jwtToken) {
-		return getJwtParser()
-				.parseClaimsJws(jwtToken)
-				.getBody();
-	}
+    private Claims extractAllClaims(final String jwtToken) {
+        return getJwtParser()
+                .parseClaimsJws(jwtToken)
+                .getBody();
+    }
 
-	private JwtParser getJwtParser() {
-		return Jwts
-				.parserBuilder()
-				.setSigningKey(jwtSignKeyProvider.get())
-				.build();
-	}
+    private JwtParser getJwtParser() {
+        return Jwts
+                .parserBuilder()
+                .setSigningKey(jwtSignKeyProvider.get())
+                .build();
+    }
 }

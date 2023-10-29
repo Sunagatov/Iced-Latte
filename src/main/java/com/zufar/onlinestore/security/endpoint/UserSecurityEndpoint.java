@@ -7,15 +7,17 @@ import com.zufar.onlinestore.security.dto.UserAuthenticationRequest;
 import com.zufar.onlinestore.security.dto.UserAuthenticationResponse;
 import com.zufar.onlinestore.security.dto.UserRegistrationRequest;
 import com.zufar.onlinestore.security.dto.UserRegistrationResponse;
+import com.zufar.onlinestore.security.jwt.JwtBlacklistValidator;
+import com.zufar.onlinestore.security.jwt.JwtTokenFromAuthHeaderExtractor;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @Validated
@@ -28,6 +30,9 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     private final UserAuthenticationService userAuthenticationService;
     private final UserRegistrationService userRegistrationService;
+    private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+    private final JwtBlacklistValidator jwtBlacklistValidator;
+
     @Override
     @PostMapping("/register")
     public ResponseEntity<UserRegistrationResponse> register(@RequestBody final UserRegistrationRequest request) {
@@ -44,5 +49,17 @@ public class UserSecurityEndpoint implements SecurityApi {
         UserAuthenticationResponse authenticationResponse = userAuthenticationService.authenticate(request);
         log.info("Authentication completed for user with email = '{}'", request.email());
         return ResponseEntity.ok(authenticationResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        log.info("Received logout request");
+
+        String token = jwtTokenFromAuthHeaderExtractor.extract(request);
+
+        jwtBlacklistValidator.addToBlacklist(token);
+
+        return ResponseEntity.ok()
+                .body("{ \"message\": \"Logout is successful\" }");
     }
 }
