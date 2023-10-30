@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.security.configuration;
 
-import com.zufar.onlinestore.security.endpoint.UserSecurityEndpoint;
-import com.zufar.onlinestore.security.jwt.filter.JwtAuthenticationFilter;
+import com.zufar.onlinestore.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -26,11 +25,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final String API_AUTH_URL = UserSecurityEndpoint.USER_SECURITY_API_URL + "**";
     private static final String API_DOCS_URL = "/api/docs/**";
     private static final String ACTUATOR_ENDPOINTS_URL = "/actuator/**";
     private static final String WEBHOOK_PAYMENT_EVENT_URL = "/api/v1/payment/event";
     private static final String PRODUCTS_API_URL = "/api/v1/products/**";
+    public static final String REGISTRATION_URL = "/api/v1/auth/register";
+    public static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -39,13 +39,10 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(API_AUTH_URL, WEBHOOK_PAYMENT_EVENT_URL, PRODUCTS_API_URL, API_DOCS_URL, ACTUATOR_ENDPOINTS_URL).permitAll()
+                                .requestMatchers(REGISTRATION_URL, AUTHENTICATION_URL, WEBHOOK_PAYMENT_EVENT_URL, PRODUCTS_API_URL, API_DOCS_URL, ACTUATOR_ENDPOINTS_URL).permitAll()
                                 .anyRequest().authenticated()
                 )
-                .sessionManagement(sessionManagement ->
-                        sessionManagement
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
