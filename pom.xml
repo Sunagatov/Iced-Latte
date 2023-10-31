@@ -301,11 +301,6 @@
                 </dependency>
                 <dependency>
                     <groupId>org.testcontainers</groupId>
-                    <artifactId>postgresql</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.testcontainers</groupId>
                     <artifactId>mockserver</artifactId>
                     <version>${mock-server.version}</version>
                     <scope>test</scope>

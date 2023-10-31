@@ -20,23 +20,17 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.Parameter.param;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
 @Testcontainers
 class ProductsEndpointTest extends BaseProductEndpointTest {
-
-    @LocalServerPort
-    private Integer port;
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
 
     public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
             .parse("mockserver/mockserver")
@@ -65,6 +59,7 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
+        mockServer.start();
         mockServerClient = new MockServerClient(mockServer.getHost(), mockServer.getServerPort());
         mockServerClient.reset();
     }
@@ -160,8 +155,6 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
     }
 
     private String loadProductJsonResource(Resource resource) throws IOException {
-        try (InputStream inputStream = resource.getInputStream()) {
-            return objectMapper.readValue(inputStream, String.class);
-        }
+        return Files.readString(resource.getFile().toPath());
     }
 }
