@@ -12,15 +12,6 @@ management:
   server:
     port: 8083
 
-#
-# Database Properties
-#
-database:
-  url: jdbc:postgresql://localhost:5432/online_store
-  username: postgres
-  password: postgres
-  driver-class-name: org.postgresql.Driver
-
 spring:
   datasource:
     password: postgres
