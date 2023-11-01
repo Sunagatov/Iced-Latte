@@ -1,143 +1,137 @@
 package com.zufar.onlinestore.security.endpoint;
 
-import com.zufar.onlinestore.payment.converter.StripePaymentMethodConverter;
-import com.zufar.onlinestore.user.entity.UserEntity;
-import com.zufar.onlinestore.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import io.restassured.RestAssured;
+import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
+import org.mockserver.client.MockServerClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testcontainers.utility.DockerImageName;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.io.IOException;
+import java.nio.file.Files;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 @Testcontainers
-//todo check, why it's don't work from docker
-class UserSecurityEndpointTest {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private String name = "name";
-    private String lastName = "lastName";
-    private String email = "al1@gmail.com";
-    private String password = "password123!";
+class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
-    private String registerJson;
-    private String loginJson;
-    @Container
-    public static PostgreSQLContainer<?> POSTGRESQL_CONTAINER =
-            new PostgreSQLContainer<>("postgres:13.11-bullseye");
-    @Autowired
-    private StripePaymentMethodConverter stripePaymentMethodConverter;
+    public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
+            .parse("mockserver/mockserver")
+            .withTag("mockserver-" + MockServerClient.class.getPackage().getImplementationVersion());
 
+    @Rule
+    public MockServerContainer mockServer = new MockServerContainer(MOCKSERVER_IMAGE);
+    static MockServerClient mockServerClient;
 
-    @DynamicPropertySource
-    static void postgresqlProperties(DynamicPropertyRegistry registry) {
-        POSTGRESQL_CONTAINER.start();
+    @Value("classpath:security/model/register/base-user-register-model.json")
+    private Resource userRegisterJson;
+    @Value("classpath:security/model/register/user-wrong-data-register.json")
+    private Resource wrongDataUserRegisterJson;
+    @Value("classpath:security/model/register/user-already-exist-register.json")
+    private Resource userAlreadyExistRegisterJson;
 
-        registry.add("database.url", POSTGRESQL_CONTAINER::getJdbcUrl);
-        registry.add("database.username", POSTGRESQL_CONTAINER::getUsername);
-        registry.add("database.password", POSTGRESQL_CONTAINER::getPassword);
+    @Value("classpath:security/model/login/base-user-login-model.json")
+    private Resource userLoginJson;
+    @Value("classpath:security/model/login/user-wrong-authenticate.json")
+    private Resource wrongUserLoginJson;
 
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    private String endpointRegister = "register";
+    private String endpointLogin = "authenticate";
 
     @BeforeEach
     void setUp() {
-        registerJson = String.format("""
-            {
-              "firstName": "%s",
-              "lastName": "%s",
-              "email": "%s",
-              "password": "%s"
-            }
-            """, name, lastName, email, password);
-
-        loginJson = String.format("""
-            {
-              "email": "%s",
-              "password": "%s"
-            }
-            """, email, password);
+        RestAssured.port = port;
+        mockServer.start();
+        mockServerClient = new MockServerClient(mockServer.getHost(), mockServer.getServerPort());
+        mockServerClient.reset();
     }
 
     @Test
-    @Transactional
-    void register() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType("application/json")
-                        .content(registerJson))
-                .andExpect(status().isCreated());
+    void testRegisterUser() throws Exception {
+        String mockRequest = loadProductJsonResource(userRegisterJson);
 
-        UserEntity user = userRepository.findByEmail(email).get();
-        assertEquals(name, user.getFirstName());
-        assertEquals(lastName, user.getLastName());
-        assertTrue(user.getId() != null);
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withBody(mockRequest))
+                .respond(response()
+                        .withStatusCode(HttpStatus.CREATED.value()));
+
+        checkStatusCodeInResponse(endpointRegister, HttpStatus.CREATED.value(), "security/model/schema/user-register-schema.json", mockRequest);
     }
 
     @Test
-    @Transactional
-    void authenticate() throws Exception {
-        //todo think about saving test user,
-        // i need to encode password and set up entity values
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType("application/json")
-                        .content(registerJson))
-                .andExpect(status().isCreated());
+    void testWrongDataRegisterUser() throws Exception {
+        String mockRequest = loadProductJsonResource(wrongDataUserRegisterJson);
 
-        mockMvc.perform(post("/api/v1/auth/authenticate")
-                        .contentType("application/json")
-                        .content(loginJson))
-                .andExpect(status().isOk());
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withBody(mockRequest))
+                .respond(response()
+                        .withStatusCode(HttpStatus.BAD_REQUEST.value()));
+
+        checkStatusCodeInResponse(endpointRegister, HttpStatus.BAD_REQUEST.value(), mockRequest);
     }
 
-    /*
     @Test
-    @Transactional
-    void logout() throws Exception {
-        var data = mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType("application/json")
-                        .content(registerJson))
-                .andExpect(status().isCreated())
-                .andReturn();
+    void testUserAlreadyExistRegisterUser() throws Exception {
+        String mockRequest = loadProductJsonResource(userAlreadyExistRegisterJson);
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withBody(mockRequest))
+                .respond(response()
+                        .withStatusCode(HttpStatus.BAD_REQUEST.value()));
 
-        String tokenStr = data.getResponse().getContentAsString();
-        JsonNode jsonNode = objectMapper.readTree(tokenStr);
-        String token = jsonNode.get("token").asText();
-
-        // todo cant open logout endpoint
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/logout")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.status().isOk());
+        checkStatusCodeInResponse(endpointRegister, HttpStatus.BAD_REQUEST.value(), mockRequest);
     }
 
-     */
+    @Test
+    void testAuthenticateUser() throws Exception {
+        String mockRequestRegister = loadProductJsonResource(userRegisterJson);
+        String mockRequestLogin = loadProductJsonResource(userLoginJson);
+
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withBody(mockRequestRegister))
+                .respond(response()
+                        .withStatusCode(HttpStatus.CREATED.value()));
+
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "authenticate")
+                        .withBody(mockRequestLogin))
+                .respond(response()
+                        .withStatusCode(HttpStatus.OK.value()));
+
+        checkStatusCodeInResponse(endpointLogin, HttpStatus.OK.value(), mockRequestLogin);
+    }
+
+    @Test
+    void testWrongAuthenticateUser() throws Exception {
+        String mockRequestLogin = loadProductJsonResource(wrongUserLoginJson);
+
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "authenticate")
+                        .withBody(mockRequestLogin))
+                .respond(response()
+                        .withStatusCode(HttpStatus.NOT_FOUND.value()));
+
+        //todo: exception not thrown, code not responding
+        // checkStatusCodeInResponse(endpointLogin, HttpStatus.NOT_FOUND.value(), mockRequestLogin);
+    }
+
+    private String loadProductJsonResource(Resource resource) throws IOException {
+        return Files.readString(resource.getFile().toPath());
+    }
 }

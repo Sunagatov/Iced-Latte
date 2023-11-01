@@ -20,3 +20,8 @@ database:
   username: postgres
   password: postgres
   driver-class-name: org.postgresql.Driver
+
+spring:
+  datasource:
+    password: postgres
+    username: postgres
