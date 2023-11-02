@@ -22,6 +22,12 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/28.07.2023.part3.create-user-granted-authority-table.sql
   - include:
-      file: db/changelog/version-1.0/28.07.2023.part4.create-user-details-table.sql
+      file: db/changelog/version-1.0/28.07.2023.part4.insert-user-granted-authority-table.sql
   - include:
-      file: db/changelog/version-1.0/28.07.2023.part5.insert-user-details-table-data.sql
+      file: db/changelog/version-1.0/28.07.2023.part5.create-user-details-table.sql
+  - include:
+      file: db/changelog/version-1.0/28.07.2023.part6.insert-user-details-table-data.sql
+  - include:
+      file: db/changelog/version-1.0/07.10.2023.part1.create-login-attempts-table.sql
+  - include:
+      file: db/changelog/version-1.0/07.10.2023.part2.insert-login-attempts-table-data.sql
