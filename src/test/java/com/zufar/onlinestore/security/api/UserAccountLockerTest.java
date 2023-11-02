@@ -3,6 +3,7 @@ package com.zufar.onlinestore.security.api;
 import com.zufar.onlinestore.security.repository.LoginAttemptRepository;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import org.instancio.Instancio;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +27,7 @@ class UserAccountLockerTest {
             .create();
 
     @Test
+    @DisplayName("Mock test lock user account")
     void testLockUserAccount() {
         userAccountLocker.lockUserAccount(userEmail);
         verify(loginAttemptRepository, times(1))
@@ -35,6 +37,7 @@ class UserAccountLockerTest {
     }
 
     @Test
+    @DisplayName("Mock test unlock user account")
     void testUnlockUserAccount() {
         userAccountLocker.unlockUserAccount(userEmail);
         verify(userRepository, times(1))

@@ -3,6 +3,7 @@ package com.zufar.onlinestore.security.endpoint;
 import io.restassured.RestAssured;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +40,7 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
     @Value("classpath:security/model/login/base-user-login-model.json")
     private Resource userLoginJson;
-    @Value("classpath:security/model/login/user-wrong-authenticate.json")
+    @Value("classpath:security/model/login/user-wrong-password-authenticate.json")
     private Resource wrongUserLoginJson;
 
     private String endpointRegister = "register";
@@ -54,7 +55,8 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
     }
 
     @Test
-    void testRegisterUser() throws Exception {
+    @DisplayName("Register a User Successfully")
+    void shouldRegisterUserSuccessfully() throws Exception {
         String mockRequest = loadProductJsonResource(userRegisterJson);
 
         mockServerClient.when(request()
@@ -68,7 +70,8 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
     }
 
     @Test
-    void testWrongDataRegisterUser() throws Exception {
+    @DisplayName("Fail to Register User with Wrong Data")
+    void shouldFailToRegisterUserWithWrongData() throws Exception {
         String mockRequest = loadProductJsonResource(wrongDataUserRegisterJson);
 
         mockServerClient.when(request()
@@ -82,7 +85,8 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
     }
 
     @Test
-    void testUserAlreadyExistRegisterUser() throws Exception {
+    @DisplayName("Fail to Register User that Already Exists")
+    void shouldFailToRegisterUserThatAlreadyExists() throws Exception {
         String mockRequest = loadProductJsonResource(userAlreadyExistRegisterJson);
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
@@ -95,7 +99,8 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
     }
 
     @Test
-    void testAuthenticateUser() throws Exception {
+    @DisplayName("Authenticate a User Successfully")
+    void shouldAuthenticateUserSuccessfully() throws Exception {
         String mockRequestRegister = loadProductJsonResource(userRegisterJson);
         String mockRequestLogin = loadProductJsonResource(userLoginJson);
 
@@ -117,18 +122,26 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
     }
 
     @Test
-    void testWrongAuthenticateUser() throws Exception {
+    @DisplayName("Fail to Authenticate User with Wrong Password")
+    void shouldFailToAuthenticateUserWithWrongCredentials() throws Exception {
+        String mockRequestRegister = loadProductJsonResource(userRegisterJson);
         String mockRequestLogin = loadProductJsonResource(wrongUserLoginJson);
+
+        mockServerClient.when(request()
+                        .withMethod(HttpMethod.POST.name())
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointRegister)
+                        .withBody(mockRequestRegister))
+                .respond(response()
+                        .withStatusCode(HttpStatus.CREATED.value()));
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
                         .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointLogin)
                         .withBody(mockRequestLogin))
                 .respond(response()
-                        .withStatusCode(HttpStatus.NOT_FOUND.value()));
+                        .withStatusCode(HttpStatus.UNAUTHORIZED.value()));
 
-        //todo: exception not thrown, code not responding
-        // checkStatusCodeInResponse(endpointLogin, HttpStatus.NOT_FOUND.value(), mockRequestLogin);
+        checkStatusCodeInResponse(endpointLogin, HttpStatus.UNAUTHORIZED.value(), mockRequestLogin);
     }
 
     private String loadProductJsonResource(Resource resource) throws IOException {

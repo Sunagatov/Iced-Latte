@@ -19,9 +19,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class UserAuthenticationServiceTest {
@@ -48,8 +48,8 @@ class UserAuthenticationServiceTest {
 
 
     @Test
-    @DisplayName("mock test register true")
-    void mockTestRegister() {
+    @DisplayName("mock test authenticate, return authentication")
+    void mockTestAuthenticate() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal())
@@ -68,8 +68,8 @@ class UserAuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("mock test register throw BadCredentialsException")
-    void mockTestRegisterThrowBadCredentialsException() {
+    @DisplayName("mock test authenticate throw BadCredentialsException")
+    void mockTestAuthenticateThrowBadCredentialsException() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -80,8 +80,8 @@ class UserAuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("mock test register throw LockedException")
-    void mockTestRegisterThrowLockedException() {
+    @DisplayName("mock test authenticate throw LockedException")
+    void mockTestAuthenticateThrowLockedException() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new LockedException("User account is locked"));
 
