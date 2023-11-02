@@ -1,28 +1,24 @@
 package com.zufar.onlinestore.product.endpoint.e2e;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.onlinestore.product.endpoint.ProductsEndpoint;
 import io.restassured.RestAssured;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -38,9 +34,6 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
 
     @Rule
     public MockServerContainer mockServer = new MockServerContainer(MOCKSERVER_IMAGE);
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Value("classpath:product/model/product-base-model.json")
     private Resource productResponseResource;
@@ -66,7 +59,7 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
 
     @Test
     void shouldRetrieveProductSuccessfullyById() throws IOException {
-        String productId = "d2160f5d-b8e1-4cbe-8bb2-2f2f48484848";
+        String productId = "418499f3-d951-40bf-9414-5cb90ab21ecb";
         String mockResponse = loadProductJsonResource(productResponseResource);
 
         mockServerClient.when(request()
@@ -76,7 +69,7 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withStatusCode(HttpStatus.OK.value())
                         .withBody(mockResponse));
 
-        checkStatusCodeInResponse("/" + productId, HttpStatus.OK.value(), "product/model/schema/product-schema.json");
+        checkStatusCodeInResponse("/" + productId, Collections.emptyMap(), HttpStatus.OK.value(), "product/model/schema/product-schema.json");
     }
 
     @Test
@@ -110,8 +103,12 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                 .respond(response()
                         .withStatusCode(HttpStatus.OK.value())
                         .withBody(mockResponse));
-
-        checkStatusCodeInResponse("?page=1&size=1&sort_attribute=name&sort_direction=desc", HttpStatus.OK.value(), "product/model/schema/product-list-pagination-schema.json");
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 1);
+        params.put("size", 1);
+        params.put("sort_attribute", "name");
+        params.put("sort_direction", "desc");
+        checkStatusCodeInResponse("", params, HttpStatus.OK.value(), "product/model/schema/product-list-pagination-schema.json");
     }
 
     @Test
@@ -128,8 +125,12 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         ))
                 .respond(response()
                         .withStatusCode(HttpStatus.FORBIDDEN.value()));
-
-        checkStatusCodeInResponse("?page=15&size=8&sort_attribute=names&sort_direction=desc", HttpStatus.FORBIDDEN.value());
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 15);
+        params.put("size", 8);
+        params.put("sort_attribute", "names");
+        params.put("sort_direction", "desc");
+        checkStatusCodeInResponse("", params, HttpStatus.FORBIDDEN.value());
     }
 
     @Test
@@ -150,8 +151,18 @@ class ProductsEndpointTest extends BaseProductEndpointTest {
                         .withStatusCode(HttpStatus.OK.value())
                         .withBody(mockResponse)
                 );
-
-        basePositiveHasItemsCheck("products.name", expectedProductName, "?page=5&size=1&sort_attribute=name&sort_direction=desc", "product/model/schema/product-list-pagination-schema.json");
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 5);
+        params.put("size", 1);
+        params.put("sort_attribute", "name");
+        params.put("sort_direction", "desc");
+        basePositiveHasItemsCheck(
+                "products.name",
+                expectedProductName,
+                "",
+                "product/model/schema/product-list-pagination-schema.json",
+                params
+        );
     }
 
     private String loadProductJsonResource(Resource resource) throws IOException {
