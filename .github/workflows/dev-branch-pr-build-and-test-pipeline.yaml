@@ -38,7 +38,7 @@ jobs:
 
     env:
       APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
-      APP_JWT_EXPIRATION_TIME: ${{ secrets.APP_JWT_EXPIRATION_TIME}}
+      APP_JWT_EXPIRATION_TIME: 604800000
 
     steps:
       - uses: actions/checkout@v3
