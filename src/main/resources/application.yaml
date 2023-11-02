@@ -3,7 +3,7 @@
 # Server Properties
 #
 server:
-  port: 8083
+  port: ${APP_SERVER_PORT}
   ssl:
     key-store-type: PKCS12
     key-store: certs/zufarkeystore.p12
@@ -26,22 +26,23 @@ spring:
     ansi:
       enabled: detect
   datasource:
-    url: jdbc:postgresql://localhost:5432/testdb
-    username: postgres
-    password: postgres
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
-    database: POSTGRESQL
-    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: data
-      password: rootpass
-      username: rootuser
-      authentication-database: admin
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-master.yaml
+    url: ${DATASOURCE_URL}
+    user: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+#
+# Stripe Api Properties
+#
+  config:
+    import: optional:stripe.yaml
 
 #
 # Spring Doc Properties
@@ -57,7 +58,7 @@ springdoc:
 #
 management:
   server:
-    port: 8083
+    port: ${APP_SERVER_PORT}
   endpoint:
     prometheus:
       enabled: false
@@ -76,32 +77,22 @@ management:
       application: ${spring.application.name}
 
 #
-# AWS Properties
-#
-cloud:
-  aws:
-    service:
-      endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
-    region:
-      static: us-east-1
-    credentials:
-      access-key: aws_access_key_id
-      secret-key: aws_secret_access_key
-    sqs:
-      queue:
-        purchase-transactions-sqs-queue-url: ${cloud.aws.service.endpoint}/000000000000/purchase-transactions-sqs-queue
-    sns:
-      topic:
-        name: purchase-transactions-sns-topic
-        url: ${cloud.aws.service.endpoint}
-
-#
 # JWT Security Properties
 #
 jwt:
   header: Authorization
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration: 6044800
+  secret: ${APP_JWT_SECRET}
+  expiration: ${APP_JWT_EXPIRATION_TIME}
+
+#
+# Login Attempts Properties
+#
+login-attempts:
+  max-attempts: 5
+  lockout-duration-minutes: 30
+
+unlock-account-scheduler-cron: '0 0/5 * * * *'
+# every 5 minutes
 
 #
 # Logging Properties

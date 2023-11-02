@@ -1,30 +1,23 @@
 package com.zufar.onlinestore.product.converter;
 
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.onlinestore.product.entity.ProductInfo;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
+import org.springframework.data.domain.Page;
 
-import org.springframework.stereotype.Service;
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+public interface ProductInfoDtoConverter {
 
-import lombok.AllArgsConstructor;
+    @Named("toProductInfoDto")
+    @Mapping(target = "id", source = "entity.productId")
+    ProductInfoDto toDto(final ProductInfo entity);
 
-@Service
-@AllArgsConstructor
-public class ProductInfoDtoConverter {
-
-	public ProductInfoDto convertToDto(final ProductInfo entity) {
-		return ProductInfoDto.builder()
-				.id(entity.getId())
-				.category(entity.getCategory())
-				.name(entity.getName())
-				.price(entity.getPrice())
-				.build();
-	}
-
-	public ProductInfo convertToEntity(final ProductInfoDto dto) {
-		return ProductInfo.builder()
-				.category(dto.getCategory())
-				.name(dto.getName())
-				.price(dto.getPrice())
-				.build();
-	}
+    @Mapping(target = "products", source = "pageProductResponseDto.content")
+    @Mapping(target = "page", source = "pageProductResponseDto.number")
+    @Mapping(target = "size", source = "pageProductResponseDto.size")
+    ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto);
 }

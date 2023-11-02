@@ -1,107 +1,53 @@
 package com.zufar.onlinestore.product.endpoint;
 
-import com.zufar.onlinestore.product.converter.ProductInfoDtoConverter;
-import com.zufar.onlinestore.product.dto.ProductInfoDto;
-import com.zufar.onlinestore.product.entity.ProductInfo;
-import com.zufar.onlinestore.product.repository.ProductInfoRepository;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collection;
-import java.util.Optional;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.zufar.onlinestore.product.api.ProductApi;
+import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
+import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = "/api/products")
-public class ProductsEndpoint {
-	private final ProductInfoRepository productInfoRepository;
-	private final ProductInfoDtoConverter productInfoDtoConverter;
+@RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)
+public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.api.ProductApi {
 
-	@PostMapping
-	@ResponseBody
-	public ResponseEntity<Void> saveProduct(@RequestBody @Valid @NotNull(message = "Request body is mandatory") final ProductInfoDto request) {
-		log.info("Received request to create ProductInfo - {}.", request);
-		ProductInfo productInfo = productInfoDtoConverter.convertToEntity(request);
-		productInfoRepository.save(productInfo);
-		log.info("The ProductInfo was created");
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.build();
-	}
+    public static final String PRODUCTS_URL = "/api/v1/products";
 
-	@GetMapping("/{id}")
-	@ResponseBody
-	public ResponseEntity<ProductInfoDto> getProductInfoById(@PathVariable("id") @NotBlank final String id) {
-		log.info("Received request to get the ProductInfo with id - {}.", id);
-		Optional<ProductInfo> ProductInfo = productInfoRepository.findById(Integer.parseInt(id));
-		if (ProductInfo.isEmpty()) {
-			log.info("the ProductInfo with id - {} is absent.", id);
-			return ResponseEntity.notFound()
-					.build();
-		}
-		ProductInfoDto ProductInfoDto = productInfoDtoConverter.convertToDto(ProductInfo.get());
-		log.info("the ProductInfo with id - {} was retrieved - {}.", id, ProductInfoDto);
-		return ResponseEntity.ok()
-				.body(ProductInfoDto);
-	}
+    private final ProductApi productApi;
 
-	@GetMapping
-	@ResponseBody
-	public ResponseEntity<Collection<ProductInfoDto>> getAllProducts() {
-		log.info("Received request to get all ProductInfos");
-		Collection<ProductInfo> productInfoCollection = productInfoRepository.findAll();
-		if (productInfoCollection.isEmpty()) {
-			log.info("All ProductInfos are absent.");
-			return ResponseEntity.notFound()
-					.build();
-		}
-		Collection<ProductInfoDto> ProductInfos = productInfoCollection.stream()
-				.map(productInfoDtoConverter::convertToDto)
-				.toList();
+    @Override
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final String productId) {
+        log.info("Received the request to get the product with productId - {}.", productId);
+        ProductInfoDto product = productApi.getProduct(UUID.fromString(productId));
+        log.info("The product with productId: {} was retrieved successfully", productId);
+        return ResponseEntity.ok()
+                .body(product);
+    }
 
-		log.info("All ProductInfos were retrieved - {}.", ProductInfos);
-		return ResponseEntity.ok()
-				.body(ProductInfos);
-	}
-
-	@DeleteMapping("/{id}")
-	@ResponseBody
-	public ResponseEntity<Void> deleteById(@PathVariable("id") @NotBlank final String id) {
-		log.info("Received request to delete the ProductInfo with id - {}.", id);
-		productInfoRepository.deleteById(Integer.parseInt(id));
-		log.info("the ProductInfo with id - {} was deleted.", id);
-		return ResponseEntity.ok()
-				.build();
-	}
-
-	@PutMapping("/{id}")
-	@ResponseBody
-	public ResponseEntity<Void> updateProductInfo(@PathVariable("id") @NotBlank final String id,
-	                                              @RequestBody @Valid @NotNull final ProductInfoDto request) {
-		log.info("Received request to update the ProductInfo with id - {}, request - {}.", id, request);
-		ProductInfo productInfo = productInfoDtoConverter.convertToEntity(request);
-		productInfo.setId(Integer.parseInt(id));
-		productInfoRepository.save(productInfo);
-		log.info("the ProductInfo with id - {} was updated.", id);
-		return ResponseEntity.ok()
-				.build();
-	}
+    @Override
+    @GetMapping
+    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                                        @RequestParam(name = "size", defaultValue = "50") Integer size,
+                                                                        @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
+                                                                        @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
+        log.info("Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                page, size, sortAttribute, sortDirection);
+        ProductListWithPaginationInfoDto productPaginationDto = productApi.getProducts(page, size, sortAttribute, sortDirection);
+        log.info("Products were retrieved successfully with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                page, size, sortAttribute, sortDirection);
+        return ResponseEntity.ok()
+                .body(productPaginationDto);
+    }
 }

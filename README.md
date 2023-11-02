@@ -1,6 +1,6 @@
 # Online-Store
 * Rest API which simulates the work of an online store. <br />
-* Based on AWS Services and Spring Boot ecosystem technologies. <br />
+* Based on Spring Boot ecosystem technologies and PostgreSQL database. <br />
 * Created for learning purposes. 
 
 ## Prerequisites
@@ -17,12 +17,7 @@
   * JWT
   * TLS
 * Databases
-  * Mongo DB
-  * AWS Dynamo DB
-* Queues
-  * AWS SQS
-* Topics
-  * AWS SNS
+  * PostgreSQL
 * Containerisation
   * Docker
 * Monitoring
@@ -31,33 +26,10 @@
   * Kibana
   * Filebeat
 * Logging
-  * Slf4j
-  * Logback
+  * Log4j2
   
 ## Getting the project up and running
-Get project running by
-```shell
-docker-compose --profile dev up
-```
-If this doesn't work use
-```shell
-docker compose --profile dev up
-```
-### Working with REST API
-* #### OpenAPI Schema
-
-  Schema in json
-    ```shell
-    http://localhost:8083/api/docs/schema
-    ```
-    Schema in yaml
-    ```shell
-    http://localhost:8083/api/docs/schema.yaml
-    ```
-* #### Swagger UI page
-    ```shell
-    http://localhost:8083/api/docs/swagger-ui
-    ```
+See [START.MD](https://github.com/Sunagatov/Online-Store/blob/development/START.MD)
 
 ### Obtaining a token
 Using Postman get Bearer token by running
@@ -68,25 +40,7 @@ Copy the token and insert into Auth tab
 ### Testing authorisation
 Run this GET request to test authentication
 ```shell 
-http://localhost:8083/api/products
-```
-
-## Docker (Should be fixed)
-Build the Docker image
-```shell
-docker build -t zufar_sunagatov/online-store:v1 .
-```
-
-Run the Docker image
-```shell
-docker run -it --rm -p 8081:8081 --name online-store zufar_sunagatov/online-store:v1
-```
-
-Push the image to Docker
-```shell
-docker login --username=zufar_sunagatov
-docker tag zufar_sunagatov/online-store:v1 zufar_sunagatov/online-store:v1
-docker push zufar_sunagatov/online-store:v1
+http://localhost:8083/api/v1/products/a3c4d3f7-1172-4fb2-90a9-59b13b35dfc6
 ```
 
 Override our code style
