@@ -1,0 +1,26 @@
+
+#
+# Server Properties
+#
+server:
+  port: 8083
+
+#
+# Management Properties
+#
+management:
+  server:
+    port: 8083
+
+spring:
+  datasource:
+    password: postgres
+    username: postgres
+
+#
+# JWT Security Properties
+#
+jwt:
+  header: Authorization
+  secret: ${APP_JWT_SECRET}
+  expiration: ${APP_JWT_EXPIRATION_TIME}

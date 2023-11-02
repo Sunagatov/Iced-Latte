@@ -1,0 +1,6 @@
+{
+  "firstName": "testName",
+  "lastName": "testLastName",
+  "email": "wrongEmail",
+  "password": "wrongPassword"
+}

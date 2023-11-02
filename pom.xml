@@ -56,6 +56,9 @@
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
         <testcontainers.version>1.18.3</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
+        <rest-assured.version>5.3.2</rest-assured.version>
+        <mock-server.version>1.19.0</mock-server.version>
+        <mock-server-client.version>5.15.0</mock-server-client.version>
 
         <!-- Spring Dependencies Versions -->
         <spring-retry.version>2.0.2</spring-retry.version>
@@ -65,7 +68,9 @@
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
-        
+
+
+
         <!-- Validation Dependencies Versions -->
         <validation-api.version>2.0.1.Final</validation-api.version>
 
@@ -99,6 +104,7 @@
         <lombok.version>1.18.24</lombok.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
+
     </properties>
 
     <!-- Dependencies -->
@@ -280,6 +286,34 @@
 
                 <!-- Testing Dependencies -->
                 <dependency>
+                    <groupId>io.rest-assured</groupId>
+                    <artifactId>rest-assured</artifactId>
+                    <version>${rest-assured.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.testcontainers</groupId>
+                    <artifactId>junit-jupiter</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-testcontainers</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.testcontainers</groupId>
+                    <artifactId>mockserver</artifactId>
+                    <version>${mock-server.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.mock-server</groupId>
+                    <artifactId>mockserver-client-java</artifactId>
+                    <version>${mock-server-client.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-test</artifactId>
                     <scope>test</scope>
@@ -317,6 +351,12 @@
                 <dependency>
                     <groupId>org.springframework.security</groupId>
                     <artifactId>spring-security-test</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.rest-assured</groupId>
+                    <artifactId>json-schema-validator</artifactId>
+                    <version>3.3.0</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
