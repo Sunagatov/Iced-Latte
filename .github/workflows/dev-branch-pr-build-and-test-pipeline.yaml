@@ -35,8 +35,19 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
+    env:
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+      APP_JWT_EXPIRATION_TIME: 604800000
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
 
       - name: Cache Maven dependencies
         uses: actions/cache@v3
@@ -45,9 +56,5 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2
-
-      - name: Load environment variables from .env
-        run: source .env
-
       - name: Run unit tests
         run: mvn test -Pdev --file pom.xml
