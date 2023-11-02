@@ -1,5 +1,6 @@
 package com.zufar.onlinestore.security.endpoint;
 
+import com.zufar.onlinestore.OnlineStoreApplication;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -21,7 +22,7 @@ import static org.hamcrest.Matchers.lessThan;
 // Can't get Docker image: RemoteDockerImage(imageName=postgres:13.11-bullseye, imagePullPolicy=DefaultPullPolicy(), imageNameSubstitutor=org.testcontainers.utility.ImageNameSubstitutor$LogWrappedImageNameSubstitutor@39f8adc0)
 
 @ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = OnlineStoreApplication.class)
 public class BaseUserSecurityEndpointTest {
 
     @Container

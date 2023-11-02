@@ -59,7 +59,7 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointRegister)
                         .withBody(mockRequest))
                 .respond(response()
                         .withStatusCode(HttpStatus.CREATED.value()));
@@ -73,7 +73,7 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointRegister)
                         .withBody(mockRequest))
                 .respond(response()
                         .withStatusCode(HttpStatus.BAD_REQUEST.value()));
@@ -86,7 +86,7 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
         String mockRequest = loadProductJsonResource(userAlreadyExistRegisterJson);
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointRegister)
                         .withBody(mockRequest))
                 .respond(response()
                         .withStatusCode(HttpStatus.BAD_REQUEST.value()));
@@ -101,14 +101,14 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "register")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointRegister)
                         .withBody(mockRequestRegister))
                 .respond(response()
                         .withStatusCode(HttpStatus.CREATED.value()));
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "authenticate")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointLogin)
                         .withBody(mockRequestLogin))
                 .respond(response()
                         .withStatusCode(HttpStatus.OK.value()));
@@ -122,7 +122,7 @@ class UserSecurityEndpointTest extends BaseUserSecurityEndpointTest {
 
         mockServerClient.when(request()
                         .withMethod(HttpMethod.POST.name())
-                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + "authenticate")
+                        .withPath(UserSecurityEndpoint.USER_SECURITY_API_URL + endpointLogin)
                         .withBody(mockRequestLogin))
                 .respond(response()
                         .withStatusCode(HttpStatus.NOT_FOUND.value()));
