@@ -20,7 +20,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,7 +35,7 @@ public class UserEntity implements UserDetails {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID userId;
+    private UUID id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -57,9 +56,8 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private transient Address address;
 
-    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private Set<UserGrantedAuthority> authorities = new HashSet<>();
+    private Set<UserGrantedAuthority> authorities;
 
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;
@@ -79,18 +77,11 @@ public class UserEntity implements UserDetails {
     }
 
     public void addAuthority(UserGrantedAuthority authority) {
+        if (this.authorities == null) {
+            this.authorities = new HashSet<>();
+        }
         this.authorities.add(authority);
         authority.setUser(this);
-    }
-
-    public void removeAuthority(UserGrantedAuthority authority) {
-        authority.setUser(null);
-        this.authorities.remove(authority);
-    }
-
-    public void removeAuthorities() {
-        authorities.forEach(authority -> authority.setUser(null));
-        authorities.clear();
     }
 
     @Override
@@ -101,21 +92,21 @@ public class UserEntity implements UserDetails {
             return false;
         UserEntity user = (UserEntity) o;
         return new EqualsBuilder()
-                .append(userId, user.userId)
+                .append(id, user.id)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(userId)
+                .append(id)
                 .toHashCode();
     }
 
     @Override
     public String toString() {
         return "User{" +
-                "userId='" + userId + '\'' +
+                "userId='" + id + '\'' +
                 '}';
     }
 }
