@@ -20,4 +20,4 @@ jobs:
         run: |
          docker login -u ${{secrets.DOCKERHUB_USERNAME}} -p ${{secrets.DOCKERHUB_PASSWORD}}
          docker build -t zufarexplainedit/test_ci:latest .
-          docker push zufarexplainedit/test_ci:latest
+         docker push zufarexplainedit/test_ci:latest
