@@ -7,7 +7,7 @@ networks:
 services:
   postgresdb:
     image: 'postgres:13.11-bullseye'
-    container_name: online-store-postgresdb
+    container_name: postgresdb
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -16,13 +16,132 @@ services:
       - '5432:5432'
     networks:
       - online-store-network
+    profiles:
+      - dev
+      - test
+      - prod
     volumes:
       - 'db:/var/lib/postgresql/data'
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+
+  elasticsearch:
+    build:
+      context: ./elastic-stack/elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - ./elastic-stack/elasticsearch:/usr/share/elasticsearch/data:Z
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    environment:
+      node.name: elasticsearch
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      discovery.type: single-node # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+    networks:
+      - online-store-network
+    profiles:
+      - prod
+  # The 'setup' service runs a one-off script which initializes users inside
+  # Elasticsearch — such as 'logstash_internal' and 'kibana_system' — with the
+  # values of the passwords defined in the '.env' file.
+  #
+  # This task is only performed during the *initial* startup of the stack. On all
+  # subsequent runs, the service simply returns immediately, without performing
+  # any modification to existing users.
+
+  setup:
+    build:
+      context: ./elastic-stack/setup/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    init: true
+    volumes:
+      - ./elastic-stack/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./elastic-stack/setup/helpers.sh:/helpers.sh:ro,Z
+      - ./elastic-stack/setup/roles:/roles:ro,Z
+      - ./elastic-stack/setup:/state:Z
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    networks:
+      - online-store-network
+
+  logstash:
+    build:
+      context: ./elastic-stack/logstash/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+      - ./elastic-stack/logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+    ports:
+      - '5044:5044'
+      - '50000:50000/tcp'
+      - '50000:50000/udp'
+      - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+    networks:
+      - online-store-network
+    depends_on:
+      - elasticsearch
+    profiles:
+      - prod
+
+  kibana:
+    build:
+      context: ./elastic-stack/kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elastic-stack/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    ports:
+      - '5601:5601'
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - online-store-network
+    depends_on:
+      - elasticsearch
+    profiles:
+      - prod
+
+  localstack:
+    image: 'localstack/localstack:latest'
+    container_name: localstack
+    build:
+      context: ./
+      dockerfile: docker/localstack/Dockerfile
+    hostname: awslocal
+    ports:
+      - '4566:4566'
+      - '4510-4559:4510-4559'
+    user: root
+    environment:
+      DEBUG: 0
+      SERVICES: "sqs,sns,dynamodb"
+      HOSTNAME_EXTERNAL: awslocal
+      PERSISTENCE: "/var/lib/localstack/state"
+      AWS_DEFAULT_REGION: us-east-1
+      DYNAMODB_SHARE_DB: 1
+      DYNAMODB_IN_MEMORY: 1
+      EDGE_PORT: 4566
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-scripts/localstack:/etc/localstack/init/ready.d"
+    networks:
+      - online-store-network
+    profiles:
+      - aws
 
   sonarqube:
     image: sonarqube:latest
@@ -36,6 +155,8 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+    profiles:
+      - dev
 
 volumes:
   sonarqube_conf:
