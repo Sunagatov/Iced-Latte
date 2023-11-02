@@ -36,6 +36,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
+    env:
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+
     steps:
       - uses: actions/checkout@v3
 
