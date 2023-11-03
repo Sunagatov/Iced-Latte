@@ -28,12 +28,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Download .env file
-        uses: actions/download-artifact@v2
-        with:
-          name: env-file
-          path: .
-
       - name: Run Your Tests
         run: |
           set -a
@@ -63,12 +57,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2
-
-      - name: Download .env file
-        uses: actions/download-artifact@v2
-        with:
-          name: env-file
-          path: .
 
       - name: Run unit tests
         run: |
