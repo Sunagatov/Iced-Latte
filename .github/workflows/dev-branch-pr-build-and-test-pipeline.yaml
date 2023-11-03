@@ -30,7 +30,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-         source .env
+         export $(cat .env | xargs)
          mvn -B package -Pdev -DskipTests --file pom.xml
 
   test:
@@ -58,5 +58,5 @@ jobs:
 
       - name: Run unit tests
         run: |
-         source .env
+         export $(cat .env | xargs)
          mvn test -Pdev --file pom.xml
