@@ -29,7 +29,9 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn -B package -Pdev -DskipTests --file pom.xml
+        run: |
+         source .env
+         mvn -B package -Pdev -DskipTests --file pom.xml
 
   test:
     name: Test Job
@@ -55,4 +57,6 @@ jobs:
             ${{ runner.os }}-m2
 
       - name: Run unit tests
-        run: mvn test -Pdev --file pom.xml
+        run: |
+         source .env
+         mvn test -Pdev --file pom.xml
