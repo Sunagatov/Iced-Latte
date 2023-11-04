@@ -15,3 +15,8 @@ spring:
   datasource:
     password: postgres
     username: postgres
+
+jwt:
+  header: Authorization
+  secret: ${random.uuid}
+  expiration: 1800000
