@@ -15,6 +15,7 @@ public class UserService implements UserApi {
 
     private final SaveUserOperationPerformer saveUserOperationPerformer;
     private final SingleUserProvider singleUserProvider;
+    private final ConfirmUserEmailOperationPerformer confirmUserEmailOperationPerformer;
 
     @Override
     public UserDto saveUser(final UserDto userDto) {
@@ -24,5 +25,15 @@ public class UserService implements UserApi {
     @Override
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
         return singleUserProvider.getUserById(userId);
+    }
+
+    @Override
+    public String genereateEmailConfirmationToken(UUID userId) throws UserNotFoundException {
+        return confirmUserEmailOperationPerformer.generateUserEmailConfirmationToken(userId);
+    }
+
+    @Override
+    public void confirmUserEmail(String token) throws UserNotFoundException {
+        confirmUserEmailOperationPerformer.confirmUserEmail(token);
     }
 }

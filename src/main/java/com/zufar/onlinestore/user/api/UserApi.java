@@ -23,4 +23,21 @@ public interface UserApi {
      * @throws UserNotFoundException if there is no user in the database with the provided userId
      */
     UserDto getUserById(final UUID userId) throws UserNotFoundException;
+
+
+    /**
+     * Generates a user-unique confirmation token and updates user with it
+     *
+     * @param userId the id of user to generate token for
+     * @throws UserNotFoundException if there is no user in the database with the provided token
+     */
+    String genereateEmailConfirmationToken(final UUID userId) throws UserNotFoundException;
+
+    /**
+     * Method to confirm user email
+     *
+     * @param token the token to confirm user email
+     * @throws UserNotFoundException if there is no user in the database with the provided token
+     */
+    void confirmUserEmail(final String token) throws UserNotFoundException;
 }

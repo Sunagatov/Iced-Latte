@@ -20,6 +20,14 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
     /**
+     * Finds a user entity by its confirmation token.
+     *
+     * @param token The confirmation token of the user.
+     * @return An optional containing the user entity if found.
+     */
+    Optional<UserEntity> findByConfirmationToken(String token);
+
+    /**
      * Updates the locked status of a user based on the given email.
      *
      * @param email The email of the user.

@@ -44,6 +44,20 @@ spring:
   config:
     import: optional:stripe.yaml
 
+  mail:
+    host: ${SMTP_MAIL_HOST:smtp.gmail.com"}
+    port: ${SMTP_MAIL_PORT:587}
+    username: ${COMPANY_EMAIL_USERNAME:#{null}}
+    password:  ${COMPANY_EMAIL_PASSWORD:#{null}}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: "*"
+
 #
 # Spring Doc Properties
 #
@@ -101,3 +115,8 @@ logging:
   pattern:
     file: online-store-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+
+iced-latte:
+  feature:
+    email-confirmation:
+      enabled: {$FEATURE_EMAIL_CONFIRMATION_ENABLED:false}
