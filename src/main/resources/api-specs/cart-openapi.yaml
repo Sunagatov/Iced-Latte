@@ -1,78 +1,101 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online_Store API"
-  description: "Online_Store API for Cart package"
+  title: "Online Store Shopping Cart API"
+  description: "This API allows users to manage their shopping cart items, including adding, updating, and deleting cart items."
   version: "1.0.0"
+  termsOfService: "http://example.com/terms/"
+  contact:
+    name: "API Support"
+    url: "http://example.com/support"
+    email: "support@example.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 
 servers:
-  - url: "http://localhost:8083"
+  - url: "https://api.example.com/v1"
+    description: "Production server"
 
 tags:
   - name: "Cart"
-    description: "An API for managing and retrieving cart information"
+    description: "Endpoints related to shopping cart operations"
 
 paths:
   /api/v1/cart/items:
     post:
       tags:
         - "Cart"
-      summary: "Add a list of new products to the cart"
+      summary: "Add items to the shopping cart"
       operationId: "addNewItemToShoppingSession"
       requestBody:
-        description: "Add a list of new products to the cart by productIds and productsQuantity"
+        description: "Payload containing a list of items to be added to the cart."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AddNewItemsToShoppingSessionRequest"
-        required: true
+            examples:
+              add-multiple:
+                summary: "Add Multiple Items"
+                value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
       responses:
         "200":
-          description: "OK"
+          description: "Items added successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
+        "400":
+          description: "Invalid input, object invalid."
 
     patch:
       tags:
         - "Cart"
-      summary: "Update the item in the cart"
+      summary: "Update cart item quantity"
       operationId: "updateProductQuantityInShoppingSessionItem"
       requestBody:
-        description: "Change the quantity of the item in the cart by shoppingSessionItemId and productQuantityChange (example: '1' will increase the value by one, '-1' will reduce by one)"
+        description: "Payload containing the cart item ID and the quantity change."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateProductQuantityInShoppingSessionItemRequest"
-        required: true
+            examples:
+              increment-quantity:
+                summary: "Increment Quantity"
+                value: {"shoppingSessionItemId": "e5f6g7h8", "productQuantityChange": 1}
       responses:
         "200":
-          description: "OK"
+          description: "Shopping cart item quantity was updated successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
+        "400":
+          description: "Invalid input, object invalid."
 
     delete:
       tags:
         - "Cart"
-      summary: "Delete list of items from the cart"
+      summary: "Remove items from the cart"
       operationId: "deleteItemsFromShoppingSession"
       requestBody:
-        description: "Delete list of items from the cart by list of shoppingSessionItemIds"
+        description: "Payload containing an array of cart item IDs to be removed."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/DeleteItemsFromShoppingSessionRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
+          description: "Items removed successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
+        "400":
+          description: "Invalid input, object invalid."
 
   /api/v1/cart:
     get:
@@ -93,79 +116,125 @@ components:
   schemas:
     NewShoppingSessionItemDto:
       type: "object"
+      description: "Defines a new item to be added to a shopping session."
       properties:
         productId:
           type: "string"
           format: "uuid"
+          description: "The unique identifier of the product."
         productQuantity:
           type: "integer"
           format: "int32"
+          description: "The quantity of the product to be added."
+          minimum: 1
+      required:
+        - productId
+        - productQuantity
 
     AddNewItemsToShoppingSessionRequest:
       type: "object"
+      description: "Request body for adding new items to the shopping session."
       properties:
         items:
           type: "array"
           uniqueItems: true
+          description: "An array of new shopping session items."
           items:
             $ref: "#/components/schemas/NewShoppingSessionItemDto"
+      required:
+        - items
 
     ShoppingSessionDto:
       type: "object"
+      description: "Data transfer object for a shopping session."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The unique identifier of the shopping session."
         userId:
           type: "string"
           format: "uuid"
+          description: "The unique identifier of the user owning this shopping session."
         items:
           type: "array"
+          description: "A list of items in the shopping session."
           items:
             $ref: "#/components/schemas/ShoppingSessionItemDto"
         itemsQuantity:
           type: "integer"
           format: "int32"
+          description: "The total number of items in the shopping session."
         itemsTotalPrice:
           type: "number"
           format: "decimal"
+          description: "The total price of all items in the shopping session."
         productsQuantity:
           type: "integer"
           format: "int32"
+          description: "The total quantity of all products in the session."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "The date and time when the shopping session was created."
         closedAt:
           type: "string"
           format: "date-time"
+          description: "The date and time when the shopping session was closed."
+      required:
+        - id
+        - userId
+        - items
+        - itemsQuantity
+        - itemsTotalPrice
+        - productsQuantity
+        - createdAt
 
     ShoppingSessionItemDto:
       type: "object"
+      description: "Represents an item within a shopping session."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The unique identifier of the shopping session item."
         productInfo:
           $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
         productQuantity:
           type: "integer"
           format: "int32"
+          description: "The quantity of the product in the shopping session item."
+          minimum: 1
+      required:
+        - id
+        - productInfo
+        - productQuantity
 
     UpdateProductQuantityInShoppingSessionItemRequest:
       type: "object"
+      description: "Request body for updating the quantity of an item in the shopping session."
       properties:
         shoppingSessionItemId:
           type: "string"
           format: "uuid"
+          description: "The unique identifier of the shopping session item to update."
         productQuantityChange:
           type: "integer"
           format: "int32"
+          description: "The change to be applied to the quantity. Can be positive or negative."
+      required:
+        - shoppingSessionItemId
+        - productQuantityChange
 
     DeleteItemsFromShoppingSessionRequest:
       type: "object"
+      description: "Request body for deleting items from the shopping session."
       properties:
         shoppingSessionItemIds:
           type: "array"
+          description: "An array of shopping session item IDs to be deleted."
           items:
             type: "string"
             format: "uuid"
+      required:
+        - shoppingSessionItemIds
