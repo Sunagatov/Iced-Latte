@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.product.endpoint.e2e;
+package com.zufar.onlinestore.product.endpoint;
 
 import com.zufar.onlinestore.product.endpoint.ProductsEndpoint;
 import io.restassured.RestAssured;
