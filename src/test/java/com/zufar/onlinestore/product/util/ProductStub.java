@@ -28,16 +28,6 @@ public class ProductStub {
         return productList;
     }
 
-    public static ProductInfoDto generateSampleProduct() {
-        ProductInfoDto productA = new ProductInfoDto();
-        productA.setId(UUID.randomUUID());
-        productA.setName("Product A");
-        productA.setDescription("Description for Product A");
-        productA.setPrice(BigDecimal.valueOf(10.50));
-        productA.setQuantity(20);
-        return productA;
-    }
-
     public static ProductInfo generateSampleEntityProduct() {
         ProductInfo productA = new ProductInfo();
         productA.setProductId(UUID.randomUUID());
