@@ -2,6 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Online-Store API"
+  description: "This API allows clients to interact with an online store's product catalog, including retrieval and listing of products."
   version: "1.0.0"
 
 servers:
@@ -9,35 +10,40 @@ servers:
 
 tags:
   - name: "Product"
-    description: "An API for managing and retrieving product information"
+    description: "API endpoints related to product management and retrieval."
 
 paths:
   /api/v1/products/{productId}:
     get:
       tags:
         - "Product"
-      summary: "Enables to get a product by its id"
+      summary: "Retrieve a Product by ID"
+      description: "Fetch detailed information of a single product using its unique identifier."
       operationId: "getProductById"
       parameters:
         - name: "productId"
-          description: "the identifier of the product which is returned as the return value"
           in: "path"
           required: true
+          description: "Unique identifier of the product."
           schema:
             type: "string"
+            format: "uuid"
       responses:
         "200":
-          description: "OK"
+          description: "The product was found and its details are returned."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ProductInfoDto"
+        "404":
+          description: "No product found for the given ID."
 
   /api/v1/products:
     get:
       tags:
         - "Product"
-      summary: "Enables to get the product list with pagination and sorting features"
+      summary: "List Products with Pagination"
+      description: "Retrieve a paginated list of products, with optional sorting parameters."
       operationId: "getProducts"
       parameters:
         - name: "page"
@@ -72,16 +78,24 @@ paths:
             default: "desc"
       responses:
         "200":
-          description: "OK"
+          description: "Paginated list of products retrieved successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
+        "400":
+          description: "Invalid parameters provided for pagination or sorting."
 
 components:
   schemas:
     ProductInfoDto:
       type: "object"
+      required:
+        - id
+        - name
+        - price
+        - quantity
+        - active
       properties:
         id:
           type: "string"
@@ -98,10 +112,15 @@ components:
           format: "int32"
         active:
           type: "boolean"
-          format: "yes"
 
     ProductListWithPaginationInfoDto:
       type: "object"
+      required:
+        - products
+        - page
+        - size
+        - totalElements
+        - totalPages
       properties:
         products:
           type: "array"
