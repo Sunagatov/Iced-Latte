@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +25,7 @@ class JwtTokenFromAuthHeaderExtractorTest {
     private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
     @Mock
     private HttpServletRequest request;
-    private String jwtHttpRequestHeader = "Authorization";
+    private String jwtHttpRequestHeader = HttpHeaders.AUTHORIZATION;
     private String postfix = Instancio.create(String.class);
     private String BEARER_PREFIX;
     private String header;
