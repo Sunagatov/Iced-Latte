@@ -28,9 +28,9 @@ public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.a
 
     @Override
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final String productId) {
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.info("Received the request to get the product with productId - {}.", productId);
-        ProductInfoDto product = productApi.getProduct(UUID.fromString(productId));
+        ProductInfoDto product = productApi.getProduct(productId);
         log.info("The product with productId: {} was retrieved successfully", productId);
         return ResponseEntity.ok()
                 .body(product);
