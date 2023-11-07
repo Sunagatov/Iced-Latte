@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "null"
+    },
+    "message": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "httpStatusCode": {
+      "type": "integer"
+    },
+    "timestamp": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "data",
+    "message",
+    "description",
+    "httpStatusCode",
+    "timestamp"
+  ]
+}
