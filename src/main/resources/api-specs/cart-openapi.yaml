@@ -4,22 +4,17 @@ info:
   title: "Online Store Shopping Cart API"
   description: "This API allows users to manage their shopping cart items, including adding, updating, and deleting cart items."
   version: "1.0.0"
-  termsOfService: "http://example.com/terms/"
   contact:
-    name: "API Support"
-    url: "http://example.com/support"
-    email: "support@example.com"
-  license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+    name: "Online Store Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "https://api.example.com/v1"
     description: "Production server"
 
 tags:
-  - name: "Cart"
-    description: "Endpoints related to shopping cart operations"
+  - name: "Shopping cart"
+    description: "Operations related to shopping cart"
 
 paths:
   /api/v1/cart/items:
@@ -108,7 +103,7 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
 

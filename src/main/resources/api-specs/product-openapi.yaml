@@ -37,6 +37,8 @@ paths:
                 $ref: "#/components/schemas/ProductInfoDto"
         "404":
           description: "No product found for the given ID."
+        "500":
+          description: "Internal Server Error."
 
   /api/v1/products:
     get:
@@ -47,35 +49,42 @@ paths:
       operationId: "getProducts"
       parameters:
         - name: "page"
-          description: "page number in order (starting from 0)"
+          description: "The page number in order (starting from 0)."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
-            default: "0"
+            default: 0
+            minimum: 0
         - name: "size"
-          description: "number of products in the output"
+          description: "The number of products per page."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
-            default: "50"
+            default: 50
+            minimum: 1
+            maximum: 100
         - name: "sort_attribute"
-          description: "the name of the product field by which they should be sorted"
+          description: "The name of the product field by which the results should be sorted."
           in: "query"
           required: false
           schema:
             type: "string"
             default: "name"
+            enum:
+              - "name"
+              - "price"
+              - "quantity"
         - name: "sort_direction"
-          description: "sorting direction (DESC or ASC)"
+          description: "The direction of the sorting."
           in: "query"
           required: false
           schema:
             type: "string"
-            default: "desc"
+            default: "asc"
       responses:
         "200":
           description: "Paginated list of products retrieved successfully."
@@ -85,6 +94,8 @@ paths:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
         "400":
           description: "Invalid parameters provided for pagination or sorting."
+        "500":
+          description: "Internal Server Error."
 
 components:
   schemas:
