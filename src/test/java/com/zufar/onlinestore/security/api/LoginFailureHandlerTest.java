@@ -23,10 +23,9 @@ class LoginFailureHandlerTest {
     private FailedLoginAttemptIncrementor failedLoginAttemptIncrementor;
     @Mock
     private UserAccountLocker userAccountLocker;
-    private String userEmail = Instancio.of(String.class)
-            .create();
-    private LoginAttemptEntity loginAttempt = Instancio.of(LoginAttemptEntity.class)
-            .create();
+
+    private String userEmail = Instancio.create(String.class);
+    private LoginAttemptEntity loginAttempt = Instancio.create(LoginAttemptEntity.class);
     private int maxLoginAttempts = 2;
 
     @BeforeEach
@@ -62,6 +61,5 @@ class LoginFailureHandlerTest {
                 .lockUserAccount(userEmail);
         verify(failedLoginAttemptIncrementor, times(1))
                 .increment(userEmail);
-
     }
 }

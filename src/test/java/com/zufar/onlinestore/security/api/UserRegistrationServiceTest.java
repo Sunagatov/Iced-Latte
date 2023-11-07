@@ -35,11 +35,9 @@ class UserRegistrationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    private UserRegistrationRequest request = Instancio.of(UserRegistrationRequest.class)
-            .create();
-    private UserDto userDto = Instancio.of(UserDto.class)
-            .create();
-    private String jwtToken = "jwtToken";
+    private UserRegistrationRequest request = Instancio.create(UserRegistrationRequest.class);
+    private UserDto userDto = Instancio.create(UserDto.class);
+    private String jwtToken = Instancio.create(String.class);
 
     @Test
     @DisplayName("mock test register")

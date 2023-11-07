@@ -23,8 +23,7 @@ class UserAccountLockerTest {
     private UserRepository userRepository;
     @Mock
     private LoginAttemptRepository loginAttemptRepository;
-    private String userEmail = Instancio.of(String.class)
-            .create();
+    private String userEmail = Instancio.create(String.class);
 
     @Test
     @DisplayName("Mock test lock user account")
@@ -43,5 +42,4 @@ class UserAccountLockerTest {
         verify(userRepository, times(1))
                 .setAccountLockedStatus(userEmail, true);
     }
-
 }

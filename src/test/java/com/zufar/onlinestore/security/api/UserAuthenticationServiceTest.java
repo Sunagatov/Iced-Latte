@@ -39,13 +39,9 @@ class UserAuthenticationServiceTest {
     @Mock
     private Authentication authentication;
 
-    private UserAuthenticationRequest request = Instancio.of(UserAuthenticationRequest.class)
-            .create();
-    private UserDetails userDetails = Instancio.of(UserDetails.class)
-            .create();
-
-    private String jwtToken = "jwtToken";
-
+    private UserAuthenticationRequest request = Instancio.create(UserAuthenticationRequest.class);
+    private UserDetails userDetails = Instancio.create(UserDetails.class);
+    private String jwtToken = Instancio.create(String.class);
 
     @Test
     @DisplayName("mock test authenticate, return authentication")

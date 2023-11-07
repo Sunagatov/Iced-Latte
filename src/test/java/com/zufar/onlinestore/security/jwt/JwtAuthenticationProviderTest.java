@@ -3,23 +3,26 @@ package com.zufar.onlinestore.security.jwt;
 import jakarta.servlet.http.HttpServletRequest;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -36,10 +39,10 @@ class JwtAuthenticationProviderTest {
     private JwtBlacklistValidator jwtBlacklistValidator;
     @Mock
     private HttpServletRequest httpRequest;
-    private String jwtToken = Instancio.create(String.class);
-    private String userEmail = Instancio.create(String.class);
     @Mock
     private UserDetails userDetails;
+    private String jwtToken = Instancio.create(String.class);
+    private String userEmail = Instancio.create(String.class);
 
     @BeforeEach
     void setUp() {
@@ -54,17 +57,11 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("Test get method in JwtAuthenticationProvider")
     void mockTestGet() {
-        MockedConstruction<WebAuthenticationDetailsSource> webAuthDetailsSourceConstruction =
-                mockConstruction(WebAuthenticationDetailsSource.class);
-
-        MockedConstruction<UsernamePasswordAuthenticationToken> authTokenConstruction =
-                mockConstruction(UsernamePasswordAuthenticationToken.class);
-
         Authentication result = jwtAuthenticationProvider.get(httpRequest);
 
         assertNotNull(result);
-        assertEquals(userDetails, result.getPrincipal());
 
         verify(jwtTokenFromAuthHeaderExtractor, times(1))
                 .extract(httpRequest);
@@ -72,7 +69,13 @@ class JwtAuthenticationProviderTest {
                 .validate(jwtToken);
         verify(jwtClaimExtractor, times(1))
                 .extractExpiration(jwtToken);
+        verify(userDetailsService, times(1))
+                .loadUserByUsername(userEmail);
 
-        //todo add tests for creating objects
-    }
+        UserDetails createdUserDetails = (UserDetails) ReflectionTestUtils.getField(result, "principal");
+        assertEquals(userDetails, createdUserDetails);
+
+        WebAuthenticationDetailsSource detailsSource = new WebAuthenticationDetailsSource();
+        WebAuthenticationDetails details = detailsSource.buildDetails(httpRequest);
+        assertEquals(details, ReflectionTestUtils.getField(result, "details"));    }
 }

@@ -4,13 +4,15 @@ import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.entity.UserEntity;
 import org.instancio.Instancio;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,8 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mockStatic;
 
-
-
 @ExtendWith(MockitoExtension.class)
 class SecurityPrincipalProviderTest {
     @InjectMocks
@@ -36,14 +36,18 @@ class SecurityPrincipalProviderTest {
     private SecurityContext securityContext;
     @Mock
     private Authentication authentication;
-    private UserEntity userEntity = Instancio.of(UserEntity.class)
-            .create();
-    private UserDto userDto = Instancio.of(UserDto.class)
-            .create();
+    private UserEntity userEntity = Instancio.create(UserEntity.class);
+    private UserDto userDto = Instancio.create(UserDto.class);
+    private static MockedStatic<SecurityContextHolder> mockedSecurityContextHolder;
 
     @BeforeAll
     static void setUpOnce() {
-        mockStatic(SecurityContextHolder.class);
+        mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class);
+    }
+
+    @AfterAll
+    static void tearDownOnce() {
+        mockedSecurityContextHolder.close();
     }
 
     @BeforeEach
@@ -61,7 +65,9 @@ class SecurityPrincipalProviderTest {
     @Test
     @DisplayName("test get User Dto from Security Context")
     public void testGetUserDtoFromSecurityContext() {
-        securityPrincipalProvider.get();
+        UserDto userDto = securityPrincipalProvider.get();
+
+        assertTrue(userDto != null);
         verify(securityContext, times(1))
                 .getAuthentication();
         verify(authentication, times(1))

@@ -9,12 +9,15 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,15 +51,26 @@ class JwtAuthenticationFilterTest {
     private HttpServletResponse httpResponse;
     @Mock
     private FilterChain filterChain;
+    @Mock
+    private SecurityContext securityContext;
+
     private UsernamePasswordAuthenticationToken authenticationToken;
     private UUID userId = UUID.randomUUID();
-    private SecurityContext securityContext = mock(SecurityContext.class);
     private String errorMessage;
+
+    private static MockedStatic<SecurityContextHolder> mockedSecurityContextHolder;
+    private static MockedStatic<MDC> mockedMdc;
 
     @BeforeAll
     static void setUpOnce() {
-        mockStatic(SecurityContextHolder.class);
-        mockStatic(MDC.class);
+        mockedSecurityContextHolder = mockStatic(SecurityContextHolder.class);
+        mockedMdc = mockStatic(MDC.class);
+    }
+
+    @AfterAll
+    static void tearDownOnce() {
+        mockedSecurityContextHolder.close();
+        mockedMdc.close();
     }
 
     @BeforeEach
@@ -70,24 +84,15 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("Test for doFilterInternal without Exception")
     public void testDoFilterInternalWithoutException() throws ServletException, IOException {
         jwtAuthenticationFilter.doFilterInternal(httpRequest, httpResponse, filterChain);
 
         mockTestDoFilterInternal();
     }
 
-    private void mockTestDoFilterInternal() throws ServletException, IOException {
-        verify(jwtAuthenticationProvider, times(1))
-                .get(httpRequest);
-        verify(securityContext, times(1))
-                .setAuthentication(authenticationToken);
-        verify(securityPrincipalProvider, times(1))
-                .getUserId();
-        verify(filterChain, times(1))
-                .doFilter(httpRequest, httpResponse);
-    }
-
     @Test
+    @DisplayName("Test for doFilterInternal with JwtTokenBlacklistedException")
     public void testDoFilterInternalThrowsJwtTokenBlacklistedException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "JWT Token is blacklisted";
         doThrow(JwtTokenBlacklistedException.class)
@@ -102,6 +107,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("Test for doFilterInternal with AbsentBearerHeaderException")
     public void testDoFilterInternalThrowsAbsentBearerHeaderException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "Bearer authentication header is absent";
         doThrow(AbsentBearerHeaderException.class)
@@ -116,7 +122,8 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    public void testDoFilterInternalThrows_ExpiredJwtException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
+    @DisplayName("Test for doFilterInternal with ExpiredJwtException")
+    public void testDoFilterInternalThrowsExpiredJwtException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "Jwt token is expired";
         doThrow(ExpiredJwtException.class)
                 .when(filterChain).doFilter(httpRequest, httpResponse);
@@ -130,7 +137,8 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    public void testDoFilterInternalThrows_JwtTokenHasNoUserEmailException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
+    @DisplayName("Test for doFilterInternal with JwtTokenHasNoUserEmailException")
+    public void testDoFilterInternalThrowsJwtTokenHasNoUserEmailException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "User email not found in jwtToken";
         doThrow(JwtTokenHasNoUserEmailException.class)
                 .when(filterChain).doFilter(httpRequest, httpResponse);
@@ -144,6 +152,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("Test for doFilterInternal with UsernameNotFoundException")
     public void testDoFilterInternalThrows_UsernameNotFoundException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "User with the provided email does not exist";
         doThrow(UsernameNotFoundException.class)
@@ -158,6 +167,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("Test for doFilterInternal with Exception")
     public void testDoFilterInternalThrowsException() throws ServletException, IOException, InstantiationException, IllegalAccessException {
         errorMessage = "Internal server error";
         doAnswer(invocation -> {
@@ -170,6 +180,17 @@ class JwtAuthenticationFilterTest {
 
         mockTestDoFilterInternal();
         testHandleExceptions(httpResponse, errorMessage);
+    }
+
+    private void mockTestDoFilterInternal() throws ServletException, IOException {
+        verify(jwtAuthenticationProvider, times(1))
+                .get(httpRequest);
+        verify(securityContext, times(1))
+                .setAuthentication(authenticationToken);
+        verify(securityPrincipalProvider, times(1))
+                .getUserId();
+        verify(filterChain, times(1))
+                .doFilter(httpRequest, httpResponse);
     }
 
     private void testHandleExceptions(HttpServletResponse httpResponse, String errorMessage) throws IOException {
