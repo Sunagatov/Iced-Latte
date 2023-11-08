@@ -35,7 +35,8 @@ public abstract class AbstractE2ETest {
 
     @BeforeEach
     void baseSetUp() {
-        specification = given().log().all(true)
+        specification = given()
+                .log().all(true)
                 .port(port)
                 .basePath(ProductsEndpoint.PRODUCTS_URL)
                 .accept(ContentType.JSON);

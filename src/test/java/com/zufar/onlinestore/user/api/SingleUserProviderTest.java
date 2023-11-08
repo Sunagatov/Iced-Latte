@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class SingleUserProviderTest {
+class SingleUserProviderTest {
 
     @Mock
     private UserRepository userCrudRepository;
@@ -34,7 +34,7 @@ public class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
-    public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
+    void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
@@ -52,7 +52,7 @@ public class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
-    public void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+    void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());

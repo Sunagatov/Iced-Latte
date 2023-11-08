@@ -12,10 +12,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DefaultUserEntityValuesSetterTest {
+class DefaultUserEntityValuesSetterTest {
 
     @Test
-    public void setDefaultValues_ShouldSetAllNeededFields() {
+    void setDefaultValues_ShouldSetAllNeededFields() {
         DefaultUserEntityValuesSetter defaultUserEntityValuesSetter = new DefaultUserEntityValuesSetter();
         UserEntity userEntity = new UserEntity();
         UserGrantedAuthority defaultAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();

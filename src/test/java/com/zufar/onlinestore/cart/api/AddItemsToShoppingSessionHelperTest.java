@@ -48,7 +48,7 @@ class AddItemsToShoppingSessionHelperTest {
 
     @Test
     @DisplayName("Add should return the ShoppingSessionDto with increased list of items when the itemsToAdd set is valid")
-    public void shouldItemsAddToShoppingSessionDtoWithValidItemsSet() {
+    void shouldItemsAddToShoppingSessionDtoWithValidItemsSet() {
         UUID userId = UUID.randomUUID();
 
         ShoppingSession shoppingSession = new ShoppingSession();
