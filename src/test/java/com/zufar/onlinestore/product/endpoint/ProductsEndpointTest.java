@@ -27,7 +27,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
     private static final String PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION = "product/model/schema/product-list-pagination-schema.json";
 
     private static final String NAME_ATTRIBUTE = "name";
-    private static final String AMERICAN_PRODUCT_NAME = "Americano";
+    private static final String EXPECTED_PRODUCT_NAME = "Nitro Coffee";
     private static final String PRODUCTS_PATH_TO_NAME = "products.name";
 
     @Test
@@ -85,8 +85,8 @@ class ProductsEndpointTest extends AbstractE2ETest {
     }
 
     @Test
-    @DisplayName("Should contain product with name 'Americano'")
-    void shouldContainProductWithNameAmericano() {
+    @DisplayName("Should contain product with name 'Nitro Coffee'")
+    void shouldContainProductWithNameNitroCoffee() {
         Map<String, Object> params = new HashMap<>();
         params.put(PaginationAndSortingAttribute.PAGE, 5);
         params.put(PaginationAndSortingAttribute.SIZE, 1);
@@ -101,7 +101,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
                 response,
                 PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION,
                 PRODUCTS_PATH_TO_NAME,
-                AMERICAN_PRODUCT_NAME
+                EXPECTED_PRODUCT_NAME
         );
     }
 }

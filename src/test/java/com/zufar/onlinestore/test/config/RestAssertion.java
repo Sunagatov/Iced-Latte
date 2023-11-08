@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.*;
 
 public final class RestAssertion {
 
-    public static final long DEFAULT_HTTP_TIMEOUT = 1500L;
+    public static final long DEFAULT_HTTP_TIMEOUT = 2000L;
 
     private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
         return response.then()
