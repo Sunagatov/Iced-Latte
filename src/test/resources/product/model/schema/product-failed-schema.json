@@ -6,12 +6,7 @@
       "type": "null"
     },
     "message": {
-      "type": "array",
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
+      "type": "string"
     },
     "description": {
       "type": "string"
@@ -24,9 +19,7 @@
     }
   },
   "required": [
-    "data",
     "message",
-    "description",
     "httpStatusCode",
     "timestamp"
   ]

@@ -6,12 +6,10 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 import static com.zufar.onlinestore.test.config.RestAssertion.*;
@@ -33,16 +31,16 @@ class ProductsEndpointTest extends AbstractE2ETest {
     private static final String PRODUCTS_PATH_TO_NAME = "products.name";
 
     @Test
-    @DisplayName("Get product by exists ID")
+    @DisplayName("Should retrieve product successfully by ID")
     void shouldRetrieveProductSuccessfullyById() {
         String productId = "418499f3-d951-40bf-9414-5cb90ab21ecb";
         Response response = given(specification)
                 .get(ProductsEndpoint.GET_SINGLE_PRODUCT_PATH, productId);
-        assertRestApiBodySchemaResponse(response, HttpStatus.OK.value(), PRODUCT_SCHEMA_LOCATION);
+        assertRestApiOkResponse(response, PRODUCT_SCHEMA_LOCATION);
     }
 
     @Test
-    @DisplayName("Get product by doesn't exists ID")
+    @DisplayName("Should return not found for invalid product ID")
     void shouldReturnNotFoundForInvalidProductId() {
         String invalidProductId = UUID.randomUUID().toString();
         Response response = given(specification)
@@ -51,7 +49,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
     }
 
     @Test
-    @DisplayName("Fetch products with pagination and sorting")
+    @DisplayName("Should fetch products with pagination and sorting")
     void shouldFetchProductsWithPaginationAndSorting() {
         Map<String, Object> params = new HashMap<>();
         params.put(PaginationAndSortingAttribute.PAGE, 1);
@@ -61,25 +59,25 @@ class ProductsEndpointTest extends AbstractE2ETest {
         Response response = given(specification)
                 .queryParams(params)
                 .get();
-        assertRestApiBodySchemaResponse(response, HttpStatus.OK.value(), PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION);
+        assertRestApiOkResponse(response, PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION);
     }
 
     @Test
-    @DisplayName("Fetch products with invalid pagination and sorting attributes")
+    @DisplayName("Should return error for invalid sort attribute")
     void shouldReturnErrorForInvalidSortAttribute() {
         Map<String, Object> params = new HashMap<>();
         params.put(PaginationAndSortingAttribute.PAGE, 15);
         params.put(PaginationAndSortingAttribute.SIZE, 8);
-        params.put(PaginationAndSortingAttribute.SORT_ATTRIBUTE, NAME_ATTRIBUTE + new Random().nextInt());
+        params.put(PaginationAndSortingAttribute.SORT_ATTRIBUTE, "name354864904");
         params.put(PaginationAndSortingAttribute.SORT_DIRECTION, Sort.Direction.DESC.name().toLowerCase());
         Response response = given(specification)
                 .queryParams(params)
                 .get();
-        assertRestApiEmptyBodyResponse(response, HttpStatus.FORBIDDEN.value());
+        assertRestApiForbiddenEmptyResponse(response);
     }
 
     @Test
-    @DisplayName("Get product with name `Americano`")
+    @DisplayName("Should contain product with name 'Americano'")
     void shouldContainProductWithNameAmericano() {
         Map<String, Object> params = new HashMap<>();
         params.put(PaginationAndSortingAttribute.PAGE, 5);
@@ -91,9 +89,9 @@ class ProductsEndpointTest extends AbstractE2ETest {
                 .get();
         assertRestApiOkResponse(
                 response,
+                PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION,
                 PRODUCTS_PATH_TO_NAME,
-                AMERICAN_PRODUCT_NAME,
-                PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION
+                AMERICAN_PRODUCT_NAME
         );
     }
 }
