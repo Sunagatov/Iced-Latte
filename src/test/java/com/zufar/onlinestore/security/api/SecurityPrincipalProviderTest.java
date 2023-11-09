@@ -20,7 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,16 +28,22 @@ import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(MockitoExtension.class)
 class SecurityPrincipalProviderTest {
+
     @InjectMocks
     private SecurityPrincipalProvider securityPrincipalProvider;
+
     @Mock
     private UserDtoConverter userDtoConverter;
+
     @Mock
     private SecurityContext securityContext;
+
     @Mock
     private Authentication authentication;
+
     private UserEntity userEntity = Instancio.create(UserEntity.class);
     private UserDto userDto = Instancio.create(UserDto.class);
+
     private static MockedStatic<SecurityContextHolder> mockedSecurityContextHolder;
 
     @BeforeAll
@@ -52,34 +58,27 @@ class SecurityPrincipalProviderTest {
 
     @BeforeEach
     void setUp() {
-        when(SecurityContextHolder.getContext())
-                .thenReturn(securityContext);
-        when(securityContext.getAuthentication())
-                .thenReturn(authentication);
-        when(authentication.getPrincipal())
-                .thenReturn(userEntity);
-        when(userDtoConverter.toDto(userEntity))
-                .thenReturn(userDto);
+        mockedSecurityContextHolder.when(()->SecurityContextHolder.getContext()).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userEntity);
+        when(userDtoConverter.toDto(userEntity)).thenReturn(userDto);
     }
 
     @Test
-    @DisplayName("test get User Dto from Security Context")
-    public void testGetUserDtoFromSecurityContext() {
+    @DisplayName("Should get User Dto from Security Context")
+    void shouldGetUserDtoFromSecurityContext() {
         UserDto userDto = securityPrincipalProvider.get();
 
-        assertTrue(userDto != null);
-        verify(securityContext, times(1))
-                .getAuthentication();
-        verify(authentication, times(1))
-                .getPrincipal();
-        verify(userDtoConverter, times(1))
-                .toDto(userEntity);
+        assertNotNull(userDto);
+        verify(securityContext, times(1)).getAuthentication();
+        verify(authentication, times(1)).getPrincipal();
+        verify(userDtoConverter, times(1)).toDto(userEntity);
     }
 
     @Test
-    @DisplayName("test get userId from Security Context")
-    public void testGetUserIdFromSecurityContext() {
+    @DisplayName("Should get userId from Security Context")
+    void shouldGetUserIdFromSecurityContext() {
         UUID userId = securityPrincipalProvider.getUserId();
-        assertTrue(userId != null);
+        assertNotNull(userId);
     }
 }

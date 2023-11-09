@@ -21,60 +21,55 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenFromAuthHeaderExtractorTest {
+
     @InjectMocks
     private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+
     @Mock
     private HttpServletRequest request;
+
     private String jwtHttpRequestHeader = HttpHeaders.AUTHORIZATION;
-    private String postfix = Instancio.create(String.class);
+    private String postfix = "POSTFIX";
     private String BEARER_PREFIX;
     private String header;
 
     @BeforeEach
     void setUp() throws NoSuchFieldException, IllegalAccessException {
         ReflectionTestUtils.setField(jwtTokenFromAuthHeaderExtractor, "jwtHttpRequestHeader", jwtHttpRequestHeader);
-        BEARER_PREFIX = JwtTokenFromAuthHeaderExtractor.class
-                .getDeclaredField("BEARER_PREFIX")
-                .get(null).toString();
+        BEARER_PREFIX = jwtTokenFromAuthHeaderExtractor.BEARER_PREFIX;
         header = BEARER_PREFIX + postfix;
     }
 
     @Test
-    @DisplayName("Test extracting token from HttpServletRequest with Bearer header")
-    void testExtractRequestWithBearerHeader() {
-        when(request.getHeader(jwtHttpRequestHeader))
-                .thenReturn(header);
+    @DisplayName("Given a HttpServletRequest with a Bearer header, When extracting the token, Then it should return the token")
+    void shouldReturnTokenFromRequestWithBearerHeader() {
+        when(request.getHeader(jwtHttpRequestHeader)).thenReturn(header);
 
         String result = jwtTokenFromAuthHeaderExtractor.extract(request);
 
         assertEquals(postfix, result);
-        verify(request, times(1))
-                .getHeader(jwtHttpRequestHeader);
+        verify(request, times(1)).getHeader(jwtHttpRequestHeader);
     }
 
     @Test
-    @DisplayName("Test extracting token from HttpServletRequest without Bearer header")
-    void testExtractRequestWithoutBearerHeader() {
-        when(request.getHeader(jwtHttpRequestHeader))
-                .thenReturn(postfix);
+    @DisplayName("Given a HttpServletRequest without a Bearer header, When extracting the token, Then it should throw an AbsentBearerHeaderException")
+    void shouldThrowAbsentBearerHeaderExceptionForRequestWithoutBearerHeader() {
+        when(request.getHeader(jwtHttpRequestHeader)).thenReturn(postfix);
 
-        assertThrows(AbsentBearerHeaderException.class,
-                () -> jwtTokenFromAuthHeaderExtractor.extract(request));
-        verify(request, times(1))
-                .getHeader(jwtHttpRequestHeader);
+        assertThrows(AbsentBearerHeaderException.class, () -> jwtTokenFromAuthHeaderExtractor.extract(request));
+        verify(request, times(1)).getHeader(jwtHttpRequestHeader);
     }
 
     @Test
-    @DisplayName("Test extracting token from String with Bearer header")
-    void testExtractStringWithBearerHeader() {
+    @DisplayName("Given a String with a Bearer header, When extracting the token, Then it should return the token")
+    void shouldReturnTokenFromStringWithBearerHeader() {
         String result = jwtTokenFromAuthHeaderExtractor.extract(header);
         assertEquals(postfix, result);
     }
 
     @Test
-    @DisplayName("Test extracting token from String without Bearer header")
-    void testExtractStringWithoutBearerHeader() {
-        assertThrows(AbsentBearerHeaderException.class,
-                () -> jwtTokenFromAuthHeaderExtractor.extract(postfix));
+    @DisplayName("Given a String without a Bearer header, When extracting the token, Then it should throw an AbsentBearerHeaderException")
+    void shouldThrowAbsentBearerHeaderExceptionForStringWithoutBearerHeader() {
+        assertThrows(AbsentBearerHeaderException.class, () -> jwtTokenFromAuthHeaderExtractor.extract(postfix));
     }
 }

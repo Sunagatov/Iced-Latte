@@ -6,24 +6,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class LoginAttemptFactoryTest {
-    private String userEmail = Instancio.of(String.class)
-            .create();
+    private String userEmail = "TestEmail";
 
     @Test
-    @DisplayName("test creating LoginAttemptEntity")
-    public void testLoginAttemptEntity(){
-        LoginAttemptEntity loginAttemptEntity =
-                LoginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+    @DisplayName("Test LoginAttemptEntity creation")
+    void shouldCreateInitialFailedLoggedAttemptEntityWithDefaultValues() {
+        LoginAttemptEntity loginAttemptEntity = LoginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
 
-        assertTrue(loginAttemptEntity!=null);
-        assertEquals(null, loginAttemptEntity.getId());
+        assertNotNull(loginAttemptEntity);
+        assertNull(loginAttemptEntity.getId());
         assertEquals(userEmail, loginAttemptEntity.getUserEmail());
         assertEquals(0, loginAttemptEntity.getAttempts());
-        assertEquals(null, loginAttemptEntity.getExpirationDatetime());
-        assertEquals(false, loginAttemptEntity.getIsUserLocked());
-        assertTrue(loginAttemptEntity.getLastModified()!=null);
+        assertNull(loginAttemptEntity.getExpirationDatetime());
+        assertFalse(loginAttemptEntity.getIsUserLocked());
+        assertNotNull(loginAttemptEntity.getLastModified());
     }
 }

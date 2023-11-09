@@ -69,11 +69,8 @@
         <jjwt-api.version>0.11.5</jjwt-api.version>
         <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
 
-
-
         <!-- Validation Dependencies Versions -->
         <validation-api.version>2.0.1.Final</validation-api.version>
-
         <modelmapper.version>3.1.1</modelmapper.version>
 
         <!-- Swagger and OpenAPI Dependencies Versions -->

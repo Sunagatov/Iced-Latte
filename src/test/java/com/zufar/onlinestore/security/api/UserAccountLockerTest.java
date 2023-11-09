@@ -2,44 +2,54 @@ package com.zufar.onlinestore.security.api;
 
 import com.zufar.onlinestore.security.repository.LoginAttemptRepository;
 import com.zufar.onlinestore.user.repository.UserRepository;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class UserAccountLockerTest {
+
     @InjectMocks
     private UserAccountLocker userAccountLocker;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private LoginAttemptRepository loginAttemptRepository;
-    private String userEmail = Instancio.create(String.class);
+
+    private String userEmail = "TestEmail";
+    private LocalDateTime timeBeforeRunningMethod = LocalDateTime.now().minusSeconds(1);
 
     @Test
     @DisplayName("Mock test lock user account")
-    void testLockUserAccount() {
-        userAccountLocker.lockUserAccount(userEmail);
-        verify(loginAttemptRepository, times(1))
-                .setUserLockedStatusAndExpiration(eq(userEmail), any());
-        verify(userRepository, times(1))
-                .setAccountLockedStatus(userEmail, false);
+    void givenUserAccountIsNotLockedWhenLockUserAccountThenUserAccountShouldBeLocked() {
+        ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<LocalDateTime> expirationCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+
+        assertDoesNotThrow(() -> userAccountLocker.lockUserAccount(userEmail));
+        verify(loginAttemptRepository, times(1)).setUserLockedStatusAndExpiration(emailCaptor.capture(), expirationCaptor.capture());
+        assertEquals(userEmail, emailCaptor.getValue());
+        assertTrue(expirationCaptor.getValue().isAfter(timeBeforeRunningMethod));
+        verify(userRepository, times(1)).setAccountLockedStatus(userEmail, false);
     }
 
     @Test
     @DisplayName("Mock test unlock user account")
-    void testUnlockUserAccount() {
-        userAccountLocker.unlockUserAccount(userEmail);
-        verify(userRepository, times(1))
-                .setAccountLockedStatus(userEmail, true);
+    void givenUserAccountIsLockedWhenUnlockUserAccountThenUserAccountShouldBeUnlocked() {
+        assertDoesNotThrow(()->userAccountLocker.unlockUserAccount(userEmail));
+        verify(userRepository, times(1)).setAccountLockedStatus(userEmail, true);
     }
 }

@@ -25,16 +25,22 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtSignKeyProviderTest {
+
     @InjectMocks
     private JwtSignKeyProvider jwtSignKeyProvider;
+
     @Mock
     private SecretKey key;
-    private String secretKey = Instancio.create(String.class);
+
+    private String secretKey = "TestSecretKey";
+
     private static MockedStatic<Keys> mockedKeys;
+
     @BeforeAll
     static void setUpOnce() {
         mockedKeys = mockStatic(Keys.class);
     }
+
     @AfterAll
     static void tearDownOnce() {
         mockedKeys.close();
@@ -46,11 +52,10 @@ class JwtSignKeyProviderTest {
     }
 
     @Test
-    @DisplayName("Test get key")
-    void testGetKey() {
+    @DisplayName("Given a secret key string, When getting a key, Then it should return a valid key")
+    void shouldReturnValidKeyFromSecretKeyString() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        when(Keys.hmacShaKeyFor(keyBytes))
-                .thenReturn(key);
+        when(Keys.hmacShaKeyFor(keyBytes)).thenReturn(key);
 
         Key resultKey = jwtSignKeyProvider.get();
 

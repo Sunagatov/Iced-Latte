@@ -35,22 +35,28 @@ import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(MockitoExtension.class)
 class JwtClaimExtractorTest {
+
     @InjectMocks
     private JwtClaimExtractor jwtClaimExtractor;
+
     @Mock
     private JwtSignKeyProvider jwtSignKeyProvider;
+
     @Mock
     private JwtParser jwtParser;
+
     @Mock
     private JwtParserBuilder jwtParserBuilder;
+
     @Mock
     private Jws<Claims> jws;
+
     @Mock
     private Claims claims;
 
     private Key key = Instancio.create(Key.class);
-    private String jwtToken = Instancio.create(String.class);
-    private String userEmail = Instancio.create(String.class);
+    private String jwtToken = "TestJwtToken";
+    private String userEmail = "TestEmail";
 
     private static MockedStatic<Jwts> mockedJwts;
     private static MockedStatic<StringUtils> mockedStringUtils;
@@ -69,61 +75,47 @@ class JwtClaimExtractorTest {
 
     @BeforeEach
     void setUp() {
-        when(Jwts.parserBuilder())
-                .thenReturn(jwtParserBuilder);
-        when(jwtSignKeyProvider.get())
-                .thenReturn(key);
-        when(jwtParserBuilder.setSigningKey(key))
-                .thenReturn(jwtParserBuilder);
-        when(jwtParserBuilder.build())
-                .thenReturn(jwtParser);
+        mockedJwts.when(() -> Jwts.parserBuilder()).thenReturn(jwtParserBuilder);
+        when(jwtSignKeyProvider.get()).thenReturn(key);
+        when(jwtParserBuilder.setSigningKey(key)).thenReturn(jwtParserBuilder);
+        when(jwtParserBuilder.build()).thenReturn(jwtParser);
 
-        when(jwtParser.parseClaimsJws(jwtToken))
-                .thenReturn(jws);
-        when(jws.getBody())
-                .thenReturn(claims);
+        when(jwtParser.parseClaimsJws(jwtToken)).thenReturn(jws);
+        when(jws.getBody()).thenReturn(claims);
     }
 
     @Test
-    @DisplayName("Test extractEmail with valid email")
-    public void mockTestExtractEmailSuccess() {
-        when(claims.getSubject())
-                .thenReturn(userEmail);
-        when(StringUtils.isEmpty(userEmail))
-                .thenReturn(false);
+    @DisplayName("Given a JWT token with a valid email, When extracting email, Then the email should be successfully extracted")
+    public void shouldExtractEmailSuccessfullyWithValidEmail() {
+        when(claims.getSubject()).thenReturn(userEmail);
+        mockedStringUtils.when(() -> StringUtils.isEmpty(userEmail)).thenReturn(false);
 
         String email = jwtClaimExtractor.extractEmail(jwtToken);
 
         assertTrue(email.equals(userEmail));
         mockTestExtractAllClaims();
         mockTestGetJwtParser();
-        verify(claims, times(1))
-                .getSubject();
+        verify(claims, times(1)).getSubject();
     }
 
     @Test
-    @DisplayName("Test extractEmail with no email in the JWT token")
-    public void mockTestExtractEmailThrowJwtTokenHasNoUserEmailException() {
-        when(claims.getSubject())
-                .thenReturn(userEmail);
-        when(StringUtils.isEmpty(userEmail))
-                .thenReturn(true);
+    @DisplayName("Given a JWT token with no email in the claims, When extracting email, Then it should throw JwtTokenHasNoUserEmailException")
+    public void shouldThrowJwtTokenHasNoUserEmailExceptionWhenNoEmailInClaims() {
+        when(claims.getSubject()).thenReturn(userEmail);
+        mockedStringUtils.when(() -> StringUtils.isEmpty(userEmail)).thenReturn(true);
 
-        assertThrows(JwtTokenHasNoUserEmailException.class,
-                () -> jwtClaimExtractor.extractEmail(jwtToken));
+        assertThrows(JwtTokenHasNoUserEmailException.class, () -> jwtClaimExtractor.extractEmail(jwtToken));
 
         mockTestExtractAllClaims();
         mockTestGetJwtParser();
-        verify(claims, times(1))
-                .getSubject();
+        verify(claims, times(1)).getSubject();
     }
 
     @Test
-    @DisplayName("Test extractExpiration")
-    public void mockTestExtractExpirationSuccess() {
+    @DisplayName("Given a JWT token, When extracting expiration, Then it should be extracted successfully")
+    public void shouldExtractExpirationSuccessfully() {
         Date date = new Date();
-        when(claims.getExpiration())
-                .thenReturn(date);
+        when(claims.getExpiration()).thenReturn(date);
 
         LocalDateTime result = jwtClaimExtractor.extractExpiration(jwtToken);
         assertTrue(getLocalDataTimeByDate(date).equals(result));
@@ -138,18 +130,13 @@ class JwtClaimExtractorTest {
 
 
     private void mockTestExtractAllClaims() {
-        verify(jwtParser, times(1))
-                .parseClaimsJws(jwtToken);
-        verify(jws, times(1))
-                .getBody();
+        verify(jwtParser, times(1)).parseClaimsJws(jwtToken);
+        verify(jws, times(1)).getBody();
     }
 
     private void mockTestGetJwtParser() {
-        verify(jwtSignKeyProvider, times(1))
-                .get();
-        verify(jwtParserBuilder, times(1))
-                .setSigningKey(key);
-        verify(jwtParserBuilder, times(1))
-                .build();
+        verify(jwtSignKeyProvider, times(1)).get();
+        verify(jwtParserBuilder, times(1)).setSigningKey(key);
+        verify(jwtParserBuilder, times(1)).build();
     }
 }

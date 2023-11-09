@@ -5,7 +5,6 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +17,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.security.Key;
 import java.util.HashMap;
@@ -45,9 +43,9 @@ class JwtTokenProviderTest {
     @Spy
     private static JwtBuilder jwtBuilder;
 
-    private long validityInMilliseconds = Instancio.create(Long.class);
-    private String userName = Instancio.create(String.class);
+    private String userName = "TestUserName";
     private Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
     private static MockedStatic<Jwts> mockedJwts;
 
     @BeforeAll
@@ -63,19 +61,16 @@ class JwtTokenProviderTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(jwtTokenProvider, "validityInMilliseconds", validityInMilliseconds);
-
-        when(Jwts.builder())
-                .thenReturn(jwtBuilder);
-        when(userDetails.getUsername())
-                .thenReturn(userName);
+        mockedJwts.when(()->Jwts.builder()).thenReturn(jwtBuilder);
+        when(userDetails.getUsername()).thenReturn(userName);
     }
 
+
     @Test
-    @DisplayName("Test generating token with UserDetails")
-    void testGenerateTokenUserDetails() {
-        when(jwtSignKeyProvider.get())
-                .thenReturn(key);
+    @DisplayName("Given valid UserDetails, When generating a token, Then it should return a token with correct claims and signing")
+    void shouldReturnTokenWithValidUserDetails() {
+        when(jwtSignKeyProvider.get()).thenReturn(key);
+
         String token = jwtTokenProvider.generateToken(userDetails);
 
         assertNotNull(token);
@@ -84,10 +79,9 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("Test generating token with extraClaims and UserDetails")
-    void testGenerateTokenExtraClaims() {
-        when(jwtSignKeyProvider.get())
-                .thenReturn(key);
+    @DisplayName("Given valid extraClaims and UserDetails, When generating a token, Then it should return a token with correct claims and signing")
+    void shouldReturnTokenWithValidExtraClaimsAndUserDetails() {
+        when(jwtSignKeyProvider.get()).thenReturn(key);
 
         String token = jwtTokenProvider.generateToken(extraClaims, userDetails);
 
@@ -97,18 +91,16 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("Test generating token with UserDetails throws JwtTokenException")
-    void testGenerateTokenUserDetailsThrowJwtTokenException() {
-        assertThrows(JwtTokenException.class,
-                () -> jwtTokenProvider.generateToken(userDetails));
+    @DisplayName("Given an invalid UserDetails, When generating a token, Then it should throw a JwtTokenException")
+    void shouldThrowJwtTokenExceptionForInvalidUserDetails() {
+        assertThrows(JwtTokenException.class, () -> jwtTokenProvider.generateToken(userDetails));
         verifyClaimsAndSigning(new HashMap<>(), null);
     }
 
     @Test
-    @DisplayName("Test generating token with extraClaims and UserDetails throws JwtTokenException")
-    void testGenerateTokenExtraClaimsThrowJwtTokenException() {
-        assertThrows(JwtTokenException.class,
-                () -> jwtTokenProvider.generateToken(extraClaims, userDetails));
+    @DisplayName("Given invalid extraClaims and UserDetails, When generating a token, Then it should throw a JwtTokenException")
+    void shouldThrowJwtTokenExceptionForInvalidExtraClaimsAndUserDetails() {
+        assertThrows(JwtTokenException.class, () -> jwtTokenProvider.generateToken(extraClaims, userDetails));
         verifyClaimsAndSigning(extraClaims, null);
     }
 
