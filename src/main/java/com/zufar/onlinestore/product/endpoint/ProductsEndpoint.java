@@ -1,17 +1,13 @@
 package com.zufar.onlinestore.product.endpoint;
 
-import com.zufar.onlinestore.product.api.ProductApi;
 import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
 import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.product.api.ProductApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -24,10 +20,12 @@ public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.a
 
     public static final String PRODUCTS_URL = "/api/v1/products";
 
+    public static final String GET_SINGLE_PRODUCT_PATH = "/{productId}";
+
     private final ProductApi productApi;
 
     @Override
-    @GetMapping("/{productId}")
+    @GetMapping(GET_SINGLE_PRODUCT_PATH)
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.info("Received the request to get the product with productId - {}.", productId);
         ProductInfoDto product = productApi.getProduct(productId);

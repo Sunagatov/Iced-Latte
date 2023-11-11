@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "products": {
+      "type": "array",
+      "items": {
+        "$ref": "product-schema.json"
+      }
+    },
+    "page": {
+      "type": "integer"
+    },
+    "size": {
+      "type": "integer"
+    },
+    "totalElements": {
+      "type": "integer"
+    },
+    "totalPages": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "products",
+    "page",
+    "size",
+    "totalElements",
+    "totalPages"
+  ]
+}

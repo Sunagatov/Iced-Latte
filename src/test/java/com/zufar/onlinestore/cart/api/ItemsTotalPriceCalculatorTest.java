@@ -22,7 +22,7 @@ class ItemsTotalPriceCalculatorTest {
 
     @Test
     @DisplayName("Calculate should return the Total price of items in ShoppingSession")
-    public void shouldReturnCorrectTotalPrice() {
+    void shouldReturnCorrectTotalPrice() {
         ShoppingSession shoppingSession = CartDtoTestStub.createShoppingSession();
 
         BigDecimal result = itemsTotalPriceCalculator.calculate(shoppingSession.getItems());

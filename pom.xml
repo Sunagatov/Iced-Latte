@@ -102,6 +102,8 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
 
+        <json-schema-validator.version>3.3.0</json-schema-validator.version>
+        <rest-assured.version>5.3.2</rest-assured.version>
     </properties>
 
     <!-- Dependencies -->
@@ -341,6 +343,16 @@
                 </dependency>
                 <dependency>
                     <groupId>org.testcontainers</groupId>
+                    <artifactId>junit-jupiter</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-testcontainers</artifactId>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.testcontainers</groupId>
                     <artifactId>postgresql</artifactId>
                     <version>${testcontainers.version}</version>
                     <scope>test</scope>
@@ -352,8 +364,14 @@
                 </dependency>
                 <dependency>
                     <groupId>io.rest-assured</groupId>
+                    <artifactId>rest-assured</artifactId>
+                    <version>${rest-assured.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.rest-assured</groupId>
                     <artifactId>json-schema-validator</artifactId>
-                    <version>3.3.0</version>
+                    <version>${json-schema-validator.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
