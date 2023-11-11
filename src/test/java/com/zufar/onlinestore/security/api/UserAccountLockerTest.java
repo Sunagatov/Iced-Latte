@@ -30,12 +30,12 @@ class UserAccountLockerTest {
     @Mock
     private LoginAttemptRepository loginAttemptRepository;
 
-    private String userEmail = "TestEmail";
-    private LocalDateTime timeBeforeRunningMethod = LocalDateTime.now().minusSeconds(1);
+    private final String userEmail = "TestEmail";
+    private final LocalDateTime timeBeforeRunningMethod = LocalDateTime.now().minusSeconds(1);
 
     @Test
-    @DisplayName("Mock test lock user account")
-    void givenUserAccountIsNotLockedWhenLockUserAccountThenUserAccountShouldBeLocked() {
+    @DisplayName("Should Lock User Account When Account Is Not Already Locked")
+    void shouldLockUserAccountWhenAccountIsNotLocked() {
         ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<LocalDateTime> expirationCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
 
@@ -47,9 +47,9 @@ class UserAccountLockerTest {
     }
 
     @Test
-    @DisplayName("Mock test unlock user account")
-    void givenUserAccountIsLockedWhenUnlockUserAccountThenUserAccountShouldBeUnlocked() {
-        assertDoesNotThrow(()->userAccountLocker.unlockUserAccount(userEmail));
+    @DisplayName("Should Unlock User Account When Account Is Locked")
+    void shouldUnlockUserAccountWhenAccountIsLocked() {
+        assertDoesNotThrow(() -> userAccountLocker.unlockUserAccount(userEmail));
         verify(userRepository, times(1)).setAccountLockedStatus(userEmail, true);
     }
 }
