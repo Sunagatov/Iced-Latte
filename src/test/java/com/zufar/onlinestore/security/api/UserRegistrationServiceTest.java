@@ -8,7 +8,7 @@ import com.zufar.onlinestore.security.jwt.JwtTokenProvider;
 import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.user.converter.UserDtoConverter;
 import com.zufar.onlinestore.user.entity.UserEntity;
-import org.instancio.Instancio;
+import com.zufar.onlinestore.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,11 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("UserRegistrationService Tests")
 class UserRegistrationServiceTest {
 
     @InjectMocks
@@ -43,26 +46,58 @@ class UserRegistrationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    private UserRegistrationRequest request = Instancio.create(UserRegistrationRequest.class);
-    private UserDto userDto = Instancio.create(UserDto.class);
-    private String jwtToken = "TestJwtToken";
-    private UserDto userDtoWithId = new UserDto();
-    private UserEntity userDetails = new UserEntity();
+    private final UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john.doe@example.com", "password123");
+    private final UserDto userDto = UserDtoTestStub.createUserDto();
+    private final UserDto userDtoWithId = new UserDto();
+    private final UserEntity userDetails = UserDtoTestStub.createUserEntity();
 
     @Test
-    @DisplayName("Register when user is successfully registered")
-    public void registerWhenUserIsSuccessfullyRegistered() {
-        userDto.setPassword(request.password());
+    @DisplayName("Should Successfully Register User And Return JWT Token")
+    void shouldSuccessfullyRegisterUserAndReturnJwtToken() {
+        String jwtToken = "TestJwtToken";
 
         when(registrationDtoConverter.toDto(request)).thenReturn(userDto);
-        when(passwordEncoder.encode(request.password())).thenReturn(request.password());
+        when(passwordEncoder.encode(request.password())).thenReturn("encodedPassword123");
         when(userApi.saveUser(userDto)).thenReturn(userDtoWithId);
         when(userDtoConverter.toEntity(userDtoWithId)).thenReturn(userDetails);
         when(jwtTokenProvider.generateToken(userDetails)).thenReturn(jwtToken);
 
         UserRegistrationResponse response = userRegistrationService.register(request);
 
-        assertEquals(response, new UserRegistrationResponse(jwtToken));
+        assertEquals(new UserRegistrationResponse(jwtToken), response);
+        verify(registrationDtoConverter, times(1)).toDto(request);
+        verify(passwordEncoder, times(1)).encode(request.password());
+        verify(userApi, times(1)).saveUser(userDto);
+        verify(userDtoConverter, times(1)).toEntity(userDtoWithId);
+        verify(jwtTokenProvider, times(1)).generateToken(userDetails);
+    }
+
+    @Test
+    @DisplayName("Should Handle Password Encoding Failure During Registration")
+    void shouldHandlePasswordEncodingFailureDuringRegistration() {
+        when(registrationDtoConverter.toDto(request)).thenReturn(userDto);
+        when(passwordEncoder.encode(request.password())).thenThrow(new RuntimeException("Encoding failed"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> userRegistrationService.register(request));
+
+        assertEquals("Encoding failed", exception.getMessage());
+        verify(registrationDtoConverter, times(1)).toDto(request);
+        verify(passwordEncoder, times(1)).encode(request.password());
+        verifyNoInteractions(userApi, jwtTokenProvider);
+    }
+
+    @Test
+    @DisplayName("Should Handle Token Generation Failure During Registration")
+    void shouldHandleTokenGenerationFailureDuringRegistration() {
+        when(registrationDtoConverter.toDto(request)).thenReturn(userDto);
+        when(passwordEncoder.encode(request.password())).thenReturn("encodedPassword123");
+        when(userApi.saveUser(userDto)).thenReturn(userDtoWithId);
+        when(userDtoConverter.toEntity(userDtoWithId)).thenReturn(userDetails);
+        when(jwtTokenProvider.generateToken(userDetails)).thenThrow(new RuntimeException("Token generation failed"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> userRegistrationService.register(request));
+
+        assertEquals("Token generation failed", exception.getMessage());
         verify(registrationDtoConverter, times(1)).toDto(request);
         verify(passwordEncoder, times(1)).encode(request.password());
         verify(userApi, times(1)).saveUser(userDto);
