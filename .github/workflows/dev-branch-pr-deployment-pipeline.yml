@@ -15,9 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-
       - name: Build Docker Image
         run: |
-         docker login -u ${{secrets.DOCKERHUB_USERNAME}} -p ${{secrets.DOCKERHUB_PASSWORD}}
-         docker build -t zufarexplainedit/test_ci:latest .
-         docker push zufarexplainedit/test_ci:latest
+          docker login -u ${{secrets.DOCKERHUB_USERNAME}} -p ${{secrets.DOCKERHUB_PASSWORD}}
+          docker build -t zufarexplainedit/test_ci:latest .
+          docker push zufarexplainedit/test_ci:latest
