@@ -1,7 +1,6 @@
 package com.zufar.onlinestore.security.api;
 
 import com.zufar.onlinestore.security.entity.LoginAttemptEntity;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtBlacklistValidatorTest {
 
