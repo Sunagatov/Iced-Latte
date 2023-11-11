@@ -4,44 +4,31 @@ import com.zufar.onlinestore.security.exception.JwtTokenBlacklistedException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JwtBlacklistValidatorTest {
 
-    private JwtBlacklistValidator jwtBlacklistValidator = new JwtBlacklistValidator();
-    private String token = "testToken";
+    private final JwtBlacklistValidator jwtBlacklistValidator = new JwtBlacklistValidator();
+    private final String validToken = "validToken";
+    private final String blacklistedToken = "blacklistedToken";
 
     @Test
-    @DisplayName("Given a token, When it is added to the blacklist, Then it should be in the blacklist")
-    public void shouldAddTokenToBlacklist() throws Exception {
-        Field blacklistedTokensField = JwtBlacklistValidator.class.getDeclaredField("blacklistedTokens");
-        blacklistedTokensField.setAccessible(true);
-        Set<String> blacklistedTokens = (Set<String>) blacklistedTokensField.get(jwtBlacklistValidator);
-
-        jwtBlacklistValidator.addToBlacklist(token);
-
-        assertTrue(blacklistedTokens.contains(token));
+    @DisplayName("Should blacklist token when added")
+    void shouldBlacklistTokenWhenAdded() {
+        jwtBlacklistValidator.addToBlacklist(validToken);
+        assertThrows(JwtTokenBlacklistedException.class, () -> jwtBlacklistValidator.validate(validToken));
     }
 
     @Test
-    @DisplayName("Given a blacklisted token, When it is validated, Then it should not throw JwtTokenBlacklistedException")
-    public void shouldNotThrowExceptionForValidatedBlacklistedToken() {
-        jwtBlacklistValidator.addToBlacklist(token);
-        String tokenToValidate = "wrong token";
-        assertDoesNotThrow(() -> jwtBlacklistValidator.validate(tokenToValidate));
+    @DisplayName("Should throw exception for blacklisted token")
+    void shouldThrowExceptionForBlacklistedToken() {
+        jwtBlacklistValidator.addToBlacklist(blacklistedToken);
+        assertThrows(JwtTokenBlacklistedException.class, () -> jwtBlacklistValidator.validate(blacklistedToken));
     }
 
     @Test
-    @DisplayName("Given a non-blacklisted token, When it is validated, Then it should throw JwtTokenBlacklistedException")
-    public void shouldThrowExceptionForValidatedNonBlacklistedToken() {
-        jwtBlacklistValidator.addToBlacklist(token);
-        assertThrows(JwtTokenBlacklistedException.class, () -> {
-            jwtBlacklistValidator.validate(token);
-        });
+    @DisplayName("Should not throw exception for non-blacklisted token")
+    void shouldNotThrowExceptionForNonBlacklistedToken() {
+        assertDoesNotThrow(() -> jwtBlacklistValidator.validate("someOtherToken"));
     }
 }
