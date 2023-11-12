@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(value = CartEndpoint.CART_URL)
-public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.CartApi {
+public class CartEndpoint implements com.zufar.onlinestore.openapi.cart.api.ShoppingCartApi {
 
     public static final String CART_URL = "/api/v1/cart";
 
