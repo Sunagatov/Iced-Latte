@@ -36,7 +36,7 @@ class ShoppingSessionProviderTest {
 
     @Test
     @DisplayName("GetByUserId should return the correct ShoppingSessionDto when the user exists")
-    public void shouldReturnCorrectShoppingSessionDtoWhenUserExists() throws ShoppingSessionNotFoundException {
+    void shouldReturnCorrectShoppingSessionDtoWhenUserExists() throws ShoppingSessionNotFoundException {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
         ShoppingSession expectedShoppingSession = CartDtoTestStub.createShoppingSession();
 
@@ -51,7 +51,7 @@ class ShoppingSessionProviderTest {
 
     @Test
     @DisplayName("GetByUserId should throw ShoppingSessionNotFoundException when the shopping session does not exist")
-    public void shouldThrowShoppingSessionNotFoundExceptionWhenShoppingSessionDoesNotExist() {
+    void shouldThrowShoppingSessionNotFoundExceptionWhenShoppingSessionDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(shoppingSessionRepository.findShoppingSessionByUserId(nonExistentUserId)).thenThrow(ShoppingSessionNotFoundException.class);

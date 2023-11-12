@@ -36,7 +36,7 @@ class ShoppingSessionItemDtoConverterTest {
 
     @Test
     @DisplayName("ToDto should convert ShoppingSessionItem to ShoppingSessionItemDto with complete shopping session item information")
-    public void shouldConvertShoppingSessionItemToShoppingSessionItemDtoWithCompleteShoppingSessionInformation() {
+    void shouldConvertShoppingSessionItemToShoppingSessionItemDtoWithCompleteShoppingSessionInformation() {
         ShoppingSessionItem shoppingSessionItem = CartDtoTestStub.createShoppingSessionItem();
         ShoppingSessionItemDto shoppingSessionItemDto = shoppingSessionItemDtoConverter.toDto(shoppingSessionItem);
 

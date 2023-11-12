@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private SaveUserOperationPerformer saveUserOperationPerformer;
@@ -31,7 +31,7 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
-    public void saveUser_ShouldSaveUserAndReturnUserDto() {
+    void saveUser_ShouldSaveUserAndReturnUserDto() {
         UserDto userDto = UserDtoTestStub.createUserDto();
         UserDto expectedUserDto = UserDtoTestStub.createUserDto();
 
@@ -45,7 +45,7 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
-    public void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() throws UserNotFoundException {
+    void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() throws UserNotFoundException {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserDto expectedUserDto = UserDtoTestStub.createUserDto();
 
@@ -59,7 +59,7 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
-    public void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+    void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(singleUserProvider.getUserById(nonExistentUserId)).thenThrow(UserNotFoundException.class);
