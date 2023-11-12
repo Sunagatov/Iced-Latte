@@ -34,7 +34,7 @@ public class UserService implements UserApi {
     public void sendEmailConfirmationToken(final UUID userId) throws UserNotFoundException {
         var user = userId != null ? singleUserProvider.getUserById(userId) : securityPrincipalProvider.get();
         if (!user.getEmailConfirmed()) {
-            var token = confirmUserEmailOperationPerformer.generateUserEmailConfirmationToken(user.getId());
+            confirmUserEmailOperationPerformer.generateUserEmailConfirmationToken(user.getId());
             sendEmailToUserOperationPerformer.sendUserEmailConfirmationEmail(user.getId());
         }
     }

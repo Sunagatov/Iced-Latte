@@ -100,7 +100,6 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
         <javax-mail.version>1.5.5</javax-mail.version>
-        <spring-profile>dev</spring-profile>
     </properties>
 
     <!-- Dependencies -->
@@ -261,9 +260,6 @@
                     <value>dev</value>
                 </property>
             </activation>
-            <properties>
-                <spring-profile>dev</spring-profile>
-            </properties>
             <dependencies>
                 <!-- Swagger and OpenAPI Dependencies -->
                 <dependency>
@@ -329,7 +325,6 @@
                     <scope>test</scope>
                 </dependency>
             </dependencies>
-            <!-- Expand maven properties to spring config -->
         </profile>
     </profiles>
 

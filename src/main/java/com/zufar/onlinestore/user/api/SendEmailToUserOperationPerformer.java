@@ -1,6 +1,5 @@
 package com.zufar.onlinestore.user.api;
 
-import com.zufar.onlinestore.security.api.SecurityPrincipalProvider;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
 import com.zufar.onlinestore.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
@@ -40,8 +39,13 @@ public class SendEmailToUserOperationPerformer {
                     });
             final var token = userEntity.getConfirmationToken();
             final var email = userEntity.getEmail();
-            final var message = mailSender.createMimeMessage();
-            composeConfirmationMessage(message, email, emailFrom, token, confirmationBaseLink);
+            final var message = composeConfirmationMessage(
+                    mailSender.createMimeMessage(),
+                    email,
+                    emailFrom,
+                    token,
+                    confirmationBaseLink
+            );
             mailSender.send(message);
         }
     }
@@ -52,7 +56,6 @@ public class SendEmailToUserOperationPerformer {
             String emailFrom,
             String token,
             String comfirmationBaseLink) {
-
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, false);
             helper.setTo(emailTo);

@@ -24,7 +24,6 @@ public class UserRegistrationService {
     private final UserDtoConverter userDtoConverter;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-    private final SendEmailToUserOperationPerformer sendEmailToUserOperationPerformer;
 
     public UserRegistrationResponse register(final UserRegistrationRequest request) {
         log.info("Received registration request from {}.", request.email());
