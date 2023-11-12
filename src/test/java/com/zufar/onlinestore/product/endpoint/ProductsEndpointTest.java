@@ -38,7 +38,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
         String productId = "418499f3-d951-40bf-9414-5cb90ab21ecb";
 
         Response response = given(specification)
-                .get(ProductsEndpoint.GET_SINGLE_PRODUCT_PATH, productId);
+                .get("/{productId}", productId);
 
         assertRestApiOkResponse(response, PRODUCT_SCHEMA_LOCATION);
     }
@@ -49,7 +49,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
         String invalidProductId = UUID.randomUUID().toString();
 
         Response response = given(specification)
-                .get(ProductsEndpoint.GET_SINGLE_PRODUCT_PATH, invalidProductId);
+                .get("/{productId}", invalidProductId);
 
         assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }

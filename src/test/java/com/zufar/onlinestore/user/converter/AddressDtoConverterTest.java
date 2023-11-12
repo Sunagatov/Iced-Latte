@@ -15,7 +15,7 @@ class AddressDtoConverterTest {
 
     @Test
     @DisplayName("toDto should convert Address to AddressDto")
-    public void toDtoShouldConvertAddressToAddressDto() {
+    void toDtoShouldConvertAddressToAddressDto() {
         Address address = AddressDtoTestStub.createAddressEntity();
 
         AddressDto dto = converter.toDto(address);
@@ -27,7 +27,7 @@ class AddressDtoConverterTest {
 
     @Test
     @DisplayName("toEntity should convert AddressDto to Address")
-    public void toEntityShouldConvertAddressDtoToAddress() {
+    void toEntityShouldConvertAddressDtoToAddress() {
         AddressDto dto = AddressDtoTestStub.createAddressDto();
 
         Address address = converter.toEntity(dto);
