@@ -21,12 +21,12 @@ public class UnlockAccountScheduler {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void unlockLockoutExpiredAccounts() {
         try {
-            log.info("Starting unlockLockoutExpiredAccounts scheduled task.");
+            log.debug("Starting unlockLockoutExpiredAccounts scheduled task.");
 
             loginAttemptRepository.resetLockedAccounts();
             userRepository.unlockUsers();
 
-            log.info("Finished unlockLockoutExpiredAccounts scheduled task.");
+            log.debug("Finished unlockLockoutExpiredAccounts scheduled task.");
         } catch (Exception exception) {
             log.error("Error during unlockLockoutExpiredAccounts scheduled task.", exception);
         }
