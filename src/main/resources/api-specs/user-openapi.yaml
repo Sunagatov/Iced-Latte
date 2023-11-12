@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online-Store API"
+  title: "Online Store User API"
   description: "API for accessing user profiles and related operations in the Online-Store platform."
   version: "1.0.0"
   contact:
@@ -9,15 +9,15 @@ info:
     email: "zufar.sunagatov@gmail.com"
 
 servers:
-  - url: "https://api.onlinestore.com/v1"
-    description: "Production server (uses live data)"
+  - url: "http://localhost:8083"
+    description: "Local development server"
 
 tags:
   - name: "User"
     description: "Operations related to user profiles"
 
 paths:
-  /users/{userId}:
+  /api/v1/users/{userId}:
     get:
       tags:
         - "User"
@@ -47,6 +47,10 @@ paths:
           description: "User not found."
         "400":
           description: "Invalid userId provided."
+        "401":
+          description: "Unauthorized access. Authentication required."
+        "500":
+          description: "Internal Server Error."
 
 components:
   schemas:
@@ -93,7 +97,6 @@ components:
           type: "string"
           description: "Password for the user's account. Note: This should be encrypted and not exposed in API calls."
           format: "password"
-          writeOnly: true
         address:
           $ref: "#/components/schemas/AddressDto"
       required:

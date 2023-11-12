@@ -82,8 +82,8 @@ jwt:
 # Login Attempts Properties
 #
 login-attempts:
-  max-attempts: ${APP_FAILED_USER_LOGIN_MAX_ATTEMPTS}
-  lockout-duration-minutes: ${APP_USER_LOCKOUT_DURATION_IN_MINUTES}
+  max-attempts: 3
+  lockout-duration-minutes: 30
 
 unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 

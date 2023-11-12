@@ -27,9 +27,9 @@ public class UserEndpoint implements com.zufar.onlinestore.openapi.user.api.User
 
     @Override
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable final String userId) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable final UUID userId) {
         log.info("Received the request to get the User with userId - {}.", userId);
-        UserDto userDto = userApi.getUserById(UUID.fromString(userId));
+        UserDto userDto = userApi.getUserById(userId);
         log.info("The user with userId - {} was retrieved.", userId);
         return ResponseEntity.ok()
                 .body(userDto);

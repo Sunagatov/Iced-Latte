@@ -4,9 +4,13 @@ info:
   title: "Online-Store API"
   description: "This API allows clients to interact with an online store's product catalog, including retrieval and listing of products."
   version: "1.0.0"
+  contact:
+    name: "Online Store Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "http://localhost:8083"
+    description: "Local development server"
 
 tags:
   - name: "Product"
@@ -74,10 +78,6 @@ paths:
           schema:
             type: "string"
             default: "name"
-            enum:
-              - "name"
-              - "price"
-              - "quantity"
         - name: "sort_direction"
           description: "The direction of the sorting."
           in: "query"
@@ -123,7 +123,6 @@ components:
           format: "int32"
         active:
           type: "boolean"
-          format: "yes"
 
     ProductListWithPaginationInfoDto:
       type: "object"

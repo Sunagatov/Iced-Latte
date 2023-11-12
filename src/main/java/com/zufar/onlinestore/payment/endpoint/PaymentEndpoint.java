@@ -47,7 +47,8 @@ public class PaymentEndpoint implements com.zufar.onlinestore.openapi.payment.ap
 
     @Override
     @PostMapping("/event")
-    public ResponseEntity<Void> paymentEventProcess(@RequestBody final String paymentIntentPayload, @RequestHeader("Stripe-Signature") final String stripeSignatureHeader) {
+    public ResponseEntity<Void> paymentEventProcess(@RequestBody final String paymentIntentPayload,
+                                                    @RequestHeader("Stripe-Signature") final String stripeSignatureHeader) {
         paymentApi.processPaymentEvent(paymentIntentPayload, stripeSignatureHeader);
 
         return new ResponseEntity<>(HttpStatus.OK);
