@@ -4,12 +4,6 @@
 #
 server:
   port: ${APP_SERVER_PORT}
-  ssl:
-    key-store-type: PKCS12
-    key-store: certs/zufarkeystore.p12
-    key-store-password: newpass
-    key-alias: zufarkeystore
-    enabled: false
   tomcat:
     accept-count: 100
 
@@ -88,16 +82,15 @@ jwt:
 # Login Attempts Properties
 #
 login-attempts:
-  max-attempts: 5
-  lockout-duration-minutes: 30
+  max-attempts: ${APP_FAILED_USER_LOGIN_MAX_ATTEMPTS}
+  lockout-duration-minutes: ${APP_USER_LOCKOUT_DURATION_IN_MINUTES}
 
-unlock-account-scheduler-cron: '0 0/5 * * * *'
-# every 5 minutes
+unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 
 #
 # Logging Properties
 #
 logging:
   pattern:
-    file: online-store-%d{yyyy-MM-dd}.%i.log
+    file: ${LOG_FILE_NAME_FORMAT}
   config: classpath:logback-spring.xml
