@@ -1,7 +1,6 @@
-package com.zufar.onlinestore.exception.handler;
+package com.zufar.onlinestore.security.exception.handler;
 
 import com.zufar.onlinestore.security.exception.JwtTokenException;
-import com.zufar.onlinestore.security.exception.handler.JwtTokenExceptionsHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,4 +35,3 @@ class JwtTokenExceptionsHandlerTest {
         assertEquals("Cause error message", errors.get("JwtToken Cause Error message"));
     }
 }
-
