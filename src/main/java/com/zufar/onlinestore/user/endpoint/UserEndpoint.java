@@ -1,15 +1,12 @@
 package com.zufar.onlinestore.user.endpoint;
 
-import com.zufar.onlinestore.user.api.UserApi;
 import com.zufar.onlinestore.openapi.dto.UserDto;
+import com.zufar.onlinestore.user.api.UserApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -33,5 +30,12 @@ public class UserEndpoint implements com.zufar.onlinestore.openapi.user.api.User
         log.info("The user with userId - {} was retrieved.", userId);
         return ResponseEntity.ok()
                 .body(userDto);
+    }
+
+    @Override
+    @PostMapping("/confirmation")
+    public ResponseEntity<Void> postSendUserEmailConfirmation() {
+        userApi.sendEmailConfirmationToken(null);
+        return ResponseEntity.ok().build();
     }
 }

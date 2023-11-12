@@ -45,10 +45,10 @@ spring:
     import: optional:stripe.yaml
 
   mail:
-    host: ${SMTP_MAIL_HOST:smtp.gmail.com"}
-    port: ${SMTP_MAIL_PORT:587}
-    username: ${COMPANY_EMAIL_USERNAME:#{null}}
-    password:  ${COMPANY_EMAIL_PASSWORD:#{null}}
+    host: ${SMTP_MAIL_HOST}
+    port: ${SMTP_MAIL_PORT}
+    username: ${COMPANY_EMAIL_USERNAME}
+    password:  ${COMPANY_EMAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -56,7 +56,7 @@ spring:
           starttls:
             enable: true
           ssl:
-            trust: "*"
+            trust:  ${SMTP_MAIL_HOST:smtp-relay.brevo.com}
 
 #
 # Spring Doc Properties
@@ -119,4 +119,10 @@ logging:
 iced-latte:
   feature:
     email-confirmation:
-      enabled: {$FEATURE_EMAIL_CONFIRMATION_ENABLED:false}
+      enabled: ${FEATURE_EMAIL_CONFIRMATION_ENABLED:true}
+      email-properties:
+        from: ${FEATURE_EMAIL_CONFIRMATION_COMPANY_EMAIL}
+      base-link: ${FEATURE_EMAIL_CONFIRMATION_BASE_LINK}
+      token:
+        pattern: '???-???'
+        pattern-placeholder-char: '?'

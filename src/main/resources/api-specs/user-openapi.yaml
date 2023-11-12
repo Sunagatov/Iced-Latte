@@ -32,6 +32,15 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/UserDto"
+  /api/v1/users/confirmation:
+    post:
+      tags:
+        - "User"
+      summary: "Send a confirmation email to the user"
+      operationId: "postSendUserEmailConfirmation"
+      responses:
+        "200":
+          description: "OK"
 
 components:
   schemas:
@@ -59,6 +68,8 @@ components:
           type: "string"
         email:
           type: "string"
+        emailConfirmed:
+          type: "boolean"
         password:
           type: "string"
         address:

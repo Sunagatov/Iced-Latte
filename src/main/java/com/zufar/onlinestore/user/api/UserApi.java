@@ -2,6 +2,7 @@ package com.zufar.onlinestore.user.api;
 
 import com.zufar.onlinestore.openapi.dto.UserDto;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
+import org.springframework.lang.Nullable;
 
 import java.util.UUID;
 
@@ -26,12 +27,12 @@ public interface UserApi {
 
 
     /**
-     * Generates a user-unique confirmation token and updates user with it
+     * Generates a confirmation token and updates user with it
      *
-     * @param userId the id of user to generate token for
+     * @param  userId nullable id of a user to generate token for, if null, then the current user is used
      * @throws UserNotFoundException if there is no user in the database with the provided token
      */
-    String genereateEmailConfirmationToken(final UUID userId) throws UserNotFoundException;
+    void sendEmailConfirmationToken(@Nullable final UUID userId) throws UserNotFoundException;
 
     /**
      * Method to confirm user email

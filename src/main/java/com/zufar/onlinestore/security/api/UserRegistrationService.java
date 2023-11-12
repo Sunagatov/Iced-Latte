@@ -32,8 +32,7 @@ public class UserRegistrationService {
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         userDto.setPassword(encodedPassword);
         final UserDto userDtoWithId = userApi.saveUser(userDto);
-        userApi.genereateEmailConfirmationToken(userDtoWithId.getId());
-        sendEmailToUserOperationPerformer.sendUserEmailConfirmationEmail(userDtoWithId.getId());
+        userApi.sendEmailConfirmationToken(userDtoWithId.getId());
         UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
         log.info("Registration was successful for {}.", request.email());

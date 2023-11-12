@@ -79,7 +79,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return Stream.of(REGISTRATION_URL, AUTHENTICATION_URL, PRODUCTS_API_URL, EMAIL_CONFIRMATION_URL)
+        return Stream.of(REGISTRATION_URL,
+                        AUTHENTICATION_URL,
+                        PRODUCTS_API_URL,
+                        EMAIL_CONFIRMATION_URL)
                 .anyMatch(urlPath -> request.getServletPath().contains(urlPath) || urlPath.contains(request.getServletPath()));
     }
 }

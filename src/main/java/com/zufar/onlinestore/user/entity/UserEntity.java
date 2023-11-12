@@ -76,7 +76,7 @@ public class UserEntity implements UserDetails {
     private String confirmationToken;
 
     @Column(name = "email_confirmed", nullable = false)
-        private boolean emailConfirmed = false;
+    private boolean emailConfirmed = false;
 
     @Override
     public String getUsername() {
