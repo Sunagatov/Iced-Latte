@@ -17,7 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class SaveUserOperationPerformerTest {
+class SaveUserOperationPerformerTest {
 
     @Mock
     private UserRepository userCrudRepository;
@@ -33,7 +33,7 @@ public class SaveUserOperationPerformerTest {
 
     @Test
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
-    public void saveUser_ShouldSaveUserAndReturnUserDto() {
+    void saveUser_ShouldSaveUserAndReturnUserDto() {
         UserDto userDto = UserDtoTestStub.createUserDto();
         UserEntity userEntity = UserDtoTestStub.createUserEntity();
 

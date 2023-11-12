@@ -1,34 +1,59 @@
 package com.zufar.onlinestore.user.exception.handler;
 
-import com.zufar.onlinestore.common.response.ApiResponse;
+import com.zufar.onlinestore.common.exception.dto.ApiErrorResponse;
+import com.zufar.onlinestore.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.onlinestore.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.onlinestore.user.exception.UserNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@DisplayName("UserExceptionHandler Tests")
 class UserExceptionHandlerTest {
 
+    @Mock
+    private ApiErrorResponseCreator apiErrorResponseCreator;
+
+    @Mock
+    private ErrorDebugMessageCreator errorDebugMessageCreator;
+
+    @InjectMocks
     private UserExceptionHandler userExceptionHandler;
 
-    @BeforeEach
-    void setUp() {
-        userExceptionHandler = new UserExceptionHandler();
-    }
-
     @Test
-    void handleUserNotFoundException_ShouldReturnApiResponseWithNotFoundStatus() {
+    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when UserNotFoundException is thrown")
+    void shouldReturnApiErrorResponseWithNotFoundStatusWhenUserNotFoundExceptionThrown() {
         UUID userId = UUID.randomUUID();
+        LocalDateTime currentDateTime = LocalDateTime.now();
         UserNotFoundException exception = new UserNotFoundException(userId);
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "User with id = " + userId + " is not found.",
+                HttpStatus.NOT_FOUND.value(),
+                currentDateTime
+        );
 
-        ApiResponse<Void> apiResponse = userExceptionHandler.handleUserNotFoundException(exception);
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
+        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
-        assertEquals(HttpStatus.NOT_FOUND.value(), apiResponse.httpStatusCode());
-        assertEquals("User with id = " + userId + " is not found.", apiResponse.messages().get(0));
-        assertTrue(apiResponse.description().contains("Operation was failed in method: handleUserNotFoundException_ShouldReturnApiResponseWithNotFoundStatus that belongs to the class: com.zufar.onlinestore.user.exception.handler.UserExceptionHandlerTest. Problematic code line: "));
+        ApiErrorResponse actualResponse = userExceptionHandler.handleUserNotFoundException(exception);
+
+        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
+        assertEquals(expectedResponse.message(), actualResponse.message());
+        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
+        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

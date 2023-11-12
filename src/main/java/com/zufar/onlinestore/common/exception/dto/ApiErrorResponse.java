@@ -1,22 +1,15 @@
-package com.zufar.onlinestore.common.response;
+package com.zufar.onlinestore.common.exception.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Builder
-public record ApiResponse<T>(
-
-        @JsonProperty("data")
-        T data,
+public record ApiErrorResponse(
 
         @JsonProperty("message")
-        List<String> messages,
-
-        @JsonProperty("description")
-        String description,
+        String message,
 
         @JsonProperty("httpStatusCode")
         Integer httpStatusCode,

@@ -17,13 +17,14 @@ import java.time.LocalDateTime;
 public class FailedLoginAttemptIncrementor {
 
     private final LoginAttemptRepository loginAttemptRepository;
+    private final LoginAttemptFactory loginAttemptFactory;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public LoginAttemptEntity increment(String userEmail) {
         LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
                 .orElseGet(() -> {
                     log.info("No login attempt record found for email: {}. Creating a new record.", userEmail);
-                    return LoginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+                    return loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
                 });
         loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
         loginAttempt.setLastModified(LocalDateTime.now());

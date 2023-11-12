@@ -11,18 +11,11 @@ server:
 management:
   server:
     port: 8083
-
-#
-# Spring Properties
-#
 spring:
   datasource:
     password: postgres
     username: postgres
 
-#
-# JWT Properties
-#
 jwt:
   header: Authorization
   secret: ${random.uuid}
