@@ -2,6 +2,7 @@ package com.zufar.onlinestore.product.util;
 
 import com.zufar.onlinestore.openapi.dto.ProductInfoDto;
 import com.zufar.onlinestore.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.onlinestore.product.entity.ProductInfo;
 import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
@@ -27,7 +28,17 @@ public class ProductStub {
         return productList;
     }
 
-    private static List<ProductInfoDto> generateSampleProducts() {
+    public static ProductInfo generateSampleEntityProduct() {
+        ProductInfo productA = new ProductInfo();
+        productA.setProductId(UUID.randomUUID());
+        productA.setName("Product A");
+        productA.setDescription("Description for Product A");
+        productA.setPrice(BigDecimal.valueOf(10.50));
+        productA.setQuantity(20);
+        return productA;
+    }
+
+    public static List<ProductInfoDto> generateSampleProducts() {
         List<ProductInfoDto> products = new ArrayList<>();
 
         ProductInfoDto productA = new ProductInfoDto();

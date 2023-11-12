@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ShoppingSessionItemsDeleterTest {
+class ShoppingSessionItemsDeleterTest {
 
     @InjectMocks
     private ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
@@ -41,7 +41,7 @@ public class ShoppingSessionItemsDeleterTest {
 
     @Test
     @DisplayName("Delete should return the ShoppingSessionDto with correct list of items when the itemIdsForDelete list is valid")
-    public void shouldItemsDeleteFromShoppingSessionDtoWithValidItemsList() {
+    void shouldItemsDeleteFromShoppingSessionDtoWithValidItemsList() {
         List<UUID> itemIdsForDelete = Collections.singletonList(UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
         DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
         request.shoppingSessionItemIds(itemIdsForDelete);
@@ -63,7 +63,7 @@ public class ShoppingSessionItemsDeleterTest {
 
     @Test
     @DisplayName("Delete should return the ShoppingSessionDto with empty list of items when the itemIdsForDelete list is valid")
-    public void shouldDeleteAllItemsFromShoppingSessionDtoWithValidItemsList() {
+    void shouldDeleteAllItemsFromShoppingSessionDtoWithValidItemsList() {
         List<UUID> itemIdsForDelete = List.of(
                 UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc"),
                 UUID.fromString("e5cadeb1-089c-430f-85d1-e18438167241"),
@@ -87,7 +87,7 @@ public class ShoppingSessionItemsDeleterTest {
 
     @Test
     @DisplayName("Delete should return the ShoppingSessionDto with list of items without change when the itemIdsForDelete list is valid")
-    public void shouldDeleteNothingFromShoppingSessionDtoWithEmptyItemsList() {
+    void shouldDeleteNothingFromShoppingSessionDtoWithEmptyItemsList() {
         List<UUID> itemIdsForDelete = new ArrayList<>();
         DeleteItemsFromShoppingSessionRequest request = new DeleteItemsFromShoppingSessionRequest();
         request.shoppingSessionItemIds(itemIdsForDelete);
