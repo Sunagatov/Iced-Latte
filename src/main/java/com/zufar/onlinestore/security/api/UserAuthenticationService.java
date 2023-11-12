@@ -27,6 +27,7 @@ public class UserAuthenticationService {
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         String userEmail = request.email();
         String userPassword = request.password();
+        int userAccountLockoutDurationMinutes = 30;
 
         log.info("Authenticating user with email = '{}'", userEmail);
 
@@ -51,7 +52,7 @@ public class UserAuthenticationService {
 
         } catch (LockedException exception) {
             log.error("User's account with email = '{}' is locked", userEmail);
-            throw new UserAccountLockedException(userEmail);
+            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
 
         } catch (Exception exception) {
             log.error("Error occurred during authentication", exception);

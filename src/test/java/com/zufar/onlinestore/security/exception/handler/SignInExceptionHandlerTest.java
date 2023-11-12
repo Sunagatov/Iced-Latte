@@ -63,10 +63,13 @@ class SignInExceptionHandlerTest {
     @Test
     @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UserAccountLockedException is thrown")
     void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserAccountLockedExceptionThrown() {
-        UserAccountLockedException exception = new UserAccountLockedException("Account is locked.");
+        int userAccountLockoutDurationMinutes = 30;
+        String userEmail = "userEmail";
+        UserAccountLockedException exception = new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Account is locked.",
+                String.format("The request was rejected due to an incorrect number of login attempts for the user with email='%s'. " +
+                        "Try again in %s minutes or reset your password", userEmail, userAccountLockoutDurationMinutes),
                 HttpStatus.UNAUTHORIZED.value(),
                 currentDateTime
         );
