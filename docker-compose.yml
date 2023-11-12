@@ -7,14 +7,14 @@ networks:
 
 services:
   online-store-app:
-    image: '${DOCKER_HUB}/online-store:${DOCKER_IMAGE_TAG}'
+    image: '${DOCKER_HUB_ACCOUNT_NAME}/online-store:${DOCKER_IMAGE_TAG}'
     container_name: '${DOCKER_IMAGE_NAME}'
     env_file:
       - .env
     build:
       context: .
       args:
-        APP_ENV: ${APP_ENV}
+        APP_PROFILE: ${APP_PROFILE}
         APP_VERSION: ${APP_VERSION}
     ports:
       - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'

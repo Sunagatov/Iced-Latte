@@ -4,11 +4,11 @@ WORKDIR /usr/app
 ADD . /usr/app
 
 ARG APP_VERSION
-ARG APP_ENV
+ARG APP_PROFILE
 
 RUN set -ex; \
     mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
-    mvn package -P${APP_ENV}
+    mvn package -P${APP_PROFILE}
 
 FROM eclipse-temurin:17-jre-jammy 
 WORKDIR /usr/app
