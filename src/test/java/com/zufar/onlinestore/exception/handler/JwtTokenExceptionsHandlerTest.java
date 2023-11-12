@@ -2,7 +2,10 @@ package com.zufar.onlinestore.exception.handler;
 
 import com.zufar.onlinestore.security.exception.JwtTokenException;
 import com.zufar.onlinestore.security.exception.handler.JwtTokenExceptionsHandler;
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -11,18 +14,26 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class JwtTokenExceptionsHandlerTest{
+@ExtendWith(MockitoExtension.class)
+@DisplayName("JwtTokenExceptionsHandler Tests")
+class JwtTokenExceptionsHandlerTest {
 
+    private final JwtTokenExceptionsHandler jwtTokenExceptionsHandler = new JwtTokenExceptionsHandler();
 
     @Test
-    public void testHandleJwtTokenException() {
-        JwtTokenException exception = new JwtTokenException("Test exception");
-        JwtTokenExceptionsHandler handler = new JwtTokenExceptionsHandler();
+    @DisplayName("Should return UNAUTHORIZED ResponseEntity with error details when JwtTokenException is thrown")
+    void shouldReturnUnauthorizedResponseEntityWhenJwtTokenExceptionThrown() {
+        Throwable cause = new RuntimeException("Cause error message");
+        JwtTokenException exception = new JwtTokenException("Jwt token error message", cause);
 
-        ResponseEntity<Map<String, String>> response = handler.handleJwtTokenException(exception);
+        ResponseEntity<Map<String, String>> response = jwtTokenExceptionsHandler.handleJwtTokenException(exception);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Test exception", response.getBody().get("JwtToken Error message"));
-        assertNotNull(response.getBody().get("JwtToken Cause Error message"));
+
+        Map<String, String> errors = response.getBody();
+        assertNotNull(errors);
+        assertEquals("Jwt token error message", errors.get("JwtToken Error message"));
+        assertEquals("Cause error message", errors.get("JwtToken Cause Error message"));
     }
 }
+
