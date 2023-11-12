@@ -1,7 +1,12 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /usr/app
+
 ADD . /usr/app
-RUN set -ex; export APP_ENV=$(grep APP_ENV .env | cut -d '=' -f2) && \
+
+ARG APP_VERSION
+ARG APP_ENV
+
+RUN set -ex; \
     mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
     mvn package -P${APP_ENV}
 

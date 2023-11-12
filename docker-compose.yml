@@ -13,6 +13,9 @@ services:
       - .env
     build:
       context: .
+      args:
+        APP_ENV: ${APP_ENV}
+        APP_VERSION: ${APP_VERSION}
     ports:
       - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
     networks:
