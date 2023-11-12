@@ -24,12 +24,10 @@ public class ProductsEndpoint implements com.zufar.onlinestore.openapi.product.a
 
     public static final String PRODUCTS_URL = "/api/v1/products";
 
-    public static final String GET_SINGLE_PRODUCT_PATH = "/{productId}";
-
     private final ProductApi productApi;
 
     @Override
-    @GetMapping(GET_SINGLE_PRODUCT_PATH)
+    @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.info("Received the request to get the product with productId - {}.", productId);
         ProductInfoDto product = productApi.getProduct(productId);

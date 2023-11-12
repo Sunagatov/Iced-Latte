@@ -98,19 +98,20 @@ class ProductQuantityItemUpdaterTest {
     void shouldThrowInvalidShoppingSessionIdExceptionWhenShoppingSessionIdIsInvalid() throws ShoppingSessionNotFoundException, InvalidShoppingSessionIdException {
         int productQuantityChange = 5;
         ShoppingSessionItem item = CartDtoTestStub.createShoppingSessionItem();
+        UUID itemId = item.getId();
         UserDto userDto = UserDtoTestStub.createUserDto();
         ShoppingSessionDto shoppingSession = new ShoppingSessionDto();
         shoppingSession.setId(UUID.randomUUID());
         shoppingSession.setUserId(userDto.getId());
 
-        when(shoppingSessionItemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+        when(shoppingSessionItemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(shoppingSessionItemRepository.save(item)).thenReturn(item);
         when(securityPrincipalProvider.get()).thenReturn(userDto);
         when(shoppingSessionProvider.getByUserId(userDto.getId())).thenReturn(shoppingSession);
 
-        assertThrows(InvalidShoppingSessionIdException.class, () -> productQuantityItemUpdater.update(item.getId(), productQuantityChange));
+        assertThrows(InvalidShoppingSessionIdException.class, () -> productQuantityItemUpdater.update(itemId, productQuantityChange));
 
-        verify(shoppingSessionItemRepository, times(1)).findById(item.getId());
+        verify(shoppingSessionItemRepository, times(1)).findById(itemId);
         verify(shoppingSessionProvider, times(1)).getByUserId(userDto.getId());
         verify(securityPrincipalProvider, times(1)).get();
         verify(shoppingSessionItemRepository, times(1)).save(item);
@@ -121,12 +122,13 @@ class ProductQuantityItemUpdaterTest {
     void shouldThrowInvalidItemProductQuantityExceptionWhenProductQuantitySetNegative() {
         int productQuantityChange = -10;
         ShoppingSessionItem shoppingSessionItem = CartDtoTestStub.createShoppingSessionItem();
+        UUID shoppingSessionItemId = shoppingSessionItem.getId();
 
-        when(shoppingSessionItemRepository.findById(shoppingSessionItem.getId())).thenThrow(new InvalidItemProductQuantityException(productQuantityChange));
+        when(shoppingSessionItemRepository.findById(shoppingSessionItemId)).thenThrow(new InvalidItemProductQuantityException(productQuantityChange));
 
-        assertThrows(InvalidItemProductQuantityException.class, () -> productQuantityItemUpdater.update(shoppingSessionItem.getId(), productQuantityChange));
+        assertThrows(InvalidItemProductQuantityException.class, () -> productQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange));
 
-        verify(shoppingSessionItemRepository, times(1)).findById(shoppingSessionItem.getId());
+        verify(shoppingSessionItemRepository, times(1)).findById(shoppingSessionItemId);
         verify(shoppingSessionProvider, times(0)).getByUserId(any(UUID.class));
         verify(securityPrincipalProvider, times(0)).get();
         verify(shoppingSessionItemRepository, times(0)).save(any(ShoppingSessionItem.class));
@@ -137,12 +139,13 @@ class ProductQuantityItemUpdaterTest {
     void shouldThrowInvalidItemProductQuantityExceptionWhenProductQuantityChangeIsZero() {
         int productQuantityChange = 0;
         ShoppingSessionItem shoppingSessionItem = CartDtoTestStub.createShoppingSessionItem();
+        UUID shoppingSessionItemId = shoppingSessionItem.getId();
 
-        when(shoppingSessionItemRepository.findById(shoppingSessionItem.getId())).thenThrow(new InvalidItemProductQuantityException(productQuantityChange));
+        when(shoppingSessionItemRepository.findById(shoppingSessionItemId)).thenThrow(new InvalidItemProductQuantityException(productQuantityChange));
 
-        assertThrows(InvalidItemProductQuantityException.class, () -> productQuantityItemUpdater.update(shoppingSessionItem.getId(), productQuantityChange));
+        assertThrows(InvalidItemProductQuantityException.class, () -> productQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange));
 
-        verify(shoppingSessionItemRepository, times(1)).findById(shoppingSessionItem.getId());
+        verify(shoppingSessionItemRepository, times(1)).findById(shoppingSessionItemId);
         verify(shoppingSessionProvider, times(0)).getByUserId(any(UUID.class));
         verify(securityPrincipalProvider, times(0)).get();
         verify(shoppingSessionItemRepository, times(0)).save(any(ShoppingSessionItem.class));

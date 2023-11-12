@@ -14,28 +14,28 @@ import org.springframework.context.annotation.Configuration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = UserDtoConverterTest.Config.class)
-public class UserDtoConverterTest {
+class UserDtoConverterTest {
 
     @Autowired
     private UserDtoConverter userDtoConverter;
 
     @Configuration
-    public static class Config {
+    static class Config {
 
         @Bean
-        public UserDtoConverter userDtoConverter() {
+        UserDtoConverter userDtoConverter() {
             return Mappers.getMapper(UserDtoConverter.class);
         }
 
         @Bean
-        public AddressDtoConverter addressDtoConverter() {
+        AddressDtoConverter addressDtoConverter() {
             return Mappers.getMapper(AddressDtoConverter.class);
         }
     }
 
     @Test
     @DisplayName("toDto should convert UserEntity to UserDto with complete user information")
-    public void toDtoShouldConvertUserEntityToUserDtoWithCompleteUserInformation() {
+    void toDtoShouldConvertUserEntityToUserDtoWithCompleteUserInformation() {
         UserEntity entity = UserDtoTestStub.createUserEntity();
         UserDto dto = userDtoConverter.toDto(entity);
 
@@ -52,7 +52,7 @@ public class UserDtoConverterTest {
 
     @Test
     @DisplayName("toEntity should convert UserDto to UserEntity with complete user information")
-    public void toEntityShouldConvertUserDtoToUserEntityWithCompleteUserInformation() {
+    void toEntityShouldConvertUserDtoToUserEntityWithCompleteUserInformation() {
         UserDto dto = UserDtoTestStub.createUserDto();
         UserEntity entity = userDtoConverter.toEntity(dto);
 
