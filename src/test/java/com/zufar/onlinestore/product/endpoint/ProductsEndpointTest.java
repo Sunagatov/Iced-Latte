@@ -5,6 +5,7 @@ import com.zufar.onlinestore.test.config.AbstractE2ETest;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.data.domain.Sort;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -19,6 +20,7 @@ import static io.restassured.RestAssured.given;
 
 
 @Testcontainers
+@Disabled("Disabled as while the issue 'ContainerFetch Can't get Docker image: RemoteDockerImag...' was not fixed.")
 @DisplayName("ProductsEndpoint Tests")
 class ProductsEndpointTest extends AbstractE2ETest {
 
