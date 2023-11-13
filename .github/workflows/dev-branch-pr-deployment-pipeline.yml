@@ -1,22 +1,51 @@
-name: Continuous Integration Pipeline
+name: CI/CD Pipeline for DEV environment
 
 on:
+  push:
+    branches: [ development ]
   pull_request:
-    branches:
-      - development
-    types:
-      - closed
+    types: [ closed ]
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+  DEV_DOCKER_COMPOSE_FILE: docker-compose.dev.yml
 
 jobs:
-  build:
-    if: ${{ github.event.pull_request.merged }}
-
+  setup-environment:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v1
-      - name: Build Docker Image
+      - uses: actions/checkout@v2
+      - name: Create .env file
         run: |
-          docker login -u ${{secrets.DOCKERHUB_USERNAME}} -p ${{secrets.DOCKERHUB_PASSWORD}}
-          docker build -t zufarexplainedit/test_ci:latest .
-          docker push zufarexplainedit/test_ci:latest
+          echo "${{ secrets.ENV_FILE }}" > .env
+          echo $PWD
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2
+        with:
+          load-mode: strict
+      - name: Read envs
+        run: |
+          export
+
+  build-and-push-docker-image:
+    runs-on: ubuntu-latest
+    needs: setup-environment
+    steps:
+      - name: Fetch sources
+        uses: actions/checkout@v2
+      - name: Build the docker image
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          export IMAGE_NAME=${{ secrets.IMAGE_NAME }}
+          export IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
+          docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
+          export
+      - name: Log in to docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push image
+        run: docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
