@@ -9,12 +9,15 @@ import java.time.LocalDateTime;
 @Service
 public class ApiErrorResponseCreator {
 
-    public ApiErrorResponse buildResponse(Exception exception,
-                                          HttpStatus httpStatus) {
+    public ApiErrorResponse buildResponse(String errorMessage, HttpStatus httpStatus) {
         return ApiErrorResponse.builder()
-                .message(exception.getMessage())
+                .message(errorMessage)
                 .timestamp(LocalDateTime.now())
                 .httpStatusCode(httpStatus.value())
                 .build();
+    }
+
+    public ApiErrorResponse buildResponse(Exception exception, HttpStatus httpStatus) {
+        return buildResponse(exception.getMessage(), httpStatus);
     }
 }

@@ -24,10 +24,11 @@ public class GlobalExceptionHandler {
         String message = exception
                 .getBindingResult()
                 .getAllErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .map(error -> String.format("{ ErrorMessage: %s }", error.getDefaultMessage()))
                 .toList()
                 .toString();
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
         log.error("Handle method argument not valid exception: failed: message: {}, debugMessage: {}.",
                 message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
