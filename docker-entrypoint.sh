@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-host="${POSTGRES_HOST:-postgresdb}"
-max_retries="${POSTGRES_MAX_RETRIES:-5}"
-wait_seconds="${POSTGRES_INITIAL_WAIT:-2}"
+host="${DATASOURCE_HOST:-postgresdb}"
+max_retries=3
+wait_seconds=2
 
 retries=0
 until nc -z "$host" "$DATASOURCE_PORT" || [ $retries -eq "$max_retries" ]

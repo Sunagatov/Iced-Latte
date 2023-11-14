@@ -1,34 +1,69 @@
-name: CI/CD Pipeline for DEV environment
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ development ]
-  pull_request:
-    types: [ closed ]
-
-env:
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
-  DEV_DOCKER_COMPOSE_FILE: docker-compose.yml
+    branches: [ main, feature/* ]
 
 jobs:
-  build-and-push-docker-image:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Load environment variables
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Define environment variables
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-      - name: Build the docker image
-        run: |
-          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-          export IMAGE_NAME=${{ secrets.IMAGE_NAME }}
-          export IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
-          docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
-      - name: Log in to docker hub
-        uses: docker/login-action@v3
+          echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
+          echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> "$GITHUB_ENV"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Push image
-        run: docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+          build-args: |
+            APP_VERSION=${{ secrets.APP_VERSION }}
+            APP_PROFILE=${{ secrets.APP_PROFILE }}
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml, .env"
+          target: "/opt/project/backend-test"
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+            docker stop online-store-backend || true
+            docker run -d \
+              --network online-store-network \
+              --name online-store-backend \
+              -e APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }} \
+              -e DATASOURCE_HOST=${{ secrets.DATASOURCE_HOST }} \
+              -e DATASOURCE_PORT=${{ secrets.DATASOURCE_PORT }} \
+              -e DATASOURCE_NAME=${{ secrets.DATASOURCE_NAME }} \
+              -e DATASOURCE_USERNAME=${{ secrets.DATASOURCE_USERNAME }} \
+              -e DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }} \
+              -e APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }} \
+              ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}

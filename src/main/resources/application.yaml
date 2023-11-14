@@ -20,16 +20,16 @@ spring:
     ansi:
       enabled: detect
   datasource:
-    url: ${DATASOURCE_URL}
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+      ddl-auto: validate
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${DATASOURCE_URL}
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
     user: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
 #
@@ -76,14 +76,14 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: ${APP_JWT_EXPIRATION_TIME}
+  expiration: 1800000 # 30 minutes
 
 #
 # Login Attempts Properties
 #
 login-attempts:
-  max-attempts: 3
-  lockout-duration-minutes: 30
+  max-attempts: 5
+  lockout-duration-minutes: 60
 
 unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 
@@ -92,5 +92,5 @@ unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 #
 logging:
   pattern:
-    file: ${LOG_FILE_NAME_FORMAT}
+    file: online-store-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
