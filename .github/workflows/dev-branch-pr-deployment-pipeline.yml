@@ -1,8 +1,11 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for DEV environment
 
 on:
   push:
-    branches: [ main, feature/* ]
+    branches: [ development ]
+  pull_request:
+    types: [ closed ]
+
 
 jobs:
   build-and-deploy:
