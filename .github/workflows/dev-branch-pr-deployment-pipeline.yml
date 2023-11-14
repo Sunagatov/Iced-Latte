@@ -48,14 +48,16 @@ jobs:
           script: |
             docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
             docker stop online-store-backend || true
+            docker rm online-store-backend || true
             docker run -d \
-              --network online-store-network \
-              --name online-store-backend \
-              -e APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }} \
-              -e DATASOURCE_HOST=${{ secrets.DATASOURCE_HOST }} \
-              -e DATASOURCE_PORT=${{ secrets.DATASOURCE_PORT }} \
-              -e DATASOURCE_NAME=${{ secrets.DATASOURCE_NAME }} \
-              -e DATASOURCE_USERNAME=${{ secrets.DATASOURCE_USERNAME }} \
-              -e DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }} \
-              -e APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }} \
-              ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+            --network online-store-network \
+            --name online-store-backend \
+            -e APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }} \
+            -e DATASOURCE_HOST=${{ secrets.DATASOURCE_HOST }} \
+            -e DATASOURCE_PORT=${{ secrets.DATASOURCE_PORT }} \
+            -e DATASOURCE_NAME=${{ secrets.DATASOURCE_NAME }} \
+            -e DATASOURCE_USERNAME=${{ secrets.DATASOURCE_USERNAME }} \
+            -e DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }} \
+            -e APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }} \
+            ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+
