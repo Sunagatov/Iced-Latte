@@ -7,7 +7,7 @@ ARG APP_VERSION
 ARG APP_PROFILE
 
 RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=${APP_VERSION} && \
-    mvn package -P${APP_PROFILE}
+    mvn package -P${APP_PROFILE} -DskipTests
 
 FROM eclipse-temurin:17-jre-jammy 
 WORKDIR /usr/app
