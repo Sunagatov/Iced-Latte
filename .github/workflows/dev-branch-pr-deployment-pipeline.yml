@@ -14,17 +14,12 @@ jobs:
   setup-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Checkout private env repository
+      - name: Copy env from the private repository
         uses: actions/checkout@v2
         with:
           repository: Sunagatov/Vault
           token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
           path: Vault
-
-      - name: List files in IcedLatte/Backend
-        run: ls -lah Vault/IcedLatte/Backend
 
       - name: Copy .env file
         run: cp ./Vault/IcedLatte/Backend/.env ./
@@ -34,22 +29,22 @@ jobs:
         with:
           load-mode: strict
 
-      - name: Set IMAGE_TAG
-        id: set_image_tag
-        run: echo "IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV && echo "::set-output name=IMAGE_TAG::$GITHUB_REF_NAME-${GITHUB_SHA:0:7}"
-
-      - name: Build the docker image
-        run: docker build -t $DOCKERHUB_USERNAME/$IMAGE_NAME:${{ steps.set_image_tag.outputs.IMAGE_TAG }} -f Dockerfile.dev .
-
-      - name: Log in to docker hub
+      - name: Log in to Dockerhub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Push image
-        run: |
-          docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+          build-args: |
+            APP_VERSION=${{ secrets.APP_VERSION }}
+            APP_PROFILE=${{ secrets.APP_PROFILE }}
 
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
@@ -60,9 +55,12 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           envs: DOCKERHUB_USERNAME,IMAGE_NAME,IMAGE_TAG
           script: |
-            echo "Pulling image $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
             docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
             docker stop online-store-backend || true
             docker rm online-store-backend || true
-            echo "Running container with image $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
-            docker run -d --name online-store-backend --network online-store-network --restart always --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+            docker run -d \
+            --network online-store-network \
+            --name online-store-backend \
+            --restart always \
+            --env-file .env \
+            $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
