@@ -17,6 +17,6 @@ services:
         APP_PROFILE: dev
         APP_VERSION: 0.0.1
     ports:
-      - 8083:8083
+      - '8083:8083'
     networks:
       - online-store-network

@@ -93,7 +93,6 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
-          envs: DOCKER_IMAGE_TAG, APP_SERVER_PORT
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
             docker pull ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
