@@ -39,7 +39,7 @@ jobs:
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
-    needs: setup-environment
+    needs: prepare-env-file
     steps:
       - name: Checkout source code from the repository
         uses: actions/checkout@v4
