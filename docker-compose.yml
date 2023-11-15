@@ -8,14 +8,14 @@ networks:
 services:
   online-store-app:
     image: '${DOCKER_HUB_ACCOUNT_NAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
-    container_name: ${DOCKER_CONTAINER_NAME}
+    container_name: '${DOCKER_CONTAINER_NAME}'
     env_file:
       - .env
     build:
       context: .
       args:
-        APP_PROFILE: ${APP_PROFILE}
-        APP_VERSION: ${APP_VERSION}
+        APP_PROFILE: '${APP_PROFILE}'
+        APP_VERSION: '${APP_VERSION}'
     ports:
       - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
     networks:

@@ -83,10 +83,10 @@ jobs:
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: $DEV_SSH_HOST
-          port: $DEV_SSH_PORT
-          username: $DEV_SSH_USER
-          key: $DEV_SSH_PRIV_KEY
+          host: ${{ secrets.DEV_SSH_HOST }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
             echo $DOCKER_HUB_TOKEN | docker login -u $$DOCKER_HUB_ACCOUNT_NAME --password-stdin
