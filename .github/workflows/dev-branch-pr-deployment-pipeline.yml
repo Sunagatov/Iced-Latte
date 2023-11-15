@@ -23,7 +23,7 @@ jobs:
           path: Vault
 
       - name: Copy .env file
-        run: cp $ENV_FILE_PATH_IN_PRIVATE_REPOSITORY ./
+        run: cp ./Vault/IcedLatte/Backend/.env ./
 
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
