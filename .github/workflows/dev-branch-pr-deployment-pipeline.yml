@@ -18,9 +18,9 @@ jobs:
       - name: Copy env from the private repository
         uses: actions/checkout@v4
         with:
-          repository: Sunagatov/$PRIVATE_REPOSITORY
-          token: $PRIVATE_REPO_ACCESS_TOKEN
-          path: $PRIVATE_REPOSITORY
+          repository: Sunagatov/Vault
+          token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+          path: Vault
 
       - name: Copy .env file
         run: cp $ENV_FILE_PATH_IN_PRIVATE_REPOSITORY ./
