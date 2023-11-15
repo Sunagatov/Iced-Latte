@@ -6,58 +6,63 @@ on:
   pull_request:
     types: [ closed ]
 
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+
 jobs:
-  build-and-deploy-job:
+  setup-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - uses: actions/checkout@v2
+
+      - name: Checkout private env repository
         uses: actions/checkout@v2
+        with:
+          repository: Sunagatov/Vault
+          token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+          path: Vault
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - name: List files in IcedLatte/Backend
+        run: ls -lah Vault/IcedLatte/Backend
 
-      - name: Define environment variables
-        run: |
-          echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
-          echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> "$GITHUB_ENV"
+      - name: Copy .env file
+        run: cp ./Vault/IcedLatte/Backend/.env ./
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v1
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2
+        with:
+          load-mode: strict
+
+      - name: Set IMAGE_TAG
+        id: set_image_tag
+        run: echo "IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV && echo "::set-output name=IMAGE_TAG::$GITHUB_REF_NAME-${GITHUB_SHA:0:7}"
+
+      - name: Build the docker image
+        run: docker build -t $DOCKERHUB_USERNAME/$IMAGE_NAME:${{ steps.set_image_tag.outputs.IMAGE_TAG }} -f Dockerfile.dev .
+
+      - name: Log in to docker hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
-          build-args: |
-            APP_VERSION=${{ secrets.APP_VERSION }}
-            APP_PROFILE=${{ secrets.APP_PROFILE }}
+      - name: Push image
+        run: |
+          docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
 
-      - name: Deploy on server
-        uses: appleboy/ssh-action@master
+      - name: Deploy image via SSH
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
           port: ${{ secrets.DEV_SSH_PORT }}
+          username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
+          envs: DOCKERHUB_USERNAME,IMAGE_NAME,IMAGE_TAG
           script: |
-            docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
+            echo "Pulling image $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
+            docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
             docker stop online-store-backend || true
             docker rm online-store-backend || true
-            docker run -d \
-            --network online-store-network \
-            --name online-store-backend \
-            -e APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }} \
-            -e DATASOURCE_HOST=${{ secrets.DATASOURCE_HOST }} \
-            -e DATASOURCE_PORT=${{ secrets.DATASOURCE_PORT }} \
-            -e DATASOURCE_NAME=${{ secrets.DATASOURCE_NAME }} \
-            -e DATASOURCE_USERNAME=${{ secrets.DATASOURCE_USERNAME }} \
-            -e DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }} \
-            -e APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }} \
-            ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.branch }}-${{ env.sha_short }}
-
+            echo "Running container with image $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
+            docker run -d --name online-store-backend --network online-store-network --restart always --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
