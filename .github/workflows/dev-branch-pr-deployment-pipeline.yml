@@ -7,7 +7,6 @@ on:
     types: [ closed ]
 
 env:
-  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ./Vault/IcedLatte/Backend/.env
   DOCKER_COMPOSE_FILE: docker-compose.yml
   DOCKER_CONTAINER_NAME: iced-latte-backend
@@ -58,7 +57,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          github-token: ${{ env.DOCKER_HUB_TOKEN }}
+          build-args: APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }},DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG
+          github-token: ${{ secrets.DOCKER_HUB_TOKEN }}
           context: .
           push: true
           tags: ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
