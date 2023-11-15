@@ -10,20 +10,26 @@ env:
   PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
   PRIVATE_REPOSITORY: ${{ secrets.PRIVATE_REPOSITORY }}
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ${{ secrets.ENV_FILE_PATH_IN_PRIVATE_REPOSITORY }}
+  DOCKER_COMPOSE_FILE: docker-compose.yml
+  DOCKER_CONTAINER_NAME: online-store-backend
+  APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
   prepare-env-file:
     name: Prepare the .env file
     runs-on: ubuntu-latest
     steps:
+
       - name: Clone the .env file from private repository (vault)
         uses: actions/checkout@v4
         with:
           repository: Sunagatov/Vault
           token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
           path: Vault
+
       - name: Copy the .env file to the workspace
         run: cp ./Vault/IcedLatte/Backend/.env ./
+
       - name: Store the .env file as an artifact
         uses: actions/upload-artifact@v2
         with:
@@ -35,6 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-env-file
     steps:
+
       - name: Checkout source code from the repository
         uses: actions/checkout@v4
 
@@ -43,19 +50,15 @@ jobs:
         with:
           name: env-file
           path: .
+
       - name: Set DOCKER_IMAGE_TAG
         id: set_image_tag
         run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV && echo "::set-output name=IMAGE_TAG::$GITHUB_REF_NAME-${GITHUB_SHA:0:7}"
+
       - name: Build and push docker image
         run: |
-          export DOCKER_IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}
           export DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
-          export DOCKER_HUB_ACCOUNT_NAME=${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
-          export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
-          export DOCKER_COMPOSE_NETWORK=${{ secrets.DOCKER_COMPOSE_NETWORK }}
-          export APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }}
-          export DOCKER_CONTAINER_NAME=online-store-backend
-          docker-compose -f docker-compose.yml build
+          docker-compose -f $DOCKER_COMPOSE_FILE build
           echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
@@ -63,11 +66,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push-docker-image
     steps:
+
       - name: Download .env file
         uses: actions/download-artifact@v3
         with:
           name: env-file
           path: .
+
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -79,5 +84,5 @@ jobs:
           script: |
             echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
             docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set_image_tag.outputs.DOCKER_IMAGE_TAG }}
-            cd /opt/project/backend-test
-            docker-compose -f docker-compose.yml up -d
+            cd $APP_PATH_ON_THE_REMOTE_SERVER
+            docker-compose -f $DOCKER_COMPOSE_FILE up -d
