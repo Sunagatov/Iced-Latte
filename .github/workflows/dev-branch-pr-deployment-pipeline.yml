@@ -62,17 +62,10 @@ jobs:
 
       - name: Build and push docker image
         run: |
+          export $DOCKER_IMAGE_TAG
+          export ${{ secrets.APP_SERVER_PORT }}
           docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} build
           docker push ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          build-args: APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }},DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG
-          github-token: ${{ secrets.DOCKER_HUB_TOKEN }}
-          context: .
-          push: true
-          tags: ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
 
   deploy-app-to-server:
     runs-on: ubuntu-latest
