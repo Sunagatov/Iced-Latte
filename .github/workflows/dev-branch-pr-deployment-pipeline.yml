@@ -58,7 +58,7 @@ jobs:
       - name: Build and push docker image
         run: |
           docker-compose -f $DOCKER_COMPOSE_FILE build
-          echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
+          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
   deploy-app-to-server:
