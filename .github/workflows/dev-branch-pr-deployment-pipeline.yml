@@ -54,29 +54,40 @@ jobs:
 
       - name: Build the docker image
         run: |
-          export DOCKER_IMAGE_NAME=${{ env.DOCKER_IMAGE_NAME }}
-          export DOCKER_IMAGE_TAG=DOCKER_IMAGE_TAG
-          export DOCKER_HUB_ACCOUNT_NAME=${{ env.DOCKER_HUB_ACCOUNT_NAME }}
-          export DOCKER_COMPOSE_NETWORK=${{ env.DOCKER_COMPOSE_NETWORK }}
-          export APP_SERVER_PORT=${{ env.APP_SERVER_PORT }}
-          export DOCKER_CONTAINER_NAME=${{ env.DOCKER_CONTAINER_NAME }}
-          docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
-          export
+           set -a
+           source .env
+           set +a
+           export DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME}
+           export DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}
+           export DOCKER_HUB_ACCOUNT_NAME=${DOCKER_HUB_ACCOUNT_NAME}
+           export DOCKER_COMPOSE_NETWORK=${DOCKER_COMPOSE_NETWORK}
+           export APP_SERVER_PORT=${APP_SERVER_PORT}
+           export DOCKER_CONTAINER_NAME=${DOCKER_CONTAINER_NAME}
+           docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
 
       - name: Print environment variables for debugging
         run: |
-          echo "DOCKER_HUB_ACCOUNT_NAME=${{ env.DOCKER_HUB_ACCOUNT_NAME }}"
-          echo "DOCKER_HUB_ACCOUNT_NAME=${{ env.DOCKER_HUB_TOKEN }}"
-          echo "IMAGE_NAME=${{ env.IMAGE_NAME }}"
+          set -a
+          source .env
+          set +a
+          echo "DOCKER_HUB_ACCOUNT_NAME=$DOCKER_HUB_ACCOUNT_NAME"
+          echo "IMAGE_NAME=$IMAGE_NAME"
+          # Be careful not to print DOCKER_HUB_TOKEN or any other sensitive information
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.DOCKER_HUB_ACCOUNT_NAME }}
-          password: ${{ env.DOCKER_HUB_TOKEN }}
+        run: |
+          set -a
+          source .env
+          set +a
+          echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
 
       - name: Push image
-        run: docker push ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:$DOCKER_IMAGE_TAG
+        run: |
+          set -a
+          source .env
+          set +a
+          docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+
 
   deploy-app-to-server:
     runs-on: ubuntu-latest
