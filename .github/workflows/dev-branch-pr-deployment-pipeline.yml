@@ -10,9 +10,11 @@ env:
   PRIVATE_REPO_ACCESS_TOKEN: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
   PRIVATE_REPOSITORY: ${{ secrets.PRIVATE_REPOSITORY }}
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ${{ secrets.ENV_FILE_PATH_IN_PRIVATE_REPOSITORY }}
+  DOCKER_HUB_TOKEN: ${{ secrets.$DOCKER_HUB_TOKEN }}
   DOCKER_COMPOSE_FILE: docker-compose.yml
   DOCKER_CONTAINER_NAME: iced-latte-backend
   DOCKER_IMAGE_NAME: iced-latte-backend
+  DOCKER_HUB_ACCOUNT_NAME: zufarexplainedit
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
@@ -73,6 +75,10 @@ jobs:
           name: env-file
           path: .
 
+      - name: Set DOCKER_IMAGE_TAG
+        id: docker_image_tag
+        run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -83,6 +89,6 @@ jobs:
           envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
             echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
-            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.IMAGE_TAG }}
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.DOCKER_IMAGE_TAG }}
             cd $APP_PATH_ON_THE_REMOTE_SERVER
             docker-compose -f $DOCKER_COMPOSE_FILE up -d
