@@ -12,8 +12,6 @@ env:
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ${{ secrets.ENV_FILE_PATH_IN_PRIVATE_REPOSITORY }}
   DOCKER_COMPOSE_FILE: docker-compose.yml
   DOCKER_CONTAINER_NAME: iced-latte-backend
-  DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
-  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
   DOCKER_IMAGE_NAME: iced-latte-backend
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
@@ -64,37 +62,27 @@ jobs:
           echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
-#  deploy-app-to-server:
-#    runs-on: ubuntu-latest
-#    needs: build-and-push-docker-image
-#    steps:
-#
-#      - name: Download .env file
-#        uses: actions/download-artifact@v3
-#        with:
-#          name: env-file
-#          path: .
-#
-#      - name: Deploy image via SSH
-#        uses: appleboy/ssh-action@v1.0.0
-#        with:
-#          host: ${{ secrets.DEV_SSH_HOST }}
-#          port: ${{ secrets.DEV_SSH_PORT }}
-#          username: ${{ secrets.DEV_SSH_USER }}
-#          key: ${{ secrets.DEV_SSH_PRIV_KEY }}
-#          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
-#          script: |
-#            export APP_PROFILE=dev
-#            export APP_VERSION=$DOCKER_IMAGE_TAG
-#            export DOCKER_COMPOSE_FILE=docker-compose.yml
-#            export DOCKER_CONTAINER_NAME=iced-latte-backend
-#            export DOCKER_HUB_ACCOUNT_NAME=${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
-#            export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
-#            export DOCKER_IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}
-#            export DOCKER_COMPOSE_NETWORK=${{ secrets.DOCKER_COMPOSE_NETWORK }}
-#            export DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG
-#            export APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }}
-#            echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
-#            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.IMAGE_TAG }}
-#            cd $APP_PATH_ON_THE_REMOTE_SERVER
-#            docker-compose -f docker-compose.yml up -d
+  deploy-app-to-server:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker-image
+    steps:
+
+      - name: Download .env file
+        uses: actions/download-artifact@v3
+        with:
+          name: env-file
+          path: .
+
+      - name: Deploy image via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIV_KEY }}
+          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
+          script: |
+            echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.IMAGE_TAG }}
+            cd $APP_PATH_ON_THE_REMOTE_SERVER
+            docker-compose -f $DOCKER_COMPOSE_FILE up -d
