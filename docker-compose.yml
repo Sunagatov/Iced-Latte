@@ -15,7 +15,7 @@ services:
       context: .
       args:
         APP_PROFILE: dev
-        APP_VERSION: '${DOCKER_IMAGE_TAG}'
+        APP_VERSION: 0.0.1
     ports:
       - 8083:8083
     networks:
