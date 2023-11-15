@@ -15,10 +15,13 @@ env:
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
-  prepare-env-file:
-    name: Prepare the .env file
+  build-and-push-docker-image:
+    name: Build and push docker image
     runs-on: ubuntu-latest
+    needs: prepare-env-file
     steps:
+      - name: Checkout source code from the repository
+        uses: actions/checkout@v4
 
       - name: Clone the .env file from private repository (vault)
         uses: actions/checkout@v4
@@ -29,27 +32,6 @@ jobs:
 
       - name: Copy the .env file to the workspace
         run: cp $ENV_FILE_PATH_IN_PRIVATE_REPOSITORY ./
-
-      - name: Store the required files as an artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-files
-          path: |
-            .env
-
-  build-and-push-docker-image:
-    name: Build and push docker image
-    runs-on: ubuntu-latest
-    needs: prepare-env-file
-    steps:
-      - name: Checkout source code from the repository
-        uses: actions/checkout@v4
-
-      - name: Download deployment files
-        uses: actions/download-artifact@v3
-        with:
-          name: deployment-files
-          path: .
 
       - name: Set DOCKER_IMAGE_TAG
         run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
@@ -84,5 +66,4 @@ jobs:
           envs: DOCKER_IMAGE_TAG
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            docker pull ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
