@@ -80,13 +80,17 @@ jobs:
 
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
+          envs: DOCKER_IMAGE_TAG
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            export DOCKER_IMAGE_TAG=${{ env.DOCKER_IMAGE_TAG }}
+            echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ env.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
             docker pull ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
+            scp docker-compose.yml .env ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
+            ssh ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} 'cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }} && docker-compose up -d'
