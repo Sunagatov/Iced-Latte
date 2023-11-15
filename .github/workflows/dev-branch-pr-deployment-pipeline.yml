@@ -62,8 +62,7 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           envs: DOCKERHUB_USERNAME,IMAGE_NAME,IMAGE_TAG
           script: |
-            docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
-            if [ $(docker ps -a -q -f name=online-store-backend) ]; then
+            if docker ps -a -q -f name=online-store-backend; then
               docker stop online-store-backend
               docker rm online-store-backend
             fi
