@@ -69,5 +69,4 @@ jobs:
             --network online-store-network \
             --name online-store-backend \
             --restart always \
-            --env-file .env \
-            $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+            --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
