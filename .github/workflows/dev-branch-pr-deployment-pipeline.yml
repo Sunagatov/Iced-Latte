@@ -62,12 +62,7 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           envs: DOCKERHUB_USERNAME,IMAGE_NAME,IMAGE_TAG
           script: |
-            set -e
             docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
             docker stop online-store-backend || true
             docker rm online-store-backend || true
-            docker run -d \
-              --name online-store-backend \
-              --network online-store-network \
-              --restart always \
-              --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+            docker run -d --name online-store-backend --network online-store-network --restart always --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
