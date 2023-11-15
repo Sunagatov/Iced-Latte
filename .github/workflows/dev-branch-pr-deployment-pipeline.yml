@@ -81,6 +81,7 @@ jobs:
           envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
             echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
+            export DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
             docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:$DOCKER_IMAGE_TAG
             cd /opt/project/backend-test
             docker-compose -f docker-compose.yml up -d
