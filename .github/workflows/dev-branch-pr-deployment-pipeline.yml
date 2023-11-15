@@ -63,6 +63,8 @@ jobs:
           envs: DOCKERHUB_USERNAME,IMAGE_NAME,IMAGE_TAG
           script: |
             docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
-            docker stop online-store-backend || true
-            docker rm online-store-backend || true
+            if [ $(docker ps -a -q -f name=online-store-backend) ]; then
+              docker stop online-store-backend
+              docker rm online-store-backend
+            fi
             docker run -d --name online-store-backend --network online-store-network --restart always --env-file .env $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
