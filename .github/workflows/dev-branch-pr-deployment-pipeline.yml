@@ -55,9 +55,12 @@ jobs:
 
       - name: Build the docker image
         run: |
-          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-          export IMAGE_NAME=${{ secrets.IMAGE_NAME }}
-          export IMAGE_TAG=$IMAGE_TAG
+          export DOCKER_IMAGE_NAME=${{ env.IMAGE_NAME }}
+          export DOCKER_IMAGE_TAG=$IMAGE_TAG
+          export DOCKER_HUB_ACCOUNT_NAME=${{ env.DOCKER_HUB_ACCOUNT_NAME }}
+          export DOCKER_COMPOSE_NETWORK=${{ env.DOCKER_COMPOSE_NETWORK }}
+          export APP_SERVER_PORT=${{ env.APP_SERVER_PORT }}
+          export DOCKER_CONTAINER_NAME=${{ env.DOCKER_CONTAINER_NAME }}
           docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
           export
 

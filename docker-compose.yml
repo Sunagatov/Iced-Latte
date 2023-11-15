@@ -7,8 +7,8 @@ networks:
 
 services:
   online-store-app:
-    image: '${DOCKER_HUB_ACCOUNT_NAME}/$IMAGE_NAME:${DOCKER_IMAGE_TAG}'
-    container_name: dev-backend
+    image: '${DOCKER_HUB_ACCOUNT_NAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
+    container_name: ${DOCKER_CONTAINER_NAME}
     env_file:
       - .env
     build:
