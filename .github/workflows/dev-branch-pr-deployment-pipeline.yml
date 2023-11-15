@@ -10,8 +10,13 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
-  DEV_DOCKER_COMPOSE_FILE: docker-compose.dev.yml
+  DEV_DOCKER_COMPOSE_FILE: docker-compose.yml
   ENV_BRANCH: ${{ github.ref_name }}
+  DOCKER_COMPOSE_NETWORK: ${{ secrets.DOCKER_COMPOSE_NETWORK }}
+  DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
+  APP_SERVER_PORT: ${{ secrets.APP_SERVER_PORT }}
+  APP_PROFILE: dev
+  APP_VERSION: ${{ github.ref_name }}-${{ github.sha | cut:0:7 }}
 
 jobs:
   setup-environment:
@@ -29,7 +34,13 @@ jobs:
           load-mode: strict
 
       - name: Set Short SHA
-        run: echo "ENV_SHA_SHORT=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+        run: echo "DOCKER_IMAGE_TAG=${{ github.ref_name }}-${{ github.sha | cut:0:7 }}" >> $GITHUB_ENV
+
+      - name: Upload .env file as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: env-file
+          path: .env
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
@@ -38,10 +49,14 @@ jobs:
       - name: Checkout source code from the repository
         uses: actions/checkout@v4
 
+      - name: Download .env file
+        uses: actions/download-artifact@v2
+        with:
+          name: env-file
+          path: .
+
       - name: Build the docker image
-        run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-          docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} build
+        run: docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} build
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -49,8 +64,8 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
-      - name: Push image
-        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.ENV_BRANCH }}-${{ env.ENV_SHA_SHORT }}
+      - name: Push images
+        run: docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} push
 
   deploy-to-server:
     runs-on: ubuntu-latest
@@ -63,9 +78,9 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
-          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, ENV_SHA_SHORT
+          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:${{ env.ENV_BRANCH }}-${{ env.ENV_SHA_SHORT }}
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$IMAGE_NAME:$DOCKER_IMAGE_TAG
             cd /opt/project/backend-test
             docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} up -d
