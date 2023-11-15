@@ -10,13 +10,12 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
-  DEV_DOCKER_COMPOSE_FILE: docker-compose.yml
+  DOCKER_COMPOSE_FILE: docker-compose.yml
   ENV_BRANCH: ${{ github.ref_name }}
   DOCKER_COMPOSE_NETWORK: ${{ secrets.DOCKER_COMPOSE_NETWORK }}
   DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
   APP_SERVER_PORT: ${{ secrets.APP_SERVER_PORT }}
   APP_PROFILE: dev
-  APP_VERSION: ${{ github.ref_name }}-${{ github.sha | cut:0:7 }}
 
 jobs:
   setup-environment:
@@ -32,9 +31,6 @@ jobs:
         uses: xom9ikk/dotenv@v2
         with:
           load-mode: strict
-
-      - name: Set Short SHA
-        run: echo "DOCKER_IMAGE_TAG=${{ github.ref_name }}-${{ github.sha | cut:0:7 }}" >> $GITHUB_ENV
 
       - name: Upload .env file as an artifact
         uses: actions/upload-artifact@v2
@@ -56,7 +52,12 @@ jobs:
           path: .
 
       - name: Build the docker image
-        run: docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} build
+        run: |
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          export IMAGE_NAME=${{ secrets.IMAGE_NAME }}
+          export IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
+          docker-compose -f $DEV_DOCKER_COMPOSE_FILE build
+          export
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -64,13 +65,18 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
-      - name: Push images
-        run: docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} push
+      - name: Push image
+        run: docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
 
   deploy-to-server:
     runs-on: ubuntu-latest
     needs: build-and-push-docker-image
     steps:
+      - name: Download .env file
+        uses: actions/download-artifact@v2
+        with:
+          name: env-file
+          path: .
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
