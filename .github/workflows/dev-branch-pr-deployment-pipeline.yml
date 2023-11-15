@@ -43,7 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-env-file
     steps:
-
       - name: Checkout source code from the repository
         uses: actions/checkout@v4
 
@@ -71,7 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push-docker-image
     steps:
-
       - name: Download deployment files
         uses: actions/download-artifact@v3
         with:
@@ -89,7 +87,6 @@ jobs:
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           script: |
-            scp -r deployment/* ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
             docker pull ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
