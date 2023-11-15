@@ -12,8 +12,6 @@ env:
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
   DEV_DOCKER_COMPOSE_FILE: docker-compose.dev.yml
   ENV_BRANCH: ${{ github.ref_name }}
-  ENV_SHA: ${{ github.sha }}
-  IMAGE_TAG: ${{ github.ref_name }}-${{ github.sha | slice:0:7 }}
 
 jobs:
   setup-environment:
@@ -32,6 +30,9 @@ jobs:
 
       - name: Read envs
         run: export
+
+      - name: Set Short SHA
+        run: echo "ENV_SHA_SHORT=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
   build-and-push-docker-image:
     runs-on: ubuntu-latest
@@ -52,7 +53,7 @@ jobs:
           password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Push image
-        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.ENV_BRANCH }}-${{ env.ENV_SHA_SHORT }}
 
   deploy-to-server:
     runs-on: ubuntu-latest
@@ -65,9 +66,9 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
-          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, ENV_SHA, IMAGE_TAG
+          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, ENV_SHA_SHORT, IMAGE_TAG
           script: |
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+            docker pull $DOCKERHUB_USERNAME/$IMAGE_NAME:${{ env.ENV_BRANCH }}-${{ env.ENV_SHA_SHORT }}
             cd /opt/project/backend-test
             docker-compose -f ${{ env.DEV_DOCKER_COMPOSE_FILE }} up -d
