@@ -14,7 +14,7 @@ env:
   DOCKER_CONTAINER_NAME: iced-latte-backend
   DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}
   DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
   DEV_SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
   DEV_SSH_USER: ${{ secrets.DEV_SSH_USER }}
@@ -64,13 +64,7 @@ jobs:
 
       - name: Build and push docker image
         run: |
-          export DOCKER_IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}
-          export DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
-          export DOCKER_HUB_ACCOUNT_NAME=${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
-          export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
-          export DOCKER_COMPOSE_NETWORK=${{ secrets.DOCKER_COMPOSE_NETWORK }}
-          export APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }}
-          export DOCKER_CONTAINER_NAME=online-store-backend
+          export DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG
           docker-compose -f $DOCKER_COMPOSE_FILE build
           echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
