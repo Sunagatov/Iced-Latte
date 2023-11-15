@@ -15,10 +15,6 @@ env:
   DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
   DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}
-  DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
-  DEV_SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
-  DEV_SSH_USER: ${{ secrets.DEV_SSH_USER }}
-  DEV_SSH_PRIV_KEY: ${{ secrets.DEV_SSH_PRIV_KEY }}
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
@@ -38,7 +34,7 @@ jobs:
         run: cp ./Vault/IcedLatte/Backend/.env ./
 
       - name: Store the .env file as an artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: env-file
           path: .env
@@ -59,8 +55,8 @@ jobs:
           path: .
 
       - name: Set DOCKER_IMAGE_TAG
-        id: set_image_tag
-        run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV && echo "::set-output name=IMAGE_TAG::$GITHUB_REF_NAME-${GITHUB_SHA:0:7}"
+        id: docker_image_tag
+        run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
 
       - name: Build and push docker image
         run: |
@@ -90,6 +86,6 @@ jobs:
           envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
             echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
-            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ steps.set_image_tag.outputs.DOCKER_IMAGE_TAG }}
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.IMAGE_TAG }}
             cd $APP_PATH_ON_THE_REMOTE_SERVER
             docker-compose -f docker-compose.yml up -d
