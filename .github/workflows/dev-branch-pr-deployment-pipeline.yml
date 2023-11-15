@@ -12,6 +12,8 @@ env:
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ${{ secrets.ENV_FILE_PATH_IN_PRIVATE_REPOSITORY }}
   DOCKER_COMPOSE_FILE: docker-compose.yml
   DOCKER_CONTAINER_NAME: online-store-backend
+  DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
@@ -57,9 +59,15 @@ jobs:
 
       - name: Build and push docker image
         run: |
+          export DOCKER_IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}
           export DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
+          export DOCKER_HUB_ACCOUNT_NAME=${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
+          export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
+          export DOCKER_COMPOSE_NETWORK=${{ secrets.DOCKER_COMPOSE_NETWORK }}
+          export APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }}
+          export DOCKER_CONTAINER_NAME=online-store-backend
           docker-compose -f $DOCKER_COMPOSE_FILE build
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
+          echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
   deploy-app-to-server:
