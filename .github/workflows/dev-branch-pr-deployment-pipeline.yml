@@ -83,9 +83,9 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
-          envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
+          envs: DOCKER_IMAGE_TAG, APP_SERVER_PORT
           script: |
             echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
-            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ env.DOCKER_IMAGE_TAG }}
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
             cd $APP_PATH_ON_THE_REMOTE_SERVER
             docker-compose -f $DOCKER_COMPOSE_FILE up -d
