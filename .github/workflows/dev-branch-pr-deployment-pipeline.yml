@@ -14,7 +14,7 @@ env:
   DOCKER_CONTAINER_NAME: iced-latte-backend
   DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}
+  DOCKER_IMAGE_NAME: iced-latte-backend
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
@@ -60,17 +60,6 @@ jobs:
 
       - name: Build and push docker image
         run: |
-          export APP_SERVER_PORT=${{ secrets.APP_SERVER_PORT }}
-          export APP_PROFILE=dev
-          export APP_VERSION=$DOCKER_IMAGE_TAG
-          export DOCKER_COMPOSE_FILE=docker-compose.yml
-          export DOCKER_CONTAINER_NAME=iced-latte-backend
-          export DOCKER_HUB_ACCOUNT_NAME=${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
-          export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
-          export DOCKER_IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}
-          export DOCKER_COMPOSE_NETWORK=${{ secrets.DOCKER_COMPOSE_NETWORK }}
-          export DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG
-          
           docker-compose -f $DOCKER_COMPOSE_FILE build
           echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_ACCOUNT_NAME --password-stdin
           docker push $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG

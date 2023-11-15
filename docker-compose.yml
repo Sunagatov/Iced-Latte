@@ -2,21 +2,21 @@ version: '3.9'
 
 networks:
   online-store-network:
-    name: '${DOCKER_COMPOSE_NETWORK}'
+    name: online-store-network
     external: true
 
 services:
   iced-latte-app:
-    image: '${DOCKER_HUB_ACCOUNT_NAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
-    container_name: '${DOCKER_CONTAINER_NAME}'
+    image: 'zufarexplainedit/iced-latte-backend:${DOCKER_IMAGE_TAG}'
+    container_name: iced-latte-backend
     env_file:
       - .env
     build:
       context: .
       args:
-        APP_PROFILE: '${APP_PROFILE}'
-        APP_VERSION: '${APP_VERSION}'
+        APP_PROFILE: dev
+        APP_VERSION: '${DOCKER_IMAGE_TAG}'
     ports:
       - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
     networks:
-      - '${DOCKER_COMPOSE_NETWORK}'
+      - online-store-network
