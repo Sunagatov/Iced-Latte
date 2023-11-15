@@ -6,7 +6,7 @@ networks:
     external: true
 
 services:
-  online-store-app:
+  iced-latte-app:
     image: '${DOCKER_HUB_ACCOUNT_NAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
     container_name: '${DOCKER_CONTAINER_NAME}'
     env_file:
