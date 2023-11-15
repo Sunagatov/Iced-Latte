@@ -69,12 +69,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push-docker-image
     steps:
-      - name: Download deployment files
-        uses: actions/download-artifact@v3
-        with:
-          name: deployment-files
-          path: .
-
       - name: Set DOCKER_IMAGE_TAG
         run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
 
@@ -90,7 +84,5 @@ jobs:
           envs: DOCKER_IMAGE_TAG
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ env.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
             docker pull ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
-            scp docker-compose.yml .env ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            ssh ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} 'cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }} && docker-compose up -d'
+            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
