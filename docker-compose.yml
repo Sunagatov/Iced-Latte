@@ -17,6 +17,6 @@ services:
         APP_PROFILE: dev
         APP_VERSION: '${DOCKER_IMAGE_TAG}'
     ports:
-      - '${APP_SERVER_PORT}:${APP_SERVER_PORT}'
+      - 8083:8083
     networks:
       - online-store-network

@@ -63,7 +63,6 @@ jobs:
       - name: Build and push docker image
         run: |
           export $DOCKER_IMAGE_TAG
-          export ${{ secrets.APP_SERVER_PORT }}
           docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} build
           docker push ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
 
