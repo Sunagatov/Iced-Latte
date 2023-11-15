@@ -11,9 +11,14 @@ env:
   PRIVATE_REPOSITORY: ${{ secrets.PRIVATE_REPOSITORY }}
   ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ${{ secrets.ENV_FILE_PATH_IN_PRIVATE_REPOSITORY }}
   DOCKER_COMPOSE_FILE: docker-compose.yml
-  DOCKER_CONTAINER_NAME: online-store-backend
+  DOCKER_CONTAINER_NAME: iced-latte-backend
   DOCKER_HUB_ACCOUNT_NAME: ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }
+  DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
+  DEV_SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
+  DEV_SSH_USER: ${{ secrets.DEV_SSH_USER }}
+  DEV_SSH_PRIV_KEY: ${{ secrets.DEV_SSH_PRIV_KEY }}
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/backend-test
 
 jobs:
@@ -84,13 +89,13 @@ jobs:
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          port: ${{ secrets.DEV_SSH_PORT }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_PRIV_KEY }}
+          host: $DEV_SSH_HOST
+          port: $DEV_SSH_PORT
+          username: $DEV_SSH_USER
+          key: $DEV_SSH_PRIV_KEY
           envs: DOCKERHUB_USERNAME, IMAGE_NAME, ENV_BRANCH, DOCKER_IMAGE_TAG
           script: |
-            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
-            docker pull ${{ secrets.DOCKER_HUB_ACCOUNT_NAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set_image_tag.outputs.DOCKER_IMAGE_TAG }}
+            echo $DOCKER_HUB_TOKEN | docker login -u $$DOCKER_HUB_ACCOUNT_NAME --password-stdin
+            docker pull $DOCKER_HUB_ACCOUNT_NAME/$DOCKER_IMAGE_NAME:${{ steps.set_image_tag.outputs.DOCKER_IMAGE_TAG }}
             cd $APP_PATH_ON_THE_REMOTE_SERVER
             docker-compose -f $DOCKER_COMPOSE_FILE up -d
