@@ -48,6 +48,7 @@ jobs:
         with:
           name: env-file
           path: .
+
       - name: Set DOCKER_IMAGE_TAG
         run: echo "DOCKER_IMAGE_TAG=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
 
@@ -65,11 +66,11 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKER_HUB_ACCOUNT_NAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
 
       - name: Push image
-        run: docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$DOCKER_IMAGE_TAG
+        run: docker push ${{ env.DOCKER_HUB_ACCOUNT_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:$DOCKER_IMAGE_TAG
 
   deploy-app-to-server:
     runs-on: ubuntu-latest
