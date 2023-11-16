@@ -19,10 +19,21 @@ spring:
   output:
     ansi:
       enabled: detect
+  task:
+    scheduling:
+      pool:
+        size: 5
+
+  #
+  # Database Properties
+  #
   datasource:
     url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
   jpa:
     hibernate:
       ddl-auto: validate
@@ -32,6 +43,7 @@ spring:
     url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
     user: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
+
 #
 # Stripe Api Properties
 #
@@ -61,14 +73,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, shutdown, prometheus
+        include: health, info, metrics shutdown, prometheus
   prometheus:
     metrics:
       export:
-        enabled: false
+        enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
 
 #
 # JWT Security Properties
@@ -92,5 +107,9 @@ unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 #
 logging:
   pattern:
-    file: online-store-%d{yyyy-MM-dd}.%i.log
+    file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+  level:
+    sql: error
+    web: debug
+    root: info
