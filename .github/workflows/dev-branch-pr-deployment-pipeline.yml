@@ -66,6 +66,5 @@ jobs:
           envs: DOCKER_IMAGE_TAG
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull ${{ env.DOCKER_IMAGE_NAME }}
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
