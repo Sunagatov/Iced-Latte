@@ -6,13 +6,14 @@ networks:
     external: true
 
 services:
-  iced-latte-app:
+  iced-latte-backend:
     image: 'zufarexplainedit/iced-latte-backend:${DOCKER_IMAGE_TAG}'
     container_name: iced-latte-backend
     env_file:
       - .env
     build:
       context: .
+      dockerfile: Dockerfile
       args:
         APP_PROFILE: dev
         APP_VERSION: 0.0.1
