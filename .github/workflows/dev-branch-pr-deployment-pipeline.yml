@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for DEV environment (Iced Latte Backend)
+name: Build and Deploy
 
 on:
   push:
