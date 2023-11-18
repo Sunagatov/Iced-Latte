@@ -120,9 +120,15 @@
             <artifactId>spring-retry</artifactId>
             <version>${spring-retry.version}</version>
         </dependency>
+
+        <!-- Monitoring Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
         <!-- Project Lombok -->
