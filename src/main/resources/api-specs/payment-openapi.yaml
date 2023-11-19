@@ -1,11 +1,15 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online-Store API"
+  title: "Iced Latte Payment API"
   version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "http://localhost:8083"
+    description: "Local development server"
 
 tags:
   - name: "Payment"
@@ -27,9 +31,9 @@ paths:
             minLength: 1
       responses:
         "200":
-          description: "OK"
+          description: "Payment processed successfully"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ProcessedPaymentWithClientSecretDto"
         "400":
@@ -40,23 +44,21 @@ paths:
           content:
             application/json:
               example:
-                messages: ["incompatible types -- expected type"]
-                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
-                Problematic code line: 4"
-                httpStatusCode: "BAD_REQUEST"
-                timestamp: "2023-01-15 09:10:50"
+                messages: ["Invalid card details token ID provided."]
+                description: "The request to process the payment failed due to invalid input."
+                httpStatusCode: "400"
+                timestamp: "2023-01-15T09:10:50Z"
               schema:
                 $ref: "#/components/schemas/ErrorHandler"
         "404":
-          description: "User with id = {userId} is not found."
+          description: "The requested user or payment was not found."
           content:
             application/json:
               example:
-                messages: [ "incompatible types -- expected type" ]
-                description: "Operation was failed in method: processPayment that belongs to the class: PaymentEndpoint. 
-                Problematic code line: 4"
-                httpStatusCode: "NOT_FOUND"
-                timestamp: "2023-01-15 09:10:50"
+                messages: ["User or payment not found."]
+                description: "The request to retrieve payment details failed because the user or payment does not exist."
+                httpStatusCode: "404"
+                timestamp: "2023-01-15T09:10:50Z"
               schema:
                 $ref: "#/components/schemas/ErrorHandler"
 
@@ -64,7 +66,7 @@ paths:
     get:
       tags:
         - "Payment"
-      summary: "Enables to get a payment details by payment id"
+      summary: "Enables to get payment details by payment id"
       operationId: "getPaymentDetails"
       parameters:
         - name: "paymentId"
@@ -75,22 +77,20 @@ paths:
             format: "int64"
       responses:
         "200":
-          description: "OK"
+          description: "Payment details retrieved successfully"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ProcessedPaymentDetailsDto"
         "404":
-          description: "The payment with paymentId = {paymentId} is not found. 
-          The shopping session for the user with id = {userId} is not found."
+          description: "Payment details not found."
           content:
             application/json:
               example:
-                messages: [ "incompatible types -- expected type" ]
-                description: "Operation was failed in method: getPaymentDetails that belongs to the class: PaymentEndpoint. 
-                Problematic code line: 4"
-                httpStatusCode: "NOT_FOUND"
-                timestamp: "2023-01-15 09:10:50"
+                messages: ["Payment details with the specified ID were not found."]
+                description: "Failed to retrieve payment details because the payment does not exist."
+                httpStatusCode: "404"
+                timestamp: "2023-01-15T09:10:50Z"
               schema:
                 $ref: "#/components/schemas/ErrorHandler"
 
@@ -116,18 +116,16 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "Payment event processed successfully"
         "400":
-          description: "Payment event with the stripe signature = {stripe signature} cannot be processed. 
-          PaymentEvent = {PaymentEvent} cannot be parsed."
+          description: "Error in processing the payment event."
           content:
             application/json:
               example:
-                messages: [ "incompatible types -- expected type" ]
-                description: "Operation was failed in method: paymentEventProcess that belongs to the class: PaymentEndpoint. 
-                Problematic code line: 4"
-                httpStatusCode: "BAD_REQUEST"
-                timestamp: "2023-01-15 09:10:50"
+                messages: ["Invalid Stripe-Signature provided."]
+                description: "Failed to process the payment event due to an invalid signature."
+                httpStatusCode: "400"
+                timestamp: "2023-01-15T09:10:50Z"
               schema:
                 $ref: "#/components/schemas/ErrorHandler"
 
@@ -135,8 +133,7 @@ paths:
     post:
       tags:
         - "Payment"
-      summary: "This method is a temporary solution until the front-end goes functional to pass us a token with payment card details.
-      In the meantime, this method serves to test the payment api"
+      summary: "Temporary solution to test the payment API by simulating card detail token generation."
       operationId: "processCardDetailsToken"
       requestBody:
         content:
@@ -146,13 +143,13 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "Card details token created successfully"
           content:
-            text/plain:
+            application/json:
               schema:
                 type: "string"
         "400":
-          description: "Card token with cardNumber = {cardNumber} cannot create"
+          description: "Error in card token creation."
           content:
             application/json:
               example:

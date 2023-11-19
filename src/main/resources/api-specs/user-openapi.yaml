@@ -1,37 +1,56 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online-Store API"
+  title: "Iced Latte User API"
+  description: "API for accessing user profiles and related operations in the Online-Store platform."
   version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "http://localhost:8083"
+    description: "Local development server"
 
 tags:
   - name: "User"
-    description: "An API for getting user information"
+    description: "Operations related to user profiles"
 
 paths:
   /api/v1/users/{userId}:
     get:
       tags:
         - "User"
-      summary: "Enables to get a user by its id"
+      summary: "Get an user by its ID"
+      description: "Get a detailed user profile for the given user ID."
       operationId: "getUserById"
       parameters:
         - name: "userId"
-          description: "the identifier of the user which is returned as the return value"
           in: "path"
+          description: "Unique identifier of an user."
           required: true
           schema:
             type: "string"
+            format: "uuid"
+          examples:
+            default:
+              summary: "an example of an userId"
+              value: "123e4567-e89b-12d3-a456-426614174000"
       responses:
         "200":
-          description: "OK"
+          description: "A user object containing detailed user information."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/UserDto"
+        "404":
+          description: "User not found."
+        "400":
+          description: "Invalid userId provided."
+        "401":
+          description: "Unauthorized access. Authentication required."
+        "500":
+          description: "Internal Server Error."
   /api/v1/users/confirmation:
     post:
       tags:
@@ -46,31 +65,55 @@ components:
   schemas:
     AddressDto:
       type: "object"
+      description: "The address of a user."
       properties:
         line:
           type: "string"
+          description: "Street line of the user's address."
         city:
           type: "string"
+          description: "City of the user's address."
         country:
           type: "string"
+          description: "Country of the user's address."
+      required:
+        - line
+        - city
+        - country
 
     UserDto:
       type: "object"
+      description: "A user profile in the Online-Store system."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The unique identifier for the user."
         firstName:
           type: "string"
+          description: "The first name of the user."
         lastName:
           type: "string"
+          description: "The last name of the user."
         stripeCustomerToken:
           type: "string"
+          description: "The Stripe customer token associated with the user."
         email:
           type: "string"
+          description: "The email address of the user."
+          format: "email"
         emailConfirmed:
           type: "boolean"
         password:
           type: "string"
+          description: "Password for the user's account. Note: This should be encrypted and not exposed in API calls."
+          format: "password"
         address:
           $ref: "#/components/schemas/AddressDto"
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - password
+        - address

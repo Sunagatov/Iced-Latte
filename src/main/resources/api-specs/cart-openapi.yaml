@@ -1,83 +1,110 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online_Store API"
-  description: "Online_Store API for Cart package"
+  title: "Iced Latte Shopping Cart API"
+  description: "API allows users to manage their shopping cart items, including adding, updating, and deleting cart items. It includes detailed error responses, supports authentication, and provides examples for better understanding."
   version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "http://localhost:8083"
+    description: "Local development server"
 
 tags:
-  - name: "Cart"
-    description: "An API for managing and retrieving cart information"
+  - name: "Shopping Cart"
+    description: "Operations related to shopping cart items"
 
 paths:
   /api/v1/cart/items:
     post:
       tags:
-        - "Cart"
-      summary: "Add a list of new products to the cart"
+        - "Shopping Cart"
+      summary: "Add items to the shopping cart"
       operationId: "addNewItemToShoppingSession"
       requestBody:
-        description: "Add a list of new products to the cart by productIds and productsQuantity"
+        description: "Payload containing a list of items to be added to the cart."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AddNewItemsToShoppingSessionRequest"
-        required: true
+            examples:
+              add-multiple:
+                summary: "Add Multiple Items"
+                value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
       responses:
         "200":
-          description: "OK"
+          description: "Items added successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
-
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
     patch:
       tags:
-        - "Cart"
-      summary: "Update the item in the cart"
+        - "Shopping Cart"
+      summary: "Update cart item quantity"
       operationId: "updateProductQuantityInShoppingSessionItem"
       requestBody:
-        description: "Change the quantity of the item in the cart by shoppingSessionItemId and productQuantityChange (example: '1' will increase the value by one, '-1' will reduce by one)"
+        description: "Payload containing the cart item ID and the quantity change."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateProductQuantityInShoppingSessionItemRequest"
-        required: true
+            examples:
+              increment-quantity:
+                summary: "Increment Quantity"
+                value: {"shoppingSessionItemId": "e5f6g7h8", "productQuantityChange": 1}
       responses:
         "200":
-          description: "OK"
+          description: "Shopping cart item quantity was updated successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
-
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
     delete:
       tags:
-        - "Cart"
-      summary: "Delete list of items from the cart"
+        - "Shopping Cart"
+      summary: "Remove items from the cart"
       operationId: "deleteItemsFromShoppingSession"
       requestBody:
-        description: "Delete list of items from the cart by list of shoppingSessionItemIds"
+        description: "Payload containing an array of cart item IDs to be removed."
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/DeleteItemsFromShoppingSessionRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
+          description: "Items removed successfully."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
-
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
   /api/v1/cart:
     get:
       tags:
-        - "Cart"
+        - "Shopping Cart"
       summary: "Get the cart of authorized user"
       description: "Get the cart of authorized user"
       operationId: "getShoppingSession"
@@ -85,9 +112,15 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingSessionDto"
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
 
 components:
   schemas:
@@ -100,7 +133,10 @@ components:
         productQuantity:
           type: "integer"
           format: "int32"
-
+          minimum: 1
+      required:
+        - productId
+        - productQuantity
     AddNewItemsToShoppingSessionRequest:
       type: "object"
       properties:
@@ -109,7 +145,8 @@ components:
           uniqueItems: true
           items:
             $ref: "#/components/schemas/NewShoppingSessionItemDto"
-
+      required:
+        - items
     ShoppingSessionDto:
       type: "object"
       properties:
@@ -138,7 +175,14 @@ components:
         closedAt:
           type: "string"
           format: "date-time"
-
+      required:
+        - id
+        - userId
+        - items
+        - itemsQuantity
+        - itemsTotalPrice
+        - productsQuantity
+        - createdAt
     ShoppingSessionItemDto:
       type: "object"
       properties:
@@ -150,7 +194,11 @@ components:
         productQuantity:
           type: "integer"
           format: "int32"
-
+          minimum: 1
+      required:
+        - id
+        - productInfo
+        - productQuantity
     UpdateProductQuantityInShoppingSessionItemRequest:
       type: "object"
       properties:
@@ -160,7 +208,9 @@ components:
         productQuantityChange:
           type: "integer"
           format: "int32"
-
+      required:
+        - shoppingSessionItemId
+        - productQuantityChange
     DeleteItemsFromShoppingSessionRequest:
       type: "object"
       properties:
@@ -169,3 +219,5 @@ components:
           items:
             type: "string"
             format: "uuid"
+      required:
+        - shoppingSessionItemIds

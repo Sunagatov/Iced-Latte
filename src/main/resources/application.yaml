@@ -4,12 +4,6 @@
 #
 server:
   port: ${APP_SERVER_PORT}
-  ssl:
-    key-store-type: PKCS12
-    key-store: certs/zufarkeystore.p12
-    key-store-password: newpass
-    key-alias: zufarkeystore
-    enabled: false
   tomcat:
     accept-count: 100
 
@@ -18,26 +12,30 @@ server:
 #
 spring:
   application:
-    name: Online Store Application
+    name: Iced Latte Application
   banner:
     charset: UTF-8
     location: classpath:banner.txt
   output:
     ansi:
       enabled: detect
+
+  #
+  # Database Properties
+  #
   datasource:
-    url: ${DATASOURCE_URL}
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+      ddl-auto: validate
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${DATASOURCE_URL}
-    user: ${DATASOURCE_USERNAME}
-    password: ${DATASOURCE_PASSWORD}
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
 #
 # Stripe Api Properties
 #
@@ -72,7 +70,7 @@ springdoc:
 #
 management:
   server:
-    port: ${APP_SERVER_PORT}
+    port: ${server.port}
   endpoint:
     prometheus:
       enabled: false
@@ -81,11 +79,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, shutdown, prometheus
+        include: health, info, metrics, shutdown, prometheus
   prometheus:
     metrics:
       export:
-        enabled: false
+        enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
@@ -96,24 +94,23 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: ${APP_JWT_EXPIRATION_TIME}
+  expiration: 1800000 # 30 minutes
 
 #
 # Login Attempts Properties
 #
 login-attempts:
   max-attempts: 5
-  lockout-duration-minutes: 30
+  lockout-duration-minutes: 60
 
-unlock-account-scheduler-cron: '0 0/5 * * * *'
-# every 5 minutes
+unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 
 #
 # Logging Properties
 #
 logging:
   pattern:
-    file: online-store-%d{yyyy-MM-dd}.%i.log
+    file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
 
 iced-latte:

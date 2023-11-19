@@ -1,8 +1,11 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online-Store API"
+  title: "Iced Latte Security API"
   version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
 
 servers:
   - url: "http://localhost:8083"

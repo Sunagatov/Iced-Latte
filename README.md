@@ -1,51 +1,80 @@
-# Online-Store
-* Rest API which simulates the work of an online store. <br />
-* Based on Spring Boot ecosystem technologies and PostgreSQL database. <br />
-* Created for learning purposes. 
+# Iced-Latte (Backend)
 
-## Prerequisites
-* JDK 17
-* Apache Maven 3.6.3
-* Docker Desktop
+[![ci Status](https://github.com/Sunagatov/Online-Store/actions/workflows/dev-branch-pr-deployment-pipeline.yml/badge.svg)](https://github.com/Sunagatov/Online-Store/actions)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/danilqa/node-file-router/blob/main/LICENSE)
+[![Known Vulnerabilities](https://snyk.io/test/github/Sunagatov/Online-Store/badge.svg)](https://snyk.io/test/github/Sunagatov/Online-Store)
+[![Docker Pulls](https://img.shields.io/docker/pulls/zufarexplainedit/iced-latte-backend.svg)](https://hub.docker.com/r/zufarexplainedit/iced-latte-backend/)
+[![GitHub issues](https://img.shields.io/github/issues/Sunagatov/Online-Store)](https://github.com/Sunagatov/Online-Store/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Sunagatov/Online-Store)](https://github.com/Sunagatov/Online-Store/stargazers)
 
-## Tech stack
-* Spring 
-  * Boot 3
-  * Data
-  * Security
-* Security
-  * JWT
-  * TLS
-* Databases
-  * PostgreSQL
-* Containerisation
-  * Docker
-* Monitoring
-  * ElasticSearch
-  * Logstash
-  * Kibana
-  * Filebeat
-* Logging
-  * Log4j2
-  
-## Getting the project up and running
-See [START.MD](https://github.com/Sunagatov/Online-Store/blob/development/START.MD)
+**Iced-Latte (Backend)** is a REST API that simulates the operations of an coffee online shop. 
+Built using Spring Boot and PostgreSQL, it's crafted for educational purposes, offering insights into modern application development with Java.
 
-### Obtaining a token
-Using Postman get Bearer token by running
-```shell
-http://localhost:8083/api/auth/register
-```
-Copy the token and insert into Auth tab
-### Testing authorisation
-Run this GET request to test authentication
-```shell 
-http://localhost:8083/api/v1/products/a3c4d3f7-1172-4fb2-90a9-59b13b35dfc6
-```
+## Table of Contents
 
-Override our code style
-```shell
-1. Press ⌘ + , or Ctrl+Alt+S to open the IDE settings and select Editor | Code Style.
-2. Check the box Enable EditorConfig support.
-3. Apply the changes and close the dialog.
-```
+- [Prerequisites](#prerequisites)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [API Documentation](#api-documentation)
+- [Contributing](#contributing)
+- [Code of Conduct](#code-of-conduct)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Contact](#contact)
+
+## Tech Stack
+
+- **Spring Framework:** Web, Boot, Data, Security, Actuator.
+- **Security:** JWT, TLS.
+- **Database:** PostgreSQL.
+- **Containerization:** Docker.
+- **Monitoring:** Prometheus, Grafana
+- **Logging:** Log4j2.
+
+## Quick Start
+
+Follow the setup instructions in [START.MD](START.MD) to get the project up and running.
+
+## Features
+- User Authentication and Authorization
+- Product Catalog Management
+- Order Processing and Tracking
+- Stripe Payment Integration
+- Real-time Data Monitoring
+
+## API Documentation
+
+The API is fully documented with Swagger. Access the documentation at `http://localhost:8083/swagger-ui.html` once the server is running.
+
+## Contributing
+
+Interested in contributing? Read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## Code of Conduct
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Contact
+
+Have any questions or suggestions? Feel free to [open an issue](https://github.com/Sunagatov/Online-Store/issues) or contact us directly.
+
+## FAQ
+
+Address some common questions users might have about your project.
+
+1. **Question:** How do I set up the project?
+   **Answer:** Follow the instructions in [START.MD](START.MD).
+
+2. **Question:** Where can I find API documentation?
+   **Answer:** The API documentation is available at `http://localhost:8083/swagger-ui.html`.
+
+<!-- Add more FAQs as needed -->
+
+## Community and Support
+
+Join our community https://t.me/zufarexplained! Link to forums, chat, or community pages if available.

@@ -25,8 +25,8 @@
 
     <groupId>com.zufar-project</groupId>
     <artifactId>online-store</artifactId>
-    <name>Online Store</name>
-    <description>Online-store project for learning purpose</description>
+    <name>Iced Latte</name>
+    <description>Iced Latte is the modern online marketplace</description>
 
     <properties>
         <!-- Project Version -->
@@ -72,7 +72,7 @@
         <modelmapper.version>3.1.1</modelmapper.version>
 
         <!-- Swagger and OpenAPI Dependencies Versions -->
-        <openapi-package>com.zufar.onlinestore.openapi</openapi-package>
+        <openapi-package>com.zufar.icedlatte.openapi</openapi-package>
         <openapi-package-with-dto>${openapi-package}.dto</openapi-package-with-dto>
         <springfox.swagger.version>3.0.0</springfox.swagger.version>
         <swagger-core-version>2.2.8</swagger-core-version>
@@ -100,7 +100,6 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
         <json-schema-validator.version>3.3.0</json-schema-validator.version>
-        <javax-mail.version>1.5.5</javax-mail.version>
     </properties>
 
     <!-- Dependencies -->
@@ -121,9 +120,15 @@
             <artifactId>spring-retry</artifactId>
             <version>${spring-retry.version}</version>
         </dependency>
+
+        <!-- Monitoring Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -473,7 +478,7 @@
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
-                                <modelPackage>com.zufar.onlinestore.security.dto</modelPackage>
+                                <modelPackage>com.zufar.icedlatte.security.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
