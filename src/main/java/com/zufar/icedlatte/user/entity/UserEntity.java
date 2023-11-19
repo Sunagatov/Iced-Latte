@@ -19,6 +19,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -70,6 +71,12 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
+    @Column(name = "confirmation_token", nullable = true)
+    private String confirmationToken;
+
+    @Column(name = "email_confirmed", nullable = false)
+    private boolean emailConfirmed = false;
 
     @Override
     public String getUsername() {

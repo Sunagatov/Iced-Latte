@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import org.springframework.lang.Nullable;
 
 import java.util.UUID;
 
@@ -23,4 +24,21 @@ public interface UserApi {
      * @throws UserNotFoundException if there is no user in the database with the provided userId
      */
     UserDto getUserById(final UUID userId) throws UserNotFoundException;
+
+
+    /**
+     * Generates a confirmation token and updates user with it
+     *
+     * @param  userId nullable id of a user to generate token for, if null, then the current user is used
+     * @throws UserNotFoundException if there is no user in the database with the provided token
+     */
+    void sendEmailConfirmationToken(@Nullable final UUID userId) throws UserNotFoundException;
+
+    /**
+     * Method to confirm user email
+     *
+     * @param token the token to confirm user email
+     * @throws UserNotFoundException if there is no user in the database with the provided token
+     */
+    void confirmUserEmail(final String token) throws UserNotFoundException;
 }

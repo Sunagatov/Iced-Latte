@@ -15,4 +15,10 @@ public class UserNotFoundException extends RuntimeException {
         this.userId = userId;
         this.userName = null;
     }
+
+    public UserNotFoundException(String token) {
+        super(String.format("User with confirmation token = %s is not found.", token));
+        this.userId = null;
+        this.userName = null;
+    }
 }

@@ -43,6 +43,13 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     @Override
+    @GetMapping("/confirmation/{token}")
+    public ResponseEntity<Void> confirmEmail(String token) {
+        userRegistrationService.confirmRegistrationEmail(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody final UserAuthenticationRequest request) {
         log.info("Received authentication request for user with email = '{}'", request.email());

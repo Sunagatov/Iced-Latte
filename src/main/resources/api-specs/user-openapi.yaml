@@ -51,6 +51,15 @@ paths:
           description: "Unauthorized access. Authentication required."
         "500":
           description: "Internal Server Error."
+  /api/v1/users/confirmation:
+    post:
+      tags:
+        - "User"
+      summary: "Send a confirmation email to the user"
+      operationId: "postSendUserEmailConfirmation"
+      responses:
+        "200":
+          description: "OK"
 
 components:
   schemas:
@@ -93,6 +102,8 @@ components:
           type: "string"
           description: "The email address of the user."
           format: "email"
+        emailConfirmed:
+          type: "boolean"
         password:
           type: "string"
           description: "Password for the user's account. Note: This should be encrypted and not exposed in API calls."

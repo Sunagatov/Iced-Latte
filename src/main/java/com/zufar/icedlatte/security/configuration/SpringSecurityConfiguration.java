@@ -31,6 +31,8 @@ public class SpringSecurityConfiguration {
     private static final String PRODUCTS_API_URL = "/api/v1/products/**";
     public static final String REGISTRATION_URL = "/api/v1/auth/register";
     public static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
+    private static final String EMAIL_CONFIRMATION_URL = "/api/v1/auth/confirmation/**";
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -39,7 +41,14 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(REGISTRATION_URL, AUTHENTICATION_URL, WEBHOOK_PAYMENT_EVENT_URL, PRODUCTS_API_URL, API_DOCS_URL, ACTUATOR_ENDPOINTS_URL).permitAll()
+                                .requestMatchers(REGISTRATION_URL,
+                                        AUTHENTICATION_URL,
+                                        WEBHOOK_PAYMENT_EVENT_URL,
+                                        PRODUCTS_API_URL,
+                                        API_DOCS_URL,
+                                        ACTUATOR_ENDPOINTS_URL,
+                                        EMAIL_CONFIRMATION_URL
+                                ).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String REGISTRATION_URL = "/api/v1/auth/register";
+    private static final String EMAIL_CONFIRMATION_URL = "/api/v1/auth/confirmation";
     private static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
     private static final String PRODUCTS_API_URL = "/api/v1/products/";
     private static final String MDC_USER_ID_KEY2VALUE = "user.id.key2value";
@@ -78,7 +79,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return Stream.of(REGISTRATION_URL, AUTHENTICATION_URL, PRODUCTS_API_URL)
+        return Stream.of(REGISTRATION_URL,
+                        AUTHENTICATION_URL,
+                        PRODUCTS_API_URL,
+                        EMAIL_CONFIRMATION_URL)
                 .anyMatch(urlPath -> request.getServletPath().contains(urlPath) || urlPath.contains(request.getServletPath()));
     }
 }
