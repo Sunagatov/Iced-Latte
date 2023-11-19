@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

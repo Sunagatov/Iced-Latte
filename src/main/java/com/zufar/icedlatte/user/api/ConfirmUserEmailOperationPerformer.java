@@ -1,8 +1,8 @@
-package com.zufar.onlinestore.user.api;
+package com.zufar.icedlatte.user.api;
 
-import com.zufar.onlinestore.user.exception.UserNotFoundException;
-import com.zufar.onlinestore.user.repository.UserRepository;
-import com.zufar.onlinestore.user.util.ConfirmUserEmailTokenGenerator;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.user.util.ConfirmUserEmailTokenGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

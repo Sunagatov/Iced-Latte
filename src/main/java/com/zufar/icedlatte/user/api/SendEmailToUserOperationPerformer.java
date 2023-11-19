@@ -1,7 +1,7 @@
-package com.zufar.onlinestore.user.api;
+package com.zufar.icedlatte.user.api;
 
-import com.zufar.onlinestore.user.exception.UserNotFoundException;
-import com.zufar.onlinestore.user.repository.UserRepository;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,8 @@ public class SendEmailToUserOperationPerformer {
             helper.setFrom(emailFrom);
             helper.setSubject("Iced Latte Email confirmation");
             helper.setText(
-                    "Your confirmation code is" + token + "\n" +
+                    "Your confirmation code is:\n" +
+                            token + "\n" +
                             "Please, confirm your email by clicking on the link below:\n" +
                             comfirmationBaseLink + token + "\n" +
                             "If you didn't register on our website, please, ignore this email.\n" +

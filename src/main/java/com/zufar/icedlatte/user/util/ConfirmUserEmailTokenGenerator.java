@@ -1,4 +1,4 @@
-package com.zufar.onlinestore.user.util;
+package com.zufar.icedlatte.user.util;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
