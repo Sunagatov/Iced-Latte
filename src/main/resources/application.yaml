@@ -33,9 +33,9 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
-    user: ${DATASOURCE_USERNAME}
-    password: ${DATASOURCE_PASSWORD}
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
 #
 # Stripe Api Properties
 #
@@ -56,7 +56,7 @@ springdoc:
 #
 management:
   server:
-    port: ${APP_SERVER_PORT}
+    port: ${server.port}
   endpoint:
     prometheus:
       enabled: false
