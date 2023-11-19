@@ -42,8 +42,9 @@ class UserDtoConverterTest {
         assertEquals(entity.getId(), dto.getId());
         assertEquals(entity.getFirstName(), dto.getFirstName());
         assertEquals(entity.getLastName(), dto.getLastName());
+        assertEquals(entity.getBirthDate(), dto.getBirthDate());
+        assertEquals(entity.getPhoneNumber(), dto.getPhoneNumber());
         assertEquals(entity.getEmail(), dto.getEmail());
-        assertEquals(entity.getPassword(), dto.getPassword());
         assertEquals(entity.getStripeCustomerToken(), dto.getStripeCustomerToken());
         assertEquals(entity.getAddress().getLine(), dto.getAddress().getLine());
         assertEquals(entity.getAddress().getCity(), dto.getAddress().getCity());
@@ -59,8 +60,9 @@ class UserDtoConverterTest {
         assertEquals(dto.getId(), entity.getId());
         assertEquals(dto.getFirstName(), entity.getFirstName());
         assertEquals(dto.getLastName(), entity.getLastName());
+        assertEquals(dto.getBirthDate(), entity.getBirthDate());
+        assertEquals(dto.getPhoneNumber(), entity.getPhoneNumber());
         assertEquals(dto.getEmail(), entity.getEmail());
-        assertEquals(dto.getPassword(), entity.getPassword());
         assertEquals(dto.getStripeCustomerToken(), entity.getStripeCustomerToken());
         assertEquals(dto.getAddress().getLine(), entity.getAddress().getLine());
         assertEquals(dto.getAddress().getCity(), entity.getAddress().getCity());

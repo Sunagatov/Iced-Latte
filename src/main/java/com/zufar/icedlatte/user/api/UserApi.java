@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 
 import java.util.UUID;
@@ -13,7 +14,7 @@ public interface UserApi {
      * @param saveUserRequest the request to save a new user with the information from saveUserRequest
      * @return UserDto the information about a new user
      */
-    UserDto saveUser(final UserDto saveUserRequest);
+    UserDto saveUser(final UserRegistrationRequest saveUserRequest);
 
     /**
      * Method enables to get user with the provided userId
