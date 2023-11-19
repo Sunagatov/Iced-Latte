@@ -2,7 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte User API"
-  description: "API for accessing user profiles and related operations in the Online-Store platform."
+  description: "API for accessing user profiles and related operations in the Iced-Latte platform."
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -74,7 +74,7 @@ components:
 
     UserDto:
       type: "object"
-      description: "A user profile in the Online-Store system."
+      description: "A user profile in the Iced-Latte system."
       properties:
         id:
           type: "string"

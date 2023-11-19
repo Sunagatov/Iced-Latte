@@ -2,7 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte Shopping Cart API"
-  description: "API allows users to manage their shopping cart items, including adding, updating, and deleting cart items. It includes detailed error responses, supports authentication, and provides examples for better understanding."
+  description: "API allows users to manage their shopping cart items, including adding, updating, and deleting shopping cart items. It includes detailed error responses, supports authentication, and provides examples for better understanding."
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -24,7 +24,7 @@ paths:
       summary: "Add items to the shopping cart"
       operationId: "addNewItemToShoppingSession"
       requestBody:
-        description: "Payload containing a list of items to be added to the cart."
+        description: "Payload containing a list of items to be added to the shopping cart."
         required: true
         content:
           application/json:
@@ -50,10 +50,10 @@ paths:
     patch:
       tags:
         - "Shopping Cart"
-      summary: "Update cart item quantity"
+      summary: "Update shopping cart item quantity"
       operationId: "updateProductQuantityInShoppingSessionItem"
       requestBody:
-        description: "Payload containing the cart item ID and the quantity change."
+        description: "Payload containing the shopping cart item ID and the quantity change."
         required: true
         content:
           application/json:
@@ -79,10 +79,10 @@ paths:
     delete:
       tags:
         - "Shopping Cart"
-      summary: "Remove items from the cart"
+      summary: "Remove items from the shopping cart"
       operationId: "deleteItemsFromShoppingSession"
       requestBody:
-        description: "Payload containing an array of cart item IDs to be removed."
+        description: "Payload containing an array of shopping cart item IDs to be removed."
         required: true
         content:
           application/json:
@@ -105,8 +105,8 @@ paths:
     get:
       tags:
         - "Shopping Cart"
-      summary: "Get the cart of authorized user"
-      description: "Get the cart of authorized user"
+      summary: "Get the shopping cart of authorized user"
+      description: "Get the shopping cart of authorized user"
       operationId: "getShoppingSession"
       responses:
         "200":
