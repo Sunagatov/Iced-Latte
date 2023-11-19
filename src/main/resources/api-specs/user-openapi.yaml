@@ -1,11 +1,11 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online Store User API"
+  title: "Iced Latte User API"
   description: "API for accessing user profiles and related operations in the Online-Store platform."
   version: "1.0.0"
   contact:
-    name: "Online Store Support"
+    name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
 
 servers:

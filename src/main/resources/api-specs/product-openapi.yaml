@@ -2,10 +2,10 @@ openapi: "3.0.3"
 
 info:
   title: "Online-Store API"
-  description: "This API allows clients to interact with an online store's product catalog, including retrieval and listing of products."
+  description: "This API allows clients to interact with an Iced Latte's product catalog, including retrieval and listing of products."
   version: "1.0.0"
   contact:
-    name: "Online Store Support"
+    name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
 
 servers:

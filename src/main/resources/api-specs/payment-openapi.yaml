@@ -1,10 +1,10 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online Store Payment API"
+  title: "Iced Latte Payment API"
   version: "1.0.0"
   contact:
-    name: "Online Store Support"
+    name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
 
 servers:
