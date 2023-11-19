@@ -27,7 +27,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "shopping_session")
-public class ShoppingSession {
+public class ShoppingCart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,12 +36,12 @@ public class ShoppingSession {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "shoppingSession",
+    @OneToMany(mappedBy = "shoppingCart",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE,
                     CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
             orphanRemoval = true,
             fetch = FetchType.EAGER)
-    private Set<ShoppingSessionItem> items;
+    private Set<ShoppingCartItem> items;
 
     @Column(name = "items_quantity", nullable = false)
     private Integer itemsQuantity;
@@ -63,7 +63,7 @@ public class ShoppingSession {
 
     public Integer getProductsQuantity() {
         return this.items.stream()
-                .map(ShoppingSessionItem::getProductQuantity)
+                .map(ShoppingCartItem::getProductQuantity)
                 .reduce(Integer::sum)
                 .orElse(DEFAULT_PRODUCTS_QUANTITY);
     }
@@ -74,7 +74,7 @@ public class ShoppingSession {
             return true;
         if (object == null || getClass() != object.getClass())
             return false;
-        ShoppingSession that = (ShoppingSession) object;
+        ShoppingCart that = (ShoppingCart) object;
         return Objects.equals(id, that.id);
     }
 
@@ -85,7 +85,7 @@ public class ShoppingSession {
 
     @Override
     public String toString() {
-        return "ShoppingSession {" +
+        return "ShoppingCart {" +
                 "id = " + id +
                 '}';
     }

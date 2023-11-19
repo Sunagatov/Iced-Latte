@@ -3,11 +3,11 @@ package com.zufar.icedlatte.payment.api.impl.intent;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.zufar.icedlatte.cart.api.CartApi;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.payment.converter.StripePaymentIntentConverter;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.enums.PaymentStatus;
-import com.zufar.icedlatte.payment.exception.ShoppingSessionAlreadyPaidException;
+import com.zufar.icedlatte.payment.exception.ShoppingCartAlreadyPaidException;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,9 +42,9 @@ public class PaymentCreator {
         UUID userId = pair.getLeft();
         PaymentMethod paymentMethod = pair.getRight();
 
-        ShoppingSessionDto shoppingSession = cartApi.getShoppingSessionByUserId(userId);
-        PaymentIntent stripePaymentIntent = stripePaymentIntentCreator.createStripePaymentIntent(paymentMethod, shoppingSession);
-        Payment paymentToSave = fillPaymentDetails(shoppingSession, stripePaymentIntent);
+        ShoppingCartDto shoppingCart = cartApi.getShoppingCartByUserId(userId);
+        PaymentIntent stripePaymentIntent = stripePaymentIntentCreator.createStripePaymentIntent(paymentMethod, shoppingCart);
+        Payment paymentToSave = fillPaymentDetails(shoppingCart, stripePaymentIntent);
         try {
             Payment savedPayment = paymentRepository.save(paymentToSave);
             log.info("Create payment: finishing: payment was created");
@@ -52,13 +52,13 @@ public class PaymentCreator {
             return Pair.of(stripePaymentIntent.getClientSecret(), savedPayment);
 
         } catch (DataIntegrityViolationException e) {
-           throw new ShoppingSessionAlreadyPaidException(shoppingSession.getId());
+           throw new ShoppingCartAlreadyPaidException(shoppingCart.getId());
         }
     }
 
-    private Payment fillPaymentDetails(ShoppingSessionDto shoppingSession, PaymentIntent stripePaymentIntent) {
+    private Payment fillPaymentDetails(ShoppingCartDto shoppingCart, PaymentIntent stripePaymentIntent) {
         log.info("Fill payment details: starting: start payment object filling");
-        Payment payment = stripePaymentIntentConverter.toEntity(stripePaymentIntent, shoppingSession);
+        Payment payment = stripePaymentIntentConverter.toEntity(stripePaymentIntent, shoppingCart);
         payment.setStatus(PaymentStatus.PAYMENT_IS_PROCESSING);
         payment.setDescription(PaymentStatus.PAYMENT_IS_PROCESSING.getDescription());
         log.info("Fill payment details: finished: payment object was filled");

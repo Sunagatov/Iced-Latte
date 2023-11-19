@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.icedlatte.openapi.dto.NewShoppingSessionItemDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingSessionIdException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 
 import java.util.Set;
@@ -14,44 +14,44 @@ import java.util.UUID;
 public interface CartApi {
 
     /**
-     * Enables to get ShoppingSession (the cart details)
+     * Enables to get ShoppingCart (the cart details)
      *
-     * @param userId is the identifier of the user for whom the shopping session is returned
-     * @return ShoppingSessionDto (the cart details)
+     * @param userId is the identifier of the user for whom the shopping cart is returned
+     * @return ShoppingCartDto (the cart details)
      */
-    ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException;
+    ShoppingCartDto getShoppingCartByUserId(final UUID userId) throws ShoppingCartNotFoundException;
 
     /**
-     * Enables to add a new item into the shopping session (the cart details)
+     * Enables to add a new item into the shopping cart (the cart details)
      *
-     * @param items which we would like to add to the shoppingSession of the user
-     * @return ShoppingSessionDto (the cart details)
-     * @throws ShoppingSessionNotFoundException     if there is no shoppingSession in the database with the provided shoppingSessionId from addNewProductToShoppingSessionRequest
-     * @throws ShoppingSessionItemNotFoundException if there is no shoppingSessionItem in the database with the provided shoppingSessionItemId from addNewProductToShoppingSessionRequest
-     * @throws ProductNotFoundException             if there is no product in the database with the provided productId from addNewProductToShoppingSessionRequest
+     * @param items which we would like to add to the shoppingCart of the user
+     * @return ShoppingCartDto (the cart details)
+     * @throws ShoppingCartNotFoundException     if there is no shoppingCart in the database with the provided shoppingCartId from addNewProductToShoppingCartRequest
+     * @throws ShoppingCartItemNotFoundException if there is no shoppingCartItem in the database with the provided shoppingCartItemId from addNewProductToShoppingCartRequest
+     * @throws ProductNotFoundException             if there is no product in the database with the provided productId from addNewProductToShoppingCartRequest
      */
-    ShoppingSessionDto addItemsToShoppingSession(final Set<NewShoppingSessionItemDto> items)
-            throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException;
+    ShoppingCartDto addItemsToShoppingCart(final Set<NewShoppingCartItemDto> items)
+            throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException, ProductNotFoundException;
 
     /**
-     * Enables to remove the specific item from the shopping session (the cart details)
+     * Enables to remove the specific item from the shopping cart (the cart details)
      *
-     * @param deleteItemsFromShoppingSessionRequest the request to delete the specific items from the shopping session (the cart details)
-     * @return ShoppingSessionDto (the shoppingSession details)
+     * @param deleteItemsFromShoppingCartRequest the request to delete the specific items from the shopping cart (the cart details)
+     * @return ShoppingCartDto (the shoppingCart details)
      */
-    ShoppingSessionDto deleteItemsFromShoppingSession(final DeleteItemsFromShoppingSessionRequest deleteItemsFromShoppingSessionRequest);
+    ShoppingCartDto deleteItemsFromShoppingCart(final DeleteItemsFromShoppingCartRequest deleteItemsFromShoppingCartRequest);
 
     /**
-     * Enables to change the product's quantity in the specific item of the shopping session (the cart details)
+     * Enables to change the product's quantity in the specific item of the shopping cart (the cart details)
      *
-     * @param shoppingSessionItemId  we use this id to decrease or increase productQuantity of the item with the id = shoppingSessionItemId
-     * @param productQuantityChange we use this data to decrease or increase productQuantity of the item with the id = shoppingSessionItemId
-     * @return ShoppingSessionDto (the cart details)
-     * @throws ShoppingSessionNotFoundException     if there is no ShoppingSession in the database with the provided shoppingSessionId from updateProductsQuantityInShoppingSessionItemRequest
-     * @throws ShoppingSessionItemNotFoundException if there is no ShoppingSessionItem in the database with the provided shoppingSessionItemId from updateProductsQuantityInShoppingSessionItemRequest
-     * @throws InvalidShoppingSessionIdException    if ShoppingSessionId in UpdateProductsQuantityRequest and ShoppingSessionId of Item with id from request are not equal
+     * @param shoppingCartItemId  we use this id to decrease or increase productQuantity of the item with the id = shoppingCartItemId
+     * @param productQuantityChange we use this data to decrease or increase productQuantity of the item with the id = shoppingCartItemId
+     * @return ShoppingCartDto (the cart details)
+     * @throws ShoppingCartNotFoundException     if there is no ShoppingCart in the database with the provided shoppingCartId from updateProductsQuantityInShoppingCartItemRequest
+     * @throws ShoppingCartItemNotFoundException if there is no ShoppingCartItem in the database with the provided shoppingCartItemId from updateProductsQuantityInShoppingCartItemRequest
+     * @throws InvalidShoppingCartIdException    if ShoppingCartId in UpdateProductsQuantityRequest and ShoppingCartId of Item with id from request are not equal
      */
-    ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+    ShoppingCartDto updateProductQuantityInShoppingCartItem(final UUID shoppingCartItemId,
                                                                    final int productQuantityChange)
-            throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException;
+            throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException, InvalidShoppingCartIdException;
 }

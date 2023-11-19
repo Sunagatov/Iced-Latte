@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.cart.stub;
 
-import com.zufar.icedlatte.cart.entity.ShoppingSession;
-import com.zufar.icedlatte.cart.entity.ShoppingSessionItem;
-import com.zufar.icedlatte.openapi.dto.NewShoppingSessionItemDto;
+import com.zufar.icedlatte.cart.entity.ShoppingCart;
+import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionItemDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 
 import java.math.BigDecimal;
@@ -18,29 +18,29 @@ import java.util.UUID;
 
 public class CartDtoTestStub {
 
-    public static ShoppingSessionItem createShoppingSessionItem() {
-        ShoppingSession shoppingSession = new ShoppingSession();
+    public static ShoppingCartItem createShoppingCartItem() {
+        ShoppingCart shoppingCart = new ShoppingCart();
 
         UUID productId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
         ProductInfo productInfo = new ProductInfo(
                 productId, "Test name", "Test description", BigDecimal.valueOf(1.1), 1, true);
 
         UUID itemId = UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddd");
-        return new ShoppingSessionItem(
-                itemId, 1, shoppingSession, productInfo, 5);
+        return new ShoppingCartItem(
+                itemId, 1, shoppingCart, productInfo, 5);
     }
 
-    public static NewShoppingSessionItemDto createShoppingSessionItemDtoToAdd() {
-        NewShoppingSessionItemDto newShoppingSessionItemDto = new NewShoppingSessionItemDto();
-        newShoppingSessionItemDto.setProductId(UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639"));
-        newShoppingSessionItemDto.setProductQuantity(3);
+    public static NewShoppingCartItemDto createShoppingCartItemDtoToAdd() {
+        NewShoppingCartItemDto newShoppingCartItemDto = new NewShoppingCartItemDto();
+        newShoppingCartItemDto.setProductId(UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639"));
+        newShoppingCartItemDto.setProductQuantity(3);
 
-        return newShoppingSessionItemDto;
+        return newShoppingCartItemDto;
     }
 
-    public static ShoppingSessionItemDto createShoppingSessionItemDto() {
-        ShoppingSessionItemDto shoppingSessionItemDto = new ShoppingSessionItemDto();
-        shoppingSessionItemDto.setId(UUID.randomUUID());
+    public static ShoppingCartItemDto createShoppingCartItemDto() {
+        ShoppingCartItemDto shoppingCartItemDto = new ShoppingCartItemDto();
+        shoppingCartItemDto.setId(UUID.randomUUID());
         ProductInfoDto productInfoDto = new ProductInfoDto();
         productInfoDto.setId(UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639"));
         productInfoDto.setName("Test name");
@@ -48,15 +48,15 @@ public class CartDtoTestStub {
         productInfoDto.setPrice(BigDecimal.valueOf(1.1));
         productInfoDto.setQuantity(3);
         productInfoDto.setActive(true);
-        shoppingSessionItemDto.setProductInfo(productInfoDto);
+        shoppingCartItemDto.setProductInfo(productInfoDto);
 
-        return shoppingSessionItemDto;
+        return shoppingCartItemDto;
     }
 
-    public static ShoppingSession createShoppingSession() {
+    public static ShoppingCart createShoppingCart() {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
-        ShoppingSession shoppingSession = new ShoppingSession();
-        Set<ShoppingSessionItem> items = new HashSet<>();
+        ShoppingCart shoppingCart = new ShoppingCart();
+        Set<ShoppingCartItem> items = new HashSet<>();
 
         UUID firstProductId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
         ProductInfo firstProductInfo = new ProductInfo(
@@ -69,45 +69,45 @@ public class CartDtoTestStub {
                 thirdProductId, "Third test name", "Third test description", BigDecimal.valueOf(3.3), 3, true);
 
         UUID firstItemId = UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc");
-        ShoppingSessionItem firstItem = new ShoppingSessionItem(
-                firstItemId, 1, shoppingSession, firstProductInfo, 1);
+        ShoppingCartItem firstItem = new ShoppingCartItem(
+                firstItemId, 1, shoppingCart, firstProductInfo, 1);
         UUID secondItemId = UUID.fromString("e5cadeb1-089c-430f-85d1-e18438167241");
-        ShoppingSessionItem secondItem = new ShoppingSessionItem(
-                secondItemId, 1, shoppingSession, secondProductInfo, 2);
+        ShoppingCartItem secondItem = new ShoppingCartItem(
+                secondItemId, 1, shoppingCart, secondProductInfo, 2);
         UUID thirdItemId = UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906");
-        ShoppingSessionItem thirdItem = new ShoppingSessionItem(
-                thirdItemId, 1, shoppingSession, thridProductInfo, 3);
+        ShoppingCartItem thirdItem = new ShoppingCartItem(
+                thirdItemId, 1, shoppingCart, thridProductInfo, 3);
 
         items.add(firstItem);
         items.add(secondItem);
         items.add(thirdItem);
 
-        shoppingSession.setUserId(userId);
-        shoppingSession.setItems(items);
-        shoppingSession.setItemsQuantity(3);
-        shoppingSession.setProductsQuantity(6);
-        shoppingSession.setCreatedAt(OffsetDateTime.now());
-        shoppingSession.setClosedAt(OffsetDateTime.now().plusHours(2));
+        shoppingCart.setUserId(userId);
+        shoppingCart.setItems(items);
+        shoppingCart.setItemsQuantity(3);
+        shoppingCart.setProductsQuantity(6);
+        shoppingCart.setCreatedAt(OffsetDateTime.now());
+        shoppingCart.setClosedAt(OffsetDateTime.now().plusHours(2));
 
-        return shoppingSession;
+        return shoppingCart;
     }
 
-    public static ShoppingSessionDto createShoppingSessionDto() {
+    public static ShoppingCartDto createShoppingCartDto() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        ShoppingSessionDto shoppingSessionDto = new ShoppingSessionDto();
+        ShoppingCartDto shoppingCartDto = new ShoppingCartDto();
 
-        shoppingSessionDto.setUserId(userId);
-        shoppingSessionDto.setItemsQuantity(2);
-        shoppingSessionDto.setProductsQuantity(3);
-        shoppingSessionDto.setItemsTotalPrice(BigDecimal.valueOf(5.5));
-        shoppingSessionDto.setCreatedAt(OffsetDateTime.now());
-        shoppingSessionDto.setClosedAt(OffsetDateTime.now().plusHours(2));
+        shoppingCartDto.setUserId(userId);
+        shoppingCartDto.setItemsQuantity(2);
+        shoppingCartDto.setProductsQuantity(3);
+        shoppingCartDto.setItemsTotalPrice(BigDecimal.valueOf(5.5));
+        shoppingCartDto.setCreatedAt(OffsetDateTime.now());
+        shoppingCartDto.setClosedAt(OffsetDateTime.now().plusHours(2));
 
-        return shoppingSessionDto;
+        return shoppingCartDto;
     }
 
-    public static List<ShoppingSessionItemDto> createShoppingSessionDtoList() {
-        List<ShoppingSessionItemDto> items = new ArrayList<>();
+    public static List<ShoppingCartItemDto> createShoppingCartDtoList() {
+        List<ShoppingCartItemDto> items = new ArrayList<>();
 
         UUID firstProductDtoId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
         ProductInfoDto firstProductInfoDto = new ProductInfoDto();
@@ -127,12 +127,12 @@ public class CartDtoTestStub {
         secondProductInfoDto.setActive(true);
 
         UUID firstItemId = UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc");
-        ShoppingSessionItemDto firstItemDto = new ShoppingSessionItemDto();
+        ShoppingCartItemDto firstItemDto = new ShoppingCartItemDto();
         firstItemDto.setId(firstItemId);
         firstItemDto.setProductInfo(firstProductInfoDto);
         firstItemDto.setProductQuantity(1);
         UUID secondItemId = UUID.fromString("e5cadeb1-089c-430f-85d1-e18438167241");
-        ShoppingSessionItemDto secondItemDto = new ShoppingSessionItemDto();
+        ShoppingCartItemDto secondItemDto = new ShoppingCartItemDto();
         secondItemDto.setId(secondItemId);
         secondItemDto.setProductInfo(secondProductInfoDto);
         secondItemDto.setProductQuantity(2);
@@ -143,23 +143,23 @@ public class CartDtoTestStub {
         return items;
     }
 
-    public static ShoppingSessionDto createFullShoppingSessionDto() {
+    public static ShoppingCartDto createFullShoppingCartDto() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        ShoppingSessionDto shoppingSessionDto = new ShoppingSessionDto();
+        ShoppingCartDto shoppingCartDto = new ShoppingCartDto();
 
-        shoppingSessionDto.setId(UUID.randomUUID());
-        shoppingSessionDto.setUserId(userId);
-        shoppingSessionDto.setItemsQuantity(3);
-        shoppingSessionDto.setProductsQuantity(6);
-        shoppingSessionDto.setItemsTotalPrice(BigDecimal.valueOf(15.4));
-        shoppingSessionDto.setCreatedAt(OffsetDateTime.now());
-        shoppingSessionDto.setClosedAt(OffsetDateTime.now().plusHours(2));
+        shoppingCartDto.setId(UUID.randomUUID());
+        shoppingCartDto.setUserId(userId);
+        shoppingCartDto.setItemsQuantity(3);
+        shoppingCartDto.setProductsQuantity(6);
+        shoppingCartDto.setItemsTotalPrice(BigDecimal.valueOf(15.4));
+        shoppingCartDto.setCreatedAt(OffsetDateTime.now());
+        shoppingCartDto.setClosedAt(OffsetDateTime.now().plusHours(2));
 
-        return shoppingSessionDto;
+        return shoppingCartDto;
     }
 
-    public static List<ShoppingSessionItemDto> createFullShoppingSessionDtoList() {
-        List<ShoppingSessionItemDto> items = new ArrayList<>();
+    public static List<ShoppingCartItemDto> createFullShoppingCartDtoList() {
+        List<ShoppingCartItemDto> items = new ArrayList<>();
 
         UUID firstProductDtoId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
         ProductInfoDto firstProductInfoDto = new ProductInfoDto();
@@ -189,19 +189,19 @@ public class CartDtoTestStub {
         thirdProductInfoDto.setActive(true);
 
         UUID firstItemId = UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddc");
-        ShoppingSessionItemDto firstItemDto = new ShoppingSessionItemDto();
+        ShoppingCartItemDto firstItemDto = new ShoppingCartItemDto();
         firstItemDto.setId(firstItemId);
         firstItemDto.setProductInfo(firstProductInfoDto);
         firstItemDto.setProductQuantity(1);
 
         UUID secondItemId = UUID.fromString("e5cadeb1-089c-430f-85d1-e18438167241");
-        ShoppingSessionItemDto secondItemDto = new ShoppingSessionItemDto();
+        ShoppingCartItemDto secondItemDto = new ShoppingCartItemDto();
         secondItemDto.setId(secondItemId);
         secondItemDto.setProductInfo(secondProductInfoDto);
         secondItemDto.setProductQuantity(2);
 
         UUID thirdItemId = UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906");
-        ShoppingSessionItemDto thirdItemDto = new ShoppingSessionItemDto();
+        ShoppingCartItemDto thirdItemDto = new ShoppingCartItemDto();
         thirdItemDto.setId(thirdItemId);
         thirdItemDto.setProductInfo(thirdProductInfoDto);
         thirdItemDto.setProductQuantity(3);
@@ -213,20 +213,20 @@ public class CartDtoTestStub {
         return items;
     }
 
-    public static ShoppingSessionDto createEmptyShoppingSessionDto() {
+    public static ShoppingCartDto createEmptyShoppingCartDto() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        ShoppingSessionDto shoppingSessionDto = new ShoppingSessionDto();
-        List<ShoppingSessionItemDto> items = new ArrayList<>();
+        ShoppingCartDto shoppingCartDto = new ShoppingCartDto();
+        List<ShoppingCartItemDto> items = new ArrayList<>();
 
-        shoppingSessionDto.setId(UUID.randomUUID());
-        shoppingSessionDto.setUserId(userId);
-        shoppingSessionDto.setItems(items);
-        shoppingSessionDto.setItemsQuantity(0);
-        shoppingSessionDto.setProductsQuantity(0);
-        shoppingSessionDto.setItemsTotalPrice(BigDecimal.valueOf(0.0));
-        shoppingSessionDto.setCreatedAt(OffsetDateTime.now());
-        shoppingSessionDto.setClosedAt(OffsetDateTime.now().plusHours(2));
+        shoppingCartDto.setId(UUID.randomUUID());
+        shoppingCartDto.setUserId(userId);
+        shoppingCartDto.setItems(items);
+        shoppingCartDto.setItemsQuantity(0);
+        shoppingCartDto.setProductsQuantity(0);
+        shoppingCartDto.setItemsTotalPrice(BigDecimal.valueOf(0.0));
+        shoppingCartDto.setCreatedAt(OffsetDateTime.now());
+        shoppingCartDto.setClosedAt(OffsetDateTime.now().plusHours(2));
 
-        return shoppingSessionDto;
+        return shoppingCartDto;
     }
 }
