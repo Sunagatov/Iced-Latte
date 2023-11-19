@@ -27,7 +27,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "shopping_session_item")
+@Table(name = "shopping_cart_item")
 public class ShoppingCartItem {
 
     @Id
@@ -38,7 +38,7 @@ public class ShoppingCartItem {
     private Integer version; // Adding version field for optimistic locking
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shopping_session_id", nullable = false)
+    @JoinColumn(name = "shopping_cart_id", nullable = false)
     private ShoppingCart shoppingCart;
 
     @ManyToOne(fetch = FetchType.EAGER)

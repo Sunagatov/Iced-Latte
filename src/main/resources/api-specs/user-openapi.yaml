@@ -54,27 +54,13 @@ paths:
 
 components:
   schemas:
-    AddressDto:
-      type: "object"
-      description: "The address of a user."
-      properties:
-        line:
-          type: "string"
-          description: "Street line of the user's address."
-        city:
-          type: "string"
-          description: "City of the user's address."
-        country:
-          type: "string"
-          description: "Country of the user's address."
-      required:
-        - line
-        - city
-        - country
-
     UserDto:
       type: "object"
       description: "A user profile in the Iced-Latte system."
+      required:
+        - firstName
+        - lastName
+        - email
       properties:
         id:
           type: "string"
@@ -86,6 +72,13 @@ components:
         lastName:
           type: "string"
           description: "The last name of the user."
+        birthDate:
+          type: "string"
+          description: "The birth date of the user."
+          format: date
+        phoneNumber:
+          type: "string"
+          description: "The phone number of the user."
         stripeCustomerToken:
           type: "string"
           description: "The Stripe customer token associated with the user."
@@ -93,16 +86,24 @@ components:
           type: "string"
           description: "The email address of the user."
           format: "email"
-        password:
-          type: "string"
-          description: "Password for the user's account. Note: This should be encrypted and not exposed in API calls."
-          format: "password"
         address:
           $ref: "#/components/schemas/AddressDto"
+
+    AddressDto:
+      type: "object"
       required:
-        - id
-        - firstName
-        - lastName
-        - email
-        - password
-        - address
+        - country
+        - city
+        - line
+        - postcode
+      properties:
+        country:
+          type: "string"
+        city:
+          type: "string"
+        line:
+          type: "string"
+        postcode:
+          type: "string"
+
+

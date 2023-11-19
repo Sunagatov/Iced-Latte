@@ -26,7 +26,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "shopping_session")
+@Table(name = "shopping_cart")
 public class ShoppingCart {
 
     @Id

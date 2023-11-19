@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.converter;
 
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -34,12 +35,12 @@ class RegistrationDtoConverterTest {
                 "John", "Doe", "john.doe@example.com", "password123"
         );
 
-        UserDto userDto = registrationDtoConverter.toDto(userRegistrationRequest);
+        UserEntity userEntity = registrationDtoConverter.toEntity(userRegistrationRequest);
 
-        assertEquals(userRegistrationRequest.firstName(), userDto.getFirstName());
-        assertEquals(userRegistrationRequest.lastName(), userDto.getLastName());
-        assertEquals(userRegistrationRequest.email(), userDto.getEmail());
-        assertEquals(userRegistrationRequest.password(), userDto.getPassword());
+        assertEquals(userRegistrationRequest.firstName(), userEntity.getFirstName());
+        assertEquals(userRegistrationRequest.lastName(), userEntity.getLastName());
+        assertEquals(userRegistrationRequest.email(), userEntity.getEmail());
+        assertEquals(userRegistrationRequest.password(), userEntity.getPassword());
     }
 }
 

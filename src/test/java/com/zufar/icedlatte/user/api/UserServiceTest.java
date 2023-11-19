@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
@@ -32,15 +33,16 @@ class UserServiceTest {
     @Test
     @DisplayName("saveUser should save the user and return the corresponding UserDto")
     void saveUser_ShouldSaveUserAndReturnUserDto() {
-        UserDto userDto = UserDtoTestStub.createUserDto();
-        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
+        UserRegistrationRequest userRegistrationRequest = new UserRegistrationRequest(
+                "John", "Doe", "john.doe@example.com", "password123"
+        );        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
 
-        when(saveUserOperationPerformer.saveUser(userDto)).thenReturn(expectedUserDto);
+        when(saveUserOperationPerformer.saveUser(userRegistrationRequest)).thenReturn(expectedUserDto);
 
-        UserDto actualUserDto = userService.saveUser(userDto);
+        UserDto actualUserDto = userService.saveUser(userRegistrationRequest);
 
         assertEquals(expectedUserDto, actualUserDto);
-        verify(saveUserOperationPerformer).saveUser(userDto);
+        verify(saveUserOperationPerformer).saveUser(userRegistrationRequest);
     }
 
     @Test
