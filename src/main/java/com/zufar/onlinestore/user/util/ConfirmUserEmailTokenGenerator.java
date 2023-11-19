@@ -4,7 +4,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConfirmUserEmailTokenGenerator {
+public final class ConfirmUserEmailTokenGenerator {
 
     public static final String NUMERIC_BASE = "0123456789";
     public static final String LATIN_BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -88,5 +88,3 @@ public class ConfirmUserEmailTokenGenerator {
         }
     }
 }
-
-

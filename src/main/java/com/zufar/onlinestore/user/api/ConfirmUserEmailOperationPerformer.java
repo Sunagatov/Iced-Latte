@@ -46,14 +46,12 @@ public class ConfirmUserEmailOperationPerformer {
     }
 
     public void confirmUserEmail(final String token) {
-        userCrudRepository.findByConfirmationToken(token)
-                .ifPresent(
-                        user -> {
-                            user.setEmailConfirmed(true);
-                            user.setConfirmationToken(null);
-                            userCrudRepository.save(user);
-                        }
-                );
+        userCrudRepository.findByConfirmationToken(token).ifPresent(
+                user -> {
+                    user.setEmailConfirmed(true);
+                    user.setConfirmationToken(null);
+                    userCrudRepository.save(user);
+                }
+        );
     }
-
 }

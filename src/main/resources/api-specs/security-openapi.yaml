@@ -57,7 +57,7 @@ paths:
       tags:
         - "Security"
       summary: "Confirms a user registration email"
-      operationId: "postUserEmailConfirmation"
+      operationId: "confirmEmail"
       parameters:
         - name: "token"
           description: "Unique token for confirming a user registration email"
