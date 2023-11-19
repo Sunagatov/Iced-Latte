@@ -13,7 +13,7 @@ import com.zufar.icedlatte.payment.exception.PaymentMethodNotFoundException;
 import com.zufar.icedlatte.payment.exception.PaymentMethodProcessingException;
 import com.zufar.icedlatte.payment.exception.PaymentMethodRetrievingException;
 import com.zufar.icedlatte.payment.exception.PaymentNotFoundException;
-import com.zufar.icedlatte.payment.exception.ShoppingSessionAlreadyPaidException;
+import com.zufar.icedlatte.payment.exception.ShoppingCartAlreadyPaidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -129,11 +129,11 @@ public class PaymentExceptionHandler {
         return apiErrorResponse;
     }
 
-    @ExceptionHandler(ShoppingSessionAlreadyPaidException.class)
+    @ExceptionHandler(ShoppingCartAlreadyPaidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleShoppingSessionAlreadyPaidException(final ShoppingSessionAlreadyPaidException exception) {
+    public ApiErrorResponse handleShoppingCartAlreadyPaidException(final ShoppingCartAlreadyPaidException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle shopping session already paid exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle shopping cart already paid exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;

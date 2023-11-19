@@ -22,14 +22,14 @@ paths:
       tags:
         - "Shopping Cart"
       summary: "Add items to the shopping cart"
-      operationId: "addNewItemToShoppingSession"
+      operationId: "addNewItemToShoppingCart"
       requestBody:
         description: "Payload containing a list of items to be added to the shopping cart."
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddNewItemsToShoppingSessionRequest"
+              $ref: "#/components/schemas/AddNewItemsToShoppingCartRequest"
             examples:
               add-multiple:
                 summary: "Add Multiple Items"
@@ -40,7 +40,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShoppingSessionDto"
+                $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -51,25 +51,25 @@ paths:
       tags:
         - "Shopping Cart"
       summary: "Update shopping cart item quantity"
-      operationId: "updateProductQuantityInShoppingSessionItem"
+      operationId: "updateProductQuantityInShoppingCartItem"
       requestBody:
         description: "Payload containing the shopping cart item ID and the quantity change."
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateProductQuantityInShoppingSessionItemRequest"
+              $ref: "#/components/schemas/UpdateProductQuantityInShoppingCartItemRequest"
             examples:
               increment-quantity:
                 summary: "Increment Quantity"
-                value: {"shoppingSessionItemId": "e5f6g7h8", "productQuantityChange": 1}
+                value: {"shoppingCartItemId": "e5f6g7h8", "productQuantityChange": 1}
       responses:
         "200":
           description: "Shopping cart item quantity was updated successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShoppingSessionDto"
+                $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -80,21 +80,21 @@ paths:
       tags:
         - "Shopping Cart"
       summary: "Remove items from the shopping cart"
-      operationId: "deleteItemsFromShoppingSession"
+      operationId: "deleteItemsFromShoppingCart"
       requestBody:
         description: "Payload containing an array of shopping cart item IDs to be removed."
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DeleteItemsFromShoppingSessionRequest"
+              $ref: "#/components/schemas/DeleteItemsFromShoppingCartRequest"
       responses:
         "200":
           description: "Items removed successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShoppingSessionDto"
+                $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -107,14 +107,14 @@ paths:
         - "Shopping Cart"
       summary: "Get the shopping cart of authorized user"
       description: "Get the shopping cart of authorized user"
-      operationId: "getShoppingSession"
+      operationId: "getShoppingCart"
       responses:
         "200":
           description: "OK"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShoppingSessionDto"
+                $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -124,7 +124,7 @@ paths:
 
 components:
   schemas:
-    NewShoppingSessionItemDto:
+    NewShoppingCartItemDto:
       type: "object"
       properties:
         productId:
@@ -137,17 +137,17 @@ components:
       required:
         - productId
         - productQuantity
-    AddNewItemsToShoppingSessionRequest:
+    AddNewItemsToShoppingCartRequest:
       type: "object"
       properties:
         items:
           type: "array"
           uniqueItems: true
           items:
-            $ref: "#/components/schemas/NewShoppingSessionItemDto"
+            $ref: "#/components/schemas/NewShoppingCartItemDto"
       required:
         - items
-    ShoppingSessionDto:
+    ShoppingCartDto:
       type: "object"
       properties:
         id:
@@ -159,7 +159,7 @@ components:
         items:
           type: "array"
           items:
-            $ref: "#/components/schemas/ShoppingSessionItemDto"
+            $ref: "#/components/schemas/ShoppingCartItemDto"
         itemsQuantity:
           type: "integer"
           format: "int32"
@@ -183,7 +183,7 @@ components:
         - itemsTotalPrice
         - productsQuantity
         - createdAt
-    ShoppingSessionItemDto:
+    ShoppingCartItemDto:
       type: "object"
       properties:
         id:
@@ -199,25 +199,25 @@ components:
         - id
         - productInfo
         - productQuantity
-    UpdateProductQuantityInShoppingSessionItemRequest:
+    UpdateProductQuantityInShoppingCartItemRequest:
       type: "object"
       properties:
-        shoppingSessionItemId:
+        shoppingCartItemId:
           type: "string"
           format: "uuid"
         productQuantityChange:
           type: "integer"
           format: "int32"
       required:
-        - shoppingSessionItemId
+        - shoppingCartItemId
         - productQuantityChange
-    DeleteItemsFromShoppingSessionRequest:
+    DeleteItemsFromShoppingCartRequest:
       type: "object"
       properties:
-        shoppingSessionItemIds:
+        shoppingCartItemIds:
           type: "array"
           items:
             type: "string"
             format: "uuid"
       required:
-        - shoppingSessionItemIds
+        - shoppingCartItemIds

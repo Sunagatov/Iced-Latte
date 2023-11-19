@@ -4,7 +4,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.payment.config.StripeConfiguration;
 import com.zufar.icedlatte.payment.converter.StripePaymentIntentConverter;
 import com.zufar.icedlatte.payment.exception.PaymentIntentProcessingException;
@@ -26,10 +26,10 @@ public class StripePaymentIntentCreator {
     private final StripePaymentIntentConverter stripePaymentIntentConverter;
     private final StripeConfiguration stripeConfiguration;
 
-    public PaymentIntent createStripePaymentIntent(final PaymentMethod paymentMethod, ShoppingSessionDto shoppingSession) {
+    public PaymentIntent createStripePaymentIntent(final PaymentMethod paymentMethod, ShoppingCartDto shoppingCart) {
         log.info("Create stripe payment intent: starting: start payment intent creation");
         String currency = stripeConfiguration.currency();
-        PaymentIntentCreateParams paymentIntentCreateParams = stripePaymentIntentConverter.toStripeObject(paymentMethod, shoppingSession, currency);
+        PaymentIntentCreateParams paymentIntentCreateParams = stripePaymentIntentConverter.toStripeObject(paymentMethod, shoppingCart, currency);
         String paymentMethodId = paymentIntentCreateParams.getPaymentMethod();
         log.info("Create stripe payment intent: in progress: creation stripe payment intent with paymentMethodId = {}", paymentMethodId);
         try {

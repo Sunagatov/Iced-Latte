@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.icedlatte.openapi.dto.NewShoppingSessionItemDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingSessionIdException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,29 +19,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingCartManager implements CartApi {
 
-    private final AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
+    private final AddItemsToShoppingCartHelper addItemsToShoppingCartHelper;
     private final ProductQuantityItemUpdater productQuantityItemUpdater;
-    private final ShoppingSessionProvider shoppingSessionProvider;
-    private final ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
+    private final ShoppingCartProvider shoppingCartProvider;
+    private final ShoppingCartItemsDeleter shoppingCartItemsDeleter;
 
     @Override
-    public ShoppingSessionDto getShoppingSessionByUserId(final UUID userId) throws ShoppingSessionNotFoundException {
-        return shoppingSessionProvider.getByUserId(userId);
+    public ShoppingCartDto getShoppingCartByUserId(final UUID userId) throws ShoppingCartNotFoundException {
+        return shoppingCartProvider.getByUserId(userId);
     }
 
     @Override
-    public ShoppingSessionDto addItemsToShoppingSession(final Set<NewShoppingSessionItemDto> items) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, ProductNotFoundException {
-        return addItemsToShoppingSessionHelper.add(items);
+    public ShoppingCartDto addItemsToShoppingCart(final Set<NewShoppingCartItemDto> items) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException, ProductNotFoundException {
+        return addItemsToShoppingCartHelper.add(items);
     }
 
     @Override
-    public ShoppingSessionDto deleteItemsFromShoppingSession(final DeleteItemsFromShoppingSessionRequest deleteItemsFromShoppingSessionRequest) {
-        return shoppingSessionItemsDeleter.delete(deleteItemsFromShoppingSessionRequest);
+    public ShoppingCartDto deleteItemsFromShoppingCart(final DeleteItemsFromShoppingCartRequest deleteItemsFromShoppingCartRequest) {
+        return shoppingCartItemsDeleter.delete(deleteItemsFromShoppingCartRequest);
     }
 
     @Override
-    public ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
-                                                                          final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
-        return productQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange);
+    public ShoppingCartDto updateProductQuantityInShoppingCartItem(final UUID shoppingCartItemId,
+                                                                          final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException, InvalidShoppingCartIdException {
+        return productQuantityItemUpdater.update(shoppingCartItemId, productQuantityChange);
     }
 }

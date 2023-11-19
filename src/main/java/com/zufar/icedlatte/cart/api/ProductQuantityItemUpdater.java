@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
-import com.zufar.icedlatte.cart.entity.ShoppingSessionItem;
+import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingSessionIdException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
-import com.zufar.icedlatte.cart.repository.ShoppingSessionItemRepository;
+import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
+import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
@@ -26,54 +26,54 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductQuantityItemUpdater {
 
-    private final ShoppingSessionItemRepository shoppingSessionItemRepository;
-    private final ShoppingSessionProvider shoppingSessionProvider;
+    private final ShoppingCartItemRepository shoppingCartItemRepository;
+    private final ShoppingCartProvider shoppingCartProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingSessionDto update(final UUID shoppingSessionItemId,
-                                     final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
-        ShoppingSessionItem item = getShoppingSessionItem(shoppingSessionItemId);
-        ShoppingSessionItem updatedItem = updateItemProductQuantity(shoppingSessionItemId, productQuantityChange, item);
-        ShoppingSessionDto shoppingSession = getShoppingSession();
+    public ShoppingCartDto update(final UUID shoppingCartItemId,
+                                     final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
+        ShoppingCartItem item = getShoppingCartItem(shoppingCartItemId);
+        ShoppingCartItem updatedItem = updateItemProductQuantity(shoppingCartItemId, productQuantityChange, item);
+        ShoppingCartDto shoppingCart = getShoppingCart();
 
-        if (shoppingSession.getId() != updatedItem.getShoppingSession().getId()) {
-            log.warn("Failed to update the productQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
-                    productQuantityChange, shoppingSessionItemId, shoppingSession.getId());
-            throw new InvalidShoppingSessionIdException(shoppingSession.getId());
+        if (shoppingCart.getId() != updatedItem.getShoppingCart().getId()) {
+            log.warn("Failed to update the productQuantity with the change = {} in the shoppingCartItem with id: {} of the shoppingCart with the id = {}.",
+                    productQuantityChange, shoppingCartItemId, shoppingCart.getId());
+            throw new InvalidShoppingCartIdException(shoppingCart.getId());
         }
-        return shoppingSession;
+        return shoppingCart;
     }
 
-    private ShoppingSessionItem getShoppingSessionItem(final UUID shoppingSessionItemId) throws ShoppingSessionItemNotFoundException {
-        return shoppingSessionItemRepository.findById(shoppingSessionItemId)
+    private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
+        return shoppingCartItemRepository.findById(shoppingCartItemId)
                 .orElseThrow(() -> {
-                    log.warn("Shopping session item  with id = {} is not found.", shoppingSessionItemId);
-                    return new ShoppingSessionItemNotFoundException(shoppingSessionItemId);
+                    log.warn("Shopping cart item  with id = {} is not found.", shoppingCartItemId);
+                    return new ShoppingCartItemNotFoundException(shoppingCartItemId);
                 });
     }
 
-    private ShoppingSessionItem updateItemProductQuantity(final UUID shoppingSessionItemId,
-                                                          int productQuantityChange,
-                                                          ShoppingSessionItem item) {
+    private ShoppingCartItem updateItemProductQuantity(final UUID shoppingCartItemId,
+                                                       int productQuantityChange,
+                                                       ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 0) {
-            log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingSessionItemId);
+            log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         if (productQuantityChange == 0) {
-            log.warn("productQuantityChange for item with id: {} must be not equal to zero.", shoppingSessionItemId);
+            log.warn("productQuantityChange for item with id: {} must be not equal to zero.", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         item.setProductQuantity(newQuantity);
 
-        return shoppingSessionItemRepository.save(item);
+        return shoppingCartItemRepository.save(item);
     }
 
-    private ShoppingSessionDto getShoppingSession() throws ShoppingSessionNotFoundException {
+    private ShoppingCartDto getShoppingCart() throws ShoppingCartNotFoundException {
         UserDto userDto = securityPrincipalProvider.get();
         UUID userId = userDto.getId();
-        return shoppingSessionProvider.getByUserId(userId);
+        return shoppingCartProvider.getByUserId(userId);
     }
 }

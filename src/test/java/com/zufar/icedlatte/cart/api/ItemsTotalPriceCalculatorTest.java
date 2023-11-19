@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.cart.entity.ShoppingSession;
+import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,11 +21,11 @@ class ItemsTotalPriceCalculatorTest {
     private ItemsTotalPriceCalculator itemsTotalPriceCalculator;
 
     @Test
-    @DisplayName("Calculate should return the Total price of items in ShoppingSession")
+    @DisplayName("Calculate should return the Total price of items in ShoppingCart")
     void shouldReturnCorrectTotalPrice() {
-        ShoppingSession shoppingSession = CartDtoTestStub.createShoppingSession();
+        ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
 
-        BigDecimal result = itemsTotalPriceCalculator.calculate(shoppingSession.getItems());
+        BigDecimal result = itemsTotalPriceCalculator.calculate(shoppingCart.getItems());
 
         assertEquals(TOTAL_PRICE_FOR_SHOPPING_SESSION, result);
     }
