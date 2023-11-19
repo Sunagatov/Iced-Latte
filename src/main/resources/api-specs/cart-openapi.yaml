@@ -1,11 +1,11 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online Store Shopping Cart API"
+  title: "Iced Latte Shopping Cart API"
   description: "API allows users to manage their shopping cart items, including adding, updating, and deleting cart items. It includes detailed error responses, supports authentication, and provides examples for better understanding."
   version: "1.0.0"
   contact:
-    name: "Online Store Support"
+    name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
 
 servers:

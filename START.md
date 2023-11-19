@@ -1,6 +1,7 @@
-# Getting Started with the Iced Latte Online Store
+# Getting Started with the Iced Latte
 
-Welcome to the Iced Latte Online Store! This guide will assist you in setting up and running the application using Docker and Docker Compose.
+Welcome to the Iced Latte! 
+This guide will assist you in setting up and running the application using Docker and Docker Compose.
 
 ## Prerequisites
 
