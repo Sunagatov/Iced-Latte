@@ -23,6 +23,4 @@ public interface UserApi {
      * @throws UserNotFoundException if there is no user in the database with the provided userId
      */
     UserDto getUserById(final UUID userId) throws UserNotFoundException;
-
-    UserDto addNewItemToFavorite(final UUID productId, final UUID userId);
 }
