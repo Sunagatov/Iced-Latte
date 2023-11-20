@@ -25,4 +25,9 @@ public class UserService implements UserApi {
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
         return singleUserProvider.getUserById(userId);
     }
+
+    @Override
+    public UserDto addNewItemToFavorite(UUID productId, UUID userId) {
+        return null;
+    }
 }
