@@ -80,6 +80,19 @@ public class UserEntity implements UserDetails {
         authority.setUser(this);
     }
 
+    public void addFavoriteProduct(ProductInfo product) {
+        if (this.favoriteProducts == null) {
+            this.favoriteProducts = new HashSet<>();
+        }
+        this.favoriteProducts.add(product);
+    }
+
+    public void removeFavoriteProduct(ProductInfo product) {
+        if (this.favoriteProducts != null) {
+            this.favoriteProducts.remove(product);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
