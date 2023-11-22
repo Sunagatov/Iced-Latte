@@ -23,8 +23,8 @@ public class UserRegistrationService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
-        log.info("Received registration request from {}.", request.email());
-        final UserDto userDto = registrationDtoConverter.toDto(request);
+        log.info("Received registration request from {}.", userRegistrationRequest.email());
+        final UserDto userDto = registrationDtoConverter.toDto(userRegistrationRequest);
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         userDto.setPassword(encodedPassword);
         final UserDto userDtoWithId = userApi.saveUser(userDto);

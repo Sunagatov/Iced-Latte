@@ -41,7 +41,8 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(REGISTRATION_URL,
+                                .requestMatchers(
+                                        REGISTRATION_URL,
                                         AUTHENTICATION_URL,
                                         WEBHOOK_PAYMENT_EVENT_URL,
                                         PRODUCTS_API_URL,

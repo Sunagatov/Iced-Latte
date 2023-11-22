@@ -42,6 +42,9 @@ spring:
   config:
     import: optional:stripe.yaml
 
+#
+# Email Properties
+#
   mail:
     host: ${SMTP_MAIL_HOST}
     port: ${SMTP_MAIL_PORT}
@@ -55,6 +58,17 @@ spring:
             enable: true
           ssl:
             trust:  ${SMTP_MAIL_HOST:smtp-relay.brevo.com}
+
+iced-latte:
+  feature:
+    email-confirmation:
+      enabled: ${FEATURE_EMAIL_CONFIRMATION_ENABLED:true}
+      email-properties:
+        from: ${FEATURE_EMAIL_CONFIRMATION_COMPANY_EMAIL}
+      base-link: ${FEATURE_EMAIL_CONFIRMATION_BASE_LINK}
+      token:
+        pattern: '???-???'
+        pattern-placeholder-char: '?'
 
 #
 # Spring Doc Properties
@@ -112,14 +126,3 @@ logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
-
-iced-latte:
-  feature:
-    email-confirmation:
-      enabled: ${FEATURE_EMAIL_CONFIRMATION_ENABLED:true}
-      email-properties:
-        from: ${FEATURE_EMAIL_CONFIRMATION_COMPANY_EMAIL}
-      base-link: ${FEATURE_EMAIL_CONFIRMATION_BASE_LINK}
-      token:
-        pattern: '???-???'
-        pattern-placeholder-char: '?'
