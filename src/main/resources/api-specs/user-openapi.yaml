@@ -17,12 +17,12 @@ tags:
     description: "Operations related to user profiles"
 
 paths:
-  /api/v1/users/{userId}:
+  /api/v1/users/:
     get:
       tags:
         - "User"
       summary: "Get an user by its ID"
-      description: "Get a detailed user profile for the given user ID."
+      description: "Retrieve a detailed user profile for the given user ID."
       operationId: "getUserById"
       parameters:
         - name: "userId"
@@ -43,6 +43,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserDto"
+        "400":
+          description: "Invalid userId provided."
+        "401":
+          description: "Unauthorized access. Authentication required."
+        "404":
+          description: "User not found."
+        "500":
+          description: "Internal Server Error."
+
+    put:
+      tags:
+        - "User"
+      summary: "Edit an user by its ID"
+      description: "Edit a user profile for the given user ID."
+      operationId: "editUserById"
+      requestBody:
+        description: "Payload containing updated user profile"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserAccountRequest"
+            examples:
+              update-multiple:
+                summary: "Edit a user profils"
+                value: { "firstName": "John", "lastName": "Doe", "email": "johndoe@example.com" }
+      responses:
+        "200":
+          description: "An updated user object containing detailed user information."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "400":
+          description: "Invalid userId provided."
+        "401":
+          description: "Unauthorized access. Authentication required."
+        "404":
+          description: "User not found."
+        "500":
+          description: "Internal Server Error."
+
+    patch:
+      tags:
+        - "User"
+      summary: "Change an user password"
+      description: "Change the password for a user profile for the given user ID."
+      operationId: "ChangeUserPassword"
+      requestBody:
+        description: "Payload containing the new password for the user."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUserPasswordRequest"
+            examples:
+              update-password:
+                summary: "Change User Password"
+                value: { "password": "new_password" }
+      responses:
+        "200":
+          description: "An updated user object containing detailed user information."
+        "400":
+          description: "Invalid userId provided."
+        "401":
+          description: "Unauthorized access. Authentication required."
+        "404":
+          description: "User not found."
+        "500":
+          description: "Internal Server Error."
+
+    delete:
+      tags:
+        - "User"
+      summary: "Delete an user by its ID"
+      description: "Delete a user profile for the given user ID."
+      operationId: "deleteUserById"
+      responses:
+        "200":
+          description: "An information about successful deletion of the user by given the userId."
         "404":
           description: "User not found."
         "400":
@@ -54,6 +134,49 @@ paths:
 
 components:
   schemas:
+    UpdateUserAccountRequest:
+      type: "object"
+      description: "A user profile object details to update."
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The unique identifier for the user."
+        firstName:
+          type: "string"
+          description: "The first name of the user."
+        lastName:
+          type: "string"
+          description: "The last name of the user."
+        birthDate:
+          type: "string"
+          description: "The birth date of the user."
+          format: date
+        phoneNumber:
+          type: "string"
+          description: "The phone number of the user."
+        email:
+          type: "string"
+          description: "The email address of the user."
+          format: "email"
+        address:
+          $ref: "#/components/schemas/AddressDto"
+    ChangeUserPasswordRequest:
+      type: "object"
+      description: "A user profile object details to update."
+      required:
+        - password
+      properties:
+        newPassword:
+          type: "string"
+          description: "The first name of the user."
+        oldPassword:
+          type: "string"
+          description: "The first name of the user."
     UserDto:
       type: "object"
       description: "A user profile in the Iced-Latte system."
