@@ -32,7 +32,6 @@ public class UserDtoTestStub {
         dto.setFirstName("John");
         dto.setLastName("Doe");
         dto.setEmail("johndoe@example.com");
-        dto.setPassword("password123");
         dto.setStripeCustomerToken("tok_123456789");
         dto.setAddress(addressDto);
         return dto;

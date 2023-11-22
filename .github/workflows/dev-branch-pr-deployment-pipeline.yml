@@ -1,8 +1,6 @@
 name: Build and Deploy
 
 on:
-  push:
-    branches: [ development ]
   pull_request:
     types: [ closed ]
 

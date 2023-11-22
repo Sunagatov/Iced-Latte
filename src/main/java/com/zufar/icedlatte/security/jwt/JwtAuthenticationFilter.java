@@ -6,7 +6,6 @@ import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +29,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String REGISTRATION_URL = "/api/v1/auth/register";
     private static final String EMAIL_CONFIRMATION_URL = "/api/v1/auth/confirmation";
+    private static final String OPEN_API_URL = "api/docs/schema";
+    private static final String SWAGGER_API_URL = "api/docs/swagger-ui";
     private static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
     private static final String PRODUCTS_API_URL = "/api/v1/products/";
     private static final String MDC_USER_ID_KEY2VALUE = "user.id.key2value";
@@ -40,8 +41,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
                                     @NonNull final HttpServletResponse httpResponse,
-                                    @NonNull final FilterChain filterChain) throws ServletException, IOException {
+                                    @NonNull final FilterChain filterChain) throws IOException {
         try {
+            if (shouldNotFilter(httpRequest)) {
+                return;
+            }
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
 
             SecurityContextHolder
@@ -65,8 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             handleException(httpResponse, "User with the provided email does not exist", exception);
         } catch (Exception exception) {
             handleException(httpResponse, "Internal server error", exception);
-        }
-        finally {
+        } finally {
             MDC.remove(MDC_USER_ID_KEY2VALUE);
         }
     }
@@ -82,6 +85,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return Stream.of(REGISTRATION_URL,
                         AUTHENTICATION_URL,
                         PRODUCTS_API_URL,
+                        OPEN_API_URL,
+                        SWAGGER_API_URL,
                         EMAIL_CONFIRMATION_URL)
                 .anyMatch(urlPath -> request.getServletPath().contains(urlPath) || urlPath.contains(request.getServletPath()));
     }

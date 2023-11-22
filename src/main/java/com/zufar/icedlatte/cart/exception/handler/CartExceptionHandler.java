@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.cart.exception.handler;
 
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingSessionIdException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
@@ -33,31 +33,31 @@ public class CartExceptionHandler {
         return apiErrorResponse;
     }
 
-    @ExceptionHandler(InvalidShoppingSessionIdException.class)
+    @ExceptionHandler(InvalidShoppingCartIdException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleInvalidShoppingSessionIdException(final InvalidShoppingSessionIdException exception) {
+    public ApiErrorResponse handleInvalidShoppingCartIdException(final InvalidShoppingCartIdException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle invalid shopping sessionId exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle invalid shopping cartId exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;
     }
 
-    @ExceptionHandler(ShoppingSessionItemNotFoundException.class)
+    @ExceptionHandler(ShoppingCartItemNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleShoppingSessionItemNotFoundException(final ShoppingSessionItemNotFoundException exception) {
+    public ApiErrorResponse handleShoppingCartItemNotFoundException(final ShoppingCartItemNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle shopping session item not found exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle shopping cart item not found exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;
     }
 
-    @ExceptionHandler(ShoppingSessionNotFoundException.class)
+    @ExceptionHandler(ShoppingCartNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleShoppingSessionNotFoundException(final ShoppingSessionNotFoundException exception) {
+    public ApiErrorResponse handleShoppingCartNotFoundException(final ShoppingCartNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle shopping session not found exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle shopping cart not found exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;

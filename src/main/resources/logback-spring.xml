@@ -13,7 +13,7 @@
 
     <!--  FILE LOGGING CONFIGURATION  -->
     <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/online-store.log</file>
+        <file>logs/iced-latte.log</file>
 
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
@@ -55,7 +55,7 @@
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/online-store-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/iced-latte-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>1MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>10MB</totalSizeCap>

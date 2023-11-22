@@ -1,13 +1,13 @@
 # Iced-Latte (Backend)
 
-[![ci Status](https://github.com/Sunagatov/Online-Store/actions/workflows/dev-branch-pr-deployment-pipeline.yml/badge.svg)](https://github.com/Sunagatov/Online-Store/actions)
+[![ci Status](https://github.com/Sunagatov/Iced-Latte/actions/workflows/dev-branch-pr-deployment-pipeline.yml/badge.svg)](https://github.com/Sunagatov/Iced-Latte/actions)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/danilqa/node-file-router/blob/main/LICENSE)
-[![Known Vulnerabilities](https://snyk.io/test/github/Sunagatov/Online-Store/badge.svg)](https://snyk.io/test/github/Sunagatov/Online-Store)
+[![Known Vulnerabilities](https://snyk.io/test/github/Sunagatov/Iced-Latte/badge.svg)](https://snyk.io/test/github/Sunagatov/Iced-Latte)
 [![Docker Pulls](https://img.shields.io/docker/pulls/zufarexplainedit/iced-latte-backend.svg)](https://hub.docker.com/r/zufarexplainedit/iced-latte-backend/)
-[![GitHub issues](https://img.shields.io/github/issues/Sunagatov/Online-Store)](https://github.com/Sunagatov/Online-Store/issues)
-[![GitHub stars](https://img.shields.io/github/stars/Sunagatov/Online-Store)](https://github.com/Sunagatov/Online-Store/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/Sunagatov/Iced-Latte)](https://github.com/Sunagatov/Iced-Latte/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte)](https://github.com/Sunagatov/Iced-Latte/stargazers)
 
-**Iced-Latte (Backend)** is a REST API that simulates the operations of an coffee online shop. 
+**Iced-Latte (Backend)** is a REST API that performs the operations of an coffee online shop. 
 Built using Spring Boot and PostgreSQL, it's crafted for educational purposes, offering insights into modern application development with Java.
 
 ## Table of Contents
@@ -61,7 +61,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
-Have any questions or suggestions? Feel free to [open an issue](https://github.com/Sunagatov/Online-Store/issues) or contact us directly.
+Have any questions or suggestions? Feel free to [open an issue](https://github.com/Sunagatov/Iced-Latte/issues) or contact us directly.
 
 ## FAQ
 

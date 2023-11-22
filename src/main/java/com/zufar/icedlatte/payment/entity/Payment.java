@@ -36,8 +36,8 @@ public class Payment {
     @Column(name = "payment_intent_id", nullable = false, unique = true)
     private String paymentIntentId;
 
-    @Column(name = "shopping_session_id", nullable = false, unique = true)
-    private UUID shoppingSessionId;
+    @Column(name = "shopping_cart_id", nullable = false, unique = true)
+    private UUID shoppingCartId;
 
     @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;

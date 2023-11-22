@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.payment.api.impl.intent;
 
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
-import com.zufar.icedlatte.cart.repository.ShoppingSessionRepository;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
+import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.payment.converter.PaymentConverter;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentDetailsDto;
 import com.zufar.icedlatte.payment.exception.PaymentNotFoundException;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Service
 public class PaymentRetriever {
 
-    private final ShoppingSessionRepository shoppingSessionRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentConverter paymentConverter;
 
@@ -35,10 +35,10 @@ public class PaymentRetriever {
 
         return paymentRepository.findById(paymentId)
                 .map(payment -> {
-                    UUID shoppingSessionId = payment.getShoppingSessionId();
-                    return shoppingSessionRepository.findById(shoppingSessionId)
-                            .map(session -> paymentConverter.toDto(payment, session.getItems()))
-                            .orElseThrow(() -> new ShoppingSessionNotFoundException(shoppingSessionId));
+                    UUID shoppingCartId = payment.getShoppingCartId();
+                    return shoppingCartRepository.findById(shoppingCartId)
+                            .map(shoppingCart -> paymentConverter.toDto(payment, shoppingCart.getItems()))
+                            .orElseThrow(() -> new ShoppingCartNotFoundException(shoppingCartId));
                 })
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
     }

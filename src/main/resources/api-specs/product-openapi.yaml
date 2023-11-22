@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: "Online-Store API"
+  title: "Iced-Latte API"
   description: "This API allows clients to interact with an Iced Latte's product catalog, including retrieval and listing of products."
   version: "1.0.0"
   contact:

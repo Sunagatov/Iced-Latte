@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.cart.exception.handler;
 
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingSessionIdException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingSessionNotFoundException;
+import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
@@ -36,13 +36,13 @@ class CartExceptionHandlerTest {
     private CartExceptionHandler shoppingExceptionHandler;
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when ShoppingSessionNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithNotFoundStatusWhenShoppingSessionNotFoundExceptionThrown() {
+    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when ShoppingCartNotFoundException is thrown")
+    void shouldReturnApiErrorResponseWithNotFoundStatusWhenShoppingCartNotFoundExceptionThrown() {
         UUID userId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
-        ShoppingSessionNotFoundException exception = new ShoppingSessionNotFoundException(userId);
+        ShoppingCartNotFoundException exception = new ShoppingCartNotFoundException(userId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping session for the user with id = " + userId + " is not found.",
+                "The shopping cart for the user with id = " + userId + " is not found.",
                 HttpStatus.NOT_FOUND.value(),
                 currentDateTime
         );
@@ -50,7 +50,7 @@ class CartExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
         when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
-        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingSessionNotFoundException(exception);
+        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartNotFoundException(exception);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());
@@ -61,13 +61,13 @@ class CartExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when ShoppingSessionItemNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithNotFoundStatusWhenShoppingSessionItemNotFoundExceptionThrown() {
-        UUID shoppingSessionItemId = UUID.randomUUID();
+    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when ShoppingCartItemNotFoundException is thrown")
+    void shouldReturnApiErrorResponseWithNotFoundStatusWhenShoppingCartItemNotFoundExceptionThrown() {
+        UUID shoppingCartItemId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
-        ShoppingSessionItemNotFoundException exception = new ShoppingSessionItemNotFoundException(shoppingSessionItemId);
+        ShoppingCartItemNotFoundException exception = new ShoppingCartItemNotFoundException(shoppingCartItemId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping session item with id = " + shoppingSessionItemId + " is not found.",
+                "The shopping cart item with id = " + shoppingCartItemId + " is not found.",
                 HttpStatus.NOT_FOUND.value(),
                 currentDateTime
         );
@@ -75,7 +75,7 @@ class CartExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
         when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
-        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingSessionItemNotFoundException(exception);
+        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartItemNotFoundException(exception);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());
@@ -86,13 +86,13 @@ class CartExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with BAD_REQUEST status when InvalidShoppingSessionIdException is thrown")
-    void shouldReturnApiErrorResponseWithBadRequestStatusWhenInvalidShoppingSessionIdExceptionThrown() {
-        UUID shoppingSessionId = UUID.randomUUID();
+    @DisplayName("Should return ApiErrorResponse with BAD_REQUEST status when InvalidShoppingCartIdException is thrown")
+    void shouldReturnApiErrorResponseWithBadRequestStatusWhenInvalidShoppingCartIdExceptionThrown() {
+        UUID shoppingCartId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
-        InvalidShoppingSessionIdException exception = new InvalidShoppingSessionIdException(shoppingSessionId);
+        InvalidShoppingCartIdException exception = new InvalidShoppingCartIdException(shoppingCartId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping session id = " + shoppingSessionId + " is invalid.",
+                "The shopping cart id = " + shoppingCartId + " is invalid.",
                 HttpStatus.BAD_REQUEST.value(),
                 currentDateTime
         );
@@ -100,7 +100,7 @@ class CartExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
         when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
-        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidShoppingSessionIdException(exception);
+        ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidShoppingCartIdException(exception);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());

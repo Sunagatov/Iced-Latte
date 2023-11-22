@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class UserService implements UserApi {
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
-    public UserDto saveUser(final UserDto userDto) {
+    public UserDto saveUser(final UserRegistrationRequest userDto) {
         return saveUserOperationPerformer.saveUser(userDto);
     }
 

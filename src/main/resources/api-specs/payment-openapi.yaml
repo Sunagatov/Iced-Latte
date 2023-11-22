@@ -40,7 +40,7 @@ paths:
           description: "Cannot retrieve stripe customer by stripeCustomerId = {stripeCustomerId}. 
           Cannot retrieve payment method associated with stripe customer, stripeCustomerId = {stripeCustomerId}. 
           The payment associated with customer is not found, stripeCustomerId = {stripeCustomerId}. 
-          Shopping session with shoppingSessionId = %s is already paid"
+          Shopping cart with shoppingCartId = %s is already paid"
           content:
             application/json:
               example:
@@ -213,7 +213,7 @@ components:
           type: "array"
           uniqueItems: true
           items:
-            $ref: "cart-openapi.yaml#/components/schemas/ShoppingSessionItemDto"
+            $ref: "cart-openapi.yaml#/components/schemas/ShoppingCartItemDto"
         status:
           $ref: "#/components/schemas/PaymentStatus"
         description:

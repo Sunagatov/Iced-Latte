@@ -24,7 +24,7 @@
     </dependencyManagement>
 
     <groupId>com.zufar-project</groupId>
-    <artifactId>online-store</artifactId>
+    <artifactId>iced-latte</artifactId>
     <name>Iced Latte</name>
     <description>Iced Latte is the modern online marketplace</description>
 

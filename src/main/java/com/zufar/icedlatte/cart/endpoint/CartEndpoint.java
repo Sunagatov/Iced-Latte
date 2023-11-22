@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingSessionRequest;
-import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingSessionRequest;
-import com.zufar.icedlatte.openapi.dto.NewShoppingSessionItemDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingSessionDto;
-import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingSessionItemRequest;
+import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,46 +35,46 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @PostMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> addNewItemToShoppingSession(@RequestBody final AddNewItemsToShoppingSessionRequest request) {
-        log.warn("Received the request to add a new items to the shoppingSession");
-        Set<NewShoppingSessionItemDto> items = request.getItems();
-        ShoppingSessionDto shoppingSessionDto = cartApi.addItemsToShoppingSession(items);
-        log.info("ShoppingSessionItem was added to the shoppingSession with id={}", shoppingSessionDto.getId());
+    public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@RequestBody final AddNewItemsToShoppingCartRequest request) {
+        log.warn("Received the request to add a new items to the shoppingCart");
+        Set<NewShoppingCartItemDto> items = request.getItems();
+        ShoppingCartDto shoppingCartDto = cartApi.addItemsToShoppingCart(items);
+        log.info("ShoppingCartItem was added to the shoppingCart with id={}", shoppingCartDto.getId());
         return ResponseEntity.ok()
-                .body(shoppingSessionDto);
+                .body(shoppingCartDto);
     }
 
     @Override
     @GetMapping
-    public ResponseEntity<ShoppingSessionDto> getShoppingSession() {
+    public ResponseEntity<ShoppingCartDto> getShoppingCart() {
         UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the shoppingSession for the user with id: {}", userId);
-        ShoppingSessionDto shoppingSessionDto = cartApi.getShoppingSessionByUserId(userId);
-        log.info("The shoppingSession for the user with id: {} was retrieved successfully", shoppingSessionDto.getUserId());
+        log.info("Received the request to get the shoppingCart for the user with id: {}", userId);
+        ShoppingCartDto shoppingCartDto = cartApi.getShoppingCartByUserId(userId);
+        log.info("The shoppingCart for the user with id: {} was retrieved successfully", shoppingCartDto.getUserId());
         return ResponseEntity.ok()
-                .body(shoppingSessionDto);
+                .body(shoppingCartDto);
     }
 
     @Override
     @PatchMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> updateProductQuantityInShoppingSessionItem(@RequestBody final UpdateProductQuantityInShoppingSessionItemRequest request) {
-        UUID shoppingSessionItemId = request.getShoppingSessionItemId();
+    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
+        UUID shoppingCartItemId = request.getShoppingCartItemId();
         Integer productQuantityChange = request.getProductQuantityChange();
-        log.warn("Received the request to update the productQuantity with the change = {} in the shoppingSessionItem with id: {}.",
-                productQuantityChange, shoppingSessionItemId);
-        ShoppingSessionDto shoppingSessionDto = cartApi.updateProductQuantityInShoppingSessionItem(shoppingSessionItemId, productQuantityChange);
-        log.info("ProductsQuantity was updated in shoppingSession item");
+        log.warn("Received the request to update the productQuantity with the change = {} in the shoppingCartItem with id: {}.",
+                productQuantityChange, shoppingCartItemId);
+        ShoppingCartDto shoppingCartDto = cartApi.updateProductQuantityInShoppingCartItem(shoppingCartItemId, productQuantityChange);
+        log.info("ProductsQuantity was updated in shoppingCart item");
         return ResponseEntity.ok()
-                .body(shoppingSessionDto);
+                .body(shoppingCartDto);
     }
 
     @Override
     @DeleteMapping(value = "/items")
-    public ResponseEntity<ShoppingSessionDto> deleteItemsFromShoppingSession(@RequestBody final DeleteItemsFromShoppingSessionRequest request) {
-        log.info("Received the request to delete the shopping session items with ids: {}.", request.getShoppingSessionItemIds());
-        ShoppingSessionDto shoppingSessionDto = cartApi.deleteItemsFromShoppingSession(request);
-        log.info("The shopping session items with ids = {} were deleted.", request.getShoppingSessionItemIds());
+    public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@RequestBody final DeleteItemsFromShoppingCartRequest request) {
+        log.info("Received the request to delete the shopping cart items with ids: {}.", request.getShoppingCartItemIds());
+        ShoppingCartDto shoppingCartDto = cartApi.deleteItemsFromShoppingCart(request);
+        log.info("The shopping cart items with ids = {} were deleted.", request.getShoppingCartItemIds());
         return ResponseEntity.ok()
-                .body(shoppingSessionDto);
+                .body(shoppingCartDto);
     }
 }

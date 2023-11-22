@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
+import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
@@ -19,12 +19,10 @@ import org.springframework.stereotype.Service;
 public class UserRegistrationService {
 
     private final UserApi userApi;
-    private final RegistrationDtoConverter registrationDtoConverter;
     private final UserDtoConverter userDtoConverter;
     private final JwtTokenProvider jwtTokenProvider;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserRegistrationResponse register(final UserRegistrationRequest request) {
+    public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         log.info("Received registration request from {}.", request.email());
         final UserDto userDto = registrationDtoConverter.toDto(request);
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
@@ -33,7 +31,7 @@ public class UserRegistrationService {
         userApi.sendEmailConfirmationToken(userDtoWithId.getId());
         UserEntity userDetails = userDtoConverter.toEntity(userDtoWithId);
         final String jwtToken = jwtTokenProvider.generateToken(userDetails);
-        log.info("Registration was successful for {}.", request.email());
+        log.info("Registration was successful for {}.", userDtoWithId.getEmail());
         return new UserRegistrationResponse(jwtToken);
     }
 

@@ -27,8 +27,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "shopping_session_item")
-public class ShoppingSessionItem {
+@Table(name = "shopping_cart_item")
+public class ShoppingCartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -38,8 +38,8 @@ public class ShoppingSessionItem {
     private Integer version; // Adding version field for optimistic locking
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shopping_session_id", nullable = false)
-    private ShoppingSession shoppingSession;
+    @JoinColumn(name = "shopping_cart_id", nullable = false)
+    private ShoppingCart shoppingCart;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
@@ -48,9 +48,9 @@ public class ShoppingSessionItem {
     @Column(name = "products_quantity", nullable = false)
     private Integer productQuantity;
 
-    public ShoppingSessionItem(UUID id, ShoppingSession shoppingSession, ProductInfo productInfo, Integer productQuantity) {
+    public ShoppingCartItem(UUID id, ShoppingCart shoppingCart, ProductInfo productInfo, Integer productQuantity) {
         this.id = id;
-        this.shoppingSession = shoppingSession;
+        this.shoppingCart = shoppingCart;
         this.productInfo = productInfo;
         this.productQuantity = productQuantity;
     }
@@ -63,7 +63,7 @@ public class ShoppingSessionItem {
         if (object == null || getClass() != object.getClass())
             return false;
 
-        ShoppingSessionItem that = (ShoppingSessionItem) object;
+        ShoppingCartItem that = (ShoppingCartItem) object;
 
         return new EqualsBuilder()
                 .append(id, that.id)
@@ -81,7 +81,7 @@ public class ShoppingSessionItem {
 
     @Override
     public String toString() {
-        return "ShoppingSessionItem {" +
+        return "ShoppingCartItem {" +
                 "id = " + id +
                 '}';
     }
