@@ -36,6 +36,8 @@ spring:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
+    drop-first: true
+
 #
 # Stripe Api Properties
 #
