@@ -59,7 +59,7 @@ public class UserEntity implements UserDetails {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
-    private transient Address address;
+    private Address address;
 
     @Column(name = "stripe_customer_token", unique = true)
     private String stripeCustomerToken;

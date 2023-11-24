@@ -13,7 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,7 +39,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
-    public ResponseEntity<UserDto> getUserById(@PathVariable final UUID userId) {
+    @GetMapping
+    public ResponseEntity<UserDto> getUserById() {
+        UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user with userId - {}.", userId);
         UserDto userDto = singleUserProvider.getUserById(userId);
         log.info("The user with userId - {} was retrieved.", userId);
@@ -45,8 +50,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     @Override
+    @PutMapping
     public ResponseEntity<UserDto> editUserById(UpdateUserAccountRequest updateUserAccountRequest) {
-        UUID userId = updateUserAccountRequest.getId();
+        UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to edit the User with userId - {}.", userId);
         UserDto updatedUserDto = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
         log.info("The user with userId - {} was updated.", userId);
@@ -55,6 +61,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     @Override
+    @PatchMapping
     public ResponseEntity<Void> changeUserPassword(ChangeUserPasswordRequest changeUserPasswordRequest) {
         log.info("Received the request to change the user's password.");
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
@@ -64,6 +71,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     @Override
+    @DeleteMapping
     public ResponseEntity<Void> deleteUserById() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to delete the user's account.");
