@@ -18,8 +18,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "favorite")
-public class Favorite {
+@Table(name = "favorite_list")
+public class FavoriteList {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,7 +28,7 @@ public class Favorite {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "favorite", cascade = CascadeType.ALL,
+    @OneToMany(mappedBy = "favoriteList", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<FavoriteItem> favoriteItems;
 

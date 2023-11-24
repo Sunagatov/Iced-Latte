@@ -35,7 +35,7 @@ public class FavoriteItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "favorite_id", nullable = false, referencedColumnName = "id")
-    private Favorite favorite;
+    private FavoriteList favoriteList;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)

@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: "Iced Latte Shopping Cart API"
+  title: "Iced Latte Favorite List API"
   description: "API allows users to save and receive favorites items."
   version: "1.0.0"
   contact:
@@ -17,34 +17,7 @@ tags:
     description: "Operations related to favorites items"
 
 paths:
-  /api/v1/favorite/{productId}:
-    post:
-      tags:
-        - "Favorite Products"
-      summary: "Add a new favorite product"
-      operationId: "addNewProductToFavorite"
-      parameters:
-        - name: "productId"
-          in: "path"
-          required: true
-          description: "Unique identifier of the product."
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "Favorite product added successfully."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FavoriteDto"
-        "400":
-          description: "Invalid input, object invalid."
-        "401":
-          description: "Unauthorized access."
-        "500":
-          description: "Internal server error."
-
+  /api/v1/favorites/{productId}:
     delete:
       tags:
         - "Favorite Products"
@@ -61,10 +34,6 @@ paths:
       responses:
         "200":
           description: "Favorite product removed successfully."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FavoriteDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -74,7 +43,7 @@ paths:
         "500":
           description: "Internal server error."
 
-  /api/v1/favorite:
+  /api/v1/favorites:
     get:
       tags:
         - "Favorite Products"
@@ -86,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOfFavoriteProducts"
+                $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "401":
           description: "Unauthorized access."
         "404":
@@ -94,7 +63,6 @@ paths:
         "500":
           description: "Internal server error."
 
-  /api/v1/favorite/batch:
     post:
       tags:
         - "Favorite Products"
@@ -113,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FavoriteDto"
+                $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -123,7 +91,7 @@ paths:
 
 components:
   schemas:
-    FavoriteDto:
+    FavoriteListDto:
       type: "object"
       properties:
         id:
@@ -168,3 +136,13 @@ components:
             format: uuid
       required:
         - productIds
+
+    ListOfFavoriteProductsDto:
+      type: object
+      properties:
+        productIds:
+          type: array
+          items:
+            $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+      required:
+        - productsDto

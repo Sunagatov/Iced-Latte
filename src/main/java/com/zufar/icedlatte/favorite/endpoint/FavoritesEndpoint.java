@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
-import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
+import com.zufar.icedlatte.openapi.favoriteList.api.FavoriteProductsApi;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = FavoriteEndpoint.FAVORITE_URL)
-public class FavoriteEndpoint implements FavoriteProductsApi {
+@RequestMapping(value = FavoritesEndpoint.FAVORITES_URL)
+public class FavoritesEndpoint implements FavoriteProductsApi {
 
-    public static final String FAVORITE_URL = "/api/v1/favorite";
+    public static final String FAVORITES_URL = "/api/v1/favorites";
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
 }

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS favorite_item
 
     CONSTRAINT fk_favorite
         FOREIGN KEY (favorite_id)
-            REFERENCES favorite (id)
+            REFERENCES favorite_list (id)
             ON DELETE CASCADE,
 
     CONSTRAINT fk_product
