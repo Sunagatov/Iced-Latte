@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.user.entity;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.favorite.entity.Favorite;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -59,14 +59,6 @@ public class UserEntity implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "favorite_product",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private Set<ProductInfo> favoriteProducts;
-
     @Override
     public String getUsername() {
         return email;
@@ -78,19 +70,6 @@ public class UserEntity implements UserDetails {
         }
         this.authorities.add(authority);
         authority.setUser(this);
-    }
-
-    public void addFavoriteProduct(ProductInfo product) {
-        if (this.favoriteProducts == null) {
-            this.favoriteProducts = new HashSet<>();
-        }
-        this.favoriteProducts.add(product);
-    }
-
-    public void removeFavoriteProduct(ProductInfo product) {
-        if (this.favoriteProducts != null) {
-            this.favoriteProducts.remove(product);
-        }
     }
 
     @Override

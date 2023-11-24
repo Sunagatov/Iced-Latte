@@ -32,4 +32,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/07.10.2023.part2.insert-login-attempts-table-data.sql
   - include:
-      file: db/changelog/version-1.0/19.11.2023.part1.create-favorite-product-table.sql
+      file: db/changelog/version-1.0/23.11.2023.part1.create-favorite-product-table.sql
+  - include:
+      file: db/changelog/version-1.0/23.11.2023.part2.create-favorite-product-item-table.sql
+  - include:
+      file: db/changelog/version-1.0/23.11.2023.part3.insert-favorite-data.sql
+  - include:
+      file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql

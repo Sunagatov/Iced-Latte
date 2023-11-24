@@ -99,11 +99,6 @@ components:
           format: "password"
         address:
           $ref: "#/components/schemas/AddressDto"
-        favoriteProducts:
-          type: "array"
-          uniqueItems: true
-          items:
-            $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
       required:
         - id
         - firstName
@@ -111,4 +106,3 @@ components:
         - email
         - password
         - address
-        - favoriteProducts
