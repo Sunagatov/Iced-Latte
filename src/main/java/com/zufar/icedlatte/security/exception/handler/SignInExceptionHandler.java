@@ -23,11 +23,20 @@ public class SignInExceptionHandler {
     private final ApiErrorResponseCreator apiErrorResponseCreator;
     private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
-    @ExceptionHandler({UserNotFoundException.class, UsernameNotFoundException.class})
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler({UserNotFoundException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle user not found exception: failed: message: {}, debugMessage: {}.",
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        log.error("Handle user not found exception: failed: message: {}, debugMessage: {}",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler({UsernameNotFoundException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        log.error("Handle user not found exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }
@@ -36,7 +45,7 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUserAccountLockedException(final UserAccountLockedException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.error("Handle user account locked exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle user account locked exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }
@@ -45,7 +54,7 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.error("Handle bad credentials exception: failed: message: {}, debugMessage: {}.",
+        log.error("Handle bad credentials exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }

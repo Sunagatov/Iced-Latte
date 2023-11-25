@@ -48,7 +48,7 @@ public class UserAuthenticationService {
 
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
-            throw new UsernameNotFoundException(String.format("User with the provided email='%s' does not exist", userEmail), exception);
+            throw new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
         }
         catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
