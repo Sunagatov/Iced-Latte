@@ -4,21 +4,13 @@ import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
-import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
-import com.zufar.icedlatte.user.api.SingleUserProvider;
-import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
+import com.zufar.icedlatte.user.api.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -37,6 +29,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
     private final DeleteUserOperationPerformer deleteUserOperationPerformer;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final ConfirmUserEmailOperationPerformer confirmUserEmailOperationPerformer;
+    private final SendEmailToUserOperationPerformer sendEmailToUserOperationPerformer;
 
     @Override
     @GetMapping
@@ -84,7 +78,11 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping("/confirmation")
     public ResponseEntity<Void> postSendUserEmailConfirmation() {
-        userApi.sendEmailConfirmationToken(null);
+        var user = securityPrincipalProvider.get();
+        if (!user.getEmailConfirmed()) {
+            confirmUserEmailOperationPerformer.generateUserEmailConfirmationToken(user.getId());
+            sendEmailToUserOperationPerformer.sendUserEmailConfirmationEmail(user.getId());
+        }
         return ResponseEntity.ok().build();
     }
 }

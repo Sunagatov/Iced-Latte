@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
+import com.zufar.icedlatte.user.api.ConfirmUserEmailOperationPerformer;
+import com.zufar.icedlatte.user.api.SendEmailToUserOperationPerformer;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -28,6 +29,8 @@ public class UserRegistrationService {
     private final UserRepository userCrudRepository;
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
+    private final ConfirmUserEmailOperationPerformer confirmUserEmailOperationPerformer;
+    private final SendEmailToUserOperationPerformer sendEmailToUserOperationPerformer;
 
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.password());
@@ -44,13 +47,14 @@ public class UserRegistrationService {
         UserEntity userEntity = userCrudRepository.save(newUserEntity);
 
         final String jwtToken = jwtTokenProvider.generateToken(userEntity);
-        userApi.sendEmailConfirmationToken(userDtoWithId.getId());
+        confirmUserEmailOperationPerformer.generateUserEmailConfirmationToken(userEntity.getId());
+        sendEmailToUserOperationPerformer.sendUserEmailConfirmationEmail(userEntity.getId());
         return new UserRegistrationResponse(jwtToken);
     }
 
     public void confirmRegistrationEmail(final String token) {
         log.info("Received email confirmation request for token {}.", token);
-        userApi.confirmUserEmail(token);
+        confirmUserEmailOperationPerformer.confirmUserEmail(token);
         log.info("Token {} was validated.", token);
     }
 }
