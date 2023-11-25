@@ -25,9 +25,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    public static final String SHOPPING_CART_URL = "/api/v1/cart/**";
-    public static final String PAYMENT_URL = "/api/v1/payment/**";
-    public static final String USERS_URL = "/api/v1/users/**";
+    private static final String SHOPPING_CART_URL = "/api/v1/cart/**";
+    private static final String PAYMENT_URL = "/api/v1/payment/**";
+    private static final String USERS_URL = "/api/v1/users/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -47,23 +47,22 @@ public class SpringSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService) {
+    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService,
+                                                         final PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setHideUserNotFoundExceptions(false);
         return authenticationProvider;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
-                                                       final PasswordEncoder passwordEncoder,
-                                                       final UserDetailsService userDetailService) throws Exception {
+                                                       final AuthenticationProvider authenticationProvider) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity
                 .getSharedObject(AuthenticationManagerBuilder.class);
 
-        authenticationManagerBuilder
-                .userDetailsService(userDetailService)
-                .passwordEncoder(passwordEncoder);
+        authenticationManagerBuilder.authenticationProvider(authenticationProvider);
 
         return authenticationManagerBuilder
                 .build();
