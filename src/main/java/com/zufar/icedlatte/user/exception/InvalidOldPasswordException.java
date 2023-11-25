@@ -9,8 +9,8 @@ public class InvalidOldPasswordException extends RuntimeException {
 
     private final String userName;
 
-    public InvalidOldPasswordException(UUID userId) {
-        super(String.format("User with id = %s provided incorrect password.", userId));
+    public InvalidOldPasswordException(String userEmail) {
+        super(String.format("User with userEmail = %s provided incorrect password.", userEmail));
         this.userName = null;
     }
 }

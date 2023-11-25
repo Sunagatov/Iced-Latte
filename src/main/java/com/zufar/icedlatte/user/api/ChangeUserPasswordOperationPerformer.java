@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -26,14 +27,16 @@ public class ChangeUserPasswordOperationPerformer {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void changeUserPassword(final ChangeUserPasswordRequest changeUserPasswordRequest) throws InvalidOldPasswordException {
-        UUID userId = securityPrincipalProvider.getUserId();
+        UserDto userDto = securityPrincipalProvider.get();
+        UUID userId = userDto.getId();
+        String userEmail = userDto.getEmail();
 
         String oldPasswordFromRequest = changeUserPasswordRequest.getOldPassword();
         String oldPasswordInDatabase = singleUserProvider.getUserEntityById(userId).getPassword();
 
         if (!passwordEncoder.matches(oldPasswordFromRequest, oldPasswordInDatabase)) {
             log.error("User with id = {} provided incorrect password.", userId);
-            throw new InvalidOldPasswordException(userId);
+            throw new InvalidOldPasswordException(userEmail);
         }
 
         String newPassword = changeUserPasswordRequest.getNewPassword();
