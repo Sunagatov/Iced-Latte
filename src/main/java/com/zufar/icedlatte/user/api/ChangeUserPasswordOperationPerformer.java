@@ -35,7 +35,7 @@ public class ChangeUserPasswordOperationPerformer {
         String oldPasswordInDatabase = singleUserProvider.getUserEntityById(userId).getPassword();
 
         if (!passwordEncoder.matches(oldPasswordFromRequest, oldPasswordInDatabase)) {
-            log.error("User with id = {} provided incorrect password.", userId);
+            log.warn("User with id = {} provided incorrect password.", userId);
             throw new InvalidOldPasswordException(userEmail);
         }
 
