@@ -22,7 +22,7 @@ public class SingleUserProvider {
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(readOnly = true)
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
         return userCrudRepository.findById(userId)
                 .map(userDtoConverter::toDto)
@@ -32,7 +32,7 @@ public class SingleUserProvider {
                 });
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(readOnly = true)
     public UserEntity getUserEntityById(final UUID userId) throws UserNotFoundException {
         return userCrudRepository.findById(userId)
                 .orElseThrow(() -> {
