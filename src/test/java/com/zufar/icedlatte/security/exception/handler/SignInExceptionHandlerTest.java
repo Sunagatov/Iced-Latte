@@ -7,6 +7,7 @@ import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -36,18 +37,18 @@ class SignInExceptionHandlerTest {
     private SignInExceptionHandler signInExceptionHandler;
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when UserNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithNotFoundStatusWhenUserNotFoundExceptionThrown() {
+    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UserNotFoundException is thrown")
+    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserNotFoundExceptionThrown() {
         UUID userId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
         UserNotFoundException exception = new UserNotFoundException(userId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
                 "User with id = " + userId + " is not found.",
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.UNAUTHORIZED.value(),
                 currentDateTime
         );
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
         when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = signInExceptionHandler.handleUserNotFoundException(exception);
@@ -56,7 +57,31 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.message(), actualResponse.message());
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
+    }
+
+    @Test
+    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UsernameNotFoundException is thrown")
+    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUsernameNotFoundExceptionThrown() {
+        UsernameNotFoundException exception = new UsernameNotFoundException("Username not found");
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "Username not found",
+                HttpStatus.UNAUTHORIZED.value(),
+                currentDateTime
+        );
+
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
+
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleUsernameNotFoundException(exception);
+
+        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
+        assertEquals(expectedResponse.message(), actualResponse.message());
+        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
         verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 

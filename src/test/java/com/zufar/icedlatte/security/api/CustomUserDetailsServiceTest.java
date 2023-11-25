@@ -81,7 +81,7 @@ class CustomUserDetailsServiceTest {
                 "Expected UsernameNotFoundException to be thrown"
         );
 
-        assertEquals("User with the email = '" + userEmail + "' does not exist", thrown.getMessage());
+        assertEquals("Invalid credentials for user's account with email = '" + userEmail + "'", thrown.getMessage());
         verify(userRepository, times(1)).findByEmail(userEmail);
     }
 }
