@@ -30,7 +30,17 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     /**
      * Updates the locked status of a user based on the given email.
      *
-     * @param email The email of the user.
+     * @param newPassword The new password of the user.
+     * @param userId      The id of the user.
+     */
+    @Modifying
+    @Query(value = "UPDATE UserEntity u SET u.password = :newPassword WHERE u.id = :userId")
+    void changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
+
+    /**
+     * Updates the locked status of a user based on the given email.
+     *
+     * @param email         The email of the user.
      * @param accountLocked The new locked status to set.
      */
     @Modifying

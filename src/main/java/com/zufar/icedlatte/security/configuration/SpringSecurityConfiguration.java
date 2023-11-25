@@ -25,13 +25,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final String API_DOCS_URL = "/api/docs/**";
-    private static final String ACTUATOR_ENDPOINTS_URL = "/actuator/**";
-    private static final String WEBHOOK_PAYMENT_EVENT_URL = "/api/v1/payment/event";
-    private static final String PRODUCTS_API_URL = "/api/v1/products/**";
-    public static final String REGISTRATION_URL = "/api/v1/auth/register";
-    public static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
-    private static final String EMAIL_CONFIRMATION_URL = "/api/v1/auth/confirmation/**";
+    private static final String SHOPPING_CART_URL = "/api/v1/cart/**";
+    private static final String PAYMENT_URL = "/api/v1/payment/**";
+    private static final String USERS_URL = "/api/v1/users/**";
 
 
     @Bean
@@ -41,16 +37,10 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(
-                                        REGISTRATION_URL,
-                                        AUTHENTICATION_URL,
-                                        WEBHOOK_PAYMENT_EVENT_URL,
-                                        PRODUCTS_API_URL,
-                                        API_DOCS_URL,
-                                        ACTUATOR_ENDPOINTS_URL,
-                                        EMAIL_CONFIRMATION_URL
-                                ).permitAll()
-                                .anyRequest().authenticated()
+                                .requestMatchers(SHOPPING_CART_URL).authenticated()
+                                .requestMatchers(PAYMENT_URL).authenticated()
+                                .requestMatchers(USERS_URL).authenticated()
+                                .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
@@ -58,23 +48,22 @@ public class SpringSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService) {
+    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService,
+                                                         final PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setHideUserNotFoundExceptions(false);
         return authenticationProvider;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
-                                                       final PasswordEncoder passwordEncoder,
-                                                       final UserDetailsService userDetailService) throws Exception {
+                                                       final AuthenticationProvider authenticationProvider) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity
                 .getSharedObject(AuthenticationManagerBuilder.class);
 
-        authenticationManagerBuilder
-                .userDetailsService(userDetailService)
-                .passwordEncoder(passwordEncoder);
+        authenticationManagerBuilder.authenticationProvider(authenticationProvider);
 
         return authenticationManagerBuilder
                 .build();

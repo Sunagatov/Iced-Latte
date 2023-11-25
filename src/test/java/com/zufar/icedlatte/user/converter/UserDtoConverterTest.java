@@ -50,22 +50,4 @@ class UserDtoConverterTest {
         assertEquals(entity.getAddress().getCity(), dto.getAddress().getCity());
         assertEquals(entity.getAddress().getCountry(), dto.getAddress().getCountry());
     }
-
-    @Test
-    @DisplayName("toEntity should convert UserDto to UserEntity with complete user information")
-    void toEntityShouldConvertUserDtoToUserEntityWithCompleteUserInformation() {
-        UserDto dto = UserDtoTestStub.createUserDto();
-        UserEntity entity = userDtoConverter.toEntity(dto);
-
-        assertEquals(dto.getId(), entity.getId());
-        assertEquals(dto.getFirstName(), entity.getFirstName());
-        assertEquals(dto.getLastName(), entity.getLastName());
-        assertEquals(dto.getBirthDate(), entity.getBirthDate());
-        assertEquals(dto.getPhoneNumber(), entity.getPhoneNumber());
-        assertEquals(dto.getEmail(), entity.getEmail());
-        assertEquals(dto.getStripeCustomerToken(), entity.getStripeCustomerToken());
-        assertEquals(dto.getAddress().getLine(), entity.getAddress().getLine());
-        assertEquals(dto.getAddress().getCity(), entity.getAddress().getCity());
-        assertEquals(dto.getAddress().getCountry(), entity.getAddress().getCountry());
-    }
 }

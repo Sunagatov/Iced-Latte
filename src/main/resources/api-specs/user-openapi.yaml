@@ -2,7 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte User API"
-  description: "API for accessing user profiles and related operations in the Iced-Latte platform."
+  description: "API for accessing user profiles and related operations in the Iced-Latte platform"
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -17,40 +17,109 @@ tags:
     description: "Operations related to user profiles"
 
 paths:
-  /api/v1/users/{userId}:
+  /api/v1/users:
+
     get:
       tags:
         - "User"
       summary: "Get an user by its ID"
-      description: "Get a detailed user profile for the given user ID."
+      description: "Fetches an user's details"
       operationId: "getUserById"
-      parameters:
-        - name: "userId"
-          in: "path"
-          description: "Unique identifier of an user."
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-          examples:
-            default:
-              summary: "an example of an userId"
-              value: "123e4567-e89b-12d3-a456-426614174000"
       responses:
         "200":
-          description: "A user object containing detailed user information."
+          description: "A user object containing detailed user information"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserDto"
-        "404":
-          description: "User not found."
         "400":
-          description: "Invalid userId provided."
+          description: "Invalid userId provided"
         "401":
-          description: "Unauthorized access. Authentication required."
+          description: "Unauthorized access. Authentication required"
+        "404":
+          description: "User not found"
         "500":
-          description: "Internal Server Error."
+          description: "Internal Server Error"
+
+    put:
+      tags:
+        - "User"
+      summary: "Edit an user's details by its ID"
+      description: "Edit a user's details for the given user ID"
+      operationId: "editUserById"
+      requestBody:
+        description: "Payload containing updated user's details"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserAccountRequest"
+            examples:
+              update-multiple:
+                summary: "Edit an user's details"
+                value: { "firstName": "John", "lastName": "Doe", "email": "johndoe@example.com" }
+      responses:
+        "200":
+          description: "An updated user object containing detailed user information"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "400":
+          description: "Invalid userId provided"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Internal Server Error"
+
+    patch:
+      tags:
+        - "User"
+      summary: "Change a user's password"
+      description: "Change the password for a user"
+      operationId: "ChangeUserPassword"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUserPasswordRequest"
+      responses:
+        "200":
+          description: "Password changed successfully"
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              examples:
+                invalidPassword:
+                  value: { "message": "Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&" }
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Internal Server Error"
+
+    delete:
+      tags:
+        - "User"
+      summary: "Delete an user by its ID"
+      description: "Delete a user profile for the given user ID"
+      operationId: "deleteUserById"
+      responses:
+        "200":
+          description: "An information about successful deletion of the user by given the userId"
+        "404":
+          description: "User not found"
+        "400":
+          description: "Invalid userId provided"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
 
   /api/v1/users/confirmation:
     post:
@@ -64,9 +133,48 @@ paths:
 
 components:
   schemas:
+    UpdateUserAccountRequest:
+      type: "object"
+      description: "A user profile object details to update"
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: "string"
+          description: "The first name of the user"
+        lastName:
+          type: "string"
+          description: "The last name of the user"
+        birthDate:
+          type: "string"
+          description: "The birth date of the user"
+          format: date
+        phoneNumber:
+          type: "string"
+          description: "The phone number of the user"
+        address:
+          $ref: "#/components/schemas/AddressDto"
+
+    ChangeUserPasswordRequest:
+      type: "object"
+      description: "Payload for changing user password"
+      required:
+        - newPassword
+        - oldPassword
+      properties:
+        newPassword:
+          type: "string"
+          description: "The new password for the user. Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&"
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+        oldPassword:
+          type: "string"
+          description: "The current password for the user. Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&"
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+
     UserDto:
       type: "object"
-      description: "A user profile in the Iced-Latte system."
+      description: "A user profile in the Iced-Latte system"
       required:
         - firstName
         - lastName
@@ -75,26 +183,30 @@ components:
         id:
           type: "string"
           format: "uuid"
-          description: "The unique identifier for the user."
+          description: "The unique identifier for the user"
         firstName:
           type: "string"
-          description: "The first name of the user."
+          minLength: 2
+          maxLength: 128
+          description: "The first name of the user. First name should have a length between 2 and 128 characters"
         lastName:
           type: "string"
-          description: "The last name of the user."
+          minLength: 2
+          maxLength: 128
+          description: "The last name of the user. Last name should have a length between 2 and 128 characters"
         birthDate:
           type: "string"
-          description: "The birth date of the user."
+          description: "The birth date of the user"
           format: date
         phoneNumber:
           type: "string"
-          description: "The phone number of the user."
+          description: "The phone number of the user"
         stripeCustomerToken:
           type: "string"
-          description: "The Stripe customer token associated with the user."
+          description: "The Stripe customer token associated with the user"
         email:
           type: "string"
-          description: "The email address of the user."
+          description: "The email address of the user"
           format: "email"
         emailConfirmed:
           type: "boolean"
@@ -111,11 +223,23 @@ components:
       properties:
         country:
           type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Country should have a length between 2 and 128 characters"
         city:
           type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "City should have a length between 2 and 128 characters"
         line:
           type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Line should have a length between 2 and 128 characters"
         postcode:
           type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Postcode should have a length between 2 and 128 characters"
 
 

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.converter;
 
+import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.mapstruct.Mapper;
@@ -12,6 +13,6 @@ public interface UserDtoConverter {
     @Mapping(target = "address", source = "entity.address", qualifiedByName = "toAddressDto")
     UserDto toDto(final UserEntity entity);
 
-    @Mapping(target = "address", source = "dto.address", qualifiedByName = "toAddress")
-    UserEntity toEntity(final UserDto dto);
+    @Mapping(target = "address", source = "updateUserAccountRequest.address", qualifiedByName = "toAddress")
+    UserEntity toEntity(final UpdateUserAccountRequest updateUserAccountRequest);
 }
