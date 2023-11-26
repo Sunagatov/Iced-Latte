@@ -7,6 +7,9 @@ networks:
 
 volumes:
   pgdata:
+  prometheus_data:
+  grafana_data:
+  nginx_conf:
 
 services:
   iced-latte-backend:
@@ -23,8 +26,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.local
-    ports:
-      - '8083:8083'
     networks:
       - iced-latte-network
     depends_on:
@@ -38,8 +39,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=testdb
-    ports:
-      - '5432:5432'
     networks:
       - iced-latte-network
     volumes:
@@ -49,4 +48,45 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: on-failure
+
+  iced-latte-prometheus:
+    image: prom/prometheus:v2.33.3
+    container_name: iced-latte-prometheus
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - iced-latte-network
+    restart: on-failure
+
+  iced-latte-grafana:
+    image: grafana/grafana:9.1.5
+    container_name: iced-latte-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SERVER_ROOT_URL=http://localhost/grafana/
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+    networks:
+      - iced-latte-network
+    depends_on:
+      - iced-latte-prometheus
+    restart: on-failure
+
+  iced-latte-nginx:
+    image: nginx:alpine
+    container_name: iced-latte-nginx
+    volumes:
+      - ./nginx_conf:/etc/nginx/conf.d:ro
+    ports:
+      - '80:80'
+    networks:
+      - iced-latte-network
+    depends_on:
+      - iced-latte-backend
+      - iced-latte-prometheus
+      - iced-latte-grafana
     restart: on-failure
