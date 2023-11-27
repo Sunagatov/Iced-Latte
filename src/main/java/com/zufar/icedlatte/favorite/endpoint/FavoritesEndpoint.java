@@ -29,14 +29,14 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
-    private final AddProductsToFavoriteList addProductsToFavoriteList;
+    private final AddProductsToFavoriteList addProductsToFavoriteListHelper;
 
     @Override
     @PostMapping
     public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@RequestBody final ListOfFavoriteProducts request) {
         UUID userId = securityPrincipalProvider.getUserId();
         log.warn("Received the request to add a list of favorite products for the user with id: {}", userId);
-        FavoriteListDto favoriteList = addProductsToFavoriteList.add(request, userId);
+        FavoriteListDto favoriteList = addProductsToFavoriteListHelper.add(request, userId);
         ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
         log.info("The list of favorite products for the user with id: {} was added successfully", userId);
         return ResponseEntity.ok()

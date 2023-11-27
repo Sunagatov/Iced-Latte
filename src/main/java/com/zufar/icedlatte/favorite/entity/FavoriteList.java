@@ -67,7 +67,7 @@ public class FavoriteList {
 
     @Override
     public String toString() {
-        return "FavoriteList{" +
+        return "FavoriteList {" +
                 "id=" + id +
                 ", user=" + user +
                 ", favoriteItems=" + favoriteItems +

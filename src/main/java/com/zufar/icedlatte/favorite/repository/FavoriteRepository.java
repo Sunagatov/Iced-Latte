@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface FavoriteRepository extends JpaRepository<FavoriteList, UUID> {
+
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"favoriteItems", "favoriteItems.favoriteList"})
     Optional<FavoriteList> findByUserId(UUID userId);
 }
