@@ -91,40 +91,6 @@ paths:
 
 components:
   schemas:
-    FavoriteListDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        userId:
-          type: "string"
-          format: "uuid"
-        favoriteItems:
-          type: "array"
-          uniqueItems: true
-          items:
-            $ref: "#/components/schemas/FavoriteItemDto"
-        updatedAt:
-          type: "string"
-          format: "date-time"
-      required:
-        - id
-        - userId
-        - productIds
-        - updateAt
-
-    FavoriteItemDto:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        productInfo:
-          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
-      required:
-        - id
-        - productInfo
 
     ListOfFavoriteProducts:
       type: object
@@ -140,7 +106,7 @@ components:
     ListOfFavoriteProductsDto:
       type: object
       properties:
-        productIds:
+        products:
           type: array
           items:
             $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
