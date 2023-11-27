@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
-import com.zufar.icedlatte.openapi.favoriteList.api.FavoriteProductsApi;
+import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
