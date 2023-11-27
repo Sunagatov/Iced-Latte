@@ -1,0 +1,114 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Favorite List API"
+  description: "API allows users to save and receive favorites items."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+
+tags:
+  - name: "Favorite list"
+    description: "Operations related to favorites items"
+
+paths:
+  /api/v1/favorites/{productId}:
+    delete:
+      tags:
+        - "Favorite Products"
+      summary: "Remove a favorite product by ID"
+      operationId: "removeProductFromFavorite"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Favorite product removed successfully."
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Favorite product not found."
+        "500":
+          description: "Internal server error."
+
+  /api/v1/favorites:
+    get:
+      tags:
+        - "Favorite Products"
+      summary: "Get all favorite products for the authorized user"
+      operationId: "getListOfFavoriteProducts"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOfFavoriteProductsDto"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Favorite products list is empty."
+        "500":
+          description: "Internal server error."
+
+    post:
+      tags:
+        - "Favorite Products"
+      summary: "Add a list of favorite products"
+      operationId: "addListOfFavoriteProducts"
+      requestBody:
+        description: "Payload containing a list of product IDs to be added to favorites."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListOfFavoriteProducts"
+      responses:
+        "200":
+          description: "Favorite products added successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOfFavoriteProductsDto"
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
+
+components:
+  schemas:
+
+    ListOfFavoriteProducts:
+      type: object
+      properties:
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - productIds
+
+    ListOfFavoriteProductsDto:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+      required:
+        - productsDto
