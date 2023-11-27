@@ -15,15 +15,15 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.TemporalType;
 import jakarta.persistence.JoinColumn;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @Builder
@@ -52,10 +52,25 @@ public class FavoriteList {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public void addFavoriteProduct(FavoriteItem favoriteItem) {
-        if (this.favoriteItems == null) {
-            this.favoriteItems = ConcurrentHashMap.newKeySet();
-        }
-        this.favoriteItems.add(favoriteItem);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FavoriteList that = (FavoriteList) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "FavoriteList{" +
+                "id=" + id +
+                ", user=" + user +
+                ", favoriteItems=" + favoriteItems +
+                '}';
     }
 }

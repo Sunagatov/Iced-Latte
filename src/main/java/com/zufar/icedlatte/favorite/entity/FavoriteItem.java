@@ -1,4 +1,3 @@
-
 package com.zufar.icedlatte.favorite.entity;
 
 import com.zufar.icedlatte.product.entity.ProductInfo;
@@ -11,11 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Data
@@ -40,4 +38,27 @@ public class FavoriteItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private ProductInfo productInfo;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FavoriteItem that = (FavoriteItem) o;
+        return Objects.equals(favoriteList, that.favoriteList) && Objects.equals(productInfo, that.productInfo);
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(productInfo)
+                .toHashCode();    }
+
+    @Override
+    public String toString() {
+        return "FavoriteItem{" +
+                "id=" + id +
+                ", productInfo=" + productInfo +
+                '}';
+    }
 }
