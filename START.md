@@ -9,8 +9,7 @@ Ensure you have Docker Desktop installed.
 
 ## Configuration
 
-Before starting the application, set up the `.env.local` file with the necessary environment variables. Key variables include:
-
+Key variables which are used in the startup of the app. They are pre-configured for initial use, can be adjusted to tailor the app's startup settings.
 - `APP_PROFILE`: Application profile (e.g., `dev`)
 - `APP_VERSION`: Application version
 - `APP_SERVER_PORT`: Server port for the backend service
@@ -25,7 +24,7 @@ Before starting the application, set up the `.env.local` file with the necessary
 ### Running All Services with latest build
 To start the application containers with the latest build:
 ```bash
-docker-compose -f docker-compose.local.yml up -d --build
+docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb
 ```
 
 ### Running All Services

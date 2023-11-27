@@ -26,6 +26,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.local
+    ports:
+      - '8083:8083'
     networks:
       - iced-latte-network
     depends_on:
@@ -39,6 +41,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=testdb
+    ports:
+      - '5432:5432'
     networks:
       - iced-latte-network
     volumes:
