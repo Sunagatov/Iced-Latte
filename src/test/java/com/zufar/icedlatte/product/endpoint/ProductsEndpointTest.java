@@ -2,10 +2,12 @@ package com.zufar.icedlatte.product.endpoint;
 
 import com.zufar.icedlatte.product.util.PaginationAndSortingAttribute;
 import com.zufar.icedlatte.test.config.AbstractE2ETest;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled;
 import org.springframework.data.domain.Sort;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -31,6 +33,15 @@ class ProductsEndpointTest extends AbstractE2ETest {
     private static final String NAME_ATTRIBUTE = "name";
     private static final String EXPECTED_PRODUCT_NAME = "Nitro Coffee";
     private static final String PRODUCTS_PATH_TO_NAME = "products.name";
+
+    @BeforeEach
+    void setEndpointUrl() {
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(ProductsEndpoint.PRODUCTS_URL)
+                .accept(ContentType.JSON);
+    }
 
     @Test
     @DisplayName("Should retrieve product successfully by ID")
