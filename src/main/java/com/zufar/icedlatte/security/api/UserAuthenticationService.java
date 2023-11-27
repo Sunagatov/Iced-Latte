@@ -12,6 +12,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -45,13 +46,17 @@ public class UserAuthenticationService {
 
             return new UserAuthenticationResponse(jwtToken);
 
-        } catch (BadCredentialsException exception) {
-            log.error("Invalid credentials for user's account with email = '{}'", userEmail);
+        } catch (UsernameNotFoundException exception) {
+            log.warn("User with the provided email='{}' does not exist", userEmail, exception);
+            throw new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+        }
+        catch (BadCredentialsException exception) {
+            log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
             throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
 
         } catch (LockedException exception) {
-            log.error("User's account with email = '{}' is locked", userEmail);
+            log.warn("User's account with email = '{}' is locked", userEmail, exception);
             throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
 
         } catch (Exception exception) {

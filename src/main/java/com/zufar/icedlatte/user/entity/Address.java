@@ -28,14 +28,17 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID addressId;
 
-    @Column(name = "line", nullable = false)
-    private String line;
+    @Column(name = "country", nullable = false)
+    private String country;
 
     @Column(name = "city", nullable = false)
     private String city;
 
-    @Column(name = "country", nullable = false)
-    private String country;
+    @Column(name = "line", nullable = false)
+    private String line;
+
+    @Column(name = "postcode", nullable = false)
+    private String postcode;
 
     @Override
     public boolean equals(Object o) {

@@ -6,13 +6,13 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
   - include:
-      file: db/changelog/version-1.0/21.07.2023.part1.create-shopping-session-table.sql
+      file: db/changelog/version-1.0/21.07.2023.part1.create-shopping-cart-table.sql
   - include:
-      file: db/changelog/version-1.0/21.07.2023.part2.create-shopping-session-item-table.sql
+      file: db/changelog/version-1.0/21.07.2023.part2.create-shopping-cart-item-table.sql
   - include:
-      file: db/changelog/version-1.0/21.07.2023.part3.insert-shopping-session-data.sql
+      file: db/changelog/version-1.0/21.07.2023.part3.insert-shopping-cart-data.sql
   - include:
-      file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-session-item-data.sql
+      file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-cart-item-data.sql
   - include:
       file: db/changelog/version-1.0/22.07.2023.create-reservation-table.sql
   - include:
