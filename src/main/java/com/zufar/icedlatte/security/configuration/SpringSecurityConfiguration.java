@@ -35,6 +35,7 @@ public class SpringSecurityConfiguration {
                                 .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                                 .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
                                 .requestMatchers(SecurityConstants.USERS_URL).authenticated()
+                                .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
