@@ -61,7 +61,7 @@ management:
     port: ${server.port}
   endpoint:
     prometheus:
-      enabled: false
+      enabled: true
     shutdown:
       enabled: true
   endpoints:

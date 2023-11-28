@@ -25,10 +25,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final String SHOPPING_CART_URL = "/api/v1/cart/**";
-    private static final String PAYMENT_URL = "/api/v1/payment/**";
-    private static final String USERS_URL = "/api/v1/users/**";
-
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
@@ -36,9 +32,10 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(SHOPPING_CART_URL).authenticated()
-                                .requestMatchers(PAYMENT_URL).authenticated()
-                                .requestMatchers(USERS_URL).authenticated()
+                                .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
+                                .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
+                                .requestMatchers(SecurityConstants.USERS_URL).authenticated()
+                                .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

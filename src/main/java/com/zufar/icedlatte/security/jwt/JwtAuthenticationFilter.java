@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
@@ -14,6 +15,7 @@ import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -27,11 +29,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String REGISTRATION_URL = "/api/v1/auth/register";
-    private static final String OPEN_API_URL = "api/docs/schema";
-    private static final String SWAGGER_API_URL = "api/docs/swagger-ui";
-    private static final String AUTHENTICATION_URL = "/api/v1/auth/authenticate";
-    private static final String PRODUCTS_API_URL = "/api/v1/products/";
     private static final String MDC_USER_ID_KEY2VALUE = "user.id.key2value";
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
@@ -82,7 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return Stream.of(REGISTRATION_URL, OPEN_API_URL, SWAGGER_API_URL, AUTHENTICATION_URL, PRODUCTS_API_URL)
-                .anyMatch(urlPath -> request.getServletPath().contains(urlPath) || urlPath.contains(request.getServletPath()));
+        return !isSecuredUrl(request);
+    }
+
+    private boolean isSecuredUrl(HttpServletRequest request) {
+        return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
+                        SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL)
+                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }
