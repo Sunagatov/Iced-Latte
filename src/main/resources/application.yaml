@@ -43,6 +43,12 @@ spring:
 #
   config:
     import: optional:stripe.yaml
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
 
 #
 # Spring Doc Properties
@@ -64,6 +70,9 @@ management:
       enabled: true
     shutdown:
       enabled: true
+    health:
+      enabled: true
+      show-details: always
   endpoints:
     web:
       exposure:
@@ -75,6 +84,19 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+cloud:
+  aws:
+    region:
+      static: us-west-1
+    credentials:
+      access-key: minio
+      secret-key: minio123
+    stack:
+      auto: false
+    s3:
+      endpoint: http://iced-latte-minio:9000
+
 
 #
 # JWT Security Properties

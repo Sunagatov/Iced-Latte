@@ -101,6 +101,7 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
         <json-schema-validator.version>3.3.0</json-schema-validator.version>
+        <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
     </properties>
 
     <!-- Dependencies -->
@@ -120,6 +121,11 @@
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
             <version>${spring-retry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-aws</artifactId>
+            <version>${spring-cloud-starter-aws.version}</version>
         </dependency>
 
         <!-- Monitoring Dependencies -->
