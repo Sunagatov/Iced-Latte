@@ -56,7 +56,7 @@ docker-compose -f docker-compose.local.yml down
 ### Viewing Logs
 To view logs for a specific service:
 ```bash
-docker-compose -f docker-compose.local.yml logs [service-name]
+docker-compose -f docker-compose.local.yml logs [iced-latte-backend|iced-latte-postgresdb] [-f]
 ```
 
 ### Remove all volumes (including database data):
