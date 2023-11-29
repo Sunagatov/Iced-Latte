@@ -1,14 +1,12 @@
 package com.zufar.icedlatte.test.config;
 
-import com.zufar.icedlatte.user.entity.UserEntity;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jackson.JsonLoader;
+import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -18,6 +16,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static io.restassured.RestAssured.given;
 
 
 @ActiveProfiles("test")
@@ -37,7 +37,14 @@ public abstract class AbstractE2ETest {
     @Value("${jwt.expiration}")
     protected Long expiration;
 
+    @Value("${jwt.email}")
+    protected String email;
+
+    @Value("${jwt.password}")
+    protected String password;
     protected static String jwtToken = "";
+
+    private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate.json";
 
     @DynamicPropertySource
     static void dataSourceProperties(DynamicPropertyRegistry registry) {
@@ -46,18 +53,26 @@ public abstract class AbstractE2ETest {
 
     protected static RequestSpecification specification;
 
-    protected void generateJwtToken(){
-        UserEntity userDetails = new UserEntity();
-        userDetails.setEmail("john@example.com");
-        userDetails.setPassword("password123");
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        Key secretHmac = Keys.hmacShaKeyFor(keyBytes);
-        jwtToken = Jwts.builder()
-                .setClaims(new HashMap<>())
-                .setSubject(userDetails.getEmail())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(secretHmac, SignatureAlgorithm.HS256)
-                .compact();
+    protected String getRequestBody(String resourcePath) {
+        try {
+            JsonNode json = JsonLoader.fromResource(resourcePath);
+            return json.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void getJwtToken(){
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
+        String body = getRequestBody(AUTHENTICATE_TEMPLATE);
+        Response response = given(specification)
+                .body(body)
+                .post("/authenticate");
+        jwtToken = response.getBody().path("token");
     }
 }
