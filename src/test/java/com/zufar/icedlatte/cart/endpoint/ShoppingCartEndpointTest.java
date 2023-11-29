@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.cart.endpoint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.test.config.AbstractE2ETest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeAll;
+import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -20,15 +22,13 @@ import static io.restassured.RestAssured.given;
 class ShoppingCartEndpointTest extends AbstractE2ETest {
 
     private static final String SHOPPING_CART_SCHEMA_LOCATION = "cart/model/schema/cart-schema.json";
-
-    @BeforeAll
-    static void generate(){
-        generateJwtToken();
-    }
+    private static final String SHOPPING_CART_ADD_BODY_LOCATION = "/cart/model/cart-add-body.json";
+    private static final String SHOPPING_CART_UPDATE_BODY_LOCATION = "/cart/model/cart-update-body.json";
+    private static final String SHOPPING_CART_DELETE_BODY_LOCATION = "/cart/model/cart-delete-body.json";
 
     @BeforeEach
-    void specification() {
-        //String jwtToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huQGV4YW1wbGUuY29tIiwiaWF0IjoxNzAxMDc3NzkwLCJleHAiOjI3MDEwNzc3OTB9.y0JN0nTlObmrG9cql9m6n9oJJCx-AvppQVwyvhRxNzk";
+    void tokenAndSpecification() {
+        generateJwtToken();
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -36,6 +36,15 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
                 .basePath(CartEndpoint.CART_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
+    }
+
+    private String getRequestBody(String resourcePath) {
+        try {
+            JsonNode json = JsonLoader.fromResource(resourcePath);
+            return json.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -51,15 +60,7 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @DisplayName("Should add shopping cart successfully")
     void shouldAddItemFromShoppingCart() {
 
-        String body = """
-                {
-                  "items": [
-                    {
-                      "productId": "9ed30979-1da4-40c2-87e3-5c498ea070ab",
-                      "productQuantity": 1
-                    }
-                  ]
-                }""";
+        String body = getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION);
 
         Response response = given(specification)
                 .body(body)
@@ -72,11 +73,7 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @DisplayName("Should update shopping cart successfully")
     void shouldUpdateItemFromShoppingCart() {
 
-        String body = """
-                {
-                  "shoppingCartItemId": "9ed30979-1da4-40c2-87e3-5c498ea070ab",
-                  "productQuantityChange": 4
-                }""";
+        String body = getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION);
 
         Response response = given(specification)
                 .body(body)
@@ -89,12 +86,7 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @DisplayName("Should delete shopping cart successfully")
     void shouldDeleteItemFromShoppingCart() {
 
-        String body = """
-                {
-                  "shoppingCartItemIds": [
-                    "9ed30979-1da4-40c2-87e3-5c498ea070ab"
-                  ]
-                }""";
+        String body = getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION);
 
         Response response = given(specification)
                 .body(body)

@@ -9,6 +9,7 @@ import io.restassured.specification.RequestSpecification;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -30,9 +31,11 @@ public abstract class AbstractE2ETest {
     @LocalServerPort
     protected Integer port;
 
-    protected static String secretKey = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    @Value("${jwt.secret}")
+    protected String secretKey;
 
-    protected static Long expiration = 1800000L;
+    @Value("${jwt.expiration}")
+    protected Long expiration;
 
     protected static String jwtToken = "";
 
@@ -43,7 +46,7 @@ public abstract class AbstractE2ETest {
 
     protected static RequestSpecification specification;
 
-    protected static void generateJwtToken(){
+    protected void generateJwtToken(){
         UserEntity userDetails = new UserEntity();
         userDetails.setEmail("john@example.com");
         userDetails.setPassword("password123");
