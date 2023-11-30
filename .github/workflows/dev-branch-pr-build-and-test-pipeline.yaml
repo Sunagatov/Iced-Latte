@@ -6,6 +6,51 @@ on:
       - development
 
 jobs:
+  sonarqube:
+    name: SonarQube Job
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: SonarQube Analysis
+        env:
+          SONAR_TOKEN: sqa_414079a5c5ae09a2de465b9b3502677cd43ec61d
+          SONAR_HOST_URL: http://31.132.209.218:63535/
+        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: sqa_414079a5c5ae09a2de465b9b3502677cd43ec61d
+          SONAR_HOST_URL: http://31.132.209.218:63535/
+        with:
+          scanMetadataReportFile: target/sonar/report-task.txt
+
   build:
     name: Build Job
     runs-on: ubuntu-latest
