@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
 import com.zufar.icedlatte.favorite.api.AddProductsToFavoriteList;
+import com.zufar.icedlatte.favorite.api.DeleteProductsFromFavoriteList;
+import com.zufar.icedlatte.favorite.api.GetFavoritesProductsByUserId;
 import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
@@ -11,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -30,6 +29,8 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
     private final AddProductsToFavoriteList addProductsToFavoriteListHelper;
+    private final GetFavoritesProductsByUserId getFavoritesProductsByUserId;
+    private final DeleteProductsFromFavoriteList deleteProductsFromFavoriteListHelper;
 
     @Override
     @PostMapping
@@ -41,5 +42,28 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
         log.info("The list of favorite products for the user with id: {} was added successfully", userId);
         return ResponseEntity.ok()
                 .body(listOfFavoriteProductsDto);
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.warn("Received the request to get a list of favorite products for the user with id: {}", userId);
+        FavoriteListDto favoriteList = getFavoritesProductsByUserId.get(userId);
+        ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
+        log.info("The list of favorite products for the user with id: {} was retrieved successfully", userId);
+        return ResponseEntity.ok()
+                .body(listOfFavoriteProductsDto);
+    }
+
+    @Override
+    @DeleteMapping(value = "/{productId}")
+    public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.warn("Received the request to delete a product from favorite list for the user with id: {}", userId);
+        deleteProductsFromFavoriteListHelper.delete(productId, userId);
+        log.info("The product of favorite list for the user with id: {} was deleted successfully", userId);
+        return ResponseEntity.ok()
+                .build();
     }
 }
