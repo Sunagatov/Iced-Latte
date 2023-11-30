@@ -82,4 +82,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     public void EWmethod() {}
+
+    public void EWmethod2() {}
 }
