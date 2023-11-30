@@ -58,4 +58,15 @@ public class FavoriteList {
         }
         this.favoriteItems.add(favoriteItem);
     }
+
+    public boolean containsFavoriteItem(UUID favoriteItemId) {
+        return this.favoriteItems != null &&
+                this.favoriteItems.stream().anyMatch(item -> item.getId().equals(favoriteItemId));
+    }
+
+    public void removeFavoriteItemById(UUID favoriteItemId) {
+        if (this.favoriteItems != null) {
+            this.favoriteItems.removeIf(item -> item.getId().equals(favoriteItemId));
+        }
+    }
 }
