@@ -80,4 +80,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
+
+    public void EWmethod() {}
 }
