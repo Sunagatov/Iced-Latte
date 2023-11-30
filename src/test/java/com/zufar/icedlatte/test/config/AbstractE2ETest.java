@@ -44,7 +44,7 @@ public abstract class AbstractE2ETest {
     protected String password;
     protected static String jwtToken = "";
 
-    private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate.json";
+    private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate-template.json";
 
     @DynamicPropertySource
     static void dataSourceProperties(DynamicPropertyRegistry registry) {
@@ -69,7 +69,7 @@ public abstract class AbstractE2ETest {
                 .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
-        String body = getRequestBody(AUTHENTICATE_TEMPLATE);
+        String body = getRequestBody(AUTHENTICATE_TEMPLATE).formatted(email, password);
         Response response = given(specification)
                 .body(body)
                 .post("/authenticate");
