@@ -94,3 +94,12 @@ services:
       - iced-latte-prometheus
       - iced-latte-grafana
     restart: on-failure
+
+  iced-latte-redis:
+    image: redis/redis-stack:latest
+    container_name: iced-latte-redis
+    environment:
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6380
+    ports:
+      - "6380:6380"

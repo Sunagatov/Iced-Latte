@@ -18,13 +18,15 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `DATASOURCE_NAME`: Database name
 - `DATASOURCE_USERNAME`: Database username
 - `DATASOURCE_PASSWORD`: Database password
+- `REDIS_HOST`: Redis host
+- `REDIS_Port`: Redis port
 
 ## Starting the Application
 
 ### Running All Services with latest build
 To start the application containers with the latest build:
 ```bash
-docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb
+docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb iced-latte-redis
 ```
 
 ### Running All Services
