@@ -6,6 +6,23 @@ on:
       - development
 
 jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run SonarQube Server
+        run: docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p 9000:9000 sonarqube:latest
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ curl -s -d "login=admin&name=github" -u admin:admin http://localhost:9000/api/user_tokens/generate | grep -Pio '(?<="token":")[^"]*' }}
+          SONAR_HOST_URL: localhost
+
   build:
     name: Build Job
     runs-on: ubuntu-latest
