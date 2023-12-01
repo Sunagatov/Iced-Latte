@@ -54,6 +54,7 @@ public class FavoriteProductAdderTest {
     void shouldAddProductsToFavoriteListReturningFavoriteList() {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
+        UUID favoriteListId = UUID.randomUUID();
 
         ProductInfo productInfo = new ProductInfo();
         productInfo.setProductId(productId);
@@ -74,7 +75,8 @@ public class FavoriteProductAdderTest {
         FavoriteListEntity addedFavoriteList = new FavoriteListEntity();
         addedFavoriteList.setFavoriteItems(Set.of(favoriteItem));
 
-        FavoriteListDto expectedFavoriteListDto = new FavoriteListDto(UUID.randomUUID(),
+        FavoriteListDto expectedFavoriteListDto = new FavoriteListDto(
+                favoriteListId,
                 userId,
                 Set.of(favoriteItemDto),
                 OffsetDateTime.now());
