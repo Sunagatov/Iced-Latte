@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.favorite.converter;
 
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
-import com.zufar.icedlatte.favorite.entity.FavoriteList;
+import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
@@ -14,5 +14,5 @@ public interface FavoriteListDtoConverter {
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "favoriteItems", source = "favoriteItems", qualifiedByName = "toSetFavoriteItemDto")
-    FavoriteListDto toDto(final FavoriteList favoriteList);
+    FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity);
 }

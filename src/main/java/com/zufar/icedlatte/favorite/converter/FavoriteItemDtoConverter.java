@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.favorite.converter;
 
 import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
-import com.zufar.icedlatte.favorite.entity.FavoriteItem;
+import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -17,8 +17,8 @@ import java.util.Set;
 public interface FavoriteItemDtoConverter {
 
     @Mapping(target = "productInfo", source = "productInfo", qualifiedByName = "toProductInfoDto")
-    FavoriteItemDto toDto(final FavoriteItem favoriteItem);
+    FavoriteItemDto toDto(final FavoriteItemEntity favoriteItemEntity);
 
     @Named("toSetFavoriteItemDto")
-    Set<FavoriteItemDto> toSetDto(final Set<FavoriteItem> favoriteItems);
+    Set<FavoriteItemDto> toSetDto(final Set<FavoriteItemEntity> favoriteItemEntities);
 }
