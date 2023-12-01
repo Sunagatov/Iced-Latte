@@ -31,7 +31,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "favorite_list")
-public class FavoriteList {
+public class FavoriteListEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -41,11 +41,11 @@ public class FavoriteList {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @OneToMany(mappedBy = "favoriteList",
+    @OneToMany(mappedBy = "favoriteListEntity",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE,
                     CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
             orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<FavoriteItem> favoriteItems;
+    private Set<FavoriteItemEntity> favoriteItems;
 
     @UpdateTimestamp
     @Temporal(TemporalType.TIMESTAMP)
@@ -56,7 +56,7 @@ public class FavoriteList {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        FavoriteList that = (FavoriteList) o;
+        FavoriteListEntity that = (FavoriteListEntity) o;
         return Objects.equals(id, that.id);
     }
 
