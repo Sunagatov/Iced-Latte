@@ -41,9 +41,10 @@ spring:
   #
   # Redis
   #
-  redis:
-    host: ${REDIS_HOST}
-    port: ${REDIS_PORT}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 #
 # Stripe Api Properties
@@ -84,6 +85,9 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  health:
+    redis:
+      enabled: false
 
 #
 # JWT Security Properties

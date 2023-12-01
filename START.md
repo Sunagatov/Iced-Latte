@@ -26,7 +26,7 @@ Key variables which are used in the startup of the app. They are pre-configured 
 ### Running All Services with latest build
 To start the application containers with the latest build:
 ```bash
-docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb iced-latte-redis
+docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb
 ```
 
 ### Running All Services
