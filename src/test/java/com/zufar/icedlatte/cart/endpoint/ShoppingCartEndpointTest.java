@@ -4,7 +4,6 @@ import com.zufar.icedlatte.test.config.AbstractE2ETest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -15,7 +14,6 @@ import static io.restassured.RestAssured.given;
 
 
 @Testcontainers
-@Disabled("Disabled as while the issue 'ContainerFetch Can't get Docker image: RemoteDockerImag...' was not fixed.")
 @DisplayName("ShoppingCartEndpointTest Tests")
 class ShoppingCartEndpointTest extends AbstractE2ETest {
 
