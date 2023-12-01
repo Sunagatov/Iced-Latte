@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.favorite.api;
 
-import com.zufar.icedlatte.favorite.entity.FavoriteItem;
-import com.zufar.icedlatte.favorite.entity.FavoriteList;
+import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
+import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,13 +20,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class DeleteProductsFromFavoriteListTest {
+public class FavoriteProductDeleterTest {
 
     @InjectMocks
-    private DeleteProductsFromFavoriteList deleteProductsFromFavoriteList;
+    private FavoriteProductDeleter favoriteProductDeleter;
 
     @Mock
-    private GetFavoriteList getFavoriteList;
+    private FavoriteListProvider favoriteListProvider;
 
     @Test
     @DisplayName("Should delete products from favorite list")
@@ -37,16 +37,16 @@ public class DeleteProductsFromFavoriteListTest {
         ProductInfo productInfo = new ProductInfo();
         productInfo.setProductId(productId);
 
-        FavoriteItem favoriteItem = new FavoriteItem();
+        FavoriteItemEntity favoriteItem = new FavoriteItemEntity();
         favoriteItem.setProductInfo(productInfo);
 
-        FavoriteList favoriteList = new FavoriteList();
+        FavoriteListEntity favoriteList = new FavoriteListEntity();
         favoriteList.setFavoriteItems(new HashSet<>(Set.of(favoriteItem)));
 
-        when(getFavoriteList.getEntityFavoriteList(userId)).thenReturn(favoriteList);
+        when(favoriteListProvider.getFavoriteListEntity(userId)).thenReturn(favoriteList);
 
-        assertDoesNotThrow(() -> deleteProductsFromFavoriteList.delete(productId, userId));
+        assertDoesNotThrow(() -> favoriteProductDeleter.delete(productId, userId));
 
-        verify(getFavoriteList, times(1)).getEntityFavoriteList(userId);
+        verify(favoriteListProvider, times(1)).getFavoriteListEntity(userId);
     }
 }
