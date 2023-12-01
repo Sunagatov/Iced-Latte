@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.favorite.api;
 
-import com.zufar.icedlatte.favorite.entity.FavoriteList;
+import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -11,13 +11,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DeleteProductsFromFavoriteList {
+public class FavoriteProductDeleter {
 
-    private final GetFavoriteList getFavoriteList;
+    private final FavoriteListProvider favoriteListProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void delete(final UUID productId, final UUID userId) {
-        FavoriteList favoriteList = getFavoriteList.getEntityFavoriteList(userId);
-        favoriteList.getFavoriteItems().removeIf(item -> item.getProductInfo().getProductId().equals(productId));
+        FavoriteListEntity favoriteList = favoriteListProvider.getFavoriteListEntity(userId);
+        favoriteList.getFavoriteItems()
+                .removeIf(item -> item.getProductInfo().getProductId().equals(productId));
     }
 }
