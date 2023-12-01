@@ -5,7 +5,6 @@ import com.zufar.icedlatte.test.config.AbstractE2ETest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
@@ -22,7 +21,6 @@ import static io.restassured.RestAssured.given;
 
 
 @Testcontainers
-@Disabled
 @DisplayName("ProductsEndpoint Tests")
 class ProductsEndpointTest extends AbstractE2ETest {
 
