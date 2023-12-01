@@ -69,10 +69,14 @@ public abstract class AbstractE2ETest {
                 .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
-        String body = getRequestBody(AUTHENTICATE_TEMPLATE).formatted(email, password);
+
+        String body = getRequestBody(AUTHENTICATE_TEMPLATE)
+                .formatted(email, password);
+
         Response response = given(specification)
                 .body(body)
                 .post("/authenticate");
+
         jwtToken = response.getBody().path("token");
     }
 }

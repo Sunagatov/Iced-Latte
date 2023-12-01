@@ -38,16 +38,15 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @Test
     @DisplayName("Should retrieve shopping cart successfully")
     void shouldRetrieveShoppingCartSuccessfully() {
-
         Response response = given(specification)
                 .get();
+
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
     }
 
     @Test
     @DisplayName("Should add shopping cart successfully")
     void shouldAddItemFromShoppingCart() {
-
         String body = getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION);
 
         Response response = given(specification)
@@ -60,7 +59,6 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @Test
     @DisplayName("Should update shopping cart successfully")
     void shouldUpdateItemFromShoppingCart() {
-
         String body = getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION);
 
         Response response = given(specification)
@@ -73,7 +71,6 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @Test
     @DisplayName("Should update not found shopping cart successfully")
     void shouldUpdateNotFoundShoppingCart() {
-
         String body = getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION);
 
         Response response = given(specification)
@@ -86,7 +83,6 @@ class ShoppingCartEndpointTest extends AbstractE2ETest {
     @Test
     @DisplayName("Should delete shopping cart successfully")
     void shouldDeleteItemFromShoppingCart() {
-
         String body = getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION);
 
         Response response = given(specification)
