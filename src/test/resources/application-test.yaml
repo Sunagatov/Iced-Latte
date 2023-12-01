@@ -11,11 +11,32 @@ server:
 management:
   server:
     port: 8083
-spring:
-  datasource:
-    password: postgres
-    username: postgres
 
+spring:
+  #
+  # Database Properties
+  #
+  datasource:
+    host: iced-latte-postgresdb
+    port: 5432
+    name: testdb
+    username: postgres
+    password: postgres
+    url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.name}?serverTimezone=UTC
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-master.yaml
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    drop-first: true
+
+#
+# JWT Security Properties
+#
 jwt:
   header: Authorization
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

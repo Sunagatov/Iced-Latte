@@ -5,7 +5,6 @@ import com.zufar.icedlatte.test.config.AbstractE2ETest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
@@ -15,14 +14,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiForbiddenEmptyResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static io.restassured.RestAssured.given;
 
 
 @Testcontainers
-@Disabled("Disabled as while the issue 'ContainerFetch Can't get Docker image: RemoteDockerImag...' was not fixed.")
 @DisplayName("ProductsEndpoint Tests")
 class ProductsEndpointTest extends AbstractE2ETest {
 
@@ -94,7 +92,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
                 .queryParams(params)
                 .get();
 
-        assertRestApiForbiddenEmptyResponse(response);
+        assertRestApiBadRequestResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }
 
     @Test
