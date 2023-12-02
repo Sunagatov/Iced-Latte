@@ -10,6 +10,7 @@ env:
   DOCKER_CONTAINER_NAME: iced-latte-backend
   DOCKER_IMAGE_NAME: iced-latte-backend
   DOCKER_HUB_ACCOUNT_NAME: zufarexplainedit
+  ICED_LATTE_PATH_ON_THE_REMOTE_SERVER: /opt/project/Iced-Latte
   APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/Iced-Latte/Iced-Latte-Backend
 
 jobs:
@@ -63,7 +64,8 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIV_KEY }}
           envs: DOCKER_IMAGE_TAG
           script: |
-            cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
-            scp -P ${{ secrets.DEV_SSH_PORT }} .env ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
+            cd ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}  
+            git clone https://${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}:x-oauth-basic@github.com/Sunagatov/Vault.git
+            cp ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}/Vault/IcedLatte/Backend/.env ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/.env 
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
