@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
-public class FavoriteListProviderTest {
+class FavoriteListProviderTest {
 
     @InjectMocks
     private FavoriteListProvider favoriteListProvider;
@@ -40,7 +39,7 @@ public class FavoriteListProviderTest {
     @Mock
     private FavoriteListDtoConverter favoriteListDtoConverter;
 
-    private final OffsetDateTime beforeLaunchTime = OffsetDateTime.now().minus(1, ChronoUnit.SECONDS);
+    private final OffsetDateTime beforeLaunchTime = OffsetDateTime.now().minusSeconds(1);
 
     @Test
     @DisplayName("Should get favorite list if it exists")
@@ -48,7 +47,7 @@ public class FavoriteListProviderTest {
         UUID userId = UUID.randomUUID();
         FavoriteListEntity expectedFavoriteList = new FavoriteListEntity();
 
-        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.ofNullable(expectedFavoriteList));
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(expectedFavoriteList));
 
         FavoriteListEntity result = favoriteListProvider.getFavoriteListEntity(userId);
 

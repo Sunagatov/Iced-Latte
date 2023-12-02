@@ -30,7 +30,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
-public class FavoriteProductAdderTest {
+class FavoriteProductAdderTest {
+
     @InjectMocks
     private FavoriteProductAdder favoriteProductAdder;
 
@@ -47,7 +48,6 @@ public class FavoriteProductAdderTest {
     private FavoriteListDtoConverter favoriteListDtoConverter;
 
     private ListOfFavoriteProducts listOfFavoriteProducts = new ListOfFavoriteProducts();
-
 
     @Test
     @DisplayName("Should add products to favorite list returning favorite list")
