@@ -64,5 +64,6 @@ jobs:
           envs: DOCKER_IMAGE_TAG
           script: |
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
+            scp -P ${{ secrets.DEV_SSH_PORT }} .env ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
