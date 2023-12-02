@@ -67,5 +67,6 @@ jobs:
             cd ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}  
             git clone https://${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}:x-oauth-basic@github.com/Sunagatov/Vault.git
             cp ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}/Vault/IcedLatte/Backend/.env ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/.env 
+            cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}  
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
             docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
