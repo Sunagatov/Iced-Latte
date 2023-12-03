@@ -2,8 +2,6 @@ package com.zufar.icedlatte.user.exception;
 
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
 public class InvalidOldPasswordException extends RuntimeException {
 

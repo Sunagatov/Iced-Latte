@@ -54,26 +54,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(httpRequest, httpResponse);
 
         } catch (JwtTokenBlacklistedException exception) {
-            handleException(httpResponse, "JWT Token is blacklisted", exception);
+            handleException(httpResponse, "JWT Token is blacklisted", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (AbsentBearerHeaderException exception) {
-            handleException(httpResponse, "Bearer authentication header is absent", exception);
+            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (ExpiredJwtException exception) {
-            handleException(httpResponse, "Jwt token is expired", exception);
+            handleException(httpResponse, "Jwt token is expired", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (JwtTokenHasNoUserEmailException exception) {
-            handleException(httpResponse, "User email not found in jwtToken", exception);
+            handleException(httpResponse, "User email not found in jwtToken", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (UsernameNotFoundException exception) {
-            handleException(httpResponse, "User with the provided email does not exist", exception);
+            handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (Exception exception) {
-            handleException(httpResponse, "Internal server error", exception);
+            handleException(httpResponse, "Internal server error", exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
         finally {
             MDC.remove(MDC_USER_ID_KEY2VALUE);
         }
     }
 
-    private void handleException(HttpServletResponse httpResponse, String errorMessage, Exception exception) throws IOException {
+    private void handleException(HttpServletResponse httpResponse, 
+                                 String errorMessage, 
+                                 Exception exception,
+                                 int statusCode) throws IOException {
         log.error(errorMessage, exception);
-        httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        httpResponse.setStatus(statusCode);
         httpResponse.getWriter().write("{ \"message\": \"" + errorMessage + "\" }");
     }
 

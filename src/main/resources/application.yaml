@@ -38,6 +38,14 @@ spring:
     password: ${spring.datasource.password}
     drop-first: true
 
+  #
+  # Redis
+  #
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
 #
 # Stripe Api Properties
 #
@@ -54,6 +62,8 @@ spring:
 # Spring Doc Properties
 #
 springdoc:
+  packages-to-scan: com.zufar.icedlatte.cart,com.zufar.icedlatte.security,com.zufar.icedlatte.user,com.zufar.icedlatte.favorite
+  # product, payment - broken?
   api-docs:
     path: /api/docs/schema
   swagger-ui:
@@ -84,6 +94,9 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  health:
+    redis:
+      enabled: false
 
 cloud:
   aws:

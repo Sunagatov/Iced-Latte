@@ -25,7 +25,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "favorite_item")
-public class FavoriteItem {
+public class FavoriteItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,7 +36,7 @@ public class FavoriteItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "favorite_id", nullable = false, referencedColumnName = "id")
-    private FavoriteList favoriteList;
+    private FavoriteListEntity favoriteListEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
@@ -46,8 +46,8 @@ public class FavoriteItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        FavoriteItem that = (FavoriteItem) o;
-        return Objects.equals(favoriteList, that.favoriteList) && Objects.equals(productInfo, that.productInfo);
+        FavoriteItemEntity that = (FavoriteItemEntity) o;
+        return Objects.equals(favoriteListEntity, that.favoriteListEntity) && Objects.equals(productInfo, that.productInfo);
     }
 
     @Override

@@ -83,6 +83,9 @@
         <postgresql.version>42.6.0</postgresql.version>
         <liquibase.version>4.23.1</liquibase.version>
 
+        <!-- Redis Dependencies Versions -->
+        <spring-boot-starter-data-redis.version>3.2.0</spring-boot-starter-data-redis.version>
+
         <!-- Apache Maven Plugin Dependencies Versions -->
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -101,6 +104,7 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
         <json-schema-validator.version>3.3.0</json-schema-validator.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.2.0</springdoc-openapi-starter-webmvc-ui.version>
         <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
     </properties>
 
@@ -136,6 +140,11 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
         </dependency>
 
         <!-- Project Lombok -->
@@ -246,6 +255,17 @@
             <version>${servlet-api.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>${spring-boot-starter-data-redis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -270,28 +290,6 @@
                 </property>
             </activation>
             <dependencies>
-                <!-- Swagger and OpenAPI Dependencies -->
-                <dependency>
-                    <groupId>io.swagger.core.v3</groupId>
-                    <artifactId>swagger-annotations</artifactId>
-                    <version>${swagger-core-version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.springfox</groupId>
-                    <artifactId>springfox-swagger2</artifactId>
-                    <version>${springfox.swagger.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.springfox</groupId>
-                    <artifactId>springfox-swagger-ui</artifactId>
-                    <version>${springfox.swagger.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.springdoc</groupId>
-                    <artifactId>springdoc-openapi-ui</artifactId>
-                    <version>${springdoc-openapi-ui.version}</version>
-                </dependency>
-
                 <!-- Testing Dependencies -->
                 <dependency>
                     <groupId>org.springframework.boot</groupId>
