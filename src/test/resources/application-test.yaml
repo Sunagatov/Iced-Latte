@@ -34,6 +34,14 @@ spring:
     password: ${spring.datasource.password}
     drop-first: true
 
+  #
+  # Redis
+  #
+  data:
+    redis:
+      host: localhost
+      port: 6380
+
 #
 # JWT Security Properties
 #

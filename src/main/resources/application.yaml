@@ -41,10 +41,10 @@ spring:
   #
   # Redis
   #
-  redis:
-    host: ${REDIS_HOST}
-    port: ${REDIS_PORT}
-
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 #
 # Stripe Api Properties
 #

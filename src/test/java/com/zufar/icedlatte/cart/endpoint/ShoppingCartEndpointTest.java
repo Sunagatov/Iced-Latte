@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.test.config.AbstractE2ETest;
+import com.zufar.icedlatte.test.config.AbstractE2ETest2;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +15,7 @@ import static io.restassured.RestAssured.given;
 
 @Testcontainers
 @DisplayName("ShoppingCartEndpointTest Tests")
-class ShoppingCartEndpointTest extends AbstractE2ETest {
+class ShoppingCartEndpointTest extends AbstractE2ETest2 {
 
     private static final String SHOPPING_CART_SCHEMA_LOCATION = "cart/model/schema/cart-schema.json";
     private static final String SHOPPING_CART_ADD_BODY_LOCATION = "/cart/model/cart-add-body.json";

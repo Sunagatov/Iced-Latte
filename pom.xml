@@ -54,7 +54,7 @@
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
+        <testcontainers.version>1.19.3</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <rest-assured.version>5.3.2</rest-assured.version>
 
