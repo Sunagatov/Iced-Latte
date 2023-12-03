@@ -3,13 +3,14 @@ version: '3.9'
 networks:
   iced-latte-network:
     name: iced-latte-network
-    external: false
+    attachable: true
 
 volumes:
-  pgdata:
+  pg_data:
   prometheus_data:
   grafana_data:
-  nginx_conf:
+  nginx_data:
+  minio_data:
 
 services:
   iced-latte-backend:
@@ -46,7 +47,7 @@ services:
     networks:
       - iced-latte-network
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s
@@ -55,7 +56,7 @@ services:
     restart: on-failure
 
   iced-latte-minio:
-    image: minio/minio:latest
+    image: minio/minio
     container_name: iced-latte-minio
     volumes:
       - minio_data:/data
@@ -99,7 +100,7 @@ services:
     image: nginx:alpine
     container_name: iced-latte-nginx
     volumes:
-      - ./nginx_conf:/etc/nginx/conf.d:ro
+      - ./nginx_data:/etc/nginx/conf.d:ro
     ports:
       - '80:80'
     networks:
