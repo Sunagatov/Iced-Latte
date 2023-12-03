@@ -34,7 +34,10 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     public List<ProductInfo> getFavoriteList(){
         UUID userId = securityPrincipalProvider.getUserId();
         FavoriteList favoriteList = favoriteRepository.getReferenceById(userId);
-        return favoriteList.getFavoriteItems().stream().map(FavoriteItem::getProductInfo).toList();
+        return favoriteList.getFavoriteItems()
+                .stream()
+                .map(FavoriteItem::getProductInfo)
+                .toList();
     }
 
     @DeleteMapping(value = "/{productId}")
@@ -42,10 +45,13 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
         UUID userId = securityPrincipalProvider.getUserId();
         FavoriteList favoriteList = favoriteRepository.getReferenceById(userId);
         if(!favoriteList.containsFavoriteItem(productId)){
-            throw new NoSuchElementException("Элемент с id " + productId + " отсутствует в списке.");
+            throw new NoSuchElementException("There's no product with ID " + productId + " on the list.");
         }
         favoriteList.removeFavoriteItemById(productId);
-        return favoriteList.getFavoriteItems().stream().map(FavoriteItem::getProductInfo).toList();
+        return favoriteList.getFavoriteItems()
+                .stream()
+                .map(FavoriteItem::getProductInfo)
+                .toList();
     }
 
 }
