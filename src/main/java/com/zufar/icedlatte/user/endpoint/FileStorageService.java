@@ -1,31 +1,56 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.PutObjectResult;
+import com.zufar.icedlatte.common.filestorage.IsMinioBucketAbsentChecker;
+import com.zufar.icedlatte.common.filestorage.MinioBucketCreator;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileStorageService {
 
-    private final AmazonS3 amazonS3;
+    private final MinioClient minioClient;
+    private final IsMinioBucketAbsentChecker isMinioBucketAbsentChecker;
+    private final MinioBucketCreator minioBucketCreator;
 
-    private final String bucketName = "user-avatars"; // Your bucket name
+    @Value("${spring.minio.bucket}")
+    private String bucketName;
+
+    @Value("${spring.minio.url}")
+    private String minioStorageUrl;
 
     public void uploadUserAvatar(UUID userId, MultipartFile file) {
-        String key = "avatars/" + userId + "/" + file.getOriginalFilename();
         try {
-            amazonS3.putObject(bucketName, key, file.getInputStream(), null);
-            String avatarUrl = amazonS3.getUrl(bucketName, key).toString();
+            if (isMinioBucketAbsentChecker.isAbsent(bucketName)) {
+                minioBucketCreator.create(bucketName);
+            }
 
+            String fileName = "avatars/" + userId + "/" + file.getOriginalFilename();
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error storing file", e);
+            PutObjectArgs objectArgs = PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileName)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType())
+                    .build();
+
+            minioClient.putObject(objectArgs);
+
+            String fileUrl = minioStorageUrl + ":9000/" + bucketName + "/" + fileName;
+
+            GetObjectArgs getObjectArgs = GetObjectArgs.builder().bucket(bucketName).object(fileName).build();
+
+            GetObjectResponse object = minioClient.getObject(getObjectArgs);
+        } catch (Exception e) {
+            throw new RuntimeException("Error uploading file", e);
         }
     }
 }

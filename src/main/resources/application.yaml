@@ -11,6 +11,21 @@ server:
 # Spring Properties
 #
 spring:
+
+  #
+  # Minio Properties
+  #
+  minio:
+    metric-name: minio.storage
+    secret-key: minio123
+    access-key: minio123
+    bucket: iced-latte-bucket-for-static-files
+    read-timeout: 10s
+    connect-timeout: 10s
+    write-timeout: 60s
+    url: http://127.0.0.1:9000
+    secure: false
+
   application:
     name: Iced Latte Application
   banner:
@@ -103,12 +118,12 @@ cloud:
     region:
       static: us-west-1
     credentials:
-      access-key: minio
+      access-key: minio123
       secret-key: minio123
     stack:
       auto: false
     s3:
-      endpoint: http://iced-latte-minio:9000
+      endpoint: http://localhost:9000
 
 
 #

@@ -24,6 +24,8 @@ services:
       DATASOURCE_USERNAME: postgres
       DATASOURCE_PASSWORD: postgres
       DATASOURCE_HOST: iced-latte-postgresdb
+      REDIS_HOST: iced-latte-redis
+      REDIS_PORT: 6380
     build:
       context: .
       dockerfile: Dockerfile.local
@@ -61,10 +63,11 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      MINIO_ROOT_USER: minio
+      MINIO_ROOT_USER: minio123
       MINIO_ROOT_PASSWORD: minio123
     ports:
       - '9000:9000'
+      - '9001:9001'
     networks:
       - iced-latte-network
     command: server /data

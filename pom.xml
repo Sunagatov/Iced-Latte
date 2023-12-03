@@ -106,6 +106,7 @@
         <json-schema-validator.version>3.3.0</json-schema-validator.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.2.0</springdoc-openapi-starter-webmvc-ui.version>
         <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
+        <minio.version>8.5.7</minio.version>
     </properties>
 
     <!-- Dependencies -->
@@ -131,6 +132,11 @@
             <artifactId>spring-cloud-starter-aws</artifactId>
             <version>${spring-cloud-starter-aws.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.jlefebure</groupId>
+            <artifactId>spring-boot-starter-minio</artifactId>
+            <version>1.1</version>
+        </dependency>
 
         <!-- Monitoring Dependencies -->
         <dependency>
@@ -145,6 +151,11 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
         </dependency>
 
         <!-- Project Lombok -->

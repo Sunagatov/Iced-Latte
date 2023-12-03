@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.endpoint;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +23,8 @@ public class UserFileUploadEndpoint {
     private final FileStorageService fileStorageService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
-    @PostMapping("/avatar")
-    public ResponseEntity<Void> uploadUserAvatar(@RequestParam("file") MultipartFile file) {
+    @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Void> uploadUserAvatar(@RequestParam(value = "file") MultipartFile file) {
         UUID userId = securityPrincipalProvider.getUserId();
         fileStorageService.uploadUserAvatar(userId, file);
         return ResponseEntity.status(HttpStatus.OK).build();
