@@ -3,13 +3,14 @@ version: '3.9'
 networks:
   iced-latte-network:
     name: iced-latte-network
-    external: false
+    attachable: true
 
 volumes:
-  pgdata:
+  pg_data:
   prometheus_data:
   grafana_data:
-  nginx_conf:
+  nginx_data:
+  minio_data:
 
 services:
   iced-latte-backend:
@@ -23,6 +24,8 @@ services:
       DATASOURCE_USERNAME: postgres
       DATASOURCE_PASSWORD: postgres
       DATASOURCE_HOST: iced-latte-postgresdb
+      REDIS_HOST: iced-latte-redis
+      REDIS_PORT: 6380
     build:
       context: .
       dockerfile: Dockerfile.local
@@ -46,7 +49,7 @@ services:
     networks:
       - iced-latte-network
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s
@@ -84,7 +87,7 @@ services:
     image: nginx:alpine
     container_name: iced-latte-nginx
     volumes:
-      - ./nginx_conf:/etc/nginx/conf.d:ro
+      - ./nginx_data:/etc/nginx/conf.d:ro
     ports:
       - '80:80'
     networks:
