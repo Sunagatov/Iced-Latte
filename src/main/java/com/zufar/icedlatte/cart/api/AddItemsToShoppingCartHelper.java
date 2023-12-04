@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,16 +67,18 @@ public class AddItemsToShoppingCartHelper {
                 .collect(Collectors.toSet());
 
         return productInfoRepository.findAllById(newProductIds).stream()
-                .map(productInfo -> ShoppingCartItem.builder()
-                        .shoppingCart(shoppingCart)
-                        .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
-                        .productInfo(productInfo)
-                        .build())
+                .map(productInfo ->
+                        ShoppingCartItem.builder()
+                                .shoppingCart(shoppingCart)
+                                .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
+                                .productInfo(productInfo)
+                                .build()
+                )
                 .toList();
     }
 
     private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
-                                                              List<ShoppingCartItem> shoppingCartItems) {
+                                                           List<ShoppingCartItem> shoppingCartItems) {
         int productsQuantity = shoppingCartItems.stream()
                 .map(ShoppingCartItem::getProductQuantity)
                 .reduce(Integer::sum)
@@ -93,7 +95,7 @@ public class AddItemsToShoppingCartHelper {
                 .userId(userId)
                 .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
                 .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
-                .items(Collections.emptySet())
+                .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();
     }

@@ -52,7 +52,7 @@ public class ShoppingCart {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "closed_at", nullable = false)
+    @Column(name = "closed_at")
     private OffsetDateTime closedAt;
 
     private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
