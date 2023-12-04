@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
+import com.zufar.icedlatte.favorite.api.FavoriteListPageProvider;
 import com.zufar.icedlatte.favorite.api.FavoriteListProvider;
 import com.zufar.icedlatte.favorite.api.FavoriteProductAdder;
 import com.zufar.icedlatte.favorite.api.FavoriteProductDeleter;
@@ -7,6 +8,7 @@ import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -37,6 +40,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     private final FavoriteProductAdder favoriteProductAdderHelper;
     private final FavoriteListProvider favoriteListProvider;
     private final FavoriteProductDeleter favoriteProductDeleter;
+    private final FavoriteListPageProvider favoriteListPageProvider;
 
     @Override
     @PostMapping
@@ -50,14 +54,25 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     }
 
     @Override
-    @GetMapping
-    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
+    @GetMapping(value = "/{page}")
+    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts(@PathVariable final Integer page) {
         log.info("Received the request to retrieve the list of favorite products.");
         UUID userId = securityPrincipalProvider.getUserId();
-        FavoriteListDto favoriteList = favoriteListProvider.getFavoriteListDto(userId);
-        ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
+        List<ProductInfoDto> products = favoriteListPageProvider.getFavoritesProductsByPage(userId, page);
+        ListOfFavoriteProductsDto listOfFavoriteProductsDto = new ListOfFavoriteProductsDto();
+        listOfFavoriteProductsDto.setProducts(products);
         log.info("Favorite products retrieval processed.");
         return ResponseEntity.ok().body(listOfFavoriteProductsDto);
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<Integer> getNumberOfPages() {
+        log.info("Received the request to retrieve the number of pages.");
+        UUID userId = securityPrincipalProvider.getUserId();
+        Integer numberOfPages = favoriteListPageProvider.getNumberOfPages(userId);
+        log.info("Number of pages retrieval processed.");
+        return ResponseEntity.ok().body(numberOfPages);
     }
 
     @Override

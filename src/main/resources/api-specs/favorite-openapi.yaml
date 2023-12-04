@@ -43,12 +43,19 @@ paths:
         "500":
           description: "Internal server error."
 
-  /api/v1/favorites:
+  /api/v1/favorites/{page}:
     get:
       tags:
         - "Favorite Products"
       summary: "Get all favorite products for the authorized user"
       operationId: "getListOfFavoriteProducts"
+      parameters:
+        - name: "page"
+          in: "path"
+          required: true
+          description: "Page number."
+          schema:
+            type: "integer"
       responses:
         "200":
           description: "OK"
@@ -63,6 +70,7 @@ paths:
         "500":
           description: "Internal server error."
 
+  /api/v1/favorites:
     post:
       tags:
         - "Favorite Products"
@@ -88,6 +96,26 @@ paths:
           description: "Unauthorized access."
         "500":
           description: "Internal server error."
+
+    get:
+      tags:
+        - "Favorite Products"
+      summary: "Get number of pages"
+      operationId: "getNumberOfPages"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "integer"
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
+
 
 components:
   schemas:
