@@ -67,18 +67,20 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     networks:
       - iced-latte-network
+    ports:
+      - '9090:9090'
     restart: on-failure
 
   iced-latte-grafana:
     image: grafana/grafana:9.1.5
     container_name: iced-latte-grafana
     volumes:
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SERVER_ROOT_URL=http://localhost/grafana/
-      - GF_SECURITY_ADMIN_PASSWORD=secret
+      - ./grafana_data:/var/lib/grafana
+      - ./grafana_data/grafana.ini:/etc/grafana/grafana.ini
     networks:
       - iced-latte-network
+    ports:
+      - '3000:3000'
     depends_on:
       - iced-latte-prometheus
     restart: on-failure
