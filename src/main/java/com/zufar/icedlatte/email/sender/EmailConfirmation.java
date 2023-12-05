@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.sender;
 
-import com.zufar.icedlatte.email.dto.EmailConfirmDto;
+import com.zufar.icedlatte.email.dto.EmailConfirmationDto;
 import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +20,12 @@ public class EmailConfirmation extends AbstractEmailSander {
     @Autowired
     public EmailConfirmation(JavaMailSender javaMailSender,
                              SimpleMailMessage mailMessage,
-                             List<MessageBuilder<EmailConfirmDto>> messageBuilders) {
+                             List<MessageBuilder<EmailConfirmationDto>> messageBuilders) {
         super(javaMailSender, mailMessage, messageBuilders);
     }
 
     public void sendTemporaryCode(String email, String message) {
-        message = getMessage(EmailConfirmMessage.class, new EmailConfirmDto(message));
+        message = getMessage(EmailConfirmMessage.class, new EmailConfirmationDto(message));
         sendNotification(email, message, subject);
     }
 }
