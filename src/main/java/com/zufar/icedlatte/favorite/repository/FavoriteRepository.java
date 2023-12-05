@@ -19,9 +19,15 @@ public interface FavoriteRepository extends JpaRepository<FavoriteListEntity, UU
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"favoriteItems", "favoriteItems.favoriteListEntity"})
     Optional<FavoriteListEntity> findByUserId(UUID userId);
 
-    @Query("SELECT fi FROM FavoriteItemEntity fi " +
-            "WHERE fi.favoriteListEntity.user.id = :userId")
-    List<FavoriteItemEntity> findFavoriteItemsByUserIdWithPagination(
-            @Param("userId") UUID userId,
-            Pageable pageable);
+    @Query("""
+            SELECT fi FROM FavoriteItemEntity fi 
+            WHERE fi.favoriteListEntity.user.id = :userId
+                    """)
+    List<FavoriteItemEntity> findFavoriteItemsByUserIdWithPagination(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(fi) FROM FavoriteItemEntity fi 
+            WHERE fi.favoriteListEntity.user.id = :userId
+            """)
+    Integer getPageQuantity(@Param("userId") UUID userId);
 }

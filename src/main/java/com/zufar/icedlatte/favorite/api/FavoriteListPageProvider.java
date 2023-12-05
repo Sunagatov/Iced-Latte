@@ -22,7 +22,6 @@ public class FavoriteListPageProvider {
 
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final FavoriteRepository favoriteRepository;
-    private final FavoriteListProvider favoriteListProvider;
 
     private final Integer PAGE_SIZE = 2;
 
@@ -40,9 +39,7 @@ public class FavoriteListPageProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Integer getNumberOfPages(final UUID userId) {
-        int totalItems = favoriteListProvider.getFavoriteListEntity(userId)
-                .getFavoriteItems()
-                .size();
+        Integer totalItems = favoriteRepository.getPageQuantity(userId);
         return (int) Math.ceil((double) totalItems / PAGE_SIZE);
     }
 
