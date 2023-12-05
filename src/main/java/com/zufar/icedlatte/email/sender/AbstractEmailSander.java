@@ -11,7 +11,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public abstract class EmailSander<T> {
+public abstract class AbstractEmailSander<T> {
 
     private final JavaMailSender javaMailSender;
     private final SimpleMailMessage mailMessage;
