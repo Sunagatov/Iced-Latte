@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: "Iced-Latte API"
+  title: "Iced-Latte Product API"
   description: "This API allows clients to interact with an Iced Latte's product catalog, including retrieval and listing of products."
   version: "1.0.0"
   contact:
@@ -11,6 +11,8 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
+  - url: "https://dev.api.it-sl.ru"
+    description: "Production server"
 
 tags:
   - name: "Product"

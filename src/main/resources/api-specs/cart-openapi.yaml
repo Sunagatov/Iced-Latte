@@ -11,6 +11,8 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
+  - url: "https://dev.api.it-sl.ru"
+    description: "Production server"
 
 tags:
   - name: "Shopping Cart"
