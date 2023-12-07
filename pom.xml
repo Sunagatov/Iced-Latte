@@ -238,7 +238,6 @@
             <version>${apache-commons-lang3.version}</version>
         </dependency>
 
-
         <!-- Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -58,8 +58,10 @@ spring:
 springdoc:
   api-docs:
     path: /api/docs/schema
+    enabled: true
   swagger-ui:
     path: /api/docs/swagger-ui
+    enabled: true
 
 #
 # Management Properties
