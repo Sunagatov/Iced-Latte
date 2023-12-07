@@ -238,18 +238,6 @@
             <version>${apache-commons-lang3.version}</version>
         </dependency>
 
-        <!-- Java EE Annotations -->
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>${javax.annotation-api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>${servlet-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- Redis -->
         <dependency>
@@ -421,6 +409,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -439,6 +428,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -457,6 +447,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -474,6 +465,7 @@
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <modelPackage>com.zufar.icedlatte.security.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
@@ -490,6 +482,7 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.payment.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
@@ -508,6 +501,7 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/favorite-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.favorite.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
