@@ -19,7 +19,7 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `DATASOURCE_USERNAME`: Database username
 - `DATASOURCE_PASSWORD`: Database password
 - `REDIS_HOST`: Redis host
-- `REDIS_Port`: Redis port
+- `REDIS_PORT`: Redis port
 
 ## Starting the Application
 

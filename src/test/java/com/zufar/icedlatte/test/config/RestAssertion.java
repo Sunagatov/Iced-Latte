@@ -6,33 +6,35 @@ import org.hamcrest.Matcher;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.lessThan;
 
 public final class RestAssertion {
 
     public static final long DEFAULT_HTTP_TIMEOUT = 2000L;
 
-    private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
-        return response.then()
-                .statusCode(httpStatusCode.value())
-                .body(schemaMatcher)
-                .time(lessThan(DEFAULT_HTTP_TIMEOUT));
+    public static void assertRestApiBadRequestResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.BAD_REQUEST, schema);
     }
 
-    private static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
-        return assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, matchesJsonSchemaInClasspath(schema));
+    public static void assertRestApiNotFoundResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
     }
 
     private static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
 
-    public static void assertRestApiForbiddenEmptyResponse(Response response) {
-        assertRestApiEmptyBodyResponse(response, HttpStatus.FORBIDDEN);
+    private static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
+        return assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, matchesJsonSchemaInClasspath(schema));
     }
 
-    public static void assertRestApiNotFoundResponse(Response response, String schema) {
-        assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
+    private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
+        return response.then()
+                .statusCode(httpStatusCode.value())
+                .body(schemaMatcher)
+                .time(lessThan(DEFAULT_HTTP_TIMEOUT));
     }
 
     public static void assertRestApiOkResponse(Response response, String schema) {

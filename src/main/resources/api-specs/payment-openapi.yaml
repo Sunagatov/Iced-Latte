@@ -2,6 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte Payment API"
+  description: "API for accessing payment and related operations in the Iced-Latte platform"
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -10,6 +11,8 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
+  - url: "https://dev.api.it-sl.ru"
+    description: "Production server"
 
 tags:
   - name: "Payment"
