@@ -3,7 +3,6 @@ package com.zufar.icedlatte.common.filestorage;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -13,33 +12,34 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MinioConfig {
 
-    @Value("${spring.minio.endpoint}")
-    private String endpoint;
-    @Value("${spring.minio.accessKey}")
-    private String accessKey;
-    @Value("${spring.minio.secretKey}")
-    private String secretKey;
-    @Value("${spring.minio.bucket}")
-    private String avatarBucket;
+    private static final int MINIO_PORT = 9000;
+
+    @Value("${spring.minio.url}")
+    private String minioUrl;
+
+    @Value("${spring.minio.secure}")
+    private boolean minioSecure;
+
+    @Value("${spring.minio.access-key}")
+    private String minioAccessKey;
+
+    @Value("${spring.minio.secret-key}")
+    private String minioSecretKey;
+
+    @Value("${spring.minio.buckets.user-avatar}")
+    private String minioAvatarBucket;
 
     @Bean
-    public MinioClient minioClient() {
+    public MinioClient minioClient() throws Exception {
         MinioClient minioClient = MinioClient.builder()
-                .endpoint(endpoint, 9000, false)
-                .credentials(accessKey, secretKey)
+                .endpoint(minioUrl, MINIO_PORT, minioSecure)
+                .credentials(minioAccessKey, minioSecretKey)
                 .build();
-        createBuckets(minioClient);
-        return minioClient;
-    }
 
-    @PostConstruct
-    public void createBuckets(MinioClient minioClient) {
-        try {
-            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(avatarBucket).build())) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(avatarBucket).build());
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(minioAvatarBucket).build())) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioAvatarBucket).build());
         }
+
+        return minioClient;
     }
 }
