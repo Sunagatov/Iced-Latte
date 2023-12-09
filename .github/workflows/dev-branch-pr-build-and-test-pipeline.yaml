@@ -22,7 +22,7 @@ jobs:
             ${{ runner.os }}-m2
 
       - name: Cache SonarQube packages
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -37,8 +37,8 @@ jobs:
 
       - name: SonarQube Analysis
         env:
-          SONAR_TOKEN: sqa_414079a5c5ae09a2de465b9b3502677cd43ec61d
-          SONAR_HOST_URL: http://31.132.209.218:63535/
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
 
       - name: SonarQube Quality Gate check
@@ -46,7 +46,7 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: sqa_414079a5c5ae09a2de465b9b3502677cd43ec61d
+          SONAR_TOKEN: ${{ secrets.SONAR_HOST_URL }}
           SONAR_HOST_URL: http://31.132.209.218:63535/
         with:
           scanMetadataReportFile: target/sonar/report-task.txt
