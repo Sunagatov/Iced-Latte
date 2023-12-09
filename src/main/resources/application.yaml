@@ -19,7 +19,8 @@ spring:
     metric-name: minio.storage
     secret-key: minio123
     access-key: minio123
-    bucket: iced-latte-bucket-for-static-files
+    buckets:
+      user-avatar: avatars
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
@@ -111,19 +112,6 @@ management:
   health:
     redis:
       enabled: false
-
-cloud:
-  aws:
-    region:
-      static: us-west-1
-    credentials:
-      access-key: minio123
-      secret-key: minio123
-    stack:
-      auto: false
-    s3:
-      endpoint: http://localhost:9000
-
 
 #
 # JWT Security Properties
