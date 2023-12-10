@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.common.filestorage.MinioObjectDeleter;
-import com.zufar.icedlatte.common.filestorage.MinioObjectSaver;
-import com.zufar.icedlatte.common.filestorage.MinioObjectDownloader;
+import com.zufar.icedlatte.common.filestorage.MinioObjectUploader;
+import com.zufar.icedlatte.common.filestorage.MinioObjectGetter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,18 +17,18 @@ public class FileStorageService {
     @Value("${spring.minio.buckets.user-avatar}")
     private String bucketName;
     private static final String avatarNamePrefix = "user-avatar-";
-    private final MinioObjectSaver minioObjectSaver;
-    private final MinioObjectDownloader minioObjectDownloader;
+    private final MinioObjectUploader minioObjectUploader;
+    private final MinioObjectGetter minioObjectGetter;
     private final MinioObjectDeleter minioObjectDeleter;
 
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String fileName = userAvatarNameCoder(userId);
-        minioObjectSaver.saveFile(fileName, file, bucketName);
+        minioObjectUploader.saveFile(fileName, file, bucketName);
     }
 
     public MultipartFile getUserAvatar(final UUID userId) {
         String fileName = userAvatarNameCoder(userId);
-        return minioObjectDownloader.downloadFile(fileName, bucketName);
+        return minioObjectGetter.downloadFile(fileName, bucketName);
     }
 
     public void deleteUserAvatar(final UUID userId) {

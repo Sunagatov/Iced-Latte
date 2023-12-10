@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.filestorage;
 
+import com.zufar.icedlatte.common.exception.filestorage.MinioDeleteException;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,8 @@ public class MinioObjectDeleter {
                             .build()
             );
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.info("Failed to delete file: {}", e.getMessage());
+            throw new MinioDeleteException(fileName);
         }
     }
 }

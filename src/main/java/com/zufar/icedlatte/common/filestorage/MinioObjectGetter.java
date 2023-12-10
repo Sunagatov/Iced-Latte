@@ -1,31 +1,31 @@
 package com.zufar.icedlatte.common.filestorage;
 
+import com.zufar.icedlatte.common.exception.filestorage.MinioGetException;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
-import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
-public class MinioObjectSaver {
+public class MinioObjectGetter {
 
     private final MinioClient minioClient;
 
-    public void saveFile(String fileName, MultipartFile file, String backedName) {
+    public MultipartFile downloadFile(String fileName, String bucketName) {
         try {
-            minioClient.uploadObject(
-                    UploadObjectArgs.builder()
-                            .bucket(backedName)
+            return (MultipartFile) minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
                             .object(fileName)
-                            .filename(fileName, file.getSize())
                             .build()
             );
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.info("Failed to download file: {}", e.getMessage());
+            throw new MinioGetException(fileName);
         }
     }
 }
-
