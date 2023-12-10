@@ -1,30 +1,31 @@
 package com.zufar.icedlatte.common.filestorage;
 
-import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-@Slf4j
 @Service
+@Slf4j
 @RequiredArgsConstructor
-public class MinioObjectDownloader {
+public class MinioObjectSaver {
 
     private final MinioClient minioClient;
 
-    public MultipartFile downloadFile(String fileName, String bucketName) {
+    public void saveFile(String fileName, MultipartFile file, String backedName) {
         try {
-            return (MultipartFile) minioClient.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(bucketName)
+            minioClient.uploadObject(
+                    UploadObjectArgs.builder()
+                            .bucket(backedName)
                             .object(fileName)
+                            .filename(fileName, file.getSize())
                             .build()
             );
         } catch (Exception e) {
-            throw new RuntimeException("You don't have avatar photo", e);
+            log.error(e.getMessage(), e);
         }
-
     }
 }
+
