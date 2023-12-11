@@ -79,6 +79,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Override
     public String getUsername() {
         return email;

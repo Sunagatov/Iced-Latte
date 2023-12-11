@@ -46,4 +46,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Modifying
     @Query(value = "UPDATE UserEntity u SET u.accountNonLocked = true WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false)")
     void unlockUsers();
+
+    /**
+     * Finds the avatar url of a user based on its id.
+     * @param userId The id of the user.
+     */
+    @Query(value = "SELECT u.avatarUrl FROM UserEntity u WHERE u.id = :userId")
+    String findAvatarUrlByUserId(@Param("userId") UUID userId);
 }

@@ -7,13 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -30,7 +25,7 @@ public class UserFileUploadEndpoint {
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Void> uploadUserAvatar(@RequestParam(value = "file") MultipartFile file) {
+    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to upload the user avatar with userId - {}.", userId);
         fileStorageService.uploadUserAvatar(userId, file);
@@ -39,10 +34,10 @@ public class UserFileUploadEndpoint {
     }
 
     @GetMapping(path = "/avatar", produces = {MediaType.IMAGE_JPEG_VALUE})
-    public ResponseEntity<MultipartFile> getUserAvatar() {
+    public ResponseEntity<String> getUserAvatar() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar with userId - {}.", userId);
-        MultipartFile userAvatar = fileStorageService.getUserAvatar(userId);
+        String userAvatar = fileStorageService.getUserAvatar(userId);
         log.info("The user avatar was retrieved for user with userId - {}.", userId);
         return ResponseEntity.ok().body(userAvatar);
     }

@@ -2,7 +2,7 @@ package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.common.filestorage.MinioObjectDeleter;
 import com.zufar.icedlatte.common.filestorage.MinioObjectUploader;
-import com.zufar.icedlatte.common.filestorage.MinioObjectGetter;
+import com.zufar.icedlatte.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,22 +18,31 @@ public class FileStorageService {
     private String bucketName;
     private static final String avatarNamePrefix = "user-avatar-";
     private final MinioObjectUploader minioObjectUploader;
-    private final MinioObjectGetter minioObjectGetter;
     private final MinioObjectDeleter minioObjectDeleter;
+    private final UserAvatarUrlService userAvatarUrlService;
 
-    public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
+    public UserDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String fileName = userAvatarNameCoder(userId);
-        minioObjectUploader.saveFile(fileName, file, bucketName);
+        String avatarUrl = minioObjectUploader.uploadFile(file, bucketName, fileName);
+        return userAvatarUrlService.updateUserUrl(avatarUrl, userId);
     }
 
-    public MultipartFile getUserAvatar(final UUID userId) {
-        String fileName = userAvatarNameCoder(userId);
-        return minioObjectGetter.downloadFile(fileName, bucketName);
+    public String getUserAvatar(final UUID userId) {
+        String avatarUrl = userAvatarUrlService.getAvatarUrlByUserId(userId);
+        userAvatarValidator(avatarUrl);
+        return avatarUrl;
+    }
+
+    private void userAvatarValidator(final String avatarUrl) {
+        if (avatarUrl == null || avatarUrl.isEmpty()) {
+            throw new RuntimeException("User avatar not found.");
+        }
     }
 
     public void deleteUserAvatar(final UUID userId) {
         String fileName = userAvatarNameCoder(userId);
         minioObjectDeleter.deleteFile(fileName, bucketName);
+        userAvatarUrlService.deleteUserAvatar(userId);
     }
 
     private String userAvatarNameCoder(UUID userId) {

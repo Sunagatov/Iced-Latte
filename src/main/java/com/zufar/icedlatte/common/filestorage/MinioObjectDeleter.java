@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.common.filestorage;
 
-import com.zufar.icedlatte.common.exception.filestorage.MinioDeleteException;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectArgs;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
+import com.amazonaws.services.s3.AmazonS3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,19 +12,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MinioObjectDeleter {
 
-    private final MinioClient minioClient;
+    private final AmazonS3 amazonS3;
 
     public void deleteFile(String fileName, String bucketName) {
         try {
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(fileName)
-                            .build()
-            );
-        } catch (Exception e) {
-            log.info("Failed to delete file: {}", e.getMessage());
-            throw new MinioDeleteException(fileName);
+            amazonS3.deleteObject(bucketName, fileName);
+        } catch (AmazonServiceException ase) {
+            log.error("Amazon S3 couldn't process operation", ase);
+            throw ase;
+        } catch (SdkClientException sce) {
+            log.error("Amazon S3 couldn't be contacted for a response", sce);
+            throw sce;
         }
     }
 }

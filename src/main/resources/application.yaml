@@ -53,6 +53,7 @@ spring:
     write-timeout: 60s
     url: http://127.0.0.1:9000
     secure: false
+    region: us-east-1
 
   #
   # Redis

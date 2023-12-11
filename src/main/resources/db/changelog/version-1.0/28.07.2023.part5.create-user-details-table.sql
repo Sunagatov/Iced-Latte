@@ -13,6 +13,7 @@ CREATE TABLE user_details
     account_non_locked      BOOLEAN      NOT NULL,
     credentials_non_expired BOOLEAN      NOT NULL,
     enabled                 BOOLEAN      NOT NULL,
+    avatar_url              VARCHAR(255),
 
     CONSTRAINT fk_address
         FOREIGN KEY (address_id)

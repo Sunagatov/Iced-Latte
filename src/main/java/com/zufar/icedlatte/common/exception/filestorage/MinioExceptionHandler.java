@@ -39,15 +39,4 @@ public class MinioExceptionHandler {
 
         return apiErrorResponse;
     }
-
-    @ExceptionHandler(MinioGetException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleMinioGetException(final MinioGetException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-
-        log.error("Handle minio get exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
-    }
 }

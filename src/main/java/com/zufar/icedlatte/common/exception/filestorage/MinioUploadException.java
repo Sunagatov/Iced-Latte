@@ -2,8 +2,6 @@ package com.zufar.icedlatte.common.exception.filestorage;
 
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
 public class MinioUploadException extends RuntimeException {
 
