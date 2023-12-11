@@ -22,7 +22,7 @@ public final class RestAssertion {
         assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
     }
 
-    private static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
+    public static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
 
