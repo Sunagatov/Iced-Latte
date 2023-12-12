@@ -18,7 +18,6 @@ import java.net.URL;
 @RequiredArgsConstructor
 public class MinioObjectUploader {
 
-    //https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/examples-s3-objects.html
     private final AmazonS3 amazonS3;
 
     public String uploadFile(MultipartFile file, String bucketName, String fileName) {
@@ -37,6 +36,7 @@ public class MinioObjectUploader {
             log.error("Amazon S3 couldn't be contacted for a response", sce);
             throw sce;
         }
+
         URL objectUrl = amazonS3.getUrl(bucketName, fileName);
         return objectUrl.toString();
     }

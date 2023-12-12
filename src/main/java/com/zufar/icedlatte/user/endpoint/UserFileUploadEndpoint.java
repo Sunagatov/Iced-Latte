@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.endpoint;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.FileStorageService;
+import com.zufar.icedlatte.user.api.UserAvatarFileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,32 +21,42 @@ public class UserFileUploadEndpoint {
 
     public static final String API_CUSTOMERS = "/api/v1/users";
 
-    private final FileStorageService fileStorageService;
+    private final UserAvatarFileStorageService userAvatarFileStorageService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to upload the user avatar with userId - {}.", userId);
-        fileStorageService.uploadUserAvatar(userId, file);
+        userAvatarFileStorageService.uploadUserAvatar(userId, file);
         log.info("The user avatar was uploaded for user with userId - {}.", userId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping(path = "/avatar", produces = {MediaType.IMAGE_JPEG_VALUE})
-    public ResponseEntity<String> getUserAvatar() {
+    @GetMapping(path = "/avatar")
+    public ResponseEntity<String> getUserAvatarUrl() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar with userId - {}.", userId);
-        String userAvatar = fileStorageService.getUserAvatar(userId);
+        String userAvatar = userAvatarFileStorageService.getUserAvatarUrl(userId);
         log.info("The user avatar was retrieved for user with userId - {}.", userId);
         return ResponseEntity.ok().body(userAvatar);
     }
+
+    @GetMapping(path = "/avatar/link")
+    public ResponseEntity<String> getUserAvatarTemporaryLink() {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.info("Received the request to get the user avatar link with userId - {}.", userId);
+        String userAvatar = userAvatarFileStorageService.getUserAvatarTemporaryLink(userId);
+        log.info("The user avatar link was retrieved for user with userId - {}.", userId);
+        return ResponseEntity.ok().body(userAvatar);
+    }
+
 
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to delete the user avatar with userId - {}.", userId);
-        fileStorageService.deleteUserAvatar(userId);
+        userAvatarFileStorageService.deleteUserAvatar(userId);
         log.info("The user avatar was deleted for user with userId - {}.", userId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.common.filestorage.MinioObjectDeleter;
 import com.zufar.icedlatte.common.filestorage.MinioObjectUploader;
+import com.zufar.icedlatte.common.filestorage.MinioTemporaryLinkReceiver;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class FileStorageService {
+public class UserAvatarFileStorageService {
 
     @Value("${spring.minio.buckets.user-avatar}")
     private String bucketName;
@@ -20,6 +21,7 @@ public class FileStorageService {
     private final MinioObjectUploader minioObjectUploader;
     private final MinioObjectDeleter minioObjectDeleter;
     private final UserAvatarUrlService userAvatarUrlService;
+    private final MinioTemporaryLinkReceiver minioTemporaryLinkReceiver;
 
     public UserDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String fileName = userAvatarNameCoder(userId);
@@ -27,7 +29,7 @@ public class FileStorageService {
         return userAvatarUrlService.updateUserUrl(avatarUrl, userId);
     }
 
-    public String getUserAvatar(final UUID userId) {
+    public String getUserAvatarUrl(final UUID userId) {
         String avatarUrl = userAvatarUrlService.getAvatarUrlByUserId(userId);
         userAvatarValidator(avatarUrl);
         return avatarUrl;
@@ -37,6 +39,11 @@ public class FileStorageService {
         if (avatarUrl == null || avatarUrl.isEmpty()) {
             throw new RuntimeException("User avatar not found.");
         }
+    }
+
+    public String getUserAvatarTemporaryLink(final UUID userId) {
+        String fileName = userAvatarNameCoder(userId);
+        return minioTemporaryLinkReceiver.generatePresignedUrl(bucketName, fileName).toString();
     }
 
     public void deleteUserAvatar(final UUID userId) {
