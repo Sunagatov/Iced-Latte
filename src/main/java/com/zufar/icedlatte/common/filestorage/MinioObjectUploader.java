@@ -30,15 +30,15 @@ public class MinioObjectUploader {
         try {
             amazonS3.putObject(bucketName, fileName, inputStream, metadata);
         } catch (AmazonServiceException ase) {
-            log.error("Amazon S3 couldn't process operation", ase);
+            log.error("Minio couldn't process operation", ase);
             throw ase;
         } catch (SdkClientException sce) {
-            log.error("Amazon S3 couldn't be contacted for a response", sce);
+            log.error("Minio couldn't be contacted for a response", sce);
             throw sce;
         }
 
         URL objectUrl = amazonS3.getUrl(bucketName, fileName);
-        return objectUrl.toString();
+        return objectUrl.getPath();
     }
 
     private InputStream getInputStream(MultipartFile file) {
