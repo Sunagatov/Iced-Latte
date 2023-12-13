@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 @Service
 @Slf4j
@@ -20,7 +19,7 @@ public class MinioObjectUploader {
 
     private final AmazonS3 amazonS3;
 
-    public String uploadFile(MultipartFile file, String bucketName, String fileName) {
+    public void uploadFile(MultipartFile file, String bucketName, String fileName) {
 
         InputStream inputStream = getInputStream(file);
         ObjectMetadata metadata = new ObjectMetadata();
@@ -36,9 +35,6 @@ public class MinioObjectUploader {
             log.error("Minio couldn't be contacted for a response", sce);
             throw sce;
         }
-
-        URL objectUrl = amazonS3.getUrl(bucketName, fileName);
-        return objectUrl.getPath();
     }
 
     private InputStream getInputStream(MultipartFile file) {

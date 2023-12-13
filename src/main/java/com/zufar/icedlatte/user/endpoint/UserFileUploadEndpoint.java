@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.user.endpoint;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.filestorage.UserAvatarDeleter;
-import com.zufar.icedlatte.user.api.filestorage.UserAvatarProvider;
-import com.zufar.icedlatte.user.api.filestorage.UserAvatarUploader;
-import com.zufar.icedlatte.user.dto.UserAvatarDto;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarDeleter;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarProvider;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
+import com.zufar.icedlatte.user.dto.AvatarInfoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -38,32 +38,21 @@ public class UserFileUploadEndpoint {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    // looks: host + bucket name + file name
     @GetMapping(path = "/avatar")
-    public ResponseEntity<UserAvatarDto> getUserAvatarUrl() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the user avatar with userId - {}.", userId);
-        UserAvatarDto userAvatar = userAvatarProvider.getUserAvatarDto(userId);
-        log.info("The user avatar was retrieved for user with userId - {}.", userId);
-        return ResponseEntity.ok().body(userAvatar);
-    }
-
-    // host + bucket name + file name + minio's sign
-    @GetMapping(path = "/avatar/link")
-    public ResponseEntity<String> getUserAvatarTemporaryLink() {
+    public ResponseEntity<String> getUserAvatarLink() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar link with userId - {}.", userId);
-        String userAvatar = userAvatarProvider.getUserAvatarTemporaryLink(userId);
+        AvatarInfoDto avatarInfoDto = userAvatarProvider.getAvatarInfoDto(userId);
+        String userAvatar = avatarInfoDto.avatarUrl();
         log.info("The user avatar link was retrieved for user with userId - {}.", userId);
         return ResponseEntity.ok().body(userAvatar);
     }
-
 
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to delete the user avatar with userId - {}.", userId);
-        userAvatarDeleter.deleteUserAvatar(userId);
+        userAvatarDeleter.delete(userId);
         log.info("The user avatar was deleted for user with userId - {}.", userId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

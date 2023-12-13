@@ -4,14 +4,19 @@ import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
+import java.time.Duration;
 import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 public class MinioTemporaryLinkReceiver {
+
+    @Value("${spring.minio.expiration-time.avatar-link}")
+    private String expirationTime;
 
     private final AmazonS3 amazonS3;
 
@@ -23,7 +28,8 @@ public class MinioTemporaryLinkReceiver {
         return amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
     }
 
-    private static Date getExpirationDate() {
-        return new Date(System.currentTimeMillis() + 5 * 60 * 1000);
+    private Date getExpirationDate() {
+        Duration duration = Duration.parse(expirationTime);
+        return new Date(System.currentTimeMillis() + duration.toMillis());
     }
 }

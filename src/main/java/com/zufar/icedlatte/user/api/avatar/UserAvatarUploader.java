@@ -1,8 +1,7 @@
-package com.zufar.icedlatte.user.api.filestorage;
+package com.zufar.icedlatte.user.api.avatar;
 
 import com.zufar.icedlatte.common.filestorage.MinioObjectUploader;
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.api.UserAvatarUrlService;
+import com.zufar.icedlatte.user.dto.AvatarInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,12 +18,15 @@ public class UserAvatarUploader {
     private static final String avatarNamePrefix = "user-avatar-";
 
     private final MinioObjectUploader minioObjectUploader;
-    private final UserAvatarUrlService userAvatarUrlService;
+    private final UserAvatarProvider userAvatarProvider;
+    private final AvatarInfoSaver avatarInfoSaver;
 
-    public UserDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
+    public AvatarInfoDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String fileName = userAvatarNameCoder(userId);
-        String avatarUrl = minioObjectUploader.uploadFile(file, bucketName, fileName);
-        return userAvatarUrlService.updateUserUrl(avatarUrl, userId);
+        minioObjectUploader.uploadFile(file, bucketName, fileName);
+        String avatarUrl = userAvatarProvider.getNewTemporaryAvatarUrl(bucketName, fileName);
+        AvatarInfoDto avatarInfoDto = new AvatarInfoDto(bucketName, fileName, avatarUrl);
+        return avatarInfoSaver.save(avatarInfoDto, userId);
     }
 
     private String userAvatarNameCoder(UUID userId) {

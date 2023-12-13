@@ -79,8 +79,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "avatar_id", referencedColumnName = "id")
+    private AvatarInfo avatarInfo;
 
     @Override
     public String getUsername() {

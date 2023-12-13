@@ -44,8 +44,8 @@ docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb
 ```
 
 
-### Running only a Database (minio)
-To start only the Minio database as defined in the docker-compose.local.yml file:
+### Running only a Cloud Storage (minio)
+To start only the Minio cloud storage as defined in the docker-compose.local.yml file:
 ```bash
 docker-compose -f docker-compose.local.yml up -d iced-latte-minio
 ```
