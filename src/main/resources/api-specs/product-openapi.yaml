@@ -99,6 +99,38 @@ paths:
         "500":
           description: "Internal Server Error."
 
+  /api/v1/products/ids:
+    get:
+      tags:
+        - "Product"
+      summary: "List Products by IDs"
+      description: "Retrieve a list of products using a list of unique identifiers."
+      operationId: "getProductsByIds"
+      parameters:
+        - name: "id"
+          description: "List of product IDs."
+          in: "query"
+          required: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              format: "uuid"
+
+      responses:
+        "200":
+          description: "List of products by IDs retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductInfoDto"
+        "400":
+          description: "Invalid parameters provided."
+        "500":
+          description: "Internal Server Error."
+
 components:
   schemas:
     ProductInfoDto:
