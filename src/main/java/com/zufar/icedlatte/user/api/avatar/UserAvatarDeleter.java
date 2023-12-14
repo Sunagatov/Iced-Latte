@@ -4,6 +4,7 @@ import com.zufar.icedlatte.common.filestorage.MinioObjectDeleter;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.AvatarInfo;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.repository.AvatarInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -18,6 +19,7 @@ public class UserAvatarDeleter {
 
     private final MinioObjectDeleter minioObjectDeleter;
     private final SingleUserProvider singleUserProvider;
+    private final AvatarInfoRepository avatarInfoRepository;
 
     public void delete(final UUID userId) {
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
@@ -32,5 +34,6 @@ public class UserAvatarDeleter {
     private void deleteUserAvatar(final UserEntity userEntity) {
         AvatarInfo avatarinfo = userEntity.getAvatarInfo();
         avatarinfo.setAvatarUrl(null);
+        avatarInfoRepository.save(avatarinfo);
     }
 }

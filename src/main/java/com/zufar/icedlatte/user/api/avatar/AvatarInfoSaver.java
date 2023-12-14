@@ -30,4 +30,10 @@ public class AvatarInfoSaver {
         userEntity.setAvatarInfo(savedAvatarInfo);
         return avatarInfoDtoConverter.toDto(savedAvatarInfo);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public AvatarInfo update (final AvatarInfo avatarInfo, final String newUrl) {
+        avatarInfo.setAvatarUrl(newUrl);
+        return avatarInfoRepository.save(avatarInfo);
+    }
 }

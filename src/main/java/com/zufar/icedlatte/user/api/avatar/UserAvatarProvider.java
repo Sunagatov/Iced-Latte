@@ -29,36 +29,38 @@ public class UserAvatarProvider {
     private final MinioTemporaryLinkReceiver minioTemporaryLinkReceiver;
     private final AvatarInfoRepository avatarInfoRepository;
     private final AvatarInfoDtoConverter avatarInfoDtoConverter;
-
-    public String getNewTemporaryAvatarUrl(final UUID userId) {
-        AvatarInfoDto avatarInfoDto = getAvatarInfoDto(userId);
-        String bucketName = avatarInfoDto.bucketName();
-        String fileName = avatarInfoDto.fileName();
-        return minioTemporaryLinkReceiver.generatePresignedUrl(bucketName, fileName).toString();
-    }
+    private final AvatarInfoSaver avatarInfoSaver;
 
     public String getNewTemporaryAvatarUrl(final String bucketName, final String fileName) {
         return minioTemporaryLinkReceiver.generatePresignedUrl(bucketName, fileName).toString();
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public AvatarInfoDto getAvatarInfoDto(final UUID userId) {
         AvatarInfo avatarInfo = avatarInfoRepository.findAvatarInfoByUserId(userId)
                 .orElseThrow(() -> new EmptyUserAvatarException(userId));
-        return avatarInfoDtoConverter.toDto(avatarInfo);
+
+        AvatarInfo validatedAvatarInfo = avatarInfoValidation(avatarInfo, userId);
+        return avatarInfoDtoConverter.toDto(validatedAvatarInfo);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     private AvatarInfo avatarInfoValidation(final AvatarInfo avatarInfo, final UUID userId) {
+        final String avatarUrl = avatarInfo.getAvatarUrl();
+        if (avatarUrl == null || avatarUrl.isEmpty()) {
+            throw new EmptyUserAvatarException(userId);
+        }
+
         final OffsetDateTime updatedAt = avatarInfo.getUpdatedAt()
                 .plus(Duration.parse(expirationTime))
-                .plus(Duration.ofHours(1));
+                .plus(Duration.ofHours(1)); // extra time for validation
         final OffsetDateTime now = OffsetDateTime.now();
-        if (updatedAt.isAfter(now)) {
-            String newUrl = getNewTemporaryAvatarUrl(userId);
-            avatarInfo.setAvatarUrl(newUrl);
-            avatarInfoRepository.save(avatarInfo);
+        if (updatedAt.isBefore(now)) {
+            String bucketName = avatarInfo.getBucketName();
+            String fileName = avatarInfo.getFileName();
+            String newUrl = getNewTemporaryAvatarUrl(bucketName, fileName);
+            return avatarInfoSaver.update(avatarInfo, newUrl);
         }
+
         return avatarInfo;
     }
 }
