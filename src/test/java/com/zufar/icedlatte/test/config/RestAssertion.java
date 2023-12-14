@@ -26,7 +26,7 @@ public final class RestAssertion {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
 
-    private static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
+    public static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
         return assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, matchesJsonSchemaInClasspath(schema));
     }
 

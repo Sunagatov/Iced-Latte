@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBodySchemaResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiEmptyBodyResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static io.restassured.RestAssured.given;
@@ -52,23 +53,19 @@ public class FavoriteListEndpointTest {
 
     @Value("${jwt.password}")
     protected String password;
-    protected static String jwtToken = "";
 
     private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate-template.json";
 
     private static final String FAVORITE_LIST_SCHEMA = "favorite/model/schema/favorite-list-schema.json";
+    private static final String FAVORITE_LIST_ERROR_SCHEMA = "favorite/model/schema/favorite-list-error-schema.json";
     private static final String PRODUCT_ADD_TO_FAVORITE_LIST = "/favorite/model/product-add-to-favorite-list.json";
-
-    @DynamicPropertySource
-    static void dataSourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("DATASOURCE_URL", postgres::getJdbcUrl);
-    }
+    private static final String PRODUCT_NOT_EXIST_ADD_TO_FAVORITE_LIST = "/favorite/model/product-not-exist-add-to-favorite-list.json";
 
     protected static RequestSpecification specification;
 
     @BeforeEach
     void tokenAndSpecification() {
-        getJwtToken();
+        String jwtToken = getJwtToken();
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -87,7 +84,7 @@ public class FavoriteListEndpointTest {
         }
     }
 
-    protected void getJwtToken(){
+    protected String getJwtToken() {
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -102,7 +99,17 @@ public class FavoriteListEndpointTest {
                 .body(body)
                 .post("/authenticate");
 
-        jwtToken = response.getBody().path("token");
+        String jwtToken = response.getBody().path("token");
+
+        if (isJwtTokenNotValid(jwtToken)) {
+            throw new RuntimeException("JWT Token is empty or null. Test failed.");
+        }
+
+        return jwtToken;
+    }
+
+    protected boolean isJwtTokenNotValid(String jwtToken) {
+        return jwtToken == null || jwtToken.isEmpty();
     }
 
     @Test
@@ -118,6 +125,18 @@ public class FavoriteListEndpointTest {
     }
 
     @Test
+    @DisplayName("Should add not exist product to FavoriteList")
+    void shouldAddNotExistProductToFavoriteList() {
+        String body = getRequestBody(PRODUCT_NOT_EXIST_ADD_TO_FAVORITE_LIST);
+
+        Response response = given(specification)
+                .body(body)
+                .post();
+
+        assertRestApiBodySchemaResponse(response, HttpStatus.BAD_REQUEST, FAVORITE_LIST_ERROR_SCHEMA);
+    }
+
+    @Test
     @DisplayName("Should delete product from FavoriteList")
     void shouldDeleteProductFromFavoriteList() {
         String productId = "418499f3-d951-40bf-9414-5cb90ab21ecb";
@@ -125,7 +144,18 @@ public class FavoriteListEndpointTest {
         Response response = given(specification)
                 .delete("/{productId}", productId);
 
-        assertRestApiEmptyBodyResponse(response, HttpStatus.valueOf(200));
+        assertRestApiEmptyBodyResponse(response, HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("Should delete not exist product from FavoriteList")
+    void shouldDeleteNotExistProductFromFavoriteList() {
+        String productId = "456123456";
+
+        Response response = given(specification)
+                .delete("/{productId}", productId);
+
+        assertRestApiBodySchemaResponse(response, HttpStatus.BAD_REQUEST, FAVORITE_LIST_ERROR_SCHEMA);
     }
 
     @Test
