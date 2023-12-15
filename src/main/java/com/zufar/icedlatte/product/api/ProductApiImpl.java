@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -15,6 +16,7 @@ public class ProductApiImpl implements ProductApi {
 
     private final PageableProductsProvider pageableProductsProvider;
     private final SingleProductProvider singleProductProvider;
+    private final ProductsProvider productsProvider;
 
     @Override
     public ProductListWithPaginationInfoDto getProducts(final Integer page,
@@ -22,6 +24,11 @@ public class ProductApiImpl implements ProductApi {
                                                         final String sortAttribute,
                                                         final String sortDirection) {
         return pageableProductsProvider.getProducts(page, size, sortAttribute, sortDirection);
+    }
+
+    @Override
+    public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
+        return productsProvider.getProducts(uuids);
     }
 
     @Override

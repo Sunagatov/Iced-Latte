@@ -22,11 +22,11 @@ public final class RestAssertion {
         assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
     }
 
-    private static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
+    public static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
 
-    private static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
+    public static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
         return assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, matchesJsonSchemaInClasspath(schema));
     }
 

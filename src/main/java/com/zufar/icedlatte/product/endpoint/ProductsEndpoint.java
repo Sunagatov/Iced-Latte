@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -49,5 +51,16 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
                 page, size, sortAttribute, sortDirection);
         return ResponseEntity.ok()
                 .body(productPaginationDto);
+    }
+
+    @Override
+    @GetMapping("/ids")
+    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@PathVariable final List<UUID> productIds) {
+        var stringIDs = productIds.stream().map(UUID::toString).collect(Collectors.joining(", "));
+        log.info("Received the request to get the products with productIds - {}.", stringIDs);
+        List<ProductInfoDto> products = productApi.getProducts(productIds);
+        log.info("Products with productIds: {} was retrieved successfully", stringIDs);
+        return ResponseEntity.ok()
+                .body(products);
     }
 }

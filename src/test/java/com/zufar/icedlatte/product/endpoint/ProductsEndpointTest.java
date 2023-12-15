@@ -50,6 +50,7 @@ class ProductsEndpointTest {
     private static final String PRODUCT_SCHEMA_LOCATION = "product/model/schema/product-schema.json";
     private static final String PRODUCT_FAILED_SCHEMA_LOCATION = "product/model/schema/product-failed-schema.json";
     private static final String PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION = "product/model/schema/product-list-pagination-schema.json";
+    private static final String PRODUCT_LIST_BY_ID_SCHEMA_LOCATION = "product/model/schema/product-list-by-id-schema.json";
 
     private static final String NAME_ATTRIBUTE = "name";
     private static final String EXPECTED_PRODUCT_NAME = "Nitro Coffee";
@@ -82,6 +83,45 @@ class ProductsEndpointTest {
 
         Response response = given(specification)
                 .get("/{productId}", invalidProductId);
+
+        assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
+    }
+
+    @Test
+    @DisplayName("Should retrieve products successfully by IDs")
+    void shouldRetrieveProductsSuccessfullyByIds() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356")
+                .get("ids");
+
+        assertRestApiOkResponse(response, PRODUCT_LIST_BY_ID_SCHEMA_LOCATION);
+    }
+
+    @Test
+    @DisplayName("Should retrieve products successfully by IDs and contain 'Nitro Coffee'")
+    void shouldRetrieveProductsSuccessfullyByIdsAndContainSpecificProduct() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356") // 'Nitro Coffee'
+                .get("ids");
+
+        assertRestApiOkResponse(
+                response,
+                PRODUCT_LIST_BY_ID_SCHEMA_LOCATION,
+                "name",
+                EXPECTED_PRODUCT_NAME
+        );
+    }
+
+    @Test
+    @DisplayName("Should return not found for invalid product IDs")
+    void shouldReturnNotFoundForInvalidProductIds() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", UUID.randomUUID().toString())
+                .param("id", UUID.randomUUID().toString())
+                .get("ids");
 
         assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }
