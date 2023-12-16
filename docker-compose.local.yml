@@ -132,7 +132,7 @@ services:
     ports:
       - "6380:6380"
 
-  loki:
+  iced-latte-loki:
     image: grafana/loki:latest
     container_name: iced-latte-loki
     ports:
@@ -143,7 +143,7 @@ services:
     volumes:
       - loki_data:/loki
 
-  promtail:
+  iced-latte-promtail:
     image: grafana/promtail:latest
     volumes:
       - backend_logs:/var/log/iced-latte-backend
