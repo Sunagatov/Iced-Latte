@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.config;
 
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -18,9 +17,6 @@ public class MinioConfig {
     @Value("${spring.minio.url}")
     private String minioUrl;
 
-    @Value("${spring.minio.secure}")
-    private boolean minioSecure;
-
     @Value("${spring.minio.access-key}")
     private String minioAccessKey;
 
@@ -35,18 +31,17 @@ public class MinioConfig {
 
     @Bean
     public AmazonS3 amazonS3() {
-        AWSCredentials awsCredentials = new BasicAWSCredentials(minioAccessKey, minioSecretKey);
         AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(minioUrl, region))
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(minioAccessKey, minioSecretKey)))
                 .build();
 
         try {
             if (!amazonS3.doesBucketExistV2(minioAvatarBucket)) {
                 amazonS3.createBucket(minioAvatarBucket);
             }
-        } catch (Exception e) {
-            log.warn("Bucket {} already exists", minioAvatarBucket);
+        } catch (Exception exception) {
+            log.error("Creating AmazonS3 bucket was failed", exception);
         }
 
         return amazonS3;

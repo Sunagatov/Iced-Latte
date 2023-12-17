@@ -20,8 +20,8 @@ public class MinioObjectUploader {
     private final AmazonS3 amazonS3;
 
     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
-
         InputStream inputStream = getInputStream(file);
+
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
