@@ -3,8 +3,8 @@ package com.zufar.icedlatte.user.exception.handler;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.user.exception.EmptyUserAvatarException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
+import com.zufar.icedlatte.user.exception.UserAvatarNotFoundException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,9 +49,9 @@ public class UserExceptionHandler {
         return apiErrorResponse;
     }
 
-    @ExceptionHandler({EmptyUserAvatarException.class})
+    @ExceptionHandler({UserAvatarNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleEmptyUserAvatarException(final EmptyUserAvatarException exception) {
+    public ApiErrorResponse handleEmptyUserAvatarException(final UserAvatarNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.error("Handle empty user avatar exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.common.filestorage.MinioTemporaryLinkReceiver;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -22,11 +23,17 @@ public class ProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
+    private final MinioTemporaryLinkReceiver minioTemporaryLinkReceiver;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         var products = productInfoRepository.findAllById(uuids);
-        var result = products.stream().map(productInfoDtoConverter::toDto).toList();
+        var result = products.stream()
+                .map(productInfoDtoConverter::toDto)
+                .peek(productInfoDto -> {
+
+                })
+                .toList();
         if (result.size() == uuids.size()) {
             return result;
         }

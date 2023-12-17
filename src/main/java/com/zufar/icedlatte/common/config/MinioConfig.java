@@ -6,9 +6,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +41,12 @@ public class MinioConfig {
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .build();
 
-        if (!amazonS3.doesBucketExistV2(minioAvatarBucket)) {
-            amazonS3.createBucket(minioAvatarBucket);
+        try {
+            if (!amazonS3.doesBucketExistV2(minioAvatarBucket)) {
+                amazonS3.createBucket(minioAvatarBucket);
+            }
+        } catch (Exception e) {
+            log.warn("Bucket {} already exists", minioAvatarBucket);
         }
 
         return amazonS3;

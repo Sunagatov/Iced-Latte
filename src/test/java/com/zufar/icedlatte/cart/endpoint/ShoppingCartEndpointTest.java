@@ -3,10 +3,10 @@ package com.zufar.icedlatte.cart.endpoint;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
+import io.minio.MinioClient;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,9 +17,16 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
+import java.io.IOException;
+import java.time.Duration;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
@@ -35,7 +42,6 @@ class ShoppingCartEndpointTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
-
     @LocalServerPort
     protected Integer port;
 
@@ -57,6 +63,7 @@ class ShoppingCartEndpointTest {
     @DynamicPropertySource
     static void dataSourceProperties(DynamicPropertyRegistry registry) {
         registry.add("DATASOURCE_URL", postgres::getJdbcUrl);
+        //minioContainer2.start();
     }
 
     protected static RequestSpecification specification;

@@ -157,6 +157,8 @@ components:
           format: "int32"
         active:
           type: "boolean"
+        productFile:
+          type: "string"
 
     ProductListWithPaginationInfoDto:
       type: "object"

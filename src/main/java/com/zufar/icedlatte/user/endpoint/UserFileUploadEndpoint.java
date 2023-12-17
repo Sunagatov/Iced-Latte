@@ -4,7 +4,7 @@ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarDeleter;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarProvider;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
-import com.zufar.icedlatte.user.dto.AvatarInfoDto;
+import com.zufar.icedlatte.common.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -47,8 +47,7 @@ public class UserFileUploadEndpoint {
     public ResponseEntity<String> getUserAvatarLink() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar link with userId - {}.", userId);
-        AvatarInfoDto avatarInfoDto = userAvatarProvider.getAvatarInfoDto(userId);
-        String userAvatar = avatarInfoDto.avatarUrl();
+        String userAvatar = userAvatarProvider.getAvatarUrl(userId);
         log.info("The user avatar link was retrieved for user with userId - {}.", userId);
         return ResponseEntity.ok().body(userAvatar);
     }

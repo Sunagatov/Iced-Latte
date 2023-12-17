@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.entity;
 
+import com.zufar.icedlatte.common.entity.FileMetadata;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,8 +81,8 @@ public class UserEntity implements UserDetails {
     private boolean enabled;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "avatar_id", referencedColumnName = "id")
-    private AvatarInfo avatarInfo;
+    @JoinColumn(name = "file_metadata_id", referencedColumnName = "id")
+    private FileMetadata fileMetadata;
 
     @Override
     public String getUsername() {

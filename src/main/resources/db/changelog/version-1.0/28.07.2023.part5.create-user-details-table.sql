@@ -13,15 +13,15 @@ CREATE TABLE user_details
     account_non_locked      BOOLEAN      NOT NULL,
     credentials_non_expired BOOLEAN      NOT NULL,
     enabled                 BOOLEAN      NOT NULL,
-    avatar_id               UUID,
+    file_metadata_id               UUID,
 
     CONSTRAINT fk_address
         FOREIGN KEY (address_id)
             REFERENCES address (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_avatar_info
-        FOREIGN KEY (avatar_id)
-            REFERENCES avatar_info (id)
+    CONSTRAINT fk_file_metadata
+        FOREIGN KEY (file_metadata_id)
+            REFERENCES file_metadata (id)
             ON DELETE CASCADE
 );

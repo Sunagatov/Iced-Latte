@@ -4,9 +4,11 @@ import com.zufar.icedlatte.product.util.PaginationAndSortingAttribute;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,11 +34,12 @@ import static io.restassured.RestAssured.given;
 @DisplayName("ProductsEndpoint Tests")
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ProductsEndpointTest {
+class ProductsEndpointTest{
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
+    static MinIOContainer container = new MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z");
 
     @LocalServerPort
     protected Integer port;
@@ -63,6 +67,8 @@ class ProductsEndpointTest {
                 .port(port)
                 .basePath(ProductsEndpoint.PRODUCTS_URL)
                 .accept(ContentType.JSON);
+
+        container.start();
     }
 
     @Test
