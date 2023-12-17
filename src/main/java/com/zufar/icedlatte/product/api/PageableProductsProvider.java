@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoMapStractConverter;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
-    private final ProductInfoDtoMapStractConverter productInfoDtoMapStractConverter;
+    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductListWithPaginationInfoDto getProducts(final Integer page,
@@ -32,9 +33,9 @@ public class PageableProductsProvider {
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
-                .map(productInfoDtoMapStractConverter::toDto);
+                .map(productInfoDtoConverter::toDto);
 
-        return productInfoDtoMapStractConverter.toProductPaginationDto(productsWithPageInfo);
+        return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }
 
     private Pageable createPageableObject(final Integer page,
