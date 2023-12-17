@@ -3,7 +3,6 @@ package com.zufar.icedlatte.cart.api;
 import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
-import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +20,14 @@ public class ShoppingCartProvider {
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
+    private final ShoppingCartCreator shoppingCartCreator;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public ShoppingCartDto getByUserId(final UUID userId) throws ShoppingCartNotFoundException {
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ShoppingCartDto getByUserId(final UUID userId) {
         ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartByUserId(userId);
         if (shoppingCart == null) {
-            log.error("The shopping cart for the user with id = {} is not found.", userId);
-            throw new ShoppingCartNotFoundException(userId);
+            log.info("The shopping cart was not found.");
+            shoppingCart = shoppingCartCreator.createNewShoppingCart(userId);
         }
         return shoppingCartDtoConverter.toDto(shoppingCart);
     }
