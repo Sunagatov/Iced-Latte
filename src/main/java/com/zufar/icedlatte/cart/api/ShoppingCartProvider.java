@@ -22,7 +22,7 @@ public class ShoppingCartProvider {
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
     private final ShoppingCartCreator shoppingCartCreator;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto getByUserId(final UUID userId) {
         ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartByUserId(userId);
         if (shoppingCart == null) {
