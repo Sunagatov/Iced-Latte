@@ -4,7 +4,7 @@ import com.zufar.icedlatte.cart.api.ItemsTotalPriceCalculator;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoMapStractConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -35,8 +35,8 @@ class ShoppingCartDtoConverterTest {
         }
 
         @Bean
-        public ProductInfoDtoConverter productInfoDtoConverter() {
-            return Mappers.getMapper(ProductInfoDtoConverter.class);
+        public ProductInfoDtoMapStractConverter productInfoDtoConverter() {
+            return Mappers.getMapper(ProductInfoDtoMapStractConverter.class);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoMapStractConverter;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -19,12 +19,12 @@ import java.util.UUID;
 public class SingleProductProvider {
 
     private final ProductInfoRepository productInfoRepository;
-    private final ProductInfoDtoConverter productInfoDtoConverter;
+    private final ProductInfoDtoMapStractConverter productInfoDtoMapStractConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductInfoDto getProductById(final UUID productId) {
         return productInfoRepository.findById(productId)
-                .map(productInfoDtoConverter::toDto)
+                .map(productInfoDtoMapStractConverter::toDto)
                 .orElseThrow(() -> {
                     log.error("The product with id = {} is not found.", productId);
                     return new ProductNotFoundException(productId);
