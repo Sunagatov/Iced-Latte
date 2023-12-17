@@ -31,19 +31,22 @@ import java.util.stream.Collectors;
 public class AddItemsToShoppingCartHelper {
 
     public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
-    public static final int DEFAULT_ITEMS_QUANTITY = 0;
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductInfoRepository productInfoRepository;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
+    private final ShoppingCartCreator shoppingCartCreator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto add(final Set<NewShoppingCartItemDto> itemsToAdd) {
         UUID userId = securityPrincipalProvider.getUserId();
 
         ShoppingCart shoppingCart = Optional.ofNullable(shoppingCartRepository.findShoppingCartByUserId(userId))
-                .orElseGet(() -> createNewShoppingCart(userId));
+                .orElseGet(() -> {
+                    log.info("The shopping cart was not found.");
+                    return shoppingCartCreator.createNewShoppingCart(userId);
+                });
 
         List<ShoppingCartItem> items = createItems(itemsToAdd, shoppingCart);
 
@@ -88,15 +91,5 @@ public class AddItemsToShoppingCartHelper {
         existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);
         existingShoppingCart.getItems().addAll(shoppingCartItems);
         return existingShoppingCart;
-    }
-
-    private static ShoppingCart createNewShoppingCart(UUID userId) {
-        return ShoppingCart.builder()
-                .userId(userId)
-                .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
-                .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
-                .items(new HashSet<>())
-                .createdAt(OffsetDateTime.now())
-                .build();
     }
 }
