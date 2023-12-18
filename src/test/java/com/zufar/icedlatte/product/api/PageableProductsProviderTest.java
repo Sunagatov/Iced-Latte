@@ -38,7 +38,7 @@ class PageableProductsProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private ProductImageReceiver productImageReceiver;
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @InjectMocks
     private PageableProductsProvider productsProvider;
@@ -62,7 +62,7 @@ class PageableProductsProviderTest {
         when(productRepository.findAll(pageRequest)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
-        when(productImageReceiver.getProductFileUrl(any(UUID.class))).thenReturn("fileUrl");
+        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageNumber, size,
                 sortAttribute, Sort.Direction.ASC.name()

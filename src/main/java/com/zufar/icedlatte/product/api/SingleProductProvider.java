@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.filestorage.api.FileProvider;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -21,18 +20,16 @@ public class SingleProductProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductImageReceiver productImageReceiver;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductInfoDto getProductById(final UUID productId) {
-        ProductInfoDto productInfoDto = productInfoRepository.findById(productId)
+        return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)
+                .map(productPictureLinkUpdater::update)
                 .orElseThrow(() -> {
                     log.error("The product with id = {} is not found.", productId);
                     return new ProductNotFoundException(productId);
                 });
-        final String productFileUrl = productImageReceiver.getProductFileUrl(productId);
-        productInfoDto.setProductFileUrl(productFileUrl);
-        return productInfoDto;
     }
 }

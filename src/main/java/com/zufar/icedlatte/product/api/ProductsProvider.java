@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.filestorage.api.FileProvider;
 import com.zufar.icedlatte.common.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
@@ -29,17 +28,14 @@ public class ProductsProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
-    private final ProductImageReceiver productImageReceiver;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         var products = productInfoRepository.findAllById(uuids);
         var result = products.stream()
                 .map(productInfoDtoConverter::toDto)
-                .peek(productInfoDto -> {
-                    final String productFileUrl = productImageReceiver.getProductFileUrl(productInfoDto.getId());
-                    productInfoDto.setProductFileUrl(productFileUrl);
-                })
+                .map(productPictureLinkUpdater::update)
                 .toList();
 
         if (result.size() == uuids.size()) {

@@ -356,12 +356,6 @@
                     <version>${json-schema-validator.version}</version>
                     <scope>test</scope>
                 </dependency>
-                <dependency>
-                    <groupId>org.testcontainers</groupId>
-                    <artifactId>minio</artifactId>
-                    <version>1.19.3</version>
-                    <scope>test</scope>
-                </dependency>
             </dependencies>
         </profile>
     </profiles>

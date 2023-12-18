@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -24,7 +23,7 @@ public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductImageReceiver productImageReceiver;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
@@ -37,12 +36,7 @@ public class PageableProductsProvider {
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
                 .map(productInfoDtoConverter::toDto)
-                .map(productInfoDto -> {
-                    final UUID productId = productInfoDto.getId();
-                    final String productFileUrl = productImageReceiver.getProductFileUrl(productId);
-                    productInfoDto.setProductFileUrl(productFileUrl);
-                    return productInfoDto;
-                });
+                .map(productPictureLinkUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }

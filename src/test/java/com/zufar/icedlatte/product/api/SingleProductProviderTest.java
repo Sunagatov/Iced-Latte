@@ -1,8 +1,7 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.filestorage.api.FileProvider;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -33,7 +32,8 @@ class SingleProductProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private ProductImageReceiver productImageReceiver;
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
+
 
     @InjectMocks
     private SingleProductProvider productProvider;
@@ -42,9 +42,9 @@ class SingleProductProviderTest {
     void shouldReturnProductWhenProductIdExists() {
         UUID productId = UUID.randomUUID();
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(mock(ProductInfo.class)));
+        when(productRepository.findById(any(UUID.class))).thenReturn(Optional.of(mock(ProductInfo.class)));
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(productImageReceiver.getProductFileUrl(productId)).thenReturn("fileUrl");
+        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductInfoDto result = productProvider.getProductById(productId);
 
@@ -57,6 +57,7 @@ class SingleProductProviderTest {
     void shouldThrowExceptionWhenProductIdNotExists() {
         UUID productId = UUID.randomUUID();
 
+        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(any(ProductInfoDto.class));
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
         ProductNotFoundException thrownException = assertThrows(
