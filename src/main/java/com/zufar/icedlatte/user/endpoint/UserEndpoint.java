@@ -9,7 +9,6 @@ import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
 import com.zufar.icedlatte.common.filestorage.api.FileDeleter;
-import com.zufar.icedlatte.common.filestorage.api.FileProvider;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarReceiver;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +91,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
                 .build();
     }
 
+    @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -101,6 +101,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Override
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -110,6 +111,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         return ResponseEntity.ok().body(userAvatar);
     }
 
+    @Override
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
         UUID userId = securityPrincipalProvider.getUserId();
