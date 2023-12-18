@@ -3,7 +3,6 @@ package com.zufar.icedlatte.common.filestorage.api;
 import com.zufar.icedlatte.common.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
-import com.zufar.icedlatte.common.filestorage.exception.FileNotFoundException;
 import com.zufar.icedlatte.common.filestorage.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,6 +35,6 @@ public class MinioFileService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteByRelatedObjectId(final UUID relatedObjectId) {
-        fileMetadataRepository.deleteByUserId(relatedObjectId);
+        fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
     }
 }
