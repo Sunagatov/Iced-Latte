@@ -29,7 +29,7 @@ public class ProductsProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
-    private final FileProvider fileProvider;
+    private final ProductImageReceiver productImageReceiver;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
@@ -37,7 +37,7 @@ public class ProductsProvider {
         var result = products.stream()
                 .map(productInfoDtoConverter::toDto)
                 .peek(productInfoDto -> {
-                    final String productFileUrl = fileProvider.getRelatedObjectUrl(productInfoDto.getId());
+                    final String productFileUrl = productImageReceiver.getProductFileUrl(productInfoDto.getId());
                     productInfoDto.setProductFileUrl(productFileUrl);
                 })
                 .toList();

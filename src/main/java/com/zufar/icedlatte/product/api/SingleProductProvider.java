@@ -21,7 +21,7 @@ public class SingleProductProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final FileProvider fileProvider;
+    private final ProductImageReceiver productImageReceiver;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductInfoDto getProductById(final UUID productId) {
@@ -31,7 +31,7 @@ public class SingleProductProvider {
                     log.error("The product with id = {} is not found.", productId);
                     return new ProductNotFoundException(productId);
                 });
-        final String productFileUrl = fileProvider.getRelatedObjectUrl(productId);
+        final String productFileUrl = productImageReceiver.getProductFileUrl(productId);
         productInfoDto.setProductFileUrl(productFileUrl);
         return productInfoDto;
     }

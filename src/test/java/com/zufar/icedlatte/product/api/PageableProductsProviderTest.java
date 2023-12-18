@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +36,9 @@ class PageableProductsProviderTest {
 
     @Mock
     private ProductInfoDtoConverter productInfoConverter;
+
+    @Mock
+    private ProductImageReceiver productImageReceiver;
 
     @InjectMocks
     private PageableProductsProvider productsProvider;
@@ -58,6 +62,7 @@ class PageableProductsProviderTest {
         when(productRepository.findAll(pageRequest)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
+        when(productImageReceiver.getProductFileUrl(any(UUID.class))).thenReturn("fileUrl");
 
         ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageNumber, size,
                 sortAttribute, Sort.Direction.ASC.name()

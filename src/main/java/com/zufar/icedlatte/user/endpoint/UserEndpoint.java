@@ -10,6 +10,7 @@ import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
 import com.zufar.icedlatte.common.filestorage.api.FileDeleter;
 import com.zufar.icedlatte.common.filestorage.api.FileProvider;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarReceiver;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
-    private final FileProvider fileProvider;
+    private final UserAvatarReceiver userAvatarReceiver;
 
     @Override
     @GetMapping
@@ -104,7 +105,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<String> getUserAvatarLink() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar link.");
-        String userAvatar = fileProvider.getRelatedObjectUrl(userId);
+        String userAvatar = userAvatarReceiver.getUserAvatar(userId);
         log.info("The user avatar link was retrieved.");
         return ResponseEntity.ok().body(userAvatar);
     }

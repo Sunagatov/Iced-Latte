@@ -30,7 +30,7 @@ public class MinioFileService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public FileMetadataDto getFileMetadataDto(final UUID relatedObjectId) {
         FileMetadata fileMetadata = fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
-                .orElseThrow(() -> new FileNotFoundException(relatedObjectId));
+                .orElse(null);
         return fileMetadataDtoConverter.toDto(fileMetadata);
     }
 

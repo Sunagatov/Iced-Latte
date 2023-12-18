@@ -33,7 +33,7 @@ class SingleProductProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private FileProvider fileProvider;
+    private ProductImageReceiver productImageReceiver;
 
     @InjectMocks
     private SingleProductProvider productProvider;
@@ -44,7 +44,7 @@ class SingleProductProviderTest {
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(mock(ProductInfo.class)));
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(fileProvider.getRelatedObjectUrl(productId)).thenReturn("fileUrl");
+        when(productImageReceiver.getProductFileUrl(productId)).thenReturn("fileUrl");
 
         ProductInfoDto result = productProvider.getProductById(productId);
 
