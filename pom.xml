@@ -54,7 +54,7 @@
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
+        <testcontainers.version>1.19.3</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <rest-assured.version>5.3.2</rest-assured.version>
 
@@ -87,7 +87,7 @@
         <spring-boot-starter-data-redis.version>3.2.0</spring-boot-starter-data-redis.version>
 
         <!-- Apache Maven Plugin Dependencies Versions -->
-        <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
+        <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -236,19 +236,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${apache-commons-lang3.version}</version>
-        </dependency>
-
-        <!-- Java EE Annotations -->
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>${javax.annotation-api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>${servlet-api.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Redis -->
@@ -421,6 +408,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -439,6 +427,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -457,6 +446,7 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -474,6 +464,7 @@
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <modelPackage>com.zufar.icedlatte.security.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
@@ -490,6 +481,7 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.payment.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
@@ -508,6 +500,7 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/favorite-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.favorite.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>

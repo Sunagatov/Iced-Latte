@@ -1,36 +1,69 @@
 package com.zufar.icedlatte.product.endpoint;
 
 import com.zufar.icedlatte.product.util.PaginationAndSortingAttribute;
-import com.zufar.icedlatte.test.config.AbstractE2ETest;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled;
-import org.springframework.data.domain.Sort;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
+import io.restassured.specification.RequestSpecification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiForbiddenEmptyResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static io.restassured.RestAssured.given;
 
 
 @Testcontainers
-@Disabled("Disabled as while the issue 'ContainerFetch Can't get Docker image: RemoteDockerImag...' was not fixed.")
 @DisplayName("ProductsEndpoint Tests")
-class ProductsEndpointTest extends AbstractE2ETest {
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class ProductsEndpointTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
+
+    @LocalServerPort
+    protected Integer port;
+
+    @DynamicPropertySource
+    static void dataSourceProperties(DynamicPropertyRegistry registry) {
+        registry.add("DATASOURCE_URL", postgres::getJdbcUrl);
+    }
+
+    protected static RequestSpecification specification;
 
     private static final String PRODUCT_SCHEMA_LOCATION = "product/model/schema/product-schema.json";
     private static final String PRODUCT_FAILED_SCHEMA_LOCATION = "product/model/schema/product-failed-schema.json";
     private static final String PRODUCT_LIST_PAGINATION_SCHEMA_LOCATION = "product/model/schema/product-list-pagination-schema.json";
+    private static final String PRODUCT_LIST_BY_ID_SCHEMA_LOCATION = "product/model/schema/product-list-by-id-schema.json";
 
     private static final String NAME_ATTRIBUTE = "name";
     private static final String EXPECTED_PRODUCT_NAME = "Nitro Coffee";
     private static final String PRODUCTS_PATH_TO_NAME = "products.name";
+
+    @BeforeEach
+    void setEndpointUrl() {
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(ProductsEndpoint.PRODUCTS_URL)
+                .accept(ContentType.JSON);
+    }
 
     @Test
     @DisplayName("Should retrieve product successfully by ID")
@@ -50,6 +83,45 @@ class ProductsEndpointTest extends AbstractE2ETest {
 
         Response response = given(specification)
                 .get("/{productId}", invalidProductId);
+
+        assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
+    }
+
+    @Test
+    @DisplayName("Should retrieve products successfully by IDs")
+    void shouldRetrieveProductsSuccessfullyByIds() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356")
+                .get("ids");
+
+        assertRestApiOkResponse(response, PRODUCT_LIST_BY_ID_SCHEMA_LOCATION);
+    }
+
+    @Test
+    @DisplayName("Should retrieve products successfully by IDs and contain 'Nitro Coffee'")
+    void shouldRetrieveProductsSuccessfullyByIdsAndContainSpecificProduct() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356") // 'Nitro Coffee'
+                .get("ids");
+
+        assertRestApiOkResponse(
+                response,
+                PRODUCT_LIST_BY_ID_SCHEMA_LOCATION,
+                "name",
+                EXPECTED_PRODUCT_NAME
+        );
+    }
+
+    @Test
+    @DisplayName("Should return not found for invalid product IDs")
+    void shouldReturnNotFoundForInvalidProductIds() {
+        Response response = given(specification)
+                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
+                .param("id", UUID.randomUUID().toString())
+                .param("id", UUID.randomUUID().toString())
+                .get("ids");
 
         assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }
@@ -83,7 +155,7 @@ class ProductsEndpointTest extends AbstractE2ETest {
                 .queryParams(params)
                 .get();
 
-        assertRestApiForbiddenEmptyResponse(response);
+        assertRestApiBadRequestResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }
 
     @Test

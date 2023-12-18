@@ -13,14 +13,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.UUID;
 
+import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_ITEMS_QUANTITY;
+import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_PRODUCTS_QUANTITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ShoppingCartProviderTest {
@@ -30,6 +30,9 @@ class ShoppingCartProviderTest {
 
     @Mock
     ShoppingCartRepository shoppingCartRepository;
+
+    @Mock
+    ShoppingCartCreator shoppingCartCreator;
 
     @Mock
     ShoppingCartDtoConverter shoppingCartDtoConverter;
@@ -45,19 +48,31 @@ class ShoppingCartProviderTest {
         ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
 
         assertEquals(shoppingCartDtoConverter.toDto(expectedShoppingCart), actualShoppingCartDto);
-        verify(shoppingCartRepository).findShoppingCartByUserId(userId);
+        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(userId);
+        verify(shoppingCartCreator, times(0)).createNewShoppingCart(userId);
         verify(shoppingCartDtoConverter, times(2)).toDto(expectedShoppingCart);
     }
 
     @Test
-    @DisplayName("GetByUserId should throw ShoppingCartNotFoundException when the shopping cart does not exist")
-    void shouldThrowShoppingCartNotFoundExceptionWhenShoppingCartDoesNotExist() {
-        UUID nonExistentUserId = UUID.randomUUID();
+    @DisplayName("GetByUserId should create a new ShoppingCart when the shopping cart does not exist")
+    void shouldCreateNewShoppingCartWhenShoppingCartDoesNotExist() {
+        UUID userId = UUID.randomUUID();
+        ShoppingCart shoppingCart = ShoppingCart.builder()
+                .userId(userId)
+                .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
+                .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
+                .items(new HashSet<>())
+                .createdAt(OffsetDateTime.now())
+                .build();
 
-        when(shoppingCartRepository.findShoppingCartByUserId(nonExistentUserId)).thenThrow(ShoppingCartNotFoundException.class);
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(null);
+        when(shoppingCartCreator.createNewShoppingCart(userId)).thenReturn(shoppingCart);
 
-        assertThrows(ShoppingCartNotFoundException.class, () -> shoppingCartProvider.getByUserId(nonExistentUserId));
-        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(nonExistentUserId);
-        verify(shoppingCartDtoConverter, never()).toDto(new ShoppingCart());
+        ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
+
+        assertEquals(shoppingCartDtoConverter.toDto(shoppingCart), actualShoppingCartDto);
+        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(userId);
+        verify(shoppingCartCreator, times(1)).createNewShoppingCart(userId);
+        verify(shoppingCartDtoConverter, times(2)).toDto(shoppingCart);
     }
 }
