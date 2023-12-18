@@ -6,13 +6,11 @@ import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductInfoDtoMapstructConverter {
 
-    @Named("toProductInfoDto")
     @Mapping(target = "id", source = "entity.productId")
     ProductInfoDto toDto(final ProductInfo entity);
 

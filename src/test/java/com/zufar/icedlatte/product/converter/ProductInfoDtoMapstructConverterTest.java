@@ -16,13 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ProductInfoDtoMapstructConverterTest {
+class ProductInfoDtoConverterTest {
 
-    private ProductInfoDtoMapstructConverter converter;
+    private ProductInfoDtoConverter converter;
 
     @BeforeEach
     void setup() {
-        converter = Mappers.getMapper(ProductInfoDtoMapstructConverter.class);
+        converter = Mappers.getMapper(ProductInfoDtoConverter.class);
     }
 
     @Test
