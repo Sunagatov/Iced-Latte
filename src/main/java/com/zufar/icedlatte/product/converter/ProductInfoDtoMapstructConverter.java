@@ -10,7 +10,7 @@ import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface ProductInfoDtoMapStractConverter {
+public interface ProductInfoDtoMapstructConverter {
 
     @Named("toProductInfoDto")
     @Mapping(target = "id", source = "entity.productId")

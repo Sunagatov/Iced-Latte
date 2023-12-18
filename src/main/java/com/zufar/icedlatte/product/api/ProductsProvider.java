@@ -1,9 +1,7 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.filestorage.MinioTemporaryLinkReceiver;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoMapStractConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +26,7 @@ public class ProductsProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         var products = productInfoRepository.findAllById(uuids);
-        var result = products.stream()
-                .map(productInfoDtoConverter::toDto)
-                .toList();
+        var result = products.stream().map(productInfoDtoConverter::toDto).toList();
         if (result.size() == uuids.size()) {
             return result;
         }

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.product.converter.ProductInfoDtoMapStractConverter;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoMapstructConverter;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -29,7 +29,7 @@ class SingleProductProviderTest {
     private ProductInfoRepository productRepository;
 
     @Mock
-    private ProductInfoDtoMapStractConverter productInfoConverter;
+    private ProductInfoDtoMapstructConverter productInfoConverter;
 
     @InjectMocks
     private SingleProductProvider productProvider;

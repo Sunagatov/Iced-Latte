@@ -1,6 +1,13 @@
 package com.zufar.icedlatte.common.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,11 +31,14 @@ public class FileMetadata {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID fileId;
 
+    @Column(name = "entity_id")
+    private UUID entityId;
+
     @Column(name = "bucket_name")
-    public String bucketName;
+    private String bucketName;
 
     @Column(name = "file_name")
-    public String fileName;
+    private String fileName;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)

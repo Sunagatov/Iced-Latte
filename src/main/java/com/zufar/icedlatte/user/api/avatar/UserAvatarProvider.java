@@ -25,20 +25,20 @@ public class UserAvatarProvider {
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public String getAvatarUrl(final UUID userId) {
+        FileMetadataDto fileMetadataDto = getAvatarInfoDto(userId);
+        return getNewTemporaryAvatarUrl(fileMetadataDto);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public FileMetadataDto getAvatarInfoDto(final UUID userId) {
         FileMetadata fileMetadata = fileMetadataRepository.findAvatarInfoByUserId(userId)
                 .orElseThrow(() -> new UserAvatarNotFoundException(userId));
         return fileMetadataDtoConverter.toDto(fileMetadata);
     }
 
-    public String getNewTemporaryAvatarUrl(final String bucketName, final String fileName) {
-        return minioTemporaryLinkReceiver.generatePresignedUrl(bucketName, fileName).toString();
-    }
-
-    public String getAvatarUrl(final UUID userId) {
-        FileMetadataDto fileMetadataDto = getAvatarInfoDto(userId);
-        final String bucketName = fileMetadataDto.bucketName();
-        final String fileName = fileMetadataDto.fileName();
-        return getNewTemporaryAvatarUrl(bucketName, fileName);
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public String getNewTemporaryAvatarUrl(final FileMetadataDto fileMetadata) {
+        return minioTemporaryLinkReceiver.generatePresignedUrlAsString(fileMetadata);
     }
 }

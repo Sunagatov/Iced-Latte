@@ -8,17 +8,24 @@ import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarDeleter;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarProvider;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -37,6 +44,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
     private final DeleteUserOperationPerformer deleteUserOperationPerformer;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final UserAvatarUploader userAvatarUploader;
+    private final UserAvatarDeleter userAvatarDeleter;
+    private final UserAvatarProvider userAvatarProvider;
 
     @Override
     @GetMapping
@@ -79,5 +89,32 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         log.info("The user's account was deleted.");
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
+    }
+
+    @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.info("Received the request to upload the user avatar with userId - {}.", userId);
+        userAvatarUploader.uploadUserAvatar(userId, file);
+        log.info("The user avatar was uploaded for user with userId - {}.", userId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping(path = "/avatar")
+    public ResponseEntity<String> getUserAvatarLink() {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.info("Received the request to get the user avatar link with userId - {}.", userId);
+        String userAvatar = userAvatarProvider.getAvatarUrl(userId);
+        log.info("The user avatar link was retrieved for user with userId - {}.", userId);
+        return ResponseEntity.ok().body(userAvatar);
+    }
+
+    @DeleteMapping(path = "/avatar")
+    public ResponseEntity<Void> deleteUserAvatar() {
+        UUID userId = securityPrincipalProvider.getUserId();
+        log.info("Received the request to delete the user avatar with userId - {}.", userId);
+        userAvatarDeleter.delete(userId);
+        log.info("The user avatar was deleted for user with userId - {}.", userId);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
