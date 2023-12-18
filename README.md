@@ -71,7 +71,7 @@ Address some common questions users might have about your project.
    **Answer:** Follow the instructions in [START.MD](START.md).
 
 2. **Question:** Where can I find API documentation?
-   **Answer:** The API documentation is available at `http://localhost:8083/swagger-ui.html`.
+   **Answer:** The API documentation is available at `http://localhost:8083/api/docs/swagger-ui`.
 
 <!-- Add more FAQs as needed -->
 

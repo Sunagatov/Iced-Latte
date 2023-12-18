@@ -11,6 +11,9 @@ volumes:
   grafana_data:
   nginx_data:
   minio_data:
+  loki_data:
+  promtail_data:
+  backend_logs: {}
 
 services:
   iced-latte-backend:
@@ -35,6 +38,8 @@ services:
       - iced-latte-network
     depends_on:
       - iced-latte-postgresdb
+    volumes:
+      - backend_logs:/usr/app/logs
     restart: on-failure
 
   iced-latte-postgresdb:
@@ -67,18 +72,20 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     networks:
       - iced-latte-network
+    ports:
+      - '9090:9090'
     restart: on-failure
 
   iced-latte-grafana:
     image: grafana/grafana:9.1.5
     container_name: iced-latte-grafana
     volumes:
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SERVER_ROOT_URL=http://localhost/grafana/
-      - GF_SECURITY_ADMIN_PASSWORD=secret
+      - ./grafana_data:/var/lib/grafana
+      - ./grafana_data/grafana.ini:/etc/grafana/grafana.ini
     networks:
       - iced-latte-network
+    ports:
+      - '3000:3000'
     depends_on:
       - iced-latte-prometheus
     restart: on-failure
@@ -101,8 +108,31 @@ services:
   iced-latte-redis:
     image: redis/redis-stack:latest
     container_name: iced-latte-redis
+    networks:
+      - iced-latte-network
     environment:
       - REDIS_HOST=localhost
       - REDIS_PORT=6380
     ports:
       - "6380:6380"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: iced-latte-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - iced-latte-network
+    volumes:
+      - loki_data:/loki
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - backend_logs:/var/log/iced-latte-backend
+      - promtail_data:/var/log
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - iced-latte-network

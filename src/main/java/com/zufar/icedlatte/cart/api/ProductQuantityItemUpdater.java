@@ -33,7 +33,7 @@ public class ProductQuantityItemUpdater {
     @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto update(final UUID shoppingCartItemId,
-                                     final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
+                                  final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
         ShoppingCartItem item = getShoppingCartItem(shoppingCartItemId);
         ShoppingCartItem updatedItem = updateItemProductQuantity(shoppingCartItemId, productQuantityChange, item);
         ShoppingCartDto shoppingCart = getShoppingCart();
