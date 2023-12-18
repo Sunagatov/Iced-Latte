@@ -1,7 +1,7 @@
-package com.zufar.icedlatte.common.converter;
+package com.zufar.icedlatte.common.filestorage.converter;
 
-import com.zufar.icedlatte.common.dto.FileMetadataDto;
-import com.zufar.icedlatte.common.entity.FileMetadata;
+import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;

@@ -1,9 +1,9 @@
-package com.zufar.icedlatte.common.filestorage;
+package com.zufar.icedlatte.common.filestorage.minio;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-import com.zufar.icedlatte.common.dto.FileMetadataDto;
+import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

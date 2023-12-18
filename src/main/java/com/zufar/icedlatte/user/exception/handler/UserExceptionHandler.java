@@ -4,7 +4,6 @@ import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
-import com.zufar.icedlatte.user.exception.UserAvatarNotFoundException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,15 +44,6 @@ public class UserExceptionHandler {
     public ApiErrorResponse handleInvalidOldPasswordException(final InvalidOldPasswordException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
         log.error("Handle user's invalid old password exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler({UserAvatarNotFoundException.class})
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleEmptyUserAvatarException(final UserAvatarNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle empty user avatar exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }

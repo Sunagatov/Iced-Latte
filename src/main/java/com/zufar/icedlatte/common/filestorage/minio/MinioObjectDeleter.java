@@ -1,8 +1,9 @@
-package com.zufar.icedlatte.common.filestorage;
+package com.zufar.icedlatte.common.filestorage.minio;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,10 @@ public class MinioObjectDeleter {
 
     private final AmazonS3 amazonS3;
 
-    public void deleteFile(String bucketName, String fileName) {
+    public void deleteFile(FileMetadataDto fileMetadataDto) {
+        final String bucketName = fileMetadataDto.bucketName();
+        final String fileName = fileMetadataDto.fileName();
+
         try {
             amazonS3.deleteObject(bucketName, fileName);
         } catch (AmazonServiceException ase) {

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.entity;
+package com.zufar.icedlatte.common.filestorage.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,13 +31,13 @@ public class FileMetadata {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID fileId;
 
-    @Column(name = "entity_id")
-    private UUID entityId;
+    @Column(name = "related_object_id")
+    private UUID relatedObjectId;
 
-    @Column(name = "bucket_name")
+    @Column(name = "bucket_name", nullable = false)
     private String bucketName;
 
-    @Column(name = "file_name")
+    @Column(name = "file_name", nullable = false, unique = true)
     private String fileName;
 
     @CreationTimestamp

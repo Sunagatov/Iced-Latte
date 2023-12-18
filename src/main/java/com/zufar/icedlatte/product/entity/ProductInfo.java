@@ -1,7 +1,11 @@
 package com.zufar.icedlatte.product.entity;
 
-import com.zufar.icedlatte.common.entity.FileMetadata;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,10 +44,6 @@ public class ProductInfo {
 
     @Column(name = "active", nullable = false)
     private Boolean active;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "file_metadata_id", referencedColumnName = "id")
-    private FileMetadata fileMetadata;
 
     @Override
     public boolean equals(Object object) {

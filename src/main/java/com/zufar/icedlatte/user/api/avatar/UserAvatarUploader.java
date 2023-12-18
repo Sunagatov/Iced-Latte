@@ -1,7 +1,8 @@
 package com.zufar.icedlatte.user.api.avatar;
 
-import com.zufar.icedlatte.common.dto.FileMetadataDto;
-import com.zufar.icedlatte.common.filestorage.MinioObjectUploader;
+import com.zufar.icedlatte.common.filestorage.api.MinioFileService;
+import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.common.filestorage.minio.MinioObjectUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,14 @@ public class UserAvatarUploader {
     private static final String avatarNamePrefix = "user-avatar-";
 
     private final MinioObjectUploader minioObjectUploader;
-    private final UserFileService userFileService;
+    private final MinioFileService minioFileService;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FileMetadataDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
-        String fileName =  avatarNamePrefix + userId.toString();
+        minioFileService.deleteByRelatedObjectId(userId);
+        String fileName = avatarNamePrefix + userId.toString();
         minioObjectUploader.uploadFile(file, bucketName, fileName);
-        FileMetadataDto fileMetadataDto = new FileMetadataDto(bucketName, fileName);
-        return userFileService.save(fileMetadataDto, userId);
+        FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
+        return minioFileService.save(fileMetadataDto);
     }
 }

@@ -32,7 +32,12 @@ public class PageableProductsProvider {
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
-                .map(productInfoDtoConverter::toDto);
+                .map(productInfoDtoConverter::toDto)
+                .map(productInfoDto -> {
+                    final String productFileUrl = productInfoDto.getProductFileUrl();
+                    productInfoDto.setProductFileUrl(productFileUrl);
+                    return productInfoDto;
+                });
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }

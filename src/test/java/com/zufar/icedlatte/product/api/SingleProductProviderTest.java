@@ -1,7 +1,8 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.common.filestorage.api.FileProvider;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -31,6 +32,9 @@ class SingleProductProviderTest {
     @Mock
     private ProductInfoDtoConverter productInfoConverter;
 
+    @Mock
+    private FileProvider fileProvider;
+
     @InjectMocks
     private SingleProductProvider productProvider;
 
@@ -40,6 +44,7 @@ class SingleProductProviderTest {
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(mock(ProductInfo.class)));
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
+        when(fileProvider.getRelatedObjectUrl(productId)).thenReturn("fileUrl");
 
         ProductInfoDto result = productProvider.getProductById(productId);
 
