@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.entity;
 
+import com.zufar.icedlatte.payment.entity.Shipping;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -66,6 +68,9 @@ public class UserEntity implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<UserGrantedAuthority> authorities;
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<Shipping> deliveries;
 
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;

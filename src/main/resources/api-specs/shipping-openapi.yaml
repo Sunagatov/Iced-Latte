@@ -1,0 +1,162 @@
+openapi: "3.0.3"
+info:
+  title: "Iced Latte Shipping API"
+  description: "API allows users to manage their shipping, including adding, updating, and deleting shipping info. It includes detailed error responses and provides examples for better understanding."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://dev.api.it-sl.ru"
+    description: "Production server"
+
+tags:
+  - name: "Shipping"
+    description: "Operations related to shipping"
+
+paths:
+  /api/v1/shipping/{shippingId}:
+    get:
+      tags:
+        - "Shipping"
+      summary: "Get shipping information by ID"
+      operationId: "getShippingById"
+      parameters:
+        - name: "shippingId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Successful response with the details of the shipping information"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingInfoDto'
+        "404":
+          description: "Shipping information not found"
+
+    delete:
+      tags:
+        - "Shipping"
+      summary: "Delete a shipping entry by ID"
+      operationId: "deleteShippingById"
+      parameters:
+        - name: "shippingId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Shipping entry deleted successfully"
+        "404":
+          description: "Shipping information not found"
+
+  /api/v1/shipping:
+    post:
+      tags:
+        - "Shipping"
+      summary: "Create a new shipping entry"
+      operationId: "createShipping"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingInfoDto'
+      responses:
+        "201":
+          description: "Shipping entry created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingInfoDto'
+        "400":
+          description: "Invalid input"
+
+  /api/v1/shipping/user/{userId}:
+    get:
+      tags:
+        - "Shipping"
+      summary: "Get all shipping information for a specific user"
+      operationId: "getAllShippingByUserId"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          description: "Unique identifier of the user"
+      responses:
+        "200":
+          description: "Successful response with a list of shipping information for the user"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/ShippingInfoDto'
+        "404":
+          description: "User not found or no shipping information available"
+
+components:
+  schemas:
+
+    ShippingInfoDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: "The email address of the customer."
+        firstName:
+          type: string
+          description: "The first name of the recipient."
+        lastName:
+          type: string
+          description: "The last name of the recipient."
+        phoneNumber:
+          type: string
+          description: "The contact phone number for the delivery."
+        address:
+          $ref: "#/components/schemas/AddressDto"
+        shippingMethod:
+          type: "string"
+          description: "The chosen method of shipping."
+
+    AddressDto:
+      type: "object"
+      required:
+        - country
+        - city
+        - line
+        - postcode
+      properties:
+        country:
+          type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Country should have a length between 2 and 128 characters"
+        city:
+          type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "City should have a length between 2 and 128 characters"
+        line:
+          type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Line should have a length between 2 and 128 characters"
+        postcode:
+          type: "string"
+          minLength: 2
+          maxLength: 128
+          description: "Postcode should have a length between 2 and 128 characters"

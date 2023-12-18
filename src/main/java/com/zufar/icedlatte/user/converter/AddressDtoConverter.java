@@ -14,4 +14,5 @@ public interface AddressDtoConverter {
 
     @Named("toAddress")
     Address toEntity(final AddressDto dto);
+
 }
