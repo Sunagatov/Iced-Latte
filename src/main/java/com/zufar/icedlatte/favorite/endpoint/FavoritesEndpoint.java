@@ -54,8 +54,19 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     }
 
     @Override
+    @GetMapping
+    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
+        log.info("Received the request to retrieve the list of favorite products.");
+        UUID userId = securityPrincipalProvider.getUserId();
+        FavoriteListDto favoriteList = favoriteListProvider.getFavoriteListDto(userId);
+        ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
+        log.info("Favorite products retrieval processed.");
+        return ResponseEntity.ok().body(listOfFavoriteProductsDto);
+    }
+
+    @Override
     @GetMapping(value = "/{page}")
-    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts(@PathVariable final Integer page) {
+    public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProductsByPage(@PathVariable final Integer page) {
         log.info("Received the request to retrieve the list of favorite products.");
         UUID userId = securityPrincipalProvider.getUserId();
         List<ProductInfoDto> products = favoriteListPageProvider.getFavoritesProductsByPage(userId, page);
@@ -66,7 +77,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     }
 
     @Override
-    @GetMapping
+    @GetMapping(value = "/pages")
     public ResponseEntity<Integer> getNumberOfPages() {
         log.info("Received the request to retrieve the number of pages.");
         UUID userId = securityPrincipalProvider.getUserId();

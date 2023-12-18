@@ -50,7 +50,7 @@ paths:
       tags:
         - "Favorite Products"
       summary: "Get all favorite products for the authorized user"
-      operationId: "getListOfFavoriteProducts"
+      operationId: "getListOfFavoriteProductsByPage"
       parameters:
         - name: "page"
           in: "path"
@@ -99,6 +99,26 @@ paths:
         "500":
           description: "Internal server error."
 
+    get:
+      tags:
+        - "Favorite Products"
+      summary: "Get all favorite products for the authorized user"
+      operationId: "getListOfFavoriteProducts"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOfFavoriteProductsDto"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Favorite products list is empty."
+        "500":
+          description: "Internal server error."
+
+  /api/v1/favorites/pages:
     get:
       tags:
         - "Favorite Products"
