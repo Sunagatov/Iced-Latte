@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.email.api;
 
+import com.zufar.icedlatte.email.dto.EmailConformationDto;
 import com.zufar.icedlatte.email.sender.EmailConfirmation;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,9 @@ public class EmailTokenSender {
 
     public void sendEmailVerificationCode(final UserRegistrationRequest request) {
         String token = tokenGenerator.nextToken();
-        tokenManager.addToken(token, request);
+        final String tokenKey = request.email();
+        final EmailConformationDto emailConformationDto = new EmailConformationDto(token, request);
+        tokenManager.addToken(tokenKey, emailConformationDto);
         emailConfirmation.sendTemporaryCode(request.email(), token);
     }
 }

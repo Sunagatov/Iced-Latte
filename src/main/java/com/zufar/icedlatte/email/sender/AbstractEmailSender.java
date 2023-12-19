@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.email.sender;
 
+import com.zufar.icedlatte.email.exception.MessageBuilderNotFoundException;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,7 +12,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-public abstract class AbstractEmailSander<T> {
+public abstract class AbstractEmailSender<T> {
 
     private final JavaMailSender javaMailSender;
     private final SimpleMailMessage mailMessage;
@@ -28,7 +29,7 @@ public abstract class AbstractEmailSander<T> {
         return messageBuilders.stream()
                 .filter(builder -> builder.supports(clazz))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No message builder found"))
+                .orElseThrow(() -> new  MessageBuilderNotFoundException(clazz.getName()))
                 .buildMessage(event, Locale.ENGLISH);
     }
 }

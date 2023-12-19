@@ -2,7 +2,7 @@ package com.zufar.icedlatte.email.api;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.email.dto.EmailConformationDto;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class TokenManager {
 
     private final Integer EXPIRE_TIME = 5;
-    private final Cache<String, UserRegistrationRequest> tokenCache;
+    private final Cache<String, EmailConformationDto> tokenCache;
 
     public TokenManager() {
         this.tokenCache = CacheBuilder.newBuilder()
@@ -19,15 +19,15 @@ public class TokenManager {
                 .build();
     }
 
-    public void addToken(String token, UserRegistrationRequest request) {
-        tokenCache.put(token, request);
+    public void addToken(String tokenKey, EmailConformationDto request) {
+        tokenCache.put(tokenKey, request);
     }
 
-    public UserRegistrationRequest getToken(String token) {
-        return tokenCache.getIfPresent(token);
+    public EmailConformationDto getToken(String tokenKey) {
+        return tokenCache.getIfPresent(tokenKey);
     }
 
-    public void removeToken(String token) {
-        tokenCache.invalidate(token);
+    public void removeToken(String tokenKey) {
+        tokenCache.invalidate(tokenKey);
     }
 }
