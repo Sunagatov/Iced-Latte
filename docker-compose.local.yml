@@ -29,6 +29,8 @@ services:
       DATASOURCE_HOST: iced-latte-postgresdb
       REDIS_HOST: iced-latte-redis
       REDIS_PORT: 6380
+      MINIO_HOST: http://iced-latte-minio
+      MINIO_PORT: 9000
     build:
       context: .
       dockerfile: Dockerfile.local
@@ -37,6 +39,7 @@ services:
     networks:
       - iced-latte-network
     depends_on:
+      - iced-latte-minio
       - iced-latte-postgresdb
     volumes:
       - backend_logs:/usr/app/logs
@@ -60,6 +63,22 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: on-failure
+
+  iced-latte-minio:
+    image: minio/minio
+    container_name: iced-latte-minio
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minio123
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    networks:
+      - iced-latte-network
+    command: server /data --console-address ":9001"
     restart: on-failure
 
   iced-latte-prometheus:
@@ -116,7 +135,7 @@ services:
     ports:
       - "6380:6380"
 
-  loki:
+  iced-latte-loki:
     image: grafana/loki:latest
     container_name: iced-latte-loki
     ports:
@@ -127,7 +146,7 @@ services:
     volumes:
       - loki_data:/loki
 
-  promtail:
+  iced-latte-promtail:
     image: grafana/promtail:latest
     volumes:
       - backend_logs:/var/log/iced-latte-backend

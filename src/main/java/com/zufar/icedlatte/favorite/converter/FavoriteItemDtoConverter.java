@@ -3,12 +3,7 @@ package com.zufar.icedlatte.favorite.converter;
 import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.InjectionStrategy;
+import org.mapstruct.*;
 
 import java.util.Set;
 
@@ -16,8 +11,9 @@ import java.util.Set;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,  injectionStrategy = InjectionStrategy.FIELD)
 public interface FavoriteItemDtoConverter {
 
-    @Mapping(target = "productInfo", source = "productInfo", qualifiedByName = "toProductInfoDto")
-    FavoriteItemDto toDto(final FavoriteItemEntity favoriteItemEntity);
+    @Mapping(target = "productInfo", source = "productInfo")
+    FavoriteItemDto toDto(@Context final ProductInfoDtoConverter productInfoDtoConverter,
+                          final FavoriteItemEntity favoriteItemEntity);
 
     @Named("toSetFavoriteItemDto")
     Set<FavoriteItemDto> toSetDto(final Set<FavoriteItemEntity> favoriteItemEntities);

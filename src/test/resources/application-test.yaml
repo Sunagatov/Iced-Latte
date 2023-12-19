@@ -35,6 +35,24 @@ spring:
     drop-first: true
 
   #
+  # Minio Properties
+  #
+  minio:
+    metric-name: minio.storage
+    secret-key: minio123
+    access-key: minio123
+    buckets:
+      user-avatar: avatars
+      product-picture: products
+    link-expiration-time: P7D
+    read-timeout: 10s
+    connect-timeout: 10s
+    write-timeout: 60s
+    url: iced-latte-minio:9000
+    secure: false
+    region: us-east-1
+
+  #
   # Redis
   #
   data:

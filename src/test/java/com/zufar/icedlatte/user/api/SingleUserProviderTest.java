@@ -29,6 +29,10 @@ class SingleUserProviderTest {
     @Mock
     private UserDtoConverter userDtoConverter;
 
+    @Mock
+    private UserAvatarLinkUpdater userAvatarLinkUpdater;
+
+
     @InjectMocks
     private SingleUserProvider singleUserProvider;
 
@@ -42,12 +46,14 @@ class SingleUserProviderTest {
 
         UserDto expectedUserDto = UserDtoTestStub.createUserDto();
         when(userDtoConverter.toDto(testUserEntity)).thenReturn(expectedUserDto);
+        when(userAvatarLinkUpdater.update(expectedUserDto)).thenReturn(expectedUserDto);
 
         UserDto actualUserDto = singleUserProvider.getUserById(userId);
 
         assertEquals(expectedUserDto, actualUserDto);
         verify(userCrudRepository).findById(userId);
         verify(userDtoConverter).toDto(testUserEntity);
+        verify(userAvatarLinkUpdater).update(expectedUserDto);
     }
 
     @Test
