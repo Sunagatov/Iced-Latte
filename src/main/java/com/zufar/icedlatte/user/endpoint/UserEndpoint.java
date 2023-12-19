@@ -9,7 +9,7 @@ import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
 import com.zufar.icedlatte.common.filestorage.api.FileDeleter;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarReceiver;
+import com.zufar.icedlatte.user.api.avatar.UserAvatarLinkProvider;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
-    private final UserAvatarReceiver userAvatarReceiver;
+    private final UserAvatarLinkProvider userAvatarLinkProvider;
 
     @Override
     @GetMapping
@@ -54,7 +54,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user with userId - {}.", userId);
         UserDto userDto = singleUserProvider.getUserById(userId);
-        log.info("The user with userId - {} was retrieved.", userId);
+        log.info("The request to retrieve the user's account was handled.");
         return ResponseEntity.ok()
                 .body(userDto);
     }
@@ -65,7 +65,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to edit the User with userId - {}.", userId);
         UserDto updatedUserDto = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
-        log.info("The user with userId - {} was updated.", userId);
+        log.info("The request to update the user's account was handled.");
         return ResponseEntity.ok()
                 .body(updatedUserDto);
     }
@@ -75,7 +75,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> changeUserPassword(ChangeUserPasswordRequest changeUserPasswordRequest) {
         log.info("Received the request to change the user's password.");
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
-        log.info("The user's password was changed.");
+        log.info("The request to change the user's password was handled.");
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
@@ -86,7 +86,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to delete the user's account.");
         deleteUserOperationPerformer.deleteUser(userId);
-        log.info("The user's account was deleted.");
+        log.info("The request to delete the user's account was handled.");
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
@@ -97,7 +97,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to upload the user avatar.");
         userAvatarUploader.uploadUserAvatar(userId, file);
-        log.info("The user avatar was uploaded.");
+        log.info("The request to upload the user's avatar was handled.");
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -106,8 +106,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<String> getUserAvatarLink() {
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to get the user avatar link.");
-        String userAvatar = userAvatarReceiver.getUserAvatar(userId);
-        log.info("The user avatar link was retrieved.");
+        String userAvatar = userAvatarLinkProvider.getLink(userId);
+        log.info("The request to retrieve the user's avatar link was handled.");
         return ResponseEntity.ok().body(userAvatar);
     }
 
@@ -117,7 +117,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         UUID userId = securityPrincipalProvider.getUserId();
         log.info("Received the request to delete the user avatar.");
         fileDeleter.delete(userId);
-        log.info("The user avatar was deleted.");
+        log.info("The request to delete the user avatar was handled.");
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

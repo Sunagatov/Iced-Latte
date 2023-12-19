@@ -20,7 +20,7 @@ public class MinioFileService {
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FileMetadataDto save (final FileMetadataDto fileMetadataDto) {
+    public FileMetadataDto save(final FileMetadataDto fileMetadataDto) {
         FileMetadata fileMetadata = fileMetadataDtoConverter.toEntity(fileMetadataDto);
         FileMetadata savedFileMetadata = fileMetadataRepository.save(fileMetadata);
         return fileMetadataDtoConverter.toDto(savedFileMetadata);

@@ -259,7 +259,7 @@ components:
           format: "email"
         address:
           $ref: "#/components/schemas/AddressDto"
-        avatarUrl:
+        avatarLink:
           type: "string"
           description: "The avatar url of the user"
 

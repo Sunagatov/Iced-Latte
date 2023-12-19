@@ -8,11 +8,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserAvatarReceiver {
+public class UserAvatarLinkProvider {
 
     private final FileProvider fileProvider;
 
-    public String getUserAvatar(final UUID userId) {
+    public String getLink(final UUID userId) {
         String avatarFileUrl = fileProvider.getRelatedObjectUrl(userId);
         return avatarFileUrl == null ? "default file" : avatarFileUrl;
     }
