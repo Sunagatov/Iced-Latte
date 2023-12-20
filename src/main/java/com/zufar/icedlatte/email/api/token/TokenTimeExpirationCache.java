@@ -34,7 +34,7 @@ public class TokenTimeExpirationCache {
         }
     }
 
-    public void removeTimeToken(String email) {
+    public void removeToken(String email) {
         tokenCache.invalidate(email);
     }
 }

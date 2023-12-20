@@ -34,7 +34,7 @@ public class TokenManager {
         }
 
         tokenCache.removeToken(token);
-        tokenTimeExpirationCache.removeTimeToken(requestedEmail);
+        tokenTimeExpirationCache.removeToken(requestedEmail);
         return userRegistrationRequest;
     }
 }
