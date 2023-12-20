@@ -123,6 +123,63 @@ paths:
         "500":
           description: "Internal Server Error"
 
+  /api/v1/users/avatar:
+    post:
+      tags:
+        - "User"
+      summary: "Upload user avatar"
+      description: "Upload a user's avatar image"
+      operationId: "uploadUserAvatar"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: "object"
+              properties:
+                file:
+                  type: "string"
+                  format: "binary"
+      responses:
+        "200":
+          description: "User avatar uploaded successfully"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
+    get:
+      tags:
+        - "User"
+      summary: "Get user avatar link"
+      description: "Get the link to the user's avatar image"
+      operationId: "getUserAvatarLink"
+      responses:
+        "200":
+          description: "User avatar link retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
+    delete:
+      tags:
+        - "User"
+      summary: "Delete user avatar"
+      description: "Delete the user's avatar image"
+      operationId: "deleteUserAvatar"
+      responses:
+        "200":
+          description: "User avatar deleted successfully"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
 components:
   schemas:
     UpdateUserAccountRequest:
@@ -202,6 +259,9 @@ components:
           format: "email"
         address:
           $ref: "#/components/schemas/AddressDto"
+        avatarLink:
+          type: "string"
+          description: "The avatar url of the user"
 
     AddressDto:
       type: "object"

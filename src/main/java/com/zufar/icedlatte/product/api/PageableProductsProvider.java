@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,8 @@ public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
+
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductListWithPaginationInfoDto getProducts(final Integer page,
@@ -32,7 +35,8 @@ public class PageableProductsProvider {
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
-                .map(productInfoDtoConverter::toDto);
+                .map(productInfoDtoConverter::toDto)
+                .map(productPictureLinkUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }

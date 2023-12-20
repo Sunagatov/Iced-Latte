@@ -39,6 +39,24 @@ spring:
     drop-first: true
 
   #
+  # Minio Properties
+  #
+  minio:
+    metric-name: minio.storage
+    secret-key: minio123
+    access-key: minio123
+    buckets:
+      user-avatar: avatars
+      product-picture: products
+    link-expiration-time: P7D
+    read-timeout: 10s
+    connect-timeout: 10s
+    write-timeout: 60s
+    url: ${MINIO_HOST}:${MINIO_PORT}
+    secure: false
+    region: us-east-1
+
+  #
   # Redis
   #
   data:
@@ -81,6 +99,12 @@ temporary-cache:
 #
   config:
     import: optional:stripe.yaml
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
 
 #
 # Spring Doc Properties
@@ -104,6 +128,9 @@ management:
       enabled: true
     shutdown:
       enabled: true
+    health:
+      enabled: true
+      show-details: always
   endpoints:
     web:
       exposure:

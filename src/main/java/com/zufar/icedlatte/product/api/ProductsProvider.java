@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.common.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.common.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -22,17 +26,32 @@ public class ProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
+    private final FileMetadataRepository fileMetadataRepository;
+    private final FileMetadataDtoConverter fileMetadataDtoConverter;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         var products = productInfoRepository.findAllById(uuids);
-        var result = products.stream().map(productInfoDtoConverter::toDto).toList();
+        var result = products.stream()
+                .map(productInfoDtoConverter::toDto)
+                .map(productPictureLinkUpdater::update)
+                .toList();
+
         if (result.size() == uuids.size()) {
             return result;
         }
+
         uuids.removeAll(result.stream().map(ProductInfoDto::getId).collect(Collectors.toSet()));
         log.error("Products with ids = {} are not found.", String.join(", ",
                 uuids.stream().map(UUID::toString).collect(Collectors.joining())));
         throw new ProductNotFoundException(uuids);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public FileMetadataDto getProductImageMetadata(final UUID productId) {
+        FileMetadata fileMetadata = fileMetadataRepository.findAvatarInfoByRelatedObjectId(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        return fileMetadataDtoConverter.toDto(fileMetadata);
     }
 }

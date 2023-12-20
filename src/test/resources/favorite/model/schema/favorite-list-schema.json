@@ -8,7 +8,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ]
           },
           "name": {
             "type": "string"
