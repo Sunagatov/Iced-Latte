@@ -10,12 +10,12 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class TimeTokenCache {
+public class TokenTimeExpirationCache {
 
     private final Integer EXPIRE_TIME;
     private final Cache<String, OffsetDateTime> tokenCache;
 
-    public TimeTokenCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
+    public TokenTimeExpirationCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
         this.EXPIRE_TIME = expireTime;
         this.tokenCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_TIME, TimeUnit.MINUTES)

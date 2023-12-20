@@ -12,21 +12,20 @@ public class TokenManager {
 
     private final TokenCache tokenCache;
     private final TokenGenerator tokenGenerator;
-    private final TimeTokenCache timeTokenCache;
+    private final TokenTimeExpirationCache tokenTimeExpirationCache;
 
     public String generateToken(UserRegistrationRequest request) {
         final String email = request.email();
-        timeTokenCache.validateTimeToken(email);
+        tokenTimeExpirationCache.validateTimeToken(email);
         final String token = tokenGenerator.nextToken();
         tokenCache.addToken(token, request);
-        timeTokenCache.manageEmailSendingRate(email);
+        tokenTimeExpirationCache.manageEmailSendingRate(email);
         return token;
     }
 
     public UserRegistrationRequest validateToken(ConfirmEmailRequest confirmEmailRequest) {
         final String token = confirmEmailRequest.token();
         final String requestedEmail = confirmEmailRequest.email();
-
         UserRegistrationRequest userRegistrationRequest = tokenCache.getToken(token);
         final String savedEmail = userRegistrationRequest.email();
 
@@ -35,7 +34,7 @@ public class TokenManager {
         }
 
         tokenCache.removeToken(token);
-        timeTokenCache.removeTimeToken(requestedEmail);
+        tokenTimeExpirationCache.removeTimeToken(requestedEmail);
         return userRegistrationRequest;
     }
 }
