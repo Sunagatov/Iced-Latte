@@ -11,11 +11,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class TokenCache {
 
-    @Value("${spring.temporary-cache-time.token}")
-    private static Integer EXPIRE_TIME;
+    private Integer EXPIRE_TIME;
+
     private final Cache<String, UserRegistrationRequest> tokenCache;
 
-    public TokenCache() {
+    public TokenCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
+        this.EXPIRE_TIME = expireTime;
         this.tokenCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_TIME, TimeUnit.MINUTES)
                 .build();

@@ -42,6 +42,11 @@ spring:
       host: localhost
       port: 6380
 
+
+temporary-cache:
+  time:
+    token: 5
+
 #
 # JWT Security Properties
 #

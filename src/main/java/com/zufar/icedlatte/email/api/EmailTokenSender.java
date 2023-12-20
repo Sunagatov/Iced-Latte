@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.email.api;
 
-import com.zufar.icedlatte.email.api.token.TimeTokenCache;
-import com.zufar.icedlatte.email.api.token.TokenCache;
 import com.zufar.icedlatte.email.api.token.TokenManager;
 import com.zufar.icedlatte.email.sender.EmailConfirmation;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;

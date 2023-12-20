@@ -6,19 +6,17 @@ import com.zufar.icedlatte.email.exception.TimeTokenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class TimeTokenCache {
 
-    @Value("${spring.temporary-cache-time.token}")
-    private static Integer EXPIRE_TIME;
-
+    private final Integer EXPIRE_TIME;
     private final Cache<String, OffsetDateTime> tokenCache;
 
-    public TimeTokenCache() {
+    public TimeTokenCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
+        this.EXPIRE_TIME = expireTime;
         this.tokenCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_TIME, TimeUnit.MINUTES)
                 .build();

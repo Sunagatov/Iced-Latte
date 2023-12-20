@@ -4,9 +4,9 @@ import com.zufar.icedlatte.email.exception.InvalidTokenException;
 import com.zufar.icedlatte.security.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class TokenManager {
 

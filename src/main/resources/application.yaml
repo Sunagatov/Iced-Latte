@@ -65,10 +65,17 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
   messages:
     basename: messages/messages
-  temporary-cache-time:
+
+#
+# Temporary Cache
+#
+temporary-cache:
+  time:
     token: 5
+
 #
 # Stripe Api Properties
 #
