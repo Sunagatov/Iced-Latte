@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Cache Maven dependencies
         uses: actions/cache@v3
@@ -39,7 +41,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.scm.provider=git
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
