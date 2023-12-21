@@ -9,7 +9,6 @@ jobs:
   sonarqube:
     name: SonarQube Job
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -78,7 +77,6 @@ jobs:
 
   test:
     name: Test Job
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
