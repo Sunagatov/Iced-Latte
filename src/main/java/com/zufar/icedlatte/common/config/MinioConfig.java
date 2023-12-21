@@ -34,6 +34,7 @@ public class MinioConfig {
         AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(minioUrl, region))
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(minioAccessKey, minioSecretKey)))
+                .withPathStyleAccessEnabled(true)
                 .build();
 
         try {

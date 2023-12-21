@@ -31,7 +31,7 @@ public class FavoriteListProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public FavoriteListDto getFavoriteListDto(final UUID userId) {
-        FavoriteListEntity favoriteListEntity = this.getFavoriteListEntity(userId);
+        FavoriteListEntity favoriteListEntity = favoriteRepository.findByUserId(userId).orElseGet(() -> createNewFavoriteList(userId));
         return favoriteListDtoConverter.toDto(favoriteListEntity);
     }
 
