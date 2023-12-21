@@ -41,8 +41,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-             -Dsonar.scm.provider=git -Dsonar.branch.name=${GITHUB_REF:11}
+        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.scm.provider=git
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
