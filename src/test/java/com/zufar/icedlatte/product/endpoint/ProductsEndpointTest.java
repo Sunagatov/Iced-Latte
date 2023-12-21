@@ -1,9 +1,13 @@
 package com.zufar.icedlatte.product.endpoint;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.product.util.PaginationAndSortingAttribute;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -90,10 +94,12 @@ class ProductsEndpointTest {
     @Test
     @DisplayName("Should retrieve products successfully by IDs")
     void shouldRetrieveProductsSuccessfullyByIds() {
+        String requestBody = getRequestBody("/product/model/productsByIdsRequest1.json");
+
         Response response = given(specification)
-                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
-                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356")
-                .get("ids");
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .post("/ids");
 
         assertRestApiOkResponse(response, PRODUCT_LIST_BY_ID_SCHEMA_LOCATION);
     }
@@ -101,10 +107,12 @@ class ProductsEndpointTest {
     @Test
     @DisplayName("Should retrieve products successfully by IDs and contain 'Nitro Coffee'")
     void shouldRetrieveProductsSuccessfullyByIdsAndContainSpecificProduct() {
+        String requestBody = getRequestBody("/product/model/productsByIdsRequest1.json");
+
         Response response = given(specification)
-                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
-                .param("id", "eec8a1d8-4864-4c1b-aa8b-dedfddc6e356") // 'Nitro Coffee'
-                .get("ids");
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .post("/ids");
 
         assertRestApiOkResponse(
                 response,
@@ -117,11 +125,12 @@ class ProductsEndpointTest {
     @Test
     @DisplayName("Should return not found for invalid product IDs")
     void shouldReturnNotFoundForInvalidProductIds() {
+        String requestBody = getRequestBody("/product/model/productsByIdsRequest2.json");
+
         Response response = given(specification)
-                .param("id", "fc88cd5d-5049-4b00-8d88-df1d9b4a3ce1")
-                .param("id", UUID.randomUUID().toString())
-                .param("id", UUID.randomUUID().toString())
-                .get("ids");
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .post("ids");
 
         assertRestApiNotFoundResponse(response, PRODUCT_FAILED_SCHEMA_LOCATION);
     }
@@ -177,5 +186,14 @@ class ProductsEndpointTest {
                 PRODUCTS_PATH_TO_NAME,
                 EXPECTED_PRODUCT_NAME
         );
+    }
+
+    protected String getRequestBody(String resourcePath) {
+        try {
+            JsonNode json = JsonLoader.fromResource(resourcePath);
+            return json.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
