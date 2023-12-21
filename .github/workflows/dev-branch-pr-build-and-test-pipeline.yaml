@@ -41,7 +41,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.scm.provider=git
+        run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.scm.provider=git -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
@@ -80,7 +80,6 @@ jobs:
 
   test:
     name: Test Job
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
