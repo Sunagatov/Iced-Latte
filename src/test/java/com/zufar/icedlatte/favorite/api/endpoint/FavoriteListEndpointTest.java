@@ -31,7 +31,7 @@ import static io.restassured.RestAssured.given;
 @DisplayName("FavoriteListEndpointTest Tests")
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class FavoriteListEndpointTest {
+class FavoriteListEndpointTest {
 
     @Container
     @ServiceConnection

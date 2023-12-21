@@ -19,7 +19,7 @@ public class UserAvatarUploader {
 
     @Value("${spring.minio.buckets.user-avatar}")
     private String bucketName;
-    private static final String avatarNamePrefix = "user-avatar-";
+    private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
     private final MinioObjectUploader minioObjectUploader;
     private final MinioFileService minioFileService;
@@ -27,7 +27,7 @@ public class UserAvatarUploader {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FileMetadataDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
         minioFileService.deleteByRelatedObjectId(userId);
-        String fileName = avatarNamePrefix + userId.toString();
+        String fileName = AVATAR_NAME_PREFIX + userId.toString();
         minioObjectUploader.uploadFile(file, bucketName, fileName);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
         return minioFileService.save(fileMetadataDto);
