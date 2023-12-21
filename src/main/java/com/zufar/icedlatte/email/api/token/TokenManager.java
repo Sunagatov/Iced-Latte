@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.email.api.token;
 
-import com.zufar.icedlatte.email.exception.InvalidTokenException;
 import com.zufar.icedlatte.security.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,7 @@ public class TokenManager {
     private final TokenGenerator tokenGenerator;
     private final TokenTimeExpirationCache tokenTimeExpirationCache;
 
-    public String generateToken(UserRegistrationRequest request) {
+    public String generateToken(final UserRegistrationRequest request) {
         final String email = request.email();
         tokenTimeExpirationCache.validateTimeToken(email);
         final String token = tokenGenerator.nextToken();
@@ -23,18 +22,12 @@ public class TokenManager {
         return token;
     }
 
-    public UserRegistrationRequest validateToken(ConfirmEmailRequest confirmEmailRequest) {
+    public UserRegistrationRequest validateToken(final ConfirmEmailRequest confirmEmailRequest) {
         final String token = confirmEmailRequest.token();
-        final String requestedEmail = confirmEmailRequest.email();
         UserRegistrationRequest userRegistrationRequest = tokenCache.getToken(token);
-        final String savedEmail = userRegistrationRequest.email();
-
-        if (!requestedEmail.equals(savedEmail)) {
-            throw new InvalidTokenException(requestedEmail);
-        }
-
+        final String email = userRegistrationRequest.email();
         tokenCache.removeToken(token);
-        tokenTimeExpirationCache.removeToken(requestedEmail);
+        tokenTimeExpirationCache.removeToken(email);
         return userRegistrationRequest;
     }
 }

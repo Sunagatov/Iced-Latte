@@ -8,7 +8,7 @@ import java.security.SecureRandom;
 public class TokenGenerator {
     private final SecureRandom random = new SecureRandom();
     private final String BASE = "0123456789";
-    private final String PATTERN = "###-###";
+    private final String PATTERN = "###-###-###";
     private final char REPLACE_HOOK = '#';
 
     public String nextToken() {
