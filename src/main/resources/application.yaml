@@ -53,7 +53,7 @@ spring:
     connect-timeout: 10s
     write-timeout: 60s
     url: ${MINIO_HOST}:${MINIO_PORT}
-    secure: false
+    secure: true
     region: us-east-1
 
   #
