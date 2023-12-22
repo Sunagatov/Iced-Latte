@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Cache Maven dependencies
         uses: actions/cache@v3
@@ -42,6 +44,7 @@ jobs:
         run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
              -Dsonar.newCode.referenceBranch=development
+             -Dsonar.scm.provider=git
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check

@@ -5,7 +5,7 @@ import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.payment.calculator.PaymentPriceCalculator;
-import com.zufar.icedlatte.payment.entity.Payment;;
+import com.zufar.icedlatte.payment.entity.Payment;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
