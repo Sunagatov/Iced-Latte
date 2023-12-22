@@ -29,8 +29,8 @@ services:
       DATASOURCE_HOST: iced-latte-postgresdb
       REDIS_HOST: iced-latte-redis
       REDIS_PORT: 6380
-      MINIO_HOST: iced-latte-minio
-      MINIO_PORT: 9001
+      MINIO_HOST: http://iced-latte-minio
+      MINIO_PORT: 9000
     build:
       context: .
       dockerfile: Dockerfile.local
@@ -109,20 +109,20 @@ services:
       - iced-latte-prometheus
     restart: on-failure
 
-#  iced-latte-nginx:
-#    image: nginx:alpine
-#    container_name: iced-latte-nginx
-#    volumes:
-#      - ./nginx_data:/etc/nginx/conf.d:ro
-#    ports:
-#      - '80:80'
-#    networks:
-#      - iced-latte-network
-#    depends_on:
-#      - iced-latte-backend
-#      - iced-latte-prometheus
-#      - iced-latte-grafana
-#    restart: on-failure
+  iced-latte-nginx:
+    image: nginx:alpine
+    container_name: iced-latte-nginx
+    volumes:
+      - ./nginx_data:/etc/nginx/conf.d:ro
+    ports:
+      - '80:80'
+    networks:
+      - iced-latte-network
+    depends_on:
+      - iced-latte-backend
+      - iced-latte-prometheus
+      - iced-latte-grafana
+    restart: on-failure
 
   iced-latte-redis:
     image: redis/redis-stack:latest
