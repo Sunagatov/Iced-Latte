@@ -20,6 +20,8 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `DATASOURCE_PASSWORD`: Database password
 - `REDIS_HOST`: Redis host
 - `REDIS_PORT`: Redis port
+- `MINIO_HOST`: Minio host
+- `MINIO_PORT`: Minio port
 
 ## Starting the Application
 
