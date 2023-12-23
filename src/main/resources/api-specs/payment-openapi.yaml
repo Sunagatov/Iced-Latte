@@ -238,8 +238,6 @@ components:
           type: "string"
           minLength: 1
 
-
-
     ErrorHandler:
       type: "object"
       properties:
