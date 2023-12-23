@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
+
 
 @Builder
 @Getter
@@ -95,6 +97,14 @@ public class UserEntity implements UserDetails {
         }
         this.authorities.add(authority);
         authority.setUser(this);
+    }
+
+    public void addShipping(Shipping shipping) {
+        if (this.deliveries == null) {
+            this.deliveries = new ArrayList<>();
+        }
+        this.deliveries.add(shipping);
+        shipping.setUser(this);
     }
 
     @Override

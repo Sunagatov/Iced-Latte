@@ -109,54 +109,47 @@ paths:
 
 components:
   schemas:
-
     ShippingInfoDto:
       type: object
+      required:
+        - shippingUserEmail
+        - shippingUserFirstName
+        - shippingUserLastName
+        - shippingUserPhoneNumber
+        - shippingMethod
       properties:
-        email:
+        shippingUserEmail:
           type: string
           format: email
-          description: "The email address of the customer."
-        firstName:
+          description: "Email address of the user for shipping."
+        shippingUserFirstName:
           type: string
-          description: "The first name of the recipient."
-        lastName:
+          description: "First name of the user for shipping."
+        shippingUserLastName:
           type: string
-          description: "The last name of the recipient."
-        phoneNumber:
-          type: string
-          description: "The contact phone number for the delivery."
-        address:
-          $ref: "#/components/schemas/AddressDto"
-        shippingMethod:
+          description: "Last name of the user for shipping."
+        shippingUserPhoneNumber:
           type: "string"
-          description: "The chosen method of shipping."
+          pattern: "^\\+?[1-9]\\d{1,14}$"
+          description: "The international phone number of the recipient."
+        shippingMethod:
+          type: string
+          description: "Method of shipping."
+        address:
+          $ref: "#/components/schemas/ShippingAddressDto"
 
-    AddressDto:
-      type: "object"
-      required:
-        - country
-        - city
-        - line
-        - postcode
+    ShippingAddressDto:
+      type: object
       properties:
         country:
-          type: "string"
-          minLength: 2
-          maxLength: 128
-          description: "Country should have a length between 2 and 128 characters"
+          type: string
+          description: "Country in the shipping address."
+        addressLine:
+          type: string
+          description: "Address line in the shipping address."
         city:
-          type: "string"
-          minLength: 2
-          maxLength: 128
-          description: "City should have a length between 2 and 128 characters"
-        line:
-          type: "string"
-          minLength: 2
-          maxLength: 128
-          description: "Line should have a length between 2 and 128 characters"
-        postcode:
-          type: "string"
-          minLength: 2
-          maxLength: 128
-          description: "Postcode should have a length between 2 and 128 characters"
+          type: string
+          description: "City in the shipping address."
+        zipCode:
+          type: string
+          description: "Zip code in the shipping address."

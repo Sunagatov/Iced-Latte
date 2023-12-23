@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.payment.api.impl.shipping;
 
-import com.zufar.icedlatte.user.repository.ShippingRepository;
+import com.zufar.icedlatte.payment.repository.ShippingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;

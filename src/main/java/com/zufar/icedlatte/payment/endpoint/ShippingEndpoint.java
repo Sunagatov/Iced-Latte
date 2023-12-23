@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,20 +35,23 @@ public class ShippingEndpoint implements com.zufar.icedlatte.openapi.shipping.ap
     }
 
     @Override
-    public ResponseEntity<Void> deleteShippingById(Long shippingId) {
+    @DeleteMapping("/{shippingId}")
+    public ResponseEntity<Void> deleteShippingById(@PathVariable Long shippingId) {
         shippingApi.deleteById(shippingId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<List<ShippingInfoDto>> getAllShippingByUserId(UUID userId) {
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ShippingInfoDto>> getAllShippingByUserId(@PathVariable UUID userId) {
         List<ShippingInfoDto> deliveries = shippingApi.getAllByUserId(userId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(deliveries);
     }
 
     @Override
-    public ResponseEntity<ShippingInfoDto> getShippingById(Long shippingId) {
+    @GetMapping("/{shippingId}")
+    public ResponseEntity<ShippingInfoDto> getShippingById(@PathVariable Long shippingId) {
         ShippingInfoDto shipping = shippingApi.getById(shippingId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(shipping);

@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/version-1.0/23.11.2023.part3.insert-favorite-data.sql
   - include:
       file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql
+  - include:
+      file: db/changelog/version-1.0/17.12.2023.part1.create-shipping-table.sql

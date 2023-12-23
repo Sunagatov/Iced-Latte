@@ -87,7 +87,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean isSecuredUrl(HttpServletRequest request) {
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
-                        SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL)
+                        SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
+                        SecurityConstants.SHIPPING_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }
