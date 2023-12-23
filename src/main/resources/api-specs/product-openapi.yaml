@@ -100,23 +100,18 @@ paths:
           description: "Internal Server Error."
 
   /api/v1/products/ids:
-    get:
+    post:
       tags:
         - "Product"
       summary: "List Products by IDs"
       description: "Retrieve a list of products using a list of unique identifiers."
       operationId: "getProductsByIds"
-      parameters:
-        - name: "id"
-          description: "List of product IDs."
-          in: "query"
-          required: true
-          schema:
-            type: "array"
-            items:
-              type: "string"
-              format: "uuid"
-
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductIdsDto"
       responses:
         "200":
           description: "List of products by IDs retrieved successfully."
@@ -157,6 +152,8 @@ components:
           format: "int32"
         active:
           type: "boolean"
+        productFileUrl:
+          type: "string"
 
     ProductListWithPaginationInfoDto:
       type: "object"
@@ -183,3 +180,14 @@ components:
         totalPages:
           type: "integer"
           format: "int32"
+
+    ProductIdsDto:
+      type: "object"
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"

@@ -75,5 +75,3 @@ VALUES ('c3f45eec-18d8-43e0-9d7b-d85a4a9b6bda', 'Hazelnut Latte', 'Espresso with
 
 INSERT INTO product (id, name, description, price, quantity, active)
 VALUES ('123f7a2d-cb34-4e5f-9a1d-4e4b456a03a7', 'Lemonade Iced Tea', 'Iced Tea with a Splash of Lemonade', 3.65, 80, true);
-
-

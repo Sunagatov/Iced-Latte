@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Cache Maven dependencies
         uses: actions/cache@v3
@@ -39,15 +41,15 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify -Pdev -DskipTests org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.scm.provider=git -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_HOST_URL: http://31.132.209.218:63535/
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           scanMetadataReportFile: target/sonar/report-task.txt
 
@@ -78,7 +80,6 @@ jobs:
 
   test:
     name: Test Job
-    needs: build
     runs-on: ubuntu-latest
 
     steps:

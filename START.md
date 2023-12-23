@@ -20,13 +20,15 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `DATASOURCE_PASSWORD`: Database password
 - `REDIS_HOST`: Redis host
 - `REDIS_PORT`: Redis port
+- `MINIO_HOST`: Minio host
+- `MINIO_PORT`: Minio port
 
 ## Starting the Application
 
 ### Running All Services with latest build
 To start the application containers with the latest build:
 ```bash
-docker-compose -f docker-compose.local.yml up -d --build iced-latte-backend iced-latte-postgresdb
+docker-compose -f docker-compose.local.yml up -d --build
 ```
 
 ### Running All Services
@@ -43,6 +45,12 @@ To start only the PostgreSQL database as defined in the docker-compose.local.yml
 docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb
 ```
 
+
+### Running only a Cloud Storage (minio)
+To start only the Minio cloud storage as defined in the docker-compose.local.yml file:
+```bash
+docker-compose -f docker-compose.local.yml up -d iced-latte-minio
+```
 ## Additional Docker Commands
 
 ### Rebuild containers after changes
