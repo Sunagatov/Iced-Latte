@@ -60,7 +60,6 @@ spring:
       host: localhost
       port: 6380
 
-
 #
 # JWT Security Properties
 #
