@@ -36,7 +36,7 @@ public class ShippingRetriever {
     public List<ShippingInfoDto> getDeliveriesByUserId(final UUID userId) {
         List<Shipping> deliveries = shippingRepository.findDeliveriesByUserId(userId);
         if (deliveries == null || deliveries.isEmpty()) {
-            log.warn("No deliveries found for user with id: {}", userId);
+            log.warn("No deliveries found for user with id = {} ", userId);
             return Collections.emptyList();
         }
         return shippingConverter.toDtoList(deliveries);

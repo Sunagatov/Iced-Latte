@@ -34,6 +34,7 @@ public class ShippingCreator {
         Shipping convertedEntity = shippingConverter.toEntity(shippingInfoDto);
         userEntity.addShipping(convertedEntity);
         Shipping savedEntity = shippingRepository.save(convertedEntity);
+        log.info("The shipping record was created and saved in database.");
         return shippingConverter.toDto(savedEntity);
     }
 }
