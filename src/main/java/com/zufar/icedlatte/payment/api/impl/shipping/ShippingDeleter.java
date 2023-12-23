@@ -16,8 +16,8 @@ public class ShippingDeleter {
     @Transactional
     public void deleteShippingById(Long shippingId) {
         shippingRepository.findById(shippingId).ifPresent(s -> {
-            log.info("The shipping record was deleted from the database with id = {} ", shippingId);
             shippingRepository.deleteById(s.getShippingId());
+            log.info("The shipping record was deleted from the database with id = {} ", shippingId);
         });
     }
 }
