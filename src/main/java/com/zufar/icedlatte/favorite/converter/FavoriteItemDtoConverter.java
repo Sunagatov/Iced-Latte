@@ -3,7 +3,13 @@ package com.zufar.icedlatte.favorite.converter;
 import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.Set;
 
