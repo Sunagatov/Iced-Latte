@@ -5,12 +5,12 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Slf4j
+@Log4j2
 @Configuration
 public class MinioConfig {
 
@@ -36,7 +36,6 @@ public class MinioConfig {
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(minioAccessKey, minioSecretKey)))
                 .withPathStyleAccessEnabled(true)
                 .build();
-
         try {
             if (!amazonS3.doesBucketExistV2(minioAvatarBucket)) {
                 amazonS3.createBucket(minioAvatarBucket);

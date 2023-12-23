@@ -28,9 +28,9 @@ public class MinioFileService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public FileMetadataDto getFileMetadataDto(final UUID relatedObjectId) {
-        FileMetadata fileMetadata = fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
+        return fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
+                .map(fileMetadataDtoConverter::toDto)
                 .orElse(null);
-        return fileMetadataDtoConverter.toDto(fileMetadata);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
