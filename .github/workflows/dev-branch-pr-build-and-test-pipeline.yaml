@@ -48,6 +48,7 @@ jobs:
              -Dsonar.buildString=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
+             -Dsonar.projectVersion=${{ github.event.repository.updated_at}}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
