@@ -45,10 +45,9 @@ jobs:
              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
              -Dsonar.newCode.referenceBranch=test
              -Dsonar.scm.exclusions.disabled=true
-             -Dsonar.buildString=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
-             -Dsonar.projectVersion=${{ github.event.repository.updated_at}}
+             -Dsonar.projectVersion=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}-${date +%s%N | cut -b1-13}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
