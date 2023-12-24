@@ -43,10 +43,8 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-             -Dsonar.newCode.referenceBranch=development
              -Dsonar.scm.exclusions.disabled=true
              -Dsonar.scm.forceReloadAll=true
-             -Dsonar.scm.provider=git
              -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}
              -Dsonar.branch.target=development
              -Dsonar.verbose=true
