@@ -48,10 +48,7 @@ jobs:
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
              -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}-${GITHUB_SHA:0:7}
-             -Dsonar.branch.name=development
              -Dsonar.branch.target=development
-             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-             -Dsonar.pullrequest.branch=${{ github.head_ref }}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
