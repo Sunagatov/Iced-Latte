@@ -50,6 +50,7 @@ jobs:
              -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}-${GITHUB_SHA:0:7}
              -Dsonar.branch.target=development
              -Dsonar.branch.name=test
+             -Dsonar.verbose=true
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
