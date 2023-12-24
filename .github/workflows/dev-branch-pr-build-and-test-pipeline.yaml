@@ -43,11 +43,15 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-             -Dsonar.newCode.referenceBranch=test
+             -Dsonar.newCode.referenceBranch=development
              -Dsonar.scm.exclusions.disabled=true
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
-             -Dsonar.projectVersion=${{ github.ref_name }}-${GITHUB_SHA:0:7}-${{ github.event.commits[0].timestamp }}
+             -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}-${GITHUB_SHA:0:7}
+             -Dsonar.branch.name=development
+             -Dsonar.branch.target=development
+             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+             -Dsonar.pullrequest.branch=${{ github.head_ref }}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
