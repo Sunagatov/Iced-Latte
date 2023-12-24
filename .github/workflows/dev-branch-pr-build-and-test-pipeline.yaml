@@ -47,7 +47,7 @@ jobs:
              -Dsonar.scm.exclusions.disabled=true
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
-             -Dsonar.projectVersion=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}-${{ github.event.head_commit.timestamp }}
+             -Dsonar.projectVersion=${{ github.ref_name }}-${GITHUB_SHA:0:7}-${{ github.event.commits[0].timestamp }}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
