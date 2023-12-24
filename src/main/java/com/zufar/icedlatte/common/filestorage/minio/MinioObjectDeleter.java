@@ -18,7 +18,6 @@ public class MinioObjectDeleter {
     public void deleteFile(FileMetadataDto fileMetadataDto) {
         final String bucketName = fileMetadataDto.bucketName();
         final String fileName = fileMetadataDto.fileName();
-
         try {
             amazonS3.deleteObject(bucketName, fileName);
         } catch (AmazonServiceException ase) {

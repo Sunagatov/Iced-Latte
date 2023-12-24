@@ -20,12 +20,8 @@ public class FileProvider {
     private final MinioFileService minioFileService;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public String getRelatedObjectUrl(final UUID relatedObjectId) {
-        return Optional.ofNullable(minioFileService.getFileMetadataDto(relatedObjectId))
-                .map(minioTemporaryLinkReceiver::generatePresignedUrlAsString)
-                .orElseGet(()-> {
-                    log.error("File with id = {} was not found.", relatedObjectId);
-                    return null;
-                });
+    public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
+        return minioFileService.getFileMetadataDto(relatedObjectId)
+                .map(minioTemporaryLinkReceiver::generatePresignedUrlAsString);
     }
 }
