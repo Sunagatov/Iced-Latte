@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,5 +37,11 @@ public class MinioFileService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteByRelatedObjectId(final UUID relatedObjectId) {
         fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void saveAll(final List<FileMetadataDto> fileMetadataDtos) {
+        List<FileMetadata> fileMetadataList = fileMetadataDtoConverter.toEntityList(fileMetadataDtos);
+        fileMetadataRepository.saveAll(fileMetadataList);
     }
 }

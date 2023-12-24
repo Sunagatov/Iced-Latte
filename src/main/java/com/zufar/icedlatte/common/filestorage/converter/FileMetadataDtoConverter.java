@@ -6,6 +6,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 
+import java.util.List;
+
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface FileMetadataDtoConverter {
 
@@ -14,4 +16,7 @@ public interface FileMetadataDtoConverter {
 
     @Named("toFileMetadata")
     FileMetadata toEntity(final FileMetadataDto dto);
+
+    @Named("toFileMetadataList")
+    List<FileMetadata> toEntityList(final List<FileMetadataDto> dtoList);
 }

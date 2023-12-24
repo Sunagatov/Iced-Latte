@@ -5,6 +5,7 @@ import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
 import com.zufar.icedlatte.common.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;

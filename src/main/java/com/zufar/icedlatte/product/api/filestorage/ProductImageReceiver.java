@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.product.api;
+package com.zufar.icedlatte.product.api.filestorage;
 
 
 import com.zufar.icedlatte.common.filestorage.api.FileProvider;

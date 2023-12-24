@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -19,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
