@@ -47,7 +47,7 @@ jobs:
              -Dsonar.scm.exclusions.disabled=true
              -Dsonar.scm.forceReloadAll=true
              -Dsonar.scm.provider=git
-             -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}-${GITHUB_SHA:0:7}
+             -Dsonar.projectVersion=pr-${{ github.event.pull_request.number }}
              -Dsonar.branch.target=development
              -Dsonar.verbose=true
 
