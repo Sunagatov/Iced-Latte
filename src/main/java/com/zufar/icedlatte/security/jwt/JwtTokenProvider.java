@@ -39,7 +39,7 @@ public class JwtTokenProvider {
 					.signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
 					.compact();
 		} catch (Exception exception) {
-			log.error("Jwt token validation error", exception);
+			log.debug("Jwt token validation error", exception);
 			throw new JwtTokenException(exception);
 		}
 	}
