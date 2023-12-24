@@ -43,7 +43,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: mvn -B verify -Pdev org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-             -Dsonar.newCode.referenceBranch=development
+             -Dsonar.newCode.referenceBranch=test
              -Dsonar.scm.exclusions.disabled=true
              -Dsonar.buildString=$GITHUB_REF_NAME-${GITHUB_SHA:0:7}
              -Dsonar.scm.forceReloadAll=true
