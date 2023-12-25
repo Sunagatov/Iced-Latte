@@ -22,6 +22,14 @@ public final class RestAssertion {
         assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
     }
 
+    public static void assertRestApiCreateResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.CREATED, schema);
+    }
+
+    public static void assertRestApiUnAuthorizedResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.UNAUTHORIZED, schema);
+    }
+
     public static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
