@@ -3,6 +3,7 @@ package com.zufar.icedlatte.payment.api.impl.intent;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.zufar.icedlatte.cart.api.CartApi;
+import com.zufar.icedlatte.openapi.dto.ShippingInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.payment.converter.StripePaymentIntentConverter;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -37,13 +38,13 @@ public class PaymentCreator {
     private final StripePaymentIntentCreator stripePaymentIntentCreator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public Pair<String, Payment> createPayment(final Pair<UUID, PaymentMethod> pair) {
+    public Pair<String, Payment> createPayment(final Pair<UUID, PaymentMethod> pair, final ShippingInfoDto shippingInfo) {
         log.info("Create payment: starting: start payment creation");
         UUID userId = pair.getLeft();
         PaymentMethod paymentMethod = pair.getRight();
 
         ShoppingCartDto shoppingCart = cartApi.getShoppingCartByUserId(userId);
-        PaymentIntent stripePaymentIntent = stripePaymentIntentCreator.createStripePaymentIntent(paymentMethod, shoppingCart);
+        PaymentIntent stripePaymentIntent = stripePaymentIntentCreator.createStripePaymentIntent(paymentMethod, shoppingCart, shippingInfo);
         Payment paymentToSave = fillPaymentDetails(shoppingCart, stripePaymentIntent);
         try {
             Payment savedPayment = paymentRepository.save(paymentToSave);

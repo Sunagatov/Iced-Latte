@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.payment.api;
 
 import com.zufar.icedlatte.openapi.dto.CreateCardDetailsTokenRequest;
+import com.zufar.icedlatte.openapi.dto.CreatePaymentRequest;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentDetailsDto;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentWithClientSecretDto;
 
@@ -9,10 +10,10 @@ public interface PaymentApi {
     /**
      * This method is responsible for payment processing
      *
-     * @param cardDetailsTokenId is stripe token collected based on information about the user's payment card
+     * @param paymentRequest is stripe token collected based on information about the user's payment card and detailed shipping info
      * @return PaymentDetailsWithTokenDto combines payment identifier and payment token for processing on front-end side
      * */
-    ProcessedPaymentWithClientSecretDto processPayment(final String cardDetailsTokenId);
+    ProcessedPaymentWithClientSecretDto processPayment(final CreatePaymentRequest paymentRequest);
 
     /**
      * This method allows to create a payment method object

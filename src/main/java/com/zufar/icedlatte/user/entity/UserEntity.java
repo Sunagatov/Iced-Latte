@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.user.entity;
 
-import com.zufar.icedlatte.payment.entity.Shipping;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,14 +19,10 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
 import java.util.UUID;
-import java.util.ArrayList;
-
 
 @Builder
 @Getter
@@ -71,9 +66,6 @@ public class UserEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<UserGrantedAuthority> authorities;
 
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Shipping> deliveries;
-
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;
 
@@ -97,14 +89,6 @@ public class UserEntity implements UserDetails {
         }
         this.authorities.add(authority);
         authority.setUser(this);
-    }
-
-    public void addShipping(Shipping shipping) {
-        if (this.deliveries == null) {
-            this.deliveries = new ArrayList<>();
-        }
-        this.deliveries.add(shipping);
-        shipping.setUser(this);
     }
 
     @Override

@@ -168,12 +168,6 @@ components:
         itemsTotalPrice:
           type: "number"
           format: "decimal"
-        taxRate:
-          type: "number"
-          format: "decimal"
-        shippingCost:
-          type: "number"
-          format: "decimal"
         productsQuantity:
           type: "integer"
           format: "int32"

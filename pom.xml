@@ -555,26 +555,6 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
-                    <!-- Generate from Shipping OpenAPI Spec -->
-                    <execution>
-                        <id>generate-from-shipping-openapi-spec</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api-specs/shipping-openapi.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.shipping.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
-                                <interfaceOnly>true</interfaceOnly>
-                                <useTags>true</useTags>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-
                 </executions>
             </plugin>
         </plugins>

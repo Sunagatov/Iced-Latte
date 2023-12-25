@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.payment.api.impl;
 
+import com.zufar.icedlatte.openapi.dto.CreatePaymentRequest;
 import com.zufar.icedlatte.payment.api.PaymentApi;
 import com.zufar.icedlatte.openapi.dto.CreateCardDetailsTokenRequest;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentDetailsDto;
@@ -23,8 +24,8 @@ public class PaymentApiImpl implements PaymentApi {
     private final CardDetailsProcessor cardDetailsProcessor;
 
     @Override
-    public ProcessedPaymentWithClientSecretDto processPayment(final String cardDetailsTokenId) {
-        return paymentProcessor.processPayment(cardDetailsTokenId);
+    public ProcessedPaymentWithClientSecretDto processPayment(final CreatePaymentRequest paymentRequest) {
+        return paymentProcessor.processPayment(paymentRequest);
     }
 
     @Override

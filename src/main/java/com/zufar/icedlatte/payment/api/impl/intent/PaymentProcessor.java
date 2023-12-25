@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.payment.api.impl.intent;
 
 import com.stripe.model.PaymentMethod;
+import com.zufar.icedlatte.openapi.dto.CreatePaymentRequest;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentWithClientSecretDto;
 import com.zufar.icedlatte.payment.api.impl.customer.StripeCustomerDataProcessor;
 import com.zufar.icedlatte.payment.config.StripeConfiguration;
@@ -20,12 +21,13 @@ public class PaymentProcessor {
     private final StripeConfiguration stripeConfiguration;
     private final PaymentCreator paymentCreator;
 
-    public ProcessedPaymentWithClientSecretDto processPayment(final String cardDetailsTokenId) {
+    public ProcessedPaymentWithClientSecretDto processPayment(final CreatePaymentRequest paymentRequest) {
+        String cardDetailsTokenId = paymentRequest.getCardTokenId();
         log.info("Process payment: starting: processing payment with cardDetailsTokenId = {}.", cardDetailsTokenId);
         StripeConfiguration.setStripeKey(stripeConfiguration.secretKey());
 
         Pair<UUID, PaymentMethod> userIdAndPaymentMethodPair = stripeCustomerDataProcessor.processStripeCustomerData(cardDetailsTokenId);
-        Pair<String, Payment> clientSecretAndPaymentPair = paymentCreator.createPayment(userIdAndPaymentMethodPair);
+        Pair<String, Payment> clientSecretAndPaymentPair = paymentCreator.createPayment(userIdAndPaymentMethodPair, paymentRequest.getShippingInfo());
         String clientSecret = clientSecretAndPaymentPair.getLeft();
         Payment payment = clientSecretAndPaymentPair.getRight();
 
