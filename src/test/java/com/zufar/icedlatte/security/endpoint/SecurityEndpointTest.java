@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("FavoriteListEndpointTest Tests")
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class SecurityEndpointTest {
+class SecurityEndpointTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
@@ -371,7 +371,7 @@ public class SecurityEndpointTest {
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
 
-        Response responseRegistration = given(specification)
+        given(specification)
                 .body(bodyRegistration)
                 .post("/register");
 
