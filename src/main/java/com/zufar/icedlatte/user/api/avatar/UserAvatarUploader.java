@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.api.avatar;
 import com.zufar.icedlatte.common.filestorage.api.FileUploader;
 import com.zufar.icedlatte.common.filestorage.api.MinioFileService;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
-import com.zufar.icedlatte.common.filestorage.minio.MinioObjectUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

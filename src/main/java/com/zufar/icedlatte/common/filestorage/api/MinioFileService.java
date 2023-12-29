@@ -47,6 +47,7 @@ public class MinioFileService {
         fileMetadataRepository.saveAll(fileMetadataList);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadProductImagesToDb(String bucketName) {
         List<FileMetadataDto> fileMetadataDtos = minioProvider.getProductImagesFromMinio(bucketName);
         saveAll(fileMetadataDtos);
