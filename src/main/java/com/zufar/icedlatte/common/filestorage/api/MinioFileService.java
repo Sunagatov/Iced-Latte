@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,10 +29,9 @@ public class MinioFileService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public FileMetadataDto getFileMetadataDto(final UUID relatedObjectId) {
+    public Optional<FileMetadataDto> getFileMetadataDto(final UUID relatedObjectId) {
         return fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
-                .map(fileMetadataDtoConverter::toDto)
-                .orElse(null);
+                .map(fileMetadataDtoConverter::toDto);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)

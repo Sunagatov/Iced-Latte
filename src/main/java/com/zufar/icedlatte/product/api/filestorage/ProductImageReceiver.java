@@ -16,12 +16,15 @@ public class ProductImageReceiver {
     private final FileProvider fileProvider;
 
     public String getProductFileUrl(final UUID productId) {
-        String productFileUrl = null;
         try {
-            productFileUrl = fileProvider.getRelatedObjectUrl(productId);
+            return fileProvider.getRelatedObjectUrl(productId)
+                    .orElseGet(() -> {
+                        log.warn("File with id = {} was not found.", productId);
+                        return "default file";
+                    });
         } catch (Throwable exception) {
             log.error("FileProvider error", exception);
         }
-        return productFileUrl == null ? "default file" : productFileUrl;
+        return "default file";
     }
 }
