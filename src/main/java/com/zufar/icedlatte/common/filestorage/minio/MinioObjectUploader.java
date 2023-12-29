@@ -4,12 +4,17 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.transfer.TransferManager;
 import com.zufar.icedlatte.common.filestorage.exception.FileReadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -20,6 +25,7 @@ public class MinioObjectUploader {
 
     private final AmazonS3 amazonS3;
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
         try (InputStream inputStream = file.getInputStream()) {
             ObjectMetadata metadata = new ObjectMetadata();
@@ -35,5 +41,16 @@ public class MinioObjectUploader {
         } catch (IOException e) {
             throw new FileReadException(fileName);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void uploadFileDirectory(String bucketName, String directoryPath) {
+        TransferManager transferManager = new TransferManager(amazonS3);
+        File directory = getDirectory(directoryPath);
+        transferManager.uploadDirectory(bucketName, "", directory, true);
+    }
+
+    private File getDirectory(String directoryPath) {
+        return new File(directoryPath);
     }
 }

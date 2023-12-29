@@ -7,6 +7,9 @@ import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -15,6 +18,7 @@ public class MinioObjectDeleter {
 
     private final AmazonS3 amazonS3;
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteFile(FileMetadataDto fileMetadataDto) {
         final String bucketName = fileMetadataDto.bucketName();
         final String fileName = fileMetadataDto.fileName();

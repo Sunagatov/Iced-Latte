@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.api.avatar;
 
+import com.zufar.icedlatte.common.filestorage.api.FileUploader;
 import com.zufar.icedlatte.common.filestorage.api.MinioFileService;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.common.filestorage.minio.MinioObjectUploader;
@@ -21,14 +22,14 @@ public class UserAvatarUploader {
     private String bucketName;
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
-    private final MinioObjectUploader minioObjectUploader;
     private final MinioFileService minioFileService;
+    private final FileUploader fileUploader;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FileMetadataDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
         minioFileService.deleteByRelatedObjectId(userId);
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
-        minioObjectUploader.uploadFile(file, bucketName, fileName);
+        fileUploader.upload(file, bucketName, fileName);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
         return minioFileService.save(fileMetadataDto);
     }

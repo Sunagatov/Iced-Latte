@@ -3,6 +3,7 @@ package com.zufar.icedlatte.common.filestorage.api;
 import com.zufar.icedlatte.common.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.common.filestorage.minio.MinioProvider;
 import com.zufar.icedlatte.common.filestorage.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class MinioFileService {
 
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
+    private final MinioProvider minioProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FileMetadataDto save(final FileMetadataDto fileMetadataDto) {
@@ -43,5 +45,10 @@ public class MinioFileService {
     public void saveAll(final List<FileMetadataDto> fileMetadataDtos) {
         List<FileMetadata> fileMetadataList = fileMetadataDtoConverter.toEntityList(fileMetadataDtos);
         fileMetadataRepository.saveAll(fileMetadataList);
+    }
+
+    public void uploadProductImagesToDb(String bucketName) {
+        List<FileMetadataDto> fileMetadataDtos = minioProvider.getProductImagesFromMinio(bucketName);
+        saveAll(fileMetadataDtos);
     }
 }

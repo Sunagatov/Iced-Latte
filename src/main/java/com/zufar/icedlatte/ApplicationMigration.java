@@ -13,6 +13,7 @@ public class ApplicationMigration implements ApplicationRunner {
     private final ProductImageUploader productImageUploader;
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        productImageUploader.uploadProductImages();
+        productImageUploader.uploadProductImagesToMinio();
+        productImageUploader.updateProductsFileMetadata();
     }
 }
