@@ -2,7 +2,6 @@ package com.zufar.icedlatte.common.filestorage.minio;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,16 +27,9 @@ public class MinioTemporaryLinkReceiver {
     public URL generatePresignedUrl(FileMetadataDto fileMetadata) {
         final String bucketName = fileMetadata.bucketName();
         final String fileName = fileMetadata.fileName();
+        Date expirationDate = new Date(System.currentTimeMillis() + Duration.parse(linkExpirationTime).toMillis());
+        HttpMethod httpMethod = HttpMethod.GET;
 
-        GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, fileName)
-                .withMethod(HttpMethod.GET)
-                .withExpiration(getExpirationDate());
-
-        return amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
-    }
-
-    private Date getExpirationDate() {
-        Duration duration = Duration.parse(linkExpirationTime);
-        return new Date(System.currentTimeMillis() + duration.toMillis());
+        return amazonS3.generatePresignedUrl(bucketName, fileName, expirationDate, httpMethod);
     }
 }

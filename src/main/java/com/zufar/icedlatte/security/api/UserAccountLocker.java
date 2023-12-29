@@ -28,7 +28,7 @@ public class UserAccountLocker {
         LocalDateTime expirationDatetime = LocalDateTime.now().plusMinutes(userAccountLockoutDurationMinutes);
         loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         userRepository.setAccountLockedStatus(userEmail, false);
-        log.error("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);
+        log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
