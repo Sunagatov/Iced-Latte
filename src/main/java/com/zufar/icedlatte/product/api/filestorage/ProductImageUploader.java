@@ -20,8 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductImageUploader {
 
-    @Value("${spring.minio.buckets.product-picture")
-    private static String bucketName;
+    @Value("${spring.minio.buckets.product-picture}")
+    private String productPictureBucket;
 
     private final AmazonS3 amazonS3;
     private final MinioFileService minioFileService;
@@ -29,11 +29,11 @@ public class ProductImageUploader {
     @Transactional
     public void uploadProductImages() {
         try {
-            ObjectListing objectListing = amazonS3.listObjects(bucketName);
+            ObjectListing objectListing = amazonS3.listObjects(productPictureBucket);
             List<FileMetadataDto> fileMetadataDtos = getFileMetadataDtos(objectListing.getObjectSummaries());
             minioFileService.saveAll(fileMetadataDtos);
         } catch (Exception e) {
-            log.warn("File upload error", e);
+            log.warn("Product's files upload error", e);
         }
     }
 
@@ -46,7 +46,7 @@ public class ProductImageUploader {
             String fileName = parts[1];
             FileMetadataDto fileMetadataDto = new FileMetadataDto(
                     UUID.fromString(relatedObjectId),
-                    bucketName,
+                    productPictureBucket,
                     fileName
             );
             fileMetadataDtos.add(fileMetadataDto);

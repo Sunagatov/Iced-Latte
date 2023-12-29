@@ -26,8 +26,8 @@ public class MinioConfig {
     @Value("${spring.minio.buckets.user-avatar}")
     private String minioAvatarBucket;
 
-    @Value("${spring.minio.buckets.product-picture")
-    private static String productPictureBucket;
+    @Value("${spring.minio.buckets.product-picture}")
+    private String productPictureBucket;
 
     @Value("${spring.minio.region}")
     private String region;

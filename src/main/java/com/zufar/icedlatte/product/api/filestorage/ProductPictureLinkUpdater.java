@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.product.api.filestorage;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.product.api.filestorage.ProductImageReceiver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
