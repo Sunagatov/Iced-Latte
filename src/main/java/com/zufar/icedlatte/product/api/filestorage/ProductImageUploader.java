@@ -14,8 +14,7 @@ public class ProductImageUploader {
 
     @Value("${spring.minio.buckets.product-picture}")
     private String productPictureBucket;
-    private final String directoryPath = "./products";
-
+    private final static String directoryPath = "./products";
 
     private final MinioFileService minioFileService;
     private final FileUploader fileUploader;

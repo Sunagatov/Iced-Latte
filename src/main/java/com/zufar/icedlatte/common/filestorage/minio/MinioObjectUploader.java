@@ -46,11 +46,7 @@ public class MinioObjectUploader {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFileDirectory(String bucketName, String directoryPath) {
         TransferManager transferManager = new TransferManager(amazonS3);
-        File directory = getDirectory(directoryPath);
+        File directory = new File(directoryPath);
         transferManager.uploadDirectory(bucketName, "", directory, true);
-    }
-
-    private File getDirectory(String directoryPath) {
-        return new File(directoryPath);
     }
 }
