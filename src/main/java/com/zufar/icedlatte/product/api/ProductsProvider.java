@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.filestorage.converter.FileMetadataDtoConverter;
-import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
-import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
-import com.zufar.icedlatte.common.filestorage.repository.FileMetadataRepository;
+import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;

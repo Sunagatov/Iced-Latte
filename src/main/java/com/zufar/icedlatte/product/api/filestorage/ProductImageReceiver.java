@@ -1,4 +1,5 @@
-package com.zufar.icedlatte.user.api.avatar;
+package com.zufar.icedlatte.product.api.filestorage;
+
 
 import com.zufar.icedlatte.filestorage.file.FileProvider;
 import lombok.RequiredArgsConstructor;
@@ -10,15 +11,15 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserAvatarLinkProvider {
+public class ProductImageReceiver {
 
     private final FileProvider fileProvider;
 
-    public String getLink(final UUID userId) {
+    public String getProductFileUrl(final UUID productId) {
         try {
-            return fileProvider.getRelatedObjectUrl(userId)
+            return fileProvider.getRelatedObjectUrl(productId)
                     .orElseGet(() -> {
-                        log.warn("File with id = {} was not found.", userId);
+                        log.warn("File with id = {} was not found.", productId);
                         return "default file";
                     });
         } catch (Throwable exception) {
