@@ -36,7 +36,7 @@ public class ProductExceptionHandler {
     public ApiErrorResponse handlePropertyReferenceException(final PropertyReferenceException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.error("Handle product invalid property exception: failed: message: {}, debugMessage: {}.",
+        log.warn("Handle product invalid property exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;

@@ -22,7 +22,7 @@ public class CommonExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleFileReadException(final FileReadException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle file read exception: failed: message: {}, debugMessage: {}.",
+        log.warn("Handle file read exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }
