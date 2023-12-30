@@ -55,6 +55,8 @@ spring:
     url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
     region: us-east-1
+    default-image-directory:
+      products: ${MINIO_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
   # Redis

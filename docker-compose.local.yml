@@ -31,6 +31,7 @@ services:
       REDIS_PORT: 6380
       MINIO_HOST: http://iced-latte-minio
       MINIO_PORT: 9000
+      MINIO_DEFAULT_PRODUCT_IMAGES_PATH: ./products
     build:
       context: .
       dockerfile: Dockerfile.local
