@@ -63,6 +63,37 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+
+  #
+  # Email
+  #
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: youricedlatteshop@gmail.com
+    password: "kfcf kyba hrab nyij"   #https://support.google.com/mail/answer/7104828?hl=en&rd=3&visit_id=638195765566773400-3814427644
+    subject:
+      confirmation: "Iced Latte - Email Confirmation"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  messages:
+    basename: messages/messages
+
+#
+# Temporary Cache
+#
+temporary-cache:
+  time:
+    token: 5
+
 #
 # Stripe Api Properties
 #
