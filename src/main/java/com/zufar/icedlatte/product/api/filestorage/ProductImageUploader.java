@@ -12,9 +12,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ProductImageUploader {
 
+    private final static String directoryPath = "./products";
+
     @Value("${spring.minio.buckets.product-picture}")
     private String productPictureBucket;
-    private final static String directoryPath = "./products";
 
     private final MinioFileService minioFileService;
     private final FileUploader fileUploader;

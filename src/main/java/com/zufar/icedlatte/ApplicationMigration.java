@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class ApplicationMigration implements ApplicationRunner {
 
     private final ProductImageUploader productImageUploader;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         productImageUploader.uploadProductImagesToMinio();
