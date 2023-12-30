@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.filestorage.exception;
+package com.zufar.icedlatte.filestorage.exception;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;

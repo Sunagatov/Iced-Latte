@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.product.api.filestorage;
 
 
-import com.zufar.icedlatte.common.filestorage.api.FileProvider;
+import com.zufar.icedlatte.filestorage.file.FileProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

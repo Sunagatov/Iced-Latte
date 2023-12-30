@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.filestorage.exception;
+package com.zufar.icedlatte.filestorage.exception;
 
 import lombok.Getter;
 

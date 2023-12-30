@@ -1,6 +1,7 @@
-package com.zufar.icedlatte.common.filestorage.api;
+package com.zufar.icedlatte.filestorage.file;
 
-import com.zufar.icedlatte.common.filestorage.minio.MinioTemporaryLinkReceiver;
+import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
+import com.zufar.icedlatte.filestorage.minio.MinioTemporaryLinkReceiver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,11 +18,12 @@ import java.util.UUID;
 public class FileProvider {
 
     private final MinioTemporaryLinkReceiver minioTemporaryLinkReceiver;
-    private final MinioFileService minioFileService;
+    private final FileMetadataProvider fileMetadataProvider;
+
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
-        return minioFileService.getFileMetadataDto(relatedObjectId)
+        return fileMetadataProvider.getFileMetadataDto(relatedObjectId)
                 .map(minioTemporaryLinkReceiver::generatePresignedUrlAsString);
     }
 }

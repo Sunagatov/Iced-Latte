@@ -1,9 +1,9 @@
-package com.zufar.icedlatte.common.filestorage.minio;
+package com.zufar.icedlatte.filestorage.minio;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

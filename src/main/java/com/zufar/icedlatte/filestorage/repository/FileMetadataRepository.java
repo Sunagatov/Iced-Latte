@@ -1,6 +1,6 @@
-package com.zufar.icedlatte.common.filestorage.repository;
+package com.zufar.icedlatte.filestorage.repository;
 
-import com.zufar.icedlatte.common.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

@@ -1,11 +1,11 @@
-package com.zufar.icedlatte.common.filestorage.minio;
+package com.zufar.icedlatte.filestorage.minio;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.zufar.icedlatte.common.filestorage.exception.FileReadException;
+import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

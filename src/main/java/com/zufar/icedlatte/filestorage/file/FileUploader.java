@@ -1,6 +1,6 @@
-package com.zufar.icedlatte.common.filestorage.api;
+package com.zufar.icedlatte.filestorage.file;
 
-import com.zufar.icedlatte.common.filestorage.minio.MinioObjectUploader;
+import com.zufar.icedlatte.filestorage.minio.MinioObjectUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;

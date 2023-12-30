@@ -1,8 +1,8 @@
-package com.zufar.icedlatte.common.filestorage.minio;
+package com.zufar.icedlatte.filestorage.minio;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
-import com.zufar.icedlatte.common.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
-public class MinioTemporaryLinkReceiver {
+public class  MinioTemporaryLinkReceiver {
 
     @Value("${spring.minio.link-expiration-time}")
     private String linkExpirationTime;

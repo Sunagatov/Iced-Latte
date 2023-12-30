@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.filestorage.entity;
+package com.zufar.icedlatte.filestorage.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
