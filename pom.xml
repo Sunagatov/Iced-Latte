@@ -275,6 +275,21 @@
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.11</version>
         </dependency>
+
+        <!-- Mail -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
+        <!-- Temporary cache -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.1-jre</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -409,27 +424,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Jacoco Plugin -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- SonarQube Scanner Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
@@ -456,7 +450,6 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -475,13 +468,12 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- Generate from ShoppingCart OpenAPI Spec -->
+                    <!-- Generate from Cart OpenAPI Spec -->
                     <execution>
                         <id>generate-from-cart-openapi-spec</id>
                         <goals>
@@ -494,7 +486,6 @@
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <generateModels>true</generateModels>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -512,7 +503,6 @@
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <generateModels>false</generateModels>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <modelPackage>com.zufar.icedlatte.security.dto</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
@@ -529,7 +519,6 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.payment.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
@@ -537,6 +526,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
+
                     <!-- Generate from Favorite OpenAPI Spec -->
                     <execution>
                         <id>generate-from-favorite-openapi-spec</id>
@@ -547,7 +537,6 @@
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/favorite-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.favorite.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
