@@ -35,7 +35,28 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            application/json:
+              schema:
+                type: string
+
+
+  /api/v1/auth/confirm:
+    post:
+      tags:
+        - "Security"
+      summary: "Confirm an email"
+      operationId: "confirmEmail"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmEmailRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/UserRegistrationResponse"
 
@@ -85,6 +106,12 @@ components:
         email:
           type: "string"
         password:
+          type: "string"
+
+    ConfirmEmailRequest:
+      type: "object"
+      properties:
+        token:
           type: "string"
 
     UserAuthenticationResponse:
