@@ -28,6 +28,7 @@ public class ApplicationMigration implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         fileUploader.uploadDirectory(productPictureBucket, DIRECTORY_PATH);
+        Thread.sleep(3000);
         List<FileMetadataDto> fileMetadataDtos = minioProvider.getProductImagesFromMinio(productPictureBucket);
         fileMetadataSaver.saveAll(fileMetadataDtos);
     }
