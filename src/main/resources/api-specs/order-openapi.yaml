@@ -1,0 +1,90 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Order API"
+  description: "API allows users to access orders and related operations."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://dev.api.it-sl.ru"
+    description: "Production server"
+
+tags:
+  - name: "Orders"
+    description: "Operations related to orders"
+
+paths:
+  /api/v1/orders:
+    get:
+      tags:
+        - "Active Orders"
+      summary: "Get all active orders for the authorized user"
+      operationId: "getListOfOrders"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/OrderDto"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Orders list is empty."
+        "500":
+          description: "Internal server error."
+
+    post:
+      tags:
+        - "Active Orders"
+      summary: "Add order"
+      operationId: "createOrder"
+      requestBody:
+        description: "Payload containing a list of items to be added to the order."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderDto"
+      responses:
+        "200":
+          description: "Order placed successfully."
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
+
+components:
+  schemas:
+    OrderDto:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+          format: "uuid"
+          description: "The unique identifier for the user"
+        orderId:
+          type: "string"
+          format: "uuid"
+        dateOfOrder:
+          type: "string"
+          description: "Date of payment"
+          format: date
+        numOfItems:
+          type: "integer"
+          description: "Quantity of all product items"
+          format: "int32"
+        totalCost:
+          type: "number"
+          description: "Quantity of all product items"
+          format: "float"
+
