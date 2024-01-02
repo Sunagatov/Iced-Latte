@@ -19,6 +19,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,6 +55,7 @@ class PageableProductsProviderTest {
     @Test
     void shouldFetchProductsUsingPageAttributes() {
         Page<ProductInfo> page = new PageImpl<>(products);
+        List<ProductInfoDto> productInfoDtos = new ArrayList<>();
         final int pageNumber = 1;
         final int size = 10;
         final String sortAttribute = "name";
@@ -62,7 +65,7 @@ class PageableProductsProviderTest {
         when(productRepository.findAll(pageRequest)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
-        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productPictureLinkUpdater.updateProductsFileUrl(any(List.class), any(List.class))).thenReturn(productInfoDtos);
 
         ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageNumber, size,
                 sortAttribute, Sort.Direction.ASC.name()

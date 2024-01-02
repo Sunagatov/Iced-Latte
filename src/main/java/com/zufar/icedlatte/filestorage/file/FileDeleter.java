@@ -30,4 +30,9 @@ public class FileDeleter {
                     log.info("File was deleted from the file storage and file metadata was deleted from the database as well");
                 });
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void deleteAll(final String bucketName) {
+        minioObjectDeleter.deleteAllPackage(bucketName);
+    }
 }

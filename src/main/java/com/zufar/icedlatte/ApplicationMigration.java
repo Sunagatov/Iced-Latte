@@ -1,8 +1,10 @@
 package com.zufar.icedlatte;
 
+import com.zufar.icedlatte.filestorage.file.FileDeleter;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.minio.MinioObjectDeleter;
 import com.zufar.icedlatte.filestorage.minio.MinioProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +29,14 @@ public class ApplicationMigration implements ApplicationRunner {
     private final FileUploader fileUploader;
     private final MinioProvider minioProvider;
     private final FileMetadataSaver fileMetadataSaver;
+    private final FileDeleter fileDeleter;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        log.info("Deleting old pictures from products bucket was started");
+        fileDeleter.deleteAll(productPictureBucket);
+        Thread.sleep(5000);
+        log.info("Bucket is ready for new pictures");
         log.info("Product pictures upload was started");
         fileUploader.uploadDirectory(productPictureBucket, directoryPath);
         Thread.sleep(5000);
@@ -38,6 +45,5 @@ public class ApplicationMigration implements ApplicationRunner {
         log.info("Product pictures metadata was retrieved from minio");
         fileMetadataSaver.saveAll(fileMetadataDtos);
         log.info("Product pictures metadata was saved in postgresql database");
-
     }
 }

@@ -27,7 +27,7 @@ public class SingleProductProvider {
     public ProductInfoDto getProductById(final UUID productId) {
         return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)
-                .map(productPictureLinkUpdater::update)
+                .map(productPictureLinkUpdater::updateByProductId)
                 .orElseThrow(() -> {
                     log.error("The product with id = {} is not found.", productId);
                     return new ProductNotFoundException(productId);
