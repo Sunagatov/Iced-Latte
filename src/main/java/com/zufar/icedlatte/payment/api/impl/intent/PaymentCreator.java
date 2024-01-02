@@ -60,8 +60,8 @@ public class PaymentCreator {
     private Payment fillPaymentDetails(ShoppingCartDto shoppingCart, PaymentIntent stripePaymentIntent) {
         log.info("Fill payment details: starting: start payment object filling");
         Payment payment = stripePaymentIntentConverter.toEntity(stripePaymentIntent, shoppingCart);
-        payment.setStatus(PaymentStatus.PAYMENT_IS_PROCESSING);
-        payment.setDescription(PaymentStatus.PAYMENT_IS_PROCESSING.getDescription());
+        payment.setStatus(PaymentStatus.PAYMENT_IN_PROCESSING);
+        payment.setDescription(PaymentStatus.PAYMENT_IN_PROCESSING.getDescription());
         log.info("Fill payment details: finished: payment object was filled");
 
         return payment;
