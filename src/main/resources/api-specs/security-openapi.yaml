@@ -113,8 +113,6 @@ components:
       properties:
         token:
           type: "string"
-        email:
-          type: "string"
 
     UserAuthenticationResponse:
       type: "object"

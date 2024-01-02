@@ -8,7 +8,7 @@ import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
-import com.zufar.icedlatte.common.filestorage.api.FileDeleter;
+import com.zufar.icedlatte.filestorage.file.FileDeleter;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarLinkProvider;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import lombok.RequiredArgsConstructor;

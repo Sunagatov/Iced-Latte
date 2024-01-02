@@ -46,7 +46,6 @@ public class EmailConfig {
         return new SimpleMailMessage();
     }
 
-
     @Bean
     public MessageSource messageSource() {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();

@@ -55,6 +55,8 @@ spring:
     url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
     region: us-east-1
+    default-image-directory:
+      products: ${MINIO_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
   # Redis
@@ -70,8 +72,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ami5@tpu.ru
-    password: hqxxqevqgeqhakew   #https://support.google.com/mail/answer/7104828?hl=en&rd=3&visit_id=638195765566773400-3814427644
+    username: youricedlatteshop@gmail.com
+    password: "kfcf kyba hrab nyij"   #https://support.google.com/mail/answer/7104828?hl=en&rd=3&visit_id=638195765566773400-3814427644
     subject:
       confirmation: "Iced Latte - Email Confirmation"
     properties:
@@ -83,8 +85,17 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
   messages:
     basename: messages/messages
+
+#
+# Temporary Cache
+#
+temporary-cache:
+  time:
+    token: 5
+
 #
 # Stripe Api Properties
 #

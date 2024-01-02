@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.api;
 
-import com.zufar.icedlatte.email.exception.InvalidTokenException;
+import com.zufar.icedlatte.email.api.token.TokenManager;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
 import com.zufar.icedlatte.security.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
@@ -12,18 +12,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailTokenConformer {
 
-    private final TokenManager tokenManager;
     private final UserRegistrationService userRegistrationService;
+    private final TokenManager tokenManager;
 
-    public UserRegistrationResponse confirmEmailByCode(ConfirmEmailRequest confirmEmailRequest) {
-        final String token = confirmEmailRequest.token();
-        final String email = confirmEmailRequest.email();
-        UserRegistrationRequest userRegistrationRequest = tokenManager.getToken(token);
-        if (token == null || !token.equals(token) ||
-                userRegistrationRequest == null || !email.equals(userRegistrationRequest.email())) {
-            throw new InvalidTokenException(email);
-        }
-        tokenManager.removeToken(token);
+    public UserRegistrationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest) {
+        UserRegistrationRequest userRegistrationRequest = tokenManager.validateToken(confirmEmailRequest);
         return userRegistrationService.register(userRegistrationRequest);
     }
 }

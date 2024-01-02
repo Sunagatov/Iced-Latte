@@ -19,7 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @Validated
@@ -49,9 +52,9 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping(value = "/confirm")
     public ResponseEntity<UserRegistrationResponse> confirmEmail(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.info("Received the request to confirm the email for user with {} email", confirmEmailRequest.email());
+        log.info("Received email confirmation request");
         UserRegistrationResponse registrationResponse = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
-        log.info("Registration completed for user with email = '{}'", confirmEmailRequest.email());
+        log.info("Email verification completed");
         return new ResponseEntity<>(registrationResponse, HttpStatus.CREATED);
     }
 
