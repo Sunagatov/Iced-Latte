@@ -170,28 +170,8 @@ components:
       properties:
         status:
           type: "string"
-          enum:
-            - "PAYMENT_METHOD_IS_REQUIRED"
-            - "PAYMENT_CONFIRMATION_IS_REQUIRED"
-            - "PAYMENT_CAPTURE_IS_REQUIRED"
-            - "PAYMENT_ACTION_IS_REQUIRED"
-            - "PAYMENT_IS_FAILED"
-            - "PAYMENT_IN_PROCESSING"
-            - "PAYMENT_IS_CANCELED"
-            - "PAYMENT_IS_SUCCEEDED"
-            - "Extra line for correct generation"
         description:
           type: "string"
-          enum:
-            - "PAYMENT_METHOD_IS_REQUIRED"
-            - "PAYMENT_CONFIRMATION_IS_REQUIRED"
-            - "PAYMENT_CAPTURE_IS_REQUIRED"
-            - "PAYMENT_ACTION_IS_REQUIRED"
-            - "PAYMENT_IS_FAILED"
-            - "PAYMENT_IN_PROCESSING"
-            - "PAYMENT_IS_CANCELED"
-            - "PAYMENT_IS_SUCCEEDED"
-            - "Extra line for correct generation"
 
     ProcessedPaymentWithClientSecretDto:
       type: "object"
@@ -226,8 +206,6 @@ components:
             $ref: "cart-openapi.yaml#/components/schemas/ShoppingCartItemDto"
         status:
           $ref: "#/components/schemas/PaymentStatus"
-        description:
-          type: "string"
 
     CreateCardDetailsTokenRequest:
       type: "object"
