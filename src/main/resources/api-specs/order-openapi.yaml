@@ -15,14 +15,14 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Orders"
+  - name: "Order"
     description: "Operations related to orders"
 
 paths:
   /api/v1/orders:
     get:
       tags:
-        - "Active Orders"
+        - "Order"
       summary: "Get all active orders for the authorized user"
       operationId: "getListOfOrders"
       responses:
@@ -43,9 +43,9 @@ paths:
 
     post:
       tags:
-        - "Active Orders"
+        - "Order"
       summary: "Add order"
-      operationId: "createOrder"
+      operationId: "addOrder"
       requestBody:
         description: "Payload containing a list of items to be added to the order."
         required: true
@@ -67,24 +67,54 @@ components:
   schemas:
     OrderDto:
       type: "object"
+      description: "A Order structure in the Iced-Latte system"
+      required:
+        - id
+        - userId
       properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The unique identifier for the order"
         userId:
           type: "string"
           format: "uuid"
           description: "The unique identifier for the user"
-        orderId:
-          type: "string"
-          format: "uuid"
+        products:
+          type: "array"
+          items:
+            $ref: 'product-openapi.yaml#/components/schemas/ProductInfoDto'
         dateOfOrder:
           type: "string"
           description: "Date of payment"
           format: date
-        numOfItems:
+        itemsQuantity:
           type: "integer"
           description: "Quantity of all product items"
           format: "int32"
-        totalCost:
+        totalProductsCost:
           type: "number"
           description: "Quantity of all product items"
           format: "float"
-
+        deliveryCost:
+          type: "number"
+          format: "float"
+        taxCost:
+          type: "number"
+          format: "float"
+        totalOrderCost:
+          type: "number"
+          description: "totalProductsCost + deliveryCost + taxCost"
+          format: "float"
+        deliveryInfo:
+          type: "string"
+          description: "Order details, submitted to DB on the checkout stage"
+        recipientName:
+          type: "string"
+        recipientSurName:
+          type: "string"
+        email:
+          type: "string"
+        phone:
+          type: "integer"
+          format: "int32"

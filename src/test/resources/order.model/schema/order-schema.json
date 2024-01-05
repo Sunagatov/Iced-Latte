@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "imageLink": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "dateOfOrder": {
+      "type": "string"
+    },
+    "itemsQuantity": {
+      "type": "number"
+    },
+    "totalProductsCost": {
+      "type": "number"
+    },
+    "deliveryCost": {
+      "type": "number"
+    },
+    "taxCost": {
+      "type": "number"
+    },
+    "totalOrderCost": {
+      "type": "number"
+    },
+    "deliveryInfo": {
+      "type": "string"
+    },
+    "recipientName": {
+      "type": "string"
+    },
+    "recipientSurName": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "number"
+    }
+  }
+}
