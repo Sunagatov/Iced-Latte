@@ -55,7 +55,7 @@ public interface StripePaymentIntentConverter {
         builder.putMetadata("shippingMethod", shippingInfo.getShippingMethod());
     }
 
-    default String toFullName(String firstName, String lastName) {
+    private String toFullName(String firstName, String lastName) {
         return StringUtils.join(firstName, Character.SPACE_SEPARATOR, lastName);
     }
 }

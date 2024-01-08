@@ -18,7 +18,7 @@ public abstract class AbstractEmailSender<T> {
     private final SimpleMailMessage mailMessage;
     private final List<MessageBuilder<T>> messageBuilders;
 
-    protected void sendNotification(String email, String message, String subject) {
+    public void sendNotification(String email, String message, String subject) {
         mailMessage.setTo(email);
         mailMessage.setText(message);
         mailMessage.setSubject(subject);
