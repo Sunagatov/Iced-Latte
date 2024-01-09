@@ -5,12 +5,12 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Log4j2
+@Slf4j
 @Configuration
 public class MinioConfig {
 
@@ -26,6 +26,9 @@ public class MinioConfig {
     @Value("${spring.minio.buckets.user-avatar}")
     private String minioAvatarBucket;
 
+    @Value("${spring.minio.buckets.product-picture}")
+    private String productPictureBucket;
+
     @Value("${spring.minio.region}")
     private String region;
 
@@ -37,13 +40,18 @@ public class MinioConfig {
                 .withPathStyleAccessEnabled(true)
                 .build();
         try {
-            if (!amazonS3.doesBucketExistV2(minioAvatarBucket)) {
-                amazonS3.createBucket(minioAvatarBucket);
-            }
+            createBucket(amazonS3, minioAvatarBucket);
+            createBucket(amazonS3, productPictureBucket);
         } catch (Exception exception) {
             log.error("Creating AmazonS3 bucket was failed", exception);
         }
 
         return amazonS3;
+    }
+
+    private void createBucket(AmazonS3 amazonS3, String bucketName) {
+        if (!amazonS3.doesBucketExistV2(bucketName)) {
+            amazonS3.createBucket(bucketName);
+        }
     }
 }

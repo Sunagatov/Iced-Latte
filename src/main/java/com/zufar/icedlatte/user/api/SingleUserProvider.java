@@ -27,7 +27,7 @@ public class SingleUserProvider {
                 .map(userDtoConverter::toDto)
                 .map(userAvatarLinkUpdater::update)
                 .orElseThrow(() -> {
-                    log.error("Failed to get the user with the userId = {}.", userId);
+                    log.warn("Failed to get the user details");
                     return new UserNotFoundException(userId);
                 });
     }
@@ -36,7 +36,7 @@ public class SingleUserProvider {
     public UserEntity getUserEntityById(final UUID userId) throws UserNotFoundException {
         return userCrudRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.error("Failed to get the user with the userId = {}.", userId);
+                    log.warn("Failed to get the user details");
                     return new UserNotFoundException(userId);
                 });
     }
