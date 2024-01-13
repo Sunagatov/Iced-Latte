@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
         String message = exception
                 .getBindingResult()
                 .getAllErrors().stream()
-                .map(error -> String.format("{ ErrorMessage: %s }", error.getDefaultMessage()))
+                .map(error -> String.format("{ ErrorMessage: %s }", error.toString()))
                 .toList()
                 .toString();
 

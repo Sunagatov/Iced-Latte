@@ -5,10 +5,10 @@
     "id": {
       "type": "string"
     },
-    "userId": {
+    "status": {
       "type": "string"
     },
-    "products": {
+    "items": {
       "type": "array",
       "items": {
         "type": "object",
@@ -30,9 +30,6 @@
           }
         }
       }
-    },
-    "dateOfOrder": {
-      "type": "string"
     },
     "itemsQuantity": {
       "type": "number"
@@ -63,6 +60,9 @@
     },
     "phone": {
       "type": "number"
+    },
+    "createdAt": {
+      "type": "string"
     }
   }
 }

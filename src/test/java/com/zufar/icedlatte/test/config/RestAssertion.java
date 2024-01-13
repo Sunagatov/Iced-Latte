@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.test.config;
 
+import io.restassured.filter.log.LogDetail;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.hamcrest.Matcher;
@@ -40,6 +41,8 @@ public final class RestAssertion {
 
     private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
         return response.then()
+                .log()
+                .ifValidationFails(LogDetail.BODY)
                 .statusCode(httpStatusCode.value())
                 .body(schemaMatcher)
                 .time(lessThan(DEFAULT_HTTP_TIMEOUT));
