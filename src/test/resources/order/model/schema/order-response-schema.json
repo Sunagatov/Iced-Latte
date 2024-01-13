@@ -5,6 +5,9 @@
     "id": {
       "type": "string"
     },
+    "userId": {
+      "type": "string"
+    },
     "status": {
       "type": "string"
     },
@@ -16,17 +19,34 @@
           "id": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
+          "productInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "imageLink": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "active": {
+                "type": "boolean"
+              }
+            }
           },
-          "imageLink": {
-            "type": "string"
-          },
-          "price": {
-            "type": "number"
-          },
-          "quantity": {
-            "type": "number"
+          "productQuantity": {
+            "type": "integer"
           }
         }
       }
@@ -34,7 +54,7 @@
     "itemsQuantity": {
       "type": "number"
     },
-    "totalProductsCost": {
+    "itemsTotalPrice": {
       "type": "number"
     },
     "deliveryCost": {

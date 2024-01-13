@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.api;
 
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.openapi.dto.OrderRequestDto;
+import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
@@ -10,24 +11,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.*;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderProvider {
+public class OrderAdder {
 
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private static final List<OrderStatus> DEFAULT_STATUS_LIST = List.of(OrderStatus.CREATED, OrderStatus.DELIVERY,
-            OrderStatus.FINISHED);
+    private final OrderCreator orderCreator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public List<OrderResponseDto> getOrdersByStatus(final List<OrderStatus> statusList) {
-        var userId = securityPrincipalProvider.getUserId();
-        var ordersStream = orderRepository.findAllByUserIdAndStatus(userId, statusList == null ? DEFAULT_STATUS_LIST : statusList)
-                .stream();
-        return ordersStream.map(orderDtoConverter::toResponseDto).toList();
+    public OrderResponseDto addOrder(final OrderRequestDto orderBody) {
+        UUID userId = securityPrincipalProvider.getUserId();
+        var order = orderCreator.createNewOrder(orderBody, userId);
+        orderRepository.save(order);
+        log.info("New order was created and saved to database.");
+        return orderDtoConverter.toResponseDto(order);
     }
 }

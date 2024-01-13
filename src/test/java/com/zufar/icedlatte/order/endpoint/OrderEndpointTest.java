@@ -33,7 +33,7 @@ class OrderEndpointTest {
     private static final String ORDER_ADD_BODY_1 = "/order/model/add-order-body-1.json";
     private static final String ORDER_ADD_BODY_2 = "/order/model/add-order-body-1.json";
     private static final String ORDER_ADD_BAD_BODY = "/order/model/add-order-bad-body.json";
-    private static final String ADDED_ORDER_SCHEMA = "order/model/schema/added-order-schema.json";
+    private static final String ORDER_RESPONSE_SCHEMA = "order/model/schema/order-response-schema.json";
     private static final String FAILED_ORDER_SCHEMA = "order/model/schema/failed-order-schema.json";
     private static final String ORDER_LIST_SCHEMA = "order/model/schema/order-list-schema.json";
 
@@ -72,21 +72,20 @@ class OrderEndpointTest {
                 .body(body)
                 .post();
 
-        assertRestApiBodySchemaResponse(response, HttpStatus.OK, ADDED_ORDER_SCHEMA)
-                .body("status", equalTo("CREATED"));
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, ORDER_RESPONSE_SCHEMA)
+                .body("status", equalTo(OrderStatus.CREATED.toString()));
     }
 
     @Test
     @DisplayName("Missing required fields in request body. Should return 400 Bad Request")
-    void shouldReturnBadRequest() {
+    void shouldReturnBadRequestForBadBody() {
         String body = getRequestBody(ORDER_ADD_BAD_BODY);
 
-        Response responsePost = given(specification)
+        Response response = given(specification)
                 .body(body)
                 .post();
 
-        // TODO: it doesn't actually check the schema
-        assertRestApiBadRequestResponse(responsePost, FAILED_ORDER_SCHEMA);
+        assertRestApiBadRequestResponse(response, FAILED_ORDER_SCHEMA);
     }
 
     @Test
@@ -123,12 +122,19 @@ class OrderEndpointTest {
 
         Response responseNoParam = given(specification)
                 .get();
-        Response response = given(specification)
+        Response responseWithParam = given(specification)
                 .param("status", OrderStatus.CREATED)
                 .get();
 
+        var CREATED = OrderStatus.CREATED.toString();
+
         assertRestApiOkResponse(responseNoParam, ORDER_LIST_SCHEMA);
-        assertRestApiOkResponse(response, ORDER_LIST_SCHEMA);
+        responseNoParam.then().body("[0].status", is(CREATED));
+        responseNoParam.then().body("[1].status", is(CREATED));
+
+        assertRestApiOkResponse(responseWithParam, ORDER_LIST_SCHEMA);
+        responseWithParam.then().body("[0].status", is(CREATED));
+        responseWithParam.then().body("[1].status", is(CREATED));
     }
 
     @Test
@@ -147,6 +153,17 @@ class OrderEndpointTest {
                 .get();
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, ORDER_LIST_SCHEMA)
-                .body("orders", Matchers.hasSize(0));
+                .body("$[]", Matchers.hasSize(0));
+    }
+
+    @Test
+    @DisplayName("Incorrect value for parameter status. Should return 400 Bad Request")
+    void shouldReturnBadRequestForBadStatusParam() {
+        Response response = given(specification)
+                .param("status", "WRONG_VALUE")
+                .get();
+
+        assertRestApiBadRequestResponse(response, FAILED_ORDER_SCHEMA);
+        response.then().body("message", is("Incorrect status value. Supported status: [CREATED, DELIVERY, FINISHED]"));
     }
 }

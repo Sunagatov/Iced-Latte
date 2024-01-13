@@ -4,28 +4,21 @@ import com.zufar.icedlatte.openapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.util.Set;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderManager implements OrderApi {
+public class OrderManager {
 
+    private final OrderAdder orderAdder;
     private final OrderProvider orderProvider;
-    private final OrderUpdater orderUpdater;
 
-    @Override
-    public AddedOrder addNewOrder(final OrderDto order) {
-        return orderProvider.addNewOrder(order);
+    public OrderResponseDto addOrder(final OrderRequestDto request) {
+        return orderAdder.addOrder(request);
     }
 
-    @Override
-    public ListOfAddedOrders getAllOrders(final Set<OrderStatus> statusList) {
+    public List<OrderResponseDto> getOrders(final List<OrderStatus> statusList) {
         return orderProvider.getOrdersByStatus(statusList);
-    }
-
-    @Override
-    public AddedOrder updateOrderStatus(final UpdateOrderStatusDto orderInfo) {
-        return orderUpdater.updateStatus(orderInfo);
     }
 }

@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.order.converter;
 
-import com.zufar.icedlatte.openapi.dto.AddedOrder;
-import com.zufar.icedlatte.openapi.dto.OrderDto;
+import com.zufar.icedlatte.openapi.dto.OrderItemResponseDto;
+import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.stub.OrderDtoTestStub;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -12,14 +14,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.UUID;
-
-import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.createOrder;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @SpringBootTest(classes = {OrderDtoConverterTest.Config.class})
 class OrderDtoConverterTest {
 
+    @Autowired
+    ProductInfoDtoConverter productInfoDtoConverter;
+    @Autowired
+    OrderItemDtoConverter orderItemDtoConverter;
     @Autowired
     OrderDtoConverter orderDtoConverter;
 
@@ -30,29 +35,70 @@ class OrderDtoConverterTest {
         public OrderDtoConverter orderDtoConverter() {
             return Mappers.getMapper(OrderDtoConverter.class);
         }
+        @Bean
+        public OrderItemDtoConverter orderItemDtoConverter() {
+            return Mappers.getMapper(OrderItemDtoConverter.class);
+        }
+        @Bean
+        public ProductInfoDtoConverter productInfoDtoConverter() {
+            return Mappers.getMapper(ProductInfoDtoConverter.class);
+        }
     }
 
     @Test
-    @DisplayName("toOrder should convert OrderDto to Order with complete information")
-    void shouldConvertOrderDtoToOrder() {
-        OrderDto orderDto = OrderDtoTestStub.createOrderDto();
-        Order order = orderDtoConverter.toOrder(orderDto);
+    @DisplayName("toOrderEntity should convert OrderRequestDto to Order entity with complete information")
+    void shouldConvertOrderRequestDtoToOrderEntity() {
+        var orderRequestDto = OrderDtoTestStub.createOrderRequestDto();
+        Order order = orderDtoConverter.toOrderEntity(orderRequestDto);
 
-        assertEquals(orderDto.getDeliveryCost(), order.getDeliveryCost());
-        assertEquals(orderDto.getTaxCost(), order.getTaxCost());
-        assertEquals(orderDto.getDeliveryInfo(), order.getDeliveryInfo());
-        assertEquals(orderDto.getRecipientName(), order.getRecipientName());
-        assertEquals(orderDto.getRecipientSurname(), order.getRecipientSurname());
-        assertEquals(orderDto.getEmail(), order.getEmail());
-        assertEquals(orderDto.getPhoneNumber(), order.getPhoneNumber());
+        assertEquals(orderRequestDto.getDeliveryCost(), order.getDeliveryCost());
+        assertEquals(orderRequestDto.getTaxCost(), order.getTaxCost());
+        assertEquals(orderRequestDto.getDeliveryInfo(), order.getDeliveryInfo());
+        assertEquals(orderRequestDto.getRecipientName(), order.getRecipientName());
+        assertEquals(orderRequestDto.getRecipientSurname(), order.getRecipientSurname());
+        assertEquals(orderRequestDto.getEmail(), order.getEmail());
+        assertEquals(orderRequestDto.getPhoneNumber(), order.getPhoneNumber());
+        assertEquals(orderRequestDto.getItems().size(), order.getItems().size());
+        for (int i = 0; i < orderRequestDto.getItems().size(); i++) {
+            var orderItemDto = orderRequestDto.getItems().get(0);
+            var orderItem = order.getItems().get(0);
+            assertInstanceOf(OrderItem.class, orderItem);
+            assertEquals(orderItemDto.getProductQuantity(), orderItem.getProductQuantity());
+        }
     }
 
     @Test
-    @DisplayName("toAddedOrder should convert Order to AddedOrder with complete information")
+    @DisplayName("toResponseDto should convert Order entity to OrderResponseDto with complete information")
     void shouldConvertOrderToAddedOrder() {
         Order order = OrderDtoTestStub.createOrder();
-        AddedOrder addedOrder = orderDtoConverter.toAddedOrder(order);
-        // TODO: add other fields
-        assertEquals(order.getId(), addedOrder.getId());
+        OrderResponseDto response = orderDtoConverter.toResponseDto(order);
+        assertEquals(order.getId(), response.getId());
+        assertEquals(order.getUserId(), response.getUserId());
+        assertEquals(order.getStatus(), response.getStatus());
+        assertEquals(order.getItemsQuantity(), response.getItemsQuantity());
+        assertEquals(EXPECTED_ITEMS_QUANTITY, response.getItemsQuantity());
+        assertEquals(order.getCreatedAt(), response.getCreatedAt());
+        assertEquals(order.getDeliveryCost(), response.getDeliveryCost());
+        assertEquals(order.getTaxCost(), response.getTaxCost());
+        assertEquals(order.getDeliveryInfo(), response.getDeliveryInfo());
+        assertEquals(order.getRecipientName(), response.getRecipientName());
+        assertEquals(order.getRecipientSurname(), response.getRecipientSurname());
+        assertEquals(order.getEmail(), response.getEmail());
+        assertEquals(order.getPhoneNumber(), response.getPhoneNumber());
+        assertEquals(EXPECTED_ITEMS_TOTAL_PRICE, response.getItemsTotalPrice());
+        assertEquals(EXPECTED_ORDER_TOTAL_COST, response.getTotalOrderCost());
+        assertEquals(order.getItems().size(), response.getItems().size());
+        for (int i = 0; i < order.getItems().size(); i++) {
+            var orderItemResponse = response.getItems().get(0);
+            var orderItem = order.getItems().get(0);
+            assertInstanceOf(OrderItemResponseDto.class, orderItemResponse);
+            assertEquals(orderItem.getId(), orderItemResponse.getId());
+            assertEquals(orderItem.getProductQuantity(), orderItemResponse.getProductQuantity());
+            assertEquals(orderItem.getProductInfo().getProductId(), orderItemResponse.getProductInfo().getId());
+            assertEquals(orderItem.getProductInfo().getPrice(), orderItemResponse.getProductInfo().getPrice());
+            assertEquals(orderItem.getProductInfo().getDescription(), orderItemResponse.getProductInfo().getDescription());
+            assertEquals(orderItem.getProductInfo().getQuantity(), orderItemResponse.getProductInfo().getQuantity());
+            assertEquals(orderItem.getProductInfo().getName(), orderItemResponse.getProductInfo().getName());
+        }
     }
 }

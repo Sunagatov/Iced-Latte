@@ -24,7 +24,7 @@ paths:
       tags:
         - "Orders"
       summary: "Get all orders for the authorized user by status"
-      operationId: "getListOfOrdersForUser"
+      operationId: "getOrders"
       parameters:
         - name: "status"
           description: "Array of status codes to be applied for orders filtering"
@@ -34,7 +34,6 @@ paths:
             type: "array"
             items:
               $ref: "#/components/schemas/OrderStatus"
-
       responses:
         "200":
           description: "OK"
@@ -43,7 +42,7 @@ paths:
               schema:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/ListOfAddedOrders"
+                  $ref: "#/components/schemas/OrderResponseDto"
         "401":
           description: "Unauthorized access."
         "404":
@@ -51,36 +50,10 @@ paths:
         "500":
           description: "Internal server error."
 
-    patch:
-      tags:
-        - "Orders"
-      summary: "Update order status"
-      operationId: "updateOrderStatus"
-      requestBody:
-        description: "Payload containing the order ID and the new status."
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateOrderStatusDto"
-      responses:
-        "200":
-          description: "Order status was updated successfully."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AddedOrder"
-        "400":
-          description: "Invalid input, object invalid."
-        "401":
-          description: "Unauthorized access."
-        "500":
-          description: "Internal server error."
-
     post:
       tags:
         - "Orders"
-      summary: "Add order"
+      summary: "Add order for the authorized user"
       operationId: "addOrder"
       requestBody:
         description: "Payload containing a list of items to be added to the order."
@@ -88,14 +61,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OrderDto"
+              $ref: "#/components/schemas/OrderRequestDto"
       responses:
         "200":
           description: "Order placed successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AddedOrder"
+                $ref: "#/components/schemas/OrderResponseDto"
         "400":
           description: "Invalid input, object invalid."
         "401":
@@ -110,7 +83,7 @@ components:
       description: "Order status: 'CREATED' - new order recently created, 'DELIVERY' - order was sent, 'FINISHED' - order was delivered"
       enum: [ CREATED, DELIVERY, FINISHED ]
 
-    OrderDto:
+    OrderRequestDto:
       type: "object"
       description: "An order structure in the Iced-Latte system"
       required:
@@ -126,7 +99,7 @@ components:
         items:
           type: "array"
           items:
-            $ref: '#/components/schemas/OrderItemDto'
+            $ref: '#/components/schemas/OrderItemRequestDto'
         deliveryCost:
           type: "number"
           format: "decimal"
@@ -149,7 +122,7 @@ components:
           type: "string"
           description: "May be different from the user's phone"
 
-    OrderItemDto:
+    OrderItemRequestDto:
       type: "object"
       description: "An order item structure in the Iced-Latte system"
       properties:
@@ -164,16 +137,16 @@ components:
         - productId
         - productQuantity
 
-    AddedOrder:
+    OrderResponseDto:
       type: "object"
       description: "Response on successfully added or updated order"
       required:
         - id
+        - userId
         - status
         - items
         - itemsQuantity
-        - productsQuantity
-        - totalProductsCost
+        - itemsTotalPrice
         - deliveryCost
         - taxCost
         - totalOrderCost
@@ -188,19 +161,22 @@ components:
           type: "string"
           format: "uuid"
           description: "The unique identifier for the order"
+        userId:
+          type: "string"
+          format: "uuid"
         status:
           $ref: '#/components/schemas/OrderStatus'
         items:
           type: "array"
           items:
-            $ref: '#/components/schemas/AddedOrderItem'
+            $ref: '#/components/schemas/OrderItemResponseDto'
         itemsQuantity:
           type: "integer"
           description: "Quantity of all product items"
           format: "int32"
-        totalProductsCost:
+        itemsTotalPrice:
           type: "number"
-          description: "Quantity of all product items"
+          description: "Total price of all product items"
           format: "decimal"
         deliveryCost:
           type: "number"
@@ -231,31 +207,20 @@ components:
             type: "string"
             format: "date-time"
 
-    AddedOrderItem:
+    OrderItemResponseDto:
       type: "object"
       description: "Part of response on successfully added or updated order"
       required:
+        - id
         - productInfo
-      properties:
-        productInfo:
-          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
-
-    UpdateOrderStatusDto:
-      type: "object"
+        - productQuantity
       properties:
         id:
           type: "string"
           format: "uuid"
-        status:
-          $ref: '#/components/schemas/OrderStatus'
-      required:
-        - id
-        - status
-
-    ListOfAddedOrders:
-      type: object
-      properties:
-        orders:
-          type: array
-          items:
-            $ref: "#/components/schemas/AddedOrder"
+        productInfo:
+          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+        productQuantity:
+          type: "integer"
+          format: "int32"
+          minimum: 1

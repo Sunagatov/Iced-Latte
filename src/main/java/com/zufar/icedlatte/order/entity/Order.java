@@ -6,8 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -37,22 +37,16 @@ public class Order {
                     CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
             orphanRemoval = true,
             fetch = FetchType.EAGER)
-    private Set<OrderItem> items;
+    private List<OrderItem> items;
 
     @Column(name = "items_quantity", nullable = false)
     private Integer itemsQuantity;
-
-    @Column(name = "total_products_cost", nullable = false)
-    private BigDecimal totalProductsCost; // TODO: should we store this in DB?
 
     @Column(name = "delivery_cost", nullable = false)
     private BigDecimal deliveryCost;
 
     @Column(name = "tax_cost", nullable = false)
     private BigDecimal taxCost;
-
-    @Column(name = "total_order_cost", nullable = false)
-    private BigDecimal totalOrderCost; // TODO: should we store this in DB?
 
     @Column(name = "delivery_info", nullable = false)
     private String deliveryInfo;
