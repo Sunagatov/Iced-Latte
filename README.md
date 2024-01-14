@@ -25,12 +25,18 @@ Built using Spring Boot and PostgreSQL, it's crafted for educational purposes, o
 
 ## Tech Stack
 
-- **Spring Framework:** Web, Boot, Data, Security, Actuator.
+- **Architecture:** Monolith.
+- **Computer language:** Java 17.
+- **Framework:** Spring Web, Spring Boot 3, Spring Data, Spring Security, Spring Actuator, Spring Web, Spring Retry, Lombok, Apacje Commons, Spring Mail, Google Guava.
 - **Security:** JWT, TLS.
-- **Database:** PostgreSQL.
-- **Containerization:** Docker.
-- **Monitoring:** Prometheus, Grafana
-- **Logging:** Log4j2.
+- **Migration tool:** Liquabase.
+- **Logging:** Log4j2, Slf4j.
+- **Unit Tests:** JUnit 5.
+- **E2E Tests**: Rest Assured, Test containers.
+- **Converter:** Mapstruct.
+- **Test coverage:** Jacoco.
+- **API Specs:** Open API + Spring Docs.
+- **Validation:** Javax validation.
 
 ## Quick Start
 
