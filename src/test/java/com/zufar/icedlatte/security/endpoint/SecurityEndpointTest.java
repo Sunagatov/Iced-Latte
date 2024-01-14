@@ -25,7 +25,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Testcontainers
-@DisplayName("FavoriteListEndpointTest Tests")
+@DisplayName("SecurityEndpoint Tests")
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SecurityEndpointTest {
