@@ -7,5 +7,5 @@ RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=0.0.1 && \
 FROM eclipse-temurin:17-jre-jammy 
 WORKDIR /usr/app
 COPY --from=build /usr/app/target/*.jar /usr/app/app.jar
-COPY --from=build /usr/app/.env /usr/app/.env
+COPY --from=build /usr/app/.backend_env /usr/app/.backend_env
 CMD ["java", "-jar", "/usr/app/app.jar"]
