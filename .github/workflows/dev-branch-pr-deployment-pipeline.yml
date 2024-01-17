@@ -5,13 +5,14 @@ on:
     types: [ closed ]
 
 env:
-  ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ./Vault/IcedLatte/Backend/.env
+  ENV_FILE_NAME: .backend_env
+  ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ./Vault/IcedLatte/Backend/${{ env.ENV_FILE_NAME }}
   DOCKER_COMPOSE_FILE: docker-compose.yml
-  DOCKER_CONTAINER_NAME: iced-latte-backend
+  DOCKER_CONTAINER_NAME: latte-backend
   DOCKER_IMAGE_NAME: iced-latte-backend
   DOCKER_HUB_ACCOUNT_NAME: zufarexplainedit
   ICED_LATTE_PATH_ON_THE_REMOTE_SERVER: /opt/project/Iced-Latte
-  APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/Iced-Latte/Iced-Latte-Backend
+  APP_PATH_ON_THE_REMOTE_SERVER: /opt/project/Iced-Latte
 
 jobs:
   build-and-push-docker-image:
@@ -67,8 +68,8 @@ jobs:
             cd ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}  
             rm -rf Vault
             git clone https://${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}:x-oauth-basic@github.com/Sunagatov/Vault.git
-            rm ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/.env
-            cp ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}/Vault/IcedLatte/Backend/.env ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/.env
+            rm ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/${{ env.ENV_FILE_NAME }}
+            cp ${{ env.ICED_LATTE_PATH_ON_THE_REMOTE_SERVER }}/Vault/IcedLatte/Backend/${{ env.ENV_FILE_NAME }} ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }}/${{ env.ENV_FILE_NAME }}
             cd ${{ env.APP_PATH_ON_THE_REMOTE_SERVER }} 
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d
+            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} down ${{ env.DOCKER_CONTAINER_NAME }}
+            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d ${{ env.DOCKER_CONTAINER_NAME }}
