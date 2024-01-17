@@ -51,6 +51,8 @@ spring:
     url: iced-latte-minio:9000
     secure: false
     region: us-east-1
+    default-image-directory:
+      products: ./products
 
   #
   # Redis
