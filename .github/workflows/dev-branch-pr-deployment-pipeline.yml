@@ -6,7 +6,7 @@ on:
 
 env:
   ENV_FILE_NAME: .backend_env
-  ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ./Vault/IcedLatte/Backend/${{ env.ENV_FILE_NAME }}
+  ENV_FILE_PATH_IN_PRIVATE_REPOSITORY: ./Vault/IcedLatte/Backend/.backend_env
   DOCKER_COMPOSE_FILE: docker-compose.yml
   DOCKER_CONTAINER_NAME: latte-backend
   DOCKER_IMAGE_NAME: iced-latte-backend
