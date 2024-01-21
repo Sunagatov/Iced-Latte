@@ -73,3 +73,21 @@ docker-compose -f docker-compose.local.yml logs [iced-latte-backend|iced-latte-p
 ```bash
 docker-compose -f docker-compose.local.yml down -v
 ```
+
+## Database Navigator
+
+> For Ultimate Edition consider using [Database Tools and SQL plugin](https://www.jetbrains.com/help/idea/relational-databases.html)
+
+Install [Database Navigator](https://plugins.jetbrains.com/plugin/1800-database-navigator).
+
+Go to **View** > **Tool Windows** > **DB Browser**.
+
+Add new PostgresSQL connection:
+ * Host `127.0.0.1`
+ * Database `testdb`
+ * User `postgres`
+ * Password `postgres`
+
+Enjoy!
+
+![](db_navigator.png)
