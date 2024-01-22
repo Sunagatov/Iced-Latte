@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
+import com.zufar.icedlatte.security.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
@@ -42,7 +43,9 @@ public class UserRegistrationService {
 
         UserEntity userEntity = userCrudRepository.save(newUserEntity);
 
+        final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
         final String jwtToken = jwtTokenProvider.generateToken(userEntity);
-        return new UserRegistrationResponse(jwtToken);
+
+        return new UserRegistrationResponse(jwtToken, jwtRefreshToken);
     }
 }

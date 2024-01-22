@@ -24,11 +24,14 @@ public class JwtTokenProvider {
 	@Value("${jwt.expiration}")
 	private long validityInMilliseconds;
 
+	@Value("${jwt.refresh.expiration}")
+	private long validityRefreshTokenInMilliseconds;
+
 	public String generateToken(final UserDetails userDetails) {
 		return generateToken(new HashMap<>(), userDetails);
 	}
 
-	public String generateToken(final Map<String, Object> extraClaims,
+	private String generateToken(final Map<String, Object> extraClaims,
 	                            final UserDetails userDetails) {
 		try {
 			return Jwts.builder()
@@ -39,7 +42,21 @@ public class JwtTokenProvider {
 					.signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
 					.compact();
 		} catch (Exception exception) {
-			log.debug("Jwt token validation error", exception);
+			log.debug("Jwt token creation error", exception);
+			throw new JwtTokenException(exception);
+		}
+	}
+
+	public String generateRefreshToken(final UserDetails userDetails) {
+		try {
+			return Jwts.builder()
+					.setSubject(userDetails.getUsername())
+					.setIssuedAt(new Date(System.currentTimeMillis()))
+					.setExpiration(new Date(System.currentTimeMillis() + validityRefreshTokenInMilliseconds))
+					.signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
+					.compact();
+		} catch (Exception exception) {
+			log.debug("Jwt refresh token creation error", exception);
 			throw new JwtTokenException(exception);
 		}
 	}

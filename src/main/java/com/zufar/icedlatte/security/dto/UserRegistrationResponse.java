@@ -1,3 +1,3 @@
 package com.zufar.icedlatte.security.dto;
 
-public record UserRegistrationResponse(String token) {}
+public record UserRegistrationResponse(String token, String refreshToken) {}

@@ -71,3 +71,6 @@ jwt:
   expiration: 1800000
   email: jane@example.com
   password: pass54321
+  refresh:
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    expiration: 604800000 # 7 days

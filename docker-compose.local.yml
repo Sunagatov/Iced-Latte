@@ -22,6 +22,7 @@ services:
     environment:
       APP_SERVER_PORT: 8083
       APP_JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      APP_JWT_REFRESH_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       DATASOURCE_PORT: 5432
       DATASOURCE_NAME: testdb
       DATASOURCE_USERNAME: postgres
@@ -37,6 +38,7 @@ services:
       dockerfile: Dockerfile.local
     ports:
       - '8083:8083'
+      - '5005:5005'
     networks:
       - iced-latte-network
     depends_on:
