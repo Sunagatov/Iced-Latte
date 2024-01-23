@@ -46,7 +46,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         emailTokenSender.sendEmailVerificationCode(request);
         log.info("Email verification token sent to the user with email = '{}'", request.email());
         return ResponseEntity.ok()
-                .body(String.format("Email verification token sent to the user with email = %s\nIf You don't receive an email, please check your spam or may be the email address is incorrect", request.email()));
+                .body(String.format("Email verification token sent to the user with email = %s%nIf You don't receive an email, please check your spam or may be the email address is incorrect", request.email()));
     }
 
     @Override
