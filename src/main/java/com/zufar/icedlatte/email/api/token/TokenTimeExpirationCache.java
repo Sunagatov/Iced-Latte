@@ -27,7 +27,7 @@ public class TokenTimeExpirationCache {
         tokenCache.put(email, expireTime);
     }
 
-    public void validateTimeToken(String email) throws RuntimeException {
+    public void validateTimeToken(String email) {
         OffsetDateTime expireTime = tokenCache.getIfPresent(email);
         if (expireTime != null) {
             throw new TimeTokenException(email, expireTime);

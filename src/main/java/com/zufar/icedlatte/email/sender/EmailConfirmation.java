@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class EmailConfirmation extends AbstractEmailSender {
+public class EmailConfirmation extends AbstractEmailSender<EmailTokenDto> {
 
     @Value("${spring.mail.subject.confirmation}")
     private String subject;
