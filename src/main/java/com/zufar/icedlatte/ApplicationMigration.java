@@ -30,7 +30,7 @@ public class ApplicationMigration implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        log.info("Product pictures upload was started");
+        log.info("Product pictures upload was started, directory path: {}", directoryPath);
         fileUploader.uploadDirectory(productPictureBucket, directoryPath);
         Thread.sleep(5000);
         log.info("Product pictures upload was finished");

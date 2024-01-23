@@ -46,6 +46,7 @@ services:
       - iced-latte-postgresdb
     volumes:
       - backend_logs:/usr/app/logs
+      - ./products:/usr/app/products
     restart: on-failure
 
   iced-latte-postgresdb:

@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.email.exception;
 
+import lombok.Getter;
 
+@Getter
 public class MessageBuilderNotFoundException extends RuntimeException {
 
     private final String className;
