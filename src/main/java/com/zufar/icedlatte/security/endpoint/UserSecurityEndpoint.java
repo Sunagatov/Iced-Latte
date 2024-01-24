@@ -68,7 +68,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         log.info("Received authentication request for user with email = '{}'", request.email());
         UserAuthenticationResponse authenticationResponse = userAuthenticationService.authenticate(request);
         log.info("Authentication completed for user with email = '{}'", request.email());
-        return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+        return ResponseEntity.ok(authenticationResponse);
     }
 
     @PostMapping("/refresh")
@@ -78,7 +78,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationToken.getName());
         UserAuthenticationResponse authenticationResponse = userAuthenticationService.authenticate(userDetails, authenticationToken.getName());
         log.info("Refresh completed for user");
-        return new ResponseEntity<>(authenticationResponse, HttpStatus.OK);
+        return ResponseEntity.ok(authenticationResponse);
     }
 
     @PostMapping("/logout")

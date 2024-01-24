@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
-import com.zufar.icedlatte.security.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;

@@ -1,9 +1,8 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.security.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +20,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
+    private static final int USER_ACCOUNT_LOCKOUT_DURATION_MINUTES = 30;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LoginFailureHandler loginFailureHandler;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
-    private final TokenManager tokenManager;
-
-    int userAccountLockoutDurationMinutes = 30;
 
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         String userEmail = request.email();
@@ -53,14 +51,15 @@ public class UserAuthenticationService {
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
             throw new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
-        }
-        catch (BadCredentialsException exception) {
+        } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
             throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
+            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
+
         } catch (Exception exception) {
             log.error("Error occurred during authentication", exception);
             throw exception;
@@ -76,18 +75,18 @@ public class UserAuthenticationService {
             resetLoginAttemptsService.reset(userEmail);
 
             return new UserAuthenticationResponse(jwtToken, jwtRefreshToken);
-        }
-        catch (BadCredentialsException exception) {
+        } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
             throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
+            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
+
         } catch (Exception exception) {
             log.error("Error occurred during authentication", exception);
             throw exception;
         }
     }
-
 }

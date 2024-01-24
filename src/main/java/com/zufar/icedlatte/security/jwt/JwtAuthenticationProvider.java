@@ -19,7 +19,9 @@ public class JwtAuthenticationProvider {
     private final UserDetailsService userDetailsService;
     private final JwtBlacklistValidator jwtBlacklistValidator;
 
-    public UsernamePasswordAuthenticationToken get(final HttpServletRequest httpRequest, String jwtToken) {
+    public UsernamePasswordAuthenticationToken get(final HttpServletRequest httpRequest) {
+        String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
+
         jwtBlacklistValidator.validate(jwtToken);
 
         jwtClaimExtractor.extractExpiration(jwtToken);
@@ -34,11 +36,5 @@ public class JwtAuthenticationProvider {
 
         return authenticationToken;
     }
-
-    public UsernamePasswordAuthenticationToken get(final HttpServletRequest httpRequest) {
-        String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-        return get(httpRequest, jwtToken);
-    }
-
 }
 
