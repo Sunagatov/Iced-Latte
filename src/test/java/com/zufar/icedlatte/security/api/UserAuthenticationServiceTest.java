@@ -59,7 +59,7 @@ class UserAuthenticationServiceTest {
 
         UserAuthenticationResponse response = userAuthenticationService.authenticate(request);
 
-        assertEquals(new UserAuthenticationResponse(jwtToken), response);
+        assertEquals(new UserAuthenticationResponse(jwtToken,null), response);
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtTokenProvider, times(1)).generateToken(userDetails);
         verify(resetLoginAttemptsService, times(1)).reset(request.email());
