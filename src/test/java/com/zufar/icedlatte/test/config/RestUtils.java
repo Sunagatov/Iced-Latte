@@ -5,7 +5,6 @@ import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -14,7 +13,7 @@ import java.io.IOException;
 import static io.restassured.RestAssured.given;
 
 @ActiveProfiles("test")
-@SpringBootTest()
+@SpringBootTest
 public class RestUtils {
 
     private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate-template.json";
