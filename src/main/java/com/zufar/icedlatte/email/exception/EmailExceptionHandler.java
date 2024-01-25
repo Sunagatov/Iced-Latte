@@ -46,11 +46,20 @@ public class EmailExceptionHandler {
         return apiErrorResponse;
     }
 
-    @ExceptionHandler(TokenTimeExpiredException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleTokenTimeExpiredException(final TokenTimeExpiredException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+    @ExceptionHandler(IncorrectTokenException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleTokenTimeExpiredException(final IncorrectTokenException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.error("Handle token time expired exception: failed: message: {}, debugMessage: {}.",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(IncorrectTokenFormatException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleIncorrectTokenFormatException(final IncorrectTokenFormatException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.error("Handle incorrect token format exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }

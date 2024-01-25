@@ -24,6 +24,11 @@ public class TokenManager {
 
     public UserRegistrationRequest validateToken(final ConfirmEmailRequest confirmEmailRequest) {
         final String token = confirmEmailRequest.token();
+        tokenGenerator.tokenIsValid(token);
+        return deleteTokenFromCache(token);
+    }
+
+    public UserRegistrationRequest deleteTokenFromCache(String token) {
         UserRegistrationRequest userRegistrationRequest = tokenCache.getToken(token);
         final String email = userRegistrationRequest.email();
         tokenCache.removeToken(token);
