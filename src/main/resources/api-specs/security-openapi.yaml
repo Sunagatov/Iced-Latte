@@ -75,7 +75,7 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
 
@@ -88,6 +88,8 @@ paths:
       responses:
         "200":
           description: "OK"
+        "500":
+          description: "Internal Server Error"
 
   /api/v1/auth/refresh:
     post:
@@ -99,7 +101,7 @@ paths:
         "200":
           description: "OK"
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
         "401":
