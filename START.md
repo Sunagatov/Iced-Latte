@@ -22,6 +22,9 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `REDIS_PORT`: Redis port
 - `MINIO_HOST`: Minio host
 - `MINIO_PORT`: Minio port
+- `MINIO_DEFAULT_PRODUCT_IMAGES_PATH`
+
+Refer to [docker-compose.local.yml](./docker-compose.local.yml)
 
 ## Starting the Application
 

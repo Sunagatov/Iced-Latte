@@ -20,7 +20,7 @@ public class SecurityPrincipalProvider {
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
-         return userDtoConverter.toDto(userEntity);
+        return userDtoConverter.toDto(userEntity);
     }
 
     public UUID getUserId() {

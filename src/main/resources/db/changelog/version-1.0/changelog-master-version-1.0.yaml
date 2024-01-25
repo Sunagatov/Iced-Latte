@@ -41,3 +41,7 @@ databaseChangeLog:
       file: db/changelog/version-1.0/23.11.2023.part3.insert-favorite-data.sql
   - include:
       file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql
+  - include:
+      file: db/changelog/version-1.0/07.01.2024.part1.create-order-table.sql
+  - include:
+      file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql

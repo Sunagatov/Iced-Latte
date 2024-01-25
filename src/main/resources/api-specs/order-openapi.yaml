@@ -1,0 +1,226 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Order API"
+  description: "API allows users to access orders and related operations."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://iced-latte.uk/backend"
+    description: "Production server"
+
+tags:
+  - name: "Orders"
+    description: "Operations related to orders"
+
+paths:
+  /api/v1/orders:
+    get:
+      tags:
+        - "Orders"
+      summary: "Get all orders for the authorized user by status"
+      operationId: "getOrders"
+      parameters:
+        - name: "status"
+          description: "Array of status codes to be applied for orders filtering"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/OrderStatus"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/OrderResponseDto"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Orders list is empty."
+        "500":
+          description: "Internal server error."
+
+    post:
+      tags:
+        - "Orders"
+      summary: "Add order for the authorized user"
+      operationId: "createNewOrder"
+      requestBody:
+        description: "Payload containing a list of items to be added to the order."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequestDto"
+      responses:
+        "200":
+          description: "Order placed successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponseDto"
+        "400":
+          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
+        "500":
+          description: "Internal server error."
+
+components:
+  schemas:
+    OrderStatus:
+      type: string
+      description: "Order status: 'CREATED' - new order recently created, 'DELIVERY' - order was sent, 'FINISHED' - order was delivered"
+      enum: [ CREATED, DELIVERY, FINISHED ]
+
+    OrderRequestDto:
+      type: "object"
+      description: "An order structure in the Iced-Latte system"
+      required:
+        - items
+        - deliveryCost
+        - taxCost
+        - deliveryInfo
+        - recipientName
+        - recipientSurname
+        - email
+        - phoneNumber
+      properties:
+        items:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/OrderItemRequestDto'
+        deliveryCost:
+          type: "number"
+          format: "decimal"
+        taxCost:
+          type: "number"
+          format: "decimal"
+        deliveryInfo:
+          type: "string"
+          description: "Order details, submitted to DB on the checkout stage"
+        recipientName:
+          type: "string"
+          description: "May be different from the user's name"
+        recipientSurname:
+          type: "string"
+          description: "May be different from the user's surname"
+        email:
+          type: "string"
+          description: "May be different from the user's email"
+        phoneNumber:
+          type: "string"
+          description: "May be different from the user's phone"
+
+    OrderItemRequestDto:
+      type: "object"
+      description: "An order item structure in the Iced-Latte system"
+      properties:
+        productId:
+          type: "string"
+          format: "uuid"
+        productQuantity:
+          type: "integer"
+          format: "int32"
+          minimum: 1
+      required:
+        - productId
+        - productQuantity
+
+    OrderResponseDto:
+      type: "object"
+      description: "Response on successfully added or updated order"
+      required:
+        - id
+        - userId
+        - status
+        - items
+        - itemsQuantity
+        - itemsTotalPrice
+        - deliveryCost
+        - taxCost
+        - totalOrderCost
+        - deliveryInfo
+        - recipientName
+        - recipientSurname
+        - email
+        - phoneNumber
+        - createdAt
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The unique identifier for the order"
+        userId:
+          type: "string"
+          format: "uuid"
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/OrderItemResponseDto'
+        itemsQuantity:
+          type: "integer"
+          description: "Quantity of all product items"
+          format: "int32"
+        itemsTotalPrice:
+          type: "number"
+          description: "Total price of all product items"
+          format: "decimal"
+        deliveryCost:
+          type: "number"
+          format: "decimal"
+        taxCost:
+          type: "number"
+          format: "decimal"
+        totalOrderCost:
+          type: "number"
+          description: "totalProductsCost + deliveryCost + taxCost"
+          format: "decimal"
+        deliveryInfo:
+          type: "string"
+          description: "Order details, submitted to DB on the checkout stage"
+        recipientName:
+          type: "string"
+          description: "May be different from the user's name"
+        recipientSurname:
+          type: "string"
+          description: "May be different from the user's surname"
+        email:
+          type: "string"
+          description: "May be different from the user's email"
+        phoneNumber:
+          type: "string"
+          description: "May be different from the user's phone"
+        createdAt:
+            type: "string"
+            format: "date-time"
+
+    OrderItemResponseDto:
+      type: "object"
+      description: "Part of response on successfully added or updated order"
+      required:
+        - id
+        - productInfo
+        - productQuantity
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productInfo:
+          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+        productQuantity:
+          type: "integer"
+          format: "int32"
+          minimum: 1

@@ -1,12 +1,8 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
+import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
+import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 
 
@@ -39,20 +37,11 @@ class ShoppingCartEndpointTest {
     @LocalServerPort
     protected Integer port;
 
-    @Value("${jwt.secret}")
-    protected String secretKey;
-
-    @Value("${jwt.expiration}")
-    protected Long expiration;
-
     @Value("${jwt.email}")
     protected String email;
 
     @Value("${jwt.password}")
     protected String password;
-    protected static String jwtToken = "";
-
-    private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate-template.json";
 
     @DynamicPropertySource
     static void dataSourceProperties(DynamicPropertyRegistry registry) {
@@ -68,7 +57,7 @@ class ShoppingCartEndpointTest {
 
     @BeforeEach
     void tokenAndSpecification() {
-        getJwtToken();
+        var jwtToken = getJwtToken(port, email, password);
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -76,33 +65,6 @@ class ShoppingCartEndpointTest {
                 .basePath(CartEndpoint.CART_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
-    }
-
-    protected String getRequestBody(String resourcePath) {
-        try {
-            JsonNode json = JsonLoader.fromResource(resourcePath);
-            return json.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void getJwtToken(){
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
-
-        String body = getRequestBody(AUTHENTICATE_TEMPLATE)
-                .formatted(email, password);
-
-        Response response = given(specification)
-                .body(body)
-                .post("/authenticate");
-
-        jwtToken = response.getBody().path("token");
     }
 
     @Test
