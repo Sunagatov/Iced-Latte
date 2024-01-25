@@ -1,57 +1,35 @@
 package com.zufar.icedlatte.order.api;
 
-import com.zufar.icedlatte.openapi.dto.OrderItemRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderRequestDto;
-import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
-import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.entity.OrderItem;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-import static com.zufar.icedlatte.order.api.OrderItemsCalculator.calculate;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderCreator {
 
-    private final ProductInfoRepository productInfoRepository;
+    private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final OrderEntityCreator orderEntityCreator;
 
-    public Order createNewOrder(OrderRequestDto orderBody, UUID userId) {
-        var order = orderDtoConverter.toOrderEntity(orderBody);
-        var items = createOrderItems(order, orderBody.getItems());
-
-        order.setUserId(userId);
-        order.setItems(items);
-        order.setItemsQuantity(calculate(items, DEFAULT_PRODUCTS_QUANTITY));
-        order.setStatus(OrderStatus.CREATED);
-        order.setCreatedAt(OffsetDateTime.now());
-
-        return order;
-    }
-
-    private List<OrderItem> createOrderItems(Order order, List<OrderItemRequestDto> products) {
-        Map<UUID, Integer> productsWithQuantity = products.stream()
-                .collect(Collectors.toMap(OrderItemRequestDto::getProductId, OrderItemRequestDto::getProductQuantity));
-
-        return productInfoRepository.findAllById(productsWithQuantity.keySet()).stream()
-                .map(productInfo ->
-                        OrderItem.builder()
-                                .order(order)
-                                .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
-                                .productInfo(productInfo)
-                                .build()
-                )
-                .toList();
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public OrderResponseDto createNewOrder(final OrderRequestDto orderRequest) {
+        UUID userId = securityPrincipalProvider.getUserId();
+        var order = orderEntityCreator.createNewOrder(orderRequest, userId);
+        orderRepository.save(order);
+        log.info("New order was created and saved to database.");
+        return orderDtoConverter.toResponseDto(order);
     }
 }

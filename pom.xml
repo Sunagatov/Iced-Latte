@@ -54,7 +54,7 @@
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <testcontainers.version>1.19.3</testcontainers.version>
+        <testcontainers.version>${org.testcontainers.version}</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <rest-assured.version>5.3.2</rest-assured.version>
 
@@ -110,6 +110,7 @@
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
         <json-schema-validator.version>3.3.0</json-schema-validator.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.2.0</springdoc-openapi-starter-webmvc-ui.version>
+        <org.testcontainers.version>1.19.3</org.testcontainers.version>
     </properties>
 
     <!-- Dependencies -->
@@ -368,7 +369,7 @@
                 <dependency>
                     <groupId>org.testcontainers</groupId>
                     <artifactId>minio</artifactId>
-                    <version>1.19.3</version>
+                    <version>${org.testcontainers.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>

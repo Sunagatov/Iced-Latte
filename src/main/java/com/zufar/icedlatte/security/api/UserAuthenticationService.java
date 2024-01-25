@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class UserAuthenticationService {
 
     private static final int USER_ACCOUNT_LOCKOUT_DURATION_MINUTES = 30;
+    private static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials for user's account with email = '%s'";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -50,11 +51,11 @@ public class UserAuthenticationService {
 
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
-            throw new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+            throw new UsernameNotFoundException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
         } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
-            throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
 
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
@@ -78,7 +79,7 @@ public class UserAuthenticationService {
         } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
-            throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
 
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);

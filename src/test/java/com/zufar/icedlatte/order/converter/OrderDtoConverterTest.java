@@ -14,7 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.*;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ITEMS_QUANTITY;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ITEMS_TOTAL_PRICE;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ORDER_TOTAL_COST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 

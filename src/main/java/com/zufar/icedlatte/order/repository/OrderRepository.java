@@ -14,5 +14,6 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query(value = "SELECT o FROM Order o WHERE o.userId = :userId AND o.status IN :statusList")
-    List<Order> findAllByUserIdAndStatus(@Param("userId") UUID userId, @Param("statusList") List<OrderStatus> statusList);
+    List<Order> findAllByUserIdAndStatus(@Param("userId") UUID userId,
+                                         @Param("statusList") List<OrderStatus> statusList);
 }

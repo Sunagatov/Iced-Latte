@@ -4,11 +4,18 @@ import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
 import com.zufar.icedlatte.order.api.OrderItemsCalculator;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.openapi.dto.OrderRequestDto;
-import org.mapstruct.*;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {OrderItemDtoConverter.class, OrderItemsCalculator.class},
-        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        uses = {OrderItemDtoConverter.class, OrderItemsCalculator.class},
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        injectionStrategy = InjectionStrategy.FIELD)
 public interface OrderDtoConverter {
+
     @Mapping(target = "items", source = "items")
     Order toOrderEntity(final OrderRequestDto orderDto);
 

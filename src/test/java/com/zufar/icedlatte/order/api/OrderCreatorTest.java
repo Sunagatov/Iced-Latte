@@ -11,17 +11,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.util.UUID;
 
-import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.*;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.createOrder;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.createOrderRequestDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class OrderAdderTest {
+class OrderCreatorTest {
 
     @InjectMocks
-    private OrderAdder orderAdder;
+    private OrderCreator orderCreator;
 
     @Mock
     private OrderRepository orderRepository;
@@ -30,7 +33,7 @@ class OrderAdderTest {
     private SecurityPrincipalProvider securityPrincipalProvider;
 
     @Mock
-    private OrderCreator orderCreator;
+    private OrderEntityCreator orderEntityCreator;
 
     @Mock
     private OrderDtoConverter orderDtoConverter;
@@ -44,16 +47,16 @@ class OrderAdderTest {
         var orderResponse = new OrderResponseDto();
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
-        when(orderCreator.createNewOrder(orderRequest, userId)).thenReturn(orderEntity);
+        when(orderEntityCreator.createNewOrder(orderRequest, userId)).thenReturn(orderEntity);
         when(orderRepository.save(orderEntity)).thenReturn(orderEntity);
         when(orderDtoConverter.toResponseDto(orderEntity)).thenReturn(orderResponse);
 
-        OrderResponseDto result = orderAdder.addOrder(orderRequest);
+        OrderResponseDto result = orderCreator.createNewOrder(orderRequest);
 
         assertEquals(result, orderResponse);
 
         verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(orderCreator, times(1)).createNewOrder(orderRequest, userId);
+        verify(orderEntityCreator, times(1)).createNewOrder(orderRequest, userId);
         verify(orderRepository, times(1)).save(orderEntity);
         verify(orderDtoConverter, times(1)).toResponseDto(orderEntity);
     }

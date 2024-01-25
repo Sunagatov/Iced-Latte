@@ -11,7 +11,7 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
-  - url: "https://dev.api.it-sl.ru"
+  - url: "https://iced-latte.uk/backend"
     description: "Production server"
 
 tags:
@@ -54,7 +54,7 @@ paths:
       tags:
         - "Orders"
       summary: "Add order for the authorized user"
-      operationId: "addOrder"
+      operationId: "createNewOrder"
       requestBody:
         description: "Payload containing a list of items to be added to the order."
         required: true

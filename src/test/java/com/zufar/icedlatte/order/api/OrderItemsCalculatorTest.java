@@ -6,7 +6,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.zufar.icedlatte.order.api.OrderItemsCalculator.calculate;
-import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.*;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.DELIVERY_COST;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ITEMS_QUANTITY;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ITEMS_TOTAL_PRICE;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ORDER_TOTAL_COST;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.TAX_COST;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.createFirstOrderItem;
+import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.createSecondOrderItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("OrderItemsCalculator Tests")
