@@ -90,8 +90,6 @@ paths:
           description: "OK"
         "500":
           description: "Internal Server Error"
-      security:
-        - bearerAuth: [ ]
 
   /api/v1/auth/refresh:
     post:
@@ -110,14 +108,8 @@ paths:
           description: "Unauthorized access. Authentication required"
         "500":
           description: "Internal Server Error"
-      security:
-        - bearerAuth: [ ]
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
   schemas:
     UserRegistrationRequest:
       type: "object"
