@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.email.exception;
 
+import lombok.Getter;
+
+@Getter
 public class InvalidTokenException extends RuntimeException {
     private final String email;
 

@@ -26,12 +26,12 @@ public interface FavoriteListDtoConverter {
         Set<FavoriteItemDto> favoriteItemsDto = new HashSet<>();
 
         for (FavoriteItemEntity itemEntity : favoriteListEntity.getFavoriteItems()) {
-            UUID FavoriteItemEntityId = itemEntity.getId();
+            UUID favoriteItemEntityId = itemEntity.getId();
             ProductInfo productInfo = itemEntity.getProductInfo();
 
             ProductInfoDto productInfoDto = convertProductInfoDto(productInfo);
 
-            FavoriteItemDto favoriteItemDto = new FavoriteItemDto(FavoriteItemEntityId, productInfoDto);
+            FavoriteItemDto favoriteItemDto = new FavoriteItemDto(favoriteItemEntityId, productInfoDto);
             favoriteItemsDto.add(favoriteItemDto);
         }
 

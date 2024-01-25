@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -71,8 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void handleException(HttpServletResponse httpResponse, 
-                                 String errorMessage, 
+    private void handleException(HttpServletResponse httpResponse,
+                                 String errorMessage,
                                  Exception exception,
                                  int statusCode) throws IOException {
         log.error(errorMessage, exception);
@@ -88,7 +89,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isSecuredUrl(HttpServletRequest request) {
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
-                        SecurityConstants.ORDERS_URL)
+                SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }

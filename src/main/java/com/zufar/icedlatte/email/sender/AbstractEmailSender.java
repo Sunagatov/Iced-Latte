@@ -29,7 +29,7 @@ public abstract class AbstractEmailSender<T> {
         return messageBuilders.stream()
                 .filter(builder -> builder.supports(clazz))
                 .findFirst()
-                .orElseThrow(() -> new  MessageBuilderNotFoundException(clazz.getName()))
+                .orElseThrow(() -> new MessageBuilderNotFoundException(clazz.getName()))
                 .buildMessage(event, Locale.ENGLISH);
     }
 }

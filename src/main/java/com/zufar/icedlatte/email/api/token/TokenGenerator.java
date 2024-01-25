@@ -6,10 +6,10 @@ import java.security.SecureRandom;
 
 @Component
 public class TokenGenerator {
-    private final SecureRandom random = new SecureRandom();
-    private final String BASE = "0123456789";
-    private final String PATTERN = "###-###-###";
-    private final char REPLACE_HOOK = '#';
+    private static final SecureRandom random = new SecureRandom();
+    private static final String BASE = "0123456789";
+    private static final String PATTERN = "###-###-###";
+    private static final char REPLACE_HOOK = '#';
 
     public String nextToken() {
         PatternReplacer token = new PatternReplacer(PATTERN, REPLACE_HOOK);
