@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.validation.annotation.Validated;
@@ -42,6 +41,8 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final EmailTokenConformer emailTokenConformer;
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final UserDetailsService userDetailsService;
+
+    private final HttpServletRequest httpRequest;
 
     @Override
     @PostMapping("/register")
@@ -71,8 +72,9 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok(authenticationResponse);
     }
 
+    @Override
     @PostMapping("/refresh")
-    public ResponseEntity<UserAuthenticationResponse> refresh(@NonNull final HttpServletRequest httpRequest) {
+    public ResponseEntity<UserAuthenticationResponse> refreshToken() {
         log.info("Received refresh token request for user");
         var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationToken.getName());
@@ -81,15 +83,15 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok(authenticationResponse);
     }
 
+    @Override
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
+    public ResponseEntity<Void> logout() {
         log.info("Received logout request");
 
-        String token = jwtTokenFromAuthHeaderExtractor.extract(request);
+        String token = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
 
         jwtBlacklistValidator.addToBlacklist(token);
 
-        return ResponseEntity.ok()
-                .body("{ \"message\": \"Logout is successful\" }");
+        return ResponseEntity.ok().build();
     }
 }
