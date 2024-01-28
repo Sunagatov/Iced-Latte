@@ -160,6 +160,14 @@ jwt:
     expiration: 600000 # 604800000 # 7 days
 
 #
+# Actuator Security Properties
+#
+actuator:
+  user:
+    name: admin # REPLACE WITH PLACEHOLDER
+    password: admin # REPLACE WITH PLACEHOLDER
+
+#
 # Login Attempts Properties
 #
 login-attempts:
