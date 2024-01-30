@@ -9,8 +9,6 @@ services:
   latte-backend:
     image: 'zufarexplainedit/iced-latte-backend:${DOCKER_IMAGE_TAG}'
     container_name: latte-backend
-    env_file:
-      - .backend_env
     build:
       context: .
       dockerfile: Dockerfile
