@@ -5,13 +5,26 @@ import com.zufar.icedlatte.user.entity.Address;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
+import org.springframework.stereotype.Service;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface AddressDtoConverter {
+@Service
+public class AddressDtoConverter {
 
-    @Named("toAddressDto")
-    AddressDto toDto(final Address entity);
+    public AddressDto toDto(final Address entity){
+        return new AddressDto(
+                entity.getCountry(),
+                entity.getCity(),
+                entity.getLine(),
+                entity.getPostcode()
+        );
+    }
 
-    @Named("toAddress")
-    Address toEntity(final AddressDto dto);
+    public Address toEntity(final AddressDto dto){
+        Address address = new Address();
+        address.setCountry(dto.getCountry());
+        address.setCity(dto.getCity());
+        address.setLine(dto.getLine());
+        address.setPostcode(dto.getPostcode());
+        return address;
+    }
 }

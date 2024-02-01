@@ -7,12 +7,18 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
+import org.springframework.stereotype.Service;
 
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = ProductInfoDtoConverter.class)
-public interface ShoppingCartItemDtoConverter {
+@Service
+public class ShoppingCartItemDtoConverter {
+    private ProductInfoDtoConverter productInfoDtoConverter;
 
-    @Named("toShoppingCartItemDto")
-    @Mapping(target = "productInfo", source = "entity.productInfo", qualifiedByName = {"toProductInfoDto"})
-    ShoppingCartItemDto toDto(final ShoppingCartItem entity);
+    public ShoppingCartItemDto toDto(final ShoppingCartItem entity){
+        return new ShoppingCartItemDto(
+                entity.getId(),
+                productInfoDtoConverter.toDto(entity.getProductInfo()),
+               entity.getProductQuantity()
+        );
+    }
 }

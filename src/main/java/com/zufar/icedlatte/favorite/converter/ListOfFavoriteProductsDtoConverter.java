@@ -9,15 +9,15 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.MappingConstants;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
-public interface ListOfFavoriteProductsDtoConverter {
+@Service
+public class ListOfFavoriteProductsDtoConverter {
 
-    default ListOfFavoriteProductsDto toListProductDto(FavoriteListDto favoriteList) {
+    public ListOfFavoriteProductsDto toListProductDto(FavoriteListDto favoriteList) {
         ListOfFavoriteProductsDto listOfFavoriteProductsDto = new ListOfFavoriteProductsDto();
         for (FavoriteItemDto item : favoriteList.favoriteItems()) {
             listOfFavoriteProductsDto.addProductsItem(item.productInfo());
@@ -25,8 +25,7 @@ public interface ListOfFavoriteProductsDtoConverter {
         return listOfFavoriteProductsDto;
     }
 
-    @Named("toListProductInfoDto")
-    default List<ProductInfoDto> toProductInfoDto(final Set<FavoriteItemDto> favoriteItems) {
+    public List<ProductInfoDto> toProductInfoDto(final Set<FavoriteItemDto> favoriteItems) {
         return favoriteItems.stream()
                 .map(FavoriteItemDto::productInfo)
                 .toList();

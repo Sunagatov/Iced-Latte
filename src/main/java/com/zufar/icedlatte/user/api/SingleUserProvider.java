@@ -7,6 +7,7 @@ import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +19,11 @@ import java.util.UUID;
 public class SingleUserProvider {
 
     private final UserRepository userCrudRepository;
-    private final UserDtoConverter userDtoConverter;
     private final UserAvatarLinkUpdater userAvatarLinkUpdater;
 
     @Transactional(readOnly = true)
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
+        UserDtoConverter userDtoConverter = new UserDtoConverter();
         return userCrudRepository.findById(userId)
                 .map(userDtoConverter::toDto)
                 .map(userAvatarLinkUpdater::update)

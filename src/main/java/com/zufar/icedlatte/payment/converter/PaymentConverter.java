@@ -7,14 +7,18 @@ import com.zufar.icedlatte.payment.entity.Payment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
-@Mapper(uses = ShoppingCartItemDtoConverter.class , componentModel = MappingConstants.ComponentModel.SPRING)
-public interface PaymentConverter {
+@Service
+public class PaymentConverter {
 
-    @Mapping(target = "items", source = "shoppingCartItems", qualifiedByName = {"toShoppingCartItemDto"})
-    ProcessedPaymentDetailsDto toDto(final Payment payment,
-                                     final Set<ShoppingCartItem> shoppingCartItems);
+    public ProcessedPaymentDetailsDto toDto(final Payment payment,
+                                     final Set<ShoppingCartItem> shoppingCartItems){
+        return new ProcessedPaymentDetailsDto(
+
+        );
+    }
 
 }

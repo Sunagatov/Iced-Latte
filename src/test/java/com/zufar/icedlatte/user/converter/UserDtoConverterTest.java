@@ -16,17 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest(classes = UserDtoConverterTest.Config.class)
 class UserDtoConverterTest {
 
-    @Autowired
-    private UserDtoConverter userDtoConverter;
-
     @Configuration
     static class Config {
-
-        @Bean
-        UserDtoConverter userDtoConverter() {
-            return Mappers.getMapper(UserDtoConverter.class);
-        }
-
         @Bean
         AddressDtoConverter addressDtoConverter() {
             return Mappers.getMapper(AddressDtoConverter.class);
@@ -36,6 +27,7 @@ class UserDtoConverterTest {
     @Test
     @DisplayName("toDto should convert UserEntity to UserDto with complete user information")
     void toDtoShouldConvertUserEntityToUserDtoWithCompleteUserInformation() {
+        UserDtoConverter userDtoConverter = new UserDtoConverter();
         UserEntity entity = UserDtoTestStub.createUserEntity();
         UserDto dto = userDtoConverter.toDto(entity);
 

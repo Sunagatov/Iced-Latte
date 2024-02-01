@@ -2,21 +2,33 @@ package com.zufar.icedlatte.filestorage.converter;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface FileMetadataDtoConverter {
+@Service
+public class FileMetadataDtoConverter {
 
-    @Named("toFileMetadataDto")
-    FileMetadataDto toDto(final FileMetadata entity);
+    public FileMetadataDto toDto(final FileMetadata entity) {
+        return new FileMetadataDto(
+                entity.getRelatedObjectId(),
+                entity.getBucketName(),
+                entity.getFileName()
+        );
+    }
 
-    @Named("toFileMetadata")
-    FileMetadata toEntity(final FileMetadataDto dto);
+    public FileMetadata toEntity(final FileMetadataDto dto) {
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setRelatedObjectId(dto.getRelatedObjectId());
+        fileMetadata.setBucketName(dto.getBucketName());
+        fileMetadata.setFileName(fileMetadata.getFileName());
+        return fileMetadata;
+    }
 
-    @Named("toFileMetadataList")
-    List<FileMetadata> toEntityList(final List<FileMetadataDto> dtoList);
+    public List<FileMetadata> toEntityList(final List<FileMetadataDto> dtoList){
+        return dtoList.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+    }
 }

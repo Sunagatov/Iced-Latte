@@ -10,17 +10,25 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.stereotype.Service;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = ProductInfoDtoConverter.class,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,  injectionStrategy = InjectionStrategy.FIELD)
-public interface FavoriteItemDtoConverter {
+@Service
+public class FavoriteItemDtoConverter {
+    private ProductInfoDtoConverter productInfoDtoConverter;
+    public FavoriteItemDto toDto(@Context final ProductInfoDtoConverter productInfoDtoConverter,
+                          final FavoriteItemEntity favoriteItemEntity){
+        return new FavoriteItemDto(
+                favoriteItemEntity.getId(),
+                productInfoDtoConverter.toDto(favoriteItemEntity.getProductInfo())
+        );
+    }
 
-    @Mapping(target = "productInfo", source = "productInfo")
-    FavoriteItemDto toDto(@Context final ProductInfoDtoConverter productInfoDtoConverter,
-                          final FavoriteItemEntity favoriteItemEntity);
-
-    @Named("toSetFavoriteItemDto")
-    Set<FavoriteItemDto> toSetDto(final Set<FavoriteItemEntity> favoriteItemEntities);
+    public Set<FavoriteItemDto> toSetDto(final Set<FavoriteItemEntity> favoriteItemEntities){
+        return favoriteItemEntities.stream()
+                .map(entity -> toDto(productInfoDtoConverter, entity))
+                .collect(Collectors.toSet());
+    }
 }

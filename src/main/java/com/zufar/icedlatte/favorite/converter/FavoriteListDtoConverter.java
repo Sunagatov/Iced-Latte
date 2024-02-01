@@ -11,16 +11,16 @@ import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = FavoriteItemDtoConverter.class, unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
-public interface FavoriteListDtoConverter {
+@Service
+public class FavoriteListDtoConverter {
 
-    default FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity) {
+    public FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity) {
         UUID id = favoriteListEntity.getId();
         UUID userId = favoriteListEntity.getUser().getId();
         Set<FavoriteItemDto> favoriteItemsDto = new HashSet<>();
@@ -49,7 +49,7 @@ public interface FavoriteListDtoConverter {
         return productInfoDto;
     }
 
-    default ListOfFavoriteProductsDto toListProductDto(FavoriteListDto favoriteList) {
+    public ListOfFavoriteProductsDto toListProductDto(FavoriteListDto favoriteList) {
         ListOfFavoriteProductsDto listOfFavoriteProductsDto = new ListOfFavoriteProductsDto();
         for (FavoriteItemDto item : favoriteList.favoriteItems()) {
             listOfFavoriteProductsDto.addProductsItem(item.productInfo());

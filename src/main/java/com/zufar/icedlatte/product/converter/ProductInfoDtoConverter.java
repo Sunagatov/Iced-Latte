@@ -8,18 +8,34 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface ProductInfoDtoConverter {
+import java.util.List;
 
-    @Named("toProductInfoDto")
-    @Mapping(target = "id", source = "entity.productId")
-    ProductInfoDto toDto(final ProductInfo entity);
+@Service
+public class ProductInfoDtoConverter {
+
+    public ProductInfoDto toDto(final ProductInfo entity){
+        return new ProductInfoDto(
+           entity.getProductId(),
+           entity.getName(),
+           entity.getPrice(),
+           entity.getQuantity(),
+           entity.getActive()
+        );
+    }
 
     ProductInfo toProductInfo(final ProductInfoDto dto);
 
-    @Mapping(target = "products", source = "pageProductResponseDto.content")
-    @Mapping(target = "page", source = "pageProductResponseDto.number")
-    @Mapping(target = "size", source = "pageProductResponseDto.size")
-    ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto);
+    public ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto){
+        List<ProductInfoDto> productInfoDtoList = pageProductResponseDto.getContent();
+
+        return new ProductListWithPaginationInfoDto(
+                productInfoDtoList,
+                pageProductResponseDto.getNumber(),
+                pageProductResponseDto.getSize(),
+                pageProductResponseDto.getTotalElements(),
+                pageProductResponseDto.getTotalPages()
+        );
+    }
 }

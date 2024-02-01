@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,11 +28,7 @@ class SingleUserProviderTest {
     private UserRepository userCrudRepository;
 
     @Mock
-    private UserDtoConverter userDtoConverter;
-
-    @Mock
     private UserAvatarLinkUpdater userAvatarLinkUpdater;
-
 
     @InjectMocks
     private SingleUserProvider singleUserProvider;
@@ -39,6 +36,7 @@ class SingleUserProviderTest {
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
     void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
+        UserDtoConverter userDtoConverter = mock(UserDtoConverter.class);
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
