@@ -92,7 +92,7 @@ class OrderEndpointTest {
     }
 
     @Test
-    @DisplayName("Can't access order URL w/o token. Should return 401 Unauthorized")
+    @DisplayName("Can't access order URL w/o token. Should return 400 Bad Request")
     void shouldReturnUnauthorized() {
         specification = given()
                 .log().all(true)
@@ -108,8 +108,8 @@ class OrderEndpointTest {
         Response responseGet = given(specification)
                 .get();
 
-        responsePost.then().statusCode(HttpStatus.UNAUTHORIZED.value());
-        responseGet.then().statusCode(HttpStatus.UNAUTHORIZED.value());
+        responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        responseGet.then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
 
     @Test
