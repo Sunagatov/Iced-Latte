@@ -11,7 +11,7 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
-  - url: "https://dev.api.it-sl.ru"
+  - url: "https://iced-latte.uk/backend"
     description: "Production server"
 
 tags:
