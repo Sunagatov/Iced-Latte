@@ -35,7 +35,7 @@ public class ApplicationMigration implements ApplicationRunner {
         Thread.sleep(5000);
         log.info("Product pictures upload was finished");
         List<FileMetadataDto> fileMetadataDtos = awsProvider.getProductImagesFromMinio(productPictureBucket);
-        log.info("Product pictures metadata was retrieved from minio");
+        log.info("Product pictures metadata was retrieved from AWS");
         fileMetadataSaver.saveAll(fileMetadataDtos);
         log.info("Product pictures metadata was saved in postgresql database");
     }
