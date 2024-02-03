@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage.minio;
+package com.zufar.icedlatte.filestorage.aws;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
@@ -13,9 +13,9 @@ import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
-public class  MinioTemporaryLinkReceiver {
+public class AwsTemporaryLinkReceiver {
 
-    @Value("${spring.minio.link-expiration-time}")
+    @Value("${spring.aws.link-expiration-time}")
     private String linkExpirationTime;
 
     private final AmazonS3 amazonS3;

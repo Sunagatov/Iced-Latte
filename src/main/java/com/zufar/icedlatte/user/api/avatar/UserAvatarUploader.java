@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserAvatarUploader {
 
-    @Value("${spring.minio.buckets.user-avatar}")
+    @Value("${spring.aws.buckets.user-avatar}")
     private String bucketName;
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 

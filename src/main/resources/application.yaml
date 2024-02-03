@@ -39,22 +39,22 @@ spring:
     drop-first: true
 
   #
-  # Minio Properties
+  # Aws Properties
   #
-  minio:
+  aws:
     metric-name: minio.storage
-    secret-key: minio123
-    access-key: minio123
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+    region: us-east-1
     buckets:
-      user-avatar: avatars
-      product-picture: products
+      products: iced-latte-product-pictures-2
+      user-avatar: = iced-latte-user-pictures-2
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
     url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
-    region: us-east-1
     default-image-directory:
       products: ${MINIO_DEFAULT_PRODUCT_IMAGES_PATH}
 
