@@ -24,12 +24,17 @@ public class AWSConfig {
 
     @Bean
     public AmazonS3 amazonS3() {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-        AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-                .withRegion("us-east-1")
-                .build();
+        try {
+            BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
+            AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+                    .withRegion(region)
+                    .build();
 
-        return amazonS3;
+            return amazonS3;
+        } catch (Exception exception) {
+            log.error("AWS S3 Error: ", exception);
+            return null;
+        }
     }
 }
