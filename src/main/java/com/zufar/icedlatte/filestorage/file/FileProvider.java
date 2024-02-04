@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.filestorage.file;
 
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
 import com.zufar.icedlatte.filestorage.aws.AwsTemporaryLinkReceiver;
+import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

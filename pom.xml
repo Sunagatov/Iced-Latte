@@ -87,10 +87,6 @@
         <!-- Redis Dependencies Versions -->
         <spring-boot-starter-data-redis.version>3.2.0</spring-boot-starter-data-redis.version>
 
-        <!-- Minio Dependencies Versions -->
-        <spring-boot-starter-minio.version>1.1</spring-boot-starter-minio.version>
-        <minio.version>8.5.7</minio.version>
-
         <!-- Apache Maven Plugin Dependencies Versions -->
         <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -150,18 +146,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
-        </dependency>
-
-        <!-- Minio Dependencies Versions -->
-        <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.jlefebure</groupId>
-            <artifactId>spring-boot-starter-minio</artifactId>
-            <version>${spring-boot-starter-minio.version}</version>
         </dependency>
 
         <!-- Project Lombok -->
@@ -364,12 +348,6 @@
                     <groupId>org.testcontainers</groupId>
                     <artifactId>postgresql</artifactId>
                     <version>${testcontainers.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.testcontainers</groupId>
-                    <artifactId>minio</artifactId>
-                    <version>${org.testcontainers.version}</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>

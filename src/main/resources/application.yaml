@@ -42,21 +42,19 @@ spring:
   # Aws Properties
   #
   aws:
-    metric-name: minio.storage
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
     buckets:
       products: ${AWS_PRODUCT_BUCKET}
-      user-avatar: = ${AWS_USER_BUCKET}
+      user-avatar: ${AWS_USER_BUCKET}
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
     default-image-directory:
-      products: ${MINIO_DEFAULT_PRODUCT_IMAGES_PATH}
+      products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
   # Redis

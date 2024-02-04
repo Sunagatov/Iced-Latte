@@ -38,7 +38,6 @@ spring:
   # Aws Properties
   #
   aws:
-    metric-name: minio.storage
     access-key: vbfgngfdndgndgndgndgndgndgndg
     secret-key: vbfgngfdndgndgndgndgndgndgndg
     region: eu-west-1
@@ -49,7 +48,6 @@ spring:
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
     default-image-directory:
       products: ./products

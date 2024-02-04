@@ -23,7 +23,7 @@ public class AwsProvider {
     private final AmazonS3 amazonS3;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public List<FileMetadataDto> getProductImagesFromMinio(String bucketName) {
+    public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
         try {
             ObjectListing objectListing = amazonS3.listObjects(bucketName);
             return getFileMetadataDtos(objectListing.getObjectSummaries(), bucketName);
