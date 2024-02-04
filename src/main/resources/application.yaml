@@ -173,3 +173,4 @@ logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+
