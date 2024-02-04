@@ -2,7 +2,7 @@ package com.zufar.icedlatte.filestorage.file;
 
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
-import com.zufar.icedlatte.filestorage.minio.MinioObjectDeleter;
+import com.zufar.icedlatte.filestorage.aws.AwsObjectDeleter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileDeleter {
 
-    private final MinioObjectDeleter minioObjectDeleter;
+    private final AwsObjectDeleter awsObjectDeleter;
     private final FileMetadataProvider fileMetadataProvider;
     private final FileMetadataDeleter fileMetadataDeleter;
 
@@ -25,7 +25,7 @@ public class FileDeleter {
     public void delete(final UUID relatedObjectId) {
         fileMetadataProvider.getFileMetadataDto(relatedObjectId)
                 .ifPresent(fileMetadata -> {
-                    minioObjectDeleter.deleteFile(fileMetadata);
+                    awsObjectDeleter.deleteFile(fileMetadata);
                     fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
                     log.info("File was deleted from the file storage and file metadata was deleted from the database as well");
                 });

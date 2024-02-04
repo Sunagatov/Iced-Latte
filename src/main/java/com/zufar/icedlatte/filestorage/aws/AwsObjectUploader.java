@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage.minio;
+package com.zufar.icedlatte.filestorage.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
@@ -21,7 +21,7 @@ import java.io.InputStream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class MinioObjectUploader {
+public class AwsObjectUploader {
 
     private final AmazonS3 amazonS3;
 
@@ -33,10 +33,10 @@ public class MinioObjectUploader {
             metadata.setContentLength(file.getSize());
             amazonS3.putObject(bucketName, fileName, inputStream, metadata);
         } catch (AmazonServiceException ase) {
-            log.error("Minio couldn't process operation", ase);
+            log.error("AWS couldn't process operation", ase);
             throw ase;
         } catch (SdkClientException sce) {
-            log.error("Minio couldn't be contacted for a response", sce);
+            log.error("AWS couldn't be contacted for a response", sce);
             throw sce;
         } catch (IOException e) {
             throw new FileReadException(fileName);

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage.minio;
+package com.zufar.icedlatte.filestorage.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class MinioProvider {
+public class AwsProvider {
 
     private final AmazonS3 amazonS3;
 
