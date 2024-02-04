@@ -2,27 +2,31 @@ package com.zufar.icedlatte.payment.converter;
 
 import com.stripe.model.Token;
 import com.stripe.param.PaymentMethodCreateParams;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Service;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface StripePaymentMethodConverter {
+@Service
+public class StripePaymentMethodConverter {
 
-    @Mapping(target = "type", source = "token", qualifiedByName = {"toType"})
-    @Mapping(target = "card", source = "token.id", qualifiedByName = {"toToken"})
-    PaymentMethodCreateParams toStripeObject(Token token);
+    public PaymentMethodCreateParams toStripeObject(Token token) {
+        if ( token == null ) {
+            return null;
+        }
 
-    @Named("toToken")
-    default PaymentMethodCreateParams.Token toToken(String tokenId) {
+        PaymentMethodCreateParams.Builder paymentMethodCreateParams = PaymentMethodCreateParams.builder();
+
+        paymentMethodCreateParams.setType( toType( token ) );
+        paymentMethodCreateParams.setCard( toToken( token.getId() ) );
+
+        return paymentMethodCreateParams.build();
+    }
+
+    private PaymentMethodCreateParams.Token toToken(String tokenId) {
         return PaymentMethodCreateParams.Token.builder()
                 .setToken(tokenId)
                 .build();
     }
 
-    @Named("toType")
-    default PaymentMethodCreateParams.Type toType(Token token) {
+    private PaymentMethodCreateParams.Type toType(Token token) {
         return PaymentMethodCreateParams.Type.valueOf(token.getType().toUpperCase());
     }
 }

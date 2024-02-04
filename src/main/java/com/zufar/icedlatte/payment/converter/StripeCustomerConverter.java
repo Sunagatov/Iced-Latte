@@ -4,27 +4,29 @@ import com.stripe.param.CustomerCreateParams;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.apache.commons.lang3.StringUtils;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
 import org.springframework.stereotype.Component;
 
 @Component
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface StripeCustomerConverter {
+public class StripeCustomerConverter {
 
-    @Mapping(target = "putAllExtraParam", ignore = true)
-    @Mapping(target = "cashBalance", ignore = true)
-    @Mapping(target = "invoiceSettings", ignore = true)
-    @Mapping(target = "putAllMetadata", ignore = true)
-    @Mapping(target = "tax", ignore = true)
-    @Mapping(target = "address", expression = "java(toAddress(authorizedUser.getAddress()))")
-    @Mapping(target = "name", expression = "java(toFullName(authorizedUser))")
-    @Mapping(target = "email", source = "authorizedUser.email")
-    @Mapping(target = "paymentMethod", source = "paymentMethodToken")
-    CustomerCreateParams toStripeObject(UserEntity authorizedUser, String paymentMethodToken);
+    public CustomerCreateParams toStripeObject(UserEntity authorizedUser, String paymentMethodToken) {
+        if ( authorizedUser == null && paymentMethodToken == null ) {
+            return null;
+        }
 
-    default CustomerCreateParams.Address toAddress(Address address) {
+        CustomerCreateParams.Builder customerCreateParams = CustomerCreateParams.builder();
+
+        if ( authorizedUser != null ) {
+            customerCreateParams.setEmail( authorizedUser.getEmail() );
+        }
+        customerCreateParams.setPaymentMethod( paymentMethodToken );
+        customerCreateParams.setAddress( toAddress(authorizedUser.getAddress()) );
+        customerCreateParams.setName( toFullName(authorizedUser) );
+
+        return customerCreateParams.build();
+    }
+
+    private CustomerCreateParams.Address toAddress(Address address) {
         CustomerCreateParams.Address stripeAddress = null;
         if (address != null) {
             stripeAddress = CustomerCreateParams.Address.builder()
@@ -36,7 +38,7 @@ public interface StripeCustomerConverter {
         return stripeAddress;
     }
 
-    default String toFullName(UserEntity authorizedUser) {
+    private String toFullName(UserEntity authorizedUser) {
         return StringUtils.join(authorizedUser.getFirstName(), Character.SPACE_SEPARATOR, authorizedUser.getLastName());
     }
 }
