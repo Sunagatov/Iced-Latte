@@ -44,7 +44,7 @@ spring:
     region: eu-west-1
     buckets:
       products: products
-      user-avatar: = users
+      user-avatar: users
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
