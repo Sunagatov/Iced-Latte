@@ -20,7 +20,12 @@ Key variables which are used in the startup of the app. They are pre-configured 
 - `DATASOURCE_PASSWORD`: Database password
 - `REDIS_HOST`: Redis host
 - `REDIS_PORT`: Redis port
-- `AWS_DEFAULT_PRODUCT_IMAGES_PATH`
+- `AWS_ACCESS_KEY` AWS access key
+- `AWS_SECRET_KEY` AWS secret key
+- `AWS_REGION` AWS region
+- `AWS_PRODUCT_BUCKET` AWS product's bucket name
+- `AWS_USER_BUCKET`  AWS product's bucket name
+- `AWS_DEFAULT_PRODUCT_IMAGES_PATH` Package with product's files 
 
 Refer to [docker-compose.local.yml](./docker-compose.local.yml)
 
