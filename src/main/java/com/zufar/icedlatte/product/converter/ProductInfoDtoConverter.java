@@ -3,10 +3,6 @@ package com.zufar.icedlatte.product.converter;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +15,12 @@ public class ProductInfoDtoConverter {
         return new ProductInfoDto(
            entity.getProductId(),
            entity.getName(),
+           entity.getDescription(),
            entity.getPrice(),
            entity.getQuantity(),
            entity.getActive()
         );
     }
-
-    ProductInfo toProductInfo(final ProductInfoDto dto);
 
     public ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto){
         List<ProductInfoDto> productInfoDtoList = pageProductResponseDto.getContent();

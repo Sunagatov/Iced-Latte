@@ -4,11 +4,6 @@ import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
-import org.mapstruct.MappingConstants;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

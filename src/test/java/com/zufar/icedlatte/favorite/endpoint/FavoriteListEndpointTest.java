@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.favorite.api.endpoint;
+package com.zufar.icedlatte.favorite.endpoint;
 
 import com.zufar.icedlatte.favorite.endpoint.FavoritesEndpoint;
 import io.restassured.http.ContentType;

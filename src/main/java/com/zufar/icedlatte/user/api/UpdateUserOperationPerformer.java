@@ -27,10 +27,10 @@ public class UpdateUserOperationPerformer {
     private final UserRepository userCrudRepository;
     private final AddressDtoConverter addressDtoConverter;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final UserDtoConverter userDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateUser(final UpdateUserAccountRequest updateUserAccountRequest) {
-        UserDtoConverter userDtoConverter = new UserDtoConverter();
         UUID userId = securityPrincipalProvider.getUserId();
 
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);

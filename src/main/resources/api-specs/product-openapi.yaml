@@ -133,6 +133,7 @@ components:
       required:
         - id
         - name
+        - description
         - price
         - quantity
         - active

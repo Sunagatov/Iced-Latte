@@ -13,8 +13,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SecurityPrincipalProvider {
 
+    private final UserDtoConverter userDtoConverter;
+
     public UserDto get() {
-        UserDtoConverter userDtoConverter = new UserDtoConverter();
         UserEntity userEntity = (UserEntity) SecurityContextHolder
                 .getContext()
                 .getAuthentication()

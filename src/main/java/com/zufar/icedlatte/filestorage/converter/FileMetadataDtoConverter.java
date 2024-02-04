@@ -2,12 +2,14 @@ package com.zufar.icedlatte.filestorage.converter;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FileMetadataDtoConverter {
 
     public FileMetadataDto toDto(final FileMetadata entity) {
@@ -20,8 +22,8 @@ public class FileMetadataDtoConverter {
 
     public FileMetadata toEntity(final FileMetadataDto dto) {
         FileMetadata fileMetadata = new FileMetadata();
-        fileMetadata.setRelatedObjectId(dto.getRelatedObjectId());
-        fileMetadata.setBucketName(dto.getBucketName());
+        fileMetadata.setRelatedObjectId(dto.relatedObjectId());
+        fileMetadata.setBucketName(dto.bucketName());
         fileMetadata.setFileName(fileMetadata.getFileName());
         return fileMetadata;
     }

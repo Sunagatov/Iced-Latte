@@ -30,13 +30,15 @@ class SingleUserProviderTest {
     @Mock
     private UserAvatarLinkUpdater userAvatarLinkUpdater;
 
+    @Mock
+    private UserDtoConverter userDtoConverter;
+
     @InjectMocks
     private SingleUserProvider singleUserProvider;
 
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
     void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
-        UserDtoConverter userDtoConverter = mock(UserDtoConverter.class);
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 

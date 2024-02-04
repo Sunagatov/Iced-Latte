@@ -18,12 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ProductInfoDtoConverterTest {
 
-    private ProductInfoDtoConverter converter;
-
-    @BeforeEach
-    void setup() {
-        converter = Mappers.getMapper(ProductInfoDtoConverter.class);
-    }
+    private ProductInfoDtoConverter converter = new ProductInfoDtoConverter();
 
     @Test
     @DisplayName("Convert ProductInfo entity to ProductInfoDto")

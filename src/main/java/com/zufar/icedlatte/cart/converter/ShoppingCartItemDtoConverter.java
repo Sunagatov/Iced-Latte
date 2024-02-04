@@ -1,18 +1,16 @@
 package com.zufar.icedlatte.cart.converter;
 
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 @Service
+@RequiredArgsConstructor
 public class ShoppingCartItemDtoConverter {
-    private ProductInfoDtoConverter productInfoDtoConverter;
+
+    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     public ShoppingCartItemDto toDto(final ShoppingCartItem entity){
         return new ShoppingCartItemDto(

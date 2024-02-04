@@ -8,7 +8,11 @@ import com.zufar.icedlatte.order.stub.OrderDtoTestStub;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -20,32 +24,15 @@ import static com.zufar.icedlatte.order.stub.OrderDtoTestStub.EXPECTED_ORDER_TOT
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-@SpringBootTest(classes = {OrderDtoConverterTest.Config.class})
 class OrderDtoConverterTest {
 
-    @Autowired
-    ProductInfoDtoConverter productInfoDtoConverter;
-    @Autowired
-    OrderItemDtoConverter orderItemDtoConverter;
-    @Autowired
-    OrderDtoConverter orderDtoConverter;
 
-    @Configuration
-    public static class Config {
+    private ProductInfoDtoConverter productInfoDtoConverter = new ProductInfoDtoConverter();
 
-        @Bean
-        public OrderDtoConverter orderDtoConverter() {
-            return Mappers.getMapper(OrderDtoConverter.class);
-        }
-        @Bean
-        public OrderItemDtoConverter orderItemDtoConverter() {
-            return Mappers.getMapper(OrderItemDtoConverter.class);
-        }
-        @Bean
-        public ProductInfoDtoConverter productInfoDtoConverter() {
-            return Mappers.getMapper(ProductInfoDtoConverter.class);
-        }
-    }
+    private OrderItemDtoConverter orderItemDtoConverter = new OrderItemDtoConverter(productInfoDtoConverter);
+
+    private OrderDtoConverter orderDtoConverter = new OrderDtoConverter(orderItemDtoConverter);
+
 
     @Test
     @DisplayName("toOrderEntity should convert OrderRequestDto to Order entity with complete information")

@@ -6,34 +6,14 @@ import com.zufar.icedlatte.order.stub.OrderDtoTestStub;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {OrderDtoConverterTest.Config.class})
 class OrderItemDtoConverterTest {
 
+    private ProductInfoDtoConverter productInfoDtoConverter = new ProductInfoDtoConverter();
 
-    @Autowired
-    ProductInfoDtoConverter productInfoDtoConverter;
-    @Autowired
-    OrderItemDtoConverter orderItemDtoConverter;
-
-    @Configuration
-    public static class Config {
-        @Bean
-        public OrderItemDtoConverter orderItemDtoConverter() {
-            return Mappers.getMapper(OrderItemDtoConverter.class);
-        }
-        @Bean
-        public ProductInfoDtoConverter productInfoDtoConverter() {
-            return Mappers.getMapper(ProductInfoDtoConverter.class);
-        }
-    }
+    private OrderItemDtoConverter orderItemDtoConverter = new OrderItemDtoConverter(productInfoDtoConverter);
 
     @Test
     @DisplayName("toOrderItemResponseDto should convert OrderItem to OrderItemResponseDto with complete information")

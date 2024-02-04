@@ -185,6 +185,7 @@ components:
         - itemsTotalPrice
         - productsQuantity
         - createdAt
+        - closedAt
     ShoppingCartItemDto:
       type: "object"
       properties:

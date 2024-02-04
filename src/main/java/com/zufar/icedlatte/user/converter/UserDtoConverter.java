@@ -3,12 +3,15 @@ package com.zufar.icedlatte.user.converter;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import org.mapstruct.factory.Mappers;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserDtoConverter {
-    private AddressDtoConverter converter;
+
+    private final AddressDtoConverter converter;
+
     public UserDto toDto(final UserEntity entity){
         UserDto userDto = new UserDto(entity.getFirstName(), entity.getLastName(), entity.getEmail());
         userDto.setId(entity.getId());

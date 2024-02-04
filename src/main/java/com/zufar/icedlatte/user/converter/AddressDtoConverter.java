@@ -2,9 +2,6 @@ package com.zufar.icedlatte.user.converter;
 
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.entity.Address;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
 import org.springframework.stereotype.Service;
 
 @Service

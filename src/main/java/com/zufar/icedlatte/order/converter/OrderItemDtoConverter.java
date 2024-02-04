@@ -3,20 +3,28 @@ package com.zufar.icedlatte.order.converter;
 import com.zufar.icedlatte.openapi.dto.OrderItemResponseDto;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
+import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
+import org.springframework.stereotype.Service;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = ProductInfoDtoConverter.class,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        injectionStrategy = InjectionStrategy.FIELD)
-public interface OrderItemDtoConverter {
+@Service
+@RequiredArgsConstructor
+public class OrderItemDtoConverter {
+
+    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     @Named("toOrderItemResponseDto")
-    @Mapping(target = "productInfo", source = "entity.productInfo", qualifiedByName = {"toProductInfoDto"})
-    OrderItemResponseDto toDto(final OrderItem entity);
+    OrderItemResponseDto toDto(final OrderItem entity) {
+        if ( entity == null ) {
+            return null;
+        }
+
+        OrderItemResponseDto orderItemResponseDto = new OrderItemResponseDto();
+
+        orderItemResponseDto.setProductInfo( productInfoDtoConverter.toDto( entity.getProductInfo() ) );
+        orderItemResponseDto.setId( entity.getId() );
+        orderItemResponseDto.setProductQuantity( entity.getProductQuantity() );
+
+        return orderItemResponseDto;
+    }
 }

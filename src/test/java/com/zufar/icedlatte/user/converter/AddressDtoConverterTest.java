@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AddressDtoConverterTest {
 
-    private final AddressDtoConverter converter = Mappers.getMapper(AddressDtoConverter.class);
+    private final AddressDtoConverter converter = new AddressDtoConverter();
 
     @Test
     @DisplayName("toDto should convert Address to AddressDto")

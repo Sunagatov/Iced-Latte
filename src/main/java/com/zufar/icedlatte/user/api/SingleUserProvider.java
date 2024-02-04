@@ -20,10 +20,10 @@ public class SingleUserProvider {
 
     private final UserRepository userCrudRepository;
     private final UserAvatarLinkUpdater userAvatarLinkUpdater;
+    private final UserDtoConverter userDtoConverter;
 
     @Transactional(readOnly = true)
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
-        UserDtoConverter userDtoConverter = new UserDtoConverter();
         return userCrudRepository.findById(userId)
                 .map(userDtoConverter::toDto)
                 .map(userAvatarLinkUpdater::update)

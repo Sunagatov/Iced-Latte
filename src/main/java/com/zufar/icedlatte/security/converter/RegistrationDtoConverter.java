@@ -3,15 +3,15 @@ package com.zufar.icedlatte.security.converter;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.user.converter.AddressDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import org.apache.catalina.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class RegistrationDtoConverter {
 
-    private AddressDtoConverter addressDtoConverter;
+    private final AddressDtoConverter addressDtoConverter;
+
     public UserEntity toEntity(final UserRegistrationRequest userRegistrationRequest){
         UserEntity userEntity = new UserEntity();
         userEntity.setFirstName(userRegistrationRequest.firstName());
