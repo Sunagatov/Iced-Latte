@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage.minio;
+package com.zufar.icedlatte.filestorage.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MinioObjectDeleter {
+public class AwsObjectDeleter {
 
     private final AmazonS3 amazonS3;
 
@@ -25,10 +25,10 @@ public class MinioObjectDeleter {
         try {
             amazonS3.deleteObject(bucketName, fileName);
         } catch (AmazonServiceException ase) {
-            log.error("Minio couldn't process operation", ase);
+            log.error("AWS couldn't process operation", ase);
             throw ase;
         } catch (SdkClientException sce) {
-            log.error("Minio couldn't be contacted for a response", sce);
+            log.error("AWS couldn't be contacted for a response", sce);
             throw sce;
         }
     }
