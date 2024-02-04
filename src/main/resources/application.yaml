@@ -45,10 +45,10 @@ spring:
     metric-name: minio.storage
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
-    region: us-east-1
+    region: ${AWS_REGION}
     buckets:
-      products: iced-latte-product-pictures-2
-      user-avatar: = iced-latte-user-pictures-2
+      products: ${AWS_PRODUCT_BUCKET}
+      user-avatar: = ${AWS_USER_BUCKET}
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
