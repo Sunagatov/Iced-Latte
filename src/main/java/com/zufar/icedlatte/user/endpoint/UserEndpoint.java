@@ -1,9 +1,13 @@
 package com.zufar.icedlatte.user.endpoint;
 
+import com.zufar.icedlatte.email.api.EmailTokenConformer;
+import com.zufar.icedlatte.email.api.EmailTokenSender;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +52,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
     private final UserAvatarLinkProvider userAvatarLinkProvider;
+    private final EmailTokenSender emailTokenSender;
+    private final EmailTokenConformer emailTokenConformer;
 
     @Override
     @GetMapping
@@ -120,4 +127,28 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         log.info("The request to delete the user avatar was handled.");
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Override
+    @PostMapping(path = "/password/reset")
+    public ResponseEntity<Void> resetUserPassword() {
+        UserDto userDto = securityPrincipalProvider.get();
+        log.info("Received the request to reset password the User with userId - {}.", userDto.getId());
+        UserRegistrationRequest request = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
+                userDto.getEmail(), "");
+        emailTokenSender.sendEmailVerificationCode(request);
+        log.info("The request to reset the user's password was handled.");
+        return ResponseEntity.status(HttpStatus.OK)
+                .build();
+    }
+
+    @Override
+    @PostMapping(path = "/password/reset/confirm")
+    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
+        log.info("Received email confirmation request to reset password");
+        emailTokenConformer.confirmResetPasswordEmailByCode(
+                new com.zufar.icedlatte.security.dto.ConfirmEmailRequest(confirmEmailRequest.getToken()));
+        log.info("Email verification to reset password completed");
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
 }

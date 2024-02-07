@@ -26,12 +26,10 @@ public class AWSConfig {
     public AmazonS3 amazonS3() {
         try {
             BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-            AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
+            return AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
                     .withRegion(region)
                     .build();
-
-            return amazonS3;
         } catch (Exception exception) {
             log.error("AWS S3 Error: ", exception);
             return null;
