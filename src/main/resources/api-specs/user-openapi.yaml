@@ -129,7 +129,7 @@ paths:
         - "User"
       summary: "Reset user password"
       description: "Reset user password"
-      operationId: "reset"
+      operationId: "resetUserPassword"
       responses:
         "200":
           description: "Reset user password request confirm successfully"
@@ -144,7 +144,7 @@ paths:
         - "User"
       summary: "Reset user password confirm"
       description: "Reset user password confirm"
-      operationId: "confirm"
+      operationId: "confirmResetUserPassword"
       requestBody:
         content:
           application/json:
