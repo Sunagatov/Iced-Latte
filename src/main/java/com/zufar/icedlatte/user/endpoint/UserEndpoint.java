@@ -130,9 +130,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PostMapping(path = "/password/reset")
-    public ResponseEntity<Void> resetUserPassword() {
+    public ResponseEntity<Void> reset() {
         UserDto userDto = securityPrincipalProvider.get();
-        log.info("Received the request to reset password the User with userId - {}.", userDto.getId());
+        log.info("Received the request to reset password for user with id: {}", userDto.getId());
         UserRegistrationRequest request = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
                 userDto.getEmail(), "");
         emailTokenSender.sendEmailVerificationCode(request);
@@ -143,7 +143,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PostMapping(path = "/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
+    public ResponseEntity<Void> confirm(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
         log.info("Received email confirmation request to reset password");
         emailTokenConformer.confirmResetPasswordEmailByCode(
                 new com.zufar.icedlatte.security.dto.ConfirmEmailRequest(confirmEmailRequest.getToken()));
