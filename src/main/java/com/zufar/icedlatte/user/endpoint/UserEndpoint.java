@@ -132,7 +132,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PostMapping(path = "/password/reset")
     public ResponseEntity<Void> resetUserPassword() {
         UserDto userDto = securityPrincipalProvider.get();
-        log.info("Received the request to reset password the User with userId - {}.", userDto.getId());
+        log.info("Received the request to reset password for user with id: {}", userDto.getId());
         UserRegistrationRequest request = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
                 userDto.getEmail(), "");
         emailTokenSender.sendEmailVerificationCode(request);
