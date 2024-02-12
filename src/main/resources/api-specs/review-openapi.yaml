@@ -1,0 +1,167 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Security API"
+  description: "API for accessing reviews and related operations in the Iced-Latte platform"
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://iced-latte.uk/backend"
+    description: "Production server"
+
+tags:
+  - name: "Review"
+    description: "An API for review creation and modification"
+
+paths:
+  /api/v1/review:
+    post:
+      tags:
+        - "Review"
+      summary: "Add a review item for a product by authorized user"
+      operationId: "addReview"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewReviewItem"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewItemResponse"
+    patch:
+      tags:
+        - "Review"
+      summary: "Update a review item for a product by authorized user"
+      operationId: "updateReview"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewItem"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewItemResponse"
+    delete:
+      tags:
+        - "Review"
+      summary: "Remove a review item for a product by authorized user"
+      operationId: "deleteReview"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteReviewItem"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewItemResponse"
+
+  /api/v1/review/{productId}:
+      get:
+        tags:
+          - "Review"
+        summary: "Retrieve all reviews for the product"
+        operationId: "getReviews"
+        parameters:
+          - name: "productId"
+            in: "path"
+            required: true
+            description: "Unique identifier of the product."
+            schema:
+              type: "string"
+              format: "uuid"
+        responses:
+          "200":
+            description: "The product was found and its reviews are returned."
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/ProductReviewList"
+
+components:
+  schemas:
+    NewReviewItem:
+      type: "object"
+      properties:
+        productId:
+          type: "string"
+        text:
+          type: "string"
+        rate:
+          type: "integer"
+          format: "int32"
+          minimum: 1
+          maximum: 5
+
+    UpdateReviewItem:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        text:
+          type: "string"
+        rate:
+          type: "integer"
+          format: "int32"
+          minimum: 1
+          maximum: 5
+
+    DeleteReviewItem:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+
+    ReviewResponse:
+      type: "object"
+      properties:
+        productId:
+          type: "string"
+        review:
+          type: "object"
+          $ref: "#/components/schemas/ReviewItemResponse"
+
+    ReviewItemResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        text:
+          type: "string"
+        rate:
+          type: "integer"
+          format: "int32"
+          minimum: 1
+          maximum: 5
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    ProductReviewList:
+      type: "object"
+      properties:
+        productId:
+          type: "string"
+        reviews:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ReviewItemResponse"
