@@ -30,6 +30,11 @@ services:
       REDIS_HOST: iced-latte-redis
       REDIS_PORT: 6380
       AWS_DEFAULT_PRODUCT_IMAGES_PATH: ./products
+      AWS_ACCESS_KEY: vbfgngfdndgndgndgndgndgndgndg
+      AWS_SECRET_KEY: vbfgngfdndgndgndgndgndgndgndg
+      AWS_REGION: eu-west-1
+      AWS_PRODUCT_BUCKET: products
+      AWS_USER_BUCKET: users
     build:
       context: .
       dockerfile: Dockerfile.local
