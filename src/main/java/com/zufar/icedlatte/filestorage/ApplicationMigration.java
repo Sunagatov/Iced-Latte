@@ -1,4 +1,4 @@
-package com.zufar.icedlatte;
+package com.zufar.icedlatte.filestorage;
 
 import com.zufar.icedlatte.filestorage.aws.AwsProvider;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
