@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.product.endpoint;
 
+import com.zufar.icedlatte.filter.api.ProductFilterList;
+import com.zufar.icedlatte.filter.dto.ProductFilterDto;
 import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
@@ -30,6 +32,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     public static final String PRODUCTS_URL = "/api/v1/products";
 
     private final ProductApi productApi;
+    private final ProductFilterList productFilterList;
 
     @Override
     @GetMapping("/{productId}")
@@ -66,5 +69,11 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
         log.info("Products with productIds: {} was retrieved successfully", stringIDs);
         return ResponseEntity.ok()
                 .body(products);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ProductInfoDto>> getProductFilter(@RequestBody final ProductFilterDto productFilterDto){
+        List<ProductInfoDto> products = productFilterList.getProductFilterList(productFilterDto);
+        return ResponseEntity.ok().body(products);
     }
 }
