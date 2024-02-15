@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -83,6 +84,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {
+        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
+            return HttpMethod.GET.name().equals(request.getMethod());
+        }
         return !isSecuredUrl(request);
     }
 

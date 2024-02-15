@@ -37,6 +37,7 @@ public class SpringSecurityConfiguration {
                                 .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                                 .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                                 .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
+                                .requestMatchers(SecurityConstants.REVIEWS_URL).authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
