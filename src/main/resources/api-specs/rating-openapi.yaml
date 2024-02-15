@@ -44,6 +44,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/RatingDto"
 
+  /api/v1/products/rating/{productId}:
+    get:
+      tags:
+        - "Rating"
+      summary: "Get rating"
+      operationId: "getRatingByProductId"
+      parameters:
+        - name: "productId"
+          in: "path"
+          description: "ID of the product to get rating for"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Rating retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/RatingMark"
+
 components:
   schemas:
     AddNewMarkToProductRequest:
@@ -74,3 +98,13 @@ components:
         - userId
         - mark
 
+    RatingMark:
+      type: object
+      properties:
+        mark:
+          type: Integer
+        quantity:
+          type: Integer
+      required:
+        - mark
+        - quantity
