@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,5 +35,10 @@ public class ProductApiImpl implements ProductApi {
     @Override
     public ProductInfoDto getProduct(final UUID productId) {
         return singleProductProvider.getProductById(productId);
+    }
+
+    @Override
+    public ProductInfo getProductEntityById(UUID productId) {
+        return singleProductProvider.getProductEntityById(productId);
     }
 }
