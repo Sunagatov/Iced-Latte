@@ -135,7 +135,7 @@ components:
           minLength: 1
           maxLength: 1500
       required:
-        - review
+        - text
 
     ReviewResponse:
       type: "object"

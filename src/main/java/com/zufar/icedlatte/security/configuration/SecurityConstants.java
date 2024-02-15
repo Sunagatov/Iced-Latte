@@ -7,7 +7,7 @@ public final class SecurityConstants {
     public static final String FAVOURITES_URL = "/api/v1/favorites/**";
     public static final String AUTH_URL = "/api/v1/auth/refresh";
     public static final String ORDERS_URL = "/api/v1/orders/**";
-    public static final String REVIEWS_URL = "/api/v1/products/**/reviews";
+    public static final String REVIEWS_URL = "/api/v1/products/*/reviews";
 
     private SecurityConstants() {}
 }
