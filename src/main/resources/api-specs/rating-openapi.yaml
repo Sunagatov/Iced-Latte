@@ -1,0 +1,76 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Rating API"
+  description: "API allows users to add ratings to products."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://iced-latte.uk/backend"
+    description: "Production server"
+
+tags:
+  - name: "Rating"
+    description: "Operations related to rating products"
+
+paths:
+  /api/v1/products/rating:
+    post:
+      tags:
+        - "Rating"
+      summary: "Add mark to product"
+      operationId: "addNewMarkToProduct"
+      requestBody:
+        description: "Payload containing the product ID and mark."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewMarkToProductRequest"
+            examples:
+              add-mark:
+                summary: "Add Mark"
+                value: {"productId": "a1b2c3d4", "mark": 5}
+      responses:
+        "200":
+          description: "Mark added successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingDto"
+
+components:
+  schemas:
+    AddNewMarkToProductRequest:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: "uuid"
+        mark:
+          type: Integer
+      required:
+        - productId
+        - mark
+
+    RatingDto:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: "uuid"
+        userId:
+          type: string
+          format: "uuid"
+        mark:
+          type: Integer
+      required:
+        - productId
+        - userId
+        - mark
+

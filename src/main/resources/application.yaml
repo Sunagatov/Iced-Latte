@@ -46,15 +46,15 @@ spring:
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
     buckets:
-      products: ${AWS_PRODUCT_BUCKET}
-      user-avatar: ${AWS_USER_BUCKET}
+      products: test #${AWS_PRODUCT_BUCKET}
+      user-avatar: test #${AWS_USER_BUCKET}
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
     secure: false
     default-image-directory:
-      products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
+      products: test #${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
   # Redis

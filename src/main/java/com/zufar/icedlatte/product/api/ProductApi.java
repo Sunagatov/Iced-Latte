@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,15 @@ public interface ProductApi {
      * @return ProductInfoDto the product details
      */
     ProductInfoDto getProduct(final UUID productId);
+
+    /**
+     * Enables to get a product entity by its id.
+     *
+     * @param productId the identifier of the product which is returned as the return value
+     * @return ProductInfo
+     */
+
+    ProductInfo getProductEntityById(final UUID productId);
 
     /**
      * Enables to get the product list by list of ids.

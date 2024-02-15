@@ -3,6 +3,7 @@ package com.zufar.icedlatte.common.exception.handler;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,6 +32,15 @@ public class GlobalExceptionHandler {
         log.error("Handle method argument not valid exception: failed: message: {}, debugMessage: {}.",
                 message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler({PSQLException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handlePSQLException(final PSQLException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.warn("Handle PSQLException: failed: message: {}, debugMessage: {}",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }
 }
