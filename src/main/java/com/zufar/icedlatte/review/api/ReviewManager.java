@@ -15,7 +15,13 @@ public class ReviewManager {
 
     private final ReviewCreator reviewCreator;
 
-    public ReviewResponse createReview(final UUID productId, final NewReview newReview) {
+    private final ReviewDeleter reviewDeleter;
+
+    public ReviewResponse create(final UUID productId, final NewReview newReview) {
         return reviewCreator.create(productId, newReview);
+    }
+
+    public void delete(final UUID reviewId) {
+        reviewDeleter.delete(reviewId);
     }
 }

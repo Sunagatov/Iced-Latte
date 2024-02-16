@@ -21,6 +21,7 @@ import java.util.UUID;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBodySchemaResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
@@ -38,9 +39,7 @@ class ReviewEndpointTest {
     private static final String REVIEW_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
-
     private static final String EXISTING_PRODUCT = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
-
     protected static RequestSpecification specification;
     @Container
     @ServiceConnection
@@ -81,7 +80,7 @@ class ReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("Should return 404 Not Found for invalid product ID")
+    @DisplayName("Should return 404 Not Found on attempt to add review for invalid product ID")
     void shouldReturnNotFoundOnAttemptToAddNonExistentProduct() {
         String body = getRequestBody(REVIEW_ADD_BODY);
 
@@ -95,7 +94,7 @@ class ReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("Missing required fields in request body. Should return 400 Bad Request")
+    @DisplayName("Missing required fields in add review request body. Should return 400 Bad Request")
     void shouldReturnBadRequestForBadBody() {
         String body = getRequestBody(REVIEW_ADD_BAD_BODY);
 
@@ -107,7 +106,7 @@ class ReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("Review text is an empty string. Should return 400 Bad Request")
+    @DisplayName("Review text is an empty string in add review request body. Should return 400 Bad Request")
     void shouldReturnBadRequestForEmptyReviewText() {
         String body = getRequestBody(REVIEW_ADD_EMPTY_TEXT);
 
@@ -116,5 +115,52 @@ class ReviewEndpointTest {
                 .post("/{productId}/reviews", EXISTING_PRODUCT);
 
         assertRestApiBadRequestResponse(response, FAILED_REVIEW_SCHEMA);
+    }
+
+    @Test
+    @DisplayName("Should delete existing review successfully")
+    void shouldDeleteExistingReviewSuccessfully() {
+        String body = getRequestBody(REVIEW_ADD_BODY);
+
+        Response responsePost = given(specification)
+                .body(body)
+                .post("/{productId}/reviews", EXISTING_PRODUCT);
+
+        var reviewId = responsePost.then().extract().path("reviewId").toString();
+
+        Response response = given(specification)
+                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, reviewId);
+
+        response.then().statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK on delete non-existent review")
+    void shouldReturnOKOnDeleteNonExistentReview() {
+        Response response = given(specification)
+                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, UUID.randomUUID());
+
+        response.then().statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    @DisplayName("For methods POST and DELETE access to review URL w/o token is forbidden. Should return 400 Bad Request")
+    void shouldReturnBadRequest() {
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(ReviewEndpoint.REVIEW_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
+
+        String body = getRequestBody(REVIEW_ADD_BODY);
+        Response responsePost = given(specification)
+                .body(body)
+                .post("/{productId}/reviews", EXISTING_PRODUCT);
+        Response responseDelete = given(specification)
+                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, UUID.randomUUID());
+
+        responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        responseDelete.then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }
