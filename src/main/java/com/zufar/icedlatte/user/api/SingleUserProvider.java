@@ -40,4 +40,14 @@ public class SingleUserProvider {
                     return new UserNotFoundException(userId);
                 });
     }
+
+    @Transactional(readOnly = true)
+    public UserDto getUserByEmail(final String email) throws UserNotFoundException {
+        return userCrudRepository.findByEmail(email)
+                .map(userDtoConverter::toDto)
+                .orElseThrow(() -> {
+                    log.warn("Failed to get the user details");
+                    return new UserNotFoundException(null);
+                });
+    }
 }
