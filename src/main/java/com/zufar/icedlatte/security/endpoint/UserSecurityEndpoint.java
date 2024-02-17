@@ -103,7 +103,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     @Override
-    @PostMapping("/forgot/password")
+    @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@RequestBody final ForgotPasswordRequest request) {
         log.info("Received forgot password request for user");
         UserDto userDto = singleUserProvider.getUserByEmail(request.email());
@@ -115,7 +115,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     @Override
-    @PostMapping("/change/password")
+    @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@RequestBody final ChangePasswordRequest request) {
         log.info("Received change password request for user");
         UserDto userDto = singleUserProvider.getUserByEmail(request.email());

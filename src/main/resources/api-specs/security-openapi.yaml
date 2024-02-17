@@ -109,7 +109,7 @@ paths:
         "500":
           description: "Internal Server Error"
 
-  /api/v1/auth/forgot/password:
+  /api/v1/auth/password/forgot:
     post:
       tags:
         - "Security"
@@ -129,7 +129,7 @@ paths:
         "500":
           description: "Internal Server Error"
 
-  /api/v1/auth/change/password:
+  /api/v1/auth/password/change:
     post:
       tags:
         - "Security"
