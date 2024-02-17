@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequestMapping(value = RatingEndpoint.RATING_URL)
 public class RatingEndpoint {
 
-    public static final String RATING_URL = "/api/v1/products/rating";
+    public static final String RATING_URL = "/api/v1/rating/product";
 
     private final RatingUpdater ratingUpdater;
     private final SecurityPrincipalProvider securityPrincipalProvider;
