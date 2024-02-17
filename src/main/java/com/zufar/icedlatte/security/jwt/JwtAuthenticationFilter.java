@@ -93,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
                         SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL,
-                        SecurityConstants.PRODUCT_URL)
+                        SecurityConstants.RATING_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }
