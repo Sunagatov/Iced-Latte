@@ -55,6 +55,4 @@ public class ProductsProvider {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         return fileMetadataDtoConverter.toDto(fileMetadata);
     }
-
-
 }
