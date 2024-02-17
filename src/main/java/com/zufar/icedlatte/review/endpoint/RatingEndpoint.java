@@ -22,19 +22,17 @@ import java.util.UUID;
 @RequestMapping(value = RatingEndpoint.RATING_URL)
 public class RatingEndpoint {
 
-    public static final String RATING_URL = "/api/v1/products";
+    public static final String RATING_URL = "/api/v1/products/rating";
 
     private final RatingUpdater ratingUpdater;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
-
-    @PostMapping("/rating")
+    @PostMapping
     public ResponseEntity<RatingDto> addNewMarkToProduct(@RequestBody final AddNewMarkToProductRequest rating) {
         log.info("Received the request to add new mark to product");
         final UUID userId = securityPrincipalProvider.getUserId();
         final RatingDto ratingDto = ratingUpdater.addRating(rating, userId);
         log.info("Mark was added");
-        return ResponseEntity.ok()
-                .body(ratingDto);
+        return ResponseEntity.ok().body(ratingDto);
     }
 }

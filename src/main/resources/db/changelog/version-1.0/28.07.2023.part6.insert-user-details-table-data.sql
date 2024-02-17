@@ -16,4 +16,4 @@ INSERT INTO user_details (id, first_name, last_name, birth_date, phone_number, e
     ('55555555-5555-5555-5555-555555555555', 'David', 'Brown', '1982-12-05', '+12345678905', 'david@example.com', '$2a$10$YLYQZwbKJ/JbhY0ourX.w.fyUQt2xbKNPRlBneAWEuom9dmaa/hnO', 'e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', true, true, true, true);
 
 INSERT INTO user_details (id, first_name, last_name, birth_date, phone_number, email, password, address_id, account_non_expired, account_non_locked, credentials_non_expired, enabled) VALUES
-    ('66666666-6666-6666-6666-666666666666', 'Angelina', 'Jolie', '1975-06-04', '+12345678906', 'al.matsnev.01@gmail.com', '$2a$12$Yp8DN7wiVL8/erC.thXvlOcbbQ8/s5bolVmNz7/yWhDIFAsOPiaoS', 'f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', true, true, true, true);
+    ('66666666-6666-6666-6666-666666666666', 'Angelina', 'Jolie', '1975-06-04', '+12345678906', 'angelina@example.com', '$2a$10$0rWCw95gSFuuDP5TTqZ2sucLfQyKatrmyC2oifG/era5jWAczHnD2', 'f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', true, true, true, true);

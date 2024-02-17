@@ -11,6 +11,9 @@ import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -23,6 +26,7 @@ public class RatingUpdater {
     private final ProductApi productApi;
     private final RatingConverter ratingConverter;
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public RatingDto addRating(final AddNewMarkToProductRequest addNewMarkToProductRequest, final UUID userId) {
         final UserEntity user = singleUserProvider.getUserEntityById(userId);
         final ProductInfo product = productApi.getProductEntityById(addNewMarkToProductRequest.getProductId());
