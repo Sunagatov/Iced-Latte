@@ -38,7 +38,7 @@ public class ProductApiImpl implements ProductApi {
     }
 
     @Override
-    public ProductInfo getProductEntityById(UUID productId) {
+    public ProductInfo getProductEntityById(final UUID productId) {
         return singleProductProvider.getProductEntityById(productId);
     }
 }
