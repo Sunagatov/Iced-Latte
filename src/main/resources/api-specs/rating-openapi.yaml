@@ -19,7 +19,7 @@ tags:
     description: "Operations related to rating products"
 
 paths:
-  /api/v1/products/rating:
+  /api/v1/rating/product:
     post:
       tags:
         - "Rating"
@@ -44,7 +44,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RatingDto"
 
-  /api/v1/products/rating/{productId}:
+  /api/v1/rating/product/{productId}:
     get:
       tags:
         - "Rating"
