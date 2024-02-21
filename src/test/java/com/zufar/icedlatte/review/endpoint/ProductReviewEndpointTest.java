@@ -21,17 +21,16 @@ import java.util.UUID;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBodySchemaResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 @Testcontainers
-@DisplayName("ReviewEndpoint Tests")
+@DisplayName("ProductReviewEndpoint Tests")
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ReviewEndpointTest {
+class ProductReviewEndpointTest {
 
     private static final String REVIEW_ADD_BODY = "/review/model/add-review-body.json";
     private static final String REVIEW_ADD_BAD_BODY = "/review/model/add-review-bad-body.json";
@@ -61,7 +60,7 @@ class ReviewEndpointTest {
                 .log().all(true)
                 .port(port)
                 .header("Authorization", "Bearer " + jwtToken)
-                .basePath(ReviewEndpoint.REVIEW_URL)
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
     }
@@ -126,21 +125,21 @@ class ReviewEndpointTest {
                 .body(body)
                 .post("/{productId}/reviews", EXISTING_PRODUCT);
 
-        var reviewId = responsePost.then().extract().path("reviewId").toString();
+        var reviewId = responsePost.then().extract().path("productReviewId").toString();
 
         Response response = given(specification)
-                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, reviewId);
+                .delete("/{productId}/reviews/{productReviewId}", EXISTING_PRODUCT, reviewId);
 
         response.then().statusCode(HttpStatus.OK.value());
     }
 
     @Test
-    @DisplayName("Should return 200 OK on delete non-existent review")
-    void shouldReturnOKOnDeleteNonExistentReview() {
+    @DisplayName("Should return 404 Not Found on attempt to delete non-existent review")
+    void shouldReturnNotFoundOnDeleteNonExistentReview() {
         Response response = given(specification)
-                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, UUID.randomUUID());
+                .delete("/{productId}/reviews/{productReviewId}", EXISTING_PRODUCT, UUID.randomUUID());
 
-        response.then().statusCode(HttpStatus.OK.value());
+        assertRestApiNotFoundResponse(response, FAILED_REVIEW_SCHEMA);
     }
 
     @Test
@@ -149,7 +148,7 @@ class ReviewEndpointTest {
         specification = given()
                 .log().all(true)
                 .port(port)
-                .basePath(ReviewEndpoint.REVIEW_URL)
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
 

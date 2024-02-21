@@ -578,18 +578,18 @@
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- Generate from Review OpenAPI Spec -->
+                    <!-- Generate from Product Review OpenAPI Spec -->
                     <execution>
-                        <id>generate-from-review-openapi-spec</id>
+                        <id>generate-from-product-productReview-openapi-spec</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api-specs/review-openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-review-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.review.api</apiPackage>
+                                <apiPackage>${openapi-package}.product.review.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

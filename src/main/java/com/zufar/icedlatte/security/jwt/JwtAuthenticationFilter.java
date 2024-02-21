@@ -84,13 +84,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {
-        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
-            return HttpMethod.GET.name().equals(request.getMethod());
-        }
         return !isSecuredUrl(request);
     }
 
     private boolean isSecuredUrl(HttpServletRequest request) {
+        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
+            return !HttpMethod.GET.name().equals(request.getMethod());
+        }
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
                 SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL)

@@ -46,4 +46,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql
   - include:
-      file: db/changelog/version-1.0/08.02.2024.create-review-table.sql
+      file: db/changelog/version-1.0/08.02.2024.part1.create-product-review-table.sql
+  - include:
+      file: db/changelog/version-1.0/08.02.2024.part2.insert-product-review-table.sql

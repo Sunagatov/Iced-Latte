@@ -2,7 +2,7 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte Security API"
-  description: "API for accessing reviews and related operations in the Iced-Latte platform"
+  description: "API for accessing product reviews and related operations in the Iced-Latte platform"
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -15,15 +15,15 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Review"
-    description: "An API for review creation and modification"
+  - name: "Product Review"
+    description: "An API for product review creation and modification"
 
 paths:
   /api/v1/products/{productId}/reviews:
     get:
       tags:
-        - "Review"
-      summary: "Retrieve reviews and ratings for any user"
+        - "Product Review"
+      summary: "Retrieve reviews and ratings for product by any user"
       operationId: "getReviewsAndRatings"
       parameters:
         - name: "productId"
@@ -72,10 +72,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReviewsAndRatingsWithPagination"
+                $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
     post:
       tags:
-        - "Review"
+        - "Product Review"
       summary: "Add a review item for a product by authorized user"
       operationId: "addReview"
       parameters:
@@ -90,7 +90,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewReview"
+              $ref: "#/components/schemas/ProductReviewRequest"
         required: true
       responses:
         "200":
@@ -98,12 +98,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReviewResponse"
+                $ref: "#/components/schemas/ProductReviewResponse"
 
-  /api/v1/products/{productId}/reviews/{reviewId}:
+  /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
       tags:
-        - "Review"
+        - "Product Review"
       summary: "Remove a review item for a product by authorized user"
       operationId: "deleteReview"
       parameters:
@@ -114,7 +114,7 @@ paths:
           schema:
             type: "string"
             format: "uuid"
-        - name: "reviewId"
+        - name: "productReviewId"
           in: "path"
           required: true
           description: "Unique identifier of the review."
@@ -127,7 +127,7 @@ paths:
 
 components:
   schemas:
-    NewReview:
+    ProductReviewRequest:
       type: "object"
       properties:
         text:
@@ -137,24 +137,25 @@ components:
       required:
         - text
 
-    ReviewResponse:
+    ProductReviewResponse:
       type: "object"
       properties:
-        reviewId:
+        productReviewId:
           type: "string"
+          format: "uuid"
         text:
           type: "string"
         createdAt:
           type: "string"
           format: "date-time"
 
-    ReviewsAndRatingsWithPagination:
+    ProductReviewsAndRatingsWithPagination:
       type: "object"
       properties:
         reviewsWithRatings:
           type: "array"
           items:
-            $ref: "#/components/schemas/ReviewWithRating"
+            $ref: "#/components/schemas/ProductReviewWithRating"
         page:
           type: "integer"
           format: "int32"
@@ -168,7 +169,7 @@ components:
           type: "integer"
           format: "int32"
 
-    ReviewWithRating:
+    ProductReviewWithRating:
       type: "object"
       properties:
         rating:
