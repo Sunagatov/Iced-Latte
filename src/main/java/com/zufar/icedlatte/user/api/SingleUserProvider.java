@@ -48,7 +48,7 @@ public class SingleUserProvider {
         return userCrudRepository.findByEmail(email)
                 .map(userDtoConverter::toDto)
                 .orElseThrow(() -> {
-                    log.warn("Failed to get the user details");
+                    log.warn(LOG_MSG_ON_FAILURE);
                     return new UserNotFoundException(null);
                 });
     }
