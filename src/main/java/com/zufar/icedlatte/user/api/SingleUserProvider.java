@@ -17,6 +17,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SingleUserProvider {
 
+    public static final String LOG_MSG_ON_FAILURE = "Failed to get the user details";
+
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
     private final UserAvatarLinkUpdater userAvatarLinkUpdater;
@@ -27,7 +29,7 @@ public class SingleUserProvider {
                 .map(userDtoConverter::toDto)
                 .map(userAvatarLinkUpdater::update)
                 .orElseThrow(() -> {
-                    log.warn("Failed to get the user details");
+                    log.warn(LOG_MSG_ON_FAILURE);
                     return new UserNotFoundException(userId);
                 });
     }
@@ -36,7 +38,7 @@ public class SingleUserProvider {
     public UserEntity getUserEntityById(final UUID userId) throws UserNotFoundException {
         return userCrudRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.warn("Failed to get the user details");
+                    log.warn(LOG_MSG_ON_FAILURE);
                     return new UserNotFoundException(userId);
                 });
     }
