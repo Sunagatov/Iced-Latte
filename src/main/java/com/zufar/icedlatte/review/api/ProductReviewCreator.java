@@ -29,7 +29,7 @@ public class ProductReviewCreator {
     public ProductReviewResponse create(final UUID productId, final ProductReviewRequest productReviewRequest) {
         UUID userId = securityPrincipalProvider.getUserId();
         var text = productReviewRequest.getText().trim();
-        productReviewValidator.validate(productId, text);
+        productReviewValidator.validateReview(productId, text);
         var review = ProductReview.builder()
                 .userId(userId)
                 .productId(productId)

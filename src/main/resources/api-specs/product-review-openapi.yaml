@@ -99,6 +99,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewResponse"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Product not found"
+        "500":
+          description: "Internal server error."
 
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
@@ -124,6 +130,12 @@ paths:
       responses:
         "200":
           description: "OK"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Product or review not found"
+        "500":
+          description: "Internal server error."
 
 components:
   schemas:

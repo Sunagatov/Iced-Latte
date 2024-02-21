@@ -21,9 +21,10 @@ public class ProductReviewDeleter {
     private final ReviewRepository reviewRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductReviewProvider productReviewProvider;
+    private final ProductReviewValidator productReviewValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void delete(final UUID productReviewId) {
+    public void delete(final UUID productId, final UUID productReviewId) {
         var review = productReviewProvider.getReviewEntityById(productReviewId);
         var deleterId = securityPrincipalProvider.getUserId();
         var creatorId = review.getUserId();
@@ -31,6 +32,7 @@ public class ProductReviewDeleter {
             log.warn("Failed to delete product review: {}", productReviewId);
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+        productReviewValidator.checkProduct(productId);
         reviewRepository.deleteById(productReviewId);
     }
 }

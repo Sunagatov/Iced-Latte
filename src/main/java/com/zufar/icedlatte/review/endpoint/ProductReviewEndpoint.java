@@ -49,8 +49,21 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable final UUID productId, @PathVariable final UUID productReviewId) {
         log.info("Received request to delete product review with id: {}, product id: {}", productReviewId, productId);
-        productReviewDeleter.delete(productReviewId);
+        productReviewDeleter.delete(productId, productReviewId);
         log.info("Product review was deleted");
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    @GetMapping(value = "/{productId}/reviews")
+    public ResponseEntity<ProductReviewsAndRatingsWithPagination> getReviewsAndRatings(@PathVariable final UUID productId, @RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                                                @RequestParam(name = "size", defaultValue = "10") Integer size,
+                                                                                @RequestParam(name = "sort_attribute", defaultValue = "createdAt") String sortAttribute,
+                                                                                @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection){
+        log.info("Received the request to get reviews for product {} with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+                productId, page, size, sortAttribute, sortDirection);
+        ProductReviewsAndRatingsWithPagination reviewsPaginationDto = pageableReviewsProvider.getProductReviews(productId, page, size, sortAttribute, sortDirection);
+        log.info("Product reviews were retrieved successfully");
+        return ResponseEntity.ok().body(reviewsPaginationDto);
     }
 }
