@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.exception.handler;
 
+import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,17 @@ public class GlobalExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
         log.error("Handle method argument not valid exception: failed: message: {}, debugMessage: {}.",
                 message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
+
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+
+        log.warn("Handle resource not found exception: failed: message: {}, debugMessage: {}.",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;
     }

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.api;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,15 @@ public class SingleProductProvider {
                 .map(productPictureLinkUpdater::update)
                 .orElseThrow(() -> {
                     log.error("The product with id = {} is not found.", productId);
+                    return new ProductNotFoundException(productId);
+                });
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public ProductInfo getProductEntityById(final UUID productId) {
+        return productInfoRepository.findById(productId)
+                .orElseThrow(() -> {
+                    log.warn("Failed to get the product entity: {}", productId);
                     return new ProductNotFoundException(productId);
                 });
     }
