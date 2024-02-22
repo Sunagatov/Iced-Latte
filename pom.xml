@@ -81,7 +81,7 @@
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
 
         <!-- Database Dependencies Versions -->
-        <postgresql.version>42.6.0</postgresql.version>
+        <postgresql.version>42.7.2</postgresql.version>
         <liquibase.version>4.23.1</liquibase.version>
 
         <!-- Redis Dependencies Versions -->
