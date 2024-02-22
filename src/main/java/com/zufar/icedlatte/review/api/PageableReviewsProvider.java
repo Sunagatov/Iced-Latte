@@ -17,13 +17,14 @@ import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
 @Service
 @RequiredArgsConstructor
 public class PageableReviewsProvider {
+
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId, final Integer page,
+    public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId,
+                                                                    final Integer page,
                                                                     final Integer size,
                                                                     final String sortAttribute,
                                                                     final String sortDirection) {
         Pageable pageable = createPageableObject(page, size, sortAttribute, sortDirection);
-
         throw new UnsupportedOperationException("getProductReviews has not been implemenetd");
     }
 

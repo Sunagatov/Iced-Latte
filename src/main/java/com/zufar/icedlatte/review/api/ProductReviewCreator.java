@@ -27,15 +27,16 @@ public class ProductReviewCreator {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewResponse create(final UUID productId, final ProductReviewRequest productReviewRequest) {
-        UUID userId = securityPrincipalProvider.getUserId();
         var text = productReviewRequest.getText().trim();
         productReviewValidator.validateReview(productId, text);
+
         var review = ProductReview.builder()
-                .userId(userId)
+                .userId(securityPrincipalProvider.getUserId())
                 .productId(productId)
                 .text(text)
                 .build();
         reviewRepository.saveAndFlush(review);
+
         return productReviewDtoConverter.toReviewResponse(review);
     }
 }
