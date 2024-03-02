@@ -3,6 +3,7 @@ package com.zufar.icedlatte.review.exception.handler;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
+import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleUnsupportedReviewFormatException(final EmptyProductReviewException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle product invalid property exception: failed: message: {}, debugMessage: {}.",
+        log.warn("Handle unsupported review format exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;
@@ -36,7 +37,18 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleDeniedProductReviewDeletionException(final DeniedProductReviewDeletionException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle product invalid property exception: failed: message: {}, debugMessage: {}.",
+        log.warn("Handle denied product review deletion exception: failed: message: {}, debugMessage: {}.",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(DeniedProductReviewCreationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleDeniedProductReviewCreationException(final DeniedProductReviewCreationException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+
+        log.warn("Handle denied product review creation exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;

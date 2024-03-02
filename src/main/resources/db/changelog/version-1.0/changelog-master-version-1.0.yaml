@@ -51,3 +51,5 @@ databaseChangeLog:
       file: db/changelog/version-1.0/08.02.2024.part2.insert-product-review-table.sql
   - include:
       file: db/changelog/version-1.0/15.02.2024.part1.create-rating-table.sql
+  - include:
+      file: db/changelog/version-1.0/15.02.2024.part2.insert-rating-table.sql

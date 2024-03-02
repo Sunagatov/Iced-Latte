@@ -17,7 +17,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Setter
@@ -47,4 +49,8 @@ public class Rating {
 
     @Column(name = "mark", nullable = false)
     private Integer mark;
+
+    @CreationTimestamp
+    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
+    private OffsetDateTime createdAt;
 }

@@ -26,7 +26,6 @@ public class ProductReviewValidator {
         if (text.isEmpty()) {
             throw new EmptyProductReviewException();
         }
-        validateProductExists(productId);
         validateReviewExists(userId, productId);
     }
 
@@ -40,17 +39,17 @@ public class ProductReviewValidator {
     /**
      * Check if user has already created a review for this product
      */
-    public void validateReviewExists(final UUID userId, final UUID productReviewId) {
-        var review = reviewRepository.findByUserIdAndProductId(userId, productReviewId);
+    public void validateReviewExists(final UUID userId, final UUID productId) {
+        var review = reviewRepository.findByUserIdAndProductInfoProductId(userId, productId);
         if (review.isPresent()) {
-            throw new DeniedProductReviewCreationException(productReviewId, userId);
+            throw new DeniedProductReviewCreationException(productId, userId, review.get().getId());
         }
     }
 
 
     public void validateProductReviewDeletionAllowed(final UUID productReviewId) {
         var currentUserId = securityPrincipalProvider.getUserId();
-        var creatorId = productReviewProvider.getReviewEntityById(productReviewId).getUserId();
+        var creatorId = productReviewProvider.getReviewEntityById(productReviewId).getUser().getId();
 
         if (!currentUserId.equals(creatorId)) {
             throw new DeniedProductReviewDeletionException(productReviewId, currentUserId);

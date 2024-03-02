@@ -26,6 +26,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql:
+      true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml

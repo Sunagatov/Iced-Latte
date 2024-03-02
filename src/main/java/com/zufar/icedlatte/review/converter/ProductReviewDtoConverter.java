@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.converter;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
+import com.zufar.icedlatte.openapi.dto.ProductReviewWithRating;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import org.springframework.data.domain.Page;
@@ -18,7 +18,13 @@ public class ProductReviewDtoConverter {
         return response;
     }
 
-    public ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductInfoDto> pageProductReviewsAndRatingsResponseDto){
-        return null;
+    public ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewWithRating> productReviewWithRatingPage){
+        var result = new ProductReviewsAndRatingsWithPagination();
+        result.setPage(productReviewWithRatingPage.getTotalPages());
+        result.setSize(productReviewWithRatingPage.getSize());
+        result.setTotalElements(productReviewWithRatingPage.getTotalElements());
+        result.setTotalPages(productReviewWithRatingPage.getTotalPages());
+        result.setReviewsWithRatings(productReviewWithRatingPage.getContent());
+        return result;
     }
 }
