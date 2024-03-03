@@ -37,7 +37,7 @@ class OrderEndpointTest {
     private static final String ORDER_ADD_BODY_2 = "/order/model/add-order-body-1.json";
     private static final String ORDER_ADD_BAD_BODY = "/order/model/add-order-bad-body.json";
     private static final String ORDER_RESPONSE_SCHEMA = "order/model/schema/order-response-schema.json";
-    private static final String FAILED_ORDER_SCHEMA = "order/model/schema/failed-order-schema.json";
+    private static final String FAILED_ORDER_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String ORDER_LIST_SCHEMA = "order/model/schema/order-list-schema.json";
 
     protected static RequestSpecification specification;

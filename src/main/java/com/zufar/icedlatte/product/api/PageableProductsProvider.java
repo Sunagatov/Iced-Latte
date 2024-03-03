@@ -8,13 +8,13 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
 
 
 @Slf4j
@@ -40,18 +40,5 @@ public class PageableProductsProvider {
                 .map(productPictureLinkUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
-    }
-
-    private Pageable createPageableObject(final Integer page,
-                                          final Integer size,
-                                          final String sortAttribute,
-                                          final String sortDirection) {
-        Sort sort;
-        if (sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()))
-            sort = Sort.by(sortAttribute).ascending();
-        else
-            sort = Sort.by(sortAttribute).descending();
-
-        return PageRequest.of(page, size, sort);
     }
 }

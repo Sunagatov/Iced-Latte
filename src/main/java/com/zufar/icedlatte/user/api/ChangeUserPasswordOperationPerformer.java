@@ -44,4 +44,10 @@ public class ChangeUserPasswordOperationPerformer {
 
         userRepository.changeUserPassword(newEncryptedPassword, userId);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void changeUserPassword(final UUID userId, final String newPassword) {
+        String newEncryptedPassword = passwordEncoder.encode(newPassword);
+        userRepository.changeUserPassword(newEncryptedPassword, userId);
+    }
 }

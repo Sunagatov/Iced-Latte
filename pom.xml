@@ -81,7 +81,7 @@
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
 
         <!-- Database Dependencies Versions -->
-        <postgresql.version>42.6.0</postgresql.version>
+        <postgresql.version>42.7.2</postgresql.version>
         <liquibase.version>4.23.1</liquibase.version>
 
         <!-- Redis Dependencies Versions -->
@@ -572,6 +572,24 @@
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.order.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Product Review OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-product-productReview-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-review-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <apiPackage>${openapi-package}.product.review.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

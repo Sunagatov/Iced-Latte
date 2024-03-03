@@ -1,0 +1,198 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Security API"
+  description: "API for accessing product reviews and related operations in the Iced-Latte platform"
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://iced-latte.uk/backend"
+    description: "Production server"
+
+tags:
+  - name: "Product Review"
+    description: "An API for product review creation and modification"
+
+paths:
+  /api/v1/products/{productId}/reviews:
+    get:
+      tags:
+        - "Product Review"
+      summary: "Retrieve reviews and ratings for product by any user"
+      operationId: "getReviewsAndRatings"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "page"
+          description: "The page number in order (starting from 0)."
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+            minimum: 0
+        - name: "size"
+          description: "The number of reviews per page."
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: "sort_attribute"
+          description: "The name of the product field by which the results should be sorted."
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "createdAt"
+        - name: "sort_direction"
+          description: "The direction of the sorting."
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "desc"
+      responses:
+        "200":
+          description: "The product was found and its reviews are returned."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
+    post:
+      tags:
+        - "Product Review"
+      summary: "Add a review item for a product by authorized user"
+      operationId: "addReview"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductReviewRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewResponse"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Product not found"
+        "500":
+          description: "Internal server error."
+
+  /api/v1/products/{productId}/reviews/{productReviewId}:
+    delete:
+      tags:
+        - "Product Review"
+      summary: "Remove a review item for a product by authorized user"
+      operationId: "deleteReview"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "productReviewId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the review."
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+        "401":
+          description: "Unauthorized access."
+        "404":
+          description: "Product or review not found"
+        "500":
+          description: "Internal server error."
+
+components:
+  schemas:
+    ProductReviewRequest:
+      type: "object"
+      properties:
+        text:
+          type: "string"
+          minLength: 1
+          maxLength: 1500
+      required:
+        - text
+
+    ProductReviewResponse:
+      type: "object"
+      properties:
+        productReviewId:
+          type: "string"
+          format: "uuid"
+        text:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    ProductReviewsAndRatingsWithPagination:
+      type: "object"
+      properties:
+        reviewsWithRatings:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProductReviewWithRating"
+        page:
+          type: "integer"
+          format: "int32"
+        size:
+          type: "integer"
+          format: "int32"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+          format: "int32"
+
+    ProductReviewWithRating:
+      type: "object"
+      properties:
+        rating:
+          type: "integer"
+          format: "int32"
+        reviewText:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        userName:
+          type: "string"
+        userLastName:
+          type: "string"

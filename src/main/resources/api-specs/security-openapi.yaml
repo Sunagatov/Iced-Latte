@@ -109,6 +109,46 @@ paths:
         "500":
           description: "Internal Server Error"
 
+  /api/v1/auth/password/forgot:
+    post:
+      tags:
+        - "Security"
+      summary: "Send email with verification code"
+      operationId: "forgotPassword"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
+  /api/v1/auth/password/change:
+    post:
+      tags:
+        - "Security"
+      summary: "Change password with verification code"
+      operationId: "changePassword"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
 components:
   schemas:
     UserRegistrationRequest:
@@ -151,4 +191,20 @@ components:
         token:
           type: "string"
         refreshToken:
+          type: "string"
+
+    ForgotPasswordRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+
+    ChangePasswordRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        code:
+          type: "string"
+        password:
           type: "string"
