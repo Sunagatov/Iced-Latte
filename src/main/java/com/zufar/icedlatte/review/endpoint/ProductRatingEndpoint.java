@@ -2,7 +2,7 @@ package com.zufar.icedlatte.review.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.ProductRating;
 import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
-import com.zufar.icedlatte.openapi.product.rating.api.ProductRatingApi;
+import com.zufar.icedlatte.openapi.product.productRating.api.ProductRatingApi;
 import com.zufar.icedlatte.review.api.RatingProvider;
 import com.zufar.icedlatte.review.api.RatingUpdater;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
