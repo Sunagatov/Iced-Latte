@@ -1,4 +1,4 @@
-INSERT INTO product_rating (id, user_id, product_id, mark)
+INSERT INTO product_rating (id, user_id, product_id, rating_value)
 VALUES
     ('11111111-1111-1111-1111-111111111112', '11111111-1111-1111-1111-111111111111', 'ad0ef2b7-816b-4a11-b361-dfcbe705fc96', 5),
     ('11111111-1111-1111-1111-111111111113', '22222222-2222-2222-2222-222222222222', 'ad0ef2b7-816b-4a11-b361-dfcbe705fc96', 4),

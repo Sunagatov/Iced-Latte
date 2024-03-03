@@ -2,6 +2,7 @@ package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,15 @@ public class GlobalExceptionHandler {
         log.warn("Handle resource not found exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.warn("Handle constraint violation exception: failed: message: {}, debugMessage: {}.",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;
     }
 }

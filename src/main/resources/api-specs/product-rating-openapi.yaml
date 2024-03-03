@@ -15,40 +15,45 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Rating"
+  - name: "ProductRating"
     description: "Operations related to rating products"
 
 paths:
-  /api/v1/rating/product:
+  /api/v1/products/{productId}/ratings/{rating}:
     post:
       tags:
-        - "Rating"
-      summary: "Add mark to product"
-      operationId: "addNewMarkToProduct"
-      requestBody:
-        description: "Payload containing the product ID and mark."
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddNewMarkToProductRequest"
-            examples:
-              add-mark:
-                summary: "Add Mark"
-                value: {"productId": "a1b2c3d4", "mark": 5}
+        - "ProductRating"
+      summary: "Add rating to product"
+      operationId: "addNewProductRating"
+      parameters:
+        - name: "productId"
+          in: "path"
+          description: "ID of the product to get rating for"
+          required: true
+          schema:
+           type: "string"
+           format: "uuid"
+        - name: "rating"
+          in: "path"
+          description: "Rating value"
+          required: true
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 5
       responses:
         "200":
-          description: "Mark added successfully."
+          description: "Rating added successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RatingDto"
+                $ref: "#/components/schemas/ProductRatingDto"
 
-  /api/v1/rating/product/{productId}:
+  /api/v1/products/{productId}/ratings:
     get:
       tags:
-        - "Rating"
-      summary: "Get rating"
+        - "ProductRating"
+      summary: "Get Product Rating"
       operationId: "getRatingByProductId"
       parameters:
         - name: "productId"
@@ -60,51 +65,35 @@ paths:
             format: "uuid"
       responses:
         "200":
-          description: "Rating retrieved successfully."
+          description: "Product rating retrieved successfully."
           content:
             application/json:
               schema:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/RatingMark"
+                  $ref: "#/components/schemas/ProductRating"
 
 components:
   schemas:
-    AddNewMarkToProductRequest:
+    ProductRatingDto:
       type: object
       properties:
         productId:
           type: string
           format: "uuid"
-        mark:
+        rating:
           type: Integer
       required:
         - productId
-        - mark
+        - rating
 
-    RatingDto:
+    ProductRating:
       type: object
       properties:
-        productId:
-          type: string
-          format: "uuid"
-        userId:
-          type: string
-          format: "uuid"
-        mark:
-          type: Integer
-      required:
-        - productId
-        - userId
-        - mark
-
-    RatingMark:
-      type: object
-      properties:
-        mark:
+        rating:
           type: Integer
         quantity:
           type: Integer
       required:
-        - mark
+        - rating
         - quantity

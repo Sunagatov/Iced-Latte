@@ -596,18 +596,18 @@
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- Generate from Product rating OpenAPI Spec -->
+                    <!-- Generate from Product productRating OpenAPI Spec -->
                     <execution>
-                        <id>generate-from-product-rating-openapi-spec</id>
+                        <id>generate-from-product-productRating-openapi-spec</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api-specs/rating-openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-rating-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.order.api</apiPackage>
+                                <apiPackage>${openapi-package}.product.productRating.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

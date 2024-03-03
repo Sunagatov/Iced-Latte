@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.openapi.dto.RatingMark;
+import com.zufar.icedlatte.openapi.dto.ProductRating;
 import com.zufar.icedlatte.review.repository.RatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,14 +19,14 @@ public class RatingProvider {
     private final RatingRepository ratingRepository;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public List<RatingMark> getRatingByProductId(final UUID productId) {
+    public List<ProductRating> getRatingByProductId(final UUID productId) {
         List<Object[]> resultList = ratingRepository.countRatingMarksByProductId(productId);
-        List<RatingMark> ratingMarks = new ArrayList<>();
+        List<ProductRating> ratingMarks = new ArrayList<>();
 
         for (Object[] result : resultList) {
             Integer mark = ((Number) result[0]).intValue();
             Integer quantity = ((Number) result[1]).intValue();
-            ratingMarks.add(new RatingMark(mark, quantity));
+            ratingMarks.add(new ProductRating(mark, quantity));
         }
 
         return ratingMarks;

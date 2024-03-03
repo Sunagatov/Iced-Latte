@@ -1,11 +1,10 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.openapi.dto.AddNewMarkToProductRequest;
-import com.zufar.icedlatte.openapi.dto.RatingDto;
+import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
 import com.zufar.icedlatte.product.api.ProductApi;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.review.converter.RatingConverter;
-import com.zufar.icedlatte.review.entity.Rating;
+import com.zufar.icedlatte.review.entity.ProductRating;
 import com.zufar.icedlatte.review.repository.RatingRepository;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -27,17 +26,17 @@ public class RatingUpdater {
     private final RatingConverter ratingConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public RatingDto addRating(final AddNewMarkToProductRequest addNewMarkToProductRequest, final UUID userId) {
+    public ProductRatingDto addRating(final UUID userId, final UUID productId, final Integer rating) {
         final UserEntity user = singleUserProvider.getUserEntityById(userId);
-        final ProductInfo product = productApi.getProductEntityById(addNewMarkToProductRequest.getProductId());
+        final ProductInfo product = productApi.getProductEntityById(productId);
 
-        Rating rating = Rating.builder()
+        ProductRating productRatingEntity = ProductRating.builder()
                 .user(user)
                 .productInfo(product)
-                .mark(addNewMarkToProductRequest.getMark())
+                .ratingValue(rating)
                 .build();
 
-        Rating savedRating = ratingRepository.save(rating);
-        return ratingConverter.convertToDto(savedRating);
+        ratingRepository.save(productRatingEntity);
+        return ratingConverter.convertToDto(productRatingEntity);
     }
 }
