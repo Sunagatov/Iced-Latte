@@ -18,7 +18,6 @@ import com.google.gson.Gson;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-// https://platform.openai.com/docs/api-reference/moderations
 public class AiChecker implements AiApi {
 
     @Value("${ai.url}")
@@ -39,24 +38,25 @@ public class AiChecker implements AiApi {
 
             log.debug("Response Code: " + responseCode);
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+          response.append(inputLine);
+        }
+
+        log.debug("Response: " + response);
+
+        Gson gson = new Gson();
+        TextModerationResult result =
+            gson.fromJson(response.toString(), TextModerationResult.class);
+
+        AiResult air = AiResult.OK;
+        if (result.getResults().stream().anyMatch(TextModerationResult.Result::isFlagged)) {
+          air = AiResult.NOT_APPROPRIATE;
+        }
+        return new AiDto(air, response.toString());
             }
-            in.close();
-
-            log.debug("Response: " + response);
-
-            Gson gson = new Gson();
-            TextModerationResult result = gson.fromJson(response.toString(), TextModerationResult.class);
-
-            AiResult air = AiResult.OK;
-            if (result.getResults().stream().anyMatch(TextModerationResult.Result::isFlagged)) {
-                air = AiResult.NOT_APPROPRIATE;
-            }
-            return new AiDto(air, response.toString());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return new AiDto(AiResult.ERROR, e.getMessage());
