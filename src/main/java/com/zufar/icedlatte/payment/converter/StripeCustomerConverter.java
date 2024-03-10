@@ -40,3 +40,4 @@ public interface StripeCustomerConverter {
         return StringUtils.join(authorizedUser.getFirstName(), Character.SPACE_SEPARATOR, authorizedUser.getLastName());
     }
 }
+
