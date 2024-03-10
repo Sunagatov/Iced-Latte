@@ -54,15 +54,17 @@
         <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
-        <testcontainers.version>${org.testcontainers.version}</testcontainers.version>
+        <testcontainers.version>1.19.3</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <rest-assured.version>5.3.2</rest-assured.version>
+        <json-schema-validator.version>3.3.0</json-schema-validator.version>
 
         <!-- Spring Dependencies Versions -->
         <spring-boot-starter-web.version>3.1.3</spring-boot-starter-web.version>
         <spring-retry.version>2.0.2</spring-retry.version>
         <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
         <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
+        <spring-boot-starter-mail.version>3.2.0</spring-boot-starter-mail.version>
 
         <!-- JWT Dependencies Versions -->
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
@@ -104,9 +106,10 @@
         <lombok.version>1.18.24</lombok.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
-        <json-schema-validator.version>3.3.0</json-schema-validator.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.2.0</springdoc-openapi-starter-webmvc-ui.version>
-        <org.testcontainers.version>1.19.3</org.testcontainers.version>
+        <jakarta.mail-api.version>2.1.2</jakarta.mail-api.version>
+        <guava.version>32.0.0-jre</guava.version>
+        <gson.version>2.10.1</gson.version>
     </properties>
 
     <!-- Dependencies -->
@@ -259,19 +262,19 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-            <version>3.2.0</version>
+            <version>${spring-boot-starter-mail.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.mail</groupId>
             <artifactId>jakarta.mail-api</artifactId>
-            <version>2.1.2</version>
+            <version>${jakarta.mail-api.version}</version>
         </dependency>
 
         <!-- Temporary cache -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.0.0-jre</version>
+            <version>${guava.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -279,6 +282,11 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
         </dependency>
     </dependencies>
 

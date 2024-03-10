@@ -74,3 +74,13 @@ jwt:
   refresh:
     secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     expiration: 604800000 # 7 days
+
+#
+# AI Properties
+#
+ai:
+  # https://platform.openai.com/docs/api-reference/moderations/create
+  url:          "https://api.openai.com/v1/moderations"
+  api_key:      "sk-api-key"
+  request_body: '{ "input": "$message"}'
+  message_replacement_pattern: "$message"
