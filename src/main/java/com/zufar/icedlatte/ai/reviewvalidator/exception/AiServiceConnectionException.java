@@ -7,7 +7,7 @@ public class AiServiceConnectionException extends RuntimeException {
     }
 
     public AiServiceConnectionException() {
-        super(String.format("Failed to open httpURLConnection"));
+        super("Failed to open httpURLConnection");
     }
 }
 
