@@ -1,13 +1,9 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.product.util.PaginationAndSortingAttribute;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
+import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 
 
@@ -186,14 +183,5 @@ class ProductsEndpointTest {
                 PRODUCTS_PATH_TO_NAME,
                 EXPECTED_PRODUCT_NAME
         );
-    }
-
-    protected String getRequestBody(String resourcePath) {
-        try {
-            JsonNode json = JsonLoader.fromResource(resourcePath);
-            return json.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

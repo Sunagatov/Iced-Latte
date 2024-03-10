@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
+    private static final int USER_ACCOUNT_LOCKOUT_DURATION_MINUTES = 30;
+    private static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials for user's account with email = '%s'";
+
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final LoginFailureHandler loginFailureHandler;
@@ -28,7 +31,6 @@ public class UserAuthenticationService {
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         String userEmail = request.email();
         String userPassword = request.password();
-        int userAccountLockoutDurationMinutes = 30;
 
         log.info("Authenticating user with email = '{}'", userEmail);
 
@@ -39,25 +41,49 @@ public class UserAuthenticationService {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
+            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
             String jwtToken = jwtTokenProvider.generateToken(userDetails);
             log.info("Generated JWT token for user with email = '{}'", request.email());
 
             resetLoginAttemptsService.reset(userEmail);
 
-            return new UserAuthenticationResponse(jwtToken);
+            return new UserAuthenticationResponse(jwtToken, jwtRefreshToken);
 
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
-            throw new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
-        }
-        catch (BadCredentialsException exception) {
+            throw new UsernameNotFoundException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
+        } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
-            throw new BadCredentialsException(String.format("Invalid credentials for user's account with email = '%s'", userEmail), exception);
+            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
 
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
+            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
+
+        } catch (Exception exception) {
+            log.error("Error occurred during authentication", exception);
+            throw exception;
+        }
+    }
+
+    public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
+        try {
+            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+            String jwtToken = jwtTokenProvider.generateToken(userDetails);
+            log.info("Generated JWT token for user with email = '{}'", userEmail);
+
+            resetLoginAttemptsService.reset(userEmail);
+
+            return new UserAuthenticationResponse(jwtToken, jwtRefreshToken);
+        } catch (BadCredentialsException exception) {
+            log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
+            loginFailureHandler.handle(userEmail);
+            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
+
+        } catch (LockedException exception) {
+            log.warn("User's account with email = '{}' is locked", userEmail, exception);
+            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
 
         } catch (Exception exception) {
             log.error("Error occurred during authentication", exception);

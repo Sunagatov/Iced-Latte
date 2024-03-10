@@ -9,9 +9,11 @@ import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -54,25 +56,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(httpRequest, httpResponse);
 
         } catch (JwtTokenBlacklistedException exception) {
-            handleException(httpResponse, "JWT Token is blacklisted", exception, HttpServletResponse.SC_UNAUTHORIZED);
+            handleException(httpResponse, "JWT Token is blacklisted", exception, HttpServletResponse.SC_BAD_REQUEST);
         } catch (AbsentBearerHeaderException exception) {
-            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_UNAUTHORIZED);
+            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_BAD_REQUEST);
         } catch (ExpiredJwtException exception) {
             handleException(httpResponse, "Jwt token is expired", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (JwtTokenHasNoUserEmailException exception) {
-            handleException(httpResponse, "User email not found in jwtToken", exception, HttpServletResponse.SC_UNAUTHORIZED);
+            handleException(httpResponse, "User email not found in jwtToken", exception, HttpServletResponse.SC_BAD_REQUEST);
         } catch (UsernameNotFoundException exception) {
-            handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_UNAUTHORIZED);
+            handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_NOT_FOUND);
         } catch (Exception exception) {
             handleException(httpResponse, "Internal server error", exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-        finally {
+        } finally {
             MDC.remove(MDC_USER_ID_KEY2VALUE);
         }
     }
 
-    private void handleException(HttpServletResponse httpResponse, 
-                                 String errorMessage, 
+    private void handleException(HttpServletResponse httpResponse,
+                                 String errorMessage,
                                  Exception exception,
                                  int statusCode) throws IOException {
         log.error(errorMessage, exception);
@@ -81,14 +82,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {
         return !isSecuredUrl(request);
     }
 
     private boolean isSecuredUrl(HttpServletRequest request) {
+        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
+            return !HttpMethod.GET.name().equals(request.getMethod());
+        }
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
-                        SecurityConstants.SHIPPING_URL)
+                        SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL, SecurityConstants.SHIPPING_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }

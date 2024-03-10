@@ -11,7 +11,7 @@ info:
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
-  - url: "https://dev.api.it-sl.ru"
+  - url: "https://iced-latte.uk/backend"
     description: "Production server"
 
 tags:
@@ -118,6 +118,42 @@ paths:
           description: "User not found"
         "400":
           description: "Invalid userId provided"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
+  /api/v1/users/password/reset:
+    post:
+      tags:
+        - "User"
+      summary: "Reset user password"
+      description: "Reset user password"
+      operationId: "resetUserPassword"
+      responses:
+        "200":
+          description: "Reset user password request confirm successfully"
+        "401":
+          description: "Unauthorized access. Authentication required"
+        "500":
+          description: "Internal Server Error"
+
+  /api/v1/users/password/reset/confirm:
+    post:
+      tags:
+        - "User"
+      summary: "Reset user password confirm"
+      description: "Reset user password confirm"
+      operationId: "confirmResetUserPassword"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmEmailRequest"
+        required: true
+      responses:
+        "200":
+          description: "Reset user password confirm successfully"
         "401":
           description: "Unauthorized access. Authentication required"
         "500":
@@ -292,4 +328,8 @@ components:
           maxLength: 128
           description: "Postcode should have a length between 2 and 128 characters"
 
-
+    ConfirmEmailRequest:
+      type: "object"
+      properties:
+        token:
+          type: "string"

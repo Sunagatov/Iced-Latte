@@ -39,24 +39,22 @@ spring:
     drop-first: true
 
   #
-  # Minio Properties
+  # Aws Properties
   #
-  minio:
-    metric-name: minio.storage
-    secret-key: minio123
-    access-key: minio123
+  aws:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+    region: ${AWS_REGION}
     buckets:
-      user-avatar: avatars
-      product-picture: products
+      products: ${AWS_PRODUCT_BUCKET}
+      user-avatar: ${AWS_USER_BUCKET}
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    url: ${MINIO_HOST}:${MINIO_PORT}
     secure: false
-    region: us-east-1
     default-image-directory:
-      products: ${MINIO_DEFAULT_PRODUCT_IMAGES_PATH}
+      products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
   # Redis
@@ -154,7 +152,10 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: 1800000 # 30 minutes
+  expiration: 240000 # 4 minutes
+  refresh:
+    secret: ${APP_JWT_REFRESH_SECRET}
+    expiration: 420000 # 7 minutes
 
 #
 # Login Attempts Properties
@@ -172,3 +173,13 @@ logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+
+#
+# AI Properties
+#
+ai:
+# https://platform.openai.com/docs/api-reference/moderations/create
+  url:          "https://api.openai.com/v1/moderations"
+  api_key:      "sk-api-key"
+  request_body: '{ "input": "$message"}'
+  message_replacement_pattern: "$message"

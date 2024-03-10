@@ -19,4 +19,8 @@ public class EmailTokenConformer {
         UserRegistrationRequest userRegistrationRequest = tokenManager.validateToken(confirmEmailRequest);
         return userRegistrationService.register(userRegistrationRequest);
     }
+
+    public void confirmResetPasswordEmailByCode(final ConfirmEmailRequest confirmEmailRequest) {
+        tokenManager.validateToken(confirmEmailRequest);
+    }
 }

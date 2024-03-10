@@ -26,6 +26,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql:
+      true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
@@ -35,22 +37,22 @@ spring:
     drop-first: true
 
   #
-  # Minio Properties
+  # Aws Properties
   #
-  minio:
-    metric-name: minio.storage
-    secret-key: minio123
-    access-key: minio123
+  aws:
+    access-key: vbfgngfdndgndgndgndgndgndgndg
+    secret-key: vbfgngfdndgndgndgndgndgndgndg
+    region: eu-west-1
     buckets:
-      user-avatar: avatars
-      product-picture: products
+      products: products
+      user-avatar: users
     link-expiration-time: P7D
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    url: iced-latte-minio:9000
     secure: false
-    region: us-east-1
+    default-image-directory:
+      products: ./products
 
   #
   # Redis
@@ -69,3 +71,16 @@ jwt:
   expiration: 1800000
   email: jane@example.com
   password: pass54321
+  refresh:
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    expiration: 604800000 # 7 days
+
+#
+# AI Properties
+#
+ai:
+  # https://platform.openai.com/docs/api-reference/moderations/create
+  url:          "https://api.openai.com/v1/moderations"
+  api_key:      "sk-api-key"
+  request_body: '{ "input": "$message"}'
+  message_replacement_pattern: "$message"

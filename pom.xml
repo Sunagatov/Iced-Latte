@@ -57,12 +57,14 @@
         <testcontainers.version>1.19.3</testcontainers.version>
         <instancio-junit.version>3.0.1</instancio-junit.version>
         <rest-assured.version>5.3.2</rest-assured.version>
+        <json-schema-validator.version>3.3.0</json-schema-validator.version>
 
         <!-- Spring Dependencies Versions -->
         <spring-boot-starter-web.version>3.1.3</spring-boot-starter-web.version>
         <spring-retry.version>2.0.2</spring-retry.version>
         <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
         <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
+        <spring-boot-starter-mail.version>3.2.0</spring-boot-starter-mail.version>
 
         <!-- JWT Dependencies Versions -->
         <jjwt-impl.version>0.11.5</jjwt-impl.version>
@@ -81,15 +83,11 @@
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
 
         <!-- Database Dependencies Versions -->
-        <postgresql.version>42.6.0</postgresql.version>
+        <postgresql.version>42.7.2</postgresql.version>
         <liquibase.version>4.23.1</liquibase.version>
 
         <!-- Redis Dependencies Versions -->
         <spring-boot-starter-data-redis.version>3.2.0</spring-boot-starter-data-redis.version>
-
-        <!-- Minio Dependencies Versions -->
-        <spring-boot-starter-minio.version>1.1</spring-boot-starter-minio.version>
-        <minio.version>8.5.7</minio.version>
 
         <!-- Apache Maven Plugin Dependencies Versions -->
         <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
@@ -108,8 +106,10 @@
         <lombok.version>1.18.24</lombok.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
-        <json-schema-validator.version>3.3.0</json-schema-validator.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.2.0</springdoc-openapi-starter-webmvc-ui.version>
+        <jakarta.mail-api.version>2.1.2</jakarta.mail-api.version>
+        <guava.version>32.0.0-jre</guava.version>
+        <gson.version>2.10.1</gson.version>
     </properties>
 
     <!-- Dependencies -->
@@ -149,18 +149,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
-        </dependency>
-
-        <!-- Minio Dependencies Versions -->
-        <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.jlefebure</groupId>
-            <artifactId>spring-boot-starter-minio</artifactId>
-            <version>${spring-boot-starter-minio.version}</version>
         </dependency>
 
         <!-- Project Lombok -->
@@ -274,19 +262,19 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-            <version>3.2.0</version>
+            <version>${spring-boot-starter-mail.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.mail</groupId>
             <artifactId>jakarta.mail-api</artifactId>
-            <version>2.1.2</version>
+            <version>${jakarta.mail-api.version}</version>
         </dependency>
 
         <!-- Temporary cache -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.0.0-jre</version>
+            <version>${guava.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -294,6 +282,11 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
         </dependency>
     </dependencies>
 
@@ -569,6 +562,60 @@
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.favorite.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Order OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-order-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/order-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <apiPackage>${openapi-package}.order.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Product Review OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-product-review-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-review-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <apiPackage>${openapi-package}.product.review.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Product productRating OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-product-productRating-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-rating-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <apiPackage>${openapi-package}.order.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

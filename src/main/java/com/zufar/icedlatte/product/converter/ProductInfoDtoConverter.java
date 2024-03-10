@@ -16,6 +16,8 @@ public interface ProductInfoDtoConverter {
     @Mapping(target = "id", source = "entity.productId")
     ProductInfoDto toDto(final ProductInfo entity);
 
+    ProductInfo toProductInfo(final ProductInfoDto dto);
+
     @Mapping(target = "products", source = "pageProductResponseDto.content")
     @Mapping(target = "page", source = "pageProductResponseDto.number")
     @Mapping(target = "size", source = "pageProductResponseDto.size")

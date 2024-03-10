@@ -42,7 +42,9 @@ public class UserRegistrationService {
 
         UserEntity userEntity = userCrudRepository.save(newUserEntity);
 
+        final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
         final String jwtToken = jwtTokenProvider.generateToken(userEntity);
-        return new UserRegistrationResponse(jwtToken);
+
+        return new UserRegistrationResponse(jwtToken, jwtRefreshToken);
     }
 }

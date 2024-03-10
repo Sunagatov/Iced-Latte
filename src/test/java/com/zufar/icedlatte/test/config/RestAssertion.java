@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.test.config;
 
+import io.restassured.filter.log.LogDetail;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.hamcrest.Matcher;
@@ -22,6 +23,14 @@ public final class RestAssertion {
         assertRestApiBodySchemaResponse(response, HttpStatus.NOT_FOUND, schema);
     }
 
+    public static void assertRestApiCreateResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.CREATED, schema);
+    }
+
+    public static void assertRestApiUnAuthorizedResponse(Response response, String schema) {
+        assertRestApiBodySchemaResponse(response, HttpStatus.UNAUTHORIZED, schema);
+    }
+
     public static void assertRestApiEmptyBodyResponse(Response response, HttpStatus httpStatusCode) {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
@@ -32,6 +41,8 @@ public final class RestAssertion {
 
     private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
         return response.then()
+                .log()
+                .ifValidationFails(LogDetail.BODY)
                 .statusCode(httpStatusCode.value())
                 .body(schemaMatcher)
                 .time(lessThan(DEFAULT_HTTP_TIMEOUT));
