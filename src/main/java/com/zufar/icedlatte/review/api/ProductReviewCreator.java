@@ -3,13 +3,11 @@ package com.zufar.icedlatte.review.api;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
 import com.zufar.icedlatte.product.api.SingleProductProvider;
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,18 +32,17 @@ public class ProductReviewCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewResponse create(final UUID productId, final ProductReviewRequest productReviewRequest) {
         var userId = securityPrincipalProvider.getUserId();
-        var text = productReviewRequest.getText().trim();
-        final UserEntity user = singleUserProvider.getUserEntityById(userId);
-        final ProductInfo product = singleProductProvider.getProductEntityById(productId);
-        productReviewValidator.validateReview(userId, productId, text);
+        var productReviewText = productReviewRequest.getText().trim();
+        productReviewValidator.validateReview(userId, productId, productReviewText);
 
-        var review = ProductReview.builder()
-                .user(user)
-                .productInfo(product)
-                .text(text)
+        var productReview = ProductReview.builder()
+                .user(singleUserProvider.getUserEntityById(userId))
+                .productInfo(singleProductProvider.getProductEntityById(productId))
+                .text(productReviewText)
                 .build();
-        reviewRepository.saveAndFlush(review);
 
-        return productReviewDtoConverter.toReviewResponse(review);
+        reviewRepository.saveAndFlush(productReview);
+
+        return productReviewDtoConverter.toReviewResponse(productReview);
     }
 }

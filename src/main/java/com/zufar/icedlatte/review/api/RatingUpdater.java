@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.openapi.dto.AddNewMarkToProductRequest;
-import com.zufar.icedlatte.openapi.dto.RatingDto;
+import com.zufar.icedlatte.openapi.dto.AddNewProductRatingRequest;
+import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
 import com.zufar.icedlatte.product.api.ProductApi;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.review.converter.RatingConverter;
@@ -27,14 +27,11 @@ public class RatingUpdater {
     private final RatingConverter ratingConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public RatingDto addRating(final AddNewMarkToProductRequest addNewMarkToProductRequest, final UUID userId) {
-        final UserEntity user = singleUserProvider.getUserEntityById(userId);
-        final ProductInfo product = productApi.getProductEntityById(addNewMarkToProductRequest.getProductId());
-
+    public ProductRatingDto addRating(final AddNewProductRatingRequest addNewProductRatingRequest, final UUID userId) {
         Rating rating = Rating.builder()
-                .user(user)
-                .productInfo(product)
-                .mark(addNewMarkToProductRequest.getMark())
+                .user(singleUserProvider.getUserEntityById(userId))
+                .productInfo(productApi.getProductEntityById(addNewProductRatingRequest.getProductId()))
+                .productRating(addNewProductRatingRequest.getProductRating())
                 .build();
 
         Rating savedRating = ratingRepository.save(rating);

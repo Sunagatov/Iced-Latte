@@ -1,8 +1,8 @@
 openapi: "3.0.3"
 
 info:
-  title: "Iced Latte Rating API"
-  description: "API allows users to add ratings to products."
+  title: "Iced Latte Product's Rating API"
+  description: "API allows users to add a new rating to a product."
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -15,50 +15,50 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Rating"
-    description: "Operations related to rating products"
+  - name: "Product's Rating"
+    description: "Operations related to product's rating"
 
 paths:
   /api/v1/products/rating:
     post:
       tags:
         - "Rating"
-      summary: "Add mark to product"
-      operationId: "addNewMarkToProduct"
+      summary: "Add a new product's rating"
+      operationId: "addNewProductRating"
       requestBody:
-        description: "Payload containing the product ID and mark."
+        description: "Payload containing the productId and rating."
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddNewMarkToProductRequest"
+              $ref: "#/components/schemas/AddNewProductRatingRequest"
             examples:
-              add-mark:
-                summary: "Add Mark"
-                value: {"productId": "a1b2c3d4", "mark": 5}
+              add-product-rating:
+                summary: "Add new product's rating"
+                value: {"productId": "a1b2c3d4", "productRating": 5}
       responses:
         "200":
-          description: "Mark added successfully."
+          description: "Product's rating added successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RatingDto"
+                $ref: "#/components/schemas/ProductRatingDto"
 
 components:
   schemas:
-    AddNewMarkToProductRequest:
+    AddNewProductRatingRequest:
       type: object
       properties:
         productId:
           type: string
           format: "uuid"
-        mark:
+        productRating:
           type: Integer
       required:
         - productId
-        - mark
+        - productRating
 
-    RatingDto:
+    ProductRatingDto:
       type: object
       properties:
         productId:
@@ -67,10 +67,10 @@ components:
         userId:
           type: string
           format: "uuid"
-        mark:
+        productRating:
           type: Integer
       required:
         - productId
         - userId
-        - mark
+        - productRating
 

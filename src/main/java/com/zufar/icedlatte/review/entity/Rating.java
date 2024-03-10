@@ -47,8 +47,8 @@ public class Rating {
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private ProductInfo productInfo;
 
-    @Column(name = "mark", nullable = false)
-    private Integer mark;
+    @Column(name = "productRating", nullable = false)
+    private Integer productRating;
 
     @CreationTimestamp
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)

@@ -603,7 +603,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api-specs/rating-openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/product-rating-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
