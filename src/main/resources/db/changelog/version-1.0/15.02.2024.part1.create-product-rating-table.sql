@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS product_rating
     user_id     UUID NOT NULL,
     product_id  UUID NOT NULL,
     created_at  TIMESTAMPTZ DEFAULT current_timestamp,
-    productRating        INT  NOT NULL CHECK (productRating > 0 AND productRating < 6),
+    rating      INT  NOT NULL CHECK (rating > 0 AND rating < 6),
 
     CONSTRAINT fk_user_rating
         FOREIGN KEY (user_id)
