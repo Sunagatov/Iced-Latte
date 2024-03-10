@@ -1,8 +1,8 @@
 openapi: "3.0.3"
 
 info:
-  title: "Iced Latte Security API"
-  description: "API for accessing product reviews and related operations in the Iced-Latte platform"
+  title: "Iced Latte Product's Review API"
+  description: "API for accessing product's reviews and related operations in the Iced-Latte platform"
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -23,8 +23,8 @@ paths:
     get:
       tags:
         - "Product Review"
-      summary: "Retrieve reviews and ratings for product by any user"
-      operationId: "getReviewsAndRatings"
+      summary: "Retrieve product's reviews and ratings for any user"
+      operationId: "getProductReviewsAndRatings"
       parameters:
         - name: "productId"
           in: "path"
@@ -43,7 +43,7 @@ paths:
             default: 0
             minimum: 0
         - name: "size"
-          description: "The number of reviews per page."
+          description: "The number of product's reviews per page."
           in: "query"
           required: false
           schema:
@@ -53,7 +53,7 @@ paths:
             minimum: 1
             maximum: 100
         - name: "sort_attribute"
-          description: "The name of the product field by which the results should be sorted."
+          description: "The name of the product's field by which the results should be sorted."
           in: "query"
           required: false
           schema:
@@ -68,21 +68,21 @@ paths:
             default: "desc"
       responses:
         "200":
-          description: "The product was found and its reviews are returned."
+          description: "The product was found and its reviews were returned."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
         "404":
-          description: "Product not found"
+          description: "Product was not found"
         "500":
-          description: "Internal server error."
+          description: "Internal server error"
 
     post:
       tags:
         - "Product Review"
-      summary: "Add a review item for a product by authorized user"
-      operationId: "addReview"
+      summary: "Add a new review for a specific product by authorized user"
+      operationId: "addNewProductReview"
       parameters:
         - name: "productId"
           in: "path"
@@ -105,30 +105,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductReviewResponse"
         "401":
-          description: "Unauthorized access."
+          description: "Unauthorized access"
         "404":
-          description: "Product not found"
+          description: "Product was not found"
         "500":
-          description: "Internal server error."
+          description: "Internal server error"
 
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
       tags:
         - "Product Review"
-      summary: "Remove a review item for a product by authorized user"
-      operationId: "deleteReview"
+      summary: "Delete an existed product's review by authorized user"
+      operationId: "deleteProductReview"
       parameters:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product."
+          description: "Unique identifier of the product"
           schema:
             type: "string"
             format: "uuid"
         - name: "productReviewId"
           in: "path"
           required: true
-          description: "Unique identifier of the review."
+          description: "Unique identifier of the product's review"
           schema:
             type: "string"
             format: "uuid"
@@ -136,11 +136,11 @@ paths:
         "200":
           description: "OK"
         "401":
-          description: "Unauthorized access."
+          description: "Unauthorized access"
         "404":
-          description: "Product or review not found"
+          description: "Product's review was not found"
         "500":
-          description: "Internal server error."
+          description: "Internal server error"
 
 components:
   schemas:
@@ -188,7 +188,7 @@ components:
 
     ProductReviewWithRating:
       type: "object"
-      description: "Object used to group reviews and ratings by user"
+      description: "Object used to group product's reviews and ratings by user"
       required:
         - rating
         - reviewText

@@ -17,9 +17,9 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
 
     Optional<ProductReview> findByUserIdAndProductInfoProductId(UUID userId, UUID productId);
 
-    @Query("SELECT new com.zufar.icedlatte.openapi.dto.ProductReviewWithRating(r.mark, pr.text, COALESCE(pr.createdAt, r.createdAt), u.firstName, u.lastName) " +
+    @Query("SELECT new com.zufar.icedlatte.openapi.dto.ProductReviewWithRating(r.productRating, pr.text, COALESCE(pr.createdAt, r.createdAt), u.firstName, u.lastName) " +
             "FROM ProductReview pr " +
-            "FULL JOIN Rating r ON r.user = pr.user AND pr.productInfo.productId = r.productInfo.productId " +
+            "FULL JOIN ProductRating r ON r.user = pr.user AND pr.productInfo.productId = r.productInfo.productId " +
             "JOIN UserEntity u on u.id=coalesce(r.user.id, pr.user.id) " +
             "WHERE pr.productInfo.productId = :productId OR r.productInfo.productId = :productId")
     Page<ProductReviewWithRating> findByProductIdWithRatings(@Param("productId") UUID productId, Pageable pageable);

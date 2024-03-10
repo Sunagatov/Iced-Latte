@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.AddNewMarkToProductRequest;
-import com.zufar.icedlatte.openapi.dto.RatingDto;
+import com.zufar.icedlatte.openapi.dto.AddNewProductRatingRequest;
+import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
 import com.zufar.icedlatte.review.api.RatingUpdater;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = RatingEndpoint.RATING_URL)
-public class RatingEndpoint {
+@RequestMapping(value = ProductRatingEndpoint.RATING_URL)
+public class ProductRatingEndpoint {
 
     public static final String RATING_URL = "/api/v1/rating/product";
 
@@ -28,11 +28,11 @@ public class RatingEndpoint {
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @PostMapping
-    public ResponseEntity<RatingDto> addNewMarkToProduct(@RequestBody final AddNewMarkToProductRequest rating) {
-        log.info("Received the request to add new mark to product");
+    public ResponseEntity<ProductRatingDto> addNewProductRating(@RequestBody final AddNewProductRatingRequest rating) {
+        log.info("Received the request to add product's rating");
         final UUID userId = securityPrincipalProvider.getUserId();
-        final RatingDto ratingDto = ratingUpdater.addRating(rating, userId);
-        log.info("Mark was added");
+        final ProductRatingDto ratingDto = ratingUpdater.addRating(rating, userId);
+        log.info("New Product's Rating was added");
         return ResponseEntity.ok().body(ratingDto);
     }
 }
