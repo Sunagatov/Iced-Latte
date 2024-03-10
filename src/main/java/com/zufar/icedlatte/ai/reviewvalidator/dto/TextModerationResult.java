@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.ai.dto;
+package com.zufar.icedlatte.ai.reviewvalidator.dto;
 
 import java.util.List;
 import java.util.Map;
