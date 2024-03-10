@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -37,6 +38,7 @@ public class SpringSecurityConfiguration {
                                 .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                                 .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                                 .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
+                                .requestMatchers(HttpMethod.GET, SecurityConstants.REVIEWS_URL).permitAll()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

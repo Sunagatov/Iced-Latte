@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -66,8 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_NOT_FOUND);
         } catch (Exception exception) {
             handleException(httpResponse, "Internal server error", exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-        finally {
+        } finally {
             MDC.remove(MDC_USER_ID_KEY2VALUE);
         }
     }
@@ -87,9 +87,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isSecuredUrl(HttpServletRequest request) {
+        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
+            return !HttpMethod.GET.name().equals(request.getMethod());
+        }
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
-                SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL)
+                        SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }
