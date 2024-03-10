@@ -80,7 +80,7 @@ paths:
 
     post:
       tags:
-        - "Product's Review"
+        - "Product Review"
       summary: "Add a new review for a specific product by authorized user"
       operationId: "addNewProductReview"
       parameters:
@@ -114,7 +114,7 @@ paths:
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
       tags:
-        - "Product's Review"
+        - "Product Review"
       summary: "Delete an existed product's review by authorized user"
       operationId: "deleteProductReview"
       parameters:

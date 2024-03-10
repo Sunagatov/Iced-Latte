@@ -15,14 +15,14 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Product's Rating"
+  - name: "Product Rating"
     description: "Operations related to product's rating"
 
 paths:
   /api/v1/products/rating:
     post:
       tags:
-        - "Rating"
+        - "Product Rating"
       summary: "Add a new product's rating"
       operationId: "addNewProductRating"
       requestBody:

@@ -34,25 +34,25 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewDeleter productReviewDeleter;
     private final PageableReviewsAndRatingsProvider pageableReviewsProvider;
 
-//    @Override
-//    @PostMapping(value = "/{productId}/reviews")
-//    public ResponseEntity<ProductReviewResponse> addNewProductReview(@PathVariable final UUID productId,
-//                                                           final ProductReviewRequest productReviewRequest) {
-//        log.info("Received request to add product review for product with productId = '{}'", productId);
-//        var review = productReviewCreator.create(productId, productReviewRequest);
-//        log.info("Product review was added with productReviewId = '{}'", review.getProductReviewId());
-//        return ResponseEntity.ok().body(review);
-//    }
-//
-//    @Override
-//    @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
-//    public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
-//                                             @PathVariable final UUID productReviewId) {
-//        log.info("Received request to delete product review with productReviewId = '{}', productId = '{}'", productReviewId, productId);
-//        productReviewDeleter.delete(productId, productReviewId);
-//        log.info("Product review was deleted");
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
+    @Override
+    @PostMapping(value = "/{productId}/reviews")
+    public ResponseEntity<ProductReviewResponse> addNewProductReview(@PathVariable final UUID productId,
+                                                           final ProductReviewRequest productReviewRequest) {
+        log.info("Received request to add product review for product with productId = '{}'", productId);
+        var review = productReviewCreator.create(productId, productReviewRequest);
+        log.info("Product review was added with productReviewId = '{}'", review.getProductReviewId());
+        return ResponseEntity.ok().body(review);
+    }
+
+    @Override
+    @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
+    public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
+                                             @PathVariable final UUID productReviewId) {
+        log.info("Received request to delete product review with productReviewId = '{}', productId = '{}'", productReviewId, productId);
+        productReviewDeleter.delete(productId, productReviewId);
+        log.info("Product review was deleted");
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @Override
     @GetMapping(value = "/{productId}/reviews")
