@@ -25,13 +25,12 @@ paths:
         - "Payment"
       summary: "Enables payment processing using a card details token ID"
       operationId: "processPayment"
-      parameters:
-        - name: "cardDetailsTokenId"
-          in: "query"
-          required: true
-          schema:
-            type: "string"
-            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
       responses:
         "200":
           description: "Payment processed successfully"
@@ -171,26 +170,8 @@ components:
       properties:
         status:
           type: "string"
-          enum:
-            - "PAYMENT_METHOD_IS_REQUIRED"
-            - "PAYMENT_CONFIRMATION_IS_REQUIRED"
-            - "PAYMENT_CAPTURE_IS_REQUIRED"
-            - "PAYMENT_ACTION_IS_REQUIRED"
-            - "PAYMENT_IS_FAILED"
-            - "PAYMENT_IS_PROCESSING"
-            - "PAYMENT_IS_CANCELED"
-            - "PAYMENT_IS_SUCCEEDED"
         description:
           type: "string"
-          enum:
-            - "Payment method is required"
-            - "Payment confirmation is required"
-            - "Payment capture is required"
-            - "Additional action is required to complete payment"
-            - "Payment processing error"
-            - "Payment in processing"
-            - "Payment is canceled"
-            - "Payment is succeeded"
 
     ProcessedPaymentWithClientSecretDto:
       type: "object"
@@ -210,6 +191,12 @@ components:
         itemsTotalPrice:
           type: "number"
           format: "decimal"
+        taxRate:
+          type: "number"
+          format: "decimal"
+        shippingCost:
+            type: "number"
+            format: "decimal"
         paymentIntentId:
           type: "string"
         items:
@@ -219,8 +206,6 @@ components:
             $ref: "cart-openapi.yaml#/components/schemas/ShoppingCartItemDto"
         status:
           $ref: "#/components/schemas/PaymentStatus"
-        description:
-          type: "string"
 
     CreateCardDetailsTokenRequest:
       type: "object"
@@ -237,6 +222,62 @@ components:
         cvc:
           type: "string"
           minLength: 1
+
+    CreatePaymentRequest:
+      type: "object"
+      required:
+        - cardTokenId
+      properties:
+        cardTokenId:
+          type: "string"
+          description: "Token representing the payment details of a credit card."
+        shippingInfo:
+          $ref: "#/components/schemas/ShippingInfoDto"
+
+    ShippingInfoDto:
+      type: object
+      required:
+        - shippingUserEmail
+        - shippingUserFirstName
+        - shippingUserLastName
+        - shippingUserPhoneNumber
+        - shippingMethod
+      properties:
+        shippingUserEmail:
+          type: string
+          format: email
+          description: "Email address of the user for shipping."
+        shippingUserFirstName:
+          type: string
+          description: "First name of the user for shipping."
+        shippingUserLastName:
+          type: string
+          description: "Last name of the user for shipping."
+        shippingUserPhoneNumber:
+          type: "string"
+          pattern: "^\\+?[1-9]\\d{1,14}$"
+          description: "The international phone number of the recipient."
+        shippingMethod:
+          type: string
+          description: "Method of shipping."
+        shippingAddress:
+          $ref: "#/components/schemas/ShippingAddressDto"
+
+    ShippingAddressDto:
+      type: object
+      properties:
+        country:
+          type: string
+          description: "Country in the shipping address."
+        addressLine:
+          type: string
+          description: "Address line in the shipping address."
+        city:
+          type: string
+          description: "City in the shipping address."
+        postCode:
+          type: string
+          description: "Post code in the shipping address."
 
     ErrorHandler:
       type: "object"

@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Getter
@@ -21,7 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "address")
-public class Address {
+public class Address implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 class ItemsTotalPriceCalculatorTest {
 
-    static final BigDecimal TOTAL_PRICE_FOR_SHOPPING_SESSION = BigDecimal.valueOf(15.4);
+    static final BigDecimal TOTAL_PRICE_FOR_SHOPPING_SESSION = new BigDecimal("15.4");
 
     @InjectMocks
     private ItemsTotalPriceCalculator itemsTotalPriceCalculator;

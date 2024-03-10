@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.email.api;
 
 import com.zufar.icedlatte.email.api.token.TokenManager;
-import com.zufar.icedlatte.email.sender.EmailConfirmation;
+import com.zufar.icedlatte.email.sender.AuthTokenEmailConfirmation;
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailTokenSender {
 
-    private final EmailConfirmation emailConfirmation;
+    private final AuthTokenEmailConfirmation emailConfirmation;
     private final TokenManager tokenManager;
 
     public void sendEmailVerificationCode(final UserRegistrationRequest request) {
