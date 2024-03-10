@@ -29,7 +29,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "product_rating")
-public class Rating {
+public class ProductRating {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,7 +47,7 @@ public class Rating {
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private ProductInfo productInfo;
 
-    @Column(name = "productRating", nullable = false)
+    @Column(name = "rating", nullable = false)
     private Integer productRating;
 
     @CreationTimestamp
