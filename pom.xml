@@ -580,7 +580,7 @@
                     </execution>
                     <!-- Generate from Product Review OpenAPI Spec -->
                     <execution>
-                        <id>generate-from-product-productReview-openapi-spec</id>
+                        <id>generate-from-product-review-openapi-spec</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -590,6 +590,24 @@
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <apiPackage>${openapi-package}.product.review.api</apiPackage>
+                                <modelPackage>${openapi-package-with-dto}</modelPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!-- Generate from Product rating OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-product-rating-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/rating-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <apiPackage>${openapi-package}.order.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

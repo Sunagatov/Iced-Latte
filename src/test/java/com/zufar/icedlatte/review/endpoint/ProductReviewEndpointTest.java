@@ -25,6 +25,7 @@ import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 @Testcontainers
 @DisplayName("ProductReviewEndpoint Tests")
@@ -36,9 +37,13 @@ class ProductReviewEndpointTest {
     private static final String REVIEW_ADD_BAD_BODY = "/review/model/add-review-bad-body.json";
     private static final String REVIEW_ADD_EMPTY_TEXT = "/review/model/add-review-empty-text.json";
     private static final String REVIEW_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
+    private static final String REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
-    private static final String EXISTING_PRODUCT = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
+    private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
+    private static final String AFFOGATO_ID = "ba5f15c4-1f72-4b97-b9cf-4437e5c6c2fa";
+    private static final String START_OF_REVIEW_FOR_AMERICANO = "Review for Americano";
+
     protected static RequestSpecification specification;
     @Container
     @ServiceConnection
@@ -72,10 +77,33 @@ class ProductReviewEndpointTest {
 
         Response response = given(specification)
                 .body(body)
-                .post("/{productId}/reviews", EXISTING_PRODUCT);
+                .post("/{productId}/reviews", AFFOGATO_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", equalTo(EXPECTED_REVIEW));
+    }
+
+    @Test
+    @DisplayName("Should fetch reviews and ratings with default pagination and sorting")
+    void shouldFetchReviewsAndRatingsWithDefaultPaginationAndSorting() {
+        Response response = given(specification)
+                .get("/{productId}/reviews", AMERICANO_ID);
+
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA)
+                .body("totalElements", equalTo(4))
+                .body("totalPages", equalTo(1))
+                .body("reviewsWithRatings[0].rating", equalTo(4))
+                .body("reviewsWithRatings[0].reviewText", equalTo(null))
+                .body("reviewsWithRatings[0].userName", equalTo("Emma"))
+                .body("reviewsWithRatings[1].rating", equalTo(5))
+                .body("reviewsWithRatings[1].reviewText", startsWith(START_OF_REVIEW_FOR_AMERICANO))
+                .body("reviewsWithRatings[1].userName", equalTo("John"))
+                .body("reviewsWithRatings[2].rating", equalTo(null))
+                .body("reviewsWithRatings[2].reviewText", startsWith(START_OF_REVIEW_FOR_AMERICANO))
+                .body("reviewsWithRatings[2].userName", equalTo("Jane"))
+                .body("reviewsWithRatings[3].rating", equalTo(null))
+                .body("reviewsWithRatings[3].reviewText", startsWith(START_OF_REVIEW_FOR_AMERICANO))
+                .body("reviewsWithRatings[3].userName", equalTo("Michael"));
     }
 
     @Test
@@ -99,7 +127,7 @@ class ProductReviewEndpointTest {
 
         Response response = given(specification)
                 .body(body)
-                .post("/{productId}/reviews", EXISTING_PRODUCT);
+                .post("/{productId}/reviews", AMERICANO_ID);
 
         assertRestApiBadRequestResponse(response, FAILED_REVIEW_SCHEMA);
     }
@@ -111,7 +139,25 @@ class ProductReviewEndpointTest {
 
         Response response = given(specification)
                 .body(body)
-                .post("/{productId}/reviews", EXISTING_PRODUCT);
+                .post("/{productId}/reviews", AMERICANO_ID);
+
+        assertRestApiBadRequestResponse(response, FAILED_REVIEW_SCHEMA);
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request on attempt to create review if previous still exists")
+    void shouldReturnBadRequestOnAttemptToCreateReviewIfPreviousIsNotRemoved() {
+        String body = getRequestBody(REVIEW_ADD_BODY);
+
+        // 1st create review - ok
+        given(specification)
+                .body(body)
+                .post("/{productId}/reviews", AMERICANO_ID);
+
+        // 2nd create review - no way, remove previous first
+        Response response = given(specification)
+                .body(body)
+                .post("/{productId}/reviews", AMERICANO_ID);
 
         assertRestApiBadRequestResponse(response, FAILED_REVIEW_SCHEMA);
     }
@@ -123,12 +169,12 @@ class ProductReviewEndpointTest {
 
         Response responsePost = given(specification)
                 .body(body)
-                .post("/{productId}/reviews", EXISTING_PRODUCT);
+                .post("/{productId}/reviews", AFFOGATO_ID);
 
         var reviewId = responsePost.then().extract().path("productReviewId").toString();
 
         Response response = given(specification)
-                .delete("/{productId}/reviews/{productReviewId}", EXISTING_PRODUCT, reviewId);
+                .delete("/{productId}/reviews/{productReviewId}", AFFOGATO_ID, reviewId);
 
         response.then().statusCode(HttpStatus.OK.value());
     }
@@ -137,14 +183,14 @@ class ProductReviewEndpointTest {
     @DisplayName("Should return 404 Not Found on attempt to delete non-existent review")
     void shouldReturnNotFoundOnDeleteNonExistentReview() {
         Response response = given(specification)
-                .delete("/{productId}/reviews/{productReviewId}", EXISTING_PRODUCT, UUID.randomUUID());
+                .delete("/{productId}/reviews/{productReviewId}", AMERICANO_ID, UUID.randomUUID());
 
         assertRestApiNotFoundResponse(response, FAILED_REVIEW_SCHEMA);
     }
 
     @Test
     @DisplayName("For methods POST and DELETE access to review URL w/o token is forbidden. Should return 400 Bad Request")
-    void shouldReturnBadRequest() {
+    void shouldReturnBadRequestOnPostAndDeleteWOToken() {
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -155,9 +201,9 @@ class ProductReviewEndpointTest {
         String body = getRequestBody(REVIEW_ADD_BODY);
         Response responsePost = given(specification)
                 .body(body)
-                .post("/{productId}/reviews", EXISTING_PRODUCT);
+                .post("/{productId}/reviews", AMERICANO_ID);
         Response responseDelete = given(specification)
-                .delete("/{productId}/reviews/{reviewId}", EXISTING_PRODUCT, UUID.randomUUID());
+                .delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID());
 
         responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
         responseDelete.then().statusCode(HttpStatus.BAD_REQUEST.value());

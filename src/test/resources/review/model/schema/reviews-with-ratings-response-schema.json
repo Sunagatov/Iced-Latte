@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "reviewsWithRatings": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "rating": {
+          "type": "number"
+        },
+        "reviewText": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "userLastName": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "page": {
+    "type": "number"
+  },
+  "size": {
+    "type": "number"
+  },
+  "totalElements": {
+    "type": "number"
+  },
+  "totalPages": {
+    "type": "number"
+  }
+}

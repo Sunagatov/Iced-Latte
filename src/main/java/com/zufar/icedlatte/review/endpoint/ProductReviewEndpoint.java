@@ -3,7 +3,7 @@ package com.zufar.icedlatte.review.endpoint;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
-import com.zufar.icedlatte.review.api.PageableReviewsProvider;
+import com.zufar.icedlatte.review.api.PageableReviewsAndRatingsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewCreator;
 import com.zufar.icedlatte.review.api.ProductReviewDeleter;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
 
     private final ProductReviewCreator productReviewCreator;
     private final ProductReviewDeleter productReviewDeleter;
-    private final PageableReviewsProvider pageableReviewsProvider;
+    private final PageableReviewsAndRatingsProvider pageableReviewsProvider;
 
     @Override
     @PostMapping(value = "/{productId}/reviews")
@@ -60,10 +60,10 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
                                                                                        @RequestParam(name = "size", defaultValue = "10") Integer size,
                                                                                        @RequestParam(name = "sort_attribute", defaultValue = "createdAt") String sortAttribute,
                                                                                        @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection) {
-        log.info("Received the request to get reviews for product {} with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
+        log.info("Received the request to get reviews and ratings for product {} with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
                 productId, page, size, sortAttribute, sortDirection);
         ProductReviewsAndRatingsWithPagination reviewsPaginationDto = pageableReviewsProvider.getProductReviews(productId, page, size, sortAttribute, sortDirection);
-        log.info("Product reviews were retrieved successfully");
+        log.info("Product reviews and ratings were retrieved successfully");
         return ResponseEntity.ok().body(reviewsPaginationDto);
     }
 }

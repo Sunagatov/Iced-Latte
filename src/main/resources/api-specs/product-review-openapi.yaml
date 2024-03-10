@@ -73,6 +73,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
+        "404":
+          description: "Product not found"
+        "500":
+          description: "Internal server error."
+
     post:
       tags:
         - "Product Review"
@@ -183,6 +188,13 @@ components:
 
     ProductReviewWithRating:
       type: "object"
+      description: "Object used to group reviews and ratings by user"
+      required:
+        - rating
+        - reviewText
+        - createdAt
+        - userName
+        - userLastName
       properties:
         rating:
           type: "integer"

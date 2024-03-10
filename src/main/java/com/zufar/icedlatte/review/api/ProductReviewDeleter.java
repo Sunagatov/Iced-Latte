@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.review.repository.ReviewRepository;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductReviewDeleter {
 
-    private final ReviewRepository reviewRepository;
+    private final ProductReviewRepository reviewRepository;
 
     private final ProductReviewValidator productReviewValidator;
 
