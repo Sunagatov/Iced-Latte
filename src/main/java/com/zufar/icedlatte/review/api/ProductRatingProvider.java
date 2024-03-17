@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.review.api;
 
 import com.zufar.icedlatte.openapi.dto.AverageProductRatingDto;
-import com.zufar.icedlatte.review.converter.ProductRatingDtoConverter;
 import com.zufar.icedlatte.review.repository.ProductRatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ import java.util.UUID;
 public class ProductRatingProvider {
 
     private final ProductRatingRepository ratingRepository;
-    private final ProductRatingDtoConverter ratingConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public AverageProductRatingDto getAvgRatingByProductId(final UUID productId) {
