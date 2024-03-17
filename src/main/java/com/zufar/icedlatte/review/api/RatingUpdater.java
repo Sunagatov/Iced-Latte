@@ -33,7 +33,7 @@ public class RatingUpdater {
         ProductRating productRatingEntity = ProductRating.builder()
                 .user(user)
                 .productInfo(product)
-                .ratingValue(rating)
+                .rating(rating)
                 .build();
 
         ratingRepository.save(productRatingEntity);

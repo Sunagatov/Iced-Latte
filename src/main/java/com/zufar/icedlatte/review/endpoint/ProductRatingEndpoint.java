@@ -1,8 +1,7 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.ProductRating;
 import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
-import com.zufar.icedlatte.openapi.product.productRating.api.ProductRatingApi;
+import com.zufar.icedlatte.openapi.product.rating.api.ProductRatingApi;
 import com.zufar.icedlatte.review.api.RatingProvider;
 import com.zufar.icedlatte.review.api.RatingUpdater;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
@@ -12,13 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j

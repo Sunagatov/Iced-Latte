@@ -8,28 +8,28 @@ import lombok.RequiredArgsConstructor;
 public enum PaymentStatus {
 
     PAYMENT_METHOD_IS_REQUIRED("payment_intent.requires_payment_method",
-            "Payment method is required"),
+            "Payment method is required."),
 
     PAYMENT_CONFIRMATION_IS_REQUIRED("payment_intent.requires_confirmation",
-            "Payment confirmation is required"),
+            "Payment confirmation is required."),
 
     PAYMENT_CAPTURE_IS_REQUIRED("payment_intent.requires_capture",
-            "Payment capture is required"),
+            "Payment capture is required."),
 
     PAYMENT_ACTION_IS_REQUIRED("payment_intent.requires_action",
-            "Additional action is required to complete payment"),
+            "Payment action is required."),
 
     PAYMENT_IS_FAILED("payment_intent.payment_failed",
-            "Payment processing error"),
+            "Payment has failed."),
 
-    PAYMENT_IS_PROCESSING("payment_intent.processing",
-            "Payment in processing"),
+    PAYMENT_IN_PROCESSING("payment_intent.processing",
+            "Payment is in processing."),
 
     PAYMENT_IS_CANCELED("payment_intent.canceled",
-            "Payment is canceled"),
+            "Payment has been canceled."),
 
     PAYMENT_IS_SUCCEEDED("payment_intent.succeeded",
-            "Payment is succeeded");
+            "Payment has succeeded.");
 
     private final String status;
     private final String description;

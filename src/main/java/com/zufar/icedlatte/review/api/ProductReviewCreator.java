@@ -2,10 +2,12 @@ package com.zufar.icedlatte.review.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
+import com.zufar.icedlatte.product.api.SingleProductProvider;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.review.repository.ReviewRepository;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.user.api.SingleUserProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,23 +22,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductReviewCreator {
 
-    private final ReviewRepository reviewRepository;
+    private final ProductReviewRepository reviewRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final SingleUserProvider singleUserProvider;
     private final ProductReviewValidator productReviewValidator;
+    private final SingleProductProvider singleProductProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewResponse create(final UUID productId, final ProductReviewRequest productReviewRequest) {
-        var text = productReviewRequest.getText().trim();
-        productReviewValidator.validateReview(productId, text);
+        var userId = securityPrincipalProvider.getUserId();
+        var productReviewText = productReviewRequest.getText().trim();
+        productReviewValidator.validateReview(userId, productId, productReviewText);
 
-        var review = ProductReview.builder()
-                .userId(securityPrincipalProvider.getUserId())
-                .productId(productId)
-                .text(text)
+        var productReview = ProductReview.builder()
+                .user(singleUserProvider.getUserEntityById(userId))
+                .productInfo(singleProductProvider.getProductEntityById(productId))
+                .text(productReviewText)
                 .build();
-        reviewRepository.saveAndFlush(review);
 
-        return productReviewDtoConverter.toReviewResponse(review);
+        reviewRepository.saveAndFlush(productReview);
+
+        return productReviewDtoConverter.toReviewResponse(productReview);
     }
 }

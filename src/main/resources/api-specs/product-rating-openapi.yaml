@@ -1,8 +1,8 @@
 openapi: "3.0.3"
 
 info:
-  title: "Iced Latte Rating API"
-  description: "API allows users to add ratings to products."
+  title: "Iced Latte Product's Rating API"
+  description: "API allows users to add a new rating to a product."
   version: "1.0.0"
   contact:
     name: "Iced Latte Support"
@@ -15,15 +15,15 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "ProductRating"
-    description: "Operations related to rating products"
+  - name: "Product Rating"
+    description: "Operations related to product's rating"
 
 paths:
   /api/v1/products/{productId}/ratings/{rating}:
     post:
       tags:
-        - "ProductRating"
-      summary: "Add rating to product"
+        - "Product Rating"
+      summary: "Add a new product's rating"
       operationId: "addNewProductRating"
       parameters:
         - name: "productId"
@@ -31,8 +31,8 @@ paths:
           description: "ID of the product to get rating for"
           required: true
           schema:
-           type: "string"
-           format: "uuid"
+            type: "string"
+            format: "uuid"
         - name: "rating"
           in: "path"
           description: "Rating value"
@@ -43,35 +43,35 @@ paths:
             maximum: 5
       responses:
         "200":
-          description: "Rating added successfully."
+          description: "Product's rating added successfully."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductRatingDto"
 
-  /api/v1/products/{productId}/ratings:
-    get:
-      tags:
-        - "ProductRating"
-      summary: "Get Product Rating"
-      operationId: "getRatingByProductId"
-      parameters:
-        - name: "productId"
-          in: "path"
-          description: "ID of the product to get rating for"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "Product rating retrieved successfully."
-          content:
-            application/json:
-              schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/ProductRating"
+/api/v1/products/{productId}/ratings:
+  get:
+    tags:
+      - "ProductRating"
+    summary: "Get Product Rating"
+    operationId: "getRatingByProductId"
+    parameters:
+      - name: "productId"
+        in: "path"
+        description: "ID of the product to get rating for"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+    responses:
+      "200":
+        description: "Product rating retrieved successfully."
+        content:
+          application/json:
+            schema:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/ProductRating"
 
 components:
   schemas:

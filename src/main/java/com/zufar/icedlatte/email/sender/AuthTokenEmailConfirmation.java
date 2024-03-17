@@ -12,15 +12,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class EmailConfirmation extends AbstractEmailSender<EmailTokenDto> {
+public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDto> {
 
     @Value("${spring.mail.subject.confirmation}")
     private String subject;
 
     @Autowired
-    public EmailConfirmation(JavaMailSender javaMailSender,
-                             SimpleMailMessage mailMessage,
-                             List<MessageBuilder<EmailTokenDto>> messageBuilders) {
+    public AuthTokenEmailConfirmation(JavaMailSender javaMailSender,
+                                      SimpleMailMessage mailMessage,
+                                      List<MessageBuilder<EmailTokenDto>> messageBuilders) {
         super(javaMailSender, mailMessage, messageBuilders);
     }
 

@@ -17,7 +17,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Setter
@@ -45,6 +47,10 @@ public class ProductRating {
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private ProductInfo productInfo;
 
-    @Column(name = "rating_value", nullable = false)
-    private Integer ratingValue;
+    @Column(name = "rating", nullable = false)
+    private Integer productRating;
+
+    @CreationTimestamp
+    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
+    private OffsetDateTime createdAt;
 }

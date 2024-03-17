@@ -9,6 +9,7 @@ public final class SecurityConstants {
     public static final String ORDERS_URL = "/api/v1/orders/**";
     public static final String REVIEWS_URL = "/api/v1/products/*/reviews/**";
     public static final String RATING_URL = "/api/v1/products/*/ratings/**";
+    public static final String SHIPPING_URL = "/api/v1/shipping/**";
 
     private SecurityConstants() {}
 }

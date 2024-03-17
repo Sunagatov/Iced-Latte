@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.payment.endpoint;
 
+import com.zufar.icedlatte.openapi.dto.CreatePaymentRequest;
 import com.zufar.icedlatte.payment.api.PaymentApi;
 import com.zufar.icedlatte.openapi.dto.CreateCardDetailsTokenRequest;
 import com.zufar.icedlatte.openapi.dto.ProcessedPaymentDetailsDto;
@@ -11,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,8 +29,8 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
 
     @Override
     @PostMapping
-    public ResponseEntity<ProcessedPaymentWithClientSecretDto> processPayment(@RequestParam final String cardDetailsTokenId) {
-        ProcessedPaymentWithClientSecretDto processedPayment = paymentApi.processPayment(cardDetailsTokenId);
+    public ResponseEntity<ProcessedPaymentWithClientSecretDto> processPayment(@RequestBody CreatePaymentRequest paymentRequest) {
+        ProcessedPaymentWithClientSecretDto processedPayment = paymentApi.processPayment(paymentRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(processedPayment);

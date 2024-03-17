@@ -174,3 +174,12 @@ logging:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
 
+#
+# AI Properties
+#
+ai:
+# https://platform.openai.com/docs/api-reference/moderations/create
+  url:          "https://api.openai.com/v1/moderations"
+  api_key:      "sk-api-key"
+  request_body: '{ "input": "$message"}'
+  message_replacement_pattern: "$message"
