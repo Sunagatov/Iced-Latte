@@ -46,7 +46,7 @@ public class ProductRatingEndpoint implements ProductRatingApi {
     @Override
     @GetMapping("/{productId}/ratings")
     public ResponseEntity<AverageProductRatingDto> getRatingByProductId(@PathVariable final UUID productId) {
-        log.info("Received the request to get average rating by product id: {}", productId);
+        log.info("Received the request to get average rating for product id: {}", productId);
         final AverageProductRatingDto averageRating = ratingProvider.getAvgRatingByProductId(productId);
         log.info("Rating by product id retrieval processed");
         return ResponseEntity.ok().body(averageRating);
