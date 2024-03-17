@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.review.endpoint;
 
+import com.zufar.icedlatte.openapi.dto.AverageProductRatingDto;
 import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
 import com.zufar.icedlatte.openapi.product.rating.api.ProductRatingApi;
-import com.zufar.icedlatte.review.api.RatingProvider;
-import com.zufar.icedlatte.review.api.RatingUpdater;
+import com.zufar.icedlatte.review.api.ProductRatingProvider;
+import com.zufar.icedlatte.review.api.ProductRatingUpdater;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,8 +29,8 @@ public class ProductRatingEndpoint implements ProductRatingApi {
 
     public static final String RATING_URL = "/api/v1/products/";
 
-    private final RatingUpdater ratingUpdater;
-    private final RatingProvider ratingProvider;
+    private final ProductRatingUpdater ratingUpdater;
+    private final ProductRatingProvider ratingProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
@@ -42,11 +44,11 @@ public class ProductRatingEndpoint implements ProductRatingApi {
     }
 
     @Override
-    @GetMapping(value = "{productId}/ratings")
-    public ResponseEntity<List<ProductRating>> getRatingByProductId(@PathVariable final UUID productId) {
-        log.info("Received the request to get rating by product id");
-        final List<ProductRating> ratingMarks = ratingProvider.getRatingByProductId(productId);
+    @GetMapping("/{productId}/ratings")
+    public ResponseEntity<AverageProductRatingDto> getRatingByProductId(@PathVariable final UUID productId) {
+        log.info("Received the request to get average rating by product id: {}", productId);
+        final AverageProductRatingDto averageRating = ratingProvider.getAvgRatingByProductId(productId);
         log.info("Rating by product id retrieval processed");
-        return ResponseEntity.ok().body(ratingMarks);
+        return ResponseEntity.ok().body(averageRating);
     }
 }
