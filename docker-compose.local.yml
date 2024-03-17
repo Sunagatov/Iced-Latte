@@ -7,11 +7,7 @@ networks:
 
 volumes:
   pg_data:
-  prometheus_data:
-  grafana_data:
   nginx_data:
-  loki_data:
-  promtail_data:
   backend_logs: {}
 
 services:
@@ -70,34 +66,6 @@ services:
       retries: 5
     restart: on-failure
 
-  iced-latte-prometheus:
-    image: prom/prometheus:v2.33.3
-    container_name: iced-latte-prometheus
-    volumes:
-      - prometheus_data:/prometheus
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - iced-latte-network
-    ports:
-      - '9090:9090'
-    restart: on-failure
-
-  iced-latte-grafana:
-    image: grafana/grafana:9.1.5
-    container_name: iced-latte-grafana
-    volumes:
-      - ./grafana_data:/var/lib/grafana
-      - ./grafana_data/grafana.ini:/etc/grafana/grafana.ini
-    networks:
-      - iced-latte-network
-    ports:
-      - '3000:3000'
-    depends_on:
-      - iced-latte-prometheus
-    restart: on-failure
-
   iced-latte-nginx:
     image: nginx:alpine
     container_name: iced-latte-nginx
@@ -109,8 +77,6 @@ services:
       - iced-latte-network
     depends_on:
       - iced-latte-backend
-      - iced-latte-prometheus
-      - iced-latte-grafana
     restart: on-failure
 
   iced-latte-redis:
@@ -123,24 +89,3 @@ services:
       - REDIS_PORT=6380
     ports:
       - "6380:6380"
-
-  iced-latte-loki:
-    image: grafana/loki:latest
-    container_name: iced-latte-loki
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - iced-latte-network
-    volumes:
-      - loki_data:/loki
-
-  iced-latte-promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - backend_logs:/var/log/iced-latte-backend
-      - promtail_data:/var/log
-      - ./promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    networks:
-      - iced-latte-network

@@ -99,6 +99,10 @@ temporary-cache:
 #
   config:
     import: optional:stripe.yaml
+
+#
+#Avatar Upload Properties (AWS/Minio)
+#
   servlet:
     multipart:
       enabled: true
