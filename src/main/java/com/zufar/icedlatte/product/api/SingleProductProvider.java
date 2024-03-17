@@ -40,7 +40,7 @@ public class SingleProductProvider {
     public ProductInfo getProductEntityById(final UUID productId) {
         return productInfoRepository.findById(productId)
                 .orElseThrow(() -> {
-                    log.warn("Failed to get the product entity");
+                    log.warn("Failed to get the product entity: {}", productId);
                     return new ProductNotFoundException(productId);
                 });
     }
