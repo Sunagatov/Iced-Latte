@@ -604,9 +604,9 @@
                             </configOptions>
                         </configuration>
                     </execution>
-                    <!-- Generate from Product productRating OpenAPI Spec -->
+                    <!-- Generate from Product Rating OpenAPI Spec -->
                     <execution>
-                        <id>generate-from-product-productRating-openapi-spec</id>
+                        <id>generate-from-product-rating-openapi-spec</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -615,7 +615,7 @@
                             <generatorName>spring</generatorName>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.order.api</apiPackage>
+                                <apiPackage>${openapi-package}.product.rating.api</apiPackage>
                                 <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>

@@ -53,7 +53,7 @@ paths:
             minimum: 1
             maximum: 100
         - name: "sort_attribute"
-          description: "The name of the product's field by which the results should be sorted."
+          description: "The name of the field by which the results should be sorted."
           in: "query"
           required: false
           schema:
@@ -81,7 +81,7 @@ paths:
     post:
       tags:
         - "Product Review"
-      summary: "Add a new review for a specific product by authorized user"
+      summary: "Add a new review for a specific product by authorized user. If review exists, then 400 error will be returned"
       operationId: "addNewProductReview"
       parameters:
         - name: "productId"
@@ -104,6 +104,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewResponse"
+        "400":
+          description: "Bad request, e.g. review exists"
         "401":
           description: "Unauthorized access"
         "404":
@@ -142,6 +144,35 @@ paths:
         "500":
           description: "Internal server error"
 
+  /api/v1/products/{productId}/reviews/exists:
+    get:
+      tags:
+        - "Product Review"
+      summary: "Check if a user has already created a review"
+      operationId: "getProductReview"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "The product was found and its review status for a user is returned."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewStatus"
+        "401":
+          description: "Unauthorized access"
+        "404":
+          description: "Product was not found"
+        "500":
+          description: "Internal server error"
+
+
 components:
   schemas:
     ProductReviewRequest:
@@ -153,6 +184,12 @@ components:
           maxLength: 1500
       required:
         - text
+
+    ProductReviewStatus:
+      type: "object"
+      properties:
+        exists:
+          type: "boolean"
 
     ProductReviewResponse:
       type: "object"

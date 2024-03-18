@@ -38,6 +38,7 @@ class ProductReviewEndpointTest {
     private static final String REVIEW_ADD_EMPTY_TEXT = "/review/model/add-review-empty-text.json";
     private static final String REVIEW_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
     private static final String REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
+    private static final String REVIEW_EXISTS_RESPONSE_SCHEMA = "review/model/schema/review-exists-response-schema.json";
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
     private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
@@ -86,6 +87,14 @@ class ProductReviewEndpointTest {
     @Test
     @DisplayName("Should fetch reviews and ratings with default pagination and sorting")
     void shouldFetchReviewsAndRatingsWithDefaultPaginationAndSorting() {
+        // No authorization is required
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
+
         Response response = given(specification)
                 .get("/{productId}/reviews", AMERICANO_ID);
 
@@ -104,6 +113,16 @@ class ProductReviewEndpointTest {
                 .body("reviewsWithRatings[3].rating", equalTo(null))
                 .body("reviewsWithRatings[3].reviewText", startsWith(START_OF_REVIEW_FOR_AMERICANO))
                 .body("reviewsWithRatings[3].userName", equalTo("Michael"));
+    }
+
+    @Test
+    @DisplayName("Should fetch review status successfully")
+    void shouldFetchReviewStatusSuccessfully() {
+        Response response = given(specification)
+                .get("/{productId}/reviews/exists", AFFOGATO_ID);
+
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_EXISTS_RESPONSE_SCHEMA)
+                .body("exists", equalTo(false));
     }
 
     @Test
@@ -189,8 +208,8 @@ class ProductReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("For methods POST and DELETE access to review URL w/o token is forbidden. Should return 400 Bad Request")
-    void shouldReturnBadRequestOnPostAndDeleteWOToken() {
+    @DisplayName("For methods POST, DELETE and GET /exists access to review URL w/o token is forbidden. Should return 400 Bad Request")
+    void shouldReturnBadRequestOnPostDeleteGetExistsWOToken() {
         specification = given()
                 .log().all(true)
                 .port(port)
@@ -205,7 +224,11 @@ class ProductReviewEndpointTest {
         Response responseDelete = given(specification)
                 .delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID());
 
+        Response responseGetExists = given(specification)
+                .get("/{productId}/reviews/exists", AMERICANO_ID);
+
         responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
         responseDelete.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        responseGetExists.then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }

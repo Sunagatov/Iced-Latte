@@ -19,23 +19,28 @@ tags:
     description: "Operations related to product's rating"
 
 paths:
-  /api/v1/products/rating:
+  /api/v1/products/{productId}/ratings/{rating}:
     post:
       tags:
         - "Product Rating"
-      summary: "Add a new product's rating"
+      summary: "Add a new product's rating by authorized user. If rating exists, it will be overridden"
       operationId: "addNewProductRating"
-      requestBody:
-        description: "Payload containing the productId and rating."
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddNewProductRatingRequest"
-            examples:
-              add-product-rating:
-                summary: "Add new product's rating"
-                value: {"productId": "a1b2c3d4", "productRating": 5}
+      parameters:
+        - name: "productId"
+          in: "path"
+          description: "ID of the product to get rating for"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "rating"
+          in: "path"
+          description: "Rating value"
+          required: true
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 5
       responses:
         "200":
           description: "Product's rating added successfully."
@@ -43,34 +48,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductRatingDto"
+        "401":
+          description: "Unauthorized access"
+        "404":
+          description: "Product was not found"
+        "500":
+          description: "Internal server error"
+
+  /api/v1/products/{productId}/ratings:
+    get:
+      tags:
+        - "Product Rating"
+      summary: "Get Average Product Rating for any user"
+      operationId: "getRatingByProductId"
+      parameters:
+        - name: "productId"
+          in: "path"
+          description: "ID of the product to get rating for"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Average product rating retrieved successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AverageProductRatingDto"
+        "404":
+          description: "Product was not found"
+        "500":
+          description: "Internal server error"
 
 components:
   schemas:
-    AddNewProductRatingRequest:
-      type: object
-      properties:
-        productId:
-          type: string
-          format: "uuid"
-        productRating:
-          type: Integer
-      required:
-        - productId
-        - productRating
-
     ProductRatingDto:
       type: object
       properties:
         productId:
           type: string
           format: "uuid"
-        userId:
-          type: string
-          format: "uuid"
-        productRating:
+        rating:
           type: Integer
       required:
         - productId
-        - userId
-        - productRating
+        - rating
 
+    AverageProductRatingDto:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: "uuid"
+        rating:
+          type: double
+      required:
+        - productId
+        - rating

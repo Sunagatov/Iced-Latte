@@ -2,10 +2,12 @@ package com.zufar.icedlatte.review.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
+import com.zufar.icedlatte.openapi.dto.ProductReviewStatus;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.api.PageableReviewsAndRatingsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewCreator;
 import com.zufar.icedlatte.review.api.ProductReviewDeleter;
+import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewCreator productReviewCreator;
     private final ProductReviewDeleter productReviewDeleter;
     private final PageableReviewsAndRatingsProvider pageableReviewsProvider;
+    private final ProductReviewProvider productReviewProvider;
 
     @Override
     @PostMapping(value = "/{productId}/reviews")
@@ -66,5 +69,14 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
         ProductReviewsAndRatingsWithPagination reviewsPaginationDto = pageableReviewsProvider.getProductReviews(productId, page, size, sortAttribute, sortDirection);
         log.info("Product reviews and ratings were retrieved successfully");
         return ResponseEntity.ok().body(reviewsPaginationDto);
+    }
+
+    @Override
+    @GetMapping(value = "/{productId}/reviews/exists")
+    public ResponseEntity<ProductReviewStatus> getProductReview(@PathVariable final UUID productId){
+        log.info("Received the request to get product review status product {}", productId);
+        ProductReviewStatus reviewsStatus = productReviewProvider.getProductReviewByUser(productId);
+        log.info("Product review status was retrieved successfully");
+        return ResponseEntity.ok().body(reviewsStatus);
     }
 }

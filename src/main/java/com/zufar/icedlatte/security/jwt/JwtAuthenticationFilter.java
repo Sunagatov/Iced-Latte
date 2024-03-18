@@ -87,12 +87,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isSecuredUrl(HttpServletRequest request) {
-        if (new AntPathRequestMatcher(SecurityConstants.REVIEWS_URL).matches(request)){
+        boolean isReviewsOrRatingsUrl = Stream.of(SecurityConstants.REVIEWS_URL, SecurityConstants.RATING_URL)
+                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
+        boolean isReviewsExist = Stream.of(SecurityConstants.REVIEWS_EXISTS_URL)
+                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
+        if (isReviewsOrRatingsUrl && !isReviewsExist) {
             return !HttpMethod.GET.name().equals(request.getMethod());
         }
         return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
                         SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
-                        SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL, SecurityConstants.SHIPPING_URL)
+                        SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL, SecurityConstants.SHIPPING_URL,
+                        SecurityConstants.REVIEWS_URL, SecurityConstants.RATING_URL)
                 .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 }
