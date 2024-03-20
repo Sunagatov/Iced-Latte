@@ -2,9 +2,9 @@ package com.zufar.icedlatte.review.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewResponse;
-import com.zufar.icedlatte.openapi.dto.ProductReviewStatus;
+import com.zufar.icedlatte.openapi.dto.ProductReviewWithRating;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
-import com.zufar.icedlatte.review.api.PageableReviewsAndRatingsProvider;
+import com.zufar.icedlatte.review.api.ProductReviewsAndRatingsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewCreator;
 import com.zufar.icedlatte.review.api.ProductReviewDeleter;
 import com.zufar.icedlatte.review.api.ProductReviewProvider;
@@ -34,7 +34,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
 
     private final ProductReviewCreator productReviewCreator;
     private final ProductReviewDeleter productReviewDeleter;
-    private final PageableReviewsAndRatingsProvider pageableReviewsProvider;
+    private final ProductReviewsAndRatingsProvider productReviewsAndRatingsProvider;
     private final ProductReviewProvider productReviewProvider;
 
     @Override
@@ -66,17 +66,17 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
                                                                                        @RequestParam(name = "sort_direction", defaultValue = "desc") final String sortDirection) {
         log.info("Received the request to get reviews and ratings for product {} with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}",
                 productId, page, size, sortAttribute, sortDirection);
-        ProductReviewsAndRatingsWithPagination reviewsPaginationDto = pageableReviewsProvider.getProductReviews(productId, page, size, sortAttribute, sortDirection);
+        ProductReviewsAndRatingsWithPagination reviewsPaginationDto = productReviewsAndRatingsProvider.getProductReviews(productId, page, size, sortAttribute, sortDirection);
         log.info("Product reviews and ratings were retrieved successfully");
         return ResponseEntity.ok().body(reviewsPaginationDto);
     }
 
     @Override
-    @GetMapping(value = "/{productId}/reviews/exists")
-    public ResponseEntity<ProductReviewStatus> getProductReview(@PathVariable final UUID productId){
-        log.info("Received the request to get product review status product {}", productId);
-        ProductReviewStatus reviewsStatus = productReviewProvider.getProductReviewByUser(productId);
-        log.info("Product review status was retrieved successfully");
-        return ResponseEntity.ok().body(reviewsStatus);
+    @GetMapping(value = "/{productId}/review")
+    public ResponseEntity<ProductReviewWithRating> getProductReview(@PathVariable final UUID productId){
+        log.info("Received the request to get product review and rating for product {}", productId);
+        ProductReviewWithRating result = productReviewsAndRatingsProvider.getProductReviewAndRatingByUser(productId);
+        log.info("Product review and rating were retrieved successfully");
+        return ResponseEntity.ok().body(result);
     }
 }

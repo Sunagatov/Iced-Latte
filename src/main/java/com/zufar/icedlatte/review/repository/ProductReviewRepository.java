@@ -20,7 +20,17 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
     @Query("SELECT new com.zufar.icedlatte.openapi.dto.ProductReviewWithRating(r.productRating, pr.text, COALESCE(pr.createdAt, r.createdAt), u.firstName, u.lastName) " +
             "FROM ProductReview pr " +
             "FULL JOIN ProductRating r ON r.user = pr.user AND pr.productInfo.productId = r.productInfo.productId " +
-            "JOIN UserEntity u on u.id=coalesce(r.user.id, pr.user.id) " +
+            "JOIN UserEntity u ON u.id=coalesce(r.user.id, pr.user.id) " +
             "WHERE pr.productInfo.productId = :productId OR r.productInfo.productId = :productId")
     Page<ProductReviewWithRating> findByProductIdWithRatings(@Param("productId") UUID productId, Pageable pageable);
+
+    @Query("SELECT new com.zufar.icedlatte.openapi.dto.ProductReviewWithRating(r.productRating, pr.text, COALESCE(pr.createdAt, r.createdAt), u.firstName, u.lastName) " +
+            "FROM ProductReview pr " +
+            "FULL JOIN ProductRating r ON r.user = pr.user AND pr.productInfo.productId = r.productInfo.productId " +
+            "JOIN UserEntity u ON u.id= coalesce(r.user.id, pr.user.id)" +
+            "WHERE " +
+            "(pr.productInfo.productId = :productId OR r.productInfo.productId = :productId) " +
+            "AND " +
+            "(pr.user.id = :userId OR r.user.id = :userId)")
+    Optional<ProductReviewWithRating> findByProductIdWithRating(@Param("userId") UUID userId, @Param("productId") UUID productId);
 }

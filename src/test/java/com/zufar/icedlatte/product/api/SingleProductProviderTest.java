@@ -33,7 +33,7 @@ class SingleProductProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private ProductPictureLinkUpdater productPictureLinkUpdater;
+    private ProductUpdater productUpdater;
 
 
     @InjectMocks
@@ -45,7 +45,7 @@ class SingleProductProviderTest {
 
         when(productRepository.findById(any(UUID.class))).thenReturn(Optional.of(mock(ProductInfo.class)));
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductInfoDto result = productProvider.getProductById(productId);
 
@@ -58,7 +58,7 @@ class SingleProductProviderTest {
     void shouldThrowExceptionWhenProductIdNotExists() {
         UUID productId = UUID.randomUUID();
 
-        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(any(ProductInfoDto.class));
+        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(any(ProductInfoDto.class));
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
         ProductNotFoundException thrownException = assertThrows(

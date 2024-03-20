@@ -26,7 +26,7 @@ public class ProductReviewCreator {
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final SingleUserProvider singleUserProvider;
-    private final ProductReviewValidator productReviewValidator;
+    private final ProductRatingAndReviewValidator productReviewValidator;
     private final SingleProductProvider singleProductProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
