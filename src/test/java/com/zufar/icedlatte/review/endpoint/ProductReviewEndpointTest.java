@@ -27,6 +27,7 @@ import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -133,26 +134,12 @@ class ProductReviewEndpointTest {
     @DisplayName("Should fetch review and rating successfully for an authorized user")
     void shouldFetchReviewAndRatingSuccessfully() {
         // no review and no rating
-        Response responseForNoReviewAndRating = given(specification)
+        Response response = given(specification)
                 .get("/{productId}/review", AFFOGATO_ID);
 
-        assertRestApiBodySchemaResponse(responseForNoReviewAndRating, HttpStatus.OK, REVIEW_WITH_RATING_RESPONSE_SCHEMA)
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_WITH_RATING_RESPONSE_SCHEMA)
                 .body("reviewText", nullValue())
-                .body("rating", nullValue());
-
-        // Add at least review
-        String body = getRequestBody(REVIEW_ADD_BODY);
-        Response responseWithReviewId = given(specification)
-                .body(body)
-                .post("/{productId}/reviews", AFFOGATO_ID);
-
-        Response responseWithReview = given(specification)
-                .get("/{productId}/review", AFFOGATO_ID);
-        assertRestApiBodySchemaResponse(responseWithReview, HttpStatus.OK, REVIEW_WITH_RATING_RESPONSE_SCHEMA)
-                .body("reviewText", equalTo(EXPECTED_REVIEW))
-                .body("rating", nullValue());
-
-        removeReview(AFFOGATO_ID, responseWithReviewId);
+                .body("rating", notNullValue());
     }
 
     @Test

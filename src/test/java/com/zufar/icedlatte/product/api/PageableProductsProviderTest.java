@@ -2,7 +2,6 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -38,7 +37,7 @@ class PageableProductsProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private ProductPictureLinkUpdater productPictureLinkUpdater;
+    private ProductUpdater productUpdater;
 
     @InjectMocks
     private PageableProductsProvider productsProvider;
@@ -62,7 +61,7 @@ class PageableProductsProviderTest {
         when(productRepository.findAll(pageRequest)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.<Page<ProductInfoDto>>any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
-        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageNumber, size,
                 sortAttribute, Sort.Direction.ASC.name()

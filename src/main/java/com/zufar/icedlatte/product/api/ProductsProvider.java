@@ -5,7 +5,6 @@ import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -29,14 +28,14 @@ public class ProductsProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
-    private final ProductPictureLinkUpdater productPictureLinkUpdater;
+    private final ProductUpdater productUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         var products = productInfoRepository.findAllById(uuids);
         var result = products.stream()
                 .map(productInfoDtoConverter::toDto)
-                .map(productPictureLinkUpdater::update)
+                .map(productUpdater::update)
                 .toList();
 
         if (result.size() == uuids.size()) {

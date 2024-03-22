@@ -18,7 +18,7 @@ public class ProductAverageRatingUpdater {
     public ProductInfoDto update(ProductInfoDto productInfoDto) {
         final UUID productId = productInfoDto.getId();
         final AverageProductRatingDto result = productRatingProvider.getAvgRatingByProductId(productId);
-        productInfoDto.setAverageRating(result.getRating());
+        productInfoDto.setAverageRating(result.getRating() == null ? 0 : result.getRating());
         return productInfoDto;
     }
 }
