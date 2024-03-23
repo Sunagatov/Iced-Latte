@@ -16,7 +16,6 @@ import java.util.UUID;
 public class ProductReviewDeleter {
 
     private final ProductReviewRepository reviewRepository;
-
     private final ProductRatingAndReviewValidator productReviewValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
