@@ -144,11 +144,11 @@ paths:
         "500":
           description: "Internal server error"
 
-  /api/v1/products/{productId}/reviews/exists:
+  /api/v1/products/{productId}/review:
     get:
       tags:
         - "Product Review"
-      summary: "Check if a user has already created a review"
+      summary: "Return a review for created by the user"
       operationId: "getProductReview"
       parameters:
         - name: "productId"
@@ -160,11 +160,11 @@ paths:
             format: "uuid"
       responses:
         "200":
-          description: "The product was found and its review status for a user is returned."
+          description: "The product was found and its review and rating are returned. Rating and review are null, if user left no review and rating for the product"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProductReviewStatus"
+                $ref: "#/components/schemas/ProductReviewWithRating"
         "401":
           description: "Unauthorized access"
         "404":
@@ -184,12 +184,6 @@ components:
           maxLength: 1500
       required:
         - text
-
-    ProductReviewStatus:
-      type: "object"
-      properties:
-        exists:
-          type: "boolean"
 
     ProductReviewResponse:
       type: "object"

@@ -136,6 +136,7 @@ components:
         - price
         - quantity
         - active
+        - averageRating
       properties:
         id:
           type: "string"
@@ -154,6 +155,8 @@ components:
           type: "boolean"
         productFileUrl:
           type: "string"
+        averageRating:
+          type: "double"
 
     ProductListWithPaginationInfoDto:
       type: "object"

@@ -90,7 +90,7 @@ components:
           type: string
           format: "uuid"
         rating:
-          type: Integer
+          type: "integer"
       required:
         - productId
         - rating
@@ -102,7 +102,7 @@ components:
           type: string
           format: "uuid"
         rating:
-          type: double
+          type: "double"
       required:
         - productId
         - rating

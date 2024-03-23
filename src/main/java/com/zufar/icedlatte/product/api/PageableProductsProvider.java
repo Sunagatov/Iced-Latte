@@ -2,7 +2,6 @@ package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +23,7 @@ public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductPictureLinkUpdater productPictureLinkUpdater;
-
+    private final ProductUpdater productUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductListWithPaginationInfoDto getProducts(final Integer page,
@@ -37,7 +35,7 @@ public class PageableProductsProvider {
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAll(pageable)
                 .map(productInfoDtoConverter::toDto)
-                .map(productPictureLinkUpdater::update);
+                .map(productUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
     }

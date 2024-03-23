@@ -68,6 +68,21 @@ class ProductRatingEndpointTest {
     }
 
     @Test
+    @DisplayName("Should update existing rating, not create the new one")
+    void shouldUpdateRatingSuccessfully() {
+        given(specification)
+                .post("/{productId}/ratings/{rating}", AFFOGATO_ID, 3);
+        given(specification)
+                .post("/{productId}/ratings/{rating}", AFFOGATO_ID, 5);
+
+        // Average rating should be 5, not 4
+        Response response = given(specification)
+                .get("/{productId}/ratings", AFFOGATO_ID);
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, RATING_RESPONSE_SCHEMA)
+                .body("rating", equalTo(5.0F));
+    }
+
+    @Test
     @DisplayName("Should fetch average rating successfully and return object containing avg rating and product id")
     void shouldFetchAverageRatingSuccessfully() {
         // No authorization is required
@@ -81,7 +96,7 @@ class ProductRatingEndpointTest {
                 .get("/{productId}/ratings", ESPRESSO_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, RATING_RESPONSE_SCHEMA)
-                .body("rating", equalTo(4.0F));
+                .body("rating", equalTo(3.5F));
     }
 
     @Test

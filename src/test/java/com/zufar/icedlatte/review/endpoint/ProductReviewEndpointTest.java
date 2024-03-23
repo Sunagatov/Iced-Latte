@@ -3,7 +3,9 @@ package com.zufar.icedlatte.review.endpoint;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +27,8 @@ import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 @Testcontainers
@@ -38,7 +42,7 @@ class ProductReviewEndpointTest {
     private static final String REVIEW_ADD_EMPTY_TEXT = "/review/model/add-review-empty-text.json";
     private static final String REVIEW_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
     private static final String REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
-    private static final String REVIEW_EXISTS_RESPONSE_SCHEMA = "review/model/schema/review-exists-response-schema.json";
+    private static final String REVIEW_WITH_RATING_RESPONSE_SCHEMA = "review/model/schema/review-with-rating-response-schema.json";
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
     private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
@@ -71,6 +75,15 @@ class ProductReviewEndpointTest {
                 .accept(ContentType.JSON);
     }
 
+    void removeReview(final String currentProductId, final Response response) {
+        var currentReviewId = response.getBody().path("productReviewId");
+        // clean up the DB
+        if (currentReviewId != null && currentProductId != null) {
+            given(specification)
+                    .delete("/{productId}/reviews/{reviewId}", currentProductId, currentReviewId);
+        }
+    }
+
     @Test
     @DisplayName("Should add review successfully and return object containing review text")
     void shouldAddReviewSuccessfully() {
@@ -82,6 +95,8 @@ class ProductReviewEndpointTest {
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", equalTo(EXPECTED_REVIEW));
+
+        removeReview(AFFOGATO_ID, response);
     }
 
     @Test
@@ -116,13 +131,15 @@ class ProductReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("Should fetch review status successfully")
-    void shouldFetchReviewStatusSuccessfully() {
+    @DisplayName("Should fetch review and rating successfully for an authorized user")
+    void shouldFetchReviewAndRatingSuccessfully() {
+        // no review and no rating
         Response response = given(specification)
-                .get("/{productId}/reviews/exists", AFFOGATO_ID);
+                .get("/{productId}/review", AFFOGATO_ID);
 
-        assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_EXISTS_RESPONSE_SCHEMA)
-                .body("exists", equalTo(false));
+        assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_WITH_RATING_RESPONSE_SCHEMA)
+                .body("reviewText", nullValue())
+                .body("rating", notNullValue());
     }
 
     @Test
@@ -225,7 +242,7 @@ class ProductReviewEndpointTest {
                 .delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID());
 
         Response responseGetExists = given(specification)
-                .get("/{productId}/reviews/exists", AMERICANO_ID);
+                .get("/{productId}/review", AMERICANO_ID);
 
         responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
         responseDelete.then().statusCode(HttpStatus.BAD_REQUEST.value());

@@ -15,7 +15,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProductReviewValidator {
+public class ProductRatingAndReviewValidator {
 
     private final SingleProductProvider singleProductProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;

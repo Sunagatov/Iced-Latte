@@ -12,4 +12,6 @@ public interface ProductRatingRepository extends JpaRepository<ProductRating, UU
 
     @Query("SELECT AVG(pr.productRating) FROM ProductRating pr WHERE pr.productInfo.id = :productId")
     Double getAvgRatingByProductId(UUID productId);
+
+    ProductRating findByUserIdAndProductInfoProductId(UUID userId, UUID productId);
 }
