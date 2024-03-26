@@ -35,7 +35,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewCreator productReviewCreator;
     private final ProductReviewDeleter productReviewDeleter;
     private final ProductReviewsAndRatingsProvider productReviewsAndRatingsProvider;
-    private final ProductReviewProvider productReviewProvider;
 
     @Override
     @PostMapping(value = "/{productId}/reviews")

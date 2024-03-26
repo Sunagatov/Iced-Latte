@@ -27,4 +27,13 @@ public class ProductReviewProvider {
                     return new ProductReviewNotFoundException(reviewId);
                 });
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public Integer getReviewCountProductById(final UUID productId) {
+        return reviewRepository.getReviewCountProductById(productId)
+                .orElseThrow(() -> {
+                    log.warn("Failed to get the review entities for product id: {}", productId);
+                    return new ProductReviewNotFoundException(productId);
+                });
+    }
 }

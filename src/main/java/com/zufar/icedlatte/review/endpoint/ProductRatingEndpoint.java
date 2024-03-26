@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.AverageProductRatingDto;
 import com.zufar.icedlatte.openapi.dto.ProductRatingDto;
+import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
 import com.zufar.icedlatte.openapi.product.rating.api.ProductRatingApi;
 import com.zufar.icedlatte.review.api.ProductRatingProvider;
 import com.zufar.icedlatte.review.api.ProductRatingUpdater;
@@ -44,11 +44,11 @@ public class ProductRatingEndpoint implements ProductRatingApi {
     }
 
     @Override
-    @GetMapping("/{productId}/ratings")
-    public ResponseEntity<AverageProductRatingDto> getRatingByProductId(@PathVariable final UUID productId) {
-        log.info("Received the request to get average rating for product id: {}", productId);
-        final AverageProductRatingDto averageRating = ratingProvider.getAvgRatingByProductId(productId);
-        log.info("Rating by product id retrieval processed");
-        return ResponseEntity.ok().body(averageRating);
+    @GetMapping("/{productId}/ratings/statistics")
+    public ResponseEntity<ProductReviewRatingStats> getRatingAndReviewStat(@PathVariable final UUID productId) {
+        log.info("Received the request to review and rating statistics for product id: {}", productId);
+        final ProductReviewRatingStats stats = ratingProvider.getRatingAndReviewStat(productId);
+        log.info("Product review and rating statistics were retrieved successfully");
+        return ResponseEntity.ok().body(stats);
     }
 }

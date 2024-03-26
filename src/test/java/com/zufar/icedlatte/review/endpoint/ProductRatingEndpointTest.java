@@ -20,6 +20,7 @@ import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBodySch
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Testcontainers
 @DisplayName("ProductRatingEndpoint Tests")
@@ -77,14 +78,14 @@ class ProductRatingEndpointTest {
 
         // Average rating should be 5, not 4
         Response response = given(specification)
-                .get("/{productId}/ratings", AFFOGATO_ID);
+                .get("/{productId}/ratings/statistics", AFFOGATO_ID);
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, RATING_RESPONSE_SCHEMA)
                 .body("rating", equalTo(5.0F));
     }
 
     @Test
-    @DisplayName("Should fetch average rating successfully and return object containing avg rating and product id")
-    void shouldFetchAverageRatingSuccessfully() {
+    @DisplayName("Should fetch review and rating stats successfully")
+    void shouldFetchReviewAndRatingStatsSuccessfully() {
         // No authorization is required
         specification = given()
                 .log().all(true)
@@ -93,10 +94,17 @@ class ProductRatingEndpointTest {
                 .accept(ContentType.JSON);
 
         Response response = given(specification)
-                .get("/{productId}/ratings", ESPRESSO_ID);
+                .get("/{productId}/ratings/statistics", ESPRESSO_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, RATING_RESPONSE_SCHEMA)
-                .body("rating", equalTo(3.5F));
+                .body("rating", equalTo(3.5F))
+                .body("reviewCount", equalTo(1))
+                .body("productId", notNullValue())
+                .body("ratingMap.1", equalTo(2))
+                .body("ratingMap.2", equalTo(0))
+                .body("ratingMap.3", equalTo(0))
+                .body("ratingMap.4", equalTo(1))
+                .body("ratingMap.5", equalTo(3));
     }
 
     @Test

@@ -55,12 +55,12 @@ paths:
         "500":
           description: "Internal server error"
 
-  /api/v1/products/{productId}/ratings:
+  /api/v1/products/{productId}/ratings/statistics:
     get:
       tags:
         - "Product Rating"
-      summary: "Get Average Product Rating for any user"
-      operationId: "getRatingByProductId"
+      summary: "Get Product Review and Rating statistics: average rating, count of reviews, ratings map. Endpoint is available for unauthorized users"
+      operationId: "getRatingAndReviewStat"
       parameters:
         - name: "productId"
           in: "path"
@@ -75,7 +75,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AverageProductRatingDto"
+                $ref: "#/components/schemas/ProductReviewRatingStats"
         "404":
           description: "Product was not found"
         "500":
@@ -95,7 +95,7 @@ components:
         - productId
         - rating
 
-    AverageProductRatingDto:
+    ProductReviewRatingStats:
       type: object
       properties:
         productId:
@@ -103,6 +103,43 @@ components:
           format: "uuid"
         rating:
           type: "double"
+        reviewCount:
+          type: "integer"
+          format: "int32"
+        ratingMap:
+          $ref: "#/components/schemas/RatingMap"
       required:
         - productId
         - rating
+        - reviewCount
+        - ratingMap
+
+    RatingMap:
+      type: object
+      properties:
+        5:
+          type: "integer"
+          format: "int32"
+          default: 0
+        4:
+          type: "integer"
+          format: "int32"
+          default: 0
+        3:
+          type: "integer"
+          format: "int32"
+          default: 0
+        2:
+          type: "integer"
+          format: "int32"
+          default: 0
+        1:
+          type: "integer"
+          format: "int32"
+          default: 0
+      required:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
