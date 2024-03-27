@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.converter;
 
 import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

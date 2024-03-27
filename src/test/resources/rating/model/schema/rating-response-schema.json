@@ -7,6 +7,29 @@
     },
     "rating": {
       "type": "number"
+    },
+    "reviewCount": {
+      "type": "number"
+    },
+    "ratingMap": {
+      "type": "object",
+      "properties": {
+        "1": {
+          "type": "number"
+        },
+        "2": {
+          "type": "number"
+        },
+        "3": {
+          "type": "number"
+        },
+        "4": {
+          "type": "number"
+        },
+        "5": {
+          "type": "number"
+        }
+      }
     }
   }
 }

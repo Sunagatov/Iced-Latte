@@ -23,7 +23,7 @@ paths:
     get:
       tags:
         - "Product Review"
-      summary: "Retrieve product's reviews and ratings for any user"
+      summary: "Retrieve product's reviews and ratings, endpoint is available for unauthorized users"
       operationId: "getProductReviewsAndRatings"
       parameters:
         - name: "productId"
@@ -148,7 +148,7 @@ paths:
     get:
       tags:
         - "Product Review"
-      summary: "Return a review for created by the user"
+      summary: "Return a review created by the authorized user"
       operationId: "getProductReview"
       parameters:
         - name: "productId"

@@ -33,4 +33,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
             "AND " +
             "(pr.user.id = :userId OR r.user.id = :userId)")
     Optional<ProductReviewWithRating> findByProductIdWithRating(@Param("userId") UUID userId, @Param("productId") UUID productId);
+
+    @Query("SELECT COUNT(pr) FROM ProductReview pr WHERE pr.productInfo.id = :productId")
+    Optional<Integer> getReviewCountProductById(UUID productId);
 }
