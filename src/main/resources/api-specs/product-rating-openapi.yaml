@@ -102,7 +102,7 @@ components:
           type: string
           format: "uuid"
         rating:
-                    type: "number"
+          type: "number"
           format: "double"
         reviewCount:
           type: "integer"
