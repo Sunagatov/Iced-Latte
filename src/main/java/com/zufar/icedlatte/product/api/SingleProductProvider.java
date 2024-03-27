@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
-import com.zufar.icedlatte.product.api.rating.ProductAverageRatingUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;

@@ -7,7 +7,6 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.api.ProductReviewsAndRatingsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewCreator;
 import com.zufar.icedlatte.review.api.ProductReviewDeleter;
-import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
