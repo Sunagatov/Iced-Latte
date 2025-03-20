@@ -152,13 +152,13 @@ Take some time to press F and give some respects to our [best contributors](http
 - [@Diana-Smolnikova](https://github.com/Diana-Smolnikova)
 
 #### ⚙️ Backend developers
+- [@yevr19](https://github.com/yevr19) (co-founder)
 - [@annstriganova](https://github.com/annstriganova)
 - [@M437A](https://github.com/M437A)
 - [@Sunagatov](https://github.com/Sunagatov)
 - [@vitaliibredun](https://github.com/vitaliibredun)
 - [@plakhov](https://github.com/plakhov)
 - [@shpali4](https://github.com/shpali4)
-- [@yevr19](https://github.com/yevr19)
 - [@andrew13pol](https://github.com/andrew13pol)
 - [@nnick44](https://github.com/nnick44)
 
