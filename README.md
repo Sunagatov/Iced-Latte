@@ -96,6 +96,13 @@ Three huge requests for everyone:
 - Check to see if someone else has already come up with the idea before
 - Create a new discussion
 - 🖼 If it's **UI/UX** related: attach a screenshot or wireframe
+  
+## Mock Server
+
+You can mock and interact with the Payment API using the OpenAPI spec without setting up a backend. This is useful for quickly testing request/response flows, debugging client-side logic, or integrating during early development stages. The mock server generates structured, realistic responses based on the schema and examples.
+
+<a href="https://beeceptor.com/openapi-mock-server/?utm_source=github&utm_campaign=iced-latte&url=https://raw.githubusercontent.com/Sunagatov/Iced-Latte/130565d657d813d7ee692b59c32f9f4abc03a0c3/src/main/resources/api-specs/payment-openapi.yaml" target="_blank"><img src="https://cdn.beeceptor.com/assets/images/buttons/mock-openapi-with-beeceptor.png" alt="Mock These APIs Instantly" style="height: 60px;"></a>
+
 
 ## 😍 Contributions
 
