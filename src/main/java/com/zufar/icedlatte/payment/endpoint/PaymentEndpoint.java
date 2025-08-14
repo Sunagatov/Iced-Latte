@@ -1,16 +1,12 @@
 package com.zufar.icedlatte.payment.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.PaymentConfirmationEmail;
-import com.zufar.icedlatte.openapi.dto.SessionWithClientSecretDto;
-import com.zufar.icedlatte.payment.api.PaymentProcessor;
-import com.zufar.icedlatte.payment.api.RedirectEventProcessor;
-import com.zufar.icedlatte.payment.api.WebhookEventProcessor;
-import com.zufar.icedlatte.payment.exception.StripeSessionRetrievalException;
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.servlet.http.HttpServletRequest;
+import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.payment.api.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping(value = PaymentEndpoint.PAYMENT_URL)
+@RequestMapping(PaymentEndpoint.PAYMENT_URL)
 public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
 
     public static final String PAYMENT_URL = "/api/v1/payment";
@@ -31,38 +27,31 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     private final WebhookEventProcessor webhookEventProcessor;
     private final RedirectEventProcessor redirectEventProcessor;
 
-    @Hidden
-    @GetMapping
-    public ResponseEntity<SessionWithClientSecretDto> processPayment(final HttpServletRequest request) {
-        log.info("Received request to process payment");
-        var processPaymentResponse = paymentProcessor.processPayment(request);
-        log.info("Payment session was created successfully");
-        return ResponseEntity.ok()
-                .body(processPaymentResponse);
+    @Override
+    @PostMapping
+    public ResponseEntity<SessionWithClientSecretDto> processPayment() {
+        log.info("Processing payment request");
+        var response = paymentProcessor.processPayment(null);
+        log.info("Payment session created: {}", response.getSessionId());
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Handles various requests which are sent by Stripe
-     *
-     * @param stripeSignatureHeader - Stripe Signature which is used for authorization
-     * @param paymentPayload - serialized event: Stripe sends many events, we're interested only in Session events
-     */
-    @Hidden
     @PostMapping("/stripe/webhook")
-    public ResponseEntity<Void> processStripeWebhook(@RequestHeader("Stripe-Signature") final String stripeSignatureHeader,
-                                                     @RequestBody final String paymentPayload){
-        log.info("Received Stripe payment webhook");
-        webhookEventProcessor.processPaymentEvent(paymentPayload, stripeSignatureHeader);
-        log.info("Finished processing Stripe payment webhook");
+    public ResponseEntity<Void> processStripeWebhook(@RequestHeader("Stripe-Signature") String stripeSignature,
+                                                     @RequestBody String payload,
+                                                     CsrfToken csrfToken) {
+        log.info("Processing Stripe webhook");
+        webhookEventProcessor.processPaymentEvent(payload, stripeSignature);
+        log.info("Stripe webhook processed");
         return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping("/order")
-    public ResponseEntity<PaymentConfirmationEmail> processRedirectEvent(@RequestParam final String sessionId) throws StripeSessionRetrievalException {
-        log.info("Received request to create order after redirect, session id {}", sessionId);
-        var paymentConfirmationEmail = redirectEventProcessor.processPaymentEvent(sessionId);
-        log.info("Finished creating order after redirect");
-        return ResponseEntity.ok().body(paymentConfirmationEmail);
+    public ResponseEntity<PaymentConfirmationEmail> processRedirectEvent(@RequestParam String sessionId) {
+        log.info("Processing redirect event");
+        var confirmation = redirectEventProcessor.processPaymentEvent(sessionId);
+        log.info("Order created after redirect");
+        return ResponseEntity.ok(confirmation);
     }
 }

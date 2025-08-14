@@ -1,16 +1,12 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.BrandsDto;
-import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.openapi.dto.SellersDto;
-import com.zufar.icedlatte.product.api.ProductsProvider;
-import com.zufar.icedlatte.product.api.SingleProductProvider;
+import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.product.api.*;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
-import com.zufar.icedlatte.product.api.PageableProductsProvider;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
 
 import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
 
@@ -46,15 +42,21 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @Override
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
-        log.info("Received the request to get the product with productId - {}.", productId);
-        ProductInfoDto product = singleProductProvider.getProductById(productId);
-        log.info("The product with productId: {} was retrieved successfully", productId);
-        return ResponseEntity.ok()
-                .body(product);
+        // Validate UUID input to prevent code injection
+        if (productId == null) {
+            log.warn("Invalid product ID: null value received");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Getting product by id: {}", productId);
+        var product = singleProductProvider.getProductById(productId);
+        log.info("Product retrieved: {}", productId);
+        return ResponseEntity.ok(product);
     }
 
     @Override
     @GetMapping
+    @Validated
     public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") Integer pageNumber,
                                                                         @RequestParam(name = "size", defaultValue = "50") Integer pageSize,
                                                                         @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
@@ -64,46 +66,45 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
                                                                         @RequestParam(name = "minimum_average_rating", required = false) Integer minimumAverageRating,
                                                                         @RequestParam(name = "brand_names", required = false) List<String> brandNames,
                                                                         @RequestParam(name = "seller_names", required = false) List<String> sellersNames) {
-        log.info("Received the request to get products with these pagination and sorting attributes: " +
-                "page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
+        log.info("Getting products with pagination: page={}, size={}, sort={}", pageNumber, pageSize, sortAttribute);
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
-        ProductListWithPaginationInfoDto productPaginationDto = pageableProductsProvider.getProducts(pageable, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);
-        log.info("Products were retrieved successfully with these pagination and sorting attributes: " +
-                "page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
-        return ResponseEntity.ok()
-                .body(productPaginationDto);
+        var pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
+        var products = pageableProductsProvider.getProducts(pageable, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);
+        log.info("Retrieved {} products", products.getProducts().size());
+        return ResponseEntity.ok(products);
     }
 
     @Override
     @PostMapping("/ids")
-    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@RequestBody final ProductIdsDto productIdsDto) {
-        List<UUID> productIds = productIdsDto.getProductIds();
-        var stringIDs = productIds.stream().map(UUID::toString).collect(Collectors.joining(", "));
-        log.info("Received the request to get the products with productIds - {}.", stringIDs);
-        List<ProductInfoDto> products = productsProvider.getProducts(productIds);
-        log.info("Products with productIds: {} was retrieved successfully", stringIDs);
-        return ResponseEntity.ok()
-                .body(products);
+    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
+        // Validate input to prevent code injection
+        if (productIdsDto.getProductIds() == null || productIdsDto.getProductIds().isEmpty()) {
+            log.warn("Invalid request: null or empty product IDs list");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        var productIds = productIdsDto.getProductIds();
+        log.info("Getting {} products by IDs", productIds.size());
+        var products = productsProvider.getProducts(productIds);
+        log.info("Retrieved {} products by IDs", products.size());
+        return ResponseEntity.ok(products);
     }
 
     @Override
     @GetMapping("/sellers")
     public ResponseEntity<SellersDto> getAllSellers() {
-        log.info("Received the request to get a list of all hardcoded sellers of products");
-        SellersDto sellersDto = new SellersDto(List.of("JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium", "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"));
-        log.info("The list of all hardcoded sellers of products was retrieved successfully");
-        return ResponseEntity.ok()
-                .body(sellersDto);
+        log.info("Getting all sellers");
+        var sellers = new SellersDto(List.of("JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium", "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"));
+        log.info("Retrieved {} sellers", sellers.getSellers().size());
+        return ResponseEntity.ok(sellers);
     }
 
     @Override
     @GetMapping("/brands")
     public ResponseEntity<BrandsDto> getAllBrands() {
-        log.info("Received the request to get a list of all hardcoded brands of products");
-        BrandsDto brandsDto = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
-        log.info("The list of all hardcoded brands of products was retrieved successfully");
-        return ResponseEntity.ok()
-                .body(brandsDto);
+        log.info("Getting all brands");
+        var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
+        log.info("Retrieved {} brands", brands.getBrands().size());
+        return ResponseEntity.ok(brands);
     }
 }

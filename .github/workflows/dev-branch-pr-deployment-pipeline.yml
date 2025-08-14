@@ -1,3 +1,11 @@
+      - name: Build a new docker image
+        run: docker build -t ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+      - name: Push a new docker image into Dockerhub
+        run: docker push ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+            docker rmi ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} || true
+            docker pull ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} || exit 1
+              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
+              ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }}
 name: Build and Deploy
 
 on:
@@ -9,9 +17,14 @@ jobs:
   build-and-push-docker-image:
     name: Build and push a new docker image
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout the source code from the Github repository
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Dockerhub
         uses: docker/login-action@v3
@@ -19,20 +32,30 @@ jobs:
           username: ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build a new docker image
-        run: docker build -t ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:latest-version .
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
 
-      - name: Push a new docker image into Dockerhub
-        run: docker push ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:latest-version
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy-app-to-server:
     name: Deploy application to remote server via SSH
     runs-on: ubuntu-latest
     needs: build-and-push-docker-image
     steps:
-      - name: Set DOCKER_IMAGE_TAG
-        run: echo "DOCKER_IMAGE_TAG=latest" >> $GITHUB_ENV
-
       - name: Deploy image via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -40,36 +63,56 @@ jobs:
           port: ${{ secrets.DEV_SSH_PORT }}
           username: ${{ secrets.DEV_SSH_USER }}
           password: ${{ secrets.DEV_SSH_PASSWORD }}
+          envs: IMAGE_TAG
           script: |
-            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
-            docker stop ${{ vars.DOCKER_CONTAINER_NAME }} || true
-            docker rm ${{ vars.DOCKER_CONTAINER_NAME }} || true
-            docker rmi ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:latest-version || true
-            docker pull ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:latest-version
-            docker run -d \
-              --name ${{ vars.DOCKER_CONTAINER_NAME }} \
-              --network=${{ vars.DOCKER_NETWORK }} \
-              -e APP_SERVER_PORT=${{ vars.APP_SERVER_PORT }} \
-              -e APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }} \
-              -e APP_JWT_REFRESH_SECRET=${{ secrets.APP_JWT_REFRESH_SECRET }} \
-              -e DATASOURCE_PORT=${{ vars.DATASOURCE_PORT }} \
-              -e DATASOURCE_NAME=${{ vars.DATASOURCE_NAME }} \
-              -e DATASOURCE_USERNAME=${{ vars.DATASOURCE_USERNAME }} \
-              -e DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }} \
-              -e DATASOURCE_HOST=${{ vars.DATASOURCE_HOST }} \
-              -e AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
-              -e AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
-              -e AWS_REGION=${{ vars.AWS_REGION }} \
-              -e AWS_USER_BUCKET=${{ vars.AWS_USER_BUCKET }} \
-              -e AWS_PRODUCT_BUCKET=${{ vars.AWS_PRODUCT_BUCKET }} \
-              -e AWS_DEFAULT_PRODUCT_IMAGES_PATH=${{ vars.AWS_DEFAULT_PRODUCT_IMAGES_PATH }} \
-              -e GOOGLE_AUTH_CLIENT_ID=${{ vars.GOOGLE_AUTH_CLIENT_ID }} \
-              -e GOOGLE_AUTH_CLIENT_SECRET=${{ vars.GOOGLE_AUTH_CLIENT_SECRET }} \
-              -e GOOGLE_AUTH_REDIRECT_URI=${{ vars.GOOGLE_AUTH_REDIRECT_URI }} \
-              -e REDIS_PORT=${{ vars.REDIS_PORT }} \
-              -e SPRING_AI_OPENAI_API_KEY=${{ secrets.SPRING_AI_OPENAI_API_KEY }} \
-              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-              -e STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
-              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}:/usr/app/logs \
-              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
-              zufarexplainedit/iced-latte-backend:latest-version
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push-docker-image.outputs.image-tag }}
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
+          
+          # Check if image already exists locally
+          if docker image inspect $IMAGE_TAG >/dev/null 2>&1; then
+            echo "Image $IMAGE_TAG already exists locally, skipping pull"
+          else
+            docker pull $IMAGE_TAG || exit 1
+          fi
+          
+          # Graceful container update
+          if docker ps -q -f name=${{ vars.DOCKER_CONTAINER_NAME }}; then
+            docker stop ${{ vars.DOCKER_CONTAINER_NAME }}
+            docker rm ${{ vars.DOCKER_CONTAINER_NAME }}
+          fi
+          
+          # Clean up old images (keep last 3)
+          docker images ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi || true
+          
+          docker run -d \
+            --name ${{ vars.DOCKER_CONTAINER_NAME }} \
+            --network=${{ vars.DOCKER_NETWORK }} \
+            --restart=unless-stopped \
+            --env-file <(cat <<EOF
+          APP_SERVER_PORT=${{ vars.APP_SERVER_PORT }}
+          APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }}
+          APP_JWT_REFRESH_SECRET=${{ secrets.APP_JWT_REFRESH_SECRET }}
+          DATASOURCE_PORT=${{ vars.DATASOURCE_PORT }}
+          DATASOURCE_NAME=${{ vars.DATASOURCE_NAME }}
+          DATASOURCE_USERNAME=${{ vars.DATASOURCE_USERNAME }}
+          DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }}
+          DATASOURCE_HOST=${{ vars.DATASOURCE_HOST }}
+          AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION=${{ vars.AWS_REGION }}
+          AWS_USER_BUCKET=${{ vars.AWS_USER_BUCKET }}
+          AWS_PRODUCT_BUCKET=${{ vars.AWS_PRODUCT_BUCKET }}
+          AWS_DEFAULT_PRODUCT_IMAGES_PATH=${{ vars.AWS_DEFAULT_PRODUCT_IMAGES_PATH }}
+          GOOGLE_AUTH_CLIENT_ID=${{ vars.GOOGLE_AUTH_CLIENT_ID }}
+          GOOGLE_AUTH_CLIENT_SECRET=${{ vars.GOOGLE_AUTH_CLIENT_SECRET }}
+          GOOGLE_AUTH_REDIRECT_URI=${{ vars.GOOGLE_AUTH_REDIRECT_URI }}
+          REDIS_PORT=${{ vars.REDIS_PORT }}
+          SPRING_AI_OPENAI_API_KEY=${{ secrets.SPRING_AI_OPENAI_API_KEY }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EOF
+          ) \
+            -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}:/usr/app/logs \
+            -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
+            $IMAGE_TAG

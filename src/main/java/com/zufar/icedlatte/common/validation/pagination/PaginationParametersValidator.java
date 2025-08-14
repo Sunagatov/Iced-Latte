@@ -30,7 +30,7 @@ public class PaginationParametersValidator {
                     sortAttribute, allowedSortAttributeValues);
             errorMessages.append(createErrorMessage(errorMessage));
         }
-        if (sortDirection != null && !ALLOWED_SORT_DIRECTION_VALUES.contains(sortDirection.toLowerCase())) {
+        if (sortDirection != null && !ALLOWED_SORT_DIRECTION_VALUES.contains(sortDirection.toLowerCase(java.util.Locale.ROOT))) {
             String errorMessage = String.format("'%s' is incorrect 'sortDirection' value. Allowed 'sortDirection' values are '%s'.",
                     sortDirection, ALLOWED_SORT_DIRECTION_VALUES);
             errorMessages.append(createErrorMessage(errorMessage));

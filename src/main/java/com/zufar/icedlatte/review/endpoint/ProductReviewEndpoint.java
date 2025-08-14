@@ -1,29 +1,16 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
-import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
-import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
-import com.zufar.icedlatte.openapi.dto.ProductReviewLikeDto;
-import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
+import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
-import com.zufar.icedlatte.review.api.ProductReviewsStatisticsProvider;
-import com.zufar.icedlatte.review.api.ProductReviewCreator;
-import com.zufar.icedlatte.review.api.ProductReviewDeleter;
-import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
-import com.zufar.icedlatte.review.api.ProductReviewsProvider;
+import com.zufar.icedlatte.review.api.*;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -49,21 +36,21 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
-                                                                final ProductReviewRequest productReviewRequest) {
-        log.info("Received the request to add a new product review for the product with the productId = '{}'", productId);
+                                                                @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
+        log.info("Adding product review for productId: {}", productId);
         var review = productReviewCreator.create(productId, productReviewRequest);
-        log.info("New product review was added with productReviewId = '{}' for the product with the productId = '{}'", review.getProductReviewId(), productId);
-        return ResponseEntity.ok().body(review);
+        log.info("Product review created with id: {} for productId: {}", review.getProductReviewId(), productId);
+        return ResponseEntity.ok(review);
     }
 
     @Override
     @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
-        log.info("Received request to delete product review with productReviewId = '{}', productId = '{}'", productReviewId, productId);
+        log.info("Deleting product review: {} for productId: {}", productReviewId, productId);
         productReviewDeleter.delete(productId, productReviewId);
-        log.info("Product review with productReviewId = '{}' was deleted", productReviewId);
-        return new ResponseEntity<>(HttpStatus.OK);
+        log.info("Product review deleted: {}", productReviewId);
+        return ResponseEntity.ok().build();
     }
 
     @Override
@@ -74,41 +61,52 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
                                                                                               @RequestParam(name = "sort_attribute", defaultValue = "createdAt") final String sortAttribute,
                                                                                               @RequestParam(name = "sort_direction", defaultValue = "desc") final String sortDirection,
                                                                                               @RequestParam(name = "product_ratings", required = false) List<Integer> productRatings) {
-        log.info("Received the request to get reviews and ratings for the product with the productId = '{}' and with the next pagination and sorting attributes: pageNumber - {}, pageSize - {}, sort_attribute - {}, sort_direction - {}, productRatings - {}",
-                productId, pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
+        log.info("Getting reviews for productId: {} with pagination: page={}, size={}", productId, pageNumber, pageSize);
         getReviewsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
-        ProductReviewsAndRatingsWithPagination reviewsPaginationDto = productReviewsProvider.getProductReviews(productId, pageable, productRatings);
-        log.info("Product reviews and ratings were retrieved successfully for the product with the productId = '{}'", productId);
-        return ResponseEntity.ok().body(reviewsPaginationDto);
+        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
+        var reviews = productReviewsProvider.getProductReviews(productId, pageable, productRatings);
+        log.info("Retrieved {} reviews for productId: {}", reviews.getReviewsWithRatings().size(), productId);
+        return ResponseEntity.ok(reviews);
     }
 
     @Override
     @GetMapping(value = "/{productId}/review")
     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {
-        log.info("Received the request to get product review and rating for the product with the productId = '{}'", productId);
-        ProductReviewDto result = productReviewsProvider.getProductReviewForUser(productId);
-        log.info("Product review and rating were retrieved successfully for the product with the productId = '{}'", productId);
-        return ResponseEntity.ok().body(result);
+        // Validate UUID input to prevent code injection
+        if (productId == null) {
+            log.warn("Invalid product ID: null value received");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Getting user review for productId: {}", productId);
+        var result = productReviewsProvider.getProductReviewForUser(productId);
+        log.info("User review retrieved for productId: {}", productId);
+        return ResponseEntity.ok(result);
     }
 
     @Override
     @GetMapping("/{productId}/reviews/statistics")
     public ResponseEntity<ProductReviewRatingStats> getRatingAndReviewStat(@PathVariable final UUID productId) {
-        log.info("Received the request to get the statistics of product's review and rating for the product with the productId = '{}'", productId);
-        final ProductReviewRatingStats stats = productReviewsStatisticsProvider.get(productId);
-        log.info("Statistics for product's review and rating for the product with the productId = '{}' was retrieved successfully", productId);
-        return ResponseEntity.ok().body(stats);
+        log.info("Getting review statistics for productId: {}", productId);
+        var stats = productReviewsStatisticsProvider.get(productId);
+        log.info("Review statistics retrieved for productId: {}", productId);
+        return ResponseEntity.ok(stats);
     }
 
     @Override
-    @PostMapping(value = "/{productId}/reviews/{productReviewId}/rate")
-    public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
-                                                                 @PathVariable final UUID productReviewId,
-                                                                 final ProductReviewLikeDto request) {
-        log.info("Received the request to rate a product review for the product with the productId = '{}'.", productId);
+    @PostMapping(value = "/{productId}/reviews/{productReviewId}/likes")
+    public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable @Validated final UUID productId,
+                                                                 @PathVariable @Validated final UUID productReviewId,
+                                                                 @Valid @RequestBody final ProductReviewLikeDto request) {
+        // Validate UUID inputs to prevent code injection
+        if (productId == null || productReviewId == null) {
+            log.warn("Invalid UUID parameters: productId={}, productReviewId={}", productId, productReviewId);
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Rating review: {} for productId: {} as {}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
-        log.info("Product review with id = '{}' was successfully {}.", productReviewId, request.getIsLike() ? "liked" : "disliked");
-        return ResponseEntity.ok().body(productReview);
+        log.info("Review {} successfully {}", productReviewId, request.getIsLike() ? "liked" : "disliked");
+        return ResponseEntity.ok(productReview);
     }
 }

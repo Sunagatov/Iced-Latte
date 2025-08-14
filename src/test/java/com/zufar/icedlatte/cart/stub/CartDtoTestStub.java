@@ -27,7 +27,7 @@ public class CartDtoTestStub {
                 productId, "Test name", "Test description", BigDecimal.valueOf(1.1), 1, true, BigDecimal.ZERO, 0, "brandName", "sellerName",
                 "originCountry", 100, 10, 4, 25, 200, 20, LocalDateTime.now(), 60);
 
-        UUID itemId = UUID.fromString("9b588163-b781-46bf-8714-bd0145337ddd");
+        UUID itemId = UUID.randomUUID();
         return new ShoppingCartItem(
                 itemId, 1, shoppingCart, productInfo, 5);
     }
@@ -69,7 +69,7 @@ public class CartDtoTestStub {
                 secondProductId, "Second test name", "Second test description", BigDecimal.valueOf(2.2), 2, true, BigDecimal.ZERO, 0, "brandName", "sellerName",
                 "originCountry", 100, 10, 4, 25, 200, 20, LocalDateTime.now(), 60);
         UUID thirdProductId = UUID.fromString("b58ac6f1-7ee1-4888-9055-3bebb6aa3631");
-        ProductInfo thridProductInfo = new ProductInfo(
+        ProductInfo thirdProductInfo = new ProductInfo(
                 thirdProductId, "Third test name", "Third test description", BigDecimal.valueOf(3.3), 3, true, BigDecimal.ZERO, 0, "brandName", "sellerName",
                 "originCountry", 100, 10, 4, 25, 200, 20, LocalDateTime.now(), 60);
 
@@ -80,8 +80,10 @@ public class CartDtoTestStub {
         ShoppingCartItem secondItem = new ShoppingCartItem(
                 secondItemId, 1, shoppingCart, secondProductInfo, 2);
         UUID thirdItemId = UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906");
+        int thirdItemVersion = 1;
+        int thirdItemQuantity = 3;
         ShoppingCartItem thirdItem = new ShoppingCartItem(
-                thirdItemId, 1, shoppingCart, thridProductInfo, 3);
+                thirdItemId, thirdItemVersion, shoppingCart, thirdProductInfo, thirdItemQuantity);
 
         items.add(firstItem);
         items.add(secondItem);
@@ -90,7 +92,7 @@ public class CartDtoTestStub {
         shoppingCart.setUserId(userId);
         shoppingCart.setItems(items);
         shoppingCart.setItemsQuantity(3);
-        shoppingCart.setProductsQuantity(6);
+        shoppingCart.setProductsQuantity(items.stream().mapToInt(ShoppingCartItem::getProductQuantity).sum());
         shoppingCart.setCreatedAt(OffsetDateTime.now());
         shoppingCart.setClosedAt(OffsetDateTime.now().plusHours(2));
 
@@ -104,7 +106,7 @@ public class CartDtoTestStub {
         shoppingCartDto.setUserId(userId);
         shoppingCartDto.setItemsQuantity(2);
         shoppingCartDto.setProductsQuantity(3);
-        shoppingCartDto.setItemsTotalPrice(BigDecimal.valueOf(5.5));
+        shoppingCartDto.setItemsTotalPrice(new BigDecimal("5.50"));
         shoppingCartDto.setCreatedAt(OffsetDateTime.now());
         shoppingCartDto.setClosedAt(OffsetDateTime.now().plusHours(2));
 
@@ -189,7 +191,7 @@ public class CartDtoTestStub {
         thirdProductInfoDto.setId(thirdProductId);
         thirdProductInfoDto.setName("Third test name");
         thirdProductInfoDto.setDescription("Third test description");
-        thirdProductInfoDto.setPrice(BigDecimal.valueOf(3.3));
+        thirdProductInfoDto.setPrice(new BigDecimal("3.3"));
         thirdProductInfoDto.setQuantity(3);
         thirdProductInfoDto.setActive(true);
 
@@ -233,5 +235,19 @@ public class CartDtoTestStub {
         shoppingCartDto.setClosedAt(OffsetDateTime.now().plusHours(2));
 
         return shoppingCartDto;
+    }
+
+    public static ShoppingCart createEmptyShoppingCart() {
+        UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
+        ShoppingCart shoppingCart = new ShoppingCart();
+
+        shoppingCart.setId(UUID.randomUUID());
+        shoppingCart.setUserId(userId);
+        shoppingCart.setItems(new HashSet<>());
+        shoppingCart.setItemsQuantity(0);
+        shoppingCart.setProductsQuantity(0);
+        shoppingCart.setCreatedAt(OffsetDateTime.now());
+
+        return shoppingCart;
     }
 }

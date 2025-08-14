@@ -34,7 +34,7 @@ public class ProductReviewsStatisticsProvider {
         Integer reviewsCount = reviewRepository.getReviewCountProductById(productId);
         RatingMap productRatingMap = getProductRatingMap(productId);
 
-        return new ProductReviewRatingStats(productId, formattedAvgRating, reviewsCount, productRatingMap);
+        return new ProductReviewRatingStats(productId, Double.parseDouble(formattedAvgRating), reviewsCount, productRatingMap);
     }
 
     private String getFormattedAverageProductRating(UUID productId) {
@@ -48,7 +48,7 @@ public class ProductReviewsStatisticsProvider {
     private RatingMap getProductRatingMap(UUID productId) {
         List<ProductRatingCount> productRatingCountPairs = reviewRepository.getRatingsMapByProductId(productId);
         if (productRatingCountPairs == null) {
-            return new RatingMap(0, 0, 0, 0, 0);
+            return new RatingMap();
         }
         return productReviewDtoConverter.convertToProductRatingMap(productRatingCountPairs);
     }

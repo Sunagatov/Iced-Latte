@@ -4,6 +4,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @Slf4j
@@ -31,7 +34,9 @@ public class AwsObjectUploader {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentType(file.getContentType());
             metadata.setContentLength(file.getSize());
-            amazonS3.putObject(bucketName, fileName, inputStream, metadata);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, inputStream, metadata);
+            putObjectRequest.getRequestClientOptions().setReadLimit((int) file.getSize() + 1);
+            amazonS3.putObject(putObjectRequest);
         } catch (AmazonServiceException ase) {
             log.error("AWS couldn't process operation", ase);
             throw ase;
@@ -44,9 +49,13 @@ public class AwsObjectUploader {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void uploadFileDirectory(String bucketName, String directoryPath) {
+    public void uploadFileDirectory(String bucketName, String directoryPath) throws IOException {
         TransferManager transferManager = new TransferManager(amazonS3);
-        File directory = new File(directoryPath);
+        Path normalizedPath = Paths.get(directoryPath).normalize();
+        File directory = normalizedPath.toFile();
+        if (!directory.getCanonicalPath().startsWith(new File(directoryPath).getCanonicalPath())) {
+            throw new SecurityException("Invalid directory path");
+        }
         transferManager.uploadDirectory(bucketName, "", directory, true);
     }
 }

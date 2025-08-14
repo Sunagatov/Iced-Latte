@@ -4,6 +4,7 @@ import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -27,8 +28,10 @@ public class UnlockAccountScheduler {
             userRepository.unlockUsers();
 
             log.debug("Finished unlockLockoutExpiredAccounts scheduled task.");
-        } catch (Exception exception) {
-            log.error("Error during unlockLockoutExpiredAccounts scheduled task.", exception);
+        } catch (DataAccessException dae) {
+            log.error("Database error during unlockLockoutExpiredAccounts scheduled task.", dae);
+        } catch (RuntimeException re) {
+            log.error("Unexpected error during unlockLockoutExpiredAccounts scheduled task.", re);
         }
     }
 }

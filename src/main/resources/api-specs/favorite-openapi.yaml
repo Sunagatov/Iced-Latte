@@ -81,7 +81,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ListOfFavoriteProducts"
       responses:
-        "200":
+        "201":
           description: "The products were successfully added to favorites."
           content:
             application/json:
@@ -96,7 +96,6 @@ paths:
 
 components:
   schemas:
-
     ListOfFavoriteProducts:
       type: object
       description: "A list of product IDs to be added to the user's favorite list."
@@ -118,6 +117,6 @@ components:
           type: array
           description: "An array of product details for the favorite products."
           items:
-            $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+            $ref: "./product-openapi.yaml#/components/schemas/ProductInfoDto"
       required:
-        - productsDto
+        - products

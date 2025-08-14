@@ -9,7 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Slf4j
 @Configuration
@@ -31,17 +33,26 @@ public class SpringSecurityConfiguration {
                                                    final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+                        .frameOptions().deny()
+                        .contentTypeOptions().and()
+                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                                .preload(true))
+                        .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
-                                .requestMatchers(SecurityConstants.USERS_URL).authenticated()
-                                .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
-                                .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
-                                .requestMatchers(SecurityConstants.SHIPPING_URL).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.SHOPPING_CART_URL)).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.USERS_URL)).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.FAVOURITES_URL)).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.ORDERS_URL)).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.SHIPPING_URL)).authenticated()
                                 .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(new String[0])).permitAll()
                                 .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
                                 .requestMatchers(HttpMethod.POST, SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
-                                .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
+                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.PAYMENT_URL)).authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,15 +71,8 @@ public class SpringSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(final HttpSecurity httpSecurity,
-                                                       final AuthenticationProvider authenticationProvider) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity
-                .getSharedObject(AuthenticationManagerBuilder.class);
-
-        authenticationManagerBuilder.authenticationProvider(authenticationProvider);
-
-        return authenticationManagerBuilder
-                .build();
+    public AuthenticationManager authenticationManager(final AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean

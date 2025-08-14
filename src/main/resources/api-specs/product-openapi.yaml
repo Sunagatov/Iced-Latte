@@ -41,6 +41,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductInfoDto"
+        "400":
+          description: "Invalid UUID format for productId."
         "404":
           description: "Product not found for the given ID."
         "500":
@@ -142,11 +144,12 @@ paths:
               description: "Display the product list sorted by the provided sort attribute 'reviewsCount' (the product's reviewsCount)."
               value: "sort_attribute=reviewsCount"
         - name: "sort_direction"
-          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=disc."
+          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
           in: "query"
           required: false
           schema:
             type: "string"
+            enum: ["asc", "desc"]
             default: "asc"
           examples:
             example1:
@@ -154,7 +157,7 @@ paths:
               value: "sort_direction=asc"
             example2:
               description: "Display the product list in descending order."
-              value: "sort_direction=disc"
+              value: "sort_direction=desc"
         - name: "min_price"
           description: "Filter products by the lower limit of the product's price. Possible allowed values: 1) min_price=5 or 2) min_price=17.25 or 3) any other non negative integer or decimal number value."
           in: "query"
@@ -229,10 +232,10 @@ paths:
               type: "string"
           examples:
             example1:
-              description: "Display the product list filtered by selected brand names (seller_names=BeanBrewers,JavaBeanCoffee,MorningMug)."
+              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers,JavaBeanCoffee,MorningMug)."
               value: "seller_names=BeanBrewers,JavaBeanCoffee,MorningMug"
             example2:
-              description: "Display the product list filtered by selected brand names (seller_names=BeanBrewers)."
+              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers)."
               value: "seller_names=BeanBrewers"
       responses:
         "200":

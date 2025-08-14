@@ -29,7 +29,7 @@ public interface ProductReviewDtoConverter {
     @Mapping(target = "userLastname", source = "user", qualifiedByName = "toUserLastName")
     ProductReviewDto toProductReviewDto(ProductReview productReview);
 
-    @Mapping(target = "page", expression = "java(page.getTotalPages())")
+    @Mapping(target = "page", expression = "java(page.getNumber())")
     @Mapping(target = "size", expression = "java(page.getSize())")
     @Mapping(target = "totalElements", expression = "java(page.getTotalElements())")
     @Mapping(target = "totalPages", expression = "java(page.getTotalPages())")
@@ -51,7 +51,7 @@ public interface ProductReviewDtoConverter {
     }
 
     default RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
-        var productRatingMap = new RatingMap(0, 0, 0, 0, 0);
+        var productRatingMap = new RatingMap();
 
         for (ProductRatingCount productRatingCount : productRatingCountPairs) {
             var productRating = productRatingCount.productRating();
@@ -74,7 +74,7 @@ public interface ProductReviewDtoConverter {
                     productRatingMap.setStar1(count);
                     break;
                 default:
-                    assert false : "Unexpected product's rating value";
+                    throw new IllegalArgumentException("Unexpected product's rating value: " + productRating);
             }
         }
         return productRatingMap;

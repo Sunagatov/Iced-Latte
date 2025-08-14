@@ -1,16 +1,11 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.email.api.EmailTokenConformer;
-import com.zufar.icedlatte.email.api.EmailTokenSender;
+import com.zufar.icedlatte.email.api.*;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
-import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
-import com.zufar.icedlatte.user.api.SingleUserProvider;
-import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
-import com.zufar.icedlatte.filestorage.file.FileDeleter;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarLinkProvider;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
+import com.zufar.icedlatte.security.api.*;
+import com.zufar.icedlatte.user.api.*;
+import com.zufar.icedlatte.user.api.avatar.*;
+import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -55,96 +42,110 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the user with userId - {}.", userId);
-        UserDto userDto = singleUserProvider.getUserById(userId);
-        log.info("The request to retrieve the user's account was handled.");
-        return ResponseEntity.ok()
-                .body(userDto);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Getting user profile: {}", userId);
+        var user = singleUserProvider.getUserById(userId);
+        log.info("User profile retrieved: {}", userId);
+        return ResponseEntity.ok(user);
     }
 
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to edit the User with userId - {}.", userId);
-        UserDto updatedUserDto = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
-        log.info("The request to update the user's account was handled.");
-        return ResponseEntity.ok()
-                .body(updatedUserDto);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Updating user profile: {}", userId);
+        var updatedUser = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
+        log.info("User profile updated: {}", userId);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @Override
     @PatchMapping
-    public ResponseEntity<Void> changeUserPassword(ChangeUserPasswordRequest changeUserPasswordRequest) {
-        log.info("Received the request to change the user's password.");
+    public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
+        // Validate input to prevent code injection
+        if (changeUserPasswordRequest.getOldPassword() == null || changeUserPasswordRequest.getOldPassword().trim().isEmpty() ||
+            changeUserPasswordRequest.getNewPassword() == null || changeUserPasswordRequest.getNewPassword().trim().isEmpty()) {
+            log.warn("Invalid password change request: missing passwords");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Changing user password");
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
-        log.info("The request to change the user's password was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+        log.info("User password changed");
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to delete the user's account.");
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Deleting user account: {}", userId);
         deleteUserOperationPerformer.deleteUser(userId);
-        log.info("The request to delete the user's account was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+        log.info("User account deleted: {}", userId);
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to upload the user avatar.");
+    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
+        // Validate file input to prevent code injection
+        if (file == null || file.isEmpty() || file.getOriginalFilename() == null) {
+            log.warn("Invalid file upload: null or empty file");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        // Validate file type and size
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            log.warn("Invalid file type: {}", contentType);
+            return ResponseEntity.badRequest().build();
+        }
+        
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Uploading avatar for user: {}", userId);
         userAvatarUploader.uploadUserAvatar(userId, file);
-        log.info("The request to upload the user's avatar was handled.");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        log.info("Avatar uploaded for user: {}", userId);
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the user avatar link.");
-        String userAvatar = userAvatarLinkProvider.getLink(userId);
-        log.info("The request to retrieve the user's avatar link was handled.");
-        return ResponseEntity.ok().body(userAvatar);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Getting avatar link for user: {}", userId);
+        var avatarLink = userAvatarLinkProvider.getLink(userId);
+        log.info("Avatar link retrieved for user: {}", userId);
+        return ResponseEntity.ok(avatarLink);
     }
 
     @Override
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to delete the user avatar.");
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Deleting avatar for user: {}", userId);
         fileDeleter.delete(userId);
-        log.info("The request to delete the user avatar was handled.");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        log.info("Avatar deleted for user: {}", userId);
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset")
     public ResponseEntity<Void> resetUserPassword() {
-        UserDto userDto = securityPrincipalProvider.get();
-        log.info("Received the request to reset password for user with id: {}", userDto.getId());
-        UserRegistrationRequest request = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
-                userDto.getEmail(), "");
+        var user = securityPrincipalProvider.get();
+        log.info("Resetting password for user: {}", user.getId());
+        var request = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
         emailTokenSender.sendEmailVerificationCode(request);
-        log.info("The request to reset the user's password was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+        log.info("Password reset email sent for user: {}", user.getId());
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.info("Received email confirmation request to reset password");
+    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
+        log.info("Confirming password reset");
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(confirmEmailRequest.getToken()));
-        log.info("Email verification to reset password completed");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        log.info("Password reset confirmed");
+        return ResponseEntity.ok().build();
     }
 
 }

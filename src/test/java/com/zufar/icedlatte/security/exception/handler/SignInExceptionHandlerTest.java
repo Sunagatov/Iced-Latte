@@ -94,7 +94,7 @@ class SignInExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
                 String.format("The request was rejected due to an incorrect number of login attempts for the user with email='%s'. " +
-                        "Try again in %s minutes or reset your password", userEmail, userAccountLockoutDurationMinutes),
+                        "Try again in %d minutes or reset your password", userEmail, userAccountLockoutDurationMinutes),
                 HttpStatus.UNAUTHORIZED.value(),
                 currentDateTime
         );

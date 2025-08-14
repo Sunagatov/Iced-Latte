@@ -1,7 +1,9 @@
 package com.zufar.icedlatte.common.config;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +27,15 @@ public class AWSConfig {
     @Bean
     public AmazonS3 amazonS3() {
         try {
-            BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
+            String sessionToken = System.getenv("AWS_SESSION_TOKEN");
+            BasicSessionCredentials awsCreds = new BasicSessionCredentials(accessKey, secretKey, sessionToken);
             return AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
                     .withRegion(region)
                     .build();
-        } catch (Exception exception) {
-            log.error("AWS S3 Error: ", exception);
-            return null;
+        } catch (AmazonClientException ace) {
+            log.error("AWS S3 Client Error: {}", ace.getMessage(), ace);
+            throw new RuntimeException("Failed to create AmazonS3 client", ace);
         }
     }
 }

@@ -13,6 +13,7 @@ import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,13 +38,13 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
     public boolean createOrderAndDeleteCart(Session stripeSession) {
         String sessionId = stripeSession.getId();
-        log.info("Handling completion of stripe checkout session with id = '{}'.", sessionId);
+        log.info("Handling completion of stripe checkout session with id = '{}'.", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
 
         UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
 
         Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
-            log.info("Session completion has been already handled, order has been created with id {} ", existingOrder.get().getId());
+            log.info("Session completion has been already handled, order has been created");
             return false;
         }
 
@@ -53,10 +54,10 @@ public class OrderCreator {
         log.info("Creating new order for user with id = '{}'", userId);
         Order orderEntity = createOrderEntity(user, shoppingCartDto, sessionId);
         orderRepository.saveAndFlush(orderEntity);
-        log.info("New order with id = '{}' was created and saved to database for user with id = '{}'", orderEntity.getId(), userId);
+        log.info("New order created and saved to database for user");
 
         shoppingCartRepository.deleteByUserId(userId);
-        log.info("Deleted the shopping cart for user with id = '{}'", userId);
+        log.info("Deleted the shopping cart for user");
 
         return true;
     }

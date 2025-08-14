@@ -67,28 +67,30 @@ paths:
           required: false
           schema:
             type: "string"
-            default: "name"
+            default: "createdAt"
+            enum: ["createdAt", "productRating"]
           examples:
             example1:
               description: "Display the product's review list sorted by the provided sort attribute 'createdAt' (the product's date of creation)."
               value: "sort_attribute=createdAt"
             example2:
               description: "Display the product's review list sorted by the provided sort attribute 'productRating' (the product's review rating)."
-              value: "sort_attribute=averageRating"
+              value: "sort_attribute=productRating"
         - name: "sort_direction"
-          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=disc."
+          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
           in: "query"
           required: false
           schema:
             type: "string"
             default: "asc"
+            enum: ["asc", "desc"]
           examples:
             example1:
               description: "Display the product's review list in ascending order."
               value: "sort_direction=asc"
             example2:
               description: "Display the product's review list in descending order."
-              value: "sort_direction=disc"
+              value: "sort_direction=desc"
         - name: "product_ratings"
           description: "Filter product's reviews by selected product's ratings (comma-separated list). Possible allowed values: 1) product_ratings=1 or 2) product_ratings=1,2,3,4 or 3) product_ratings=1,3,5 or 4) any other comma-separated list within 1,2,3,4,5."
           examples:
@@ -130,7 +132,7 @@ paths:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -152,7 +154,7 @@ paths:
         "401":
           description: "Unauthorized access occurred."
         "404":
-          description: "Product's review was not found."
+          description: "Product not found or product's review was not found."
         "500":
           description: "Internal server error occurred."
 
@@ -197,7 +199,7 @@ paths:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -249,7 +251,7 @@ paths:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -261,6 +263,7 @@ paths:
             type: "string"
             format: "uuid"
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -358,12 +361,13 @@ components:
       properties:
         productId:
           type: string
-          format: "uuid"
+          format: uuid
         avgRating:
-          type: string
+          type: number
+          format: double
         reviewsCount:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
         ratingMap:
           $ref: "#/components/schemas/RatingMap"
       required:
@@ -376,36 +380,30 @@ components:
       type: object
       properties:
         star5:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
           default: 0
         star4:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
           default: 0
         star3:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
           default: 0
         star2:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
           default: 0
         star1:
-          type: "integer"
-          format: "int32"
+          type: integer
+          format: int32
           default: 0
-      required:
-        - "star1"
-        - "star2"
-        - "star3"
-        - "star4"
-        - "star5"
 
     ProductReviewLikeDto:
       type: object
       properties:
         isLike:
-          type: "boolean"
+          type: boolean
       required:
         - isLike

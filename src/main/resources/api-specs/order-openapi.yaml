@@ -37,7 +37,7 @@ paths:
               $ref: "#/components/schemas/OrderStatus"
       responses:
         "200":
-          description: "List of orders successfully retrieved."
+          description: "List of orders successfully retrieved. Returns an empty array if no orders match the criteria."
           content:
             application/json:
               schema:
@@ -46,8 +46,6 @@ paths:
                   $ref: "#/components/schemas/OrderDto"
         "401":
           description: "Unauthorized access."
-        "404":
-          description: "No orders found matching the specified criteria."
         "500":
           description: "Internal server error."
 
@@ -57,8 +55,14 @@ paths:
       summary: "Place a new order for the authorized user"
       description: "Creates a new order for the authenticated user. Requires address and recipient information."
       operationId: "createOrder"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNewOrderRequestDto"
       responses:
-        "200":
+        "201":
           description: "Order successfully placed."
           content:
             application/json:
@@ -91,6 +95,7 @@ components:
         - recipientSurname
       properties:
         address:
+          # amazonq-ignore-next-line
           $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
         recipientName:
           type: "string"

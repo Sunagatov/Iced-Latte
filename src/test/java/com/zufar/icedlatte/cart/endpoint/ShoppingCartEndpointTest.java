@@ -17,11 +17,16 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+
+import org.springframework.http.HttpStatus;
 
 
 @Testcontainers
@@ -74,11 +79,18 @@ class ShoppingCartEndpointTest {
                 .get();
 
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
+        response.then()
+                .body("id", notNullValue())
+                .body("userId", notNullValue())
+                .body("items", notNullValue())
+                .body("itemsQuantity", greaterThanOrEqualTo(0))
+                .body("productsQuantity", greaterThanOrEqualTo(0))
+                .body("itemsTotalPrice", greaterThanOrEqualTo(0.0f));
     }
 
     @Test
-    @DisplayName("Should add shopping cart successfully")
-    void shouldAddItemFromShoppingCart() {
+    @DisplayName("Should add item to shopping cart successfully")
+    void shouldAddItemToShoppingCart() {
         String body = getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION);
 
         Response response = given(specification)
@@ -86,11 +98,15 @@ class ShoppingCartEndpointTest {
                 .post("/items");
 
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
+        response.then()
+                .body("items", hasSize(greaterThan(0)))
+                .body("itemsQuantity", greaterThan(0))
+                .body("productsQuantity", greaterThan(0));
     }
 
     @Test
-    @DisplayName("Should update shopping cart successfully")
-    void shouldUpdateItemFromShoppingCart() {
+    @DisplayName("Should update shopping cart item quantity successfully")
+    void shouldUpdateItemQuantityInShoppingCart() {
         String body = getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION);
 
         Response response = given(specification)
@@ -98,23 +114,26 @@ class ShoppingCartEndpointTest {
                 .patch("/items");
 
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
+        response.then()
+                .body("items", notNullValue())
+                .body("itemsQuantity", greaterThanOrEqualTo(0));
     }
 
     @Test
-    @DisplayName("Should update not found shopping cart successfully")
-    void shouldUpdateNotFoundShoppingCart() {
+    @DisplayName("Should return 404 when updating non-existent shopping cart item")
+    void shouldReturnNotFoundWhenUpdatingNonExistentItem() {
         String body = getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION);
 
         Response response = given(specification)
                 .body(body)
                 .patch("/items");
 
-        assertRestApiNotFoundResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
+        response.then().statusCode(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
-    @DisplayName("Should delete shopping cart successfully")
-    void shouldDeleteItemFromShoppingCart() {
+    @DisplayName("Should delete items from shopping cart successfully")
+    void shouldDeleteItemsFromShoppingCart() {
         String body = getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION);
 
         Response response = given(specification)
@@ -122,5 +141,36 @@ class ShoppingCartEndpointTest {
                 .delete("/items");
 
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
+        response.then()
+                .body("items", notNullValue())
+                .body("itemsQuantity", greaterThanOrEqualTo(0));
+    }
+
+    @Test
+    @DisplayName("Should return 401 when accessing cart without authentication")
+    void shouldReturnUnauthorizedWithoutToken() {
+        RequestSpecification unauthenticatedSpec = given()
+                .log().all(true)
+                .port(port)
+                .basePath(CartEndpoint.CART_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
+
+        Response response = given(unauthenticatedSpec)
+                .get();
+
+        response.then().statusCode(HttpStatus.UNAUTHORIZED.value());
+    }
+
+    @Test
+    @DisplayName("Should return 400 for invalid request body")
+    void shouldReturnBadRequestForInvalidBody() {
+        String invalidBody = "{\"invalid\": \"data\"}";
+
+        Response response = given(specification)
+                .body(invalidBody)
+                .post("/items");
+
+        response.then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }

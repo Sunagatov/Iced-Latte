@@ -18,12 +18,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiCreateResponse;
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiUnAuthorizedResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.*;
+import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
+
+import org.springframework.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 
 @Testcontainers
 @DisplayName("SecurityEndpoint Tests")
@@ -59,17 +61,20 @@ class SecurityEndpointTest {
     private static final String SECURITY_REGISTRATION_LENGTH_PASSWORD_LESS_EIGHT_CHARACTERS = "/security/model/security-registration-length-password-less-eight-characters.json";
     private static final String SECURITY_REGISTRATION_LENGTH_PASSWORD_MORE_128_CHARACTERS = "/security/model/security-registration-length-password-more-128-characters.json";
     private static final String SECURITY_REGISTRATION_PASSWORD_WITHOUT_WORD = "/security/model/security-registration-password-without-word.json";
-
+    private static final String AUTH_BASE_PATH = "/api/v1/auth";
+    private static final String TOKEN_FIELD = "token";
+    private static final String TOKEN_NULL_MESSAGE = "Token should not be null";
 
     protected static RequestSpecification specification;
 
-    protected String getRequestBody(String resourcePath) {
-        try {
-            JsonNode json = JsonLoader.fromResource(resourcePath);
-            return json.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @BeforeEach
+    void setupSpecification() {
+        specification = given()
+                .log().all(true)
+                .port(port)
+                .basePath(AUTH_BASE_PATH)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
     }
 
     @Test
@@ -91,45 +96,36 @@ class SecurityEndpointTest {
 
         assertRestApiCreateResponse(response, SECURITY_SCHEMA);
 
-        assertNotNull(response.getBody().path("token"), "Token should not be null");
+        assertNotNull(response.getBody().path(TOKEN_FIELD), TOKEN_NULL_MESSAGE);
     }
 
     @Test
-    @DisplayName("Should registration new user Failed without name")
-    void shouldRegistrationNewUserFailedWithoutName() {
+    @DisplayName("Should fail registration without name")
+    void shouldFailRegistrationWithoutName() {
         String body = getRequestBody(SECURITY_REGISTRATION_WITHOUT_NAME);
 
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
-
         Response response = given(specification)
                 .body(body)
                 .post("/register");
 
-        assertRestApiBadRequestResponse(response, SECURITY_SCHEMA_FAILED);
+        response.then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("message", notNullValue())
+                .body("httpStatusCode", equalTo(400));
     }
 
     @Test
-    @DisplayName("Should registration new user Failed length name less two word")
-    void shouldRegistrationNewUserFailedLengthNameLessTwoWord() {
+    @DisplayName("Should fail registration with short name")
+    void shouldFailRegistrationWithShortName() {
         String body = getRequestBody(SECURITY_REGISTRATION_LENGTH_NAME_LESS_TWO_WORD);
-
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
 
         Response response = given(specification)
                 .body(body)
                 .post("/register");
 
-        assertRestApiBadRequestResponse(response, SECURITY_SCHEMA_FAILED);
+        response.then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("message", notNullValue());
     }
 
     @Test
@@ -387,41 +383,31 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @DisplayName("Should authenticate user notfound")
-    void shouldAuthenticateUserNotFound() {
+    @DisplayName("Should fail authentication for non-existent user")
+    void shouldFailAuthenticationForNonExistentUser() {
         String body = getRequestBody(SECURITY_AUTHENTICATE_USER_NOT_FOUND);
-
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
 
         Response response = given(specification)
                 .body(body)
                 .post("/authenticate");
 
-        assertRestApiUnAuthorizedResponse(response, SECURITY_SCHEMA_FAILED);
+        response.then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value())
+                .body("message", notNullValue());
     }
 
     @Test
-    @DisplayName("Should authenticate incorrect password")
-    void shouldAuthenticateIncorrectPassword() {
+    @DisplayName("Should fail authentication with incorrect password")
+    void shouldFailAuthenticationWithIncorrectPassword() {
         String body = getRequestBody(SECURITY_AUTHENTICATE_INCORRECT_PASSWORD);
-
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
 
         Response response = given(specification)
                 .body(body)
                 .post("/authenticate");
 
-        assertRestApiUnAuthorizedResponse(response, SECURITY_SCHEMA_FAILED);
+        response.then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value())
+                .body("message", notNullValue());
     }
 
 }

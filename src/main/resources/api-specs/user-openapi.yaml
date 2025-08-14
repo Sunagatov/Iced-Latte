@@ -144,7 +144,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConfirmEmailRequest"
+              $ref: "#/components/schemas/ConfirmPasswordResetRequest"
       responses:
         "200":
           description: "Password reset confirmed successfully."
@@ -336,10 +336,20 @@ components:
           description: "The postal code of the address."
           example: "E1 6AN"
 
-    ConfirmEmailRequest:
+    ConfirmPasswordResetRequest:
       type: "object"
       description: "Payload to confirm a password reset."
+      required:
+        - token
+        - newPassword
       properties:
         token:
           type: "string"
           description: "The password reset token."
+        newPassword:
+          type: "string"
+          description: "The new password for the user."
+          minLength: 8
+          maxLength: 128
+          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          example: "NewSecurePassword123!"

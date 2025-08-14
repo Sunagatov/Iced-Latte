@@ -1,14 +1,12 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
-import com.zufar.icedlatte.favorite.api.FavoriteListProvider;
-import com.zufar.icedlatte.favorite.api.FavoriteProductAdder;
-import com.zufar.icedlatte.favorite.api.FavoriteProductDeleter;
-import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
-import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.favorite.api.*;
+import com.zufar.icedlatte.favorite.converter.*;
+import com.zufar.icedlatte.favorite.dto.*;
+import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -40,33 +38,39 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@RequestBody final ListOfFavoriteProducts request) {
-        log.info("Received the request to add a list of favorite products.");
-        UUID userId = securityPrincipalProvider.getUserId();
-        FavoriteListDto favoriteList = favoriteProductAdderHelper.add(request, userId);
-        ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
-        log.info("Favorite products addition processed.");
-        return ResponseEntity.ok().body(listOfFavoriteProductsDto);
+    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Validated @Valid @RequestBody final ListOfFavoriteProducts request) {
+        log.info("Adding {} products to favorites", request.getProductIds().size());
+        var userId = securityPrincipalProvider.getUserId();
+        var favoriteList = favoriteProductAdderHelper.add(request, userId);
+        var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
+        log.info("Added {} products to favorites for user: {}", request.getProductIds().size(), userId);
+        return ResponseEntity.ok(response);
     }
 
     @Override
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
-        log.info("Received the request to retrieve the list of favorite products.");
-        UUID userId = securityPrincipalProvider.getUserId();
-        FavoriteListDto favoriteList = favoriteListProvider.getFavoriteListDto(userId);
-        ListOfFavoriteProductsDto listOfFavoriteProductsDto = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
-        log.info("Favorite products retrieval processed.");
-        return ResponseEntity.ok().body(listOfFavoriteProductsDto);
+        log.info("Getting favorite products");
+        var userId = securityPrincipalProvider.getUserId();
+        var favoriteList = favoriteListProvider.getFavoriteListDto(userId);
+        var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
+        log.info("Retrieved {} favorite products for user: {}", response.getProducts().size(), userId);
+        return ResponseEntity.ok(response);
     }
 
     @Override
     @DeleteMapping(value = "/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
-        log.info("Received the request to delete a product from the favorite list.");
-        UUID userId = securityPrincipalProvider.getUserId();
+        // Validate UUID input to prevent code injection
+        if (productId == null) {
+            log.warn("Invalid product ID: null value received");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Removing product from favorites: {}", productId);
+        var userId = securityPrincipalProvider.getUserId();
         favoriteProductDeleter.delete(productId, userId);
-        log.info("Product removal from favorite list processed.");
+        log.info("Product removed from favorites: {} for user: {}", productId, userId);
         return ResponseEntity.ok().build();
     }
 }

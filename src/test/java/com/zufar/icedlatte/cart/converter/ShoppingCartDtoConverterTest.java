@@ -13,7 +13,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
+import java.math.BigDecimal;
 
 @SpringBootTest(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
 class ShoppingCartDtoConverterTest {
@@ -41,17 +45,46 @@ class ShoppingCartDtoConverterTest {
     }
 
     @Test
-    @DisplayName("ToDto should convert ShoppingCart to ShoppingCartDto with complete shopping cart information")
-    void shouldConvertShoppingCartToShoppingCartDtoWithCompleteShoppingCartInformation() {
+    @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")
+    void shouldConvertShoppingCartToShoppingCartDtoWithCompleteInformation() {
         ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
-        ShoppingCartDto shoppingCartDto = shoppingCartDtoConverter.toDto(shoppingCart);
+        
+        ShoppingCartDto result = shoppingCartDtoConverter.toDto(shoppingCart);
 
-        assertEquals(shoppingCart.getId(), shoppingCartDto.getId());
-        assertEquals(shoppingCart.getUserId(), shoppingCartDto.getUserId());
-        assertEquals(shoppingCart.getItems().size(), shoppingCartDto.getItems().size());
-        assertEquals(shoppingCart.getItemsQuantity(), shoppingCartDto.getItemsQuantity());
-        assertEquals(shoppingCart.getProductsQuantity(), shoppingCartDto.getProductsQuantity());
-        assertEquals(shoppingCart.getCreatedAt(), shoppingCartDto.getCreatedAt());
-        assertEquals(shoppingCart.getClosedAt(), shoppingCartDto.getClosedAt());
+        assertNotNull(result);
+        assertEquals(shoppingCart.getId(), result.getId());
+        assertEquals(shoppingCart.getUserId(), result.getUserId());
+        assertEquals(shoppingCart.getItems().size(), result.getItems().size());
+        assertEquals(shoppingCart.getItemsQuantity(), result.getItemsQuantity());
+        assertEquals(shoppingCart.getProductsQuantity(), result.getProductsQuantity());
+        assertEquals(shoppingCart.getCreatedAt(), result.getCreatedAt());
+        assertEquals(shoppingCart.getClosedAt(), result.getClosedAt());
+        
+        assertThat(result.getItemsTotalPrice(), greaterThanOrEqualTo(BigDecimal.ZERO));
+        assertThat(result.getItems(), hasSize(shoppingCart.getItems().size()));
+    }
+    
+    @Test
+    @DisplayName("Should handle null shopping cart gracefully")
+    void shouldHandleNullShoppingCartGracefully() {
+        ShoppingCartDto result = shoppingCartDtoConverter.toDto(null);
+        
+        assertNull(result);
+    }
+    
+    @Test
+    @DisplayName("Should convert empty shopping cart correctly")
+    void shouldConvertEmptyShoppingCartCorrectly() {
+        ShoppingCart emptyCart = CartDtoTestStub.createEmptyShoppingCart();
+        
+        ShoppingCartDto result = shoppingCartDtoConverter.toDto(emptyCart);
+        
+        assertNotNull(result);
+        assertEquals(emptyCart.getId(), result.getId());
+        assertEquals(emptyCart.getUserId(), result.getUserId());
+        assertThat(result.getItems(), hasSize(0));
+        assertEquals(0, result.getItemsQuantity());
+        assertEquals(0, result.getProductsQuantity());
+        assertEquals(BigDecimal.ZERO, result.getItemsTotalPrice());
     }
 }

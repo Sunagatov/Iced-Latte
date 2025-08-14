@@ -49,6 +49,9 @@ class ProductReviewEndpointTest {
     private static final String START_OF_REVIEW_FOR_AMERICANO = "Review for Americano";
     private static final String RATING_RESPONSE_SCHEMA = "review/model/schema/stats-response-schema.json";
     private static final String ESPRESSO_ID = "ad0ef2b7-816b-4a11-b361-dfcbe705fc96";
+    private static final String LIKE_REQUEST_BODY = "{\"isLike\": true}";
+    private static final String DISLIKE_REQUEST_BODY = "{\"isLike\": false}";
+    private static final int EXPECTED_PRODUCT_RATING = 3;
 
     protected static RequestSpecification specification;
     @Container
@@ -96,23 +99,34 @@ class ProductReviewEndpointTest {
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", equalTo(EXPECTED_REVIEW))
-                .body("productRating", equalTo(3))
+                .body("productRating", equalTo(EXPECTED_PRODUCT_RATING))
                 .body("productReviewId", notNullValue());
 
         removeReview(AFFOGATO_ID, response);
     }
 
     @Test
-    @DisplayName("Should like review successfully and return review object")
-    void shouldLikeReviewSuccessfully() {
-        String body = "{\"isLike\": true}";
-        Response responseRateReview = given(specification)
-                .body(body)
-                .post("/{productId}/reviews/{reviewId}/rate", ESPRESSO_ID, "38939e11-cf1f-42ff-bfbd-ba1c2bc867f8");
+    @DisplayName("Should like and dislike review successfully")
+    void shouldLikeAndDislikeReviewSuccessfully() {
+        String reviewId = "38939e11-cf1f-42ff-bfbd-ba1c2bc867f8";
+        
+        // Test like
+        Response likeResponse = given(specification)
+                .body(LIKE_REQUEST_BODY)
+                .post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId);
 
-        responseRateReview.then().statusCode(HttpStatus.OK.value());
-        responseRateReview.then().body("likesCount", equalTo(1));
-        responseRateReview.then().body("dislikesCount", equalTo(1));
+        assertRestApiBodySchemaResponse(likeResponse, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+                .body("productReviewId", notNullValue())
+                .body("productId", equalTo(ESPRESSO_ID));
+        
+        // Test dislike
+        Response dislikeResponse = given(specification)
+                .body(DISLIKE_REQUEST_BODY)
+                .post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId);
+
+        assertRestApiBodySchemaResponse(dislikeResponse, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+                .body("productReviewId", notNullValue())
+                .body("productId", equalTo(ESPRESSO_ID));
     }
 
     @Test
@@ -131,7 +145,7 @@ class ProductReviewEndpointTest {
                 .get("/{productId}/review", AMERICANO_ID);
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", startsWith(START_OF_REVIEW_FOR_AMERICANO))
-                .body("productRating", equalTo(3));
+                .body("productRating", equalTo(EXPECTED_PRODUCT_RATING)); // import static com.example.Constants.EXPECTED_PRODUCT_RATING;
     }
 
     @Test
@@ -148,7 +162,7 @@ class ProductReviewEndpointTest {
                 .get("/{productId}/reviews/statistics", ESPRESSO_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, RATING_RESPONSE_SCHEMA)
-                .body("avgRating", anyOf(equalTo("3.0"), equalTo("3,0")))
+                .body("avgRating", equalTo(3.0f))
                 .body("reviewsCount", equalTo(1))
                 .body("productId", notNullValue())
                 .body("ratingMap.star1", equalTo(0))
@@ -241,6 +255,7 @@ class ProductReviewEndpointTest {
                 .body(body)
                 .post("/{productId}/reviews", AFFOGATO_ID);
 
+        responsePost.then().statusCode(HttpStatus.OK.value());
         var reviewId = responsePost.then().extract().path("productReviewId").toString();
 
         Response response = given(specification)
@@ -259,9 +274,9 @@ class ProductReviewEndpointTest {
     }
 
     @Test
-    @DisplayName("For methods POST, DELETE and GET /review access to review URL w/o token is forbidden. Should return 400 Bad Request")
-    void shouldReturnBadRequestOnPostDeleteGetExistsWOToken() {
-        specification = given()
+    @DisplayName("Should return 401 Unauthorized for protected endpoints without token")
+    void shouldReturnUnauthorizedWithoutToken() {
+        RequestSpecification unauthenticatedSpec = given()
                 .log().all(true)
                 .port(port)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
@@ -269,17 +284,19 @@ class ProductReviewEndpointTest {
                 .accept(ContentType.JSON);
 
         String body = getRequestBody(REVIEW_ADD_BODY);
-        Response responsePost = given(specification)
+        
+        Response responsePost = given(unauthenticatedSpec)
                 .body(body)
                 .post("/{productId}/reviews", AMERICANO_ID);
-        Response responseDelete = given(specification)
+        
+        Response responseDelete = given(unauthenticatedSpec)
                 .delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID());
 
-        Response responseGetReview = given(specification)
+        Response responseGetReview = given(unauthenticatedSpec)
                 .get("/{productId}/review", AMERICANO_ID);
 
-        responsePost.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        responseDelete.then().statusCode(HttpStatus.BAD_REQUEST.value());
-        responseGetReview.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        responsePost.then().statusCode(HttpStatus.UNAUTHORIZED.value());
+        responseDelete.then().statusCode(HttpStatus.UNAUTHORIZED.value());
+        responseGetReview.then().statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 }

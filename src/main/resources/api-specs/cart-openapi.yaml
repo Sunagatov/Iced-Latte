@@ -210,6 +210,8 @@ components:
         productQuantityChange:
           type: "integer"
           format: "int32"
+          minimum: -100
+          maximum: 100
       required:
         - shoppingCartItemId
         - productQuantityChange

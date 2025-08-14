@@ -6,6 +6,11 @@ server:
   port: ${APP_SERVER_PORT}
   tomcat:
     accept-count: 100
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+  error:
+    include-stacktrace: never
+    include-message: never
 
 #
 # Spring Properties
@@ -151,11 +156,12 @@ management:
       enabled: true
     health:
       enabled: true
-      show-details: always
+      show-details: when-authorized
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, shutdown, prometheus
+        include: health, info, metrics, prometheus
+      base-path: /actuator
   prometheus:
     metrics:
       export:
@@ -202,7 +208,7 @@ ai:
 # https://platform.openai.com/docs/api-reference/moderations/create
   url:          "https://api.openai.com/v1/moderations"
   api_key:      "sk-api-key"
-  request_body: '{ "input": "$message"}'
+  request_body: '{"input": "$message"}'
   message_replacement_pattern: "$message"
 
 #

@@ -7,12 +7,15 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
+
+import javax.crypto.SecretKey;
 
 @Service
 @RequiredArgsConstructor
@@ -34,20 +37,20 @@ public class JwtClaimExtractor {
 
         return Instant
                 .ofEpochMilli(expiration.getTime())
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneOffset.UTC)
                 .toLocalDateTime();
     }
 
     private Claims extractAllClaims(final String jwtToken) {
         return getJwtParser()
-                .parseClaimsJws(jwtToken)
-                .getBody();
+                .parseSignedClaims(jwtToken)
+                .getPayload();
     }
 
     private JwtParser getJwtParser() {
         return Jwts
-                .parserBuilder()
-                .setSigningKey(jwtSignKeyProvider.get())
+                .parser()
+                .verifyWith((SecretKey) jwtSignKeyProvider.get())
                 .build();
     }
 }

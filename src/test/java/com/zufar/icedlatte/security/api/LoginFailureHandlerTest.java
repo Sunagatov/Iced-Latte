@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -32,13 +33,14 @@ class LoginFailureHandlerTest {
     @InjectMocks
     private LoginFailureHandler loginFailureHandler;
 
-    private final int MAX_LOGIN_ATTEMPTS = 3;
+    @Value("${security.max-login-attempts}")
+    private int maxLoginAttempts;
 
     private final String userEmail = "user@example.com";
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
+        ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", maxLoginAttempts);
     }
 
     @Test
@@ -47,7 +49,7 @@ class LoginFailureHandlerTest {
         LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(MAX_LOGIN_ATTEMPTS - 2)
+                .attempts(maxLoginAttempts - 2)
                 .isUserLocked(false)
                 .lastModified(LocalDateTime.now())
                 .build();
@@ -66,7 +68,7 @@ class LoginFailureHandlerTest {
         LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(MAX_LOGIN_ATTEMPTS)
+                .attempts(maxLoginAttempts)
                 .isUserLocked(false)
                 .lastModified(LocalDateTime.now())
                 .build();

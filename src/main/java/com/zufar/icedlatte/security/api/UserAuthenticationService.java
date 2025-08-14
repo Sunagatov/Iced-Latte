@@ -11,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -59,13 +60,11 @@ public class UserAuthenticationService {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
             throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
-
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
             throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
-
-        } catch (Exception exception) {
-            log.error("Error occurred during authentication", exception);
+        } catch (AuthenticationException exception) {
+            log.error("Authentication error occurred", exception);
             throw exception;
         }
     }
@@ -91,8 +90,8 @@ public class UserAuthenticationService {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
             throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
 
-        } catch (Exception exception) {
-            log.error("Error occurred during authentication", exception);
+        } catch (AuthenticationException exception) {
+            log.error("Authentication error occurred", exception);
             throw exception;
         }
     }

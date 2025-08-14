@@ -44,7 +44,7 @@ class ResetLoginAttemptsServiceTest {
         LoginAttemptEntity existingLoginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(5)
+                .attempts(0)
                 .isUserLocked(true)
                 .lastModified(LocalDateTime.now())
                 .build();

@@ -1,15 +1,9 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.cart.api.AddItemsToShoppingCartHelper;
-import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
-import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
-import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
-import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
-import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
-import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
+import com.zufar.icedlatte.cart.api.*;
+import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -42,46 +36,50 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @PostMapping(value = "/items")
-    public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@RequestBody final AddNewItemsToShoppingCartRequest request) {
-        log.warn("Received the request to add a new items to the shoppingCart");
-        Set<NewShoppingCartItemDto> items = request.getItems();
-        ShoppingCartDto shoppingCartDto = addItemsToShoppingCartHelper.add(items);
-        log.info("ShoppingCartItem was added to the shoppingCart with id={}", shoppingCartDto.getId());
-        return ResponseEntity.ok()
-                .body(shoppingCartDto);
+    public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            log.warn("Invalid add request: empty or null items");
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("Adding {} items to shopping cart", request.getItems().size());
+        var shoppingCart = addItemsToShoppingCartHelper.add(request.getItems());
+        log.info("Items added to shopping cart: {}", shoppingCart.getId());
+        return ResponseEntity.ok(shoppingCart);
     }
 
     @Override
     @GetMapping
     public ResponseEntity<ShoppingCartDto> getShoppingCart() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the shoppingCart for the user with id: {}", userId);
-        ShoppingCartDto shoppingCartDto = shoppingCartProvider.getByUserId(userId);
-        log.info("The shoppingCart for the user with id: {} was retrieved successfully", shoppingCartDto.getUserId());
-        return ResponseEntity.ok()
-                .body(shoppingCartDto);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("Getting shopping cart for user: {}", userId);
+        var shoppingCart = shoppingCartProvider.getByUserId(userId);
+        log.info("Shopping cart retrieved for user: {}", userId);
+        return ResponseEntity.ok(shoppingCart);
     }
 
     @Override
     @PatchMapping(value = "/items")
-    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
-        UUID shoppingCartItemId = request.getShoppingCartItemId();
-        Integer productQuantityChange = request.getProductQuantityChange();
-        log.warn("Received the request to update the productQuantity with the change = {} in the shoppingCartItem with id: {}.",
-                productQuantityChange, shoppingCartItemId);
-        ShoppingCartDto shoppingCartDto = productQuantityItemUpdater.update(shoppingCartItemId, productQuantityChange);
-        log.info("ProductsQuantity was updated in shoppingCart item");
-        return ResponseEntity.ok()
-                .body(shoppingCartDto);
+    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Validated @Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
+        var itemId = request.getShoppingCartItemId();
+        var quantityChange = request.getProductQuantityChange();
+        log.info("Updating item quantity: {} by {}", itemId, quantityChange);
+        var shoppingCart = productQuantityItemUpdater.update(itemId, quantityChange);
+        log.info("Item quantity updated for item: {}", itemId);
+        return ResponseEntity.ok(shoppingCart);
     }
 
     @Override
     @DeleteMapping(value = "/items")
-    public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@RequestBody final DeleteItemsFromShoppingCartRequest request) {
-        log.info("Received the request to delete the shopping cart items with ids: {}.", request.getShoppingCartItemIds());
-        ShoppingCartDto shoppingCartDto = shoppingCartItemsDeleter.delete(request);
-        log.info("The shopping cart items with ids = {} were deleted.", request.getShoppingCartItemIds());
-        return ResponseEntity.ok()
-                .body(shoppingCartDto);
+    public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
+        // Validate input to prevent code injection
+        if (request.getShoppingCartItemIds() == null || request.getShoppingCartItemIds().isEmpty()) {
+            log.warn("Invalid delete request: empty or null item IDs");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("Deleting {} items from shopping cart", request.getShoppingCartItemIds().size());
+        var shoppingCart = shoppingCartItemsDeleter.delete(request);
+        log.info("Items deleted from shopping cart");
+        return ResponseEntity.ok(shoppingCart);
     }
 }

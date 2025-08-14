@@ -17,7 +17,7 @@ public class StripeSessionProvider {
         try {
             session = Session.retrieve(sessionId);
         } catch (StripeException e) {
-            throw new StripeSessionRetrievalException(e.getMessage(), sessionId);
+            throw new StripeSessionRetrievalException(e.getMessage(), sessionId, e);
         }
         return session;
     }

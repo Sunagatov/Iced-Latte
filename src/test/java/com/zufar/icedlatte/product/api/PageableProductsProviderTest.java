@@ -5,7 +5,6 @@ import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,7 +46,7 @@ class PageableProductsProviderTest {
 
     @BeforeEach
     void setUp() {
-        products = Instancio.ofList(ProductInfo.class).create();
+        products = Collections.singletonList(mock(ProductInfo.class));
     }
 
     @Test

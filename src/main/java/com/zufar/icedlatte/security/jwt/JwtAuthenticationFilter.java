@@ -7,11 +7,13 @@ import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
@@ -58,28 +60,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtTokenBlacklistedException exception) {
             handleException(httpResponse, "JWT Token is blacklisted", exception, HttpServletResponse.SC_BAD_REQUEST);
         } catch (AbsentBearerHeaderException exception) {
-            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_BAD_REQUEST);
+            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (ExpiredJwtException exception) {
             handleException(httpResponse, "Jwt token is expired", exception, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (JwtTokenHasNoUserEmailException exception) {
             handleException(httpResponse, "User email not found in jwtToken", exception, HttpServletResponse.SC_BAD_REQUEST);
         } catch (UsernameNotFoundException exception) {
             handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_NOT_FOUND);
-        } catch (Exception exception) {
+        } catch (ServletException | RuntimeException exception) {
             handleException(httpResponse, "Internal server error", exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             MDC.remove(MDC_USER_ID_KEY2VALUE);
         }
     }
 
-    private void handleException(HttpServletResponse httpResponse,
-                                 String errorMessage,
-                                 Exception exception,
-                                 int statusCode) throws IOException {
-        log.error(errorMessage, exception);
-        httpResponse.setStatus(statusCode);
-        httpResponse.getWriter().write("{ \"message\": \"" + errorMessage + "\" }");
-    }
+private void handleException(HttpServletResponse httpResponse,
+                             String errorMessage,
+                             Exception exception,
+                             int statusCode) throws IOException {
+    log.error("Error occurred: {}", StringEscapeUtils.escapeJava(errorMessage), exception);
+    httpResponse.setStatus(statusCode);
+    httpResponse.getWriter().write("{ \"message\": \"" + StringEscapeUtils.escapeJson(errorMessage) + "\" }");
+}
 
     @Override
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {

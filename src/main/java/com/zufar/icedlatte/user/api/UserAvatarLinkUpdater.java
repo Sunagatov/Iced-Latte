@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Slf4j
@@ -18,11 +19,7 @@ public class UserAvatarLinkUpdater {
     public UserDto update(final UserDto userDto) {
         final UUID userId = userDto.getId();
         String userAvatarLink = null;
-        try {
-            userAvatarLink = userAvatarLinkProvider.getLink(userId);
-        } catch (Exception exception) {
-            log.error("FileProvider error", exception);
-        }
+        userAvatarLink = userAvatarLinkProvider.getLink(userId);
         userDto.setAvatarLink(userAvatarLink);
         return userDto;
     }
