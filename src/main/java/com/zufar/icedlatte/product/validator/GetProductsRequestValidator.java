@@ -14,7 +14,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GetProductsRequestValidator {
 
-    private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES = Set.of("name", "price", "quantity", "averageRating", "reviewsCount", "brandName", "sellerName");
+    private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES =
+            Set.of("name", "price", "quantity", "averageRating", "reviewsCount", "brandName", "sellerName");
     private static final Set<Integer> ALLOWED_MINIMUM_AVERAGE_RATING_VALUES = Set.of(1, 2, 3, 4);
 
     private final PaginationParametersValidator paginationParametersValidator;
@@ -27,23 +28,14 @@ public class GetProductsRequestValidator {
                          final BigDecimal maxPrice,
                          final Integer minimumAverageRating,
                          final List<String> brandNames,
-                         final List<String> sellersNames) {
+                         final List<String> sellerNames) {
+
         StringBuilder errorMessages = new StringBuilder();
-
-        StringBuilder paginationErrorMessages = paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES);
-        errorMessages.append(paginationErrorMessages);
-
-        StringBuilder minMaxPriceParameterMessages = validateMinMaxPriceParameter(minPrice, maxPrice);
-        errorMessages.append(minMaxPriceParameterMessages);
-
-        StringBuilder getBrandNameListParameterErrorMessages = validateBrandNameList(brandNames);
-        errorMessages.append(getBrandNameListParameterErrorMessages);
-
-        StringBuilder getSellerNameListParameterErrorMessages = validateSellerNameList(sellersNames);
-        errorMessages.append(getSellerNameListParameterErrorMessages);
-
-        StringBuilder minimumAverageRatingParameterErrorMessages = validateMinimumAverageRatingParameter(minimumAverageRating);
-        errorMessages.append(minimumAverageRatingParameterErrorMessages);
+        errorMessages.append(paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
+        errorMessages.append(validateMinMaxPriceParameter(minPrice, maxPrice));
+        errorMessages.append(validateBrandNameList(brandNames));
+        errorMessages.append(validateSellerNameList(sellerNames));
+        errorMessages.append(validateMinimumAverageRatingParameter(minimumAverageRating));
 
         if (!errorMessages.isEmpty()) {
             throw new GetProductsBadRequestException(errorMessages.toString());
@@ -52,64 +44,54 @@ public class GetProductsRequestValidator {
 
     private StringBuilder validateMinimumAverageRatingParameter(final Integer minimumAverageRating) {
         StringBuilder errorMessages = new StringBuilder();
-
         if (minimumAverageRating != null && !ALLOWED_MINIMUM_AVERAGE_RATING_VALUES.contains(minimumAverageRating)) {
-            String errorMessage = String.format("'%s' is incorrect 'minimumAverageRating' value. Allowed 'minimumAverageRating' values are '%s'.",
-                            minimumAverageRating, ALLOWED_MINIMUM_AVERAGE_RATING_VALUES);
-            errorMessages.append(createErrorMessage(errorMessage));
+            String msg = "'%s' is incorrect 'minimumAverageRating' value. Allowed values are '%s'."
+                    .formatted(minimumAverageRating, ALLOWED_MINIMUM_AVERAGE_RATING_VALUES);
+            errorMessages.append(createErrorMessage(msg));
         }
         return errorMessages;
     }
 
     private static StringBuilder validateMinMaxPriceParameter(BigDecimal minPrice, BigDecimal maxPrice) {
-        final StringBuilder errorMessages = new StringBuilder();
-
+        final StringBuilder errors = new StringBuilder();
         if (minPrice != null && minPrice.signum() < 0) {
-            String errorMessage = String.format("'%s' is incorrect 'minPrice' value. 'MinPrice' value should be non negative integer or decimal number value.", minPrice);
-            errorMessages.append(createErrorMessage(errorMessage));
+            errors.append(createErrorMessage("'%s' is incorrect 'minPrice'. It must be a non-negative number."
+                    .formatted(minPrice)));
         }
         if (maxPrice != null && maxPrice.signum() < 0) {
-            String errorMessage = String.format("'%s' is incorrect 'maxPrice' value. 'MaxPrice' value should be non negative integer or decimal number value.", maxPrice);
-            errorMessages.append(createErrorMessage(errorMessage));
+            errors.append(createErrorMessage("'%s' is incorrect 'maxPrice'. It must be a non-negative number."
+                    .formatted(maxPrice)));
         }
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            String errorMessage = String.format("'%s' and '%s' are incorrect 'minPrice' and 'maxPrice' values. 'MaxPrice' value should be bigger than 'MinPrice' value.", minPrice, maxPrice);
-            errorMessages.append(createErrorMessage(errorMessage));
+            errors.append(createErrorMessage("'%s' and '%s' are incorrect. 'maxPrice' must be >= 'minPrice'."
+                    .formatted(minPrice, maxPrice)));
         }
-        return errorMessages;
+        return errors;
     }
 
     private static StringBuilder validateBrandNameList(List<String> brandNames) {
-        final StringBuilder errorMessages = new StringBuilder();
-        if ((brandNames != null && brandNames.stream().anyMatch(StringUtils::isAllBlank))) {
-            String errorMessage = String.format("Some values of 'brandNames' list = '%s' are null. The list 'brandNames' must have no null values.",
-                    brandNames);
-            errorMessages.append(createErrorMessage(errorMessage));
+        final StringBuilder errors = new StringBuilder();
+        if (brandNames != null && brandNames.stream().anyMatch(StringUtils::isBlank)) {
+            errors.append(createErrorMessage("Some values of 'brandNames' are blank. Values must be non-blank."));
         }
-        if ((brandNames != null && brandNames.stream().distinct().count() < brandNames.size())) {
-            String errorMessage = String.format("The 'brandNames' list = '%s' has duplicates. The 'brandNames' list values must be unique.",
-                    brandNames);
-            errorMessages.append(createErrorMessage(errorMessage));
+        if (brandNames != null && brandNames.stream().distinct().count() < brandNames.size()) {
+            errors.append(createErrorMessage("'brandNames' has duplicates. Values must be unique."));
         }
-        return errorMessages;
+        return errors;
     }
 
     private static StringBuilder validateSellerNameList(List<String> sellerNames) {
-        final StringBuilder errorMessages = new StringBuilder();
-        if ((sellerNames != null && sellerNames.stream().anyMatch(StringUtils::isAllBlank))) {
-            String errorMessage = String.format("Some values of 'sellerNames' list = '%s' are null. The list 'sellerNames' must have no null values.",
-                    sellerNames);
-            errorMessages.append(createErrorMessage(errorMessage));
+        final StringBuilder errors = new StringBuilder();
+        if (sellerNames != null && sellerNames.stream().anyMatch(StringUtils::isBlank)) {
+            errors.append(createErrorMessage("Some values of 'sellerNames' are blank. Values must be non-blank."));
         }
-        if ((sellerNames != null && sellerNames.stream().distinct().count() < sellerNames.size())) {
-            String errorMessage = String.format("The 'sellerNames' list = '%s' has duplicates. The 'sellerNames' list values must be unique.",
-                    sellerNames);
-            errorMessages.append(createErrorMessage(errorMessage));
+        if (sellerNames != null && sellerNames.stream().distinct().count() < sellerNames.size()) {
+            errors.append(createErrorMessage("'sellerNames' has duplicates. Values must be unique."));
         }
-        return errorMessages;
+        return errors;
     }
 
     private static String createErrorMessage(String errorMessage) {
-        return String.format(" Error: { %s }. ", errorMessage);
+        return " Error: { %s }. ".formatted(errorMessage);
     }
 }

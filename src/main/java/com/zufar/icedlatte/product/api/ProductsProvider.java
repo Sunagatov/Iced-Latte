@@ -8,11 +8,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,21 +25,31 @@ public class ProductsProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final ProductUpdater productUpdater;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
-        var products = productInfoRepository.findAllById(uuids);
-        var result = products.stream()
-                .map(productInfoDtoConverter::toDto)
-                .map(productUpdater::update)
-                .toList();
-
-        if (result.size() == uuids.size()) {
-            return result;
+        if (uuids == null || uuids.isEmpty()) {
+            return List.of();
         }
 
-        uuids.removeAll(result.stream().map(ProductInfoDto::getId).collect(Collectors.toSet()));
-        log.error("Products with ids = {} are not found.", String.join(", ",
-                uuids.stream().map(UUID::toString).collect(Collectors.joining())));
-        throw new ProductNotFoundException(uuids);
+        var dtosById = productInfoRepository.findAllById(uuids).stream()
+                .map(productInfoDtoConverter::toDto)
+                .map(productUpdater::update)
+                .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
+
+        var missing = new ArrayList<UUID>();
+        var ordered = new ArrayList<ProductInfoDto>(uuids.size());
+
+        for (UUID id : uuids) {
+            var dto = dtosById.get(id);
+            if (dto != null) ordered.add(dto);
+            else missing.add(id);
+        }
+
+        if (!missing.isEmpty()) {
+            log.error("Products with ids = {} are not found.", missing.stream()
+                    .map(UUID::toString).collect(Collectors.joining(", ")));
+            throw new ProductNotFoundException(missing);
+        }
+        return ordered;
     }
 }

@@ -7,6 +7,7 @@ import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,7 +24,8 @@ public class SingleProductProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final ProductUpdater productUpdater;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
+    @Cacheable(cacheNames = "productById", key = "#productId")
     public ProductInfoDto getProductById(final UUID productId) {
         return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)
@@ -34,7 +36,7 @@ public class SingleProductProvider {
                 });
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public ProductInfo getProductEntityById(final UUID productId) {
         return productInfoRepository.findById(productId)
                 .orElseThrow(() -> {

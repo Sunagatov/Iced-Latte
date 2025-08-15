@@ -10,12 +10,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-
 
 @Slf4j
 @Service
@@ -26,20 +24,26 @@ public class PageableProductsProvider {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final ProductUpdater productUpdater;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public ProductListWithPaginationInfoDto getProducts(final Pageable pageable,
                                                         final BigDecimal minPrice,
                                                         final BigDecimal maxPrice,
                                                         final Integer minimumAverageRating,
                                                         final List<String> brandNames,
                                                         final List<String> sellerNames) {
-        BigDecimal minimumAverageRatingValue = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
+        BigDecimal minAvg = (minimumAverageRating == null) ? null : BigDecimal.valueOf(minimumAverageRating);
+        List<String> brands = nullIfEmpty(brandNames);
+        List<String> sellers = nullIfEmpty(sellerNames);
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
-                .findAllProducts(minPrice, maxPrice, minimumAverageRatingValue, brandNames, sellerNames, pageable)
+                .findAllProducts(minPrice, maxPrice, minAvg, brands, sellers, pageable)
                 .map(productInfoDtoConverter::toDto)
                 .map(productUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
+    }
+
+    private static <T> List<T> nullIfEmpty(List<T> list) {
+        return (list == null || list.isEmpty()) ? null : list;
     }
 }

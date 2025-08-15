@@ -15,9 +15,8 @@ public class ProductPictureLinkUpdater {
     private final ProductImageReceiver productImageReceiver;
 
     public ProductInfoDto update(ProductInfoDto productInfoDto) {
-        final UUID productId = productInfoDto.getId();
-        final String productFileUrl = productImageReceiver.getProductFileUrl(productId);
-        productInfoDto.setProductFileUrl(productFileUrl);
+        UUID id = productInfoDto.getId();
+        productInfoDto.setProductFileUrl(productImageReceiver.getProductFileUrl(id));
         return productInfoDto;
     }
 }
