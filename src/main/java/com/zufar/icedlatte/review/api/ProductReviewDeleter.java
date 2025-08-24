@@ -5,7 +5,6 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,7 +22,6 @@ public class ProductReviewDeleter {
     private final ProductInfoRepository productInfoRepository;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    @CacheEvict(cacheNames = "productById", key = "#productId")
     public void delete(final UUID productId,
                        final UUID productReviewId) {
         productReviewValidator.validateProductReviewDeletionAllowed(productReviewId);

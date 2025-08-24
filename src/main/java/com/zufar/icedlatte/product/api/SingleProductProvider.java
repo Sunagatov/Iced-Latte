@@ -7,6 +7,7 @@ import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "productById")
 public class SingleProductProvider {
 
     private final ProductInfoRepository productInfoRepository;
@@ -25,7 +27,7 @@ public class SingleProductProvider {
     private final ProductUpdater productUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
-    @Cacheable(cacheNames = "productById", key = "#productId")
+    @Cacheable(key = "#productId")
     public ProductInfoDto getProductById(final UUID productId) {
         return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)

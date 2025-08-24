@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,6 +94,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
 
     @Override
     @GetMapping("/sellers")
+    @Cacheable(cacheNames = "sellers")
     public ResponseEntity<SellersDto> getAllSellers() {
         log.info("Getting all sellers");
         var sellers = new SellersDto(List.of(
@@ -105,6 +107,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
 
     @Override
     @GetMapping("/brands")
+    @Cacheable(cacheNames = "brands")
     public ResponseEntity<BrandsDto> getAllBrands() {
         log.info("Getting all brands");
         var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));

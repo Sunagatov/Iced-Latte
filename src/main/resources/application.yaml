@@ -119,6 +119,16 @@ pagination:
     default-sort-direction: "desc"
 
 #
+# Cache Properties
+#
+cache:
+  default-ttl: PT10M
+  product-ttl: PT10M
+  user-ttl: PT10M
+  brands-ttl: PT24H
+  sellers-ttl: PT24H
+
+#
 # Temporary Cache
 #
 temporary-cache:

@@ -7,6 +7,7 @@ import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class SingleUserProvider {
     private final UserAvatarLinkUpdater userAvatarLinkUpdater;
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "userById", key = "#userId")
     public UserDto getUserById(final UUID userId) throws UserNotFoundException {
         return userCrudRepository.findById(userId)
                 .map(userDtoConverter::toDto)

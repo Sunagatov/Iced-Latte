@@ -11,7 +11,6 @@ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -32,7 +31,6 @@ public class ProductReviewCreator {
     private final ProductInfoRepository productInfoRepository;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    @CacheEvict(cacheNames = "productById", key = "#productId")
     public ProductReviewDto create(final UUID productId,
                                    final ProductReviewRequest productReviewRequest) {
         var userId = securityPrincipalProvider.getUserId();
