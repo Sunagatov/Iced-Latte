@@ -17,5 +17,8 @@ CREATE TABLE IF NOT EXISTS public.product_reviews
     CONSTRAINT fk_product
         FOREIGN KEY (product_id)
             REFERENCES public.product (id)
-            ON DELETE CASCADE
+            ON DELETE CASCADE,
+
+    CONSTRAINT uk_product_reviews_user_product
+        UNIQUE (user_id, product_id)
 );
