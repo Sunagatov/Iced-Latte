@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.order.entity;
 
+import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.user.entity.Address;
 import jakarta.persistence.CascadeType;
@@ -32,7 +33,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "orders")
-public class Order {
+public class Order extends AuditableEntity {
 
     @Id
     private UUID id;

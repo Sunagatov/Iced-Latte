@@ -53,3 +53,7 @@ databaseChangeLog:
       file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
   - include:
       file: db/changelog/version-1.0/22.08.2025.add-version-column-to-product-table.sql
+  - include:
+      file: db/changelog/version-1.0/25.01.2025.part1.create-audit-logs-table.sql
+  - include:
+      file: db/changelog/version-1.0/25.01.2025.part2.add-audit-columns-to-existing-tables.sql

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.entity;
 
+import com.zufar.icedlatte.common.audit.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,7 +37,7 @@ import java.util.UUID;
                 @Index(name = "idx_product_popularity", columnList = "popularity_score")
         }
 )
-public class ProductInfo {
+public class ProductInfo extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
