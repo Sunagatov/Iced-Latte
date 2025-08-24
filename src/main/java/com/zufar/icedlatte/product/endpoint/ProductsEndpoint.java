@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.endpoint;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.product.api.*;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
@@ -36,6 +37,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final PageableProductsProvider pageableProductsProvider;
     private final GetProductsRequestValidator getProductsRequestValidator;
     private final SingleProductProvider singleProductProvider;
+    private final PaginationConfig paginationConfig;
 
     @Override
     @GetMapping("/{productId}")
@@ -48,15 +50,21 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @Override
     @GetMapping
     public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(
-            @RequestParam(name = "page", defaultValue = "0") Integer pageNumber,
-            @RequestParam(name = "size", defaultValue = "50") Integer pageSize,
-            @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
-            @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection,
+            @RequestParam(name = "page", required = false) Integer pageNumber,
+            @RequestParam(name = "size", required = false) Integer pageSize,
+            @RequestParam(name = "sort_attribute", required = false) String sortAttribute,
+            @RequestParam(name = "sort_direction", required = false) String sortDirection,
             @RequestParam(name = "min_price", required = false) BigDecimal minPrice,
             @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
             @RequestParam(name = "minimum_average_rating", required = false) Integer minimumAverageRating,
             @RequestParam(name = "brand_names", required = false) List<String> brandNames,
             @RequestParam(name = "seller_names", required = false) List<String> sellerNames) {
+
+        // Apply default values from configuration
+        pageNumber = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
+        pageSize = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
+        sortAttribute = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
+        sortDirection = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
         log.info("Getting products: page={}, size={}, sort={} {}", pageNumber, pageSize, sortAttribute, sortDirection);
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,

@@ -105,6 +105,20 @@ spring:
     basename: messages/messages
 
 #
+# Pagination Properties
+#
+pagination:
+  default-page-number: 0
+  products:
+    default-page-size: 50
+    default-sort-attribute: "name"
+    default-sort-direction: "desc"
+  reviews:
+    default-page-size: 10
+    default-sort-attribute: "createdAt"
+    default-sort-direction: "desc"
+
+#
 # Temporary Cache
 #
 temporary-cache:

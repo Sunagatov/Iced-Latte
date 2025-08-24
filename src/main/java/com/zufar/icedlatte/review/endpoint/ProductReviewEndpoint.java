@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.review.endpoint;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.api.*;
@@ -7,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +32,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewsStatisticsProvider productReviewsStatisticsProvider;
     private final ProductReviewLikesUpdater productReviewLikesUpdater;
     private final GetReviewsRequestValidator getReviewsRequestValidator;
+    private final PaginationConfig paginationConfig;
 
     @Override
     @PostMapping(value = "/{productId}/reviews")
@@ -56,14 +57,20 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @GetMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getProductReviewsAndRatings(@PathVariable final UUID productId,
-                                                                                              @RequestParam(name = "page", defaultValue = "0") final Integer pageNumber,
-                                                                                              @RequestParam(name = "size", defaultValue = "10") final Integer pageSize,
-                                                                                              @RequestParam(name = "sort_attribute", defaultValue = "createdAt") final String sortAttribute,
-                                                                                              @RequestParam(name = "sort_direction", defaultValue = "desc") final String sortDirection,
+                                                                                              @RequestParam(name = "page", required = false) final Integer pageNumber,
+                                                                                              @RequestParam(name = "size", required = false) final Integer pageSize,
+                                                                                              @RequestParam(name = "sort_attribute", required = false) final String sortAttribute,
+                                                                                              @RequestParam(name = "sort_direction", required = false) final String sortDirection,
                                                                                               @RequestParam(name = "product_ratings", required = false) List<Integer> productRatings) {
-        log.info("Getting reviews for productId: {} with pagination: page={}, size={}", productId, pageNumber, pageSize);
-        getReviewsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
+        // Apply default values from configuration
+        Integer finalPageNumber = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
+        Integer finalPageSize = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
+        String finalSortAttribute = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
+        String finalSortDirection = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
+        
+        log.info("Getting reviews for productId: {} with pagination: page={}, size={}", productId, finalPageNumber, finalPageSize);
+        getReviewsRequestValidator.validate(finalPageNumber, finalPageSize, finalSortAttribute, finalSortDirection, productRatings);
+        Pageable pageable = createPageableObject(finalPageNumber, finalPageSize, finalSortAttribute, finalSortDirection);
         var reviews = productReviewsProvider.getProductReviews(productId, pageable, productRatings);
         log.info("Retrieved {} reviews for productId: {}", reviews.getReviewsWithRatings().size(), productId);
         return ResponseEntity.ok(reviews);
