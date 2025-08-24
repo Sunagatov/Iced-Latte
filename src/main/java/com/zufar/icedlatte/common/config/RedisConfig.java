@@ -33,7 +33,6 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withCacheConfiguration("productById", defaultConfig.entryTtl(cacheProperties.getProductTtl()))
-                .withCacheConfiguration("userById", defaultConfig.entryTtl(cacheProperties.getUserTtl()))
                 .withCacheConfiguration("brands", defaultConfig.entryTtl(cacheProperties.getBrandsTtl()))
                 .withCacheConfiguration("sellers", defaultConfig.entryTtl(cacheProperties.getSellersTtl()))
                 .build();
