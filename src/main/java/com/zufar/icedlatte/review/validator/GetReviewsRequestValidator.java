@@ -40,8 +40,7 @@ public class GetReviewsRequestValidator {
         final StringBuilder errorMessages = new StringBuilder();
         
         if (productRatings == null) {
-            errorMessages.append(createNullRatingError());
-            return errorMessages;
+            return errorMessages; // null is allowed for optional parameter
         }
         
         if (hasInvalidValues(productRatings)) {
