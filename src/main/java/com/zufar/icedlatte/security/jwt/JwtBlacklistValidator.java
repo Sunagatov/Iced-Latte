@@ -1,23 +1,43 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
+@Slf4j
 @Service
 public class JwtBlacklistValidator {
 
-    private final Set<String> blacklistedTokens = Collections.synchronizedSet(new HashSet<>());
+    @Autowired(required = false)
+    private RedisJwtBlacklistService redisJwtBlacklistService;
+    
+    @Autowired(required = false)
+    private InMemoryJwtBlacklistService inMemoryJwtBlacklistService;
 
     public void addToBlacklist(String token) {
-        blacklistedTokens.add(token);
+        if (redisJwtBlacklistService != null) {
+            redisJwtBlacklistService.blacklistToken(token);
+        } else if (inMemoryJwtBlacklistService != null) {
+            inMemoryJwtBlacklistService.blacklistToken(token);
+        } else {
+            log.error("No blacklist service available - token cannot be blacklisted");
+        }
     }
 
     public void validate(String token) {
-        if (blacklistedTokens.contains(token)) {
+        boolean isBlacklisted;
+        
+        if (redisJwtBlacklistService != null) {
+            isBlacklisted = redisJwtBlacklistService.isBlacklisted(token);
+        } else if (inMemoryJwtBlacklistService != null) {
+            isBlacklisted = inMemoryJwtBlacklistService.isBlacklisted(token);
+        } else {
+            log.error("No blacklist service available - failing secure");
+            throw new JwtTokenBlacklistedException();
+        }
+        
+        if (isBlacklisted) {
             throw new JwtTokenBlacklistedException();
         }
     }
