@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Shopping Cart"
@@ -45,10 +52,22 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
     patch:
       tags:
         - "Shopping Cart"
@@ -74,10 +93,22 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
     delete:
       tags:
         - "Shopping Cart"
@@ -99,10 +130,22 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
   /api/v1/cart:
     get:
       tags:
@@ -112,19 +155,38 @@ paths:
       operationId: "getShoppingCart"
       responses:
         "200":
-          description: "OK"
+          description: "Shopping cart retrieved successfully."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     NewShoppingCartItemDto:
       type: "object"

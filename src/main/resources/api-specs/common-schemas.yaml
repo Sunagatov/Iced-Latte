@@ -1,0 +1,36 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Common Schemas"
+  description: "Shared schemas used across all Iced Latte APIs"
+  version: "1.0.0"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
+      properties:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
+          type: "array"
+          items:
+            type: "string"
+          description: "Additional error details"
+        timestamp:
+          type: "string"
+          format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"
+

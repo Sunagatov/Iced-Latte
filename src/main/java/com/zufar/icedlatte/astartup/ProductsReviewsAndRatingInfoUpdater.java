@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
+import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -26,14 +26,14 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     public void run(ApplicationArguments args) throws SQLException {
         try {
             productInfoRepository.findAll().stream()
-                .map(product -> product.getProductId())
+                .map(ProductInfo::getProductId)
                 .forEach(productId -> {
                     productInfoRepository.updateAverageRating(productId);
                     productInfoRepository.updateReviewsCount(productId);
                 });
 
             productReviewRepository.findAll().stream()
-                .map(review -> review.getId())
+                .map(ProductReview::getId)
                 .forEach(reviewId -> {
                     productReviewRepository.updateLikesCount(reviewId);
                     productReviewRepository.updateDislikesCount(reviewId);
@@ -42,10 +42,8 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
             log.info("Product reviews and ratings update completed successfully");
             
         } catch (Exception e) {
-            var errorMessage = switch (e) {
-                case RuntimeException re -> "Runtime error during product update: " + re.getMessage();
-                case Exception ex -> "Unexpected error during product update: " + ex.getMessage();
-            };
+            RuntimeException re = (RuntimeException) e;
+            var errorMessage = "Runtime error during product update: " + re.getMessage();
             log.error(errorMessage, e);
             throw new SQLException(errorMessage, e);
         }

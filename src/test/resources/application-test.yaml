@@ -27,6 +27,7 @@ spring:
       ddl-auto: validate
     show-sql:
       true
+    open-in-view: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
@@ -56,7 +57,7 @@ spring:
   aws:
     access-key: vbfgngfdndgndgndgndgndgndgndg
     secret-key: vbfgngfdndgndgndgndgndgndgndg
-    region: eu-west-1
+    region: us-east-1
     buckets:
       products: products
       user-avatar: users
@@ -129,3 +130,8 @@ google:
 stripe:
   secret-key: "sk_test_51PJxciHA4AopuQMMeXaJNETc7RUAITeMTKJei07L8iEHrRiWLQalKsr756dnOzmKPUXufkUVNUSaiPyktJG9dGY500x0cM817f"
   webhook-secret: "sk-test-secret"
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration: ERROR

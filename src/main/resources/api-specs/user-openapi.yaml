@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "User"
@@ -36,10 +43,22 @@ paths:
                 $ref: "#/components/schemas/UserDto"
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     put:
       tags:
@@ -63,12 +82,28 @@ paths:
                 $ref: "#/components/schemas/UserDto"
         "400":
           description: "Invalid input data."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     patch:
       tags:
@@ -90,15 +125,29 @@ paths:
           description: "Validation error."
           content:
             application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
               examples:
                 invalidPassword:
                   value: { "message": "Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&." }
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     delete:
       tags:
@@ -111,10 +160,22 @@ paths:
           description: "User successfully deleted."
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/users/password/reset:
     post:
@@ -128,8 +189,16 @@ paths:
           description: "Password reset request confirmed successfully."
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/users/password/reset/confirm:
     post:
@@ -150,8 +219,16 @@ paths:
           description: "Password reset confirmed successfully."
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/users/avatar:
     post:
@@ -176,8 +253,16 @@ paths:
           description: "User avatar uploaded successfully."
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     get:
       tags:
@@ -194,8 +279,16 @@ paths:
                 type: "string"
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     delete:
       tags:
@@ -208,10 +301,25 @@ paths:
           description: "User avatar deleted successfully."
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     UpdateUserAccountRequest:
       type: "object"
@@ -353,3 +461,30 @@ components:
           maxLength: 128
           pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
           example: "NewSecurePassword123!"
+
+    ErrorResponse:
+      type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
+      properties:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
+          type: "array"
+          items:
+            type: "string"
+          description: "Additional error details"
+        timestamp:
+          type: "string"
+          format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"

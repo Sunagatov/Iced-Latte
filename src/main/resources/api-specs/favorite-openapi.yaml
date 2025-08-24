@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Favorite Products"
@@ -39,12 +46,28 @@ paths:
           description: "The product was successfully removed from favorites."
         "400":
           description: "The provided input is invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "The specified favorite product was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/favorites:
     get:
@@ -62,10 +85,22 @@ paths:
                 $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "The favorite products list is empty."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
@@ -89,12 +124,31 @@ paths:
                 $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "400":
           description: "The provided input is invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     ListOfFavoriteProducts:
       type: object
@@ -120,3 +174,30 @@ components:
             $ref: "./product-openapi.yaml#/components/schemas/ProductInfoDto"
       required:
         - products
+
+    ErrorResponse:
+      type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
+      properties:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
+          type: "array"
+          items:
+            type: "string"
+          description: "Additional error details"
+        timestamp:
+          type: "string"
+          format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"

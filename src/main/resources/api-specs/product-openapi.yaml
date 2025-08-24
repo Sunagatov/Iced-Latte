@@ -7,6 +7,10 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
@@ -43,10 +47,22 @@ paths:
                 $ref: "#/components/schemas/ProductInfoDto"
         "400":
           description: "Invalid UUID format for productId."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "404":
           description: "Product not found for the given ID."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
   /api/v1/products/sellers:
     get:
@@ -64,6 +80,10 @@ paths:
                 $ref: "#/components/schemas/SellersDto"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
   /api/v1/products/brands:
     get:
@@ -81,6 +101,10 @@ paths:
                 $ref: "#/components/schemas/BrandsDto"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
   /api/v1/products:
     get:
@@ -246,8 +270,16 @@ paths:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
         "400":
           description: "Invalid parameters provided."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
   /api/v1/products/ids:
     post:
@@ -273,8 +305,16 @@ paths:
                   $ref: "#/components/schemas/ProductInfoDto"
         "400":
           description: "Invalid parameters provided."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
 components:
   schemas:
@@ -439,3 +479,5 @@ components:
           items:
             type: "string"
           description: "List of product brands."
+
+

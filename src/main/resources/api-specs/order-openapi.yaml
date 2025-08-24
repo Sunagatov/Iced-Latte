@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Orders"
@@ -44,10 +51,24 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/OrderDto"
+        "400":
+          description: "Invalid query parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
@@ -70,12 +91,31 @@ paths:
                 $ref: "#/components/schemas/OrderDto"
         "400":
           description: "Invalid input data."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     OrderStatus:
       type: string
@@ -122,3 +162,30 @@ components:
           type: "string"
           format: "date-time"
           description: "The date and time when the order was created."
+
+    ErrorResponse:
+      type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
+      properties:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
+          type: "array"
+          items:
+            type: "string"
+          description: "Additional error details"
+        timestamp:
+          type: "string"
+          format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"

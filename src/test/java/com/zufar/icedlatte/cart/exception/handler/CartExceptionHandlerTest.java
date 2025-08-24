@@ -67,7 +67,7 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         ShoppingCartItemNotFoundException exception = new ShoppingCartItemNotFoundException(shoppingCartItemId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping cart item with id = " + shoppingCartItemId + " is not found.",
+                "The shopping cart item with shoppingCartItemId = " + shoppingCartItemId + " is not found.",
                 HttpStatus.NOT_FOUND.value(),
                 currentDateTime
         );
@@ -92,7 +92,7 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         InvalidShoppingCartIdException exception = new InvalidShoppingCartIdException(shoppingCartId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping cart id = " + shoppingCartId + " is invalid.",
+                "The shopping cart id = " + shoppingCartId + " is invalid in UpdateProductsQuantityInShoppingCartItemRequest.",
                 HttpStatus.BAD_REQUEST.value(),
                 currentDateTime
         );
@@ -117,7 +117,7 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         InvalidItemProductQuantityException exception = new InvalidItemProductQuantityException(itemProductQuantity);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Invalid product quantity = " + itemProductQuantity + " or product quantity without changes.",
+                "Invalid product quantity = " + itemProductQuantity + " or product quantity without changes",
                 HttpStatus.BAD_REQUEST.value(),
                 currentDateTime
         );

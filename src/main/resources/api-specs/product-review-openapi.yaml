@@ -7,10 +7,20 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
+  - {}
 
 tags:
   - name: "Product Review"
@@ -118,10 +128,22 @@ paths:
                 $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
         "400":
           description: "Bad request, e.g. the query parameters are invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Product's review was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
@@ -151,12 +173,28 @@ paths:
                 $ref: "#/components/schemas/ProductReviewDto"
         "400":
           description: "Bad request, e.g. product's review exists"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Product not found or product's review was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
@@ -181,13 +219,25 @@ paths:
             format: "uuid"
       responses:
         "200":
-          description: "OK"
+          description: "Product review deleted successfully."
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Product's review was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/review:
     get:
@@ -212,8 +262,16 @@ paths:
                 $ref: "#/components/schemas/ProductReviewDto"
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/statistics:
     get:
@@ -238,8 +296,16 @@ paths:
                 $ref: "#/components/schemas/ProductReviewRatingStats"
         "404":
           description: "Product's review was not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/{productReviewId}/likes:
     post:
@@ -277,10 +343,25 @@ paths:
                 $ref: "#/components/schemas/ProductReviewDto"
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     ProductReviewRequest:
       type: "object"
@@ -407,3 +488,30 @@ components:
           type: boolean
       required:
         - isLike
+
+    ErrorResponse:
+      type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
+      properties:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
+          type: "array"
+          items:
+            type: "string"
+          description: "Additional error details"
+        timestamp:
+          type: "string"
+          format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"

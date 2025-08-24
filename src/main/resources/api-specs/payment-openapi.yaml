@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Payment"
@@ -39,13 +46,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorHandler"
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorHandler"
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/payment/order:
     get:
@@ -72,7 +85,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorHandler"
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
@@ -103,18 +122,29 @@ components:
         customerEmail:
           type: "string"
 
-    ErrorHandler:
+    ErrorResponse:
       type: "object"
+      description: "Standard error response format"
+      required:
+        - message
+        - timestamp
+        - status
       properties:
-        messages:
+        message:
+          type: "string"
+          description: "Error message"
+        details:
           type: "array"
           items:
             type: "string"
-        description:
-          type: "string"
-        httpStatusCode:
-          type: "integer"
-          format: "int32"
+          description: "Additional error details"
         timestamp:
           type: "string"
           format: "date-time"
+          description: "Error timestamp"
+        status:
+          type: "integer"
+          description: "HTTP status code"
+        path:
+          type: "string"
+          description: "Request path that caused the error"
