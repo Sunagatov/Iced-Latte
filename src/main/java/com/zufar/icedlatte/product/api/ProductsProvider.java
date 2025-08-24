@@ -31,9 +31,13 @@ public class ProductsProvider {
             return List.of();
         }
 
-        var dtosById = productInfoRepository.findAllById(uuids).stream()
+        List<ProductInfoDto> productDtos = productInfoRepository.findAllById(uuids).stream()
                 .map(productInfoDtoConverter::toDto)
-                .map(productUpdater::update)
+                .toList();
+        
+        List<ProductInfoDto> updatedProductDtos = productUpdater.updateBatch(productDtos);
+        
+        var dtosById = updatedProductDtos.stream()
                 .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
 
         var missing = new ArrayList<UUID>();

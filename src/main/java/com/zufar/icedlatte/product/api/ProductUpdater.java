@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -16,5 +18,9 @@ public class ProductUpdater {
     public ProductInfoDto update(ProductInfoDto productInfoDto) {
         productPictureLinkUpdater.update(productInfoDto);
         return productInfoDto;
+    }
+
+    public List<ProductInfoDto> updateBatch(List<ProductInfoDto> productInfoDtos) {
+        return productPictureLinkUpdater.updateBatch(productInfoDtos);
     }
 }

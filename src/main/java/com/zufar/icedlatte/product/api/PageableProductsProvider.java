@@ -37,10 +37,17 @@ public class PageableProductsProvider {
 
         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
                 .findAllProducts(minPrice, maxPrice, minAvg, brands, sellers, pageable)
-                .map(productInfoDtoConverter::toDto)
-                .map(productUpdater::update);
+                .map(productInfoDtoConverter::toDto);
+        
+        List<ProductInfoDto> updatedProducts = productUpdater.updateBatch(productsWithPageInfo.getContent());
+        
+        Page<ProductInfoDto> updatedProductsPage = new org.springframework.data.domain.PageImpl<>(
+                updatedProducts,
+                productsWithPageInfo.getPageable(),
+                productsWithPageInfo.getTotalElements()
+        );
 
-        return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);
+        return productInfoDtoConverter.toProductPaginationDto(updatedProductsPage);
     }
 
     private static <T> List<T> nullIfEmpty(List<T> list) {

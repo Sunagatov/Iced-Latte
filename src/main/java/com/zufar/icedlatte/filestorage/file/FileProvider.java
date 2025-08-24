@@ -9,8 +9,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,5 +28,16 @@ public class FileProvider {
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
         return fileMetadataProvider.getFileMetadataDto(relatedObjectId)
                 .map(awsTemporaryLinkReceiver::generatePresignedUrlAsString);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public Map<UUID, String> getRelatedObjectUrls(final List<UUID> relatedObjectIds) {
+        return fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue())
+                ));
     }
 }

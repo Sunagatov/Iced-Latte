@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -18,5 +20,19 @@ public class ProductPictureLinkUpdater {
         UUID id = productInfoDto.getId();
         productInfoDto.setProductFileUrl(productImageReceiver.getProductFileUrl(id));
         return productInfoDto;
+    }
+
+    public List<ProductInfoDto> updateBatch(List<ProductInfoDto> productInfoDtos) {
+        List<UUID> productIds = productInfoDtos.stream()
+                .map(ProductInfoDto::getId)
+                .toList();
+        
+        Map<UUID, String> fileUrls = productImageReceiver.getProductFileUrls(productIds);
+        
+        productInfoDtos.forEach(product -> 
+                product.setProductFileUrl(fileUrls.get(product.getId()))
+        );
+        
+        return productInfoDtos;
     }
 }
