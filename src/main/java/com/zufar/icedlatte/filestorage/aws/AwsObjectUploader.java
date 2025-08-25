@@ -1,11 +1,5 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.transfer.TransferManager;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +8,15 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -26,18 +25,20 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class AwsObjectUploader {
 
-    private final AmazonS3 amazonS3;
+    private final S3Client s3Client;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
         try (InputStream inputStream = file.getInputStream()) {
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(file.getContentType());
-            metadata.setContentLength(file.getSize());
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, inputStream, metadata);
-            putObjectRequest.getRequestClientOptions().setReadLimit((int) file.getSize() + 1);
-            amazonS3.putObject(putObjectRequest);
-        } catch (AmazonServiceException ase) {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType(file.getContentType())
+                    .contentLength(file.getSize())
+                    .build();
+            
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+        } catch (S3Exception ase) {
             log.error("AWS couldn't process operation", ase);
             throw ase;
         } catch (SdkClientException sce) {
@@ -50,12 +51,27 @@ public class AwsObjectUploader {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFileDirectory(String bucketName, String directoryPath) throws IOException {
-        TransferManager transferManager = new TransferManager(amazonS3);
         Path normalizedPath = Paths.get(directoryPath).normalize();
-        File directory = normalizedPath.toFile();
-        if (!directory.getCanonicalPath().startsWith(new File(directoryPath).getCanonicalPath())) {
+        if (!normalizedPath.toFile().getCanonicalPath().startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
             throw new SecurityException("Invalid directory path");
         }
-        transferManager.uploadDirectory(bucketName, "", directory, true);
+        
+        try (var pathStream = Files.walk(normalizedPath)) {
+            pathStream
+                    .filter(Files::isRegularFile)
+                    .forEach(filePath -> {
+                        try {
+                            String key = normalizedPath.relativize(filePath).toString().replace("\\", "/");
+                            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                                    .bucket(bucketName)
+                                    .key(key)
+                                    .build();
+                            s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
+                        } catch (Exception e) {
+                            log.error("Failed to upload file: {}", filePath, e);
+                            throw new RuntimeException(e);
+                        }
+                    });
+        }
     }
 }

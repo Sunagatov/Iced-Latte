@@ -1,18 +1,19 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import com.amazonaws.HttpMethod;
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.net.URL;
 import java.time.Duration;
-import java.util.Date;
-import java.util.logging.Level;
 
 @Slf4j
 @Service
@@ -22,21 +23,35 @@ public class AwsTemporaryLinkReceiver {
     @Value("${spring.aws.link-expiration-time}")
     private String linkExpirationTime;
 
-    private final AmazonS3 amazonS3;
+    private final S3Client s3Client;
 
     public String generatePresignedUrlAsString(FileMetadataDto fileMetadata) {
-        return generatePresignedUrl(fileMetadata).toString();
+        URL url = generatePresignedUrl(fileMetadata);
+        return url != null ? url.toString() : null;
     }
-
 
     public URL generatePresignedUrl(FileMetadataDto fileMetadata) {
         final String bucketName = fileMetadata.bucketName();
         final String fileName = fileMetadata.fileName();
-        Date expirationDate = new Date(System.currentTimeMillis() + Duration.parse(linkExpirationTime).toMillis());
-        HttpMethod httpMethod = HttpMethod.GET;
+        Duration expiration = Duration.parse(linkExpirationTime);
 
-        try {
-            return amazonS3.generatePresignedUrl(bucketName, fileName, expirationDate, httpMethod);
+        try (S3Presigner presigner = S3Presigner.builder()
+                .region(s3Client.serviceClientConfiguration().region())
+                .credentialsProvider(s3Client.serviceClientConfiguration().credentialsProvider())
+                .build()) {
+            
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .build();
+
+            GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(expiration)
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            PresignedGetObjectRequest presignedGetObjectRequest = presigner.presignGetObject(getObjectPresignRequest);
+            return presignedGetObjectRequest.url();
         } catch (SdkClientException e) {
             log.error("Error generating presigned URL", e);
             return null;

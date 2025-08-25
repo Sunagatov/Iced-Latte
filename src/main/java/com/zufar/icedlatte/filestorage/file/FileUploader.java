@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.filestorage.file;
 
-import com.amazonaws.AmazonServiceException;
 import com.zufar.icedlatte.filestorage.aws.AwsObjectUploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +28,6 @@ public class FileUploader {
     public void uploadDirectory(String bucketName, String directoryPath) {
         try {
             awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
-        } catch (AmazonServiceException e) {
-            log.error("AWS service error occurred while uploading directory", e);
-            throw e;
         } catch (IOException e) {
             log.error("I/O error occurred while uploading directory", e);
             throw new RuntimeException("Failed to upload directory due to I/O error", e);

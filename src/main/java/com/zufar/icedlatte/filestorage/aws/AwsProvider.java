@@ -1,11 +1,5 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,22 +23,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AwsProvider {
 
-    private final AmazonS3 amazonS3;
+    private final S3Client s3Client;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
         try {
-            ListObjectsV2Request listObjectsV2Request = new ListObjectsV2Request().withBucketName(bucketName);
-            List<S3ObjectSummary> allObjects = new ArrayList<>();
-            ListObjectsV2Result result;
+            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .build();
+            List<S3Object> allObjects = new ArrayList<>();
+            ListObjectsV2Response result;
             do {
-                result = amazonS3.listObjectsV2(listObjectsV2Request);
-                allObjects.addAll(result.getObjectSummaries());
-                String token = result.getNextContinuationToken();
-                listObjectsV2Request.setContinuationToken(token);
+                result = s3Client.listObjectsV2(listObjectsV2Request);
+                allObjects.addAll(result.contents());
+                listObjectsV2Request = listObjectsV2Request.toBuilder()
+                        .continuationToken(result.nextContinuationToken())
+                        .build();
             } while (result.isTruncated());
             return getFileMetadataDtos(allObjects, bucketName);
-        } catch (AmazonS3Exception e) {
+        } catch (S3Exception e) {
             log.warn("Error accessing AWS S3 bucket", e);
             return List.of();
         } catch (SdkClientException e) {
@@ -47,11 +50,11 @@ public class AwsProvider {
         }
     }
 
-    private List<FileMetadataDto> getFileMetadataDtos(List<S3ObjectSummary> objectSummaries, String bucketName) {
+    private List<FileMetadataDto> getFileMetadataDtos(List<S3Object> objects, String bucketName) {
         List<FileMetadataDto> fileMetadataDtos = new ArrayList<>();
 
-        objectSummaries.forEach(objectSummary -> {
-            String fileName = objectSummary.getKey();
+        objects.forEach(s3Object -> {
+            String fileName = s3Object.key();
             String[] parts = fileName.split("/");
             String[] packageName = parts[0].split("_");
             String relatedObjectId = packageName[1];
