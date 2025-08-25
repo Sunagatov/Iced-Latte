@@ -25,10 +25,10 @@ public class SecurityEventListener {
     }
 
     @EventListener
-    public void onAuthorizationDenied(AuthorizationDeniedEvent event) {
+    public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
         String username = event.getAuthentication().get().getName();
         log.warn("Authorization denied for user: {} - Resource: {}", 
                 username, 
-                event.getAuthorizationDecision());
+                event.getAuthorizationResult());
     }
 }

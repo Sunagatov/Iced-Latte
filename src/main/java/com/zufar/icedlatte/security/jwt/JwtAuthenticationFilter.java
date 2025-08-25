@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -105,13 +105,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         httpResponse.setCharacterEncoding("UTF-8");
         
-        String jsonResponse = STR."""
+        String jsonResponse = String.format("""
             {
-                "error": "\{StringEscapeUtils.escapeJson(errorMessage)}",
-                "timestamp": "\{java.time.Instant.now()}",
-                "status": \{statusCode}
+                "error": "%s",
+                "timestamp": "%s",
+                "status": %d
             }
-            """;
+            """, StringEscapeUtils.escapeJson(errorMessage), java.time.Instant.now(), statusCode);
         
         httpResponse.getWriter().write(jsonResponse);
     }
@@ -127,18 +127,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         return SECURED_URLS.stream()
-                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
+                .anyMatch(securedUrl -> PathPatternRequestMatcher.withDefaults().matcher(securedUrl).matches(request));
     }
 
     private boolean isUnauthorizedGetReviewsUrl(HttpServletRequest request) {
         boolean isReviewsUrl = SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.stream()
-                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
+                .anyMatch(securedUrl -> PathPatternRequestMatcher.withDefaults().matcher(securedUrl).matches(request));
 
         return isReviewsUrl && HttpMethod.GET.name().equals(request.getMethod());
     }
 
     private boolean isUnauthorizedPostStripeWebhookUrl(HttpServletRequest request) {
-        boolean isStripeWebhookUrl = new AntPathRequestMatcher(SecurityConstants.STRIPE_WEBHOOK_URL)
+        boolean isStripeWebhookUrl = PathPatternRequestMatcher.withDefaults().matcher(SecurityConstants.STRIPE_WEBHOOK_URL)
                 .matches(request);
 
         return isStripeWebhookUrl && HttpMethod.POST.name().equals(request.getMethod());

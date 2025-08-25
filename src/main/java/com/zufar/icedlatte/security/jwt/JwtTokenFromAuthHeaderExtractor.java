@@ -29,7 +29,7 @@ public class JwtTokenFromAuthHeaderExtractor {
                 .map(authHeader -> authHeader.substring(BEARER_PREFIX.length()).trim())
                 .filter(StringUtils::hasText)
                 .orElseThrow(() -> new AbsentBearerHeaderException(
-                    STR."Missing or invalid Authorization header. Expected format: \{BEARER_PREFIX}<token>"
+                    "Missing or invalid Authorization header. Expected format: " + BEARER_PREFIX + "<token>"
                 ));
     }
 }

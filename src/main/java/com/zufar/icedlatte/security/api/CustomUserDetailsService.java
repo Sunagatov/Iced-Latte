@@ -30,7 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> {
                     log.warn("User not found with email: {}", email);
                     return new UsernameNotFoundException(
-                            STR."User not found with email: \{email}"
+                            "User not found with email: " + email
                     );
                 });
     }

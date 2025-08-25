@@ -1,7 +1,10 @@
 package com.zufar.icedlatte.security.configuration;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.Set;
 
+@UtilityClass
 public final class SecurityConstants {
 
     public static final String SHOPPING_CART_URL = "/api/v1/cart/**";
@@ -16,6 +19,4 @@ public final class SecurityConstants {
     public static final Set<String> ALLOWED_PRODUCT_REVIEWS_URLS = Set.of("/api/v1/products/*/reviews", "/api/v1/products/*/reviews/statistics");
     public static final String SHIPPING_URL = "/api/v1/shipping/**";
     public static final String AUTH_3PART_URL = "/api/v1/3part-auth/**";
-
-    private SecurityConstants() {}
 }
