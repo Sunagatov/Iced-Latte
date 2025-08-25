@@ -1,15 +1,15 @@
 package com.zufar.icedlatte.common.config;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @Slf4j
 @Configuration
@@ -25,17 +25,25 @@ public class AWSConfig {
     private String region;
 
     @Bean
-    public AmazonS3 amazonS3() {
+    public S3Client s3Client() {
         try {
             String sessionToken = System.getenv("AWS_SESSION_TOKEN");
-            BasicSessionCredentials awsCreds = new BasicSessionCredentials(accessKey, secretKey, sessionToken);
-            return AmazonS3ClientBuilder.standard()
-                    .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-                    .withRegion(region)
-                    .build();
-        } catch (AmazonClientException ace) {
+            if (sessionToken != null && !sessionToken.isEmpty()) {
+                AwsSessionCredentials awsCreds = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
+                return S3Client.builder()
+                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                        .region(Region.of(region))
+                        .build();
+            } else {
+                AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+                return S3Client.builder()
+                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                        .region(Region.of(region))
+                        .build();
+            }
+        } catch (SdkClientException ace) {
             log.error("AWS S3 Client Error: {}", ace.getMessage(), ace);
-            throw new RuntimeException("Failed to create AmazonS3 client", ace);
+            throw new RuntimeException("Failed to create S3Client", ace);
         }
     }
 }
