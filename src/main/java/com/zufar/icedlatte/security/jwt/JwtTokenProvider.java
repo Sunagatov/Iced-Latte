@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +39,7 @@ public class JwtTokenProvider {
                     .setSubject(userDetails.getUsername())
                     .setIssuedAt(new Date(System.currentTimeMillis()))
                     .setExpiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
-                    .signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
+                    .signWith(jwtSignKeyProvider.get())
                     .compact();
         } catch (JwtException exception) {
             log.error("Jwt token creation error: {}", exception.getMessage(), exception);
@@ -54,7 +53,7 @@ public class JwtTokenProvider {
                     .setSubject(userDetails.getUsername())
                     .setIssuedAt(new Date(System.currentTimeMillis()))
                     .setExpiration(new Date(System.currentTimeMillis() + validityRefreshTokenInMilliseconds))
-                    .signWith(jwtSignKeyProvider.get(), SignatureAlgorithm.HS256)
+                    .signWith(jwtSignKeyProvider.get())
                     .compact();
         } catch (JwtException exception) {
             log.error("Jwt refresh token creation error: {}", exception.getMessage(), exception);
