@@ -39,7 +39,6 @@ public class SpringSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
-                        .contentTypeOptions(contentTypeOptions -> {})
                         .httpStrictTransportSecurity(hstsConfig -> hstsConfig
                                 .maxAgeInSeconds(Duration.ofDays(365).toSeconds())
                                 .includeSubDomains(true)
@@ -66,8 +65,7 @@ public class SpringSecurityConfiguration {
     @Bean
     public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService,
                                                          final PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder);
         authenticationProvider.setHideUserNotFoundExceptions(false);
         return authenticationProvider;
