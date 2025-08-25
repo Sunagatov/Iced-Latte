@@ -46,5 +46,4 @@ VALUES ('ab12cd34-5678-90ef-ab12-cd34ef567890', 'ec3dca35-9793-440f-9dc6-d12abfd
 INSERT INTO public.product_reviews_likes (id, review_id, product_id, user_id, is_like)
 VALUES ('cd34ef56-7890-ab12-cd34-ef567890ab12', '4d67de3c-9cbd-4b01-9683-dc0aaedf6465', 'eec8a1d8-4864-4c1b-aa8b-dedfddc6e356', '33333333-3333-3333-3333-333333333333', true);
 
-INSERT INTO public.product_reviews_likes (id, review_id, product_id, user_id, is_like)
-VALUES ('de56f789-01ab-23cd-45ef-67890abcdef1', 'bcf00134-981d-43e7-9782-3d7c5b2091db', '7edf3a1e-c391-4d76-9002-2f0dd3e9c6e9', '44444444-4444-4444-4444-444444444444', false);
+
