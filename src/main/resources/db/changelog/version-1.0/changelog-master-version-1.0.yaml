@@ -1,8 +1,25 @@
+# Database Changelog - Version 1.0
+# Initial release database schema and data
+# 
+# This version includes:
+# - Core product management
+# - User authentication and authorization
+# - Shopping cart functionality
+# - Order management
+# - Review and rating system
+# - Audit logging
+# - File management
+
 databaseChangeLog:
+  
+  # ========== CORE PRODUCT SYSTEM ==========
+  # Product catalog foundation
   - include:
       file: db/changelog/version-1.0/19.07.2023.part1.create-product-table.sql
   - include:
       file: db/changelog/version-1.0/19.07.2023.part2.insert-product-data.sql
+      
+  # ========== SHOPPING CART SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/21.07.2023.part1.create-shopping-cart-table.sql
   - include:
@@ -11,10 +28,15 @@ databaseChangeLog:
       file: db/changelog/version-1.0/21.07.2023.part3.insert-shopping-cart-data.sql
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-cart-item-data.sql
+      
+  # ========== USER MANAGEMENT & SECURITY ==========
+  # Address management
   - include:
       file: db/changelog/version-1.0/28.07.2023.part1.create-address-table.sql
   - include:
       file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
+      
+  # User authentication and authorization
   - include:
       file: db/changelog/version-1.0/28.07.2023.part3.create-user-granted-authority-table.sql
   - include:
@@ -23,10 +45,14 @@ databaseChangeLog:
       file: db/changelog/version-1.0/28.07.2023.part5.create-user-details-table.sql
   - include:
       file: db/changelog/version-1.0/28.07.2023.part6.insert-user-details-table-data.sql
+      
+  # Login security and attempt tracking
   - include:
       file: db/changelog/version-1.0/07.10.2023.part1.create-login-attempts-table.sql
   - include:
       file: db/changelog/version-1.0/07.10.2023.part2.insert-login-attempts-table-data.sql
+      
+  # ========== FAVORITES SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/23.11.2023.part1.create-favorite-product-table.sql
   - include:
@@ -35,12 +61,22 @@ databaseChangeLog:
       file: db/changelog/version-1.0/23.11.2023.part3.insert-favorite-data.sql
   - include:
       file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql
+      
+  # ========== FILE MANAGEMENT ==========
   - include:
       file: db/changelog/version-1.0/13.12.2023.part1.create-file-metadata-table.sql
+      
+  # ========== ORDER MANAGEMENT ==========
   - include:
       file: db/changelog/version-1.0/07.01.2024.part1.create-order-table.sql
   - include:
       file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql
+      
+  # ========== PAYMENT SYSTEM ==========
+  - include:
+      file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
+      
+  # ========== REVIEW & RATING SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/08.02.2024.part1.create-product-review-table.sql
   - include:
@@ -49,10 +85,14 @@ databaseChangeLog:
       file: db/changelog/version-1.0/13.04.2024.part1.create-product-review-likes-table.sql
   - include:
       file: db/changelog/version-1.0/13.04.2024.part2.insert-product-review-likes-table.sql
-  - include:
-      file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
+      
+  # ========== PRODUCT ENHANCEMENTS ==========
+  # Optimistic locking support
   - include:
       file: db/changelog/version-1.0/22.08.2025.add-version-column-to-product-table.sql
+      
+  # ========== AUDIT & COMPLIANCE ==========
+  # Comprehensive audit logging system
   - include:
       file: db/changelog/version-1.0/25.01.2025.part1.create-audit-logs-table.sql
   - include:

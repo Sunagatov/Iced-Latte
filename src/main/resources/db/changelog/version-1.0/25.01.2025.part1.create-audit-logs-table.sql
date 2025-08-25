@@ -1,6 +1,9 @@
 --liquibase formatted sql
 
 --changeset audit:create-audit-logs-table
+--comment: Create comprehensive audit logging table for tracking all entity changes
+--author: iced-latte-team
+--date: 2025-01-25
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     entity_type VARCHAR(100) NOT NULL,
