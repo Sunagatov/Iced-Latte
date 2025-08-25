@@ -18,6 +18,9 @@ server:
 spring:
   application:
     name: Iced Latte Application
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: false
   banner:
     charset: UTF-8
     location: classpath:banner.txt
@@ -47,6 +50,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml

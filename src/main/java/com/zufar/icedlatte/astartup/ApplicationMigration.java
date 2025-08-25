@@ -4,8 +4,8 @@ import com.zufar.icedlatte.filestorage.aws.AwsProvider;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ApplicationMigration implements ApplicationRunner {
 
     @Value("${spring.aws.buckets.products:}")
@@ -30,9 +29,18 @@ public class ApplicationMigration implements ApplicationRunner {
     private final AwsProvider awsProvider;
     private final FileMetadataSaver fileMetadataSaver;
 
+    public ApplicationMigration(FileUploader fileUploader,
+                                @Autowired(required = false) AwsProvider awsProvider,
+                                FileMetadataSaver fileMetadataSaver) {
+        this.fileUploader = fileUploader;
+        this.awsProvider = awsProvider;
+        this.fileMetadataSaver = fileMetadataSaver;
+    }
+
     @Override
     public void run(ApplicationArguments args) {
-        if (productPictureBucket == null || productPictureBucket.isEmpty() ||
+        if (awsProvider == null ||
+                productPictureBucket == null || productPictureBucket.isEmpty() ||
                 directoryPath == null || directoryPath.isEmpty()) {
             log.info("AWS configuration not available, skipping file migration");
             return;
