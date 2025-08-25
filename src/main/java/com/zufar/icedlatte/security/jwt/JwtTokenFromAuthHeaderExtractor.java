@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -12,10 +12,9 @@ import java.util.Optional;
 @Service
 public class JwtTokenFromAuthHeaderExtractor {
 
-    public static final String BEARER_PREFIX = "Bearer ";
-    public static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
+    private static final String BEARER_PREFIX = "Bearer ";
 
-    @Value("${jwt.header}")
+    @Value("${jwt.header:Authorization}")
     private String jwtHttpRequestHeader;
 
     public String extract(final HttpServletRequest request) {
@@ -25,8 +24,12 @@ public class JwtTokenFromAuthHeaderExtractor {
 
     public String extract(final String header) {
         return Optional.ofNullable(header)
+                .filter(StringUtils::hasText)
                 .filter(authHeader -> authHeader.startsWith(BEARER_PREFIX))
-                .map(authHeader -> StringUtils.substring(authHeader, BEARER_PREFIX_LENGTH))
-                .orElseThrow(AbsentBearerHeaderException::new);
+                .map(authHeader -> authHeader.substring(BEARER_PREFIX.length()).trim())
+                .filter(StringUtils::hasText)
+                .orElseThrow(() -> new AbsentBearerHeaderException(
+                    STR."Missing or invalid Authorization header. Expected format: \{BEARER_PREFIX}<token>"
+                ));
     }
 }

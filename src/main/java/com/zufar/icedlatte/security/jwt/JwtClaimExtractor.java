@@ -1,14 +1,13 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.Optional;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
@@ -23,24 +22,22 @@ public class JwtClaimExtractor {
     private final JwtSignKeyProvider jwtSignKeyProvider;
 
     public String extractEmail(final String jwtToken) {
-        String userEmail = extractAllClaims(jwtToken).getSubject();
-
-        if (StringUtils.isEmpty(userEmail))
-            throw new JwtTokenHasNoUserEmailException();
-        else
-            return userEmail;
+        return Optional.ofNullable(extractAllClaims(jwtToken).getSubject())
+                .filter(StringUtils::hasText)
+                .orElseThrow(JwtTokenHasNoUserEmailException::new);
     }
 
     public LocalDateTime extractExpiration(final String jwtToken) {
-        Date expiration = extractAllClaims(jwtToken)
-                .getExpiration();
-
-        return Instant
-                .ofEpochMilli(expiration.getTime())
-                .atZone(ZoneOffset.UTC)
+        Date expiration = extractAllClaims(jwtToken).getExpiration();
+        return expiration.toInstant()
+                .atOffset(ZoneOffset.UTC)
                 .toLocalDateTime();
     }
-
+    
+    public boolean isTokenExpired(final String jwtToken) {
+        return extractExpiration(jwtToken).isBefore(LocalDateTime.now(ZoneOffset.UTC));
+    }
+    
     private Claims extractAllClaims(final String jwtToken) {
         return getJwtParser()
                 .parseSignedClaims(jwtToken)

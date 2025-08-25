@@ -1,13 +1,13 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
@@ -20,43 +20,44 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
     private final JwtSignKeyProvider jwtSignKeyProvider;
-
-    @Value("${jwt.expiration}")
-    private long validityInMilliseconds;
-
-    @Value("${jwt.refresh.expiration}")
-    private long validityRefreshTokenInMilliseconds;
+    private final JwtProperties jwtProperties;
 
     public String generateToken(final UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        return generateToken(Map.of(), userDetails);
     }
 
-    private String generateToken(final Map<String, Object> extraClaims,
-                                 final UserDetails userDetails) {
+    public String generateToken(final Map<String, Object> extraClaims,
+                               final UserDetails userDetails) {
         try {
+            Instant now = Instant.now();
             return Jwts.builder()
-                    .setClaims(extraClaims)
-                    .setSubject(userDetails.getUsername())
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
+                    .claims(extraClaims)
+                    .subject(userDetails.getUsername())
+                    .issuer(jwtProperties.getIssuer())
+                    .audience().add(jwtProperties.getAudience()).and()
+                    .issuedAt(Date.from(now))
+                    .expiration(Date.from(now.plus(jwtProperties.getExpiration())))
                     .signWith(jwtSignKeyProvider.get())
                     .compact();
         } catch (JwtException exception) {
-            log.error("Jwt token creation error: {}", exception.getMessage(), exception);
+            log.error("JWT token creation failed for user: {}", userDetails.getUsername(), exception);
             throw new JwtTokenException(exception);
         }
     }
 
     public String generateRefreshToken(final UserDetails userDetails) {
         try {
+            Instant now = Instant.now();
             return Jwts.builder()
-                    .setSubject(userDetails.getUsername())
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + validityRefreshTokenInMilliseconds))
-                    .signWith(jwtSignKeyProvider.get())
+                    .subject(userDetails.getUsername())
+                    .issuer(jwtProperties.getIssuer())
+                    .audience().add(jwtProperties.getAudience()).and()
+                    .issuedAt(Date.from(now))
+                    .expiration(Date.from(now.plus(jwtProperties.getRefreshExpiration())))
+                    .signWith(jwtSignKeyProvider.getRefresh())
                     .compact();
         } catch (JwtException exception) {
-            log.error("Jwt refresh token creation error: {}", exception.getMessage(), exception);
+            log.error("JWT refresh token creation failed for user: {}", userDetails.getUsername(), exception);
             throw new JwtTokenException(exception);
         }
     }

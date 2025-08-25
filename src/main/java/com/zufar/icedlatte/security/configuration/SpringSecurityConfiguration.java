@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.configuration;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,11 +22,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.time.Duration;
 
 @Slf4j
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
@@ -34,28 +38,27 @@ public class SpringSecurityConfiguration {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
-                        .frameOptions().deny()
-                        .contentTypeOptions().and()
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                        .contentTypeOptions(contentTypeOptions -> {})
                         .httpStrictTransportSecurity(hstsConfig -> hstsConfig
-                                .maxAgeInSeconds(31536000)
+                                .maxAgeInSeconds(Duration.ofDays(365).toSeconds())
                                 .includeSubDomains(true)
                                 .preload(true))
-                        .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 )
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.SHOPPING_CART_URL)).authenticated()
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.USERS_URL)).authenticated()
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.FAVOURITES_URL)).authenticated()
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.ORDERS_URL)).authenticated()
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.SHIPPING_URL)).authenticated()
-                                .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(new String[0])).permitAll()
-                                .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
-                                .requestMatchers(HttpMethod.POST, SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
-                                .requestMatchers(new AntPathRequestMatcher(SecurityConstants.PAYMENT_URL)).authenticated()
-                                .anyRequest().permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
+                        .requestMatchers(SecurityConstants.USERS_URL).authenticated()
+                        .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
+                        .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
+                        .requestMatchers(SecurityConstants.SHIPPING_URL).authenticated()
+                        .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
+                        .anyRequest().permitAll()
                 )
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

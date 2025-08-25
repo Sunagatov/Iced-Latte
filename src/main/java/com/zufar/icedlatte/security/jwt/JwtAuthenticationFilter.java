@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,8 +25,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 
 @Slf4j
@@ -33,7 +34,20 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String MDC_USER_ID_KEY2VALUE = "user.id.key2value";
+    private static final String MDC_USER_ID_KEY = "userId";
+    private static final String MDC_REQUEST_ID_KEY = "requestId";
+    
+    private static final Set<String> SECURED_URLS = Set.of(
+            SecurityConstants.SHOPPING_CART_URL,
+            SecurityConstants.PAYMENT_URL,
+            SecurityConstants.USERS_URL,
+            SecurityConstants.FAVOURITES_URL,
+            SecurityConstants.AUTH_URL,
+            SecurityConstants.ORDERS_URL,
+            SecurityConstants.SHIPPING_URL,
+            SecurityConstants.REVIEWS_URL,
+            SecurityConstants.REVIEW_URL
+    );
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
@@ -42,46 +56,65 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
                                     @NonNull final HttpServletResponse httpResponse,
                                     @NonNull final FilterChain filterChain) throws IOException {
+        
+        String requestId = UUID.randomUUID().toString();
+        MDC.put(MDC_REQUEST_ID_KEY, requestId);
+        
         try {
             if (shouldNotFilter(httpRequest)) {
+                filterChain.doFilter(httpRequest, httpResponse);
                 return;
             }
+            
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
-
-            SecurityContextHolder
-                    .getContext()
-                    .setAuthentication(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
             UUID userId = securityPrincipalProvider.getUserId();
-            MDC.put(MDC_USER_ID_KEY2VALUE, "userId:" + userId.toString());
+            MDC.put(MDC_USER_ID_KEY, userId.toString());
 
             filterChain.doFilter(httpRequest, httpResponse);
 
-        } catch (JwtTokenBlacklistedException exception) {
-            handleException(httpResponse, "JWT Token is blacklisted", exception, HttpServletResponse.SC_BAD_REQUEST);
-        } catch (AbsentBearerHeaderException exception) {
-            handleException(httpResponse, "Bearer authentication header is absent", exception, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (ExpiredJwtException exception) {
-            handleException(httpResponse, "Jwt token is expired", exception, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (JwtTokenHasNoUserEmailException exception) {
-            handleException(httpResponse, "User email not found in jwtToken", exception, HttpServletResponse.SC_BAD_REQUEST);
-        } catch (UsernameNotFoundException exception) {
-            handleException(httpResponse, "User with the provided email does not exist", exception, HttpServletResponse.SC_NOT_FOUND);
-        } catch (ServletException | RuntimeException exception) {
-            handleException(httpResponse, "Internal server error", exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (JwtTokenBlacklistedException ex) {
+            handleAuthenticationException(httpResponse, "JWT token is blacklisted", ex, HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (AbsentBearerHeaderException ex) {
+            handleAuthenticationException(httpResponse, "Bearer authentication header is absent", ex, HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (ExpiredJwtException ex) {
+            handleAuthenticationException(httpResponse, "JWT token has expired", ex, HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (JwtTokenHasNoUserEmailException ex) {
+            handleAuthenticationException(httpResponse, "User email not found in JWT token", ex, HttpServletResponse.SC_BAD_REQUEST);
+        } catch (UsernameNotFoundException ex) {
+            handleAuthenticationException(httpResponse, "User with the provided email does not exist", ex, HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (ServletException | RuntimeException ex) {
+            handleAuthenticationException(httpResponse, "Internal server error", ex, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
-            MDC.remove(MDC_USER_ID_KEY2VALUE);
+            MDC.remove(MDC_USER_ID_KEY);
+            MDC.remove(MDC_REQUEST_ID_KEY);
         }
     }
 
-private void handleException(HttpServletResponse httpResponse,
-                             String errorMessage,
-                             Exception exception,
-                             int statusCode) throws IOException {
-    log.error("Error occurred: {}", StringEscapeUtils.escapeJava(errorMessage), exception);
-    httpResponse.setStatus(statusCode);
-    httpResponse.getWriter().write("{ \"message\": \"" + StringEscapeUtils.escapeJson(errorMessage) + "\" }");
-}
+    private void handleAuthenticationException(HttpServletResponse httpResponse,
+                                             String errorMessage,
+                                             Exception exception,
+                                             int statusCode) throws IOException {
+        log.warn("Authentication failed: {} - Request ID: {}", 
+                StringEscapeUtils.escapeJava(errorMessage), 
+                MDC.get(MDC_REQUEST_ID_KEY), 
+                exception);
+        
+        httpResponse.setStatus(statusCode);
+        httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        httpResponse.setCharacterEncoding("UTF-8");
+        
+        String jsonResponse = STR."""
+            {
+                "error": "\{StringEscapeUtils.escapeJson(errorMessage)}",
+                "timestamp": "\{java.time.Instant.now()}",
+                "status": \{statusCode}
+            }
+            """;
+        
+        httpResponse.getWriter().write(jsonResponse);
+    }
 
     @Override
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {
@@ -89,13 +122,12 @@ private void handleException(HttpServletResponse httpResponse,
     }
 
     private boolean isSecuredUrl(HttpServletRequest request) {
-        if (isUnauthorizedGetReviewsUrl(request)) return false;
-        if (isUnauthorizedPostStripeWebhookUrl(request)) return false;
-        return Stream.of(SecurityConstants.SHOPPING_CART_URL, SecurityConstants.PAYMENT_URL,
-                SecurityConstants.USERS_URL, SecurityConstants.FAVOURITES_URL,
-                SecurityConstants.AUTH_URL, SecurityConstants.ORDERS_URL,
-                SecurityConstants.SHIPPING_URL, SecurityConstants.REVIEWS_URL,
-                SecurityConstants.REVIEW_URL).anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
+        if (isUnauthorizedGetReviewsUrl(request) || isUnauthorizedPostStripeWebhookUrl(request)) {
+            return false;
+        }
+        
+        return SECURED_URLS.stream()
+                .anyMatch(securedUrl -> new AntPathRequestMatcher(securedUrl).matches(request));
     }
 
     private boolean isUnauthorizedGetReviewsUrl(HttpServletRequest request) {

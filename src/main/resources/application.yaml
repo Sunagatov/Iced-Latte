@@ -207,9 +207,8 @@ jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
   expiration: 86400000 # 1 day
-  refresh:
-    secret: ${APP_JWT_REFRESH_SECRET}
-    expiration: 86400000 # 1 day
+  refresh-secret: ${APP_JWT_REFRESH_SECRET}
+  refresh-expiration: 86400000 # 1 day
 
 #
 # Login Attempts Properties

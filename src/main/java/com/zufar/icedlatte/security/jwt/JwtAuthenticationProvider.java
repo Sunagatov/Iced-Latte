@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,21 +20,31 @@ public class JwtAuthenticationProvider {
     private final UserDetailsService userDetailsService;
     private final JwtBlacklistValidator jwtBlacklistValidator;
 
-    public UsernamePasswordAuthenticationToken get(final HttpServletRequest httpRequest) {
+    public Authentication get(final HttpServletRequest httpRequest) {
         String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-
+        
+        // Validate token is not blacklisted
         jwtBlacklistValidator.validate(jwtToken);
-
-        jwtClaimExtractor.extractExpiration(jwtToken);
-
-        final String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
-
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
-        var authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        authenticationToken
-                .setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
-
+        
+        // Validate token is not expired
+        if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
+            throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
+        }
+        
+        String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        
+        var authenticationToken = new UsernamePasswordAuthenticationToken(
+                userDetails, 
+                null, 
+                userDetails.getAuthorities()
+        );
+        
+        authenticationToken.setDetails(
+                new WebAuthenticationDetailsSource().buildDetails(httpRequest)
+        );
+        
+        log.debug("Successfully authenticated user: {}", userEmail);
         return authenticationToken;
     }
 }

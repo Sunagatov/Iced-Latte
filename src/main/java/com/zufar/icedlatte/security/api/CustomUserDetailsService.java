@@ -3,10 +3,12 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -17,10 +19,19 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email)
+        if (!StringUtils.hasText(email)) {
+            log.warn("Attempted to load user with empty or null email");
+            throw new UsernameNotFoundException("Email cannot be empty");
+        }
+        
+        log.debug("Loading user details for email: {}", email);
+        
+        return userRepository.findByEmail(email.toLowerCase().trim())
                 .orElseThrow(() -> {
-                    log.debug("Failed to get the user with the email = {}.", email);
-                    return new UsernameNotFoundException(String.format("Invalid credentials for user's account with email = '%s'", email));
+                    log.warn("User not found with email: {}", email);
+                    return new UsernameNotFoundException(
+                            STR."User not found with email: \{email}"
+                    );
                 });
     }
 }
