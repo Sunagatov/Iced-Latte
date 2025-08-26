@@ -31,6 +31,9 @@ public class JwtAuthenticationProvider {
             throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
         }
         
+        // Extract expiration for validation
+        jwtClaimExtractor.extractExpiration(jwtToken);
+        
         String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         

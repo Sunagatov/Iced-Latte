@@ -14,21 +14,28 @@ public class SecurityEventListener {
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
         String username = event.getAuthentication().getName();
-        log.info("Authentication successful for user: {}", username);
+        var authorities = event.getAuthentication().getAuthorities();
+        log.info("Authentication successful for user: {} with authorities: {}", username, authorities);
     }
 
     @EventListener
     public void onAuthenticationFailure(AbstractAuthenticationFailureEvent event) {
         String username = event.getAuthentication().getName();
         String reason = event.getException().getMessage();
-        log.warn("Authentication failed for user: {} - Reason: {}", username, reason);
+        var exceptionType = event.getException().getClass().getSimpleName();
+        log.warn("Authentication failed for user: {} - Type: {} - Reason: {}", username, exceptionType, reason);
     }
 
     @EventListener
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
-        String username = event.getAuthentication().get().getName();
-        log.warn("Authorization denied for user: {} - Resource: {}", 
-                username, 
-                event.getAuthorizationResult());
+        if (event.getAuthentication().get() != null) {
+            String username = event.getAuthentication().get().getName();
+            log.warn("Authorization denied for user: {} - Resource: {}",
+                    username,
+                    event.getAuthorizationResult());
+        } else {
+            log.warn("Authorization denied for anonymous user - Resource: {}",
+                    event.getAuthorizationResult());
+        }
     }
 }

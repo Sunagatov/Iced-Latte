@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Locale;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,15 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
             log.warn("Attempted to load user with empty or null email");
             throw new UsernameNotFoundException("Email cannot be empty");
         }
-        
-        log.debug("Loading user details for email: {}", email);
-        
-        return userRepository.findByEmail(email.toLowerCase().trim())
+        String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
+        log.debug("Loading user details for email: {}", normalizedEmail);
+
+        return userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> {
-                    log.warn("User not found with email: {}", email);
-                    return new UsernameNotFoundException(
-                            "User not found with email: " + email
-                    );
+                    log.warn("User not found with email: {}", normalizedEmail);
+                    return new UsernameNotFoundException("Invalid credentials for user's account with email = '" + normalizedEmail + "'");
                 });
     }
 }

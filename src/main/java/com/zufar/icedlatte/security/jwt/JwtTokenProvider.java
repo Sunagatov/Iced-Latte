@@ -33,10 +33,10 @@ public class JwtTokenProvider {
             return Jwts.builder()
                     .claims(extraClaims)
                     .subject(userDetails.getUsername())
-                    .issuer(jwtProperties.getIssuer())
-                    .audience().add(jwtProperties.getAudience()).and()
+                    .issuer(jwtProperties.issuer())
+                    .audience().add(jwtProperties.audience()).and()
                     .issuedAt(Date.from(now))
-                    .expiration(Date.from(now.plus(jwtProperties.getExpiration())))
+                    .expiration(Date.from(now.plus(jwtProperties.expiration())))
                     .signWith(jwtSignKeyProvider.get())
                     .compact();
         } catch (JwtException exception) {
@@ -50,10 +50,10 @@ public class JwtTokenProvider {
             Instant now = Instant.now();
             return Jwts.builder()
                     .subject(userDetails.getUsername())
-                    .issuer(jwtProperties.getIssuer())
-                    .audience().add(jwtProperties.getAudience()).and()
+                    .issuer(jwtProperties.issuer())
+                    .audience().add(jwtProperties.audience()).and()
                     .issuedAt(Date.from(now))
-                    .expiration(Date.from(now.plus(jwtProperties.getRefreshExpiration())))
+                    .expiration(Date.from(now.plus(jwtProperties.refreshExpiration())))
                     .signWith(jwtSignKeyProvider.getRefresh())
                     .compact();
         } catch (JwtException exception) {

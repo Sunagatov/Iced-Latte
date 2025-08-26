@@ -20,14 +20,14 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
      * @param userEmail The email of the user.
      * @param expirationDatetime The expiration time for the lock.
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE LoginAttemptEntity la SET la.isUserLocked = true, la.expirationDatetime = :expiration WHERE la.userEmail = :email")
     void setUserLockedStatusAndExpiration(@Param("email") String userEmail, @Param("expiration") LocalDateTime expirationDatetime);
 
     /**
      * Resets the locked accounts whose lockout expiration time has passed.
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE LoginAttemptEntity la SET la.attempts = 0, la.isUserLocked = false, la.expirationDatetime = NULL, la.lastModified = CURRENT_TIMESTAMP " +
             "WHERE la.isUserLocked = true AND la.expirationDatetime <= CURRENT_TIMESTAMP")
     void resetLockedAccounts();

@@ -33,3 +33,12 @@ VALUES ('4a95d2f5-22a7-4e6a-83fb-6a4d8c1297f4',
         13,
         '2023-07-21 10:00:00+00',
         '2023-07-21 12:00:00+00');
+
+-- Cart 5 - Olivia's cart
+INSERT INTO public.shopping_cart (id, user_id, items_quantity, products_quantity, created_at, closed_at)
+VALUES ('77777777-7777-7777-7777-777777777777',
+        '77777777-7777-7777-7777-777777777777',
+        1,
+        2,
+        '2023-07-21 10:00:00+00',
+        null);

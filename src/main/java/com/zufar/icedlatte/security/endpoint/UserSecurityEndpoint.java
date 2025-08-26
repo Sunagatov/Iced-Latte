@@ -13,13 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Validated
@@ -49,8 +49,8 @@ public class UserSecurityEndpoint implements SecurityApi {
         emailTokenSender.sendEmailVerificationCode(request);
         log.info("Verification email sent to: {}", email);
         return ResponseEntity.ok(
-            String.format("Email verification token sent to the user with email = %s", 
-                StringEscapeUtils.escapeJava(email)));
+                String.format("Email verification token sent to the user with email = %s",
+                        StringEscapeUtils.escapeJava(email)));
     }
 
     @Override
@@ -65,13 +65,12 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        // Validate input to prevent code injection
         if (request.getEmail() == null || request.getEmail().trim().isEmpty() ||
-            request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             log.warn("Invalid authentication request: missing credentials");
             return ResponseEntity.badRequest().build();
         }
-        
+
         log.info("Authenticating user: {}", request.getEmail());
         var response = userAuthenticationService.authenticate(request);
         log.info("Authentication completed for: {}", request.getEmail());
@@ -89,30 +88,29 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok(response);
     }
 
-    // import org.springframework.security.web.csrf.CsrfFilter;
-    // import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         log.info("Processing logout");
-        var token = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-        if (token != null) {
-            jwtBlacklistValidator.addToBlacklist(token);
-            log.info("Token blacklisted");
+        String header = httpRequest.getHeader("Authorization");
+        if (!StringUtils.hasText(header)) {
+            log.info("No Authorization header on logout");
+            return ResponseEntity.ok().build();
         }
+        var token = jwtTokenFromAuthHeaderExtractor.extract(header);
+        jwtBlacklistValidator.addToBlacklist(token);
+        log.info("Token blacklisted");
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        // Validate input to prevent code injection
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             log.warn("Invalid forgot password request: null or empty email");
             return ResponseEntity.badRequest().build();
         }
-        
+
         log.info("Processing forgot password for: {}", request.getEmail());
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
@@ -124,14 +122,13 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        // Validate input to prevent code injection
         if (request.getEmail() == null || request.getEmail().trim().isEmpty() ||
-            request.getCode() == null || request.getCode().trim().isEmpty() ||
-            request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                request.getCode() == null || request.getCode().trim().isEmpty() ||
+                request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             log.warn("Invalid change password request: missing required fields");
             return ResponseEntity.badRequest().build();
         }
-        
+
         log.info("Changing password for: {}", request.getEmail());
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));

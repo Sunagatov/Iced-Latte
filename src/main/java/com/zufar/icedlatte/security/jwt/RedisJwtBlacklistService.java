@@ -16,18 +16,17 @@ import java.time.Duration;
 public class RedisJwtBlacklistService {
 
     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
-    
+
     private final RedisTemplate<String, String> redisTemplate;
-    
+
     @Value("${jwt.expiration}")
-    private long jwtExpirationMs;
+    private Duration jwtTtl;
 
     public void blacklistToken(String token) {
         try {
             String key = BLACKLIST_KEY_PREFIX + token;
-            Duration ttl = Duration.ofMillis(jwtExpirationMs);
-            redisTemplate.opsForValue().set(key, "blacklisted", ttl);
-            log.debug("Token blacklisted with TTL: {} seconds", ttl.getSeconds());
+            redisTemplate.opsForValue().set(key, "blacklisted", jwtTtl);
+            log.debug("Token blacklisted with TTL: {} seconds", jwtTtl.getSeconds());
         } catch (Exception e) {
             log.error("Failed to blacklist token", e);
         }

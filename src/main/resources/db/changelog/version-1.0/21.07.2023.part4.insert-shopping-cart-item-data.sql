@@ -67,3 +67,7 @@ VALUES ('0a287cb5-7752-4d0c-87d5-2f62276b30b1', '4a95d2f5-22a7-4e6a-83fb-6a4d8c1
 
 INSERT INTO public.shopping_cart_item (id, shopping_cart_id, product_id, products_quantity)
 VALUES ('957c98f5-1b06-4c0f-9dc6-01e4cd6d68b3', '4a95d2f5-22a7-4e6a-83fb-6a4d8c1297f4', 'e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5', 2);
+
+-- Cart 5 - Olivia's cart items
+INSERT INTO public.shopping_cart_item (id, shopping_cart_id, product_id, products_quantity)
+VALUES ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', '77777777-7777-7777-7777-777777777777', '1e5b295f-8f50-4425-90e9-8b590a27b3a9', 2);

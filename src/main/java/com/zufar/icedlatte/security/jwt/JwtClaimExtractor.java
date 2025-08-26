@@ -14,8 +14,6 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 
-import javax.crypto.SecretKey;
-
 @Service
 @RequiredArgsConstructor
 public class JwtClaimExtractor {
@@ -33,11 +31,11 @@ public class JwtClaimExtractor {
                 .atOffset(ZoneOffset.UTC)
                 .toLocalDateTime();
     }
-    
+
     public boolean isTokenExpired(final String jwtToken) {
         return extractExpiration(jwtToken).isBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
-    
+
     private Claims extractAllClaims(final String jwtToken) {
         return getJwtParser()
                 .parseSignedClaims(jwtToken)
@@ -47,7 +45,7 @@ public class JwtClaimExtractor {
     private JwtParser getJwtParser() {
         return Jwts
                 .parser()
-                .verifyWith((SecretKey) jwtSignKeyProvider.get())
+                .verifyWith(jwtSignKeyProvider.get())
                 .build();
     }
 }

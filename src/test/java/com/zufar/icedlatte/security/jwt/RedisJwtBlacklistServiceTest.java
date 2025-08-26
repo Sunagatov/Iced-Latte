@@ -36,7 +36,7 @@ class RedisJwtBlacklistServiceTest {
     @Test
     @DisplayName("Should blacklist token with TTL")
     void shouldBlacklistTokenWithTTL() {
-        ReflectionTestUtils.setField(redisJwtBlacklistService, "jwtExpirationMs", 86400000L);
+        ReflectionTestUtils.setField(redisJwtBlacklistService, "jwtTtl", Duration.ofDays(1));
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         redisJwtBlacklistService.blacklistToken(token);

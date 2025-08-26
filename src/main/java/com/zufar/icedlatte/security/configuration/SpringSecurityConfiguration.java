@@ -37,6 +37,7 @@ public class SpringSecurityConfiguration {
                                                    final JwtAuthenticationFilter jwtTokenFilter) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .httpStrictTransportSecurity(hstsConfig -> hstsConfig
@@ -78,6 +79,6 @@ public class SpringSecurityConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 }

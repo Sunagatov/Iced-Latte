@@ -16,7 +16,7 @@ public class JwtTokenExceptionsHandler {
     public ResponseEntity<Map<String, String>> handleJwtTokenException(final JwtTokenException exception) {
         Map<String, String> errors = new HashMap<>();
         errors.put("JwtToken Error message", exception.getMessage());
-        errors.put("JwtToken Cause Error message", exception.getCause().getMessage());
+        errors.put("JwtToken Cause Error message", exception.getCause() != null ? exception.getCause().getMessage() : "n/a");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(errors);
     }
