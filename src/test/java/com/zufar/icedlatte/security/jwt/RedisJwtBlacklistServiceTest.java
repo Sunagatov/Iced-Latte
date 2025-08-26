@@ -13,9 +13,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,18 +38,29 @@ class RedisJwtBlacklistServiceTest {
     @Test
     @DisplayName("Should blacklist token with TTL")
     void shouldBlacklistTokenWithTTL() {
-        ReflectionTestUtils.setField(redisJwtBlacklistService, "jwtTtl", Duration.ofDays(1));
+        ReflectionTestUtils.setField(redisJwtBlacklistService, "jwtTtl", Duration.ofHours(1));
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         redisJwtBlacklistService.blacklistToken(token);
 
-        verify(valueOperations).set(eq("jwt:blacklist:" + token), eq("blacklisted"), any(Duration.class));
+        verify(valueOperations).set(eq("jwt:blacklist:" + token.hashCode()), eq("revoked"), any(Duration.class));
+    }
+
+    @Test
+    @DisplayName("Should handle Redis failure during blacklist")
+    void shouldHandleRedisFailureDuringBlacklist() {
+        ReflectionTestUtils.setField(redisJwtBlacklistService, "jwtTtl", Duration.ofHours(1));
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        doThrow(new RuntimeException("Redis connection failed"))
+                .when(valueOperations).set(any(String.class), any(String.class), any(Duration.class));
+
+        assertThrows(RuntimeException.class, () -> redisJwtBlacklistService.blacklistToken(token));
     }
 
     @Test
     @DisplayName("Should return true for blacklisted token")
     void shouldReturnTrueForBlacklistedToken() {
-        when(redisTemplate.hasKey("jwt:blacklist:" + token)).thenReturn(true);
+        when(redisTemplate.hasKey("jwt:blacklist:" + token.hashCode())).thenReturn(true);
 
         boolean result = redisJwtBlacklistService.isBlacklisted(token);
 
@@ -57,7 +70,7 @@ class RedisJwtBlacklistServiceTest {
     @Test
     @DisplayName("Should return false for non-blacklisted token")
     void shouldReturnFalseForNonBlacklistedToken() {
-        when(redisTemplate.hasKey("jwt:blacklist:" + token)).thenReturn(false);
+        when(redisTemplate.hasKey("jwt:blacklist:" + token.hashCode())).thenReturn(false);
 
         boolean result = redisJwtBlacklistService.isBlacklisted(token);
 
@@ -67,7 +80,7 @@ class RedisJwtBlacklistServiceTest {
     @Test
     @DisplayName("Should return true when Redis fails")
     void shouldReturnTrueWhenRedisFails() {
-        when(redisTemplate.hasKey("jwt:blacklist:" + token)).thenThrow(new RuntimeException("Redis down"));
+        when(redisTemplate.hasKey("jwt:blacklist:" + token.hashCode())).thenThrow(new RuntimeException("Redis down"));
 
         boolean result = redisJwtBlacklistService.isBlacklisted(token);
 

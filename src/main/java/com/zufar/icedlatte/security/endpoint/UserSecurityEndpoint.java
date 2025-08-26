@@ -91,15 +91,23 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        log.info("Processing logout");
-        String header = httpRequest.getHeader("Authorization");
-        if (!StringUtils.hasText(header)) {
-            log.info("No Authorization header on logout");
+        log.info("Processing logout request");
+        
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (!StringUtils.hasText(authHeader)) {
+            log.debug("Logout request without Authorization header - treating as successful");
             return ResponseEntity.ok().build();
         }
-        var token = jwtTokenFromAuthHeaderExtractor.extract(header);
-        jwtBlacklistValidator.addToBlacklist(token);
-        log.info("Token blacklisted");
+        
+        try {
+            String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
+            jwtBlacklistValidator.addToBlacklist(token);
+            log.info("User logout completed successfully");
+        } catch (Exception ex) {
+            log.warn("Failed to blacklist token during logout: {}", ex.getMessage());
+            // Still return success to prevent information leakage
+        }
+        
         return ResponseEntity.ok().build();
     }
 

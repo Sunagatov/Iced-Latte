@@ -10,17 +10,17 @@ import org.springframework.util.StringUtils;
 @Service
 public class JwtBlacklistValidator {
 
-    private final RedisJwtBlacklistService redisJwtBlacklistService;
-    private final InMemoryJwtBlacklistService inMemoryJwtBlacklistService;
+    private final RedisJwtBlacklistService redisService;
+    private final InMemoryJwtBlacklistService inMemoryService;
 
-    public JwtBlacklistValidator(@Autowired(required = false) RedisJwtBlacklistService redisJwtBlacklistService,
-                                 @Autowired(required = false) InMemoryJwtBlacklistService inMemoryJwtBlacklistService) {
-        this.redisJwtBlacklistService = redisJwtBlacklistService;
-        this.inMemoryJwtBlacklistService = inMemoryJwtBlacklistService;
+    public JwtBlacklistValidator(@Autowired(required = false) RedisJwtBlacklistService redisService,
+                                 @Autowired(required = false) InMemoryJwtBlacklistService inMemoryService) {
+        this.redisService = redisService;
+        this.inMemoryService = inMemoryService;
 
-        if (this.redisJwtBlacklistService != null) {
+        if (this.redisService != null) {
             log.info("Using Redis JWT blacklist service");
-        } else if (this.inMemoryJwtBlacklistService != null) {
+        } else if (this.inMemoryService != null) {
             log.info("Using in-memory JWT blacklist service");
         } else {
             log.warn("No JWT blacklist service available - tokens cannot be blacklisted");
@@ -32,37 +32,51 @@ public class JwtBlacklistValidator {
             log.warn("Attempted to blacklist empty or null token");
             return;
         }
-
-        if (redisJwtBlacklistService != null) {
-            redisJwtBlacklistService.blacklistToken(token);
-            log.debug("Token blacklisted using Redis service");
-        } else if (inMemoryJwtBlacklistService != null) {
-            inMemoryJwtBlacklistService.blacklistToken(token);
-            log.debug("Token blacklisted using in-memory service");
-        } else {
-            log.error("No blacklist service available - token cannot be blacklisted");
+        try {
+            if (redisService != null) {
+                redisService.blacklistToken(token);
+                log.debug("Token successfully blacklisted using Redis service");
+            } else if (inMemoryService != null) {
+                inMemoryService.blacklistToken(token);
+                log.debug("Token successfully blacklisted using in-memory service");
+            } else {
+                log.error("No blacklist service available - token cannot be blacklisted");
+                throw new IllegalStateException("Blacklist service unavailable");
+            }
+        } catch (Exception ex) {
+            log.error("Failed to blacklist token: {}", ex.getMessage(), ex);
+            throw new RuntimeException("Token blacklisting failed", ex);
         }
     }
 
     public void validate(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Attempted to validate empty or null token");
+            log.warn("Token validation failed: empty or null token");
             throw new JwtTokenBlacklistedException("Invalid token format");
         }
 
-        boolean isBlacklisted;
-        if (redisJwtBlacklistService != null) {
-            isBlacklisted = redisJwtBlacklistService.isBlacklisted(token);
-        } else if (inMemoryJwtBlacklistService != null) {
-            isBlacklisted = inMemoryJwtBlacklistService.isBlacklisted(token);
+        try {
+            if (checkTokenBlacklisted(token)) {
+                log.warn("Token validation failed: token is blacklisted");
+                throw new JwtTokenBlacklistedException("Token has been revoked");
+            }
+            log.debug("Token validation successful: token is not blacklisted");
+        } catch (JwtTokenBlacklistedException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Token validation failed due to service error: {}", ex.getMessage(), ex);
+            throw new JwtTokenBlacklistedException("Token validation service unavailable");
+        }
+    }
+
+    private boolean checkTokenBlacklisted(String token) {
+        if (redisService != null) {
+            return redisService.isBlacklisted(token);
+        } else if (inMemoryService != null) {
+            return inMemoryService.isBlacklisted(token);
         } else {
             log.error("No blacklist service available - failing secure for token validation");
-            throw new JwtTokenBlacklistedException("Blacklist service unavailable");
-        }
-
-        if (isBlacklisted) {
-            log.warn("Attempted to use blacklisted JWT token");
-            throw new JwtTokenBlacklistedException("Token has been revoked");
+            return true; // Fail secure
         }
     }
 }

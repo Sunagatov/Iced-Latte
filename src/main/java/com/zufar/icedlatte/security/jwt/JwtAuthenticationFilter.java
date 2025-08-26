@@ -75,17 +75,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(httpRequest, httpResponse);
 
         } catch (JwtTokenBlacklistedException ex) {
-            handleAuthenticationException(httpResponse, "JWT token is blacklisted", ex, HttpServletResponse.SC_UNAUTHORIZED);
+            handleAuthenticationException(httpResponse, "Authentication failed: token revoked", ex, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (AbsentBearerHeaderException ex) {
-            handleAuthenticationException(httpResponse, "Bearer authentication header is absent", ex, HttpServletResponse.SC_UNAUTHORIZED);
+            handleAuthenticationException(httpResponse, "Authentication failed: invalid authorization header", ex, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (ExpiredJwtException ex) {
-            handleAuthenticationException(httpResponse, "JWT token has expired", ex, HttpServletResponse.SC_UNAUTHORIZED);
+            handleAuthenticationException(httpResponse, "Authentication failed: token expired", ex, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (JwtTokenHasNoUserEmailException ex) {
-            handleAuthenticationException(httpResponse, "User email not found in JWT token", ex, HttpServletResponse.SC_BAD_REQUEST);
+            handleAuthenticationException(httpResponse, "Authentication failed: invalid token format", ex, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (UsernameNotFoundException ex) {
-            handleAuthenticationException(httpResponse, "User with the provided email does not exist", ex, HttpServletResponse.SC_UNAUTHORIZED);
+            handleAuthenticationException(httpResponse, "Authentication failed: user not found", ex, HttpServletResponse.SC_UNAUTHORIZED);
         } catch (ServletException | RuntimeException ex) {
-            handleAuthenticationException(httpResponse, "Internal server error", ex, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            handleAuthenticationException(httpResponse, "Authentication failed: internal error", ex, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
             MDC.remove(MDC_REQUEST_ID_KEY);
@@ -96,22 +96,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                              String errorMessage,
                                              Exception exception,
                                              int statusCode) throws IOException {
-        log.warn("Authentication failed: {} - Request ID: {}", 
-                StringEscapeUtils.escapeJava(errorMessage), 
-                MDC.get(MDC_REQUEST_ID_KEY), 
-                exception);
+        String requestId = MDC.get(MDC_REQUEST_ID_KEY);
+        
+        if (statusCode >= 500) {
+            log.error("Authentication error: {} - Request ID: {}", 
+                    StringEscapeUtils.escapeJava(errorMessage), requestId, exception);
+        } else {
+            log.warn("Authentication failed: {} - Request ID: {}", 
+                    StringEscapeUtils.escapeJava(errorMessage), requestId);
+            log.debug("Authentication failure details", exception);
+        }
         
         httpResponse.setStatus(statusCode);
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         httpResponse.setCharacterEncoding("UTF-8");
+        httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        httpResponse.setHeader("Pragma", "no-cache");
+        httpResponse.setHeader("Expires", "0");
         
         String jsonResponse = String.format("""
             {
                 "error": "%s",
                 "timestamp": "%s",
-                "status": %d
+                "status": %d,
+                "path": "%s"
             }
-            """, StringEscapeUtils.escapeJson(errorMessage), java.time.Instant.now(), statusCode);
+            """, 
+            StringEscapeUtils.escapeJson("Unauthorized"), 
+            java.time.Instant.now(), 
+            statusCode,
+            StringEscapeUtils.escapeJson(httpResponse.getHeader("X-Request-URI") != null ? 
+                httpResponse.getHeader("X-Request-URI") : "unknown"));
         
         httpResponse.getWriter().write(jsonResponse);
     }

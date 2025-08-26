@@ -20,20 +20,50 @@ public class JwtClaimExtractor {
     private final JwtSignKeyProvider jwtSignKeyProvider;
 
     public String extractEmail(final String jwtToken) {
-        return Optional.ofNullable(extractAllClaims(jwtToken).getSubject())
-                .filter(StringUtils::hasText)
-                .orElseThrow(JwtTokenHasNoUserEmailException::new);
+        try {
+            return Optional.ofNullable(extractAllClaims(jwtToken).getSubject())
+                    .filter(StringUtils::hasText)
+                    .filter(this::isValidEmailFormat)
+                    .orElseThrow(() -> new JwtTokenHasNoUserEmailException("Invalid or missing email in JWT token"));
+        } catch (JwtTokenHasNoUserEmailException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token");
+        }
     }
 
     public LocalDateTime extractExpiration(final String jwtToken) {
-        Date expiration = extractAllClaims(jwtToken).getExpiration();
-        return expiration.toInstant()
-                .atOffset(ZoneOffset.UTC)
-                .toLocalDateTime();
+        try {
+            Date expiration = extractAllClaims(jwtToken).getExpiration();
+            if (expiration == null) {
+                throw new IllegalArgumentException("JWT token has no expiration date");
+            }
+            return expiration.toInstant()
+                    .atOffset(ZoneOffset.UTC)
+                    .toLocalDateTime();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Failed to extract expiration from JWT token", ex);
+        }
     }
 
     public boolean isTokenExpired(final String jwtToken) {
-        return extractExpiration(jwtToken).isBefore(LocalDateTime.now(ZoneOffset.UTC));
+        try {
+            LocalDateTime expiration = extractExpiration(jwtToken);
+            LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+            return expiration.isBefore(now);
+        } catch (Exception ex) {
+            // If we can't determine expiration, treat as expired for security
+            return true;
+        }
+    }
+
+    private boolean isValidEmailFormat(String email) {
+        return email != null && 
+               email.contains("@") && 
+               email.length() >= 5 && 
+               email.length() <= 254 &&
+               !email.startsWith("@") && 
+               !email.endsWith("@");
     }
 
     private Claims extractAllClaims(final String jwtToken) {

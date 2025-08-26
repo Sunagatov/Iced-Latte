@@ -47,4 +47,31 @@ class JwtTokenFromAuthHeaderExtractorTest {
     void shouldThrowExceptionWhenAuthorizationHeaderAbsent() {
         assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
     }
+
+    @Test
+    @DisplayName("Should throw exception when token is too short")
+    void shouldThrowExceptionWhenTokenTooShort() {
+        request.addHeader("Authorization", "Bearer short");
+        
+        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when token format is invalid")
+    void shouldThrowExceptionWhenTokenFormatInvalid() {
+        request.addHeader("Authorization", "Bearer invalidtokenformat");
+        
+        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+    }
+
+    @Test
+    @DisplayName("Should extract valid JWT token")
+    void shouldExtractValidJwtToken() {
+        String validJwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+        request.addHeader("Authorization", "Bearer " + validJwtToken);
+        
+        String actualToken = extractor.extract(request);
+        
+        assertEquals(validJwtToken, actualToken);
+    }
 }

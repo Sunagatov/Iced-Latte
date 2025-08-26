@@ -23,32 +23,40 @@ public class JwtAuthenticationProvider {
     public Authentication get(final HttpServletRequest httpRequest) {
         String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
         
-        // Validate token is not blacklisted
-        jwtBlacklistValidator.validate(jwtToken);
-        
-        // Validate token is not expired
-        if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
-            throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
+        try {
+            // Validate token is not blacklisted first (fastest check)
+            jwtBlacklistValidator.validate(jwtToken);
+            
+            // Validate token expiration
+            if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
+                log.debug("Authentication failed: JWT token has expired");
+                throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
+            }
+            
+            // Extract user email from token
+            String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
+            
+            // Load user details
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            
+            // Create authentication token
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    userDetails, 
+                    null, 
+                    userDetails.getAuthorities()
+            );
+            
+            authenticationToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(httpRequest)
+            );
+            
+            log.debug("Authentication successful for user: {}", userEmail);
+            return authenticationToken;
+            
+        } catch (Exception ex) {
+            log.debug("Authentication failed: {}", ex.getMessage());
+            throw ex;
         }
-        
-        // Extract expiration for validation
-        jwtClaimExtractor.extractExpiration(jwtToken);
-        
-        String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        
-        var authenticationToken = new UsernamePasswordAuthenticationToken(
-                userDetails, 
-                null, 
-                userDetails.getAuthorities()
-        );
-        
-        authenticationToken.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(httpRequest)
-        );
-        
-        log.debug("Successfully authenticated user: {}", userEmail);
-        return authenticationToken;
     }
 }
 
