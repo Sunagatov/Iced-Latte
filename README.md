@@ -139,51 +139,6 @@ Swagger REST APIs contracts described [here](https://iced-latte.uk/backend/api/d
 
 Take some time to press F and give some respects to our [best contributors](https://github.com/Sunagatov/Iced-Latte/graphs/contributors), who spent their own time to make the club better.
 
-#### 😎 Iced Latte project creator / Product owner / Tech Lead
-
-- [@Sunagatov](https://github.com/Sunagatov)
-
-#### 😇 Project manager
-- [@oonovikova](https://github.com/oonovikova)
-
-#### 🕵️‍♀️ QA engineers
-- [@TetianaPerinha](https://github.com/TetianaPerinha)
-- [@ilsinyakov](https://github.com/ilsinyakov)
-- [@Diana-Smolnikova](https://github.com/Diana-Smolnikova)
-
-#### ⚙️ Backend developers
-- [@yevr19](https://github.com/yevr19) (co-founder)
-- [@annstriganova](https://github.com/annstriganova)
-- [@M437A](https://github.com/M437A)
-- [@Sunagatov](https://github.com/Sunagatov)
-- [@vitaliibredun](https://github.com/vitaliibredun)
-- [@plakhov](https://github.com/plakhov)
-- [@shpali4](https://github.com/shpali4)
-- [@andrew13pol](https://github.com/andrew13pol)
-- [@nnick44](https://github.com/nnick44)
-
-#### 🖥️ Frontend developers
-- [@iakivpekarskyi](https://github.com/iakivpekarskyi)
-- [@anksuunamun-govorov](https://github.com/anksuunamun)
-- [@DmitriyUshkvarok](https://github.com/DmitriyUshkvarok)
-- [@Wdyffs](https://github.com/Wdyffs)
-- [@Gerasko-Vadim](https://github.com/Gerasko-Vadim)
-- [@FMajesty](https://github.com/Lightness322)
-- [@freecree](https://github.com/freecree)
-
-#### 🎨 UX/UI designers
-- [@vilena1me](https://github.com/vilena1me)
-- [@monsoonsiren](https://github.com/monsoonsiren)
-- [@ilyasgaifullin](https://github.com/ilyasgaifullin)
-
-#### 📊 Business and system analysts
-- [@nemeziss](https://github.com/nemeziss)
-- [@anastasiiaerokhina](https://github.com/anastasiiaerokhina)
-- [@Umk_aa](https://github.com/Umk_aa)
-- [@dianarudometova](https://github.com/dianarudometova)
-
-Let's press F to pay respects to these awesome contributors!
-
 ## 👩‍💼 License
 
 [MIT](LICENSE)
