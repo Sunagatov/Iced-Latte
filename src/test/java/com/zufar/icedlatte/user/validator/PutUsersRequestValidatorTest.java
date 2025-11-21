@@ -63,8 +63,8 @@ public class PutUsersRequestValidatorTest {
                 " Error: { Phone should contain only digits. The first symbol is allowed to be \"+\". }. " +
                 " Error: { Birth date should be in format YYYY-MM-DD. }. " +
                 " Error: { The field `town` in the JSON string is not defined in the `AddressDto` properties. JSON: %s }. " +
-                " Error: { Expected the field `country` to be a primitive type in the JSON string but got `[\"Country\",\"Another country\"]` }. " +
                 " Error: { The required field `city` is not found in the JSON string: %s }. " +
+                " Error: { Expected the field `country` to be a primitive type in the JSON string but got `[\"Country\",\"Another country\"]` }. " +
                 " Error: { The required field `line` is not found in the JSON string: %s }. " +
                 " ].", addressJSON.toString(), addressJSON.toString(), addressJSON.toString());
 

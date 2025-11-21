@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +95,7 @@ public class PutUsersRequestValidator {
             List<String> allFieldNames = allFields.stream()
                     .map(field -> getFieldNameFromDeclaredField(field.getName()))
                     .collect(Collectors.toList());
+            Collections.sort(allFieldNames);
 
             Set<Entry<String, JsonElement>> entries = addressJsonObject.entrySet();
             for (Entry<String, JsonElement> entry : entries) {
