@@ -47,29 +47,15 @@ public interface ProductReviewDtoConverter {
 
     default RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
         var productRatingMap = new RatingMap();
-
         for (ProductRatingCount productRatingCount : productRatingCountPairs) {
-            var productRating = productRatingCount.productRating();
-            var count = (int) productRatingCount.count();
-
-            switch (productRating) {
-                case 5:
-                    productRatingMap.setStar5(count);
-                    break;
-                case 4:
-                    productRatingMap.setStar4(count);
-                    break;
-                case 3:
-                    productRatingMap.setStar3(count);
-                    break;
-                case 2:
-                    productRatingMap.setStar2(count);
-                    break;
-                case 1:
-                    productRatingMap.setStar1(count);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected product's rating value: " + productRating);
+            int count = (int) productRatingCount.count();
+            switch (productRatingCount.productRating()) {
+                case 5 -> productRatingMap.setStar5(count);
+                case 4 -> productRatingMap.setStar4(count);
+                case 3 -> productRatingMap.setStar3(count);
+                case 2 -> productRatingMap.setStar2(count);
+                case 1 -> productRatingMap.setStar1(count);
+                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + productRatingCount.productRating());
             }
         }
         return productRatingMap;

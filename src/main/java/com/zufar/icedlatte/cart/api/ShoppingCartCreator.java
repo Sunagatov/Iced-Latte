@@ -24,7 +24,7 @@ public class ShoppingCartCreator {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCart getOrCreate(UUID userId) {
-        ShoppingCart cart = shoppingCartRepository.findShoppingCartByUserId(userId);
+        ShoppingCart cart = shoppingCartRepository.findShoppingCartByUserId(userId).orElse(null);
         if (cart == null) {
             log.info("The shopping cart was not found.");
             cart = createNewShoppingCart(userId);
