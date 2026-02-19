@@ -3,11 +3,14 @@ package com.zufar.icedlatte.product.api;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
+import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
 
 @Slf4j
 @Service
@@ -24,7 +28,7 @@ public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductUpdater productUpdater;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
     private final PaginationConfig paginationConfig;
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
@@ -46,16 +50,19 @@ public class PageableProductsProvider {
 
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 
+        Specification<ProductInfo> spec = Specification.allOf(
+                minPriceSpec(minPrice),
+                maxPriceSpec(maxPrice),
+                minRatingSpec(minAvg),
+                brandNamesSpec(brandNames),
+                sellerNamesSpec(sellerNames)
+        );
+
         Page<ProductInfoDto> result = productInfoRepository
-                .findAllProducts(minPrice, maxPrice, minAvg, nullIfEmpty(brandNames), nullIfEmpty(sellerNames),
-                        createPageableObject(page, size, sortAttr, sortDir))
+                .findAll(spec, createPageableObject(page, size, sortAttr, sortDir))
                 .map(productInfoDtoConverter::toDto)
-                .map(productUpdater::update);
+                .map(productPictureLinkUpdater::update);
 
         return productInfoDtoConverter.toProductPaginationDto(result);
-    }
-
-    private static <T> List<T> nullIfEmpty(List<T> list) {
-        return (list == null || list.isEmpty()) ? null : list;
     }
 }

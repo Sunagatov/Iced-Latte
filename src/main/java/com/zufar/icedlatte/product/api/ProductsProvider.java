@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.product.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -23,7 +24,7 @@ public class ProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductUpdater productUpdater;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
@@ -35,7 +36,7 @@ public class ProductsProvider {
                 .map(productInfoDtoConverter::toDto)
                 .toList();
         
-        List<ProductInfoDto> updatedProductDtos = productUpdater.updateBatch(productDtos);
+        List<ProductInfoDto> updatedProductDtos = productPictureLinkUpdater.updateBatch(productDtos);
         
         var dtosById = updatedProductDtos.stream()
                 .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
