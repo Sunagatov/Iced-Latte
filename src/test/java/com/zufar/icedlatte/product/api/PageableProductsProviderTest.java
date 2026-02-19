@@ -11,12 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 import java.util.Collections;
 
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
 class PageableProductsProviderTest {
 
     @Mock
@@ -60,8 +60,8 @@ class PageableProductsProviderTest {
 
         when(productRepository.findAllProducts( null, null, null, null, null, pageable)).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productUpdater.updateBatch(ArgumentMatchers.any())).thenReturn(Collections.singletonList(mock(ProductInfoDto.class)));
         when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
-        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageable, null, null, null, null, null);
 
