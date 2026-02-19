@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,11 +37,7 @@ public class AddItemsToShoppingCartHelper {
     public ShoppingCartDto add(final Set<NewShoppingCartItemDto> itemsToAdd) {
         UUID userId = securityPrincipalProvider.getUserId();
 
-        ShoppingCart shoppingCart = Optional.ofNullable(shoppingCartRepository.findShoppingCartByUserId(userId))
-                .orElseGet(() -> {
-                    log.info("The shopping cart was not found.");
-                    return shoppingCartCreator.createNewShoppingCart(userId);
-                });
+        ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
 
         List<ShoppingCartItem> items = createItems(itemsToAdd, shoppingCart);
 

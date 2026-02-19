@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SingleUserProvider {
 
-    public static final String LOG_MSG_ON_FAILURE = "Failed to get the user details";
+    private static final String LOG_MSG_ON_FAILURE = "Failed to get the user details";
 
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;

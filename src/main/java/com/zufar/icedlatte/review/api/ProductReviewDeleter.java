@@ -25,7 +25,7 @@ public class ProductReviewDeleter {
     public void delete(final UUID productId,
                        final UUID productReviewId) {
         productReviewValidator.validateProductReviewDeletionAllowed(productReviewId);
-        productReviewValidator.validateProductExists(productId);
+        productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
         reviewRepository.deleteById(productReviewId);
 

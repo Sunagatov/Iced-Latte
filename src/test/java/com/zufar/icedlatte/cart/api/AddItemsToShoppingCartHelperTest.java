@@ -46,6 +46,9 @@ class AddItemsToShoppingCartHelperTest {
     @Mock
     private ShoppingCartDtoConverter shoppingCartDtoConverter;
 
+    @Mock
+    private ShoppingCartCreator shoppingCartCreator;
+
     @Test
     @DisplayName("Add should return the ShoppingCartDto with increased list of items when the itemsToAdd set is valid")
     void shouldItemsAddToShoppingCartDtoWithValidItemsSet() {
@@ -67,7 +70,7 @@ class AddItemsToShoppingCartHelperTest {
         expectedShoppingCartDto.setItems(Collections.singletonList(CartDtoTestStub.createShoppingCartItemDto()));
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
-        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(shoppingCart);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(shoppingCart);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(itemToAdd.getProductInfo()));
         when(shoppingCartRepository.save(shoppingCart)).thenReturn(updatedShoppingCart);
         when(shoppingCartDtoConverter.toDto(updatedShoppingCart)).thenReturn(expectedShoppingCartDto);
@@ -77,7 +80,7 @@ class AddItemsToShoppingCartHelperTest {
         assertEquals(result, expectedShoppingCartDto);
 
         verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(userId);
+        verify(shoppingCartCreator, times(1)).getOrCreate(userId);
         verify(shoppingCartRepository, times(1)).save(shoppingCart);
         verify(shoppingCartDtoConverter, times(1)).toDto(updatedShoppingCart);
 

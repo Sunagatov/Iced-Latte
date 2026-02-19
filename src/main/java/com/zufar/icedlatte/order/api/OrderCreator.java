@@ -62,7 +62,7 @@ public class OrderCreator {
         return true;
     }
 
-    public Order createOrderEntity(final UserEntity user, final ShoppingCartDto shoppingCartDto, final String sessionId) {
+    private Order createOrderEntity(final UserEntity user, final ShoppingCartDto shoppingCartDto, final String sessionId) {
         List<OrderItem> shoppingOrderItems = shoppingCartDto.getItems().stream()
                 .map(orderDtoConverter::toOrderItem)
                 .toList();

@@ -39,19 +39,7 @@ public class UserAuthenticationService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userEmail, userPassword)
             );
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-            String jwtToken = jwtTokenProvider.generateToken(userDetails);
-            log.info("Generated JWT token for user with email = '{}'", request.getEmail());
-
-            resetLoginAttemptsService.reset(userEmail);
-
-            UserAuthenticationResponse response = new UserAuthenticationResponse();
-            response.setToken(jwtToken);
-            response.setRefreshToken(jwtRefreshToken);
-            return response;
+            return buildResponse((UserDetails) authentication.getPrincipal(), userEmail);
 
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
@@ -71,28 +59,28 @@ public class UserAuthenticationService {
 
     public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
         try {
-            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-            String jwtToken = jwtTokenProvider.generateToken(userDetails);
-            log.info("Generated JWT token for user with email = '{}'", userEmail);
-
-            resetLoginAttemptsService.reset(userEmail);
-
-            UserAuthenticationResponse response = new UserAuthenticationResponse();
-            response.setToken(jwtToken);
-            response.setRefreshToken(jwtRefreshToken);
-            return response;
+            return buildResponse(userDetails, userEmail);
         } catch (BadCredentialsException exception) {
             log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
             loginFailureHandler.handle(userEmail);
             throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
-
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
             throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
-
         } catch (AuthenticationException exception) {
             log.error("Authentication error occurred", exception);
             throw exception;
         }
+    }
+
+    private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
+        String jwtToken = jwtTokenProvider.generateToken(userDetails);
+        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+        log.info("Generated JWT token for user with email = '{}'", userEmail);
+        resetLoginAttemptsService.reset(userEmail);
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken(jwtToken);
+        response.setRefreshToken(jwtRefreshToken);
+        return response;
     }
 }

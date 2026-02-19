@@ -4,7 +4,6 @@ import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,8 +28,7 @@ public class ShoppingCartItemsDeleter {
         List<UUID> itemIds = request.getShoppingCartItemIds();
         shoppingCartItemRepository.deleteAllByIdInBatch(itemIds);
 
-        UserDto userDto = securityPrincipalProvider.get();
-        UUID userId = userDto.getId();
+        UUID userId = securityPrincipalProvider.getUserId();
 
         return shoppingCartProvider.getByUserId(userId);
     }

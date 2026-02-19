@@ -23,6 +23,16 @@ public class ShoppingCartCreator {
     private final ShoppingCartRepository shoppingCartRepository;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ShoppingCart getOrCreate(UUID userId) {
+        ShoppingCart cart = shoppingCartRepository.findShoppingCartByUserId(userId);
+        if (cart == null) {
+            log.info("The shopping cart was not found.");
+            cart = createNewShoppingCart(userId);
+        }
+        return cart;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCart createNewShoppingCart(UUID userId) {
         ShoppingCart shoppingCart = ShoppingCart.builder()
                 .userId(userId)

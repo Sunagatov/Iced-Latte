@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.cart.api;
 
 import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
+import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +26,7 @@ public class ShoppingCartProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto getByUserId(final UUID userId) {
-        ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartByUserId(userId);
-        if (shoppingCart == null) {
-            log.info("The shopping cart was not found.");
-            shoppingCart = shoppingCartCreator.createNewShoppingCart(userId);
-        }
+        ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
         return shoppingCartDtoConverter.toDto(shoppingCart);
     }
 
