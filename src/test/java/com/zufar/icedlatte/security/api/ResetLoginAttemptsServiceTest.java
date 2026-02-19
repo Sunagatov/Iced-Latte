@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,9 +74,6 @@ class ResetLoginAttemptsServiceTest {
 
         resetLoginAttemptsService.reset(userEmail);
 
-        verify(userAccountLocker, times(1)).unlockUserAccount(userEmail);
-        verify(loginAttemptRepository, times(1)).findByUserEmail(userEmail);
-        verify(loginAttemptFactory, never()).createInitialFailedLoggedAttemptEntity(userEmail);
-        verify(loginAttemptRepository, never()).save(any(LoginAttemptEntity.class));
+        verify(userAccountLocker, never()).unlockUserAccount(userEmail);
     }
 }

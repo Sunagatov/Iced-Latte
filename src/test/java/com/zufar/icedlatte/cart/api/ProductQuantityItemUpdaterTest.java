@@ -51,9 +51,13 @@ class ProductQuantityItemUpdaterTest {
     void shouldReturnUpdateShoppingCartDtoWithValidProductQuantityChange() throws ShoppingCartNotFoundException, InvalidShoppingCartIdException {
         int productQuantityChange = 5;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
+        UUID cartId = UUID.randomUUID();
+        shoppingCartItem.getShoppingCart().setId(cartId);
         UserDto userDto = UserDtoTestStub.createUserDto();
         ShoppingCartDto actualResult = CartDtoTestStub.createShoppingCartDto();
+        actualResult.setId(cartId);
         ShoppingCartItem updatedShoppingCartItem = CartDtoTestStub.createShoppingCartItem();
+        updatedShoppingCartItem.getShoppingCart().setId(cartId);
         updatedShoppingCartItem.setProductQuantity(shoppingCartItem.getProductQuantity() + productQuantityChange);
 
         when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));
@@ -76,9 +80,13 @@ class ProductQuantityItemUpdaterTest {
     void shouldReturnUpdateShoppingCartDtoWithProductQuantityChangeLessThanZero() throws ShoppingCartNotFoundException, InvalidShoppingCartIdException {
         int productQuantityChange = -2;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
+        UUID cartId = UUID.randomUUID();
+        shoppingCartItem.getShoppingCart().setId(cartId);
         UserDto userDto = UserDtoTestStub.createUserDto();
         ShoppingCartDto actualResult = CartDtoTestStub.createShoppingCartDto();
+        actualResult.setId(cartId);
         ShoppingCartItem updatedShoppingCartItem = CartDtoTestStub.createShoppingCartItem();
+        updatedShoppingCartItem.getShoppingCart().setId(cartId);
         updatedShoppingCartItem.setProductQuantity(shoppingCartItem.getProductQuantity() + productQuantityChange);
 
         when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));

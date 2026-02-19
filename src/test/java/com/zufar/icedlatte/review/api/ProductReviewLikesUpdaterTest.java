@@ -95,7 +95,7 @@ class ProductReviewLikesUpdaterTest {
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         doThrow(new ProductNotFoundForReviewException(productId))
                 .when(productReviewValidator)
-                .validateProductExists(productId);
+                .validateProductIdIsValid(productId, reviewId);
 
         assertThrows(ProductNotFoundForReviewException.class, () -> productReviewLikesUpdater.update(productId, reviewId, true));
 
@@ -120,7 +120,7 @@ class ProductReviewLikesUpdaterTest {
                 .build();
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         doThrow(new ProductReviewNotFoundException(productId))
-                .when(productReviewValidator).validateReviewExistsForUser(reviewId);
+                .when(productReviewValidator).validateProductIdIsValid(productId, reviewId);
 
         assertThrows(ProductReviewNotFoundException.class, () -> productReviewLikesUpdater.update(productId, reviewId, true));
 
