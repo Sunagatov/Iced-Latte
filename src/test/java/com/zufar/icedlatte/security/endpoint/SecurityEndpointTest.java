@@ -3,12 +3,11 @@ package com.zufar.icedlatte.security.endpoint;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,14 +18,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import com.zufar.icedlatte.email.api.token.TokenCache;
 import com.zufar.icedlatte.email.api.token.TokenManager;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.*;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 
 import org.springframework.http.HttpStatus;
@@ -42,6 +39,7 @@ class SecurityEndpointTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
 
+    @SuppressWarnings("resource")
     @Container
     static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
             .withExposedPorts(6379);
@@ -58,9 +56,7 @@ class SecurityEndpointTest {
     private static final String SECURITY_SCHEMA = "security/model/schema/security-schema.json";
     private static final String SECURITY_SCHEMA_FAILED = "security/model/schema/security-schema-failed.json";
     private static final String SECURITY_REGISTRATION = "/security/model/security-registration.json";
-    private static final String SECURITY_REGISTRATION_FOR_AUTH = "/security/model/security-registration-for-auth.json";
     private static final String SECURITY_AUTHENTICATE = "/security/model/security-authenticate.json";
-    private static final String SECURITY_AUTHENTICATE_INCORRECT_PASSWORD = "/security/model/security-authenticate-incorrect-password.json";
     private static final String SECURITY_AUTHENTICATE_USER_NOT_FOUND = "/security/model/security-authenticate-not-found-user.json";
 
     private static final String SECURITY_REGISTRATION_WITHOUT_NAME = "/security/model/security-registration-without-name.json";
@@ -69,7 +65,6 @@ class SecurityEndpointTest {
     private static final String SECURITY_REGISTRATION_WITHOUT_LAST_NAME = "/security/model/security-registration-without-last-name.json";
     private static final String SECURITY_REGISTRATION_LENGTH_LAST_NAME_LESS_TWO_WORD = "/security/model/security-registration-length-last-name-less-two-word.json";
     private static final String SECURITY_REGISTRATION_LENGTH_LAST_NAME_MORE_128_WORD = "/security/model/security-registration-length-last-name-more-128-word.json";
-    private static final String SECURITY_REGISTRATION_NOT_UNIQUE_EMAIL = "/security/model/security-registration-not-unique-email.json";
     private static final String SECURITY_REGISTRATION_EMPTY_EMAIL = "/security/model/security-registration-empty-email.json";
     private static final String SECURITY_REGISTRATION_LENGTH_EMAIL_LESS_EIGHT_WORD = "/security/model/security-registration-length-email-less-eight-word.json";
     private static final String SECURITY_REGISTRATION_LENGTH_EMAIL_MORE_128_WORD = "/security/model/security-registration-length-email-more-128-word.json";
@@ -78,10 +73,8 @@ class SecurityEndpointTest {
     private static final String SECURITY_REGISTRATION_LENGTH_PASSWORD_MORE_128_CHARACTERS = "/security/model/security-registration-length-password-more-128-characters.json";
     private static final String SECURITY_REGISTRATION_PASSWORD_WITHOUT_WORD = "/security/model/security-registration-password-without-word.json";
     private static final String AUTH_BASE_PATH = "/api/v1/auth";
-    private static final String TOKEN_FIELD = "token";
-    private static final String TOKEN_NULL_MESSAGE = "Token should not be null";
 
-    @MockBean
+    @MockitoBean
     private JavaMailSender javaMailSender;
 
     @Autowired
