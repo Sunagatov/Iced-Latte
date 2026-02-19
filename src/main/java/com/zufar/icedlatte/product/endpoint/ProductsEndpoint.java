@@ -1,13 +1,18 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.common.config.PaginationConfig;
-import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.product.api.*;
+import com.zufar.icedlatte.openapi.dto.BrandsDto;
+import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.openapi.dto.SellersDto;
+import com.zufar.icedlatte.product.api.PageableProductsProvider;
+import com.zufar.icedlatte.product.api.ProductFilterOptionsProvider;
+import com.zufar.icedlatte.product.api.ProductsProvider;
+import com.zufar.icedlatte.product.api.SingleProductProvider;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +27,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -37,7 +40,6 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final PageableProductsProvider pageableProductsProvider;
     private final GetProductsRequestValidator getProductsRequestValidator;
     private final SingleProductProvider singleProductProvider;
-    private final PaginationConfig paginationConfig;
     private final ProductFilterOptionsProvider productFilterOptionsProvider;
 
     @Override
@@ -65,21 +67,12 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
             @RequestParam(name = "brand_names", required = false) List<String> brandNames,
             @RequestParam(name = "seller_names", required = false) List<String> sellerNames) {
 
-        // Apply default values from configuration
-        pageNumber = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
-        pageSize = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
-        sortAttribute = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
-        sortDirection = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
-
-        log.info("Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
 
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
-        var products = pageableProductsProvider.getProducts(pageable, minPrice, maxPrice,
-                minimumAverageRating, brandNames, sellerNames);
-
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(pageableProductsProvider.getProducts(
+                pageNumber, pageSize, sortAttribute, sortDirection,
+                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames));
     }
 
     @Override
@@ -100,7 +93,6 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.info("Getting product by id: {}", productId);
-        var product = singleProductProvider.getProductById(productId);
-        return ResponseEntity.ok(product);
+        return ResponseEntity.ok(singleProductProvider.getProductById(productId));
     }
 }
