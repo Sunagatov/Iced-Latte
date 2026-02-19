@@ -28,8 +28,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AddItemsToShoppingCartHelper {
 
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
-
     private final ShoppingCartRepository shoppingCartRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductInfoRepository productInfoRepository;
@@ -83,7 +81,7 @@ public class AddItemsToShoppingCartHelper {
         int productsQuantity = shoppingCartItems.stream()
                 .map(ShoppingCartItem::getProductQuantity)
                 .reduce(Integer::sum)
-                .orElse(DEFAULT_PRODUCTS_QUANTITY);
+                .orElse(ShoppingCart.DEFAULT_PRODUCTS_QUANTITY);
 
         existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
         existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);

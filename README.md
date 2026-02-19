@@ -17,29 +17,55 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Github-Stars](#Github-Stars)
-
+- [Recognition](#-recognition)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
 - [Deployment](#-deployment)
 - [Forking and tweaking](#-forking-and-tweaking)
 - [How to report a bug?](#-how-to-report-a-bug)
-- [Now to propose a new feature?](#-now-to-propose-a-new-feature)
+- [How to propose a new feature?](#-how-to-propose-a-new-feature)
 - [Contributions](#-contributions)
-- [Code of Conduct](#code-of-conduct)
 - [Our top contributors](#-our-top-contributors)
 - [License](#-license)
 - [Contact](#-contact-)
 
 ## Introduction
 
-**🟥 Iced-Latte (Backend)** is a non-profit sandbox project where a team of IT enthusiasts are working on creating a modern marketplace (https://iced-latte.uk/) for selling coffee in order to pump up their soft and hard skills and have fun working on an interesting project.
+**Iced-Latte (Backend)** is a non-profit open-source project where a team of IT enthusiasts are building a real-world [coffee marketplace](https://iced-latte.uk/) — to grow their engineering skills by working on a production-grade codebase.
 
-🟥 It's crucial to note that we operate without financial support from any party, and we don't compensate anyone financially either. Our efforts are fuelled solely by passion and dedication.
+Started in 2022 as a private pet project, it was opened to the community to give junior engineers, students, and mentees hands-on experience with real processes: code reviews, CI/CD, testing, and team collaboration. No financial compensation — just passion, learning, and good code.
 
-### 🔥 Github-Stars 🔥
+> ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
 
-Please support Iced Latte project by Giving Stars 🌟 on Github repositories - your ratings mean a lot to us!🙂
+## 🏆 Recognition
+
+Iced Latte has grown beyond a pet project and earned recognition from the broader tech community.
+
+**GitHub Trending — May 22, 2024**
+The backend repository reached [GitHub's Trending page](https://archive.ph/DRsD8) — listed among the resources *"the GitHub community is most excited about today"* — gaining **85 stars in a single day** with 27 active contributors.
+
+**Project stats across all three repositories:**
+
+| Repository | Stars | Forks | Lines of Code |
+|---|---|---|---|
+| [Iced Latte Backend](https://github.com/Sunagatov/Iced-Latte) | 590 ⭐ | 97 | 19.3K |
+| [Iced Latte Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | 209 ⭐ | 46 | 8.4K |
+| [Iced Latte QA](https://github.com/Sunagatov/Iced-Latte-QA) | 146 ⭐ | 32 | 8K |
+
+**JetBrains Open Source License**
+JetBrains recognized Iced Latte's impact on the open-source community and granted the project **8 free All Products Pack licenses** for non-commercial development (February 2024). See the [JetBrains Open Source support program](https://www.jetbrains.com/community/opensource/).
+
+**KaiCode Festival Finalist**
+Iced Latte reached the finals of [KaiCode 2024](https://www.kaicode.org/2024.html#jury) — an annual open-source festival by Huawei — selected among **412 applications** as one of the most promising open-source projects.
+
+**Recommended by Eddie Jaoude**
+The project was [recommended by Eddie Jaoude](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) — one of the most influential open-source experts and a [GitHub Star](https://stars.github.com/) (174K followers on X, 17.6K on LinkedIn) — calling it a great example of a Java open-source project.
+
+### 🔥 Support the project
+
+Please support Iced Latte by giving it a ⭐ on GitHub — your stars help more engineers discover it!
+
+> 📄 Full achievement details: [Iced Latte — Creating a Popular Open Source Project](https://drive.google.com/file/d/1J7bs69RvkXGlALBrdOBX63DxEQQ5dg5k/view)
 
 ## Tech Stack
 
@@ -90,7 +116,7 @@ Three huge requests for everyone:
    - Make sure you clearly describe "observed" and "expected" behaviour. It will dramatically save time for our contributors and maintainers.
    - **For minor fixes** please just open a PR.
 
-## 💎 Now to propose a new feature?
+## 💎 How to propose a new feature?
 
 - Go to our [Discussions](https://github.com/Iced-Latte/discussions)
 - Check to see if someone else has already come up with the idea before
@@ -105,7 +131,7 @@ The main point of interaction is the [Issues page](https://github.com/Sunagatov/
 
 > The official development language at the moment is English, because 100% of our users speak it. We don't want to introduce unnecessary barriers for them. But we are used to writing commits and comments in Russian and we won't mind communicating with you in it.
 
-The bussiness docs are here [Docs](https://drive.google.com/drive/folders/1vvfXy6n4cz01JjNyTgoYG0g6EIRvyHDw?usp=share_link).
+The business docs are here [Docs](https://drive.google.com/drive/folders/1vvfXy6n4cz01JjNyTgoYG0g6EIRvyHDw?usp=share_link).
 
 Swagger REST APIs contracts described [here](https://iced-latte.uk/backend/api/docs/swagger-ui/index.html).
 

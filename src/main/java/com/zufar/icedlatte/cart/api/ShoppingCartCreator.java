@@ -18,7 +18,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingCartCreator {
 
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
     public static final int DEFAULT_ITEMS_QUANTITY = 0;
 
     private final ShoppingCartRepository shoppingCartRepository;
@@ -28,7 +27,7 @@ public class ShoppingCartCreator {
         ShoppingCart shoppingCart = ShoppingCart.builder()
                 .userId(userId)
                 .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
-                .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
+                .productsQuantity(ShoppingCart.DEFAULT_PRODUCTS_QUANTITY)
                 .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();

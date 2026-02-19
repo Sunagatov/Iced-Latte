@@ -55,7 +55,7 @@ public class ShoppingCart {
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
 
-    private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
 
     public Integer getItemsQuantity() {
         return this.items.size();
