@@ -1,5 +1,3 @@
-version: '3.9'
-
 networks:
   iced-latte-network:
     name: iced-latte-network

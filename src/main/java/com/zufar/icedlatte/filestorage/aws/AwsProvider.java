@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
@@ -30,18 +29,13 @@ public class AwsProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
         try {
-            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .build();
-            List<S3Object> allObjects = new ArrayList<>();
-            ListObjectsV2Response result;
-            do {
-                result = s3Client.listObjectsV2(listObjectsV2Request);
-                allObjects.addAll(result.contents());
-                listObjectsV2Request = listObjectsV2Request.toBuilder()
-                        .continuationToken(result.nextContinuationToken())
-                        .build();
-            } while (result.isTruncated());
+            List<S3Object> allObjects = s3Client.listObjectsV2Paginator(request)
+                    .contents()
+                    .stream()
+                    .toList();
             return getFileMetadataDtos(allObjects, bucketName);
         } catch (S3Exception e) {
             log.warn("Error accessing AWS S3 bucket", e);

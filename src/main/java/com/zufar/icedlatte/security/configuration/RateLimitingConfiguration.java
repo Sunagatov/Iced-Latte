@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.configuration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
@@ -40,14 +41,10 @@ public class RateLimitingConfiguration {
      */
     public static class InMemoryRateLimiter {
         private final ConcurrentHashMap<String, SlidingWindow> windows = new ConcurrentHashMap<>();
-        
+
+        @SuppressWarnings("unused") // injected as a Spring bean and called via RateLimitingFilter
         public boolean isAllowed(String key, int maxRequests, Duration windowSize) {
-            return windows.compute(key, (k, existingWindow) -> {
-                if (existingWindow == null) {
-                    return new SlidingWindow(maxRequests, windowSize);
-                }
-                return existingWindow;
-            }).isAllowed();
+            return windows.computeIfAbsent(key, k -> new SlidingWindow(maxRequests, windowSize)).isAllowed();
         }
         
         // Class for sliding window - Java 21 feature
@@ -86,6 +83,7 @@ public class RateLimitingConfiguration {
             this.valueOps = redisTemplate.opsForValue();
         }
         
+        @SuppressWarnings("unused") // injected as a Spring bean and called via RateLimitingFilter
         public boolean isAllowed(String key, int maxRequests, Duration windowSize) {
             String redisKey = "rate_limit:" + key;
             
@@ -106,8 +104,11 @@ public class RateLimitingConfiguration {
                 }
                 
                 return false;
-            } catch (Exception e) {
-                log.warn("Rate limiting check failed for key: {}, allowing request", key, e);
+            } catch (DataAccessException e) {
+                log.warn("Rate limiting Redis operation failed for key: {}, allowing request", key, e);
+                return true; // Fail open for availability
+            } catch (NumberFormatException e) {
+                log.warn("Rate limiting counter corrupted for key: {}, allowing request", key, e);
                 return true; // Fail open for availability
             }
         }

@@ -38,7 +38,7 @@ public class AuditService {
             auditLogRepository.save(auditLog);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize audit data", e);
-        } catch (Exception e) {
+        } catch (org.springframework.dao.DataAccessException e) {
             log.error("Failed to save audit log", e);
         }
     }

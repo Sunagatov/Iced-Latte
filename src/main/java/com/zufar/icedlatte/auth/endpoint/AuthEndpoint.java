@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -76,13 +75,7 @@ public class AuthEndpoint {
                         .body(response);
                         
             } catch (Exception e) {
-                var errorMessage = switch (e) {
-                    case SecurityException se -> "Security error during authentication: " + se.getMessage();
-                    case IllegalArgumentException iae -> "Invalid authentication data: " + iae.getMessage();
-                    default -> "Authentication failed: " + e.getMessage();
-                };
-                
-                log.error(errorMessage, e);
+                log.error("Google authentication failed", e);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         });

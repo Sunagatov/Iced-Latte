@@ -11,7 +11,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 
 @Slf4j
 @Component
@@ -23,29 +22,21 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
 
     @Override
     @Transactional
-    public void run(ApplicationArguments args) throws SQLException {
-        try {
-            productInfoRepository.findAll().stream()
-                .map(ProductInfo::getId)
-                .forEach(productId -> {
-                    productInfoRepository.updateAverageRating(productId);
-                    productInfoRepository.updateReviewsCount(productId);
-                });
+    public void run(ApplicationArguments args) {
+        productInfoRepository.findAll().stream()
+            .map(ProductInfo::getId)
+            .forEach(productId -> {
+                productInfoRepository.updateAverageRating(productId);
+                productInfoRepository.updateReviewsCount(productId);
+            });
 
-            productReviewRepository.findAll().stream()
-                .map(ProductReview::getId)
-                .forEach(reviewId -> {
-                    productReviewRepository.updateLikesCount(reviewId);
-                    productReviewRepository.updateDislikesCount(reviewId);
-                });
+        productReviewRepository.findAll().stream()
+            .map(ProductReview::getId)
+            .forEach(reviewId -> {
+                productReviewRepository.updateLikesCount(reviewId);
+                productReviewRepository.updateDislikesCount(reviewId);
+            });
 
-            log.info("Product reviews and ratings update completed successfully");
-            
-        } catch (Exception e) {
-            RuntimeException re = (RuntimeException) e;
-            var errorMessage = "Runtime error during product update: " + re.getMessage();
-            log.error(errorMessage, e);
-            throw new SQLException(errorMessage, e);
-        }
+        log.info("Product reviews and ratings update completed successfully");
     }
 }

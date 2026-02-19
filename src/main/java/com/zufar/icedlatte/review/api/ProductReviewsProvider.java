@@ -42,6 +42,12 @@ public class ProductReviewsProvider {
 
         int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
+        if (page < 0) {
+            throw new IllegalArgumentException("Page number must be non-negative, got: " + page);
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Page size must be at least 1, got: " + size);
+        }
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
 

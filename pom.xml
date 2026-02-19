@@ -82,6 +82,7 @@
 
         <!-- ========== UTILITIES VERSIONS ========== -->
         <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
+        <apache-commons-text.version>1.13.1</apache-commons-text.version>
         <guava.version>33.4.0-jre</guava.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
@@ -265,6 +266,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${apache-commons-lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${apache-commons-text.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

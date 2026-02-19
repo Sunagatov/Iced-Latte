@@ -82,13 +82,13 @@ public class ProductInfo extends AuditableEntity {
     private int weight;
 
     @Column(name = "size_length")
-    private int lengthSize;
+    private int length;
 
     @Column(name = "size_width")
-    private int widthSize;
+    private int width;
 
     @Column(name = "size_height")
-    private int heightSize;
+    private int height;
 
     @Column(name = "sold_products_count")
     private int soldProductsCount;

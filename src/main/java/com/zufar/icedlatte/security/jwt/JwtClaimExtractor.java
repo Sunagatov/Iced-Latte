@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,8 @@ public class JwtClaimExtractor {
                     .filter(StringUtils::hasText)
                     .filter(this::isValidEmailFormat)
                     .orElseThrow(() -> new JwtTokenHasNoUserEmailException("Invalid or missing email in JWT token"));
-        } catch (JwtTokenHasNoUserEmailException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token");
+        } catch (JwtException ex) {
+            throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token", ex);
         }
     }
 
@@ -41,7 +40,7 @@ public class JwtClaimExtractor {
             return expiration.toInstant()
                     .atOffset(ZoneOffset.UTC)
                     .toLocalDateTime();
-        } catch (Exception ex) {
+        } catch (JwtException ex) {
             throw new IllegalArgumentException("Failed to extract expiration from JWT token", ex);
         }
     }
@@ -51,8 +50,7 @@ public class JwtClaimExtractor {
             LocalDateTime expiration = extractExpiration(jwtToken);
             LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
             return expiration.isBefore(now);
-        } catch (Exception ex) {
-            // If we can't determine expiration, treat as expired for security
+        } catch (JwtException | IllegalArgumentException ex) {
             return true;
         }
     }

@@ -74,9 +74,9 @@ DATASOURCE_NAME=testdb
 DATASOURCE_USERNAME=postgres
 DATASOURCE_PASSWORD=postgres
 
-# JWT secrets (these values are safe to use locally)
-APP_JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-APP_JWT_REFRESH_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+# JWT secrets (these values are safe to use locally — replace with any random hex string in production)
+APP_JWT_SECRET=<your-local-jwt-secret-hex-string>
+APP_JWT_REFRESH_SECRET=<your-local-jwt-refresh-secret-hex-string>
 
 # AWS (disabled locally — no real AWS account needed)
 AWS_ENABLED=false
@@ -101,7 +101,7 @@ STRIPE_SECRET_KEY=sk_test_placeholder
 STRIPE_WEBHOOK_SECRET=whsec_placeholder
 
 # Spring AI (not needed locally, use placeholder)
-SPRING_AI_OPENAI_API_KEY=sk-placeholder
+SPRING_AI_OPENAI_API_KEY=<your-openai-api-key>
 ```
 
 > ⚠️ **Important**: `.env` is listed in `.gitignore` and will never be committed. Never put real secrets in this file.

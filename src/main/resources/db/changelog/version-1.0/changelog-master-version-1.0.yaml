@@ -16,85 +16,114 @@ databaseChangeLog:
   # Product catalog foundation
   - include:
       file: db/changelog/version-1.0/19.07.2023.part1.create-product-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/19.07.2023.part2.insert-product-data.sql
+      errorIfMissing: true
       
   # ========== SHOPPING CART SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/21.07.2023.part1.create-shopping-cart-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/21.07.2023.part2.create-shopping-cart-item-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/21.07.2023.part3.insert-shopping-cart-data.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-cart-item-data.sql
+      errorIfMissing: true
       
   # ========== USER MANAGEMENT & SECURITY ==========
   # Address management
   - include:
       file: db/changelog/version-1.0/28.07.2023.part1.create-address-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
+      errorIfMissing: true
       
   # User authentication and authorization
   - include:
       file: db/changelog/version-1.0/28.07.2023.part3.create-user-granted-authority-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/28.07.2023.part4.insert-user-granted-authority-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/28.07.2023.part5.create-user-details-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/28.07.2023.part6.insert-user-details-table-data.sql
+      errorIfMissing: true
       
   # Login security and attempt tracking
   - include:
       file: db/changelog/version-1.0/07.10.2023.part1.create-login-attempts-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/07.10.2023.part2.insert-login-attempts-table-data.sql
+      errorIfMissing: true
       
   # ========== FAVORITES SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/23.11.2023.part1.create-favorite-product-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/23.11.2023.part2.create-favorite-product-item-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/23.11.2023.part3.insert-favorite-data.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql
+      errorIfMissing: true
       
   # ========== FILE MANAGEMENT ==========
   - include:
       file: db/changelog/version-1.0/13.12.2023.part1.create-file-metadata-table.sql
+      errorIfMissing: true
       
   # ========== ORDER MANAGEMENT ==========
   - include:
       file: db/changelog/version-1.0/07.01.2024.part1.create-order-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql
+      errorIfMissing: true
       
   # ========== PAYMENT SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
+      errorIfMissing: true
       
   # ========== REVIEW & RATING SYSTEM ==========
   - include:
       file: db/changelog/version-1.0/08.02.2024.part1.create-product-review-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/08.02.2024.part2.insert-product-review-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/13.04.2024.part1.create-product-review-likes-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/13.04.2024.part2.insert-product-review-likes-table.sql
-      
-  # ========== PRODUCT ENHANCEMENTS ==========
-  # Optimistic locking support
-  - include:
-      file: db/changelog/version-1.0/22.08.2025.add-version-column-to-product-table.sql
+      errorIfMissing: true
       
   # ========== AUDIT & COMPLIANCE ==========
   # Comprehensive audit logging system
   - include:
       file: db/changelog/version-1.0/25.01.2025.part1.create-audit-log-table.sql
+      errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/25.01.2025.part2.add-audit-columns-to-existing-tables.sql
+      errorIfMissing: true
+
+  # ========== PRODUCT ENHANCEMENTS ==========
+  # Optimistic locking support
+  - include:
+      file: db/changelog/version-1.0/22.08.2025.add-version-column-to-product-table.sql
+      errorIfMissing: true
 

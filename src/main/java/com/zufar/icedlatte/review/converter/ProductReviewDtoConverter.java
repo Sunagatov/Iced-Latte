@@ -36,11 +36,13 @@ public interface ProductReviewDtoConverter {
     ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewDto> page);
 
     @Named("toUserName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserName"
     default String convertToUserName(UserEntity user) {
         return user == null ? null : user.getFirstName();
     }
 
     @Named("toUserLastName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserLastName"
     default String convertToUserLastName(UserEntity user) {
         return user == null ? null : user.getLastName();
     }
@@ -49,13 +51,14 @@ public interface ProductReviewDtoConverter {
         var productRatingMap = new RatingMap();
         for (ProductRatingCount productRatingCount : productRatingCountPairs) {
             int count = (int) productRatingCount.count();
-            switch (productRatingCount.productRating()) {
+            int rating = productRatingCount.productRating();
+            switch (rating) {
                 case 5 -> productRatingMap.setStar5(count);
                 case 4 -> productRatingMap.setStar4(count);
                 case 3 -> productRatingMap.setStar3(count);
                 case 2 -> productRatingMap.setStar2(count);
                 case 1 -> productRatingMap.setStar1(count);
-                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + productRatingCount.productRating());
+                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + rating);
             }
         }
         return productRatingMap;

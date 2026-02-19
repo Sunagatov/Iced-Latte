@@ -3,7 +3,6 @@ package com.zufar.icedlatte.security.configuration;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +28,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Duration;
 
-@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity

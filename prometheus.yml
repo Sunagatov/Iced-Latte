@@ -1,3 +1,5 @@
+# Prometheus configuration for Iced-Latte backend monitoring.
+# Scrapes Spring Actuator metrics endpoint every 15 seconds.
 global:
   scrape_interval: 15s
 

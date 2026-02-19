@@ -31,6 +31,7 @@ paths:
     get:
       tags:
         - "Product Review"
+      summary: "List product reviews with pagination, sorting and filtering"
       description: "List product's Reviews with pagination, sorting and filtering features. Endpoint is available for unauthorized users"
       operationId: "getProductReviewsAndRatings"
       parameters:
@@ -57,7 +58,7 @@ paths:
               description: "Retrieve the second page of product's list."
               value: "page=1"
         - name: "size"
-          description: "The number of products per page. Possible allowed values: 1) size=3 or 2) size=15 or 3) any other non negative value."
+          description: "The number of reviews per page. Possible allowed values: 1) size=3 or 2) size=15 or 3) any other non negative value."
           in: "query"
           required: false
           schema:
@@ -66,11 +67,11 @@ paths:
             default: 50
           examples:
             example1:
-              description: "Display only 3 products per page in the product's review list."
-              value: "size=3"
+              description: "Display only 3 reviews per page in the product's review list."
+              value: 3
             example2:
-              description: "Display only 15 products per page in the product's review list."
-              value: "size=15"
+              description: "Display only 15 reviews per page in the product's review list."
+              value: 15
         - name: "sort_attribute"
           description: "The field name of the product's review by which the results should be sorted. Possible allowed values: 1) sort_attribute=createdAt or 2) sort_attribute=productRating."
           in: "query"
@@ -81,11 +82,13 @@ paths:
             enum: ["createdAt", "productRating"]
           examples:
             example1:
+              summary: "Sort by creation date"
               description: "Display the product's review list sorted by the provided sort attribute 'createdAt' (the product's date of creation)."
-              value: "sort_attribute=createdAt"
+              value: "createdAt"
             example2:
+              summary: "Sort by product rating"
               description: "Display the product's review list sorted by the provided sort attribute 'productRating' (the product's review rating)."
-              value: "sort_attribute=productRating"
+              value: "productRating"
         - name: "sort_direction"
           description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
           in: "query"
@@ -149,6 +152,7 @@ paths:
       tags:
         - "Product Review"
       summary: "Add a new product's review for a specific product by an authorized user. If product's review exists, then 400 error will be returned"
+      description: "Creates a new review and rating for the specified product by the authenticated user. Returns 400 if the user has already submitted a review for this product."
       operationId: "addNewProductReview"
       parameters:
         - name: "productId"
@@ -166,7 +170,7 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "Product review created successfully."
           content:
             application/json:
               schema:
@@ -201,6 +205,7 @@ paths:
       tags:
         - "Product Review"
       summary: "Delete an existing product's review created by an authorized user"
+      description: "Permanently deletes the specified product review. Only the review's author can delete their own review."
       operationId: "deleteProductReview"
       parameters:
         - name: "productId"
@@ -415,27 +420,36 @@ components:
         productReviewId:
           type: "string"
           format: "uuid"
+          description: "Unique identifier of the product review."
         productId:
           type: "string"
           format: "uuid"
+          description: "Unique identifier of the reviewed product."
         productRating:
           type: "integer"
           format: "int32"
+          description: "Rating given by the user (1–5)."
         text:
           type: "string"
+          description: "Review text written by the user."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "Date and time when the review was created."
         userName:
           type: "string"
+          description: "First name of the user who wrote the review."
         userLastname:
           type: "string"
+          description: "Last name of the user who wrote the review."
         likesCount:
           type: "integer"
           format: "int32"
+          description: "Number of likes the review has received."
         dislikesCount:
           type: "integer"
           format: "int32"
+          description: "Number of dislikes the review has received."
 
     ProductReviewRatingStats:
       type: object
@@ -490,28 +504,4 @@ components:
         - isLike
 
     ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
-          type: "array"
-          items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.astartup;
 
+import com.zufar.icedlatte.filestorage.exception.FileReadException;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.aws.AwsProvider;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
@@ -39,49 +41,65 @@ public class ApplicationMigration implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (fileUploader == null || awsProvider == null ||
-                productPictureBucket == null || productPictureBucket.isEmpty() ||
-                directoryPath == null || directoryPath.isEmpty()) {
+        if (!isAwsConfigured()) {
             log.info("AWS configuration not available, skipping file migration");
             return;
         }
-
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var uploadTask = CompletableFuture.runAsync(() -> {
-                try {
-                    log.info("Product pictures upload started, directory path: {}", directoryPath);
-                    fileUploader.uploadDirectory(productPictureBucket, directoryPath);
-                    log.info("Product pictures upload finished");
-                } catch (Exception e) {
-                    log.warn("Upload failed, continuing without AWS: {}", e.getMessage());
-                }
-            }, executor);
+            CompletableFuture.runAsync(this::uploadFiles, executor)
+                    .thenCompose(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor))
+                    .thenAccept(this::saveMetadata)
+                    .join();
+        } catch (java.util.concurrent.CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            log.warn("Migration completed with warnings: {}", cause.getMessage(), cause);
+        }
+    }
 
-            var metadataTask = uploadTask.thenCompose(result ->
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            Thread.sleep(Duration.ofSeconds(5));
-                            var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
-                            log.info("Product pictures metadata retrieved from AWS");
-                            return fileMetadataDtos;
-                        } catch (Exception e) {
-                            log.warn("Metadata retrieval failed, continuing without AWS: {}", e.getMessage());
-                            return java.util.Collections.<FileMetadataDto>emptyList();
-                        }
-                    }, executor)
-            );
+    private boolean isAwsConfigured() {
+        return fileUploader != null && awsProvider != null
+                && productPictureBucket != null && !productPictureBucket.isEmpty()
+                && directoryPath != null && !directoryPath.isEmpty();
+    }
 
-            metadataTask.thenAccept(fileMetadataDtos -> {
-                if (!fileMetadataDtos.isEmpty()) {
-                    fileMetadataSaver.saveAll(fileMetadataDtos);
-                    log.info("Product pictures metadata saved in database");
-                } else {
-                    log.info("No metadata to save, skipping database operation");
-                }
-            }).join();
+    private void uploadFiles() {
+        try {
+            log.info("Product pictures upload started, directory path: {}", directoryPath);
+            fileUploader.uploadDirectory(productPictureBucket, directoryPath);
+            log.info("Product pictures upload finished");
+        } catch (FileUploadException e) {
+            log.warn("Upload failed, continuing without AWS: {}", e.getMessage(), e);
+        } catch (FileReadException e) {
+            log.warn("File read error during upload, continuing without AWS: {}", e.getMessage(), e);
+        }
+    }
 
-        } catch (Exception e) {
-            log.warn("Migration completed with warnings: {}", e.getMessage());
+    private java.util.List<FileMetadataDto> fetchMetadata() {
+        try {
+            Thread.sleep(Duration.ofSeconds(5));
+            var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
+            log.info("Product pictures metadata retrieved from AWS");
+            return fileMetadataDtos;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Metadata retrieval interrupted: {}", e.getMessage(), e);
+            return java.util.Collections.emptyList();
+        } catch (software.amazon.awssdk.core.exception.SdkException e) {
+            log.warn("Metadata retrieval failed due to AWS SDK error, continuing without AWS: {}", e.getMessage(), e);
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    private void saveMetadata(java.util.List<FileMetadataDto> fileMetadataDtos) {
+        if (fileMetadataDtos.isEmpty()) {
+            log.info("No metadata to save, skipping database operation");
+            return;
+        }
+        try {
+            fileMetadataSaver.saveAll(fileMetadataDtos);
+            log.info("Product pictures metadata saved in database");
+        } catch (RuntimeException e) {
+            log.warn("Failed to save product pictures metadata: {}", e.getMessage(), e);
         }
     }
 }

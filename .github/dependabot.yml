@@ -13,6 +13,7 @@ updates:
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:

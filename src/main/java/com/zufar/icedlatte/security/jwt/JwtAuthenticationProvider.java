@@ -22,42 +22,26 @@ public class JwtAuthenticationProvider {
 
     public Authentication get(final HttpServletRequest httpRequest) {
         String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-        
-        try {
-            // Validate token is not blacklisted first (fastest check)
-            jwtBlacklistValidator.validate(jwtToken);
-            
-            // Validate token expiration
-            if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
-                log.debug("Authentication failed: JWT token has expired");
-                throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
-            }
-            
-            // Extract user email from token
-            String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
-            
-            // Load user details
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            
-            // Create authentication token with enhanced security context
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, 
-                    null, 
-                    userDetails.getAuthorities()
-            );
-            
-            // Set additional security details
-            authenticationToken.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(httpRequest)
-            );
-            
-            log.debug("Authentication successful");
-            return authenticationToken;
-            
-        } catch (Exception ex) {
-            log.debug("Authentication failed", ex);
-            throw ex;
+
+        jwtBlacklistValidator.validate(jwtToken);
+
+        if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
+            log.debug("Authentication failed: JWT token has expired");
+            throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
         }
+
+        String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+        );
+        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
+
+        log.debug("Authentication successful");
+        return authenticationToken;
     }
 }
 

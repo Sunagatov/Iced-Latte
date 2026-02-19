@@ -62,6 +62,12 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: "Forbidden - insufficient permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -103,6 +109,12 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: "Forbidden - insufficient permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -140,6 +152,18 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "403":
+          description: "Forbidden - insufficient permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: "One or more shopping cart items not found."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -151,7 +175,7 @@ paths:
       tags:
         - "Shopping Cart"
       summary: "Get the shopping cart of authorized user"
-      description: "Get the shopping cart of authorized user"
+      description: "Retrieves the full shopping cart including all items for the currently authenticated user."
       operationId: "getShoppingCart"
       responses:
         "200":
@@ -160,14 +184,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingCartDto"
-        "400":
-          description: "Invalid input, object invalid."
+        "401":
+          description: "Unauthorized access."
           content:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized access."
+        "403":
+          description: "Forbidden - insufficient permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: "Shopping cart not found."
           content:
             application/json:
               schema:

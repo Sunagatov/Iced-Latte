@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -26,29 +27,21 @@ public class CorrelationFilter extends OncePerRequestFilter {
     private static final String CORRELATION_ID_MDC_KEY = "correlationId";
     
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) 
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) 
             throws ServletException, IOException {
         
         String correlationId = getOrGenerateCorrelationId(request);
         response.setHeader(CORRELATION_ID_HEADER, correlationId);
-        
+        MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
         try {
             CorrelationContext.runWithCorrelationId(correlationId, () -> {
-                MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
-                try {
-                    filterChain.doFilter(request, response);
-                } catch (IOException | ServletException e) {
-                    throw new RuntimeException(e);
-                }
+                filterChain.doFilter(request, response);
+                return null;
             });
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof ServletException se) {
-                throw se;
-            }
-            if (e.getCause() instanceof IOException ioe) {
-                throw ioe;
-            }
+        } catch (ServletException | IOException e) {
             throw e;
+        } catch (Exception e) {
+            throw new ServletException("Unexpected error in correlation filter", e);
         } finally {
             MDC.remove(CORRELATION_ID_MDC_KEY);
         }

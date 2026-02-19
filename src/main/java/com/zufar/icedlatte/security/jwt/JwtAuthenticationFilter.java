@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.text.StringEscapeUtils;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -48,13 +48,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityConstants.REVIEW_URL
     );
 
+    private static final JsonStringEncoder JSON_ENCODER = JsonStringEncoder.getInstance();
+
+    private static String escapeJson(String value) {
+        return new String(JSON_ENCODER.quoteAsString(value));
+    }
+
+    private static final PathPatternRequestMatcher.Builder PATH_MATCHER = PathPatternRequestMatcher.withDefaults();
+
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
     protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
                                     @NonNull final HttpServletResponse httpResponse,
-                                    @NonNull final FilterChain filterChain) throws IOException {
+                                    @NonNull final FilterChain filterChain) throws IOException, ServletException {
         
         String requestId = UUID.randomUUID().toString();
         MDC.put(MDC_REQUEST_ID_KEY, requestId);
@@ -97,16 +105,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         if (errorInfo.statusCode() >= 500) {
             log.error("Authentication error: {} - Request ID: {}", 
-                    StringEscapeUtils.escapeJava(errorInfo.message()), requestId, exception);
+                    escapeJson(errorInfo.message()), requestId, exception);
         } else {
             log.warn("Authentication failed: {} - Request ID: {}", 
-                    StringEscapeUtils.escapeJava(errorInfo.message()), requestId);
+                    escapeJson(errorInfo.message()), requestId);
             log.debug("Authentication failure details", exception);
         }
         
         httpResponse.setStatus(errorInfo.statusCode());
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         httpResponse.setCharacterEncoding("UTF-8");
+        httpResponse.setHeader("X-Content-Type-Options", "nosniff");
         httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
@@ -121,11 +130,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "requestId": "%s"
             }
             """, 
-            StringEscapeUtils.escapeJson("Unauthorized"), 
-            StringEscapeUtils.escapeJson(errorInfo.message()),
-            java.time.Instant.now(), 
+            escapeJson("Unauthorized"), 
+            escapeJson(errorInfo.message()),
+            escapeJson(java.time.Instant.now().toString()),
             errorInfo.statusCode(),
-            StringEscapeUtils.escapeJson(requestId));
+            escapeJson(requestId));
         
         httpResponse.getWriter().write(jsonResponse);
     }
@@ -144,18 +153,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         return SECURED_URLS.stream()
-                .anyMatch(securedUrl -> PathPatternRequestMatcher.withDefaults().matcher(securedUrl).matches(request));
+                .anyMatch(securedUrl -> PATH_MATCHER.matcher(securedUrl).matches(request));
     }
 
     private boolean isUnauthorizedGetReviewsUrl(HttpServletRequest request) {
         boolean isReviewsUrl = SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.stream()
-                .anyMatch(securedUrl -> PathPatternRequestMatcher.withDefaults().matcher(securedUrl).matches(request));
+                .anyMatch(securedUrl -> PATH_MATCHER.matcher(securedUrl).matches(request));
 
         return isReviewsUrl && HttpMethod.GET.name().equals(request.getMethod());
     }
 
     private boolean isUnauthorizedPostStripeWebhookUrl(HttpServletRequest request) {
-        boolean isStripeWebhookUrl = PathPatternRequestMatcher.withDefaults().matcher(SecurityConstants.STRIPE_WEBHOOK_URL)
+        boolean isStripeWebhookUrl = PATH_MATCHER.matcher(SecurityConstants.STRIPE_WEBHOOK_URL)
                 .matches(request);
 
         return isStripeWebhookUrl && HttpMethod.POST.name().equals(request.getMethod());

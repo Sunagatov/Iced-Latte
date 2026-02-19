@@ -311,13 +311,22 @@ components:
           description: "User's email address must be a valid email format"
           pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         password:
-          type: "string"
-          description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          $ref: "#/components/schemas/PasswordField"
         addressDto:
           $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
+
+    AuthTokensResponse:
+      type: "object"
+      required:
+        - token
+        - refreshToken
+      properties:
+        token:
+          type: "string"
+          description: "JWT token for authenticated user."
+        refreshToken:
+          type: "string"
+          description: "Refresh token for generating a new JWT."
 
     UserRegistrationResponse:
       type: "object"
@@ -340,11 +349,7 @@ components:
           format: "email"
           description: "User's email address."
         password:
-          type: "string"
-          description: "User's password."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          $ref: "#/components/schemas/PasswordField"
 
     UserAuthenticationResponse:
       type: "object"
@@ -390,35 +395,14 @@ components:
           format: "email"
           description: "User's email address."
         password:
-          type: "string"
-          description: "New password for the user. Must be at least 8 characters long, contain at least one letter, one digit, and may include special characters @$!%*?&."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          $ref: "#/components/schemas/PasswordField"
+
+    PasswordField:
+      type: "string"
+      description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
+      minLength: 8
+      maxLength: 128
+      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
 
     ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
-          type: "array"
-          items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

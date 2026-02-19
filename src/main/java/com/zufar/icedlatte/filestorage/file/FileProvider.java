@@ -45,12 +45,14 @@ public class FileProvider {
             log.warn("AWS not configured, returning empty URLs for {} requested objects.", relatedObjectIds.size());
             return Map.of();
         }
-        return fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
+        Map<UUID, String> urls = fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue())
                 ));
+        log.debug("Generated {} presigned URLs.", urls.size());
+        return urls;
     }
 }

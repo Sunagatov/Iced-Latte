@@ -61,7 +61,7 @@ jobs:
           password: ${{ secrets.DEV_SSH_PASSWORD }}
           envs: IMAGE_TAG
           script: |
-            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin || { echo "Docker login failed"; exit 1; }
             
             # Check if image already exists locally
             if docker image inspect $IMAGE_TAG >/dev/null 2>&1; then
@@ -72,12 +72,12 @@ jobs:
             
             # Graceful container update
             if docker ps -q -f name=${{ vars.DOCKER_CONTAINER_NAME }}; then
-              docker stop ${{ vars.DOCKER_CONTAINER_NAME }}
-              docker rm ${{ vars.DOCKER_CONTAINER_NAME }}
+              docker stop ${{ vars.DOCKER_CONTAINER_NAME }} || { echo "Failed to stop container"; exit 1; }
+              docker rm ${{ vars.DOCKER_CONTAINER_NAME }} || { echo "Failed to remove container"; exit 1; }
             fi
             
             # Clean up old images (keep last 3)
-            docker images ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi || true
+            docker images ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi 2>&1 | grep -v "image is being used" || true
             
             docker run -d \
               --name ${{ vars.DOCKER_CONTAINER_NAME }} \

@@ -43,9 +43,12 @@ public class JwtBlacklistValidator {
                 log.error("No blacklist service available - token cannot be blacklisted");
                 throw new IllegalStateException("Blacklist service unavailable");
             }
-        } catch (Exception ex) {
+        } catch (IllegalStateException ex) {
             log.error("Failed to blacklist token: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Token blacklisting failed", ex);
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.error("Failed to blacklist token: {}", ex.getMessage(), ex);
+            throw new IllegalStateException("Token blacklisting failed", ex);
         }
     }
 
@@ -63,7 +66,7 @@ public class JwtBlacklistValidator {
             log.debug("Token validation successful: token is not blacklisted");
         } catch (JwtTokenBlacklistedException ex) {
             throw ex;
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             log.error("Token validation failed due to service error: {}", ex.getMessage(), ex);
             throw new JwtTokenBlacklistedException("Token validation service unavailable");
         }

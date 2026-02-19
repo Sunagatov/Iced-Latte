@@ -3,26 +3,37 @@
 BASE_URL=${1:-"http://localhost:8083"}
 API_BASE="$BASE_URL/api/v1"
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+readonly GREEN='\033[0;32m'
+readonly RED='\033[0;31m'
+readonly NC='\033[0m'
 
 JWT_TOKEN=""
 
 test_login() {
     echo "Testing login..."
-    response=$(curl -s -w "%{http_code}" -X POST "$API_BASE/auth/authenticate" \
+    body_file=$(mktemp)
+    http_code=$(curl -s -X POST "$API_BASE/auth/authenticate" \
         -H "Content-Type: application/json" \
-        -d '{"email": "olivia@example.com", "password": "p@ss1logic11"}')
-    
-    http_code="${response: -3}"
-    body="${response%???}"
+        -d '{"email": "olivia@example.com", "password": "p@ss1logic11"}' \
+        -w "%{http_code}" -o "$body_file" 2>&1)
+    curl_exit=$?
+    body=$(cat "$body_file")
+    rm -f "$body_file"
+    if [[ $curl_exit -ne 0 ]]; then
+        echo -e "${RED}✗ Login request failed (curl error)${NC}"
+        echo "Error: $body"
+        return
+    fi
     
     if [[ "$http_code" == "200" ]]; then
         JWT_TOKEN=$(echo "$body" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-        echo -e "${GREEN}✓ Login successful${NC}"
-        echo "Token: ${JWT_TOKEN:0:30}..."
+        if [[ -z "$JWT_TOKEN" ]]; then
+            echo -e "${RED}✗ Login succeeded but token extraction failed${NC}"
+            echo "Response: $body"
+        else
+            echo -e "${GREEN}✓ Login successful${NC}"
+            echo "Token: ${JWT_TOKEN:0:30}..."
+        fi
     else
         echo -e "${RED}✗ Login failed (HTTP $http_code)${NC}"
         echo "Response: $body"
@@ -89,8 +100,15 @@ test_reviews() {
     echo "Testing reviews endpoints..."
     
     # Get product ID for review test
-    products=$(curl -s "$API_BASE/products?page=0&size=1")
-    product_id=$(echo "$products" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+    products=$(curl -s -w "%{http_code}" "$API_BASE/products?page=0&size=1")
+    curl_exit=$?
+    if [[ $curl_exit -ne 0 ]]; then
+        echo -e "${RED}✗ Failed to fetch products for reviews test (curl error)${NC}"
+        return
+    fi
+    products_http_code="${products: -3}"
+    products_body="${products:0:${#products}-3}"
+    product_id=$(echo "$products_body" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
     
     if [[ -n "$product_id" ]]; then
         # Get reviews for product
@@ -103,6 +121,8 @@ test_reviews() {
         else
             echo -e "${RED}✗ Get product reviews failed (HTTP $http_code)${NC}"
         fi
+    else
+        echo -e "${RED}✗ No product ID found for reviews test${NC}"
     fi
 }
 

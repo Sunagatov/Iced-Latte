@@ -43,13 +43,13 @@ public class StripeSessionCreator {
                         .setReturnUrl(getReturnUrl(request))
                         .addAllLineItem(stripeSessionLineItemListConverter.toLineItems(shoppingCartDto.getItems()))
                         .addAllShippingOption(stripeShippingOptionsProvider.getShippingOptions())
-                        .putMetadata("userId", userId.toString())
+                        .putMetadata("userId", String.valueOf(userId))
                         .setAutomaticTax(SessionCreateParams.AutomaticTax.builder().setEnabled(true).build())
                         .build();
         try {
             return Session.create(stripeSessionCreateParams);
         } catch (StripeException exception) {
-            throw new StripeSessionCreationException(exception.getMessage());
+            throw new StripeSessionCreationException(exception.getMessage(), exception);
         }
     }
 

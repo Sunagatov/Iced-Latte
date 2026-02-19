@@ -64,14 +64,14 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
-        try {
-            var auth = event.getAuthentication().get();
-            String username = auth.getName();
+        var authSupplier = event.getAuthentication();
+        if (authSupplier != null && authSupplier.get() != null) {
+            var auth = authSupplier.get();
             log.warn("Authorization denied for user: {} - Resource: {} - Authorities: {}",
-                    username,
+                    auth.getName(),
                     event.getAuthorizationResult(),
                     auth.getAuthorities());
-        } catch (Exception e) {
+        } else {
             log.warn("Authorization denied for anonymous user - Resource: {}",
                     event.getAuthorizationResult());
         }

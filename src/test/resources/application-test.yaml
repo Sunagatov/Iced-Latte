@@ -44,15 +44,16 @@ spring:
         If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets.
         Only the reason should be in curly brackets.
         Else return OK
-    chat:
-      options:
-        model: gpt-3.5-turbo
+      chat:
+        options:
+          model: gpt-3.5-turbo
 
   #
   # Aws Properties
   #
   aws:
     enabled: false
+    account-id: test-account-id
     access-key: vbfgngfdndgndgndgndgndgndgndg
     secret-key: vbfgngfdndgndgndgndgndgndgndg
     region: us-east-1
@@ -109,9 +110,9 @@ jwt:
 ai:
   # https://platform.openai.com/docs/api-reference/moderations/create
   url: "https://api.openai.com/v1/moderations"
-  api_key: "sk-api-key"
-  request_body: '{ "input": "$message"}'
-  message_replacement_pattern: "$message"
+  api-key: "sk-api-key"
+  request-body: '{ "input": "$message"}'
+  message-replacement-pattern: "$message"
 
 #
 # Google Auth Properties
@@ -123,8 +124,8 @@ google:
   scope: "https://www.googleapis.com/auth/userinfo.profile"
   client-id: "sk-api-client"
   client-secret: "sk-api-secret"
-  authenticateUri: "http://localhost:8083/auth/login"
-  redirectUri: "http://localhost:8083"
+  authenticate-uri: "http://localhost:8083/auth/login"
+  redirect-uri: "http://localhost:8083"
 
 stripe:
   secret-key: "sk_test_placeholder"
@@ -147,3 +148,7 @@ security:
     auth-max-requests: 10000
     window-duration: PT1M
     auth-window-duration: PT1M
+
+
+aws:
+  account-id: test-account-id

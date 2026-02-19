@@ -5,6 +5,8 @@ info:
   description: "Shared schemas used across all Iced Latte APIs"
   version: "1.0.0"
 
+paths: {}
+
 components:
   schemas:
     ErrorResponse:
@@ -30,7 +32,16 @@ components:
         status:
           type: "integer"
           description: "HTTP status code"
+          minimum: 100
+          maximum: 599
         path:
           type: "string"
           description: "Request path that caused the error"
 
+    SuccessResponse:
+      type: "object"
+      description: "Standard success response format"
+      properties:
+        message:
+          type: "string"
+          description: "Success message"

@@ -64,6 +64,7 @@ spring:
   #
   aws:
     enabled: ${AWS_ENABLED:true}
+    account-id: ${AWS_ACCOUNT_ID}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
@@ -244,7 +245,7 @@ logging:
 ai:
   # https://platform.openai.com/docs/api-reference/moderations/create
   url: "https://api.openai.com/v1/moderations"
-  api-key: "sk-api-key"
+  api-key: ${SPRING_AI_OPENAI_API_KEY}
   request-body: '{"input": "$message"}'
   message-replacement-pattern: "$message"
 
@@ -258,4 +259,4 @@ google:
   scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
   client-id: ${GOOGLE_AUTH_CLIENT_ID}
   client-secret: ${GOOGLE_AUTH_CLIENT_SECRET}
-  redirectUri: ${GOOGLE_AUTH_REDIRECT_URI}
+  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}

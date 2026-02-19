@@ -97,8 +97,11 @@ public class UserSecurityEndpoint implements SecurityApi {
             String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
             jwtBlacklistValidator.addToBlacklist(token);
             log.info("User logout completed successfully");
-        } catch (Exception ex) {
-            log.warn("Failed to blacklist token during logout: {}", ex.getMessage());
+        } catch (com.zufar.icedlatte.security.exception.AbsentBearerHeaderException ex) {
+            log.warn("Failed to extract token during logout: {}", ex.getMessage(), ex);
+            // Still return success to prevent information leakage
+        } catch (IllegalStateException ex) {
+            log.warn("Failed to blacklist token during logout: {}", ex.getMessage(), ex);
             // Still return success to prevent information leakage
         }
         

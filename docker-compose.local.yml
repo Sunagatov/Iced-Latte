@@ -41,14 +41,14 @@ services:
       REDIS_HOST: iced-latte-redis
       REDIS_PORT: 6380
       AWS_DEFAULT_PRODUCT_IMAGES_PATH: ./products
-      AWS_ACCESS_KEY: vbfgngfdndgndgndgndgndgndgndg
-      AWS_SECRET_KEY: vbfgngfdndgndgndgndgndgndgndg
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-your-aws-access-key}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY:-your-aws-secret-key}
       AWS_REGION: eu-west-1
       AWS_PRODUCT_BUCKET: products
       AWS_USER_BUCKET: users
-      GOOGLE_AUTH_CLIENT_ID: vbfgngfdndgndgndgndgndgndgndg
-      GOOGLE_AUTH_CLIENT_SECRET: vbfgngfdndgndgndgndgndgndgndg
-      GOOGLE_AUTH_REDIRECT_URI: vbfgngfdndgndgndgndgndgndgndg
+      GOOGLE_AUTH_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID:-your-google-client-id}
+      GOOGLE_AUTH_CLIENT_SECRET: ${GOOGLE_AUTH_CLIENT_SECRET:-your-google-client-secret}
+      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-your-google-redirect-uri}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder_webhook_secret}
     ports:
@@ -57,7 +57,16 @@ services:
     networks:
       - iced-latte-network
     depends_on:
-      - iced-latte-postgresdb
+      iced-latte-postgresdb:
+        condition: service_healthy
+      iced-latte-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       - backend_logs:/usr/app/logs
       - ./products:/usr/app/products
@@ -103,3 +112,10 @@ services:
       - iced-latte-network
     ports:
       - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: on-failure

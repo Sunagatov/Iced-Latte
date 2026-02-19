@@ -21,7 +21,7 @@ public class UserAvatarLinkProvider {
                         log.warn("File with id = {} was not found.", userId);
                         return "default file";
                     });
-        } catch (Throwable exception) {
+        } catch (RuntimeException exception) {
             log.error("FileProvider error", exception);
         }
         return "default file";

@@ -101,6 +101,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User or cart not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -118,7 +124,7 @@ components:
 
   schemas:
     OrderStatus:
-      type: string
+      type: "string"
       description: "The status of an order."
       enum:
         - CREATED
@@ -140,9 +146,15 @@ components:
         recipientName:
           type: "string"
           description: "Name of the order recipient. Can be different from the user's name."
+          minLength: 2
+          maxLength: 128
+          example: "John"
         recipientSurname:
           type: "string"
           description: "Surname of the order recipient. Can be different from the user's surname."
+          minLength: 2
+          maxLength: 128
+          example: "Doe"
 
     OrderDto:
       type: "object"
@@ -157,7 +169,7 @@ components:
           format: "uuid"
           description: "Unique identifier for the order."
         status:
-          $ref: '#/components/schemas/OrderStatus'
+          $ref: "#/components/schemas/OrderStatus"
         createdAt:
           type: "string"
           format: "date-time"

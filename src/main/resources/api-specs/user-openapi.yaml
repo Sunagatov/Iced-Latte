@@ -199,6 +199,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
           content:
@@ -235,6 +241,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
           content:
@@ -263,8 +275,20 @@ paths:
       responses:
         "200":
           description: "User avatar uploaded successfully."
+        "400":
+          description: "Invalid file format or size."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User not found."
           content:
             application/json:
               schema:
@@ -358,6 +382,13 @@ components:
         address:
           $ref: "#/components/schemas/AddressDto"
 
+    PasswordField:
+      type: "string"
+      description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
+      minLength: 8
+      maxLength: 128
+      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+
     ChangeUserPasswordRequest:
       type: "object"
       description: "Payload for changing user password."
@@ -366,18 +397,12 @@ components:
         - oldPassword
       properties:
         newPassword:
-          type: "string"
-          description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          allOf:
+            - $ref: "#/components/schemas/PasswordField"
           example: "NewPassword123!"
         oldPassword:
-          type: "string"
-          description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          allOf:
+            - $ref: "#/components/schemas/PasswordField"
           example: "OldPassword123!"
 
     UserDto:
@@ -473,6 +498,14 @@ components:
           maxLength: 128
           pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
           example: "NewSecurePassword123!"
+
+    SuccessResponse:
+      type: "object"
+      description: "Standard success response format"
+      properties:
+        message:
+          type: "string"
+          description: "Success message"
 
     ErrorResponse:
       type: "object"
