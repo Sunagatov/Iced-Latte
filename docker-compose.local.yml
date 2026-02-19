@@ -31,8 +31,8 @@ services:
     container_name: iced-latte-backend
     environment:
       APP_SERVER_PORT: 8083
-      APP_JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      APP_JWT_REFRESH_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-local_jwt_secret_placeholder}
+      APP_JWT_REFRESH_SECRET: ${APP_JWT_REFRESH_SECRET:-local_jwt_refresh_secret_placeholder}
       DATASOURCE_PORT: 5432
       DATASOURCE_NAME: testdb
       DATASOURCE_USERNAME: postgres
@@ -49,7 +49,7 @@ services:
       GOOGLE_AUTH_CLIENT_ID: vbfgngfdndgndgndgndgndgndgndg
       GOOGLE_AUTH_CLIENT_SECRET: vbfgngfdndgndgndgndgndgndgndg
       GOOGLE_AUTH_REDIRECT_URI: vbfgngfdndgndgndgndgndgndgndg
-      STRIPE_SECRET_KEY: sk_test_51PJxciHA4AopuQMMeXaJNETc7RUAITeMTKJei07L8iEHrRiWLQalKsr756dnOzmKPUXufkUVNUSaiPyktJG9dGY500x0cM817f
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder_webhook_secret}
     ports:
       - '8083:8083'
@@ -97,12 +97,9 @@ services:
 #    restart: on-failure
 
   iced-latte-redis:
-    image: redis/redis-stack:latest
+    image: redis/redis-stack:7.2.0-v13
     container_name: iced-latte-redis
     networks:
       - iced-latte-network
-    environment:
-      - REDIS_HOST=localhost
-      - REDIS_PORT=6379
     ports:
-      - "6379:6379"
+      - "6380:6379"

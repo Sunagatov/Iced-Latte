@@ -79,7 +79,7 @@ public class AuthEndpoint {
                 var errorMessage = switch (e) {
                     case SecurityException se -> "Security error during authentication: " + se.getMessage();
                     case IllegalArgumentException iae -> "Invalid authentication data: " + iae.getMessage();
-                    case Exception ex -> "Authentication failed: " + ex.getMessage();
+                    default -> "Authentication failed: " + e.getMessage();
                 };
                 
                 log.error(errorMessage, e);

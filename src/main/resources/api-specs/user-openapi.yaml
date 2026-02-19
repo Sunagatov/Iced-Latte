@@ -187,6 +187,12 @@ paths:
       responses:
         "200":
           description: "Password reset request confirmed successfully."
+        "400":
+          description: "Invalid request."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access. Authentication required."
           content:
@@ -217,6 +223,12 @@ paths:
       responses:
         "200":
           description: "Password reset confirmed successfully."
+        "400":
+          description: "Invalid or expired reset token."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access. Authentication required."
           content:

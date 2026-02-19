@@ -1,17 +1,13 @@
-      - name: Build a new docker image
-        run: docker build -t ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
-      - name: Push a new docker image into Dockerhub
-        run: docker push ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }}
-            docker rmi ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} || true
-            docker pull ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }} || exit 1
-              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
-              ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }}:${{ github.sha }}
 name: Build and Deploy
 
 on:
   push:
     branches:
       - development
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-and-push-docker-image:
@@ -65,54 +61,56 @@ jobs:
           password: ${{ secrets.DEV_SSH_PASSWORD }}
           envs: IMAGE_TAG
           script: |
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
+            
+            # Check if image already exists locally
+            if docker image inspect $IMAGE_TAG >/dev/null 2>&1; then
+              echo "Image $IMAGE_TAG already exists locally, skipping pull"
+            else
+              docker pull $IMAGE_TAG || exit 1
+            fi
+            
+            # Graceful container update
+            if docker ps -q -f name=${{ vars.DOCKER_CONTAINER_NAME }}; then
+              docker stop ${{ vars.DOCKER_CONTAINER_NAME }}
+              docker rm ${{ vars.DOCKER_CONTAINER_NAME }}
+            fi
+            
+            # Clean up old images (keep last 3)
+            docker images ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi || true
+            
+            docker run -d \
+              --name ${{ vars.DOCKER_CONTAINER_NAME }} \
+              --network=${{ vars.DOCKER_NETWORK }} \
+              --restart=unless-stopped \
+              --env-file <(cat <<EOF
+            APP_SERVER_PORT=${{ vars.APP_SERVER_PORT }}
+            APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }}
+            APP_JWT_REFRESH_SECRET=${{ secrets.APP_JWT_REFRESH_SECRET }}
+            DATASOURCE_PORT=${{ vars.DATASOURCE_PORT }}
+            DATASOURCE_NAME=${{ vars.DATASOURCE_NAME }}
+            DATASOURCE_USERNAME=${{ vars.DATASOURCE_USERNAME }}
+            DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }}
+            DATASOURCE_HOST=${{ vars.DATASOURCE_HOST }}
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+            AWS_REGION=${{ vars.AWS_REGION }}
+            AWS_USER_BUCKET=${{ vars.AWS_USER_BUCKET }}
+            AWS_PRODUCT_BUCKET=${{ vars.AWS_PRODUCT_BUCKET }}
+            AWS_DEFAULT_PRODUCT_IMAGES_PATH=${{ vars.AWS_DEFAULT_PRODUCT_IMAGES_PATH }}
+            GOOGLE_AUTH_CLIENT_ID=${{ vars.GOOGLE_AUTH_CLIENT_ID }}
+            GOOGLE_AUTH_CLIENT_SECRET=${{ vars.GOOGLE_AUTH_CLIENT_SECRET }}
+            GOOGLE_AUTH_REDIRECT_URI=${{ vars.GOOGLE_AUTH_REDIRECT_URI }}
+            REDIS_PORT=${{ vars.REDIS_PORT }}
+            SPRING_AI_OPENAI_API_KEY=${{ secrets.SPRING_AI_OPENAI_API_KEY }}
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            MAIL_USERNAME=${{ vars.MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+            EOF
+            ) \
+              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}:/usr/app/logs \
+              -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
+              $IMAGE_TAG
         env:
           IMAGE_TAG: ${{ needs.build-and-push-docker-image.outputs.image-tag }}
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ vars.DOCKER_HUB_ACCOUNT_NAME }} --password-stdin
-          
-          # Check if image already exists locally
-          if docker image inspect $IMAGE_TAG >/dev/null 2>&1; then
-            echo "Image $IMAGE_TAG already exists locally, skipping pull"
-          else
-            docker pull $IMAGE_TAG || exit 1
-          fi
-          
-          # Graceful container update
-          if docker ps -q -f name=${{ vars.DOCKER_CONTAINER_NAME }}; then
-            docker stop ${{ vars.DOCKER_CONTAINER_NAME }}
-            docker rm ${{ vars.DOCKER_CONTAINER_NAME }}
-          fi
-          
-          # Clean up old images (keep last 3)
-          docker images ${{ vars.DOCKER_HUB_ACCOUNT_NAME }}/${{ vars.DOCKER_IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi || true
-          
-          docker run -d \
-            --name ${{ vars.DOCKER_CONTAINER_NAME }} \
-            --network=${{ vars.DOCKER_NETWORK }} \
-            --restart=unless-stopped \
-            --env-file <(cat <<EOF
-          APP_SERVER_PORT=${{ vars.APP_SERVER_PORT }}
-          APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }}
-          APP_JWT_REFRESH_SECRET=${{ secrets.APP_JWT_REFRESH_SECRET }}
-          DATASOURCE_PORT=${{ vars.DATASOURCE_PORT }}
-          DATASOURCE_NAME=${{ vars.DATASOURCE_NAME }}
-          DATASOURCE_USERNAME=${{ vars.DATASOURCE_USERNAME }}
-          DATASOURCE_PASSWORD=${{ secrets.DATASOURCE_PASSWORD }}
-          DATASOURCE_HOST=${{ vars.DATASOURCE_HOST }}
-          AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
-          AWS_REGION=${{ vars.AWS_REGION }}
-          AWS_USER_BUCKET=${{ vars.AWS_USER_BUCKET }}
-          AWS_PRODUCT_BUCKET=${{ vars.AWS_PRODUCT_BUCKET }}
-          AWS_DEFAULT_PRODUCT_IMAGES_PATH=${{ vars.AWS_DEFAULT_PRODUCT_IMAGES_PATH }}
-          GOOGLE_AUTH_CLIENT_ID=${{ vars.GOOGLE_AUTH_CLIENT_ID }}
-          GOOGLE_AUTH_CLIENT_SECRET=${{ vars.GOOGLE_AUTH_CLIENT_SECRET }}
-          GOOGLE_AUTH_REDIRECT_URI=${{ vars.GOOGLE_AUTH_REDIRECT_URI }}
-          REDIS_PORT=${{ vars.REDIS_PORT }}
-          SPRING_AI_OPENAI_API_KEY=${{ secrets.SPRING_AI_OPENAI_API_KEY }}
-          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          EOF
-          ) \
-            -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}:/usr/app/logs \
-            -v ${{ vars.APP_DATA_PATH_ON_THE_REMOTE_SERVER }}/products:/usr/app/products \
-            $IMAGE_TAG

@@ -10,7 +10,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
@@ -87,14 +86,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // Using Java 21 pattern matching for switch expressions
         var errorInfo = switch (exception) {
-            case JwtTokenBlacklistedException ex -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);
-            case AbsentBearerHeaderException ex -> new ErrorInfo("Authentication failed: invalid authorization header", HttpServletResponse.SC_UNAUTHORIZED);
-            case ExpiredJwtException ex -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
-            case JwtTokenHasNoUserEmailException ex -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
-            case UsernameNotFoundException ex -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
-            case ServletException ex -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            case RuntimeException ex -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            default -> new ErrorInfo("Authentication failed: unknown error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);
+            case AbsentBearerHeaderException ignored -> new ErrorInfo("Authentication failed: invalid authorization header", HttpServletResponse.SC_UNAUTHORIZED);
+            case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
+            case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
+            case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
+            case ServletException ignored -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         };
         
         if (errorInfo.statusCode() >= 500) {
@@ -136,7 +134,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private record ErrorInfo(String message, int statusCode) {}
 
     @Override
-    protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         return !isSecuredUrl(request);
     }
 

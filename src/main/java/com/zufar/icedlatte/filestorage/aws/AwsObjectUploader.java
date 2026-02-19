@@ -47,7 +47,7 @@ public class AwsObjectUploader {
             log.error("AWS couldn't be contacted for a response", sce);
             throw sce;
         } catch (IOException e) {
-            throw new FileReadException(fileName);
+            throw new FileReadException(fileName, e);
         }
     }
 

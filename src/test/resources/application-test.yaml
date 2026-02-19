@@ -22,8 +22,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql:
-      true
+    show-sql: true
     open-in-view: false
   liquibase:
     enabled: true
@@ -38,12 +37,13 @@ spring:
   ai:
     openai:
       api-key: "sk-proj-"
-      prompt: "You are an assistant who checks texts for appropriateness.
-            Analyze the following text {review} and determine if it contains political statements,
-            non-English language, or inappropriate language.
-            If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets. 
-            Only the reason should be in curly brackets.
-            Else return OK"
+      prompt: |
+        You are an assistant who checks texts for appropriateness.
+        Analyze the following text {review} and determine if it contains political statements,
+        non-English language, or inappropriate language.
+        If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets.
+        Only the reason should be in curly brackets.
+        Else return OK
     chat:
       options:
         model: gpt-3.5-turbo
@@ -79,7 +79,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: youricedlatteshop@gmail.com
-    password: 35346432634
+    password: test_mail_password_placeholder
 
 #
 # Temporary Cache
@@ -100,8 +100,8 @@ jwt:
   refresh-expiration: 604800000
   issuer: iced-latte
   audience: iced-latte-users
-  email: olivia@example.com
-  password: p@ss1logic11
+  email: test-user@example.com
+  password: test_password_placeholder
 
 #
 # AI Properties
@@ -127,8 +127,8 @@ google:
   redirectUri: "http://localhost:8083"
 
 stripe:
-  secret-key: "sk_test_51PJxciHA4AopuQMMeXaJNETc7RUAITeMTKJei07L8iEHrRiWLQalKsr756dnOzmKPUXufkUVNUSaiPyktJG9dGY500x0cM817f"
-  webhook-secret: "sk-test-secret"
+  secret-key: "sk_test_placeholder"
+  webhook-secret: "whsec_test_placeholder"
 
 logging:
   level:

@@ -74,7 +74,7 @@ spring:
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    secure: false
+    secure: true
     default-image-directory:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
@@ -92,8 +92,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: youricedlatteshop@gmail.com
-    password: "kfcf kyba hrab nyij"
+    username: ${MAIL_USERNAME:youricedlatteshop@gmail.com}
+    password: ${MAIL_PASSWORD}
     subject:
       confirmation: "Iced Latte - Email Confirmation"
     properties:
@@ -242,11 +242,11 @@ logging:
 # AI Properties
 #
 ai:
-# https://platform.openai.com/docs/api-reference/moderations/create
-  url:          "https://api.openai.com/v1/moderations"
-  api_key:      "sk-api-key"
-  request_body: '{"input": "$message"}'
-  message_replacement_pattern: "$message"
+  # https://platform.openai.com/docs/api-reference/moderations/create
+  url: "https://api.openai.com/v1/moderations"
+  api-key: "sk-api-key"
+  request-body: '{"input": "$message"}'
+  message-replacement-pattern: "$message"
 
 #
 # Google Auth Properties

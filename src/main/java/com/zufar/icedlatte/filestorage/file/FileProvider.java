@@ -32,7 +32,7 @@ public class FileProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("AWS not configured, returning empty URL for: {}", relatedObjectId);
+            log.warn("AWS not configured, returning empty URL for the requested object.");
             return Optional.empty();
         }
         return fileMetadataProvider.getFileMetadataDto(relatedObjectId)
@@ -42,7 +42,7 @@ public class FileProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, String> getRelatedObjectUrls(final List<UUID> relatedObjectIds) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("AWS not configured, returning empty URLs for: {}", relatedObjectIds);
+            log.warn("AWS not configured, returning empty URLs for {} requested objects.", relatedObjectIds.size());
             return Map.of();
         }
         return fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)

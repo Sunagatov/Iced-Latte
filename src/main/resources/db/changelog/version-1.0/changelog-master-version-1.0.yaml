@@ -94,7 +94,7 @@ databaseChangeLog:
   # ========== AUDIT & COMPLIANCE ==========
   # Comprehensive audit logging system
   - include:
-      file: db/changelog/version-1.0/25.01.2025.part1.create-audit-logs-table.sql
+      file: db/changelog/version-1.0/25.01.2025.part1.create-audit-log-table.sql
   - include:
       file: db/changelog/version-1.0/25.01.2025.part2.add-audit-columns-to-existing-tables.sql
 

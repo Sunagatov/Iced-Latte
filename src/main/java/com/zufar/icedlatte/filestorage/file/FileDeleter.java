@@ -37,7 +37,7 @@ public class FileDeleter {
                         fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
                         log.info("File was deleted from the file storage and file metadata was deleted from the database as well");
                     } else {
-                        log.warn("AWS not configured, skipping file deletion from storage for: {}", relatedObjectId);
+                        log.warn("AWS not configured, skipping file deletion from storage.");
                     }
                 });
     }

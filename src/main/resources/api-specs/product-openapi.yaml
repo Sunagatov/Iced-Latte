@@ -144,8 +144,8 @@ paths:
             example2:
               description: "Display only 15 products per page in the product list."
               value: "size=15"
-        - name: "sort_attribute"
-          description: "The field name of the product by which the results should be sorted. Possible allowed values: 1) sort_attribute=name or 2) sort_attribute=price or 3) sort_attribute=quantity or 4) sort_attribute=averageRating or 5) sort_attribute=reviewsCount."
+        - name: "sortAttribute"
+          description: "The field name of the product by which the results should be sorted. Possible allowed values: 1) sortAttribute=name or 2) sortAttribute=price or 3) sortAttribute=quantity or 4) sortAttribute=averageRating or 5) sortAttribute=reviewsCount."
           in: "query"
           required: false
           schema:
@@ -154,21 +154,21 @@ paths:
           examples:
             example1:
               description: "Display the product list sorted by the provided sort attribute 'name' (the product's name)."
-              value: "sort_attribute=name"
+              value: "sortAttribute=name"
             example2:
               description: "Display the product list sorted by the provided sort attribute 'price' (the product's price)."
-              value: "sort_attribute=price"
+              value: "sortAttribute=price"
             example3:
               description: "Display the product list sorted by the provided sort attribute 'quantity' (the product's quantity)."
-              value: "sort_attribute=quantity"
+              value: "sortAttribute=quantity"
             example4:
               description: "Display the product list sorted by the provided sort attribute 'averageRating' (the product's averageRating)."
-              value: "sort_attribute=averageRating"
+              value: "sortAttribute=averageRating"
             example5:
               description: "Display the product list sorted by the provided sort attribute 'reviewsCount' (the product's reviewsCount)."
-              value: "sort_attribute=reviewsCount"
-        - name: "sort_direction"
-          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
+              value: "sortAttribute=reviewsCount"
+        - name: "sortDirection"
+          description: "The direction of sorting. Possible allowed values: 1) sortDirection=asc or 2) sortDirection=desc."
           in: "query"
           required: false
           schema:
@@ -178,12 +178,12 @@ paths:
           examples:
             example1:
               description: "Display the product list in ascending order."
-              value: "sort_direction=asc"
+              value: "sortDirection=asc"
             example2:
               description: "Display the product list in descending order."
-              value: "sort_direction=desc"
-        - name: "min_price"
-          description: "Filter products by the lower limit of the product's price. Possible allowed values: 1) min_price=5 or 2) min_price=17.25 or 3) any other non negative integer or decimal number value."
+              value: "sortDirection=desc"
+        - name: "minPrice"
+          description: "Filter products by the lower limit of the product's price. Possible allowed values: 1) minPrice=5 or 2) minPrice=17.25 or 3) any other non negative integer or decimal number value."
           in: "query"
           required: false
           schema:
@@ -191,13 +191,13 @@ paths:
             format: "decimal"
           examples:
             example1:
-              description: "Display the product list filtered by the lower limit of the product's price (min_price=5)."
-              value: "min_price=5"
+              description: "Display the product list filtered by the lower limit of the product's price (minPrice=5)."
+              value: "minPrice=5"
             example2:
-              description: "Display the product list filtered by the lower limit of the product's price (min_price=17.25)."
-              value: "min_price=17.25"
-        - name: "max_price"
-          description: "Filter products by the upper limit of the product's price. Possible allowed values: 1) max_price=5 or 2) max_price=17.25 or 3) any other non negative integer or decimal number value."
+              description: "Display the product list filtered by the lower limit of the product's price (minPrice=17.25)."
+              value: "minPrice=17.25"
+        - name: "maxPrice"
+          description: "Filter products by the upper limit of the product's price. Possible allowed values: 1) maxPrice=5 or 2) maxPrice=17.25 or 3) any other non negative integer or decimal number value."
           in: "query"
           required: false
           schema:
@@ -205,14 +205,13 @@ paths:
             format: "decimal"
           examples:
             example1:
-              description: "Display the product list filtered by the upper limit of the product's price (max_price=5)."
-              value: "max_price=5"
+              description: "Display the product list filtered by the upper limit of the product's price (maxPrice=5)."
+              value: "maxPrice=5"
             example2:
-              description: "Display the product list filtered by the upper limit of the product's price (max_price=17.25)."
-              value: "max_price=17.25"
-        - name: "minimum_average_rating"
-          description: "Filter products by the minimum average rating.
-          Possible allowed values: 1) minimum_average_rating=1 or 2) minimum_average_rating=2 or 3) minimum_average_rating=3 or 4) minimum_average_rating=4 "
+              description: "Display the product list filtered by the upper limit of the product's price (maxPrice=17.25)."
+              value: "maxPrice=17.25"
+        - name: "minimumAverageRating"
+          description: "Filter products by the minimum average rating. Possible allowed values: 1) minimumAverageRating=1 or 2) minimumAverageRating=2 or 3) minimumAverageRating=3 or 4) minimumAverageRating=4"
           in: "query"
           required: false
           schema:
@@ -220,34 +219,19 @@ paths:
             format: "int32"
           examples:
             example1:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=1)."
-              value: "minimum_average_rating=1"
+              description: "Display the product list filtered by the minimum average rating of a product (minimumAverageRating=1)."
+              value: "minimumAverageRating=1"
             example2:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=2)."
-              value: "minimum_average_rating=2"
+              description: "Display the product list filtered by the minimum average rating of a product (minimumAverageRating=2)."
+              value: "minimumAverageRating=2"
             example3:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=3)."
-              value: "minimum_average_rating=3"
+              description: "Display the product list filtered by the minimum average rating of a product (minimumAverageRating=3)."
+              value: "minimumAverageRating=3"
             example4:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=4)."
-              value: "minimum_average_rating=4"
-        - name: "brand_names"
-          description: "Filter products by selected brand names (comma-separated list). Possible allowed values: 1) brand_names=Starbucks or 2) brand_names=Starbucks,Folgers or 3) any other comma-separated list"
-          examples:
-            example1:
-              description: "Display the product list filtered by selected brand names (brand_names=Starbucks,Folgers)."
-              value: "brand_names=Starbucks,Folgers"
-            example2:
-              description: "Display the product list filtered by selected brand names (brand_names=Starbucks)."
-              value: "brand_names=Starbucks"
-          in: "query"
-          required: false
-          schema:
-            type: "array"
-            items:
-              type: "string"
-        - name: "seller_names"
-          description: "Filter products by selected seller names (comma-separated list). Possible allowed values: 1) seller_names=BeanBrewers,JavaBeanCoffee,MorningMug or 2) seller_names=BeanBrewers or 3) any other comma-separated list"
+              description: "Display the product list filtered by the minimum average rating of a product (minimumAverageRating=4)."
+              value: "minimumAverageRating=4"
+        - name: "brandNames"
+          description: "Filter products by selected brand names (comma-separated list). Possible allowed values: 1) brandNames=Starbucks or 2) brandNames=Starbucks,Folgers or 3) any other comma-separated list"
           in: "query"
           required: false
           schema:
@@ -256,11 +240,26 @@ paths:
               type: "string"
           examples:
             example1:
-              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers,JavaBeanCoffee,MorningMug)."
-              value: "seller_names=BeanBrewers,JavaBeanCoffee,MorningMug"
+              description: "Display the product list filtered by selected brand names (brandNames=Starbucks,Folgers)."
+              value: "brandNames=Starbucks,Folgers"
             example2:
-              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers)."
-              value: "seller_names=BeanBrewers"
+              description: "Display the product list filtered by selected brand names (brandNames=Starbucks)."
+              value: "brandNames=Starbucks"
+        - name: "sellerNames"
+          description: "Filter products by selected seller names (comma-separated list). Possible allowed values: 1) sellerNames=BeanBrewers,JavaBeanCoffee,MorningMug or 2) sellerNames=BeanBrewers or 3) any other comma-separated list"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          examples:
+            example1:
+              description: "Display the product list filtered by selected seller names (sellerNames=BeanBrewers,JavaBeanCoffee,MorningMug)."
+              value: "sellerNames=BeanBrewers,JavaBeanCoffee,MorningMug"
+            example2:
+              description: "Display the product list filtered by selected seller names (sellerNames=BeanBrewers)."
+              value: "sellerNames=BeanBrewers"
       responses:
         "200":
           description: "Paginated list of products retrieved successfully."

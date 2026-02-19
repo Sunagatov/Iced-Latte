@@ -51,11 +51,11 @@ public class JwtAuthenticationProvider {
                     new WebAuthenticationDetailsSource().buildDetails(httpRequest)
             );
             
-            log.debug("Authentication successful for user: {}", userEmail);
+            log.debug("Authentication successful");
             return authenticationToken;
             
         } catch (Exception ex) {
-            log.debug("Authentication failed: {}", ex.getMessage());
+            log.debug("Authentication failed", ex);
             throw ex;
         }
     }
