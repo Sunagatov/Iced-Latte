@@ -20,10 +20,10 @@ public class ResetLoginAttemptsService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
-        userAccountLocker.unlockUserAccount(userEmail);
-
         loginAttemptRepository.findByUserEmail(userEmail)
                 .ifPresent(existingLoginAttempt -> {
+                    userAccountLocker.unlockUserAccount(userEmail);
+
                     LoginAttemptEntity newLoginAttempt = loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
                     newLoginAttempt.setId(existingLoginAttempt.getId());
 

@@ -20,15 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserRegistrationService {
 
-    private static final boolean DEFAULT_ACCOUNT_NON_EXPIRED = true;
-    private static final boolean DEFAULT_ACCOUNT_NON_LOCKED = true;
-    private static final boolean DEFAULT_CREDENTIALS_NON_EXPIRED = true;
-    private static final boolean DEFAULT_ENABLED = true;
-
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userCrudRepository;
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
+    private final UserEntityDefaultsProvider userEntityDefaultsProvider;
 
     public boolean isEmailAvailable(final String email) {
         return userCrudRepository.findByEmail(email).isEmpty();
@@ -48,10 +44,7 @@ public class UserRegistrationService {
         newUserEntity.setEmail(email);
         newUserEntity.setPassword(encryptedPassword);
         newUserEntity.addAuthority(defaultUserGrantedAuthority);
-        newUserEntity.setAccountNonExpired(DEFAULT_ACCOUNT_NON_EXPIRED);
-        newUserEntity.setAccountNonLocked(DEFAULT_ACCOUNT_NON_LOCKED);
-        newUserEntity.setCredentialsNonExpired(DEFAULT_CREDENTIALS_NON_EXPIRED);
-        newUserEntity.setEnabled(DEFAULT_ENABLED);
+        userEntityDefaultsProvider.applyDefaults(newUserEntity);
 
         UserEntity userEntity = userCrudRepository.save(newUserEntity);
 
