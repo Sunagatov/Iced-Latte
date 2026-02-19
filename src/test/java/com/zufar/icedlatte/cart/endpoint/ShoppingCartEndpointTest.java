@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.cart.endpoint;
 
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -7,42 +8,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.http.HttpStatus;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.test.web.server.LocalServerPort;
 
-
-@Testcontainers
 @DisplayName("ShoppingCartEndpointTest Tests")
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ShoppingCartEndpointTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
-
-    @Container
-    static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
-            .withExposedPorts(6379);
+class ShoppingCartEndpointTest extends IntegrationTestBase {
 
     @LocalServerPort
     protected Integer port;
@@ -53,27 +30,25 @@ class ShoppingCartEndpointTest {
     @Value("${jwt.password}")
     protected String password;
 
-    @DynamicPropertySource
-    static void dataSourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("DATASOURCE_URL", postgres::getJdbcUrl);
-        registry.add("spring.data.redis.host", redis::getHost);
-        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379).toString());
-    }
-
     protected static RequestSpecification specification;
+
     private static final String SHOPPING_CART_SCHEMA_LOCATION = "cart/model/schema/cart-schema.json";
     private static final String SHOPPING_CART_ADD_BODY_LOCATION = "/cart/model/cart-add-body.json";
     private static final String SHOPPING_CART_UPDATE_BODY_LOCATION = "/cart/model/cart-update-body.json";
     private static final String SHOPPING_CART_UPDATE_BAD_BODY_LOCATION = "/cart/model/cart-update-bad-body.json";
     private static final String SHOPPING_CART_DELETE_BODY_LOCATION = "/cart/model/cart-delete-body.json";
 
+    private static String cachedJwtToken;
+
     @BeforeEach
     void tokenAndSpecification() {
-        var jwtToken = getJwtToken(port, email, password);
+        if (cachedJwtToken == null) {
+            cachedJwtToken = getJwtToken(port, email, password);
+        }
         specification = given()
                 .log().all(true)
                 .port(port)
-                .header("Authorization", "Bearer " + jwtToken)
+                .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(CartEndpoint.CART_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
@@ -82,11 +57,8 @@ class ShoppingCartEndpointTest {
     @Test
     @DisplayName("Should retrieve shopping cart successfully")
     void shouldRetrieveShoppingCartSuccessfully() {
-        Response response = given(specification)
-                .get();
-
-        assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
-        response.then()
+        assertRestApiOkResponse(given(specification).get(), SHOPPING_CART_SCHEMA_LOCATION);
+        given(specification).get().then()
                 .body("id", notNullValue())
                 .body("userId", notNullValue())
                 .body("items", notNullValue())
@@ -98,12 +70,7 @@ class ShoppingCartEndpointTest {
     @Test
     @DisplayName("Should add item to shopping cart successfully")
     void shouldAddItemToShoppingCart() {
-        String body = getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION);
-
-        Response response = given(specification)
-                .body(body)
-                .post("/items");
-
+        Response response = given(specification).body(getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION)).post("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
         response.then()
                 .body("items", hasSize(greaterThan(0)))
@@ -114,12 +81,7 @@ class ShoppingCartEndpointTest {
     @Test
     @DisplayName("Should update shopping cart item quantity successfully")
     void shouldUpdateItemQuantityInShoppingCart() {
-        String body = getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION);
-
-        Response response = given(specification)
-                .body(body)
-                .patch("/items");
-
+        Response response = given(specification).body(getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION)).patch("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
         response.then()
                 .body("items", notNullValue())
@@ -129,24 +91,14 @@ class ShoppingCartEndpointTest {
     @Test
     @DisplayName("Should return 404 when updating non-existent shopping cart item")
     void shouldReturnNotFoundWhenUpdatingNonExistentItem() {
-        String body = getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION);
-
-        Response response = given(specification)
-                .body(body)
-                .patch("/items");
-
-        response.then().statusCode(HttpStatus.NOT_FOUND.value());
+        given(specification).body(getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION)).patch("/items")
+                .then().statusCode(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
     @DisplayName("Should delete items from shopping cart successfully")
     void shouldDeleteItemsFromShoppingCart() {
-        String body = getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION);
-
-        Response response = given(specification)
-                .body(body)
-                .delete("/items");
-
+        Response response = given(specification).body(getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION)).delete("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
         response.then()
                 .body("items", notNullValue())
@@ -156,28 +108,16 @@ class ShoppingCartEndpointTest {
     @Test
     @DisplayName("Should return 401 when accessing cart without authentication")
     void shouldReturnUnauthorizedWithoutToken() {
-        RequestSpecification unauthenticatedSpec = given()
-                .log().all(true)
-                .port(port)
-                .basePath(CartEndpoint.CART_URL)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
-
-        Response response = given(unauthenticatedSpec)
-                .get();
-
-        response.then().statusCode(HttpStatus.UNAUTHORIZED.value());
+        given().log().all(true).port(port).basePath(CartEndpoint.CART_URL)
+                .contentType(ContentType.JSON).accept(ContentType.JSON)
+                .get()
+                .then().statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
     @DisplayName("Should return 400 for invalid request body")
     void shouldReturnBadRequestForInvalidBody() {
-        String invalidBody = "{\"invalid\": \"data\"}";
-
-        Response response = given(specification)
-                .body(invalidBody)
-                .post("/items");
-
-        response.then().statusCode(HttpStatus.BAD_REQUEST.value());
+        given(specification).body("{\"invalid\": \"data\"}").post("/items")
+                .then().statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }

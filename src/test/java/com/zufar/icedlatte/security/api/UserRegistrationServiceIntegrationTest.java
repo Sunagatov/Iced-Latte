@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
@@ -9,15 +10,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
-class UserRegistrationServiceIntegrationTest {
+class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private UserRegistrationService userRegistrationService;
