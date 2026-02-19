@@ -127,9 +127,14 @@ test_logout() {
 
 echo "=== Complete API Test ==="
 test_login
+sleep 2
 test_products
+sleep 2
 test_refresh
+sleep 2
 test_redis_endpoints
+sleep 2
 test_reviews
+sleep 2
 test_logout
 echo "=== Done ==="

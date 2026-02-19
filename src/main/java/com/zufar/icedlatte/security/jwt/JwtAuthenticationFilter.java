@@ -74,62 +74,66 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(httpRequest, httpResponse);
 
-        } catch (JwtTokenBlacklistedException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: token revoked", ex, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (AbsentBearerHeaderException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: invalid authorization header", ex, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (ExpiredJwtException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: token expired", ex, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (JwtTokenHasNoUserEmailException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: invalid token format", ex, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (UsernameNotFoundException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: user not found", ex, HttpServletResponse.SC_UNAUTHORIZED);
-        } catch (ServletException | RuntimeException ex) {
-            handleAuthenticationException(httpResponse, "Authentication failed: internal error", ex, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            handleAuthenticationException(httpResponse, ex);
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
             MDC.remove(MDC_REQUEST_ID_KEY);
         }
     }
 
-    private void handleAuthenticationException(HttpServletResponse httpResponse,
-                                             String errorMessage,
-                                             Exception exception,
-                                             int statusCode) throws IOException {
+    private void handleAuthenticationException(HttpServletResponse httpResponse, Exception exception) throws IOException {
         String requestId = MDC.get(MDC_REQUEST_ID_KEY);
         
-        if (statusCode >= 500) {
+        // Using Java 21 pattern matching for switch expressions
+        var errorInfo = switch (exception) {
+            case JwtTokenBlacklistedException ex -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);
+            case AbsentBearerHeaderException ex -> new ErrorInfo("Authentication failed: invalid authorization header", HttpServletResponse.SC_UNAUTHORIZED);
+            case ExpiredJwtException ex -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
+            case JwtTokenHasNoUserEmailException ex -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
+            case UsernameNotFoundException ex -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
+            case ServletException ex -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            case RuntimeException ex -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            default -> new ErrorInfo("Authentication failed: unknown error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        };
+        
+        if (errorInfo.statusCode() >= 500) {
             log.error("Authentication error: {} - Request ID: {}", 
-                    StringEscapeUtils.escapeJava(errorMessage), requestId, exception);
+                    StringEscapeUtils.escapeJava(errorInfo.message()), requestId, exception);
         } else {
             log.warn("Authentication failed: {} - Request ID: {}", 
-                    StringEscapeUtils.escapeJava(errorMessage), requestId);
+                    StringEscapeUtils.escapeJava(errorInfo.message()), requestId);
             log.debug("Authentication failure details", exception);
         }
         
-        httpResponse.setStatus(statusCode);
+        httpResponse.setStatus(errorInfo.statusCode());
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         httpResponse.setCharacterEncoding("UTF-8");
         httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
+        httpResponse.setHeader("X-Request-ID", requestId);
         
         String jsonResponse = String.format("""
             {
                 "error": "%s",
+                "message": "%s",
                 "timestamp": "%s",
                 "status": %d,
-                "path": "%s"
+                "requestId": "%s"
             }
             """, 
             StringEscapeUtils.escapeJson("Unauthorized"), 
+            StringEscapeUtils.escapeJson(errorInfo.message()),
             java.time.Instant.now(), 
-            statusCode,
-            StringEscapeUtils.escapeJson(httpResponse.getHeader("X-Request-URI") != null ? 
-                httpResponse.getHeader("X-Request-URI") : "unknown"));
+            errorInfo.statusCode(),
+            StringEscapeUtils.escapeJson(requestId));
         
         httpResponse.getWriter().write(jsonResponse);
     }
+    
+    // Record for error information - Java 21 feature
+    private record ErrorInfo(String message, int statusCode) {}
 
     @Override
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) {

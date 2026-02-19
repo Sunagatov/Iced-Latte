@@ -2,6 +2,12 @@
 # BUILD STAGE
 # =============================================================================
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
+
+# Build arguments
+ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+ARG PROFILE=dev
+ARG VERSION=0.0.1
+
 WORKDIR /app
 
 # --- Dependency Layer (cached when pom.xml unchanged) ---
@@ -12,35 +18,38 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 
 # --- Build Application ---
-RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=0.0.1 && \
-    mvn package -Pdev -DskipTests -B
+RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION} && \
+    mvn package -P${PROFILE} -DskipTests -B --no-transfer-progress
 
 # =============================================================================
 # RUNTIME STAGE
 # =============================================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM gcr.io/distroless/java21-debian12:nonroot
 
-# --- Security Setup ---
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Build arguments for runtime
+ARG VERSION=0.0.1
+ARG PROFILE=prod
+
+# Metadata
+LABEL maintainer="Iced-Latte Team" \
+      version="${VERSION}" \
+      description="Iced-Latte Backend Application"
 
 WORKDIR /app
 
 # --- Application Setup ---
-COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 # --- Runtime Configuration ---
-USER appuser
 EXPOSE 8080
-
-# --- Health Monitoring ---
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # --- Application Startup ---
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
     "-XX:MaxRAMPercentage=75.0", \
     "-XX:+ExitOnOutOfMemoryError", \
+    "-XX:+UseG1GC", \
+    "-XX:+UseStringDeduplication", \
     "-Djava.security.egd=file:/dev/./urandom", \
+    "-Dspring.profiles.active=${PROFILE}", \
     "-jar", "app.jar"]

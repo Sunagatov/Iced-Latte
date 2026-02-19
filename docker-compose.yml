@@ -3,15 +3,13 @@ version: '3.9'
 networks:
   iced-latte-network:
     name: iced-latte-network
-    external: true
 
 services:
   latte-backend:
-    image: 'zufarexplainedit/iced-latte-backend:${DOCKER_IMAGE_TAG}'
-    container_name: latte-backend
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: latte-backend
     ports:
       - '8083:8083'
     networks:

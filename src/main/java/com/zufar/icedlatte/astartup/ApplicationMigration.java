@@ -29,7 +29,7 @@ public class ApplicationMigration implements ApplicationRunner {
     private final AwsProvider awsProvider;
     private final FileMetadataSaver fileMetadataSaver;
 
-    public ApplicationMigration(FileUploader fileUploader,
+    public ApplicationMigration(@Autowired(required = false) FileUploader fileUploader,
                                 @Autowired(required = false) AwsProvider awsProvider,
                                 FileMetadataSaver fileMetadataSaver) {
         this.fileUploader = fileUploader;
@@ -39,7 +39,7 @@ public class ApplicationMigration implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (awsProvider == null ||
+        if (fileUploader == null || awsProvider == null ||
                 productPictureBucket == null || productPictureBucket.isEmpty() ||
                 directoryPath == null || directoryPath.isEmpty()) {
             log.info("AWS configuration not available, skipping file migration");

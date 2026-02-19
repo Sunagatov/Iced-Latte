@@ -26,13 +26,8 @@ public class AWSConfig {
     private String region;
 
     @Bean
-    @ConditionalOnProperty(name = "spring.aws.access-key", havingValue = "your-aws-access-key")
+    @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Client s3Client() {
-        if ("your-aws-access-key".equals(accessKey) || "your-aws-secret-key".equals(secretKey)) {
-            log.warn("AWS credentials are placeholder values. S3Client will be disabled.");
-            throw new RuntimeException("AWS not configured");
-        }
-
         try {
             String sessionToken = System.getenv("AWS_SESSION_TOKEN");
             if (sessionToken != null && !sessionToken.isEmpty()) {

@@ -63,6 +63,7 @@ spring:
   # AWS Properties
   #
   aws:
+    enabled: ${AWS_ENABLED:true}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
@@ -78,12 +79,12 @@ spring:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
-  # Redis Properties
+  # Redis Properties (DISABLED - using HashMap cache)
   #
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+  # data:
+  #   redis:
+  #     host: ${REDIS_HOST}
+  #     port: ${REDIS_PORT}
 
   #
   # Email Properties
@@ -136,7 +137,7 @@ cache:
 #
 temporary-cache:
   time:
-    token: 5
+    token: 1
   get-token-enabled: true
 
   #
@@ -209,6 +210,16 @@ jwt:
   expiration: 86400000 # 1 day
   refresh-secret: ${APP_JWT_REFRESH_SECRET}
   refresh-expiration: 86400000 # 1 day
+
+#
+# Rate Limiting Properties
+#
+security:
+  rate-limit:
+    max-requests: 200
+    auth-max-requests: 50
+    window-duration: PT1M
+    auth-window-duration: PT1M
 
 #
 # Login Attempts Properties

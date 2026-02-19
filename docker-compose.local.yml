@@ -12,20 +12,22 @@ volumes:
 
 services:
 
-  iced-latte-frontend:
-    image: 'zufarexplainedit/iced-latte-frontend:latest'
-    container_name: iced-latte-frontend
-#    build:
-#      context: /Users/astriganova/Desktop/Projects/Iced-Latte-Frontend
-#      dockerfile: Dockerfile.local
-    restart: 'always'
-    ports:
-      - '3000:3000'
-    networks:
-      - iced-latte-network
+#  iced-latte-frontend:
+#    image: 'zufarexplainedit/iced-latte-frontend:latest'
+#    container_name: iced-latte-frontend
+##    build:
+##      context: /Users/astriganova/Desktop/Projects/Iced-Latte-Frontend
+##      dockerfile: Dockerfile.local
+#    restart: 'always'
+#    ports:
+#      - '3000:3000'
+#    networks:
+#      - iced-latte-network
 
   iced-latte-backend:
-    image: 'zufarexplainedit/iced-latte-backend:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile.local
     container_name: iced-latte-backend
     environment:
       APP_SERVER_PORT: 8083
@@ -48,10 +50,7 @@ services:
       GOOGLE_AUTH_CLIENT_SECRET: vbfgngfdndgndgndgndgndgndgndg
       GOOGLE_AUTH_REDIRECT_URI: vbfgngfdndgndgndgndgndgndgndg
       STRIPE_SECRET_KEY: sk_test_51PJxciHA4AopuQMMeXaJNETc7RUAITeMTKJei07L8iEHrRiWLQalKsr756dnOzmKPUXufkUVNUSaiPyktJG9dGY500x0cM817f
-      STRIPE_WEBHOOK_SECRET: whsec_81c734081f94172b76e5dede103b67b3fcfc69220fa0747a12d67244c9ddb57d
-    build:
-      context: .
-      dockerfile: Dockerfile.local
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder_webhook_secret}
     ports:
       - '8083:8083'
       - '5005:5005' # port for remote debugging
@@ -65,7 +64,7 @@ services:
     restart: on-failure
 
   iced-latte-postgresdb:
-    image: 'postgres:13.11-bullseye'
+    image: 'postgres:14.18'
     container_name: iced-latte-postgresdb
     environment:
       - POSTGRES_USER=postgres
@@ -84,18 +83,18 @@ services:
       retries: 5
     restart: on-failure
 
-  iced-latte-nginx:
-    image: nginx:alpine
-    container_name: iced-latte-nginx
-    volumes:
-      - ./nginx_data:/etc/nginx/conf.d:ro
-    ports:
-      - '80:80'
-    networks:
-      - iced-latte-network
-    depends_on:
-      - iced-latte-backend
-    restart: on-failure
+#  iced-latte-nginx:
+#    image: nginx:alpine
+#    container_name: iced-latte-nginx
+#    volumes:
+#      - ./nginx_data:/etc/nginx/conf.d:ro
+#    ports:
+#      - '80:80'
+#    networks:
+#      - iced-latte-network
+#    depends_on:
+#      - iced-latte-backend
+#    restart: on-failure
 
   iced-latte-redis:
     image: redis/redis-stack:latest
@@ -104,6 +103,6 @@ services:
       - iced-latte-network
     environment:
       - REDIS_HOST=localhost
-      - REDIS_PORT=6380
+      - REDIS_PORT=6379
     ports:
-      - "6380:6380"
+      - "6379:6379"

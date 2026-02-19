@@ -167,6 +167,11 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.79</version>
+        </dependency>
 
         <!-- ========== SERIALIZATION & LOGGING ========== -->
         <dependency>

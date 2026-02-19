@@ -39,13 +39,14 @@ public class JwtAuthenticationProvider {
             // Load user details
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             
-            // Create authentication token
+            // Create authentication token with enhanced security context
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                     userDetails, 
                     null, 
                     userDetails.getAuthorities()
             );
             
+            // Set additional security details
             authenticationToken.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(httpRequest)
             );

@@ -41,11 +41,24 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final PaginationConfig paginationConfig;
 
     @Override
-    @GetMapping("/{productId}")
-    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
-        log.info("Getting product by id: {}", productId);
-        var product = singleProductProvider.getProductById(productId);
-        return ResponseEntity.ok(product);
+    @GetMapping("/sellers")
+    public ResponseEntity<SellersDto> getAllSellers() {
+        log.info("Getting all sellers");
+        var sellers = new SellersDto(List.of(
+                "JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium",
+                "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"
+        ));
+        log.info("Retrieved {} sellers", sellers.getSellers().size());
+        return ResponseEntity.ok(sellers);
+    }
+
+    @Override
+    @GetMapping("/brands")
+    public ResponseEntity<BrandsDto> getAllBrands() {
+        log.info("Getting all brands");
+        var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
+        log.info("Retrieved {} brands", brands.getBrands().size());
+        return ResponseEntity.ok(brands);
     }
 
     @Override
@@ -67,7 +80,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
         sortAttribute = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
         sortDirection = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
-        log.info("Getting products: page={}, size={}, sort={} {}", pageNumber, pageSize, sortAttribute, sortDirection);
+        log.info("Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
 
@@ -93,25 +106,10 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     }
 
     @Override
-    @GetMapping("/sellers")
-    @Cacheable(cacheNames = "sellers")
-    public ResponseEntity<SellersDto> getAllSellers() {
-        log.info("Getting all sellers");
-        var sellers = new SellersDto(List.of(
-                "JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium",
-                "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"
-        ));
-        log.info("Retrieved {} sellers", sellers.getSellers().size());
-        return ResponseEntity.ok(sellers);
-    }
-
-    @Override
-    @GetMapping("/brands")
-    @Cacheable(cacheNames = "brands")
-    public ResponseEntity<BrandsDto> getAllBrands() {
-        log.info("Getting all brands");
-        var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
-        log.info("Retrieved {} brands", brands.getBrands().size());
-        return ResponseEntity.ok(brands);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
+        log.info("Getting product by id: {}", productId);
+        var product = singleProductProvider.getProductById(productId);
+        return ResponseEntity.ok(product);
     }
 }
