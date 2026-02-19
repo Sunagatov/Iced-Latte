@@ -93,8 +93,9 @@ public class SpringSecurityConfiguration {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        // Using Argon2 for better security - recommended by OWASP
-        return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+    public PasswordEncoder passwordEncoder(
+            @org.springframework.beans.factory.annotation.Value("${security.argon2.memory:16384}") int memory,
+            @org.springframework.beans.factory.annotation.Value("${security.argon2.iterations:2}") int iterations) {
+        return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 }

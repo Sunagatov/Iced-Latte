@@ -100,8 +100,8 @@ jwt:
   refresh-expiration: 604800000
   issuer: iced-latte
   audience: iced-latte-users
-  email: test-user@example.com
-  password: test_password_placeholder
+  email: olivia@example.com
+  password: p@ss1logic11
 
 #
 # AI Properties
@@ -139,6 +139,9 @@ logging:
 # Rate Limiting Properties (relaxed for tests)
 #
 security:
+  argon2:
+    memory: 256
+    iterations: 1
   rate-limit:
     max-requests: 10000
     auth-max-requests: 10000

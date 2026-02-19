@@ -16,7 +16,6 @@ public abstract class IntegrationTestBase {
     @MockitoBean
     protected JavaMailSender javaMailSender;
 
-
     protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:13.11-bullseye");
     @SuppressWarnings("resource")
     protected static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
