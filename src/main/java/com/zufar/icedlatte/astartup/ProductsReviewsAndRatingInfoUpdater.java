@@ -26,7 +26,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     public void run(ApplicationArguments args) throws SQLException {
         try {
             productInfoRepository.findAll().stream()
-                .map(ProductInfo::getProductId)
+                .map(ProductInfo::getId)
                 .forEach(productId -> {
                     productInfoRepository.updateAverageRating(productId);
                     productInfoRepository.updateReviewsCount(productId);

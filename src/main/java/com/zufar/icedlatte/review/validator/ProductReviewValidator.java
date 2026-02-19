@@ -91,7 +91,7 @@ public class ProductReviewValidator {
         if (productReview.isEmpty()) {
             throw new ProductReviewNotFoundException(productReviewId);
         }
-        if (!productInfo.get().getProductId().equals(productReview.get().getProductId())) {
+        if (!productInfo.get().getId().equals(productReview.get().getProductId())) {
             throw new ProductIdsAreNotMatchException(productReviewId);
         }
     }

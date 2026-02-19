@@ -36,7 +36,7 @@ class ShoppingCartItemDtoConverterTest {
         ShoppingCartItemDto shoppingCartItemDto = shoppingCartItemDtoConverter.toDto(shoppingCartItem);
 
         assertEquals(shoppingCartItem.getId(), shoppingCartItemDto.getId());
-        assertEquals(shoppingCartItem.getProductInfo().getProductId(), shoppingCartItemDto.getProductInfo().getId());
+        assertEquals(shoppingCartItem.getProductInfo().getId(), shoppingCartItemDto.getProductInfo().getId());
         assertEquals(shoppingCartItem.getProductQuantity(), shoppingCartItemDto.getProductQuantity());
     }
 }

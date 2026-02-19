@@ -47,7 +47,7 @@ class FavoriteProductAdderTest {
     @Mock
     private FavoriteListDtoConverter favoriteListDtoConverter;
 
-    private ListOfFavoriteProducts listOfFavoriteProducts = new ListOfFavoriteProducts();
+    private final ListOfFavoriteProducts listOfFavoriteProducts = new ListOfFavoriteProducts();
 
     @Test
     @DisplayName("Should add products to favorite list returning favorite list")
@@ -57,7 +57,7 @@ class FavoriteProductAdderTest {
         UUID favoriteListId = UUID.randomUUID();
 
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setProductId(productId);
+        productInfo.setId(productId);
 
         ProductInfoDto productInfoDto = new ProductInfoDto();
         productInfoDto.setId(productId);

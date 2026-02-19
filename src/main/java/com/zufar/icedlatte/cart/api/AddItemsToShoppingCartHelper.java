@@ -53,7 +53,7 @@ public class AddItemsToShoppingCartHelper {
 
         Set<UUID> existingProductIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductInfo)
-                .map(ProductInfo::getProductId)
+                .map(ProductInfo::getId)
                 .collect(Collectors.toSet());
 
         Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
@@ -64,7 +64,7 @@ public class AddItemsToShoppingCartHelper {
                 .map(productInfo ->
                         ShoppingCartItem.builder()
                                 .shoppingCart(shoppingCart)
-                                .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
+                                .productQuantity(productsWithQuantity.get(productInfo.getId()))
                                 .productInfo(productInfo)
                                 .build()
                 )

@@ -6,7 +6,6 @@ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
@@ -17,7 +16,6 @@ import org.mapstruct.Named;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
@@ -26,16 +24,8 @@ public interface FavoriteListDtoConverter {
     @Mapping(target = "favoriteItems", source = "favoriteItems", qualifiedByName = "mapFavoriteItems")
     FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity);
 
-    @Mapping(target = "id", source = "productId")
     @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
     ProductInfoDto convertProductInfoDto(ProductInfo productInfo);
-
-    @Named("toUserId")
-    default UUID convertToUserId(UserEntity user) {
-        Optional<UserEntity> userOptional = Optional.ofNullable(user);
-        Optional<UUID> userIdOptional = userOptional.map(UserEntity::getId);
-        return userIdOptional.orElse(null);
-    }
 
     @Named("mapFavoriteItems")
     default FavoriteItemDto toFavoriteItemDto(FavoriteItemEntity itemEntity) {

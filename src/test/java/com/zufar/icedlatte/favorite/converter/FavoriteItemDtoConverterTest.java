@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.favorite.converter;
 
-import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
@@ -27,12 +26,12 @@ public class FavoriteItemDtoConverterTest {
     void toDtoTest() {
 
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setProductId(UUID.randomUUID());
+        productInfo.setId(UUID.randomUUID());
 
         FavoriteItemEntity expectedFavoriteItem = new FavoriteItemEntity();
         expectedFavoriteItem.setProductInfo(productInfo);
 
-        FavoriteItemDto actualFavoriteItemDto = converter.toDto(productInfoDtoConverter, expectedFavoriteItem);
+        converter.toDto(productInfoDtoConverter, expectedFavoriteItem);
         // FIXME: different types of sets
         //assertThat(actualFavoriteItemDto.productInfo()).isEqualTo(expectedFavoriteItem.getProductInfo());
     }

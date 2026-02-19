@@ -33,7 +33,7 @@ public class FavoriteListDtoConverterTest {
     void convertListEntityToDto() {
 
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setProductId(UUID.randomUUID());
+        productInfo.setId(UUID.randomUUID());
 
         FavoriteItemEntity favoriteItem = new FavoriteItemEntity();
         favoriteItem.setProductInfo(productInfo);
@@ -60,7 +60,7 @@ public class FavoriteListDtoConverterTest {
 
         ProductInfoDto actualProductInfoDto = converter.convertProductInfoDto(expectedProductInfo);
 
-        assertThat(actualProductInfoDto.getId()).isEqualTo(expectedProductInfo.getProductId());
+        assertThat(actualProductInfoDto.getId()).isEqualTo(expectedProductInfo.getId());
         assertThat(actualProductInfoDto.getName()).isEqualTo(expectedProductInfo.getName());
         assertThat(actualProductInfoDto.getDescription()).isEqualTo(expectedProductInfo.getDescription());
         assertThat(actualProductInfoDto.getPrice()).isEqualTo(expectedProductInfo.getPrice());

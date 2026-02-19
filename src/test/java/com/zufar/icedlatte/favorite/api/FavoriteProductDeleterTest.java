@@ -35,7 +35,7 @@ class FavoriteProductDeleterTest {
         UUID productId = UUID.randomUUID();
 
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setProductId(productId);
+        productInfo.setId(productId);
 
         FavoriteItemEntity favoriteItem = new FavoriteItemEntity();
         favoriteItem.setProductInfo(productInfo);
