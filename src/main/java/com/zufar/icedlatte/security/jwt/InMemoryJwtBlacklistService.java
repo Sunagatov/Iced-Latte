@@ -10,7 +10,11 @@ import org.springframework.util.StringUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,7 +49,7 @@ public class InMemoryJwtBlacklistService {
             cleanupExpiredTokens();
         }
 
-        String tokenKey = String.valueOf(token.hashCode());
+        String tokenKey = sha256(token);
         Instant expiryTime = Instant.now().plusMillis(jwtExpirationMs);
 
         TokenEntry entry = new TokenEntry(expiryTime);
@@ -64,7 +68,7 @@ public class InMemoryJwtBlacklistService {
             return true;
         }
 
-        String tokenKey = String.valueOf(token.hashCode());
+        String tokenKey = sha256(token);
         TokenEntry entry = blacklistedTokens.get(tokenKey);
 
         if (entry == null) {
@@ -101,6 +105,15 @@ public class InMemoryJwtBlacklistService {
         blacklistedTokens.clear();
         tokenCount.set(0);
         log.info("In-memory JWT blacklist service shutdown, cleared {} tokens", finalCount);
+    }
+
+    private static String sha256(String token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     private record TokenEntry(Instant expiryTime) {

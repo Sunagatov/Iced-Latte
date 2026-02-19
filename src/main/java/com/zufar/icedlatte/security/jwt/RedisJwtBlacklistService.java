@@ -8,7 +8,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.HexFormat;
 
 @Slf4j
 @Service
@@ -57,7 +61,12 @@ public class RedisJwtBlacklistService {
     }
 
     private String buildBlacklistKey(String token) {
-        return BLACKLIST_KEY_PREFIX + token.hashCode();
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+            return BLACKLIST_KEY_PREFIX + HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     private <T> T executeWithRetry(RedisOperation<T> operation, String operationName) {
