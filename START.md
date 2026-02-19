@@ -1,143 +1,298 @@
-# Getting Started with the Iced Latte
+# Getting Started with Iced Latte
 
-Welcome to the Iced Latte! 
-This guide will assist you in setting up and running the application using Docker and Docker Compose.
+This guide walks you through running the Iced Latte backend on your local machine.
+There are two ways to run it — pick the one that fits you:
+
+- **Option A — IntelliJ + Docker (recommended for development)**: Run the app from IntelliJ IDE, with only PostgreSQL and Redis in Docker. Best for writing and debugging code.
+- **Option B — Full Docker**: Run everything (app + database + Redis) in Docker containers. Best for a quick smoke test without an IDE.
+
+---
 
 ## Prerequisites
 
-Ensure you have Docker Desktop installed.
+Make sure you have all of the following installed before you start:
 
-## Configuration
+| Tool | Version | Download |
+|------|---------|----------|
+| Java JDK | 21 | https://adoptium.net/ |
+| Maven | 3.9+ | https://maven.apache.org/download.cgi |
+| Docker Desktop | latest | https://www.docker.com/products/docker-desktop/ |
+| IntelliJ IDEA | any edition | https://www.jetbrains.com/idea/download/ (for Option A) |
 
-Key variables which are used in the startup of the app. They are pre-configured for initial use, can be adjusted to tailor the app's startup settings.
-- `APP_PROFILE`: Application profile (e.g., `dev`)
-- `APP_VERSION`: Application version
-- `APP_SERVER_PORT`: Server port for the backend service
-- `DATASOURCE_URL`: JDBC URL for the PostgreSQL database
-- `DATASOURCE_PORT`: Database port
-- `DATASOURCE_NAME`: Database name
-- `DATASOURCE_USERNAME`: Database username
-- `DATASOURCE_PASSWORD`: Database password
-- `REDIS_HOST`: Redis host
-- `REDIS_PORT`: Redis port
-- `AWS_ACCESS_KEY` AWS access key
-- `AWS_SECRET_KEY` AWS secret key
-- `AWS_REGION` AWS region
-- `AWS_PRODUCT_BUCKET` AWS product's bucket name
-- `AWS_USER_BUCKET`  AWS product's bucket name
-- `AWS_DEFAULT_PRODUCT_IMAGES_PATH` Package with product's files 
-- `STRIPE_SECRET_KEY` Stripe secret key for payment session creation
-- `STRIPE_WEBHOOK_SECRET` Stripe secret key for webhook
+To verify your installations, run these commands in a terminal:
+```bash
+java -version       # should print: openjdk 21...
+mvn -version        # should print: Apache Maven 3.9...
+docker --version    # should print: Docker version...
+```
 
-Refer to [docker-compose.local.yml](./docker-compose.local.yml)
+---
 
-## Starting the Application
+## Option A — Run in IntelliJ (recommended for development)
 
-### Running All Services with latest build
-To start the application containers with the latest build:
+This is the recommended approach for contributors. The app runs directly in IntelliJ so you can set breakpoints, inspect variables, and iterate quickly.
+
+### Step 1 — Clone the repository
+
+```bash
+git clone https://github.com/Sunagatov/Iced-Latte.git
+cd Iced-Latte
+```
+
+### Step 2 — Start PostgreSQL and Redis with Docker
+
+The app needs a database and a cache. Start them with a single command:
+
+```bash
+docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb iced-latte-redis
+```
+
+To verify they are running:
+```bash
+docker ps
+```
+You should see two containers: `iced-latte-postgresdb` and `iced-latte-redis`.
+
+### Step 3 — Create your local environment file
+
+The app reads its configuration from environment variables. Create a file named `.env` in the project root:
+
+```bash
+# Copy the example below into a new file called .env in the project root
+```
+
+Create the file `.env` with this content:
+
+```properties
+# Server
+APP_SERVER_PORT=8083
+
+# Database (matches the Docker container started in Step 2)
+DATASOURCE_HOST=localhost
+DATASOURCE_PORT=5432
+DATASOURCE_NAME=testdb
+DATASOURCE_USERNAME=postgres
+DATASOURCE_PASSWORD=postgres
+
+# JWT secrets (these values are safe to use locally)
+APP_JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+APP_JWT_REFRESH_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+# AWS (disabled locally — no real AWS account needed)
+AWS_ENABLED=false
+AWS_ACCESS_KEY=local
+AWS_SECRET_KEY=local
+AWS_REGION=us-east-1
+AWS_PRODUCT_BUCKET=products
+AWS_USER_BUCKET=users
+AWS_DEFAULT_PRODUCT_IMAGES_PATH=./products
+
+# Redis (matches the Docker container started in Step 2)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Google OAuth (not needed locally, use placeholders)
+GOOGLE_AUTH_CLIENT_ID=local
+GOOGLE_AUTH_CLIENT_SECRET=local
+GOOGLE_AUTH_REDIRECT_URI=http://localhost:8083
+
+# Stripe (not needed locally, use placeholders)
+STRIPE_SECRET_KEY=sk_test_placeholder
+STRIPE_WEBHOOK_SECRET=whsec_placeholder
+
+# Spring AI (not needed locally, use placeholder)
+SPRING_AI_OPENAI_API_KEY=sk-placeholder
+```
+
+> ⚠️ **Important**: `.env` is listed in `.gitignore` and will never be committed. Never put real secrets in this file.
+
+### Step 4 — Load the .env file into IntelliJ
+
+IntelliJ needs to know about your `.env` file so it passes the variables to the app when you run it.
+
+1. Open IntelliJ and open the `Iced-Latte` project folder
+2. In the top-right corner, click the run configuration dropdown → **Edit Configurations...**
+3. Find `IcedLatteApplication` in the list (or click `+` → `Spring Boot` to create it)
+4. In the **Environment variables** field, click the folder icon on the right
+5. Click the `+` button → select **Load from .env file** → choose the `.env` file you created
+6. Click **OK** and **Apply**
+
+Alternatively, install the **EnvFile** plugin (Settings → Plugins → search "EnvFile") which makes this easier.
+
+### Step 5 — Run the application
+
+Click the green **Run** button (▶) next to `IcedLatteApplication`, or press **Shift+F10**.
+
+Watch the console. When you see this line, the app is ready:
+
+```
+Tomcat started on port 8083
+```
+
+### Step 6 — Verify it works
+
+Open your browser or run this command:
+
+```bash
+curl http://localhost:8083/api/v1/products?page=0&size=3
+```
+
+You should get a JSON response with a list of coffee products.
+
+You can also open the interactive API docs (Swagger UI):
+```
+http://localhost:8083/api/docs/swagger-ui/index.html
+```
+
+### Step 7 — Log in with a test user
+
+The database is pre-seeded with 15 test users. Use any of them to log in:
+
+```bash
+curl -X POST http://localhost:8083/api/v1/auth/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{"email": "olivia@example.com", "password": "p@ss1logic11"}'
+```
+
+You will receive a JWT token in the response. Use it as a Bearer token for authenticated endpoints.
+
+> All 15 seed users share the same password: `p@ss1logic11`
+
+---
+
+## Option B — Run everything in Docker
+
+Use this if you just want to run the app without setting up IntelliJ.
+
+### Step 1 — Clone the repository
+
+```bash
+git clone https://github.com/Sunagatov/Iced-Latte.git
+cd Iced-Latte
+```
+
+### Step 2 — Start all services
+
 ```bash
 docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-### Running All Services
+This builds the app image and starts three containers:
+- `iced-latte-backend` — the Spring Boot app on port `8083`
+- `iced-latte-postgresdb` — PostgreSQL on port `5432`
+- `iced-latte-redis` — Redis on port `6379`
 
-To start both the backend and PostgreSQL database services as defined in the `docker-compose.yml` file:
+The first build takes a few minutes (Maven downloads dependencies). Subsequent builds are faster.
+
+### Step 3 — Verify it works
 
 ```bash
-docker-compose -f docker-compose.local.yml up -d
+curl http://localhost:8083/api/v1/products?page=0&size=3
 ```
 
-### Running only a Database (postgresql)
-To start only the PostgreSQL database as defined in the docker-compose.local.yml file:
-```bash
-docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb
-```
+### Useful Docker commands
 
-## Additional Docker Commands
+```bash
+# View live logs from the backend
+docker-compose -f docker-compose.local.yml logs -f iced-latte-backend
 
-### Rebuild containers after changes
-```bash
-docker-compose -f docker-compose.local.yml build
-```
-### Stopping Services
-To stop all running containers:
-```bash
+# Stop all containers (keeps data)
 docker-compose -f docker-compose.local.yml down
-```
 
-### Viewing Logs
-To view logs for a specific service:
-```bash
-docker-compose -f docker-compose.local.yml logs [iced-latte-backend|iced-latte-postgresdb] [-f]
-```
-
-### Remove all volumes (including database data):
-```bash
+# Stop all containers and delete all data (fresh start)
 docker-compose -f docker-compose.local.yml down -v
+
+# Rebuild after code changes
+docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-### Remote Debugging (e.g. in Docker)
-If you want to debug BE application running in Docker, use **Remote JVM Debug** configuration:
-1. Double press **Shift**
-2. Type `Edit Configurations`
-3. Click `+` and select `Remote JVM Debug`
-4. Select **Attach to Remote JVM**, make sure that port is `5005` and host is `localhost`
-5. Save configuration and click debug button
-6. Start containers as usual `docker compose -f docker-compose.local.yml up -d --build`
-7. Set a breakpoint, e.g. here [ProductsEndpoint#getProducts](src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java#L67)
-8. Try it out:
+---
 
-    ```bash
-    curl -X 'GET' \
-    'http://localhost:8083/api/v1/products?page=0&size=50&sort_attribute=name&sort_direction=desc' \
-    -H 'accept: application/json'
-    ```
+## Running the tests
 
-Enjoy!
-
-![](docs/images/remote_debug.png)
-
-### Local Frontend + Backend
-To run FE and BE locally for testing purposes:
-1. Check out [Iced Latte Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend/) repo
-2. Navigate to the root of FE repo and create `.env`: ```bash echo 'NEXT_PUBLIC_API_HOST_REMOTE=http://localhost:80/backend/api/v1' > .env```
-3. Uncomment `iced-latte-frontend.build` section in [docker-compose.local.yml](./docker-compose.local.yml#L18)
-4. Set path to local FE repo in `iced-latte-frontend.build.context`
-5. Run build as usual
 ```bash
-docker compose -f docker-compose.local.yml up -d --build
+mvn test
 ```
 
-* FE is here http://localhost/
-* BE is here http://localhost/backend (e.g. http://localhost/backend/api/v1/products) and here too http://localhost:8083
+Expected result: **154 tests pass, 0 failures, 0 errors, 0 skipped**.
 
-:warning: **Limitations**:
+> The tests use Testcontainers — they spin up their own temporary PostgreSQL and Redis containers automatically. You do not need to start Docker containers manually for tests.
 
-AWS is available only in production, therefore there are no real pictures of products, only stubs.
+---
 
-#### Stripe Integration Testing (local)
+## Connecting to the database
 
-1. Install [Stripe CLI](https://docs.stripe.com/stripe-cli)
-2. Redirect webhook events
-   ```bash
-   stripe listen --forward-to localhost:80/backend/api/v1/payment/stripe/webhook
-   ```
-3. Use [test cards](https://docs.stripe.com/testing): `4242424242424242`
+You can inspect the database directly using IntelliJ's built-in database tool or the free **Database Navigator** plugin.
 
-## Database Navigator
+**Connection details:**
 
-> For Ultimate Edition consider using [Database Tools and SQL plugin](https://www.jetbrains.com/help/idea/relational-databases.html)
+| Field | Value |
+|-------|-------|
+| Host | `localhost` |
+| Port | `5432` |
+| Database | `testdb` |
+| Username | `postgres` |
+| Password | `postgres` |
 
-Install [Database Navigator](https://plugins.jetbrains.com/plugin/1800-database-navigator).
+**Using IntelliJ Ultimate**: View → Tool Windows → Database → `+` → PostgreSQL
 
-Go to **View** > **Tool Windows** > **DB Browser**.
+**Using Database Navigator plugin** (free, works in Community edition):
+1. Install it: Settings → Plugins → search "Database Navigator"
+2. View → Tool Windows → DB Browser
+3. Add a new PostgreSQL connection with the values above
 
-Add new PostgresSQL connection:
- * Host `127.0.0.1`
- * Database `testdb`
- * User `postgres`
- * Password `postgres`
+> ⚠️ The app runs Liquibase with `drop-first: true` on every startup, which wipes and re-seeds the database. Any manual changes you make to the DB will be lost on the next app restart.
 
-Enjoy!
+---
 
-![](docs/images/db_navigator.png)
+## Remote debugging (Docker)
+
+If you want to debug the app running inside Docker:
+
+1. In IntelliJ: Run → Edit Configurations → `+` → **Remote JVM Debug**
+2. Set host `localhost`, port `5005`, mode **Attach to Remote JVM**
+3. Start the containers: `docker-compose -f docker-compose.local.yml up -d --build`
+4. Click the **Debug** button in IntelliJ
+5. Set a breakpoint anywhere in the code
+
+---
+
+## Troubleshooting
+
+**App fails to start with "Connection refused" on port 5432**
+→ PostgreSQL container is not running. Run: `docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb`
+
+**App fails to start with "Could not resolve placeholder"**
+→ A required environment variable is missing from your `.env` file. Check the console for which variable is missing and add it.
+
+**Login returns 401 Unauthorized**
+→ Make sure you are using the correct password `p@ss1logic11` and the email exists in the seed data.
+
+**Port 8083 already in use**
+→ Another process is using the port. Either stop it or change `APP_SERVER_PORT` in your `.env` file and update the run configuration.
+
+**Tests fail with "Connection refused" to database**
+→ Tests use Testcontainers and manage their own containers. Make sure Docker Desktop is running.
+
+---
+
+## Project structure overview
+
+```
+src/
+├── main/java/com/zufar/icedlatte/
+│   ├── security/       # JWT auth, registration, login
+│   ├── product/        # Product catalog
+│   ├── cart/           # Shopping cart
+│   ├── order/          # Orders
+│   ├── review/         # Product reviews
+│   ├── favorite/       # Favorites list
+│   ├── payment/        # Stripe payment integration
+│   ├── email/          # Email verification
+│   └── user/           # User profile management
+└── test/               # Unit and integration tests
+```
+
+API documentation is available at:
+- **Local**: http://localhost:8083/api/docs/swagger-ui/index.html
+- **Production**: https://iced-latte.uk/backend/api/docs/swagger-ui/index.html
