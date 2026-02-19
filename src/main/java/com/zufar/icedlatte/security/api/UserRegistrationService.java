@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -33,16 +34,18 @@ public class UserRegistrationService {
         return userCrudRepository.findByEmail(email).isEmpty();
     }
 
+    @Transactional
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();
 
-        String email = userRegistrationRequest.getEmail();
+        String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
         if (!isEmailAvailable(email)) {
             throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.");
         }
 
         UserEntity newUserEntity = registrationDtoConverter.toEntity(userRegistrationRequest);
+        newUserEntity.setEmail(email);
         newUserEntity.setPassword(encryptedPassword);
         newUserEntity.addAuthority(defaultUserGrantedAuthority);
         newUserEntity.setAccountNonExpired(DEFAULT_ACCOUNT_NON_EXPIRED);

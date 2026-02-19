@@ -6,9 +6,12 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.GenericContainer;
@@ -16,6 +19,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import com.zufar.icedlatte.email.api.token.TokenCache;
+import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.*;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
@@ -75,6 +81,12 @@ class SecurityEndpointTest {
     private static final String TOKEN_FIELD = "token";
     private static final String TOKEN_NULL_MESSAGE = "Token should not be null";
 
+    @MockBean
+    private JavaMailSender javaMailSender;
+
+    @Autowired
+    private TokenManager tokenManager;
+
     protected static RequestSpecification specification;
 
     @BeforeEach
@@ -88,25 +100,17 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should registration new user")
     void shouldRegistrationNewUser() {
         String body = getRequestBody(SECURITY_REGISTRATION);
-
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
 
         Response response = given(specification)
                 .body(body)
                 .post("/register");
 
-        assertRestApiCreateResponse(response, SECURITY_SCHEMA);
-
-        assertNotNull(response.getBody().path(TOKEN_FIELD), TOKEN_NULL_MESSAGE);
+        response.then()
+                .statusCode(HttpStatus.OK.value())
+                .body(containsString("IgorSmith@gmail.com"));
     }
 
     @Test
@@ -234,23 +238,21 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should registration new user Failed email not unique")
     void shouldRegistrationNewUserFailedEmailNotUnique() {
-        String body = getRequestBody(SECURITY_REGISTRATION_NOT_UNIQUE_EMAIL);
+        // Use a unique email to avoid rate-limit state from other tests
+        String uniqueEmail = "duplicate." + System.currentTimeMillis() + "@gmail.com";
+        String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail + "\",\"password\":\"!h2h3kKl\"}";
 
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
+        // First registration succeeds
+        given(specification).body(body).post("/register")
+                .then().statusCode(HttpStatus.OK.value());
 
-        Response response = given(specification)
-                .body(body)
-                .post("/register");
-
-        assertRestApiBadRequestResponse(response, SECURITY_SCHEMA_FAILED);
+        // Second registration with same email within rate-limit window returns 425 TOO_EARLY
+        given(specification).body(body).post("/register")
+                .then()
+                .statusCode(425)
+                .body("message", notNullValue());
     }
 
     @Test
@@ -368,27 +370,23 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should authenticate user")
     void shouldAuthenticateUser() {
-        String body = getRequestBody(SECURITY_AUTHENTICATE);
-        String bodyRegistration = getRequestBody(SECURITY_REGISTRATION_FOR_AUTH);
+        String authBody = getRequestBody(SECURITY_AUTHENTICATE);
 
-        specification = given()
-                .log().all(true)
-                .port(port)
-                .basePath("/api/v1/auth")
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON);
+        // Generate token directly via TokenManager (bypasses email sending)
+        UserRegistrationRequest pending = new UserRegistrationRequest(
+                "Auth", "Registr", "AuthReg@gmail.com", "!h2h3kKl22");
+        String token = tokenManager.generateToken(pending);
 
+        // Confirm email with the token
         given(specification)
-                .body(bodyRegistration)
-                .post("/register");
+                .body("{\"token\":\"" + token + "\"}")
+                .post("/confirm")
+                .then().statusCode(HttpStatus.CREATED.value());
 
-        Response response = given(specification)
-                .body(body)
-                .post("/authenticate");
-
+        // Authenticate
+        Response response = given(specification).body(authBody).post("/authenticate");
         assertRestApiOkResponse(response, SECURITY_SCHEMA);
     }
 
@@ -409,7 +407,7 @@ class SecurityEndpointTest {
     @Test
     @DisplayName("Should fail authentication with incorrect password")
     void shouldFailAuthenticationWithIncorrectPassword() {
-        String body = getRequestBody(SECURITY_AUTHENTICATE_INCORRECT_PASSWORD);
+        String body = "{\"email\":\"olivia@example.com\",\"password\":\"wrongpassword1\"}";
 
         Response response = given(specification)
                 .body(body)

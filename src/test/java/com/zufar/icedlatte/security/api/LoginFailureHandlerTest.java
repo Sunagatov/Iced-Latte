@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,9 @@ class LoginFailureHandlerTest {
     @Mock
     private UserAccountLocker userAccountLocker;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private LoginFailureHandler loginFailureHandler;
 
@@ -41,6 +46,7 @@ class LoginFailureHandlerTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", maxLoginAttempts);
+        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(new UserEntity()));
     }
 
     @Test
