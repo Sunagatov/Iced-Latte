@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,26 +38,18 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final GetProductsRequestValidator getProductsRequestValidator;
     private final SingleProductProvider singleProductProvider;
     private final PaginationConfig paginationConfig;
+    private final ProductFilterOptionsProvider productFilterOptionsProvider;
 
     @Override
     @GetMapping("/sellers")
     public ResponseEntity<SellersDto> getAllSellers() {
-        log.info("Getting all sellers");
-        var sellers = new SellersDto(List.of(
-                "JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium",
-                "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"
-        ));
-        log.info("Retrieved {} sellers", sellers.getSellers().size());
-        return ResponseEntity.ok(sellers);
+        return ResponseEntity.ok(new SellersDto(productFilterOptionsProvider.getSellerNames()));
     }
 
     @Override
     @GetMapping("/brands")
     public ResponseEntity<BrandsDto> getAllBrands() {
-        log.info("Getting all brands");
-        var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
-        log.info("Retrieved {} brands", brands.getBrands().size());
-        return ResponseEntity.ok(brands);
+        return ResponseEntity.ok(new BrandsDto(productFilterOptionsProvider.getBrandNames()));
     }
 
     @Override

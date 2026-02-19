@@ -69,7 +69,7 @@ paths:
       tags:
         - "Product"
       summary: "List all product sellers"
-      description: "Retrieve a list of all sellers from the hardcoded data."
+      description: "Retrieve a list of all distinct sellers from the database."
       operationId: "getAllSellers"
       responses:
         "200":
@@ -90,7 +90,7 @@ paths:
       tags:
         - "Product"
       summary: "List all product brands"
-      description: "Retrieve a list of all brands from the hardcoded data."
+      description: "Retrieve a list of all distinct brands from the database."
       operationId: "getAllBrands"
       responses:
         "200":

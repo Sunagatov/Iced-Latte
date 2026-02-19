@@ -14,6 +14,12 @@ import java.util.UUID;
 
 public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID> {
 
+    @Query("SELECT DISTINCT p.sellerName FROM ProductInfo p ORDER BY p.sellerName")
+    List<String> findDistinctSellerNames();
+
+    @Query("SELECT DISTINCT p.brandName FROM ProductInfo p ORDER BY p.brandName")
+    List<String> findDistinctBrandNames();
+
     @Query("""
            SELECT p FROM ProductInfo p
            WHERE (:minPrice IS NULL OR p.price >= :minPrice)
