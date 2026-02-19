@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -41,20 +40,13 @@ public class ProductsProvider {
         var dtosById = updatedProductDtos.stream()
                 .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
 
-        var missing = new ArrayList<UUID>();
-        var ordered = new ArrayList<ProductInfoDto>(uuids.size());
-
-        for (UUID id : uuids) {
-            var dto = dtosById.get(id);
-            if (dto != null) ordered.add(dto);
-            else missing.add(id);
-        }
-
+        List<UUID> missing = uuids.stream().filter(id -> !dtosById.containsKey(id)).toList();
         if (!missing.isEmpty()) {
             log.error("Products with ids = {} are not found.", missing.stream()
                     .map(UUID::toString).collect(Collectors.joining(", ")));
             throw new ProductNotFoundException(missing);
         }
-        return ordered;
+
+        return uuids.stream().map(dtosById::get).toList();
     }
 }
