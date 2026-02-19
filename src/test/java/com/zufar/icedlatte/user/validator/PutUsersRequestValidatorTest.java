@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.validator;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
-import com.zufar.icedlatte.user.validator.PutUsersRequestValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -66,7 +65,7 @@ public class PutUsersRequestValidatorTest {
                 " Error: { Expected the field `country` to be a primitive type in the JSON string but got `[\"Country\",\"Another country\"]` }. " +
                 " Error: { The required field `city` is not found in the JSON string: %s }. " +
                 " Error: { The required field `line` is not found in the JSON string: %s }. " +
-                " ].", addressJSON.toString(), addressJSON.toString(), addressJSON.toString());
+                " ].", addressJSON.toString(), addressJSON, addressJSON);
 
         PutUsersBadRequestException thrownException = assertThrows(PutUsersBadRequestException.class, () -> validator.validate(firstName, lastName, phoneNumber, birthDate, addressJSON));
 
