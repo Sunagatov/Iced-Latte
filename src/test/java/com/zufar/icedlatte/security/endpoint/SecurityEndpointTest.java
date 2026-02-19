@@ -37,6 +37,7 @@ class SecurityEndpointTest {
 
     @Container
     @ServiceConnection
+    @SuppressWarnings("unused")
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13.11-bullseye");
 
     @SuppressWarnings("resource")
