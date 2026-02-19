@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @Slf4j
@@ -30,19 +29,12 @@ public class ProductReviewsStatisticsProvider {
     public ProductReviewRatingStats get(final UUID productId) {
         productReviewValidator.validateProductExists(productId);
 
-        String formattedAvgRating = getFormattedAverageProductRating(productId);
-        Integer reviewsCount = reviewRepository.getReviewCountProductById(productId);
-        RatingMap productRatingMap = getProductRatingMap(productId);
-
-        return new ProductReviewRatingStats(productId, Double.parseDouble(formattedAvgRating), reviewsCount, productRatingMap);
-    }
-
-    private String getFormattedAverageProductRating(UUID productId) {
-        Double avgRating = reviewRepository.getAvgRatingByProductId(productId);
-        if (avgRating == null) {
-            avgRating = 0.0;
-        }
-        return String.format(Locale.US, "%.1f", avgRating);
+        Double avg = reviewRepository.getAvgRatingByProductId(productId);
+        double avgRating = avg != null ? avg : 0.0;
+        return new ProductReviewRatingStats(productId,
+                Math.round(avgRating * 10.0) / 10.0,
+                reviewRepository.getReviewCountProductById(productId),
+                getProductRatingMap(productId));
     }
 
     private RatingMap getProductRatingMap(UUID productId) {

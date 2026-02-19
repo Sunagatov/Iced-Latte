@@ -5,7 +5,6 @@ import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
-import com.zufar.icedlatte.review.exception.ProductIdsAreNotMatchException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -57,16 +56,6 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the user has already created a review for this product
-     */
-    public void validateReviewExistsForUser(final UUID productReviewId) {
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
-            throw new ProductReviewNotFoundException(productReviewId);
-        }
-    }
-
-    /**
      * Check if the product's review deletion is allowed
      */
     public void validateProductReviewDeletionAllowed(final UUID productReviewId) {
@@ -81,18 +70,12 @@ public class ProductReviewValidator {
     /**
      * Check if the product's review deletion is allowed
      */
-    public void validateProductIdIsValid(final UUID productId,
-                                         final UUID productReviewId) {
-        var productInfo = productInfoRepository.findById(productId);
-        if (productInfo.isEmpty()) {
+    public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
+        if (!productInfoRepository.existsById(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
+        if (!productReviewRepository.existsById(productReviewId)) {
             throw new ProductReviewNotFoundException(productReviewId);
-        }
-        if (!productInfo.get().getId().equals(productReview.get().getProductId())) {
-            throw new ProductIdsAreNotMatchException(productReviewId);
         }
     }
 }

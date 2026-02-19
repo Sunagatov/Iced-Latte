@@ -7,7 +7,6 @@ import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
-import com.zufar.icedlatte.review.exception.ProductIdsAreNotMatchException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,17 +62,6 @@ public class ProductReviewExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
         log.warn("Handle product not found for the provided review exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler(ProductIdsAreNotMatchException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleProductIdsAreNotMatchException(final ProductIdsAreNotMatchException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-
-        log.warn("Handle product ids are not match exception: failed: message: {}, debugMessage: {}.",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
 
         return apiErrorResponse;
