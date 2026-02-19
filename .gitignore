@@ -81,6 +81,8 @@ nb-configuration.xml
 ##############################
 .DS_Store
 /.env.local
+.env
+local.env
 /README.local.md
 /docker-compose.override.yaml
 
