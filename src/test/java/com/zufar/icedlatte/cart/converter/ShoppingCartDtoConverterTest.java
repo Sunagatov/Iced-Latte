@@ -9,7 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,7 +21,8 @@ import static org.hamcrest.Matchers.*;
 
 import java.math.BigDecimal;
 
-@SpringBootTest(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
 class ShoppingCartDtoConverterTest {
 
     @Autowired

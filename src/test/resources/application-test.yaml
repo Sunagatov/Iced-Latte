@@ -134,3 +134,13 @@ logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
     org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration: ERROR
+
+#
+# Rate Limiting Properties (relaxed for tests)
+#
+security:
+  rate-limit:
+    max-requests: 10000
+    auth-max-requests: 10000
+    window-duration: PT1M
+    auth-window-duration: PT1M

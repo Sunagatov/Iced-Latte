@@ -11,10 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.*;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
@@ -27,24 +23,8 @@ class SecurityEndpointTest extends IntegrationTestBase {
     @LocalServerPort
     protected Integer port;
 
-    @MockitoBean
-    private JavaMailSender javaMailSender;
-
     @Autowired
     private TokenManager tokenManager;
-
-    @DynamicPropertySource
-    static void overrideProperties(DynamicPropertyRegistry registry) {
-        registry.add("DATASOURCE_URL", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.liquibase.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.liquibase.user", POSTGRES::getUsername);
-        registry.add("spring.liquibase.password", POSTGRES::getPassword);
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379).toString());
-    }
 
     private static final String SECURITY_SCHEMA = "security/model/schema/security-schema.json";
     private static final String SECURITY_SCHEMA_FAILED = "security/model/schema/security-schema-failed.json";

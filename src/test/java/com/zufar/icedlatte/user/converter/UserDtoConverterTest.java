@@ -7,13 +7,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(classes = UserDtoConverterTest.Config.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = UserDtoConverterTest.Config.class)
 class UserDtoConverterTest {
 
     @Autowired
@@ -46,6 +50,7 @@ class UserDtoConverterTest {
         assertEquals(entity.getPhoneNumber(), dto.getPhoneNumber());
         assertEquals(entity.getEmail(), dto.getEmail());
         assertEquals(entity.getStripeCustomerToken(), dto.getStripeCustomerToken());
+        assertNotNull(dto.getAddress());
         assertEquals(entity.getAddress().getLine(), dto.getAddress().getLine());
         assertEquals(entity.getAddress().getCity(), dto.getAddress().getCity());
         assertEquals(entity.getAddress().getCountry(), dto.getAddress().getCountry());
