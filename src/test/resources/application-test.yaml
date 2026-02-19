@@ -16,12 +16,9 @@ spring:
   # Database Properties
   #
   datasource:
-    host: iced-latte-postgresdb
-    port: 5432
-    name: testdb
+    url: jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC
     username: postgres
     password: postgres
-    url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.name}?serverTimezone=UTC
   jpa:
     hibernate:
       ddl-auto: validate
@@ -55,6 +52,7 @@ spring:
   # Aws Properties
   #
   aws:
+    enabled: false
     access-key: vbfgngfdndgndgndgndgndgndgndg
     secret-key: vbfgngfdndgndgndgndgndgndgndg
     region: us-east-1
@@ -75,7 +73,7 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6380
+      port: 6379
 
   mail:
     host: smtp.gmail.com

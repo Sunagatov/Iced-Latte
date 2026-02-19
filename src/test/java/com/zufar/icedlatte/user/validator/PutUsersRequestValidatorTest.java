@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.user.validate;
+package com.zufar.icedlatte.user.validator;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

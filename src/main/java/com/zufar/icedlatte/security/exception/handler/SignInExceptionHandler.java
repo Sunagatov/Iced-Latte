@@ -4,6 +4,7 @@ import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,15 @@ public class SignInExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
     private final ErrorDebugMessageCreator errorDebugMessageCreator;
+
+    @ExceptionHandler(UserRegistrationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleUserRegistrationException(final UserRegistrationException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.warn("Handle user registration exception: failed: message: {}, debugMessage: {}",
+                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        return apiErrorResponse;
+    }
 
     @ExceptionHandler({UserNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)

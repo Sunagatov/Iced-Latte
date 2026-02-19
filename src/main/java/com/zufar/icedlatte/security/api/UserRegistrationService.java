@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -28,9 +29,18 @@ public class UserRegistrationService {
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
 
+    public boolean isEmailAvailable(final String email) {
+        return userCrudRepository.findByEmail(email).isEmpty();
+    }
+
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();
+
+        String email = userRegistrationRequest.getEmail();
+        if (!isEmailAvailable(email)) {
+            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.");
+        }
 
         UserEntity newUserEntity = registrationDtoConverter.toEntity(userRegistrationRequest);
         newUserEntity.setPassword(encryptedPassword);

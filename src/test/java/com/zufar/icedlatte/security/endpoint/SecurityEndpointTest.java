@@ -87,7 +87,7 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("This is temporary to unblock SQ")
+    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should registration new user")
     void shouldRegistrationNewUser() {
         String body = getRequestBody(SECURITY_REGISTRATION);
@@ -233,7 +233,7 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("This is temporary to unblock SQ")
+    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should registration new user Failed email not unique")
     void shouldRegistrationNewUserFailedEmailNotUnique() {
         String body = getRequestBody(SECURITY_REGISTRATION_NOT_UNIQUE_EMAIL);
@@ -367,7 +367,7 @@ class SecurityEndpointTest {
     }
 
     @Test
-    @Disabled("This is temporary to unblock SQ")
+    @Disabled("Registration flow changed to email-verification-first: /register now sends a verification email instead of returning a token directly. Test needs rewriting to mock mail sender or use the 2-step flow.")
     @DisplayName("Should authenticate user")
     void shouldAuthenticateUser() {
         String body = getRequestBody(SECURITY_AUTHENTICATE);
