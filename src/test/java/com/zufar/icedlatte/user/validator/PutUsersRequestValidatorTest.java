@@ -31,7 +31,7 @@ public class PutUsersRequestValidatorTest {
                 "\"line\": \"Line\",\n" +
                 "\"postcode\": \"00000\"\n" +
                 "}";
-        JsonObject addressJSON =  new JsonParser().parse(addressJSONAsString).getAsJsonObject();
+        JsonObject addressJSON = JsonParser.parseString(addressJSONAsString).getAsJsonObject();
 
         assertDoesNotThrow(() -> validator.validate(firstName, lastName, phoneNumber, birthDate, addressJSON));
     }
@@ -55,7 +55,7 @@ public class PutUsersRequestValidatorTest {
                 "\"town\": \"City\",\n" +
                 "\"postcode\": \"00000\"\n" +
                 "}";
-        JsonObject addressJSON =  new JsonParser().parse(addressJSONAsString).getAsJsonObject();
+        JsonObject addressJSON = JsonParser.parseString(addressJSONAsString).getAsJsonObject();
         String expectedMessage = String.format("PutUsersRequest parameters are incorrect. Error messages are [ " +
                 " Error: { First name is the mandatory attribute. }. " +
                 " Error: { Last name should have a length between 2 and 128 characters. }. " +

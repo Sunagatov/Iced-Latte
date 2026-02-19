@@ -17,6 +17,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.Customizer;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
@@ -51,7 +53,7 @@ public class SpringSecurityConfiguration {
                                 .includeSubDomains(true)
                                 .preload(true))
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                        .contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::and)
+                        .contentTypeOptions(withDefaults())
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()

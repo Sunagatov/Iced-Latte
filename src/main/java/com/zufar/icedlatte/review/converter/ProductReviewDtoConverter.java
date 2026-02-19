@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = ProductReviewDtoConverter.class, unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
 
    public static final ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE =

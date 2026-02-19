@@ -6,11 +6,13 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = AddressDtoConverter.class)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = AddressDtoConverter.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserDtoConverter {
 
     @Mapping(target = "address", source = "entity.address", qualifiedByName = "toAddressDto")
+    @Mapping(target = "avatarLink", ignore = true)
     UserDto toDto(final UserEntity entity);
 
     @Mapping(target = "address", source = "updateUserAccountRequest.address", qualifiedByName = "toAddress")
