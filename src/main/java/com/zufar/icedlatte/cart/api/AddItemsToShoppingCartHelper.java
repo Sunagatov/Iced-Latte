@@ -74,9 +74,8 @@ public class AddItemsToShoppingCartHelper {
     private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
                                                            List<ShoppingCartItem> shoppingCartItems) {
         int productsQuantity = shoppingCartItems.stream()
-                .map(ShoppingCartItem::getProductQuantity)
-                .reduce(Integer::sum)
-                .orElse(ShoppingCart.DEFAULT_PRODUCTS_QUANTITY);
+                .mapToInt(ShoppingCartItem::getProductQuantity)
+                .sum();
 
         existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
         existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);

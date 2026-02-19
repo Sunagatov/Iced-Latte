@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -39,7 +38,6 @@ public class ShoppingCartCreator {
                 .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
                 .productsQuantity(ShoppingCart.DEFAULT_PRODUCTS_QUANTITY)
                 .items(new HashSet<>())
-                .createdAt(OffsetDateTime.now())
                 .build();
 
         this.shoppingCartRepository.save(shoppingCart);

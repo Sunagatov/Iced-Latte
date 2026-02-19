@@ -8,7 +8,7 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -72,8 +71,6 @@ public class ProductQuantityItemUpdater {
     }
 
     private ShoppingCartDto getShoppingCart() throws ShoppingCartNotFoundException {
-        UserDto userDto = securityPrincipalProvider.get();
-        UUID userId = userDto.getId();
-        return shoppingCartProvider.getByUserId(userId);
+        return shoppingCartProvider.getByUserId(securityPrincipalProvider.getUserId());
     }
 }
