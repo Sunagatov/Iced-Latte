@@ -30,7 +30,7 @@ public class ProductQuantityItemUpdater {
     private final ShoppingCartProvider shoppingCartProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
-    @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
+    @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto update(final UUID shoppingCartItemId,
                                   final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
@@ -38,7 +38,7 @@ public class ProductQuantityItemUpdater {
         ShoppingCartItem updatedItem = updateItemProductQuantity(shoppingCartItemId, productQuantityChange, item);
         ShoppingCartDto shoppingCart = getShoppingCart();
 
-        if (shoppingCart.getId() != updatedItem.getShoppingCart().getId()) {
+        if (!shoppingCart.getId().equals(updatedItem.getShoppingCart().getId())) {
             log.warn("Failed to update the productQuantity with the change = {} in the shoppingCartItem with id: {} of the shoppingCart with the id = {}.",
                     productQuantityChange, shoppingCartItemId, shoppingCart.getId());
             throw new InvalidShoppingCartIdException(shoppingCart.getId());

@@ -24,6 +24,10 @@ public class SecurityPrincipalProvider {
     }
 
     public UUID getUserId() {
-        return get().getId();
+        UserEntity userEntity = (UserEntity) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return userEntity.getId();
     }
 }
