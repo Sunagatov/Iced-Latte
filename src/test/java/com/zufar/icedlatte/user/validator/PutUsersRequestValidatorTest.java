@@ -25,12 +25,13 @@ public class PutUsersRequestValidatorTest {
         String lastName = "surname";
         String phoneNumber = "+7900000000";
         String birthDate = "2000-12-01";
-        String addressJSONAsString = "{\n" +
-                "\"country\": \"Country\",\n" +
-                "\"city\": \"City\",\n" +
-                "\"line\": \"Line\",\n" +
-                "\"postcode\": \"00000\"\n" +
-                "}";
+        String addressJSONAsString = """
+                {
+                "country": "Country",
+                "city": "City",
+                "line": "Line",
+                "postcode": "00000"
+                }""";
         JsonObject addressJSON = JsonParser.parseString(addressJSONAsString).getAsJsonObject();
 
         assertDoesNotThrow(() -> validator.validate(firstName, lastName, phoneNumber, birthDate, addressJSON));
@@ -50,11 +51,12 @@ public class PutUsersRequestValidatorTest {
         String lastName = "s";
         String phoneNumber = "+7900000000b";
         String birthDate = "2000-12-011";
-        String addressJSONAsString = "{\n" +
-                "\"country\": [\"Country\", \"Another country\"],\n" +
-                "\"town\": \"City\",\n" +
-                "\"postcode\": \"00000\"\n" +
-                "}";
+        String addressJSONAsString = """
+                {
+                "country": ["Country", "Another country"],
+                "town": "City",
+                "postcode": "00000"
+                }""";
         JsonObject addressJSON = JsonParser.parseString(addressJSONAsString).getAsJsonObject();
         String expectedMessage = String.format("PutUsersRequest parameters are incorrect. Error messages are [ " +
                 " Error: { First name is the mandatory attribute. }. " +

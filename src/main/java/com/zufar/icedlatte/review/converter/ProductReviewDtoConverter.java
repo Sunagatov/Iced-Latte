@@ -21,7 +21,7 @@ import java.util.Optional;
         unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
 
-   public static final ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE =
+   ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE =
             new ProductReviewDto(null, null, null, null, null, null, null, null, null);
 
     @Mapping(target = "productReviewId", source = "id")
