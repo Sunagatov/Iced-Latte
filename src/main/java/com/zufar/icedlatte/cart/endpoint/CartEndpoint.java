@@ -1,7 +1,13 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.cart.api.*;
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.cart.api.AddItemsToShoppingCartHelper;
+import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
+import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
+import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Set;
-import java.util.UUID;
 
 @Slf4j
 @RestController
