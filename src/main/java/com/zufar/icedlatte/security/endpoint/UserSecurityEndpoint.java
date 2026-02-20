@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -55,14 +54,10 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
-        var email = request.getEmail();
-        var sanitizedEmail = StringEscapeUtils.escapeJava(email);
-        log.info("Registering user: {}", sanitizedEmail);
+        log.info("Registering user");
         emailTokenSender.sendEmailVerificationCode(request);
-        log.info("Verification email sent to: {}", sanitizedEmail);
-        return ResponseEntity.ok(
-                String.format("Email verification token sent to the user with email = %s",
-                        StringEscapeUtils.escapeJava(email)));
+        log.debug("Verification email sent");
+        return ResponseEntity.ok("Email verification token sent");
     }
 
     @Override
@@ -77,9 +72,9 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        log.info("Authenticating user: {}", StringEscapeUtils.escapeJava(request.getEmail()));
+        log.info("Authenticating user");
         var response = userAuthenticationService.authenticate(request);
-        log.info("Authentication completed for: {}", StringEscapeUtils.escapeJava(request.getEmail()));
+        log.debug("Authentication completed");
         return ResponseEntity.ok(response);
     }
 
@@ -90,7 +85,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         var userDetails = userDetailsService.loadUserByUsername(userEmail);
         var response = userAuthenticationService.authenticate(userDetails, userEmail);
-        log.info("Token refreshed for: {}", userEmail);
+        log.debug("Token refreshed");
         return ResponseEntity.ok(response);
     }
 
@@ -138,12 +133,11 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        var sanitizedEmail = StringEscapeUtils.escapeJava(request.getEmail());
-        log.info("Changing password for: {}", sanitizedEmail);
+        log.info("Changing password");
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
         changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
-        log.info("Password changed for: {}", sanitizedEmail);
+        log.debug("Password changed");
         return ResponseEntity.ok().build();
     }
 }

@@ -27,11 +27,9 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Email cannot be empty");
         }
         String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
-        log.debug("Loading user details for email: {}", normalizedEmail);
-
         return userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> {
-                    log.warn("User not found with email: {}", normalizedEmail);
+                    log.warn("User not found");
                     return new InvalidCredentialsException();
                 });
     }

@@ -64,7 +64,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(getRequestBody(SECURITY_REGISTRATION)).post("/register")
                 .then()
                 .statusCode(HttpStatus.OK.value())
-                .body(containsString("IgorSmith@gmail.com"));
+                .body(containsString("Email verification token sent"));
     }
 
     @Test
