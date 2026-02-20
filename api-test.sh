@@ -9,6 +9,7 @@ readonly NC='\033[0m'
 readonly SLEEP_BETWEEN_TESTS=2
 
 JWT_TOKEN=""
+REFRESH_TOKEN=""
 
 http_code_of() { echo "${1: -3}"; }
 body_of()      { echo "${1:0:${#1}-3}"; }
@@ -37,6 +38,7 @@ test_login() {
 
     if [[ "$http_code" == "200" ]]; then
         JWT_TOKEN=$(echo "$body" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+        REFRESH_TOKEN=$(echo "$body" | grep -o '"refreshToken":"[^"]*' | cut -d'"' -f4)
         if [[ -z "$JWT_TOKEN" ]]; then
             fail "Login succeeded but token extraction failed"
             echo "Response: $body"
@@ -68,14 +70,14 @@ test_products() {
 }
 
 test_refresh() {
-    if [[ -z "$JWT_TOKEN" ]]; then
-        fail "No token for refresh test"
+    if [[ -z "$REFRESH_TOKEN" ]]; then
+        fail "No refresh token for refresh test"
         return 1
     fi
 
     echo "Testing refresh endpoint..."
     response=$(curl -s -w "%{http_code}" -X POST "$API_BASE/auth/refresh" \
-        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Authorization: Bearer $REFRESH_TOKEN" \
         -H "Content-Type: application/json")
 
     http_code=$(http_code_of "$response")
