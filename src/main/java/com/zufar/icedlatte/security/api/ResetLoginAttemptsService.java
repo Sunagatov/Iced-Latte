@@ -29,7 +29,7 @@ public class ResetLoginAttemptsService {
                     existingLoginAttempt.setIsUserLocked(false);
                     existingLoginAttempt.setExpirationDatetime(null);
                     existingLoginAttempt.setLastModified(Instant.now());
-                    log.info("Login attempts reset for user {}.", userEmail);
+                    log.debug("Login attempts reset.");
                 });
     }
 }

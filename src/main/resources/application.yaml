@@ -210,9 +210,9 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: 86400000 # 1 day
+  expiration: PT24H # 1 day
   refresh-secret: ${APP_JWT_REFRESH_SECRET}
-  refresh-expiration: 86400000 # 1 day
+  refresh-expiration: PT24H # 1 day
   issuer: ${APP_JWT_ISSUER:iced-latte}
   audience: ${APP_JWT_AUDIENCE:iced-latte-client}
 

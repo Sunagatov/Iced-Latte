@@ -55,7 +55,7 @@ public class UserRegistrationService {
             // amazonq-ignore-next-line
             return response;
         } catch (DataIntegrityViolationException e) {
-            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.", e);
+            throw new UserRegistrationException("Email already registered.", e);
         }
     }
 }

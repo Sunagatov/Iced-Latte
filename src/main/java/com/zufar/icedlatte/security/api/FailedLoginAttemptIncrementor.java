@@ -22,7 +22,7 @@ public class FailedLoginAttemptIncrementor {
     public LoginAttemptEntity increment(String userEmail) {
         LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
                 .orElseGet(() -> {
-                    log.info("No login attempt record found for email: {}. Creating a new record.", userEmail);
+                    log.debug("No login attempt record found. Creating a new record.");
                     return LoginAttemptEntity.builder()
                             .userEmail(userEmail)
                             .attempts(0)
@@ -33,7 +33,7 @@ public class FailedLoginAttemptIncrementor {
         loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
         loginAttempt.setLastModified(Instant.now());
         LoginAttemptEntity saved = loginAttemptRepository.save(loginAttempt);
-        log.warn("Failed login attempt #{} recorded for email: {}", saved.getAttempts(), userEmail);
+        log.warn("Failed login attempt #{} recorded", saved.getAttempts());
         return saved;
     }
 }

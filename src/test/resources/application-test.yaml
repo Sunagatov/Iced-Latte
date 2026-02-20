@@ -102,9 +102,9 @@ jwt:
   header: Authorization
   # Dummy base64 secrets - test-only, not used in production
   secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=
-  expiration: 1800000
+  expiration: PT30M
   refresh-secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA0MDRFNTM1MjY2NTU2QTU4NkUzMjcyMzU3NTM4NzgyRjQxM0E0NDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==
-  refresh-expiration: 604800000
+  refresh-expiration: PT168H
   issuer: iced-latte
   audience: iced-latte-users
   # Test user fixture credentials - not a production secret
