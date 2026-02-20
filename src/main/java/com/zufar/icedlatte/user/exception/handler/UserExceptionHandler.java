@@ -24,9 +24,9 @@ public class UserExceptionHandler {
     private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
         return apiErrorResponse;

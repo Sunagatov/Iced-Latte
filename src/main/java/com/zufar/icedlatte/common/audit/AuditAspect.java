@@ -34,18 +34,13 @@ public class AuditAspect {
         if (result == null) {
             return "unknown";
         }
-        
         try {
             Field field = result.getClass().getDeclaredField("id");
             field.setAccessible(true);
             Object id = field.get(result);
             return id != null ? id.toString() : "unknown";
-        } catch (NoSuchFieldException e) {
-            log.warn("Could not find 'id' field on type {}: {}", result.getClass().getSimpleName(), e.getMessage(), e);
-            return "unknown";
-        } catch (IllegalAccessException e) {
-            log.warn("Could not access 'id' field on type {}: {}", result.getClass().getSimpleName(), e.getMessage(), e);
-            return "unknown";
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            return result.toString();
         }
     }
 }

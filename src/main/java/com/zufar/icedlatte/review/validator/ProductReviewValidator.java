@@ -68,7 +68,7 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the product's review deletion is allowed
+     * Check if the product and review both exist
      */
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
         if (!productInfoRepository.existsById(productId)) {

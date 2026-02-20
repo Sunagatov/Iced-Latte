@@ -24,7 +24,6 @@ public class UserRegistrationService {
     private final UserRepository userCrudRepository;
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
-    private final UserEntityDefaultsProvider userEntityDefaultsProvider;
 
     public boolean isEmailAvailable(final String email) {
         return userCrudRepository.findByEmail(email).isEmpty();
@@ -44,7 +43,10 @@ public class UserRegistrationService {
         newUserEntity.setEmail(email);
         newUserEntity.setPassword(encryptedPassword);
         newUserEntity.addAuthority(defaultUserGrantedAuthority);
-        userEntityDefaultsProvider.applyDefaults(newUserEntity);
+        newUserEntity.setAccountNonExpired(true);
+        newUserEntity.setAccountNonLocked(true);
+        newUserEntity.setCredentialsNonExpired(true);
+        newUserEntity.setEnabled(true);
 
         UserEntity userEntity = userCrudRepository.save(newUserEntity);
 

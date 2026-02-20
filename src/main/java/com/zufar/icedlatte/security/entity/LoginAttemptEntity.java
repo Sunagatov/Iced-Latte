@@ -35,7 +35,7 @@ public class LoginAttemptEntity {
     @Column(name = "attempts", nullable = false)
     private Integer attempts;
 
-    @Column(name = "expiration_datetime", nullable = true)
+    @Column(name = "expiration_datetime")
     private LocalDateTime expirationDatetime;
 
     @Column(name = "is_user_locked", nullable = false)

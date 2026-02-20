@@ -59,13 +59,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
-        // Validate input to prevent code injection
-        if (changeUserPasswordRequest.getOldPassword() == null || changeUserPasswordRequest.getOldPassword().trim().isEmpty() ||
-            changeUserPasswordRequest.getNewPassword() == null || changeUserPasswordRequest.getNewPassword().trim().isEmpty()) {
-            log.warn("Invalid password change request: missing passwords");
-            return ResponseEntity.badRequest().build();
-        }
-        
         log.info("Changing user password");
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
         log.info("User password changed");
@@ -85,19 +78,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
-        // Validate file input to prevent code injection
-        if (file == null || file.isEmpty() || file.getOriginalFilename() == null) {
-            log.warn("Invalid file upload: null or empty file");
-            return ResponseEntity.badRequest().build();
-        }
-        
-        // Validate file type and size
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            log.warn("Invalid file type: {}", contentType);
-            return ResponseEntity.badRequest().build();
-        }
-        
         var userId = securityPrincipalProvider.getUserId();
         log.info("Uploading avatar for user: {}", userId);
         userAvatarUploader.uploadUserAvatar(userId, file);

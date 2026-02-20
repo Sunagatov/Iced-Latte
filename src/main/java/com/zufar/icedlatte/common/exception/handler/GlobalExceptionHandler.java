@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
         String message = exception
                 .getBindingResult()
                 .getAllErrors().stream()
-                .map(error -> String.format("{ ErrorMessage: %s", error))
+                .map(error -> String.format("{ ErrorMessage: %s }", error))
                 .toList()
                 .toString();
 

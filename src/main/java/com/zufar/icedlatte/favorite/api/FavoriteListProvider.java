@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +35,7 @@ public class FavoriteListProvider {
     private FavoriteListEntity createNewFavoriteList(UUID userId) {
         return FavoriteListEntity.builder()
                 .userId(userId)
-                .favoriteItems(ConcurrentHashMap.newKeySet())
+                .favoriteItems(new HashSet<>())
                 .updatedAt(OffsetDateTime.now())
                 .build();
     }

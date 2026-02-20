@@ -12,19 +12,19 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class TokenTimeExpirationCache {
 
-    private final Integer EXPIRE_TIME;
+    private final int expireTime;
     private final Cache<String, OffsetDateTime> tokenCache;
 
     public TokenTimeExpirationCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
-        this.EXPIRE_TIME = expireTime;
+        this.expireTime = expireTime;
         this.tokenCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(EXPIRE_TIME, TimeUnit.MINUTES)
+                .expireAfterWrite(expireTime, TimeUnit.MINUTES)
                 .build();
     }
 
     public void manageEmailSendingRate(String email) {
-        OffsetDateTime expireTime = OffsetDateTime.now().plus(EXPIRE_TIME, TimeUnit.MINUTES.toChronoUnit());
-        tokenCache.put(email, expireTime);
+        OffsetDateTime expireDateTime = OffsetDateTime.now().plus(expireTime, TimeUnit.MINUTES.toChronoUnit());
+        tokenCache.put(email, expireDateTime);
     }
 
     public void validateTimeToken(String email) {

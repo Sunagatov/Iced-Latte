@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Service
 @ConditionalOnMissingBean(RedisJwtBlacklistService.class)
-public class InMemoryJwtBlacklistService {
+public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     private final ConcurrentMap<String, TokenEntry> blacklistedTokens = new ConcurrentHashMap<>();
     private final AtomicInteger tokenCount = new AtomicInteger(0);

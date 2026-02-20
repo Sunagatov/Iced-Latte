@@ -21,7 +21,7 @@ import java.util.HexFormat;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.data.redis.host")
-public class RedisJwtBlacklistService {
+public class RedisJwtBlacklistService implements JwtBlacklistService {
 
     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
     private static final String BLACKLIST_VALUE = "revoked";

@@ -22,11 +22,14 @@ public class WebhookEventHandler {
     private final Map<String, SessionScenarioHandler> handlers;
 
     public void handlePaymentEvent(final Event stripePaymentEvent, final Session stripeSession) {
-
-        if (!Objects.nonNull(stripeSession) || !Objects.nonNull(stripePaymentEvent)) {
+        if (Objects.isNull(stripeSession) || Objects.isNull(stripePaymentEvent)) {
             return;
         }
-        handlers.get(stripePaymentEvent.getType())
-                .handle(stripeSession);
+        SessionScenarioHandler handler = handlers.get(stripePaymentEvent.getType());
+        if (handler == null) {
+            log.warn("No handler registered for Stripe event type: {}", stripePaymentEvent.getType());
+            return;
+        }
+        handler.handle(stripeSession);
     }
 }
