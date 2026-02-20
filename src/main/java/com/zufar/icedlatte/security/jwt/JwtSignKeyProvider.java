@@ -1,27 +1,24 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.configuration.JwtProperties;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 
 @Service
-@RequiredArgsConstructor
 public class JwtSignKeyProvider {
 
-    private final JwtProperties jwtProperties;
+    private final SecretKey signingKey;
+    private final SecretKey refreshKey;
 
-    public SecretKey get() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
-        return Keys.hmacShaKeyFor(keyBytes);
+    public JwtSignKeyProvider(JwtProperties jwtProperties) {
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.secret()));
+        this.refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.refreshSecret()));
     }
 
-    public SecretKey getRefresh() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.refreshSecret());
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
+    public SecretKey get() { return signingKey; }
+
+    public SecretKey getRefresh() { return refreshKey; }
 }

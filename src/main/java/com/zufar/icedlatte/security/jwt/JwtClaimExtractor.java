@@ -1,24 +1,22 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Optional;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class JwtClaimExtractor {
-    private final JwtSignKeyProvider jwtSignKeyProvider;
+
+    private final JwtParser jwtParser;
+
+    public JwtClaimExtractor(JwtSignKeyProvider jwtSignKeyProvider) {
+        this.jwtParser = Jwts.parser().verifyWith(jwtSignKeyProvider.get()).build();
+    }
 
     public String extractEmail(final String jwtToken) {
         try {
@@ -33,49 +31,16 @@ public class JwtClaimExtractor {
         }
     }
 
-    public LocalDateTime extractExpiration(final String jwtToken) {
-        try {
-            Date expiration = extractAllClaims(jwtToken).getExpiration();
-            if (expiration == null) {
-                throw new IllegalArgumentException("JWT token has no expiration date");
-            }
-            return expiration.toInstant()
-                    .atOffset(ZoneOffset.UTC)
-                    .toLocalDateTime();
-        } catch (JwtException ex) {
-            throw new IllegalArgumentException("Failed to extract expiration from JWT token", ex);
-        }
-    }
-
-    public boolean isTokenExpired(final String jwtToken) {
-        try {
-            LocalDateTime expiration = extractExpiration(jwtToken);
-            LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-            return expiration.isBefore(now);
-        } catch (JwtException | IllegalArgumentException ex) {
-            return true;
-        }
-    }
-
     private boolean isValidEmailFormat(String email) {
-        return email != null && 
-               email.contains("@") && 
-               email.length() >= 5 && 
+        return email != null &&
+               email.contains("@") &&
+               email.length() >= 5 &&
                email.length() <= 254 &&
-               !email.startsWith("@") && 
+               !email.startsWith("@") &&
                !email.endsWith("@");
     }
 
     private Claims extractAllClaims(final String jwtToken) {
-        return getJwtParser()
-                .parseSignedClaims(jwtToken)
-                .getPayload();
-    }
-
-    private JwtParser getJwtParser() {
-        return Jwts
-                .parser()
-                .verifyWith(jwtSignKeyProvider.get())
-                .build();
+        return jwtParser.parseSignedClaims(jwtToken).getPayload();
     }
 }

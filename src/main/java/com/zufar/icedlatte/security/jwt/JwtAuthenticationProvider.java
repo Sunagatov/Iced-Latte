@@ -25,11 +25,7 @@ public class JwtAuthenticationProvider {
 
         jwtBlacklistValidator.validate(jwtToken);
 
-        if (jwtClaimExtractor.isTokenExpired(jwtToken)) {
-            log.debug("Authentication failed: JWT token has expired");
-            throw new io.jsonwebtoken.ExpiredJwtException(null, null, "JWT token has expired");
-        }
-
+        // ExpiredJwtException is thrown by jwtClaimExtractor if the token is expired
         String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 

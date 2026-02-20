@@ -35,7 +35,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final JwtBlacklistValidator jwtBlacklistValidator;
     private final EmailTokenSender emailTokenSender;
     private final EmailTokenConformer emailTokenConformer;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
+    private final JwtRefreshTokenValidator jwtRefreshTokenValidator;
     private final UserDetailsService userDetailsService;
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
@@ -75,10 +75,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
         log.info("Refreshing token");
-        var authToken = jwtAuthenticationProvider.get(httpRequest);
-        var userDetails = userDetailsService.loadUserByUsername(authToken.getName());
-        var response = userAuthenticationService.authenticate(userDetails, authToken.getName());
-        log.info("Token refreshed for: {}", authToken.getName());
+        String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
+        var userDetails = userDetailsService.loadUserByUsername(userEmail);
+        var response = userAuthenticationService.authenticate(userDetails, userEmail);
+        log.info("Token refreshed for: {}", userEmail);
         return ResponseEntity.ok(response);
     }
 
