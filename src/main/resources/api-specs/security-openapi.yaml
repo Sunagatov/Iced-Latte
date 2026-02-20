@@ -1,4 +1,5 @@
 openapi: "3.0.3"
+
 info:
   title: "Iced Latte Security API"
   description: "API for accessing security and related operations in the Iced-Latte platform"
@@ -49,6 +50,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: "Unprocessable entity"
           content:
@@ -88,6 +95,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Not found"
           content:
@@ -121,6 +134,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized"
           content:
@@ -210,6 +229,12 @@ paths:
           description: "Password reset request accepted"
         "400":
           description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
@@ -330,6 +355,9 @@ components:
 
     UserRegistrationResponse:
       type: "object"
+      required:
+        - token
+        - refreshToken
       properties:
         token:
           type: "string"
@@ -353,13 +381,16 @@ components:
 
     UserAuthenticationResponse:
       type: "object"
+      required:
+        - token
+        - refreshToken
       properties:
         token:
           type: "string"
           description: "JWT token for authenticated user."
         refreshToken:
           type: "string"
-          description: "Refresh token."
+          description: "Refresh token for generating a new JWT."
 
     ConfirmEmailRequest:
       type: "object"

@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DisplayName("JwtTokenFromAuthHeaderExtractor Tests")
 class JwtTokenFromAuthHeaderExtractorTest {
 
+    private static final String VALID_JWT_TOKEN_FIXTURE = "test-header.test-payload.test-signature";
+
     private JwtTokenFromAuthHeaderExtractor extractor;
     private MockHttpServletRequest request;
 
@@ -67,11 +69,10 @@ class JwtTokenFromAuthHeaderExtractorTest {
     @Test
     @DisplayName("Should extract valid JWT token")
     void shouldExtractValidJwtToken() {
-        String validJwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-        request.addHeader("Authorization", "Bearer " + validJwtToken);
-        
+        request.addHeader("Authorization", "Bearer " + VALID_JWT_TOKEN_FIXTURE);
+
         String actualToken = extractor.extract(request);
-        
-        assertEquals(validJwtToken, actualToken);
+
+        assertEquals(VALID_JWT_TOKEN_FIXTURE, actualToken);
     }
 }

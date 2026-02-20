@@ -61,6 +61,8 @@ public class AwsObjectUploader {
             throw new FileUploadException(fileName, sce);
         } catch (IOException e) {
             throw new FileReadException(fileName, e);
+        } catch (Exception e) {
+            throw new FileUploadException(fileName, e);
         }
     }
 

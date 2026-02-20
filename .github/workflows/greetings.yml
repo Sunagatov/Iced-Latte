@@ -1,7 +1,7 @@
 name: Greetings
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened]
   issues:
     types: [opened]
@@ -18,10 +18,10 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           issue-message: |
-            Hello there! 
+            Hello there!
 
             We truly appreciate you taking the time to create a new issue for our project on GitHub. Your input helps us improve and grow. Thank you!
           pr-message: |
-            Hello there! 
+            Hello there!
 
             Thank you for your contribution! We're delighted to see your Pull Request in our GitHub repository. Your efforts make a difference. Thanks a lot!

@@ -3,6 +3,11 @@
 #
 server:
   port: 8083
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
 
 #
 # Management Properties
@@ -32,7 +37,7 @@ spring:
     password: ${spring.datasource.password}
     drop-first: true
   #
-  # Spring AI Properties
+  # Spring AI Properties (disabled in tests - fake key prevents real API calls)
   #
   ai:
     openai:
@@ -60,7 +65,7 @@ spring:
     buckets:
       products: products
       user-avatar: users
-    link-expiration-time: P7D
+    link-expiration-time: PT1H
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
@@ -69,7 +74,7 @@ spring:
       products: ./products
 
   #
-  # Redis
+  # Redis (used by RedisJwtBlacklistService in tests via Testcontainers)
   #
   data:
     redis:
@@ -95,12 +100,14 @@ temporary-cache:
 #
 jwt:
   header: Authorization
+  # Dummy base64 secrets - test-only, not used in production
   secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=
   expiration: 1800000
   refresh-secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA0MDRFNTM1MjY2NTU2QTU4NkUzMjcyMzU3NTM4NzgyRjQxM0E0NDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==
   refresh-expiration: 604800000
   issuer: iced-latte
   audience: iced-latte-users
+  # Test user fixture credentials - not a production secret
   email: olivia@example.com
   password: p@ss1logic11
 
@@ -111,7 +118,7 @@ ai:
   # https://platform.openai.com/docs/api-reference/moderations/create
   url: "https://api.openai.com/v1/moderations"
   api-key: "sk-api-key"
-  request-body: '{ "input": "$message"}'
+  request-body: '{"input": "$message"}'
   message-replacement-pattern: "$message"
 
 #
@@ -131,6 +138,9 @@ stripe:
   secret-key: "sk_test_placeholder"
   webhook-secret: "whsec_test_placeholder"
 
+aws:
+  account-id: test-account-id
+
 logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
@@ -141,14 +151,11 @@ logging:
 #
 security:
   argon2:
-    memory: 256
-    iterations: 1
+    memory: 256      # reduced from 16384 to speed up tests
+    iterations: 1    # reduced from 2 to speed up tests
   rate-limit:
     max-requests: 10000
     auth-max-requests: 10000
     window-duration: PT1M
     auth-window-duration: PT1M
 
-
-aws:
-  account-id: test-account-id

@@ -49,10 +49,11 @@ public class ApplicationMigration implements ApplicationRunner {
             CompletableFuture.runAsync(this::uploadFiles, executor)
                     .thenCompose(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor))
                     .thenAccept(this::saveMetadata)
+                    .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
                     .join();
         } catch (java.util.concurrent.CompletionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            log.warn("Migration completed with warnings: {}", cause.getMessage(), cause);
+            log.warn("Migration completed with warnings", cause);
         }
     }
 

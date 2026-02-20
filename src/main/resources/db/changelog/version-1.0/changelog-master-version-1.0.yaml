@@ -22,6 +22,7 @@ databaseChangeLog:
       errorIfMissing: true
       
   # ========== SHOPPING CART SYSTEM ==========
+  # Cart and cart item tables with seed data
   - include:
       file: db/changelog/version-1.0/21.07.2023.part1.create-shopping-cart-table.sql
       errorIfMissing: true
@@ -67,6 +68,7 @@ databaseChangeLog:
       errorIfMissing: true
       
   # ========== FAVORITES SYSTEM ==========
+  # Favorite product lists and items
   - include:
       file: db/changelog/version-1.0/23.11.2023.part1.create-favorite-product-table.sql
       errorIfMissing: true
@@ -81,11 +83,13 @@ databaseChangeLog:
       errorIfMissing: true
       
   # ========== FILE MANAGEMENT ==========
+  # File metadata storage
   - include:
       file: db/changelog/version-1.0/13.12.2023.part1.create-file-metadata-table.sql
       errorIfMissing: true
       
   # ========== ORDER MANAGEMENT ==========
+  # Order and order item tables
   - include:
       file: db/changelog/version-1.0/07.01.2024.part1.create-order-table.sql
       errorIfMissing: true
@@ -94,22 +98,24 @@ databaseChangeLog:
       errorIfMissing: true
       
   # ========== PAYMENT SYSTEM ==========
+  # Payment records
   - include:
       file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
       errorIfMissing: true
       
   # ========== REVIEW & RATING SYSTEM ==========
+  # Product reviews, ratings, and likes
   - include:
       file: db/changelog/version-1.0/08.02.2024.part1.create-product-review-table.sql
       errorIfMissing: true
   - include:
-      file: db/changelog/version-1.0/08.02.2024.part2.insert-product-review-table.sql
+      file: db/changelog/version-1.0/08.02.2024.part2.insert-product-review-data.sql
       errorIfMissing: true
   - include:
       file: db/changelog/version-1.0/13.04.2024.part1.create-product-review-likes-table.sql
       errorIfMissing: true
   - include:
-      file: db/changelog/version-1.0/13.04.2024.part2.insert-product-review-likes-table.sql
+      file: db/changelog/version-1.0/13.04.2024.part2.insert-product-review-likes-data.sql
       errorIfMissing: true
       
   # ========== AUDIT & COMPLIANCE ==========

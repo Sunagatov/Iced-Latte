@@ -51,6 +51,10 @@ public class ProductReviewsProvider {
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
 
+        if (productRatings != null && productRatings.stream().anyMatch(r -> r == null || r < 1 || r > 5)) {
+            throw new IllegalArgumentException("Product ratings must be integers between 1 and 5");
+        }
+
         var responsePage = reviewRepository
                 .findAllProductReviews(productId, productRatings, createPageableObject(page, size, sortAttr, sortDir))
                 .map(productReviewDtoConverter::toProductReviewDto);

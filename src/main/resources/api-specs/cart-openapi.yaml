@@ -44,7 +44,7 @@ paths:
                 summary: "Add Multiple Items"
                 value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
       responses:
-        "200":
+        "201":
           description: "Items added successfully."
           content:
             application/json:
@@ -89,7 +89,9 @@ paths:
             examples:
               increment-quantity:
                 summary: "Increment Quantity"
-                value: {"shoppingCartItemId": "e5f6g7h8", "productQuantityChange": 1}
+                value:
+                  shoppingCartItemId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  productQuantityChange: 1
       responses:
         "200":
           description: "Shopping cart item quantity was updated successfully."

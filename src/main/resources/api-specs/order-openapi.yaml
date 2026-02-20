@@ -141,8 +141,7 @@ components:
         - recipientSurname
       properties:
         address:
-          # amazonq-ignore-next-line
-          $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
         recipientName:
           type: "string"
           description: "Name of the order recipient. Can be different from the user's name."
@@ -176,28 +175,4 @@ components:
           description: "The date and time when the order was created."
 
     ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
-          type: "array"
-          items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

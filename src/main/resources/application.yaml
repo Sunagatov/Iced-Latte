@@ -11,6 +11,10 @@ server:
   error:
     include-stacktrace: never
     include-message: never
+    include-binding-errors: never
+    include-exception: false
+    whitelabel:
+      enabled: false
 
 #
 # Spring Properties
@@ -71,7 +75,7 @@ spring:
     buckets:
       products: ${AWS_PRODUCT_BUCKET}
       user-avatar: ${AWS_USER_BUCKET}
-    link-expiration-time: P7D
+    link-expiration-time: PT1H
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
@@ -93,7 +97,7 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:youricedlatteshop@gmail.com}
+    username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     subject:
       confirmation: "Iced Latte - Email Confirmation"
@@ -109,6 +113,19 @@ spring:
 
   messages:
     basename: messages/messages
+
+  config:
+    import: optional:stripe.yaml
+
+  #
+  # Avatar Upload Properties
+  #
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
 
 #
 # Pagination Properties
@@ -141,25 +158,9 @@ temporary-cache:
     token: 1
   get-token-enabled: true
 
-  #
-  # Stripe API Properties
-  #
-  config:
-    import: optional:stripe.yaml
-
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
-
-  #
-  # Avatar Upload Properties
-  #
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 5MB
-      max-request-size: 10MB
-      file-size-threshold: 2KB
 
 #
 # Spring Doc Properties
@@ -182,7 +183,7 @@ management:
     prometheus:
       enabled: true
     shutdown:
-      enabled: true
+      enabled: false
     health:
       enabled: true
       show-details: when-authorized
@@ -190,6 +191,7 @@ management:
     web:
       exposure:
         include: health, info, metrics, prometheus
+        # metrics and prometheus are internal; restrict to authorized access only via show-details: when-authorized
       base-path: /actuator
   prometheus:
     metrics:
@@ -245,7 +247,7 @@ logging:
 ai:
   # https://platform.openai.com/docs/api-reference/moderations/create
   url: "https://api.openai.com/v1/moderations"
-  api-key: ${SPRING_AI_OPENAI_API_KEY}
+  api-key: ${SPRING_AI_OPENAI_API_KEY:}
   request-body: '{"input": "$message"}'
   message-replacement-pattern: "$message"
 

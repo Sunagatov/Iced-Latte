@@ -9,14 +9,11 @@ import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.UUID;
 
 
 @Slf4j
@@ -130,8 +127,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PostMapping(path = "/password/reset")
-    public ResponseEntity<Void> resetUserPassword() {
-        var user = securityPrincipalProvider.get();
+    public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest initiatePasswordResetRequest) {
+        var user = singleUserProvider.getUserByEmail(initiatePasswordResetRequest.getEmail());
         log.info("Resetting password for user: {}", user.getId());
         var request = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
         emailTokenSender.sendEmailVerificationCode(request);

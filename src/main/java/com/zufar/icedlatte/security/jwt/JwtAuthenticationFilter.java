@@ -12,7 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -48,11 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityConstants.REVIEW_URL
     );
 
-    private static final JsonStringEncoder JSON_ENCODER = JsonStringEncoder.getInstance();
-
-    private static String escapeJson(String value) {
-        return new String(JSON_ENCODER.quoteAsString(value));
-    }
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final PathPatternRequestMatcher.Builder PATH_MATCHER = PathPatternRequestMatcher.withDefaults();
 
@@ -99,16 +96,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
             case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
             case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
-            case ServletException ignored -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         };
         
         if (errorInfo.statusCode() >= 500) {
-            log.error("Authentication error: {} - Request ID: {}", 
-                    escapeJson(errorInfo.message()), requestId, exception);
+            log.error("Authentication error: {} - Request ID: {}", errorInfo.message(), requestId, exception);
         } else {
-            log.warn("Authentication failed: {} - Request ID: {}", 
-                    escapeJson(errorInfo.message()), requestId);
+            log.warn("Authentication failed: {} - Request ID: {}", errorInfo.message(), requestId);
             log.debug("Authentication failure details", exception);
         }
         
@@ -121,22 +115,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setHeader("Expires", "0");
         httpResponse.setHeader("X-Request-ID", requestId);
         
-        String jsonResponse = String.format("""
-            {
-                "error": "%s",
-                "message": "%s",
-                "timestamp": "%s",
-                "status": %d,
-                "requestId": "%s"
-            }
-            """, 
-            escapeJson("Unauthorized"), 
-            escapeJson(errorInfo.message()),
-            escapeJson(java.time.Instant.now().toString()),
-            errorInfo.statusCode(),
-            escapeJson(requestId));
-        
-        httpResponse.getWriter().write(jsonResponse);
+        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+                .put("error", "Unauthorized")
+                .put("message", errorInfo.message())
+                .put("timestamp", java.time.Instant.now().toString())
+                .put("status", errorInfo.statusCode())
+                .put("requestId", requestId);
+        byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
+        httpResponse.setContentLength(responseBytes.length);
+        httpResponse.getOutputStream().write(responseBytes);
     }
     
     // Record for error information - Java 21 feature

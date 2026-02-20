@@ -26,7 +26,9 @@ public class JwtClaimExtractor {
                     .filter(StringUtils::hasText)
                     .filter(this::isValidEmailFormat)
                     .orElseThrow(() -> new JwtTokenHasNoUserEmailException("Invalid or missing email in JWT token"));
-        } catch (JwtException ex) {
+        } catch (JwtTokenHasNoUserEmailException ex) {
+            throw ex;
+        } catch (Exception ex) {
             throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token", ex);
         }
     }

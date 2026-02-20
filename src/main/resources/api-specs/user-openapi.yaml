@@ -13,7 +13,7 @@ info:
     url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
-  - url: "http://localhost:8083"
+  - url: "https://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
@@ -184,8 +184,14 @@ paths:
       summary: "Reset user password"
       description: "Initiate a user password reset."
       operationId: "resetUserPassword"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitiatePasswordResetRequest"
       responses:
-        "200":
+        "204":
           description: "Password reset request confirmed successfully."
         "400":
           description: "Invalid request."
@@ -201,6 +207,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "User not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Too many requests. Rate limit exceeded."
           content:
             application/json:
               schema:
@@ -227,7 +239,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ConfirmPasswordResetRequest"
       responses:
-        "200":
+        "204":
           description: "Password reset confirmed successfully."
         "400":
           description: "Invalid or expired reset token."
@@ -481,6 +493,17 @@ components:
           description: "The postal code of the address."
           example: "E1 6AN"
 
+    InitiatePasswordResetRequest:
+      type: "object"
+      description: "Payload to initiate a password reset."
+      required:
+        - email
+      properties:
+        email:
+          type: "string"
+          format: "email"
+          description: "The email address of the user requesting a password reset."
+
     ConfirmPasswordResetRequest:
       type: "object"
       description: "Payload to confirm a password reset."
@@ -492,44 +515,12 @@ components:
           type: "string"
           description: "The password reset token."
         newPassword:
-          type: "string"
-          description: "The new password for the user."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          allOf:
+            - $ref: "#/components/schemas/PasswordField"
           example: "NewSecurePassword123!"
 
     SuccessResponse:
-      type: "object"
-      description: "Standard success response format"
-      properties:
-        message:
-          type: "string"
-          description: "Success message"
+      $ref: "common-schemas.yaml#/components/schemas/SuccessResponse"
 
     ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
-          type: "array"
-          items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

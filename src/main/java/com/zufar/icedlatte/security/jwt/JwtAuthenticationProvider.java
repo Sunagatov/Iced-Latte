@@ -40,7 +40,7 @@ public class JwtAuthenticationProvider {
         );
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
 
-        log.debug("Authentication successful");
+        log.debug("Authentication successful.");
         return authenticationToken;
     }
 }

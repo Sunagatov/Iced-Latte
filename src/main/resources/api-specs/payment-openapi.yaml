@@ -13,7 +13,7 @@ info:
     url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
-  - url: "http://localhost:8083"
+  - url: "https://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
@@ -63,8 +63,8 @@ paths:
     get:
       tags:
         - "Payment"
-      summary: "Handles redirect after Stripe checkout session completion"
-      description: "Processes the Stripe redirect event after a successful checkout session and creates the corresponding order."
+      summary: "Stripe checkout redirect callback"
+      description: "Called by Stripe after a successful checkout session. Processes the session and creates the corresponding order."
       operationId: "processRedirectEvent"
       parameters:
         - name: "sessionId"

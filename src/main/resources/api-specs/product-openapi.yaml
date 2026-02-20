@@ -70,6 +70,8 @@ paths:
                 $ref: "#/components/schemas/SellersDto"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -89,6 +91,8 @@ paths:
                 $ref: "#/components/schemas/BrandsDto"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -184,6 +188,8 @@ paths:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -213,6 +219,8 @@ paths:
                   $ref: "#/components/schemas/ProductInfoDto"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":

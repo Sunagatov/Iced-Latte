@@ -26,15 +26,6 @@ public class RedisJwtBlacklistService {
     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
     private static final String BLACKLIST_VALUE = "revoked";
 
-    private static final MessageDigest SHA256;
-
-    static {
-        try {
-            SHA256 = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -49,7 +40,7 @@ public class RedisJwtBlacklistService {
         }
         String key = buildBlacklistKey(token);
         redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtTtl);
-        log.debug("Token blacklisted successfully with TTL: {} seconds", jwtTtl.getSeconds());
+        log.debug("Token blacklisted successfully with TTL: {} seconds", jwtTtl.toSeconds());
     }
 
     public boolean isBlacklisted(String token) {
@@ -73,10 +64,10 @@ public class RedisJwtBlacklistService {
 
     private String buildBlacklistKey(String token) {
         try {
-            byte[] hash = ((MessageDigest) SHA256.clone()).digest(token.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return BLACKLIST_KEY_PREFIX + HexFormat.of().formatHex(hash);
-        } catch (CloneNotSupportedException e) {
-            throw new IllegalStateException("MessageDigest clone failed", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 }

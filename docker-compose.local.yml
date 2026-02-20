@@ -1,5 +1,3 @@
-version: '3.9'
-
 networks:
   iced-latte-network:
     name: iced-latte-network
@@ -38,19 +36,19 @@ services:
       DATASOURCE_USERNAME: postgres
       DATASOURCE_PASSWORD: postgres
       DATASOURCE_HOST: iced-latte-postgresdb
-      REDIS_HOST: iced-latte-redis
-      REDIS_PORT: 6380
+      REDIS_HOST: ${REDIS_HOST:-iced-latte-redis}
+      REDIS_PORT: ${REDIS_PORT:-6380}
       AWS_DEFAULT_PRODUCT_IMAGES_PATH: ./products
-      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-your-aws-access-key}
-      AWS_SECRET_KEY: ${AWS_SECRET_KEY:-your-aws-secret-key}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:?AWS_ACCESS_KEY is required}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY:?AWS_SECRET_KEY is required}
       AWS_REGION: eu-west-1
       AWS_PRODUCT_BUCKET: products
       AWS_USER_BUCKET: users
-      GOOGLE_AUTH_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID:-your-google-client-id}
-      GOOGLE_AUTH_CLIENT_SECRET: ${GOOGLE_AUTH_CLIENT_SECRET:-your-google-client-secret}
-      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:-your-google-redirect-uri}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder_webhook_secret}
+      GOOGLE_AUTH_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID:?GOOGLE_AUTH_CLIENT_ID is required}
+      GOOGLE_AUTH_CLIENT_SECRET: ${GOOGLE_AUTH_CLIENT_SECRET:?GOOGLE_AUTH_CLIENT_SECRET is required}
+      GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:?GOOGLE_AUTH_REDIRECT_URI is required}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?STRIPE_WEBHOOK_SECRET is required}
     ports:
       - '8083:8083'
       - '5005:5005' # port for remote debugging
@@ -92,6 +90,7 @@ services:
       retries: 5
     restart: on-failure
 
+# nginx is currently handled at the infrastructure level (not via Docker Compose)
 #  iced-latte-nginx:
 #    image: nginx:alpine
 #    container_name: iced-latte-nginx

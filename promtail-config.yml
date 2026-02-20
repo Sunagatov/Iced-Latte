@@ -16,4 +16,4 @@ scrape_configs:
         labels:
           job: iced-latte-backend
           app: iced-latte
-          __path__: /var/log/iced-latte-backend/*log
+          __path__: /var/log/iced-latte-backend/*.log
