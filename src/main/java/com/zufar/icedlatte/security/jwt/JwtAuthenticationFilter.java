@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
@@ -15,17 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.MDC;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.UUID;
 
 
@@ -37,21 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String MDC_USER_ID_KEY = "userId";
     private static final String MDC_REQUEST_ID_KEY = "requestId";
     
-    private static final Set<String> SECURED_URLS = Set.of(
-            SecurityConstants.SHOPPING_CART_URL,
-            SecurityConstants.PAYMENT_URL,
-            SecurityConstants.USERS_URL,
-            SecurityConstants.FAVOURITES_URL,
-            SecurityConstants.AUTH_URL,
-            SecurityConstants.ORDERS_URL,
-            SecurityConstants.SHIPPING_URL,
-            SecurityConstants.REVIEWS_URL,
-            SecurityConstants.REVIEW_URL
-    );
-
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    private static final PathPatternRequestMatcher.Builder PATH_MATCHER = PathPatternRequestMatcher.withDefaults();
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
@@ -60,16 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
                                     @NonNull final HttpServletResponse httpResponse,
                                     @NonNull final FilterChain filterChain) throws IOException, ServletException {
-        
+
         String requestId = UUID.randomUUID().toString();
         MDC.put(MDC_REQUEST_ID_KEY, requestId);
-        
+
         try {
-            if (shouldNotFilter(httpRequest)) {
-                filterChain.doFilter(httpRequest, httpResponse);
-                return;
-            }
-            
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
@@ -131,29 +108,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return !isSecuredUrl(request);
-    }
-
-    private boolean isSecuredUrl(HttpServletRequest request) {
-        if (isUnauthorizedGetReviewsUrl(request) || isUnauthorizedPostStripeWebhookUrl(request)) {
-            return false;
-        }
-        
-        return SECURED_URLS.stream()
-                .anyMatch(securedUrl -> PATH_MATCHER.matcher(securedUrl).matches(request));
-    }
-
-    private boolean isUnauthorizedGetReviewsUrl(HttpServletRequest request) {
-        boolean isReviewsUrl = SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.stream()
-                .anyMatch(securedUrl -> PATH_MATCHER.matcher(securedUrl).matches(request));
-
-        return isReviewsUrl && HttpMethod.GET.name().equals(request.getMethod());
-    }
-
-    private boolean isUnauthorizedPostStripeWebhookUrl(HttpServletRequest request) {
-        boolean isStripeWebhookUrl = PATH_MATCHER.matcher(SecurityConstants.STRIPE_WEBHOOK_URL)
-                .matches(request);
-
-        return isStripeWebhookUrl && HttpMethod.POST.name().equals(request.getMethod());
+        return false;
     }
 }

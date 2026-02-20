@@ -6,6 +6,7 @@ import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -21,8 +22,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
-    private static final int USER_ACCOUNT_LOCKOUT_DURATION_MINUTES = 60;
     private static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials for user's account with email = '%s'";
+
+    @Value("${login-attempts.lockout-duration-minutes}")
+    private int userAccountLockoutDurationMinutes;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -50,7 +53,7 @@ public class UserAuthenticationService {
             throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
+            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
         } catch (AuthenticationException exception) {
             log.error("Authentication error occurred", exception);
             throw exception;
@@ -66,7 +69,7 @@ public class UserAuthenticationService {
             throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
         } catch (LockedException exception) {
             log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
+            throw new UserAccountLockedException(userEmail, userAccountLockoutDurationMinutes);
         } catch (AuthenticationException exception) {
             log.error("Authentication error occurred", exception);
             throw exception;

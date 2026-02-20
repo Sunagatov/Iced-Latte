@@ -11,6 +11,7 @@ import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,13 +32,9 @@ public class UserRegistrationService {
 
     @Transactional
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
+        String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();
-
-        String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
-        if (!isEmailAvailable(email)) {
-            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.");
-        }
 
         UserEntity newUserEntity = registrationDtoConverter.toEntity(userRegistrationRequest);
         newUserEntity.setEmail(email);
@@ -48,14 +45,16 @@ public class UserRegistrationService {
         newUserEntity.setCredentialsNonExpired(true);
         newUserEntity.setEnabled(true);
 
-        UserEntity userEntity = userCrudRepository.save(newUserEntity);
-
-        final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
-        final String jwtToken = jwtTokenProvider.generateToken(userEntity);
-
-        UserRegistrationResponse response = new UserRegistrationResponse();
-        response.setToken(jwtToken);
-        response.setRefreshToken(jwtRefreshToken);
-        return response;
+        try {
+            UserEntity userEntity = userCrudRepository.save(newUserEntity);
+            final String jwtToken = jwtTokenProvider.generateToken(userEntity);
+            final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
+            UserRegistrationResponse response = new UserRegistrationResponse();
+            response.setToken(jwtToken);
+            response.setRefreshToken(jwtRefreshToken);
+            return response;
+        } catch (DataIntegrityViolationException e) {
+            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.");
+        }
     }
 }

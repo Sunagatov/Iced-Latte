@@ -1,11 +1,21 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.email.api.*;
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.email.api.EmailTokenConformer;
+import com.zufar.icedlatte.email.api.EmailTokenSender;
+import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
+import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
+import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
-import com.zufar.icedlatte.security.api.*;
-import com.zufar.icedlatte.security.jwt.*;
-import com.zufar.icedlatte.user.api.*;
+import com.zufar.icedlatte.security.api.UserAuthenticationService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
+import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
+import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
+import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
+import com.zufar.icedlatte.user.api.SingleUserProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

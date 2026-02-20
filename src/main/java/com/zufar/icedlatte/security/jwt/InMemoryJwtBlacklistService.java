@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import java.nio.charset.StandardCharsets;
@@ -17,7 +16,6 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -25,18 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     private final ConcurrentMap<String, TokenEntry> blacklistedTokens = new ConcurrentHashMap<>();
-    private final AtomicInteger tokenCount = new AtomicInteger(0);
 
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
     private static final int MAX_TOKENS = 10000;
-    private static final long CLEANUP_INTERVAL_MS = 300000; // 5 minutes
-
-    @PostConstruct
-    public void initialize() {
-        log.info("In-memory JWT blacklist service initialized with TTL: {} ms", jwtExpirationMs);
-    }
+    private static final long CLEANUP_INTERVAL_MS = 300000;
 
     public void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
@@ -44,21 +36,13 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
             return;
         }
 
-        if (tokenCount.get() >= MAX_TOKENS) {
+        if (blacklistedTokens.size() >= MAX_TOKENS) {
             log.warn("Maximum blacklist capacity reached, performing cleanup");
             cleanupExpiredTokens();
         }
 
-        String tokenKey = sha256(token);
         Instant expiryTime = Instant.now().plusMillis(jwtExpirationMs);
-
-        TokenEntry entry = new TokenEntry(expiryTime);
-        TokenEntry previous = blacklistedTokens.put(tokenKey, entry);
-
-        if (previous == null) {
-            tokenCount.incrementAndGet();
-        }
-
+        blacklistedTokens.put(sha256(token), new TokenEntry(expiryTime));
         log.debug("Token blacklisted in memory, expires at: {}", expiryTime);
     }
 
@@ -77,7 +61,6 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
         if (entry.isExpired()) {
             blacklistedTokens.remove(tokenKey);
-            tokenCount.decrementAndGet();
             log.debug("Expired blacklisted token removed during lookup");
             return false;
         }
@@ -88,22 +71,13 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
     @Scheduled(fixedRate = CLEANUP_INTERVAL_MS)
     public void cleanupExpiredTokens() {
         Instant now = Instant.now();
-
-        blacklistedTokens.entrySet().removeIf(entry -> {
-            if (entry.getValue().isExpired(now)) {
-                tokenCount.decrementAndGet();
-                return true;
-            } else {
-                return false;
-            }
-        });
+        blacklistedTokens.entrySet().removeIf(e -> e.getValue().isExpired(now));
     }
 
     @PreDestroy
     public void shutdown() {
-        int finalCount = tokenCount.get();
+        int finalCount = blacklistedTokens.size();
         blacklistedTokens.clear();
-        tokenCount.set(0);
         log.info("In-memory JWT blacklist service shutdown, cleared {} tokens", finalCount);
     }
 

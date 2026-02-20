@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Slf4j
 @Configuration
-public class CorsConfiguration {
+public class AppCorsConfiguration {
 
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:8080}")
     private String allowedOrigins;
@@ -39,42 +39,28 @@ public class CorsConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-        
-        // Parse allowed origins
+
         List<String> origins = Arrays.asList(allowedOrigins.split(","));
         configuration.setAllowedOriginPatterns(origins);
-        
-        // Parse allowed methods
+
         List<String> methods = Arrays.asList(allowedMethods.split(","));
         configuration.setAllowedMethods(methods);
-        
-        // Parse allowed headers
+
         if (!"*".equals(allowedHeaders)) {
-            List<String> headers = Arrays.asList(allowedHeaders.split(","));
-            configuration.setAllowedHeaders(headers);
+            configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
         } else {
             configuration.addAllowedHeader("*");
         }
-        
-        // Parse exposed headers
-        List<String> exposed = Arrays.asList(exposedHeaders.split(","));
-        configuration.setExposedHeaders(exposed);
-        
-        // Security settings
+
+        configuration.setExposedHeaders(Arrays.asList(exposedHeaders.split(",")));
         configuration.setAllowCredentials(allowCredentials);
         configuration.setMaxAge(maxAge);
-        
-        // Additional security headers
-        configuration.addExposedHeader("X-Request-ID");
-        configuration.addExposedHeader("X-Rate-Limit-Remaining");
-        configuration.addExposedHeader("X-Rate-Limit-Reset");
-        
-        log.info("CORS configuration initialized with origins: {}, methods: {}, allowCredentials: {}", 
+
+        log.info("CORS configuration initialized with origins: {}, methods: {}, allowCredentials: {}",
                 origins, methods, allowCredentials);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
-        
         return source;
     }
 }
