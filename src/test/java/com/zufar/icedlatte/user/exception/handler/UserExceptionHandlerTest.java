@@ -35,18 +35,18 @@ class UserExceptionHandlerTest {
     private UserExceptionHandler userExceptionHandler;
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UserNotFoundException is thrown")
+    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when UserNotFoundException is thrown")
     void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserNotFoundExceptionThrown() {
         UUID userId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
         UserNotFoundException exception = new UserNotFoundException(userId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
                 "User with id = " + userId + " is not found.",
-                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.NOT_FOUND.value(),
                 currentDateTime
         );
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
         when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUserNotFoundException(exception);
@@ -55,7 +55,7 @@ class UserExceptionHandlerTest {
         assertEquals(expectedResponse.message(), actualResponse.message());
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
         verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 

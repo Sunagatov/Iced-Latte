@@ -15,17 +15,16 @@ public class ResetLoginAttemptsService {
 
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserAccountLocker userAccountLocker;
+    private final LoginAttemptFactory loginAttemptFactory;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
         loginAttemptRepository.findByUserEmail(userEmail)
                 .ifPresent(existingLoginAttempt -> {
                     userAccountLocker.unlockUserAccount(userEmail);
-                    existingLoginAttempt.setAttempts(0);
-                    existingLoginAttempt.setIsUserLocked(false);
-                    existingLoginAttempt.setExpirationDatetime(null);
-                    existingLoginAttempt.setLastModified(java.time.LocalDateTime.now());
-                    loginAttemptRepository.save(existingLoginAttempt);
+                    var resetAttempt = loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+                    resetAttempt.setId(existingLoginAttempt.getId());
+                    loginAttemptRepository.save(resetAttempt);
                     log.info("Login attempts reset for user {}.", userEmail);
                 });
     }
