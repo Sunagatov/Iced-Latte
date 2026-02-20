@@ -22,22 +22,12 @@ public class JwtClaimExtractor {
         try {
             return Optional.ofNullable(extractAllClaims(jwtToken).getSubject())
                     .filter(StringUtils::hasText)
-                    .filter(this::isValidEmailFormat)
-                    .orElseThrow(() -> new JwtTokenHasNoUserEmailException("Invalid or missing email in JWT token"));
+                    .orElseThrow(() -> new JwtTokenHasNoUserEmailException("Missing email in JWT token"));
         } catch (JwtTokenHasNoUserEmailException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token", ex);
         }
-    }
-
-    private boolean isValidEmailFormat(String email) {
-        return email != null &&
-               email.contains("@") &&
-               email.length() >= 5 &&
-               email.length() <= 254 &&
-               !email.startsWith("@") &&
-               !email.endsWith("@");
     }
 
     private Claims extractAllClaims(final String jwtToken) {

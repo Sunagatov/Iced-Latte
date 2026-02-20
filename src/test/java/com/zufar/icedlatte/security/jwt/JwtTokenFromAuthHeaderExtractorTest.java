@@ -1,28 +1,36 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenFromAuthHeaderExtractor Tests")
 class JwtTokenFromAuthHeaderExtractorTest {
 
     private static final String VALID_JWT_TOKEN_FIXTURE = "test-header.test-payload.test-signature";
+
+    @Mock
+    private JwtProperties jwtProperties;
 
     private JwtTokenFromAuthHeaderExtractor extractor;
     private MockHttpServletRequest request;
 
     @BeforeEach
     void setUp() {
-        extractor = new JwtTokenFromAuthHeaderExtractor();
+        when(jwtProperties.header()).thenReturn("Authorization");
+        extractor = new JwtTokenFromAuthHeaderExtractor(jwtProperties);
         request = new MockHttpServletRequest();
-        ReflectionTestUtils.setField(extractor, "jwtHttpRequestHeader", "Authorization");
     }
 
     @Test

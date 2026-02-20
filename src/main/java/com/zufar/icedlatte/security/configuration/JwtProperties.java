@@ -11,6 +11,9 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties(prefix = "jwt")
 public record JwtProperties(
+        @NotBlank(message = "JWT header cannot be blank")
+        String header,
+
         @NotBlank(message = "JWT secret cannot be blank")
         String secret,
 

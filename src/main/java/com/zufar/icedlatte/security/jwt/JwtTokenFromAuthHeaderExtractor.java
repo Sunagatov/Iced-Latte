@@ -1,8 +1,9 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -12,17 +13,17 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtTokenFromAuthHeaderExtractor {
 
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int MAX_TOKEN_LENGTH = 2048;
     private static final int MIN_TOKEN_LENGTH = 10;
 
-    @Value("${jwt.header:Authorization}")
-    private String jwtHttpRequestHeader;
+    private final JwtProperties jwtProperties;
 
     public String extract(final HttpServletRequest request) {
-        String header = request.getHeader(jwtHttpRequestHeader);
+        String header = request.getHeader(jwtProperties.header());
         return extract(header);
     }
 
