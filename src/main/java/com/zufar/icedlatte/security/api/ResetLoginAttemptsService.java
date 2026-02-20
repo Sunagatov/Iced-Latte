@@ -21,7 +21,9 @@ public class ResetLoginAttemptsService {
     public void reset(final String userEmail) {
         loginAttemptRepository.findByUserEmail(userEmail)
                 .ifPresent(existingLoginAttempt -> {
-                    userAccountLocker.unlockUserAccount(userEmail);
+                    if (Boolean.TRUE.equals(existingLoginAttempt.getIsUserLocked())) {
+                        userAccountLocker.unlockUserAccount(userEmail);
+                    }
                     var resetAttempt = loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
                     resetAttempt.setId(existingLoginAttempt.getId());
                     loginAttemptRepository.save(resetAttempt);
