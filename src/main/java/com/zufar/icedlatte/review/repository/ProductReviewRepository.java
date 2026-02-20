@@ -63,4 +63,26 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     ") " +
                     "WHERE product_reviews.id = :productReviewId")
     void updateDislikesCount(final UUID productReviewId);
+
+    @SuppressWarnings("SqlWithoutWhereClause")
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(nativeQuery = true,
+            value = "UPDATE product_reviews pr " +
+                    "SET likes_count = (" +
+                        "SELECT count(prl.id) " +
+                        "FROM product_reviews_likes prl " +
+                        "WHERE prl.is_like = true AND prl.review_id = pr.id" +
+                    ")")
+    void updateAllLikesCounts();
+
+    @SuppressWarnings("SqlWithoutWhereClause")
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(nativeQuery = true,
+            value = "UPDATE product_reviews pr " +
+                    "SET dislikes_count = (" +
+                        "SELECT count(prl.id) " +
+                        "FROM product_reviews_likes prl " +
+                        "WHERE prl.is_like = false AND prl.review_id = pr.id" +
+                    ")")
+    void updateAllDislikesCounts();
 }

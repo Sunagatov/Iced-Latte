@@ -11,9 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -33,7 +34,7 @@ public class ApplicationMigration implements ApplicationRunner {
 
     public ApplicationMigration(@Autowired(required = false) FileUploader fileUploader,
                                 @Autowired(required = false) AwsProvider awsProvider,
-                                FileMetadataSaver fileMetadataSaver) {
+                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver) {
         this.fileUploader = fileUploader;
         this.awsProvider = awsProvider;
         this.fileMetadataSaver = fileMetadataSaver;
@@ -45,16 +46,15 @@ public class ApplicationMigration implements ApplicationRunner {
             log.info("AWS configuration not available, skipping file migration");
             return;
         }
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            CompletableFuture.runAsync(this::uploadFiles, executor)
-                    .thenCompose(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor))
-                    .thenAccept(this::saveMetadata)
-                    .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
-                    .join();
-        } catch (java.util.concurrent.CompletionException e) {
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            log.warn("Migration completed with warnings", cause);
-        }
+        var executor = Executors.newVirtualThreadPerTaskExecutor();
+        CompletableFuture.runAsync(this::uploadFiles, executor)
+                .thenComposeAsync(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor), executor)
+                .thenAcceptAsync(this::saveMetadata, executor)
+                .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+                .whenComplete((v, e) -> {
+                    executor.close();
+                    if (e != null) log.warn("Migration completed with warnings", e);
+                });
     }
 
     private boolean isAwsConfigured() {
@@ -75,23 +75,18 @@ public class ApplicationMigration implements ApplicationRunner {
         }
     }
 
-    private java.util.List<FileMetadataDto> fetchMetadata() {
+    private List<FileMetadataDto> fetchMetadata() {
         try {
-            Thread.sleep(Duration.ofSeconds(5));
             var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
             log.info("Product pictures metadata retrieved from AWS");
             return fileMetadataDtos;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Metadata retrieval interrupted: {}", e.getMessage(), e);
-            return java.util.Collections.emptyList();
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
             log.warn("Metadata retrieval failed due to AWS SDK error, continuing without AWS: {}", e.getMessage(), e);
-            return java.util.Collections.emptyList();
+            return List.of();
         }
     }
 
-    private void saveMetadata(java.util.List<FileMetadataDto> fileMetadataDtos) {
+    private void saveMetadata(List<FileMetadataDto> fileMetadataDtos) {
         if (fileMetadataDtos.isEmpty()) {
             log.info("No metadata to save, skipping database operation");
             return;
@@ -99,7 +94,7 @@ public class ApplicationMigration implements ApplicationRunner {
         try {
             fileMetadataSaver.saveAll(fileMetadataDtos);
             log.info("Product pictures metadata saved in database");
-        } catch (RuntimeException e) {
+        } catch (DataAccessException e) {
             log.warn("Failed to save product pictures metadata: {}", e.getMessage(), e);
         }
     }
