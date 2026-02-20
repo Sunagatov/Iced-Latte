@@ -4,10 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,16 +19,16 @@ import java.util.List;
 public class AppCorsConfiguration {
 
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:8080}")
-    private String allowedOrigins;
+    private List<String> allowedOrigins;
 
     @Value("${cors.allowed-methods:GET,POST,PUT,DELETE,OPTIONS}")
-    private String allowedMethods;
+    private List<String> allowedMethods;
 
     @Value("${cors.allowed-headers:*}")
-    private String allowedHeaders;
+    private List<String> allowedHeaders;
 
     @Value("${cors.exposed-headers:Authorization,Content-Type,X-Request-ID}")
-    private String exposedHeaders;
+    private List<String> exposedHeaders;
 
     @Value("${cors.allow-credentials:true}")
     private boolean allowCredentials;
@@ -38,26 +38,23 @@ public class AppCorsConfiguration {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
-        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        configuration.setAllowedMethods(allowedMethods);
 
-        List<String> methods = Arrays.asList(allowedMethods.split(","));
-        configuration.setAllowedMethods(methods);
-
-        if (!"*".equals(allowedHeaders)) {
-            configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
-        } else {
+        if (allowedHeaders.size() == 1 && "*".equals(allowedHeaders.getFirst())) {
             configuration.addAllowedHeader("*");
+        } else {
+            configuration.setAllowedHeaders(allowedHeaders);
         }
 
-        configuration.setExposedHeaders(Arrays.asList(exposedHeaders.split(",")));
+        configuration.setExposedHeaders(exposedHeaders);
         configuration.setAllowCredentials(allowCredentials);
         configuration.setMaxAge(maxAge);
 
         log.info("CORS configuration initialized with origins: {}, methods: {}, allowCredentials: {}",
-                origins, methods, allowCredentials);
+                allowedOrigins, allowedMethods, allowCredentials);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);

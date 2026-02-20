@@ -31,7 +31,6 @@ class JwtTokenExceptionsHandlerTest {
 
         Map<String, String> errors = response.getBody();
         assertNotNull(errors);
-        assertEquals("Jwt token error message", errors.get("JwtToken Error message"));
-        assertEquals("Cause error message", errors.get("JwtToken Cause Error message"));
+        assertEquals("JWT token error", errors.get("error"));
     }
 }

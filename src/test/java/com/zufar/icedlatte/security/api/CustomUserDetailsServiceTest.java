@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -77,13 +77,13 @@ class CustomUserDetailsServiceTest {
         String userEmail = "nonexistent@example.com";
         when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
 
-        UsernameNotFoundException thrown = assertThrows(
-                UsernameNotFoundException.class,
+        InvalidCredentialsException thrown = assertThrows(
+                InvalidCredentialsException.class,
                 () -> customUserDetailsService.loadUserByUsername(userEmail),
-                "Expected UsernameNotFoundException to be thrown"
+                "Expected InvalidCredentialsException to be thrown"
         );
 
-        assertEquals("Invalid credentials for user's account with email = '" + userEmail + "'", thrown.getMessage());
+        assertEquals("Invalid credentials", thrown.getMessage());
         verify(userRepository, times(1)).findByEmail(userEmail);
     }
 }

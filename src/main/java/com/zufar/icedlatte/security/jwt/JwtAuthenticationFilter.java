@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -53,14 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UUID userId = securityPrincipalProvider.getUserId();
             MDC.put(MDC_USER_ID_KEY, userId.toString());
 
-            filterChain.doFilter(httpRequest, httpResponse);
-
+        } catch (AbsentBearerHeaderException ex) {
+            // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
             handleAuthenticationException(httpResponse, ex);
+            return;
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
             MDC.remove(MDC_REQUEST_ID_KEY);
         }
+
+        filterChain.doFilter(httpRequest, httpResponse);
     }
 
     private void handleAuthenticationException(HttpServletResponse httpResponse, Exception exception) throws IOException {
@@ -68,8 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // Using Java 21 pattern matching for switch expressions
         var errorInfo = switch (exception) {
+            case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED);
             case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);
-            case AbsentBearerHeaderException ignored -> new ErrorInfo("Authentication failed: invalid authorization header", HttpServletResponse.SC_UNAUTHORIZED);
             case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
             case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
             case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
@@ -106,8 +110,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // Record for error information - Java 21 feature
     private record ErrorInfo(String message, int statusCode) {}
 
-    @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return false;
-    }
 }

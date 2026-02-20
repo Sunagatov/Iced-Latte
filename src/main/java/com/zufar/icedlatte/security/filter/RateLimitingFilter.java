@@ -40,6 +40,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.auth-window-duration:PT1M}")
     private Duration authWindowDuration;
 
+    @Value("${security.rate-limit.payment-max-requests:10}")
+    private int paymentMaxRequests;
+
+    @Value("${security.rate-limit.payment-window-duration:PT1M}")
+    private Duration paymentWindowDuration;
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                   @NonNull HttpServletResponse response,
@@ -52,7 +58,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         var rateLimitConfig = getRateLimitConfig(requestPath);
         
         if (!rateLimiter.isAllowed(clientIp, rateLimitConfig.maxRequests(), rateLimitConfig.windowDuration())) {
-            handleRateLimitExceeded(response, clientIp, requestPath);
+            handleRateLimitExceeded(response, clientIp, requestPath, rateLimitConfig.windowDuration());
             return;
         }
         
@@ -64,8 +70,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return switch (requestPath) {
             case String path when path.startsWith("/api/v1/auth/") -> 
                 new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case String path when path.startsWith("/api/v1/payment/") -> 
-                new RateLimitConfig(10, Duration.ofMinutes(1)); // Stricter for payment
+            case String path when path.startsWith("/api/v1/payment/") ->
+                new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
             default -> 
                 new RateLimitConfig(maxRequests, windowDuration);
         };
@@ -75,15 +81,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
     
-    private void handleRateLimitExceeded(HttpServletResponse response, String clientIp, String requestPath) 
-            throws IOException {
-        
+    private void handleRateLimitExceeded(HttpServletResponse response, String clientIp, String requestPath,
+                                          Duration windowDuration) throws IOException {
         log.warn("Rate limit exceeded for IP: {} on path: {}", sanitize(clientIp), sanitize(requestPath));
-        
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.setHeader("Retry-After", "60"); // Retry after 60 seconds
+        response.setHeader("Retry-After", String.valueOf(windowDuration.toSeconds()));
         
         String jsonResponse = String.format("""
             {

@@ -46,7 +46,7 @@ public class UserRegistrationService {
         newUserEntity.setEnabled(true);
 
         try {
-            UserEntity userEntity = userCrudRepository.save(newUserEntity);
+            UserEntity userEntity = userCrudRepository.saveAndFlush(newUserEntity);
             final String jwtToken = jwtTokenProvider.generateToken(userEntity);
             final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
             UserRegistrationResponse response = new UserRegistrationResponse();

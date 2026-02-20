@@ -22,6 +22,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -60,6 +61,10 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.SHIPPING_URL).authenticated()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
+                        .requestMatchers(SecurityConstants.PRODUCT_REVIEW_URL).authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/*/reviews/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews/*/likes").authenticated()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
                         .requestMatchers(HttpMethod.POST, SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
@@ -69,6 +74,10 @@ public class SpringSecurityConfiguration {
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)

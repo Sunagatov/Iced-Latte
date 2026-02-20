@@ -29,18 +29,4 @@ public record JwtProperties(
         @NotBlank(message = "JWT audience cannot be blank")
         String audience
 ) {
-    public JwtProperties {
-        if (expiration == null) {
-            expiration = Duration.ofHours(24);
-        }
-        if (refreshExpiration == null) {
-            refreshExpiration = Duration.ofDays(7);
-        }
-        if (issuer == null || issuer.isBlank()) {
-            issuer = "iced-latte";
-        }
-        if (audience == null || audience.isBlank()) {
-            audience = "iced-latte-users";
-        }
-    }
 }

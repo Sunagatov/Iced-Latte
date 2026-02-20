@@ -36,15 +36,12 @@ public class RateLimitingConfiguration {
                 this.windowSize = windowSize;
             }
             
-            public boolean isAllowed() {
+            public synchronized boolean isAllowed() {
                 long now = System.currentTimeMillis();
-                
-                // Reset window if expired
                 if (now - windowStart > windowSize.toMillis()) {
                     requestCount.set(0);
                     windowStart = now;
                 }
-                
                 return requestCount.incrementAndGet() <= maxRequests;
             }
         }

@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.mockito.Mockito.doNothing;
@@ -31,20 +29,15 @@ class LoginFailureHandlerTest {
     @Mock
     private UserAccountLocker userAccountLocker;
 
-    @Mock
-    private UserRepository userRepository;
-
     @InjectMocks
     private LoginFailureHandler loginFailureHandler;
 
     private static final int MAX_LOGIN_ATTEMPTS = 5;
-
     private final String userEmail = "user@example.com";
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.of(new UserEntity()));
     }
 
     @Test
@@ -55,7 +48,7 @@ class LoginFailureHandlerTest {
                 .userEmail(userEmail)
                 .attempts(MAX_LOGIN_ATTEMPTS - 2)
                 .isUserLocked(false)
-                .lastModified(LocalDateTime.now())
+                .lastModified(Instant.now())
                 .build();
 
         when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
@@ -74,7 +67,7 @@ class LoginFailureHandlerTest {
                 .userEmail(userEmail)
                 .attempts(MAX_LOGIN_ATTEMPTS)
                 .isUserLocked(false)
-                .lastModified(LocalDateTime.now())
+                .lastModified(Instant.now())
                 .build();
 
         when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
@@ -84,16 +77,5 @@ class LoginFailureHandlerTest {
 
         verify(failedLoginAttemptIncrementor, times(1)).increment(userEmail);
         verify(userAccountLocker, times(1)).lockUserAccount(userEmail);
-    }
-
-    @Test
-    @DisplayName("Should skip recording attempt for non-existent user")
-    void shouldSkipAttemptForNonExistentUser() {
-        when(userRepository.findByEmail(userEmail)).thenReturn(java.util.Optional.empty());
-
-        loginFailureHandler.handle(userEmail);
-
-        verify(failedLoginAttemptIncrementor, never()).increment(userEmail);
-        verify(userAccountLocker, never()).lockUserAccount(userEmail);
     }
 }

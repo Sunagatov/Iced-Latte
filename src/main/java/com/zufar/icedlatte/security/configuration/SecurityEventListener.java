@@ -13,15 +13,13 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        log.info("Authentication successful for user: {} with authorities: {}",
-                event.getAuthentication().getName(),
+        log.debug("Authentication successful, authorities: {}",
                 event.getAuthentication().getAuthorities());
     }
 
     @EventListener
     public void onAuthenticationFailure(AbstractAuthenticationFailureEvent event) {
-        log.warn("Authentication failed for user: {} - {}: {}",
-                event.getAuthentication().getName(),
+        log.warn("Authentication failed - {}: {}",
                 event.getException().getClass().getSimpleName(),
                 event.getException().getMessage());
     }
@@ -30,9 +28,8 @@ public class SecurityEventListener {
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
         var authSupplier = event.getAuthentication();
         if (authSupplier != null && authSupplier.get() != null) {
-            var auth = authSupplier.get();
-            log.warn("Authorization denied for user: {} - authorities: {}",
-                    auth.getName(), auth.getAuthorities());
+            log.warn("Authorization denied, authorities: {}",
+                    authSupplier.get().getAuthorities());
         } else {
             log.warn("Authorization denied for anonymous user");
         }

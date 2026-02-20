@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,7 +14,6 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
 import java.util.HexFormat;
 
 @Slf4j
@@ -26,11 +25,8 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
     private static final String BLACKLIST_VALUE = "revoked";
 
-
     private final RedisTemplate<String, String> redisTemplate;
-
-    @Value("${jwt.expiration}")
-    private Duration jwtTtl;
+    private final JwtProperties jwtProperties;
 
     @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
     public void blacklistToken(String token) {
@@ -39,8 +35,8 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
             return;
         }
         String key = buildBlacklistKey(token);
-        redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtTtl);
-        log.debug("Token blacklisted successfully with TTL: {} seconds", jwtTtl.toSeconds());
+        redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtProperties.expiration());
+        log.debug("Token blacklisted successfully with TTL: {} seconds", jwtProperties.expiration().toSeconds());
     }
 
     public boolean isBlacklisted(String token) {

@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -25,7 +25,7 @@ public class UserAccountLocker {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void lockUserAccount(String userEmail) {
-        LocalDateTime expirationDatetime = LocalDateTime.now().plusMinutes(userAccountLockoutDurationMinutes);
+        Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, java.time.temporal.ChronoUnit.MINUTES);
         loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         userRepository.setAccountLockedStatus(userEmail, false);
         log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);

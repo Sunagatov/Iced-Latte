@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +22,7 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE LoginAttemptEntity la SET la.isUserLocked = true, la.expirationDatetime = :expiration WHERE la.userEmail = :email")
-    void setUserLockedStatusAndExpiration(@Param("email") String userEmail, @Param("expiration") LocalDateTime expirationDatetime);
+    void setUserLockedStatusAndExpiration(@Param("email") String userEmail, @Param("expiration") Instant expirationDatetime);
 
     /**
      * Resets the locked accounts whose lockout expiration time has passed.

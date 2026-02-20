@@ -16,6 +16,7 @@ import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -121,11 +122,14 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        log.info("Processing forgot password for: {}", request.getEmail());
-        var user = singleUserProvider.getUserByEmail(request.getEmail());
-        var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
-        emailTokenSender.sendEmailVerificationCode(verificationRequest);
-        log.info("Password reset email sent to: {}", request.getEmail());
+        log.info("Processing forgot password request");
+        try {
+            var user = singleUserProvider.getUserByEmail(request.getEmail());
+            var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
+            emailTokenSender.sendEmailVerificationCode(verificationRequest);
+        } catch (UserNotFoundException e) {
+            log.warn("Forgot password requested for unknown email");
+        }
         return ResponseEntity.ok().build();
     }
 

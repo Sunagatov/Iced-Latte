@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -15,7 +17,6 @@ public class ResetLoginAttemptsService {
 
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserAccountLocker userAccountLocker;
-    private final LoginAttemptFactory loginAttemptFactory;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
@@ -24,9 +25,10 @@ public class ResetLoginAttemptsService {
                     if (Boolean.TRUE.equals(existingLoginAttempt.getIsUserLocked())) {
                         userAccountLocker.unlockUserAccount(userEmail);
                     }
-                    var resetAttempt = loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
-                    resetAttempt.setId(existingLoginAttempt.getId());
-                    loginAttemptRepository.save(resetAttempt);
+                    existingLoginAttempt.setAttempts(0);
+                    existingLoginAttempt.setIsUserLocked(false);
+                    existingLoginAttempt.setExpirationDatetime(null);
+                    existingLoginAttempt.setLastModified(Instant.now());
                     log.info("Login attempts reset for user {}.", userEmail);
                 });
     }

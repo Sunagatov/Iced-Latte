@@ -10,7 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,13 +31,13 @@ class UserAccountLockerTest {
     private LoginAttemptRepository loginAttemptRepository;
 
     private final String userEmail = "TestEmail";
-    private final LocalDateTime timeBeforeRunningMethod = LocalDateTime.now().minusSeconds(1);
+    private final Instant timeBeforeRunningMethod = Instant.now().minusSeconds(1);
 
     @Test
     @DisplayName("Should Lock User Account When Account Is Not Already Locked")
     void shouldLockUserAccountWhenAccountIsNotLocked() {
         ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<LocalDateTime> expirationCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<Instant> expirationCaptor = ArgumentCaptor.forClass(Instant.class);
 
         assertDoesNotThrow(() -> userAccountLocker.lockUserAccount(userEmail));
         verify(loginAttemptRepository, times(1)).setUserLockedStatusAndExpiration(emailCaptor.capture(), expirationCaptor.capture());

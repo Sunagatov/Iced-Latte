@@ -32,7 +32,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
     private static final int MAX_TOKENS = 10000;
     private static final long CLEANUP_INTERVAL_MS = 300000;
 
-    public void blacklistToken(String token) {
+    public synchronized void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
             log.warn("Attempted to blacklist empty token");
             return;
