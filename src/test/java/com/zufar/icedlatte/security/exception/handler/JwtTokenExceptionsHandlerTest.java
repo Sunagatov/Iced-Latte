@@ -1,36 +1,43 @@
 package com.zufar.icedlatte.security.exception.handler;
 
+import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenExceptionsHandler Tests")
 class JwtTokenExceptionsHandlerTest {
 
-    private final JwtTokenExceptionsHandler jwtTokenExceptionsHandler = new JwtTokenExceptionsHandler();
+    @Mock
+    private ApiErrorResponseCreator apiErrorResponseCreator;
+
+    @InjectMocks
+    private JwtTokenExceptionsHandler jwtTokenExceptionsHandler;
 
     @Test
-    @DisplayName("Should return UNAUTHORIZED ResponseEntity with error details when JwtTokenException is thrown")
-    void shouldReturnUnauthorizedResponseEntityWhenJwtTokenExceptionThrown() {
-        Throwable cause = new RuntimeException("Cause error message");
-        JwtTokenException exception = new JwtTokenException("Jwt token error message", cause);
+    @DisplayName("Should return UNAUTHORIZED ApiErrorResponse when JwtTokenException is thrown")
+    void shouldReturnUnauthorizedWhenJwtTokenExceptionThrown() {
+        JwtTokenException exception = new JwtTokenException("Jwt token error message");
+        ApiErrorResponse expected = ApiErrorResponse.builder()
+                .message("Jwt token error message")
+                .httpStatusCode(HttpStatus.UNAUTHORIZED.value())
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expected);
 
-        ResponseEntity<Map<String, String>> response = jwtTokenExceptionsHandler.handleJwtTokenException(exception);
+        ApiErrorResponse response = jwtTokenExceptionsHandler.handleJwtTokenException(exception);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-
-        Map<String, String> errors = response.getBody();
-        assertNotNull(errors);
-        assertEquals("JWT token error", errors.get("error"));
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), response.httpStatusCode());
+        assertEquals("Jwt token error message", response.message());
     }
 }

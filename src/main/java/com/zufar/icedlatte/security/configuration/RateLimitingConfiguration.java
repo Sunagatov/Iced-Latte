@@ -8,7 +8,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Configuration
@@ -27,19 +26,19 @@ public class RateLimitingConfiguration {
 
         @SuppressWarnings("unused") // injected as a Spring bean and called via RateLimitingFilter
         public boolean isAllowed(String key, int maxRequests, Duration windowSize) {
-            SlidingWindow window = windows.getIfPresent(key);
-            if (window == null) {
-                window = new SlidingWindow(maxRequests, windowSize);
-                windows.put(key, window);
+            try {
+                return windows.get(key, () -> new SlidingWindow(maxRequests, windowSize)).isAllowed();
+            } catch (Exception e) {
+                log.error("Rate limiter cache error for key: {}", key, e);
+                return true;
             }
-            return window.isAllowed();
         }
         
         private static class SlidingWindow {
             private final int maxRequests;
             private final Duration windowSize;
-            private final AtomicInteger requestCount = new AtomicInteger(0);
-            private volatile long windowStart = System.currentTimeMillis();
+            private int requestCount = 0;
+            private long windowStart = System.currentTimeMillis();
             
             public SlidingWindow(int maxRequests, Duration windowSize) {
                 this.maxRequests = maxRequests;
@@ -49,10 +48,10 @@ public class RateLimitingConfiguration {
             public synchronized boolean isAllowed() {
                 long now = System.currentTimeMillis();
                 if (now - windowStart > windowSize.toMillis()) {
-                    requestCount.set(0);
+                    requestCount = 0;
                     windowStart = now;
                 }
-                return requestCount.incrementAndGet() <= maxRequests;
+                return ++requestCount <= maxRequests;
             }
         }
     }

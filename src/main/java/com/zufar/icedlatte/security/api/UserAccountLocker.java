@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class UserAccountLocker {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void lockUserAccount(String userEmail) {
-        Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, java.time.temporal.ChronoUnit.MINUTES);
+        Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, ChronoUnit.MINUTES);
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userRepository.setAccountLockedStatus(userEmail, false);
         if (attemptRows == 0 || userRows == 0) {

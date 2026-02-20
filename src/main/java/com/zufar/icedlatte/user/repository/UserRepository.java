@@ -30,14 +30,14 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     void changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
 
     /**
-     * Updates the locked status of a user based on the given email.
+     * Updates the accountNonLocked status of a user based on the given email.
      *
-     * @param email         The email of the user.
-     * @param accountLocked The new locked status to set.
+     * @param email            The email of the user.
+     * @param accountNonLocked The new accountNonLocked value (true = unlocked, false = locked).
      */
     @Modifying
-    @Query("UPDATE UserEntity u SET u.accountNonLocked = :accountLocked WHERE u.email = :email")
-    int setAccountLockedStatus(@Param("email") String email, @Param("accountLocked") boolean accountLocked);
+    @Query("UPDATE UserEntity u SET u.accountNonLocked = :accountNonLocked WHERE u.email = :email")
+    int setAccountLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 
     /**
      * Unlocks all users that have corresponding entries in the login_attempts table
