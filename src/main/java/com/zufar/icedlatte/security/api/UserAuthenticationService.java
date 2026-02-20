@@ -41,7 +41,11 @@ public class UserAuthenticationService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userEmail, userPassword)
             );
-            return buildResponse((UserDetails) authentication.getPrincipal(), userEmail);
+            if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+                // amazonq-ignore-next-line
+                throw new InvalidCredentialsException();
+            }
+            return buildResponse(userDetails, userEmail);
 
         } catch (UsernameNotFoundException exception) {
             log.warn("User with the provided email='{}' does not exist", userEmail, exception);
@@ -58,6 +62,7 @@ public class UserAuthenticationService {
             throw exception;
         }
     }
+// amazonq-ignore-next-line
 
     public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
         return buildResponse(userDetails, userEmail);

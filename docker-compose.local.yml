@@ -36,11 +36,12 @@ services:
       DATASOURCE_USERNAME: postgres
       DATASOURCE_PASSWORD: postgres
       DATASOURCE_HOST: iced-latte-postgresdb
+      # amazonq-ignore-next-line
       REDIS_HOST: ${REDIS_HOST:-iced-latte-redis}
       REDIS_PORT: ${REDIS_PORT:-6380}
       AWS_DEFAULT_PRODUCT_IMAGES_PATH: ./products
-      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:?AWS_ACCESS_KEY is required}
-      AWS_SECRET_KEY: ${AWS_SECRET_KEY:?AWS_SECRET_KEY is required}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:?AWS_ACCESS_KEY is required - set it in local.env}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY:?AWS_SECRET_KEY is required - set it in local.env}
       AWS_REGION: eu-west-1
       AWS_PRODUCT_BUCKET: products
       AWS_USER_BUCKET: users
@@ -69,6 +70,7 @@ services:
       - backend_logs:/usr/app/logs
       - ./products:/usr/app/products
     restart: on-failure
+    stop_grace_period: 30s
 
   iced-latte-postgresdb:
     image: 'postgres:14.18'

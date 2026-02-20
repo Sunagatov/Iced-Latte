@@ -24,7 +24,8 @@ public class UnlockAccountScheduler {
         try {
             log.debug("Starting unlockLockoutExpiredAccounts scheduled task.");
 
-            loginAttemptRepository.resetLockedAccounts();
+            int released = loginAttemptRepository.resetLockedAccounts();
+            log.debug("Released {} locked login attempt records.", released);
             userRepository.unlockUsers();
 
             log.debug("Finished unlockLockoutExpiredAccounts scheduled task.");

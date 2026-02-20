@@ -32,6 +32,8 @@ public class FailedLoginAttemptIncrementor {
                 });
         loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
         loginAttempt.setLastModified(Instant.now());
-        return loginAttemptRepository.save(loginAttempt);
+        LoginAttemptEntity saved = loginAttemptRepository.save(loginAttempt);
+        log.warn("Failed login attempt #{} recorded for email: {}", saved.getAttempts(), userEmail);
+        return saved;
     }
 }

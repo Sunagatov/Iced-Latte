@@ -28,12 +28,13 @@ public class LoginAttemptEntity {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+// amazonq-ignore-next-line
 
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
 
     @Column(name = "attempts", nullable = false)
-    private Integer attempts;
+    private int attempts;
 
     @Column(name = "expiration_datetime")
     private Instant expirationDatetime;

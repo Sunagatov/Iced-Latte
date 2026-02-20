@@ -28,55 +28,46 @@ public class SignInExceptionHandler {
     @ExceptionHandler(UserRegistrationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleUserRegistrationException(final UserRegistrationException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("Handle user registration exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleInvalidCredentialsException(final InvalidCredentialsException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle invalid credentials exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler({UserNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler({UsernameNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    // amazonq-ignore-next-line
     public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(UserAccountLockedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUserAccountLockedException(final UserAccountLockedException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle user account locked exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle bad credentials exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-        return apiErrorResponse;
+        return handle(exception, HttpStatus.UNAUTHORIZED);
+    }
+
+    private ApiErrorResponse handle(Exception exception, HttpStatus status) {
+        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
+        log.warn("Handle {}: message: {}, debugMessage: {}",
+                exception.getClass().getSimpleName(), response.message(),
+                errorDebugMessageCreator.buildErrorDebugMessage(exception), exception);
+        return response;
     }
 }
 

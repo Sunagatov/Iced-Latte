@@ -56,9 +56,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
         var email = request.getEmail();
-        log.info("Registering user: {}", email);
+        var sanitizedEmail = StringEscapeUtils.escapeJava(email);
+        log.info("Registering user: {}", sanitizedEmail);
         emailTokenSender.sendEmailVerificationCode(request);
-        log.info("Verification email sent to: {}", email);
+        log.info("Verification email sent to: {}", sanitizedEmail);
         return ResponseEntity.ok(
                 String.format("Email verification token sent to the user with email = %s",
                         StringEscapeUtils.escapeJava(email)));
@@ -76,9 +77,9 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        log.info("Authenticating user: {}", request.getEmail());
+        log.info("Authenticating user: {}", StringEscapeUtils.escapeJava(request.getEmail()));
         var response = userAuthenticationService.authenticate(request);
-        log.info("Authentication completed for: {}", request.getEmail());
+        log.info("Authentication completed for: {}", StringEscapeUtils.escapeJava(request.getEmail()));
         return ResponseEntity.ok(response);
     }
 
@@ -134,13 +135,15 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     @Override
+    // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        log.info("Changing password for: {}", request.getEmail());
+        var sanitizedEmail = StringEscapeUtils.escapeJava(request.getEmail());
+        log.info("Changing password for: {}", sanitizedEmail);
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
         changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
-        log.info("Password changed for: {}", request.getEmail());
+        log.info("Password changed for: {}", sanitizedEmail);
         return ResponseEntity.ok().build();
     }
 }

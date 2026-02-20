@@ -40,7 +40,7 @@ public class JwtTokenProvider {
                     .signWith(jwtSignKeyProvider.get())
                     .compact();
         } catch (JwtException exception) {
-            log.error("JWT token creation failed for user: {}", userDetails.getUsername(), exception);
+            log.error("JWT token creation failed", exception);
             throw new JwtTokenException(exception);
         }
     }
@@ -57,7 +57,7 @@ public class JwtTokenProvider {
                     .signWith(jwtSignKeyProvider.getRefresh())
                     .compact();
         } catch (JwtException exception) {
-            log.error("JWT refresh token creation failed for user: {}", userDetails.getUsername(), exception);
+            log.error("JWT refresh token creation failed", exception);
             throw new JwtTokenException(exception);
         }
     }

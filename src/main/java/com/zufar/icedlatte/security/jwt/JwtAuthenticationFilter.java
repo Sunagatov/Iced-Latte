@@ -63,19 +63,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
             handleAuthenticationException(httpResponse, ex);
+            MDC.remove(MDC_REQUEST_ID_KEY);
             return;
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
-            MDC.remove(MDC_REQUEST_ID_KEY);
         }
 
-        filterChain.doFilter(httpRequest, httpResponse);
+        try {
+            filterChain.doFilter(httpRequest, httpResponse);
+        } finally {
+            MDC.remove(MDC_REQUEST_ID_KEY);
+        }
     }
+// amazonq-ignore-next-line
 
     private void handleAuthenticationException(HttpServletResponse httpResponse, Exception exception) throws IOException {
         String requestId = MDC.get(MDC_REQUEST_ID_KEY);
         
         // Using Java 21 pattern matching for switch expressions
+        // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
             case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED);
             case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);

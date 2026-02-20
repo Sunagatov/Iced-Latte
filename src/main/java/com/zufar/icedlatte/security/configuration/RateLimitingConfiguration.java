@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -18,11 +20,19 @@ public class RateLimitingConfiguration {
     }
 
     public static class InMemoryRateLimiter {
-        private final ConcurrentHashMap<String, SlidingWindow> windows = new ConcurrentHashMap<>();
+        private final Cache<String, SlidingWindow> windows = CacheBuilder.newBuilder()
+                .maximumSize(10_000)
+                .expireAfterAccess(Duration.ofMinutes(10))
+                .build();
 
         @SuppressWarnings("unused") // injected as a Spring bean and called via RateLimitingFilter
         public boolean isAllowed(String key, int maxRequests, Duration windowSize) {
-            return windows.computeIfAbsent(key, k -> new SlidingWindow(maxRequests, windowSize)).isAllowed();
+            SlidingWindow window = windows.getIfPresent(key);
+            if (window == null) {
+                window = new SlidingWindow(maxRequests, windowSize);
+                windows.put(key, window);
+            }
+            return window.isAllowed();
         }
         
         private static class SlidingWindow {

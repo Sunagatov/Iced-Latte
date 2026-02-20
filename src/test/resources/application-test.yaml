@@ -151,7 +151,7 @@ logging:
 #
 security:
   argon2:
-    memory: 256      # reduced from 16384 to speed up tests
+    memory: 1024     # minimum required by Argon2
     iterations: 1    # reduced from 2 to speed up tests
   rate-limit:
     max-requests: 10000

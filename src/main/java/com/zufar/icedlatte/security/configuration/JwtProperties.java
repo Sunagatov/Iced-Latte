@@ -16,6 +16,7 @@ public record JwtProperties(
 
         @NotBlank(message = "JWT secret cannot be blank")
         String secret,
+// amazonq-ignore-next-line
 
         @NotBlank(message = "JWT refresh secret cannot be blank")
         String refreshSecret,

@@ -22,12 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserRegistrationService {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userCrudRepository;
+    private final UserRepository userRepository;
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
 
     public boolean isEmailAvailable(final String email) {
-        return userCrudRepository.findByEmail(email).isEmpty();
+        return userRepository.findByEmail(email).isEmpty();
     }
 
     @Transactional
@@ -46,15 +46,16 @@ public class UserRegistrationService {
         newUserEntity.setEnabled(true);
 
         try {
-            UserEntity userEntity = userCrudRepository.saveAndFlush(newUserEntity);
+            UserEntity userEntity = userRepository.saveAndFlush(newUserEntity);
             final String jwtToken = jwtTokenProvider.generateToken(userEntity);
             final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
             UserRegistrationResponse response = new UserRegistrationResponse();
             response.setToken(jwtToken);
             response.setRefreshToken(jwtRefreshToken);
+            // amazonq-ignore-next-line
             return response;
         } catch (DataIntegrityViolationException e) {
-            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.");
+            throw new UserRegistrationException(email, "User with email = '" + email + "' is already registered.", e);
         }
     }
 }

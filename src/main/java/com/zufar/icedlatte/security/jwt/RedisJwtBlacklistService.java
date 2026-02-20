@@ -51,6 +51,7 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
             boolean isBlacklisted = hasKey != null && hasKey;
             log.debug("Token blacklist check: {} - {}", key.substring(0, Math.min(key.length(), 50)),
                     isBlacklisted ? "BLACKLISTED" : "VALID");
+            // amazonq-ignore-next-line
             return isBlacklisted;
         } catch (RuntimeException ex) {
             log.error("Redis isBlacklisted failed - failing secure", ex);

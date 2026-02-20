@@ -26,14 +26,22 @@ public class UserAccountLocker {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void lockUserAccount(String userEmail) {
         Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, java.time.temporal.ChronoUnit.MINUTES);
-        loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
-        userRepository.setAccountLockedStatus(userEmail, false);
-        log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);
+        int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
+        int userRows = userRepository.setAccountLockedStatus(userEmail, false);
+        if (attemptRows == 0 || userRows == 0) {
+            log.error("Failed to lock account for email='{}': loginAttemptRows={}, userRows={}", userEmail, attemptRows, userRows);
+        } else {
+            log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void unlockUserAccount(String userEmail) {
-        userRepository.setAccountLockedStatus(userEmail, true);
-        log.info("User account with the email = '{}' has been unlocked.", userEmail);
+        int userRows = userRepository.setAccountLockedStatus(userEmail, true);
+        if (userRows == 0) {
+            log.error("Failed to unlock account for email='{}': no rows updated", userEmail);
+        } else {
+            log.info("User account with the email = '{}' has been unlocked.", userEmail);
+        }
     }
 }

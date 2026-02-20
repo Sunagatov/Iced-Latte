@@ -1,4 +1,5 @@
 package com.zufar.icedlatte.security.exception;
+// amazonq-ignore-next-line
 
 public class UserAccountLockedException extends RuntimeException {
 

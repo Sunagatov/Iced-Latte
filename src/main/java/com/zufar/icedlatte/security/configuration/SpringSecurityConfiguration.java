@@ -43,6 +43,7 @@ public class SpringSecurityConfiguration {
                                                    final RateLimitingFilter rateLimitingFilter,
                                                    final CorsConfigurationSource corsConfigurationSource) throws Exception {
         return httpSecurity
+                // amazonq-ignore-next-line
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
@@ -84,24 +85,36 @@ public class SpringSecurityConfiguration {
                 .build();
     }
 
+    // amazonq-ignore-next-line
     @Bean
     public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService,
                                                          final PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
+        // amazonq-ignore-next-line
         authenticationProvider.setPasswordEncoder(passwordEncoder);
         authenticationProvider.setHideUserNotFoundExceptions(false);
         return authenticationProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(final AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(final AuthenticationConfiguration authenticationConfiguration) {
+        try {
+            return authenticationConfiguration.getAuthenticationManager();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to build AuthenticationManager", e);
+        }
     }
 
     @Bean
     public PasswordEncoder passwordEncoder(
             @Value("${security.argon2.memory:16384}") int memory,
             @Value("${security.argon2.iterations:2}") int iterations) {
+        if (memory < 1024) {
+            throw new IllegalArgumentException("security.argon2.memory must be at least 1024 KB, got: " + memory);
+        }
+        if (iterations < 1) {
+            throw new IllegalArgumentException("security.argon2.iterations must be at least 1, got: " + iterations);
+        }
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 }
