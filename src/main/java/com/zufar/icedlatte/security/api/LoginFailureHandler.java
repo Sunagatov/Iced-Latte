@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
-import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,6 @@ public class LoginFailureHandler {
 
     private final FailedLoginAttemptIncrementor failedLoginAttemptIncrementor;
     private final UserAccountLocker userAccountLocker;
-    private final UserRepository userRepository;
 
     /**
      * Handles a failed login attempt. If the number of failed attempts surpasses
@@ -30,12 +28,7 @@ public class LoginFailureHandler {
      */
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void handle(final String userEmail) {
-        if (userRepository.findByEmail(userEmail).isEmpty()) {
-            log.warn("Skipping login attempt recording for non-existent user: {}", userEmail);
-            return;
-        }
         LoginAttemptEntity loginAttempt = failedLoginAttemptIncrementor.increment(userEmail);
-
         if (loginAttempt.getAttempts() >= maxLoginAttempts) {
             userAccountLocker.lockUserAccount(userEmail);
         }

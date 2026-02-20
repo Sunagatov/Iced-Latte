@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.beans.factory.annotation.Value;
 import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -68,8 +69,6 @@ public class SpringSecurityConfiguration {
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
                 )
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
@@ -92,8 +91,8 @@ public class SpringSecurityConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder(
-            @org.springframework.beans.factory.annotation.Value("${security.argon2.memory:16384}") int memory,
-            @org.springframework.beans.factory.annotation.Value("${security.argon2.iterations:2}") int iterations) {
+            @Value("${security.argon2.memory:16384}") int memory,
+            @Value("${security.argon2.iterations:2}") int iterations) {
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 }

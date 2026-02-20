@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,9 +23,11 @@ import java.util.concurrent.ConcurrentMap;
 public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     private final ConcurrentMap<String, TokenEntry> blacklistedTokens = new ConcurrentHashMap<>();
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpirationMs;
+    public InMemoryJwtBlacklistService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     private static final int MAX_TOKENS = 10000;
     private static final long CLEANUP_INTERVAL_MS = 300000;
@@ -41,7 +43,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
             cleanupExpiredTokens();
         }
 
-        Instant expiryTime = Instant.now().plusMillis(jwtExpirationMs);
+        Instant expiryTime = Instant.now().plus(jwtProperties.expiration());
         blacklistedTokens.put(sha256(token), new TokenEntry(expiryTime));
         log.debug("Token blacklisted in memory, expires at: {}", expiryTime);
     }
