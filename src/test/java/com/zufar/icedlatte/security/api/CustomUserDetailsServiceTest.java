@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,13 +77,13 @@ class CustomUserDetailsServiceTest {
         String userEmail = "nonexistent@example.com";
         when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
 
-        InvalidCredentialsException thrown = assertThrows(
-                InvalidCredentialsException.class,
+        UsernameNotFoundException thrown = assertThrows(
+                UsernameNotFoundException.class,
                 () -> customUserDetailsService.loadUserByUsername(userEmail),
-                "Expected InvalidCredentialsException to be thrown"
+                "Expected UsernameNotFoundException to be thrown"
         );
 
-        assertEquals("Invalid credentials", thrown.getMessage());
+        assertEquals("User not found", thrown.getMessage());
         verify(userRepository, times(1)).findByEmail(userEmail);
     }
 }

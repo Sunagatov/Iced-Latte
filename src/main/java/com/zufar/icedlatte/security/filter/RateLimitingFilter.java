@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,6 +28,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final RateLimitingConfiguration.InMemoryRateLimiter rateLimiter;
     
     @Value("${security.rate-limit.max-requests:100}")
@@ -88,19 +91,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Retry-After", String.valueOf(windowDuration.toSeconds()));
-        
-        String jsonResponse = String.format("""
-            {
-                "error": "Rate limit exceeded",
-                "message": "Too many requests. Please try again later.",
-                "status": %d,
-                "timestamp": "%s"
-            }
-            """, 
-            HttpStatus.TOO_MANY_REQUESTS.value(),
-            java.time.Instant.now());
-        
-        response.getWriter().write(jsonResponse);
+
+        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+                .put("error", "Rate limit exceeded")
+                .put("message", "Too many requests. Please try again later.")
+                .put("status", HttpStatus.TOO_MANY_REQUESTS.value())
+                .put("timestamp", java.time.Instant.now().toString());
+        byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
+        response.setContentLength(responseBytes.length);
+        response.getOutputStream().write(responseBytes);
     }
     
     private static String sanitize(String value) {

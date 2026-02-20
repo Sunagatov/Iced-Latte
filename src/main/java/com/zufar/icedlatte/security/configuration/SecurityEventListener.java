@@ -19,9 +19,8 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationFailure(AbstractAuthenticationFailureEvent event) {
-        log.warn("Authentication failed - {}: {}",
-                event.getException().getClass().getSimpleName(),
-                event.getException().getMessage());
+        log.warn("Authentication failed - {}",
+                event.getException().getClass().getSimpleName());
     }
 
     @EventListener

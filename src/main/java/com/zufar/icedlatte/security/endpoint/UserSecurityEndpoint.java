@@ -108,9 +108,6 @@ public class UserSecurityEndpoint implements SecurityApi {
         } catch (AbsentBearerHeaderException ex) {
             log.warn("Failed to extract token during logout: {}", ex.getMessage(), ex);
             // Still return success to prevent information leakage
-        } catch (IllegalStateException ex) {
-            log.warn("Failed to blacklist token during logout: {}", ex.getMessage(), ex);
-            // Still return success to prevent information leakage
         }
         
         return ResponseEntity.ok().build();

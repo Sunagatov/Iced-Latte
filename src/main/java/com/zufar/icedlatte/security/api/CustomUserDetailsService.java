@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> {
                     log.warn("User not found");
-                    return new InvalidCredentialsException();
+                    return new UsernameNotFoundException("User not found");
                 });
     }
 }
