@@ -26,10 +26,6 @@ public class UserRegistrationService {
     private final RegistrationDtoConverter registrationDtoConverter;
     private final PasswordEncoder passwordEncoder;
 
-    public boolean isEmailAvailable(final String email) {
-        return userRepository.findByEmail(email).isEmpty();
-    }
-
     @Transactional
     public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();

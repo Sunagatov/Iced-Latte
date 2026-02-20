@@ -25,7 +25,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -50,23 +49,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
-            UUID userId = securityPrincipalProvider.getUserId();
-            MDC.put(MDC_USER_ID_KEY, userId.toString());
-
+            MDC.put(MDC_USER_ID_KEY, securityPrincipalProvider.getUserId().toString());
         } catch (AbsentBearerHeaderException ex) {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
             handleAuthenticationException(httpResponse, ex);
             MDC.remove(MDC_REQUEST_ID_KEY);
             return;
-        } finally {
-            MDC.remove(MDC_USER_ID_KEY);
         }
 
         try {
             filterChain.doFilter(httpRequest, httpResponse);
         } finally {
+            MDC.remove(MDC_USER_ID_KEY);
             MDC.remove(MDC_REQUEST_ID_KEY);
         }
     }

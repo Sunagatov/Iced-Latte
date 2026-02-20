@@ -11,6 +11,7 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
@@ -104,7 +105,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
             jwtBlacklistValidator.addToBlacklist(token);
             log.info("User logout completed successfully");
-        } catch (com.zufar.icedlatte.security.exception.AbsentBearerHeaderException ex) {
+        } catch (AbsentBearerHeaderException ex) {
             log.warn("Failed to extract token during logout: {}", ex.getMessage(), ex);
             // Still return success to prevent information leakage
         } catch (IllegalStateException ex) {

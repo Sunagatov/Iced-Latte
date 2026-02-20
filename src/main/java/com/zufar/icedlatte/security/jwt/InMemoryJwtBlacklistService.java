@@ -9,11 +9,7 @@ import org.springframework.util.StringUtils;
 
 import jakarta.annotation.PreDestroy;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,7 +26,6 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
     }
 
     private static final int MAX_TOKENS = 10000;
-    private static final long CLEANUP_INTERVAL_MS = 300000;
 
     public synchronized void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
@@ -70,7 +65,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
         return true;
     }
 
-    @Scheduled(fixedRate = CLEANUP_INTERVAL_MS)
+    @Scheduled(fixedRateString = "${security.jwt.blacklist.cleanup-interval-ms:300000}")
     public void cleanupExpiredTokens() {
         Instant now = Instant.now();
         blacklistedTokens.entrySet().removeIf(e -> e.getValue().isExpired(now));
@@ -81,15 +76,6 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
         int finalCount = blacklistedTokens.size();
         blacklistedTokens.clear();
         log.info("In-memory JWT blacklist service shutdown, cleared {} tokens", finalCount);
-    }
-
-    private static String sha256(String token) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 
     private record TokenEntry(Instant expiryTime) {

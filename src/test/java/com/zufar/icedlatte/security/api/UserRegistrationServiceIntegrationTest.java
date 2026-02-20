@@ -70,12 +70,12 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
         );
         userRegistrationService.register(request);
 
-        assertFalse(userRegistrationService.isEmailAvailable("existing@example.com"));
+        assertTrue(userRepository.findByEmail("existing@example.com").isPresent());
     }
 
     @Test
     @DisplayName("Should return true for non-existing email availability check")
     void shouldReturnTrueForNonExistingEmail() {
-        assertTrue(userRegistrationService.isEmailAvailable("nonexisting@example.com"));
+        assertTrue(userRepository.findByEmail("nonexisting@example.com").isEmpty());
     }
 }

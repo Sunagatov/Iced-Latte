@@ -11,10 +11,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 
 @Slf4j
 @Service
@@ -60,11 +56,6 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
     }
 
     private String buildBlacklistKey(String token) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-            return BLACKLIST_KEY_PREFIX + HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
+        return BLACKLIST_KEY_PREFIX + sha256(token);
     }
 }
