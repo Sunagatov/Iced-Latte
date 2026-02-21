@@ -48,7 +48,7 @@ spring:
   # Database Properties
   #
   datasource:
-    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=require
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
   jpa:
@@ -215,6 +215,17 @@ jwt:
   refresh-expiration: PT24H # 1 day
   issuer: ${APP_JWT_ISSUER:iced-latte}
   audience: ${APP_JWT_AUDIENCE:iced-latte-client}
+
+#
+# CORS Properties
+#
+cors:
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+  allowed-headers: "*"
+  exposed-headers: Authorization,Content-Type,X-Request-ID
+  allow-credentials: true
+  max-age: 3600
 
 #
 # Rate Limiting Properties
