@@ -43,21 +43,9 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "Email verification token sent to the user with email = user@example.com"
+                example: "Email verification token sent"
         "400":
           description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: "Unprocessable entity"
           content:
             application/json:
               schema:
@@ -83,7 +71,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ConfirmEmailRequest"
       responses:
-        "200":
+        "201":
           description: "Email verification completed"
           content:
             application/json:
@@ -91,12 +79,6 @@ paths:
                 $ref: "#/components/schemas/UserRegistrationResponse"
         "400":
           description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized"
           content:
             application/json:
               schema:
@@ -142,12 +124,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: "Unprocessable entity"
           content:
             application/json:
               schema:
@@ -233,18 +209,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "Not found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error"
           content:
@@ -270,18 +234,6 @@ paths:
           description: "Password changed successfully"
         "400":
           description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: "Unprocessable entity"
           content:
             application/json:
               schema:
@@ -340,31 +292,8 @@ components:
         addressDto:
           $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
 
-    AuthTokensResponse:
-      type: "object"
-      required:
-        - token
-        - refreshToken
-      properties:
-        token:
-          type: "string"
-          description: "JWT token for authenticated user."
-        refreshToken:
-          type: "string"
-          description: "Refresh token for generating a new JWT."
-
     UserRegistrationResponse:
-      type: "object"
-      required:
-        - token
-        - refreshToken
-      properties:
-        token:
-          type: "string"
-          description: "JWT token for authenticated user."
-        refreshToken:
-          type: "string"
-          description: "Refresh token for generating a new JWT."
+      $ref: "#/components/schemas/UserAuthenticationResponse"
 
     UserAuthenticationRequest:
       type: "object"

@@ -8,7 +8,6 @@ import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
@@ -63,7 +62,7 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @Override
     @PostMapping(value = "/confirm")
-    public ResponseEntity<UserRegistrationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
+    public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
         log.info("Confirming email verification");
         var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
         log.info("Email verification completed");

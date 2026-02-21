@@ -130,13 +130,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
         "400":
-          description: "Bad request, e.g. the query parameters are invalid."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "Product's review was not found."
+          description: "Bad request, e.g. the query parameters are invalid or product not found."
           content:
             application/json:
               schema:
@@ -169,7 +163,7 @@ paths:
               $ref: "#/components/schemas/ProductReviewRequest"
         required: true
       responses:
-        "201":
+        "200":
           description: "Product review created successfully."
           content:
             application/json:
@@ -183,12 +177,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access occurred."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "Product not found or product's review was not found."
           content:
             application/json:
               schema:
@@ -231,8 +219,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: "Forbidden - you can only delete your own review."
+        "400":
+          description: "Deletion denied - you can only delete your own review."
           content:
             application/json:
               schema:
@@ -271,6 +259,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewDto"
+        "400":
+          description: "Product not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access occurred."
           content:
@@ -305,12 +299,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewRatingStats"
-        "404":
-          description: "Product's review was not found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
           content:
@@ -397,6 +385,12 @@ components:
 
     ProductReviewsAndRatingsWithPagination:
       type: "object"
+      required:
+        - reviewsWithRatings
+        - page
+        - size
+        - totalElements
+        - totalPages
       properties:
         reviewsWithRatings:
           type: "array"
@@ -440,6 +434,8 @@ components:
         productRating:
           type: "integer"
           format: "int32"
+          minimum: 1
+          maximum: 5
           description: "Rating given by the user (1–5)."
         text:
           type: "string"
@@ -485,6 +481,12 @@ components:
 
     RatingMap:
       type: "object"
+      required:
+        - star5
+        - star4
+        - star3
+        - star2
+        - star1
       properties:
         star5:
           type: "integer"

@@ -131,13 +131,7 @@ paths:
                 invalidPassword:
                   value: { "message": "Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&." }
         "401":
-          description: "Unauthorized access. Authentication required."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "User not found."
+          description: "Unauthorized access or invalid old password."
           content:
             application/json:
               schema:
@@ -191,7 +185,7 @@ paths:
             schema:
               $ref: "#/components/schemas/InitiatePasswordResetRequest"
       responses:
-        "204":
+        "200":
           description: "Password reset request confirmed successfully."
         "400":
           description: "Invalid request."
@@ -239,7 +233,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ConfirmPasswordResetRequest"
       responses:
-        "204":
+        "200":
           description: "Password reset confirmed successfully."
         "400":
           description: "Invalid or expired reset token."
@@ -518,9 +512,6 @@ components:
           allOf:
             - $ref: "#/components/schemas/PasswordField"
           example: "NewSecurePassword123!"
-
-    SuccessResponse:
-      $ref: "common-schemas.yaml#/components/schemas/SuccessResponse"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

@@ -144,7 +144,6 @@ paths:
           required: false
           schema:
             type: "number"
-            format: "decimal"
             minimum: 0
         - name: "maxPrice"
           description: "Maximum product price filter."
@@ -152,7 +151,6 @@ paths:
           required: false
           schema:
             type: "number"
-            format: "decimal"
             minimum: 0
         - name: "minimumAverageRating"
           description: "Minimum average rating filter (1–4)."
@@ -190,8 +188,6 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -290,7 +286,6 @@ components:
           description: "Description of the product."
         price:
           type: "number"
-          format: "decimal"
           description: "Price of the product."
         quantity:
           type: "integer"
@@ -304,7 +299,6 @@ components:
           description: "URL of the product's image or file."
         averageRating:
           type: "number"
-          format: "decimal"
           description: "Average rating of the product."
         reviewsCount:
           type: "integer"
@@ -342,6 +336,8 @@ components:
         discount:
           type: "integer"
           format: "int32"
+          minimum: 0
+          maximum: 100
           description: "Discount applied to the product as a percentage (0–100)."
         dateAdded:
           type: "string"

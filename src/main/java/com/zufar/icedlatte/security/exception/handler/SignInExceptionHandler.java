@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class SignInExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(UserRegistrationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -64,9 +62,8 @@ public class SignInExceptionHandler {
 
     private ApiErrorResponse handle(Exception exception, HttpStatus status) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
-        log.warn("Handle {}: message: {}, debugMessage: {}",
-                exception.getClass().getSimpleName(), response.message(),
-                errorDebugMessageCreator.buildErrorDebugMessage(exception), exception);
+        log.warn("Handle {}: message: {}",
+                exception.getClass().getSimpleName(), response.message(), exception);
         return response;
     }
 }

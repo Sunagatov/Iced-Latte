@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,9 +29,6 @@ class SignInExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
-    @Mock
-    private ErrorDebugMessageCreator errorDebugMessageCreator;
-
     @InjectMocks
     private SignInExceptionHandler signInExceptionHandler;
 
@@ -49,7 +45,6 @@ class SignInExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = signInExceptionHandler.handleUserNotFoundException(exception);
 
@@ -58,7 +53,6 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -73,7 +67,6 @@ class SignInExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = signInExceptionHandler.handleUsernameNotFoundException(exception);
 
@@ -82,7 +75,6 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -98,7 +90,6 @@ class SignInExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = signInExceptionHandler.handleUserAccountLockedException(exception);
 
@@ -107,7 +98,6 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -122,7 +112,6 @@ class SignInExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = signInExceptionHandler.handleBadCredentialsException(exception);
 
@@ -131,6 +120,5 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

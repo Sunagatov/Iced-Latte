@@ -44,7 +44,7 @@ paths:
                 summary: "Add Multiple Items"
                 value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
       responses:
-        "201":
+        "200":
           description: "Items added successfully."
           content:
             application/json:
@@ -58,12 +58,6 @@ paths:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "403":
-          description: "Forbidden - insufficient permissions."
           content:
             application/json:
               schema:
@@ -111,8 +105,8 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "403":
-          description: "Forbidden - insufficient permissions."
+        "404":
+          description: "Shopping cart item not found."
           content:
             application/json:
               schema:
@@ -154,12 +148,6 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "403":
-          description: "Forbidden - insufficient permissions."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "404":
           description: "One or more shopping cart items not found."
           content:
@@ -188,12 +176,6 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "401":
           description: "Unauthorized access."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "403":
-          description: "Forbidden - insufficient permissions."
           content:
             application/json:
               schema:
@@ -261,7 +243,7 @@ components:
           format: "int32"
         itemsTotalPrice:
           type: "number"
-          format: "decimal"
+          description: "Total price of all items in the cart."
         productsQuantity:
           type: "integer"
           format: "int32"

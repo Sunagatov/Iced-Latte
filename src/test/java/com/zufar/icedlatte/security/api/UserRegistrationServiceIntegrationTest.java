@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -28,7 +28,7 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
                 "John", "Doe", "john.doe@example.com", "Password123!"
         );
 
-        final UserRegistrationResponse response = userRegistrationService.register(request);
+        final UserAuthenticationResponse response = userRegistrationService.register(request);
 
         assertNotNull(response);
         assertNotNull(response.getToken());

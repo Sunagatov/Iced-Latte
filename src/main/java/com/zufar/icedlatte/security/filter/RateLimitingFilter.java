@@ -97,6 +97,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 .put("message", "Too many requests. Please try again later.")
                 .put("status", HttpStatus.TOO_MANY_REQUESTS.value())
                 .put("timestamp", java.time.Instant.now().toString());
+        // amazonq-ignore-next-line
         byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(responseBytes.length);
         response.getOutputStream().write(responseBytes);

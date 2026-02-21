@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.openapi.dto.UserRegistrationResponse;
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
@@ -27,7 +27,7 @@ public class UserRegistrationService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UserRegistrationResponse register(final UserRegistrationRequest userRegistrationRequest) {
+    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest) {
         String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();
@@ -45,7 +45,7 @@ public class UserRegistrationService {
             UserEntity userEntity = userRepository.saveAndFlush(newUserEntity);
             final String jwtToken = jwtTokenProvider.generateToken(userEntity);
             final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
-            UserRegistrationResponse response = new UserRegistrationResponse();
+            UserAuthenticationResponse response = new UserAuthenticationResponse();
             response.setToken(jwtToken);
             response.setRefreshToken(jwtRefreshToken);
             // amazonq-ignore-next-line

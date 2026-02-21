@@ -112,20 +112,12 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    PaymentStatus:
-      type: "object"
-      description: "Represents the status of a payment operation."
-      properties:
-        status:
-          type: "string"
-          description: "The payment status code."
-        description:
-          type: "string"
-          description: "Human-readable description of the payment status."
-
     SessionWithClientSecretDto:
       type: "object"
       description: "Contains the Stripe session ID and client secret required to complete the payment on the frontend."
+      required:
+        - sessionId
+        - clientSecret
       properties:
         sessionId:
           type: "string"
@@ -137,6 +129,8 @@ components:
     PaymentConfirmationEmail:
       type: "object"
       description: "Contains the customer email address for payment confirmation notification."
+      required:
+        - customerEmail
       properties:
         customerEmail:
           type: "string"
