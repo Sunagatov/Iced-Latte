@@ -2,7 +2,6 @@ package com.zufar.icedlatte.common.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -54,12 +53,7 @@ public class AuditService {
     private String getClientIpAddress() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-            return request.getRemoteAddr();
+            return attributes.getRequest().getRemoteAddr();
         }
         return null;
     }

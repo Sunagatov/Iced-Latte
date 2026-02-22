@@ -23,7 +23,7 @@ public class EmailExceptionHandler {
     public ApiErrorResponse handleInvalidTokenException(final InvalidTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.error("exception.email.invalid_token: message={}", apiErrorResponse.message());
+        log.warn("exception.email.invalid_token: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -39,7 +39,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.TOO_EARLY)
     public ApiErrorResponse handleTimeTokenException(final TimeTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.email.time_token: message={}", apiErrorResponse.message());
+        log.warn("exception.email.time_token: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -47,7 +47,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleTokenTimeExpiredException(final IncorrectTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.email.token_expired: message={}", apiErrorResponse.message());
+        log.warn("exception.email.token_expired: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -55,7 +55,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleIncorrectTokenFormatException(final IncorrectTokenFormatException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.email.invalid_token_format: message={}", apiErrorResponse.message());
+        log.warn("exception.email.invalid_token_format: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 }

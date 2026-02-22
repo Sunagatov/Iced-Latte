@@ -28,7 +28,7 @@ public class OrderExceptionHandler {
         String message = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.error("exception.order.type_mismatch: message={}", message);
+        log.warn("exception.order.type_mismatch: message={}", message);
 
         return apiErrorResponse;
     }

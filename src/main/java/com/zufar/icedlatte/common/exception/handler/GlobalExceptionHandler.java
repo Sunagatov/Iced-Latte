@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                 .toString();
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.error("exception.method_argument_invalid: message={}", message);
+        log.warn("exception.method_argument_invalid: message={}", message);
 
         return apiErrorResponse;
     }
