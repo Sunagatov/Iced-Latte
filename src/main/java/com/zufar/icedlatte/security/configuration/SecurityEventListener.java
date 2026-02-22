@@ -6,6 +6,8 @@ import org.springframework.security.authentication.event.AbstractAuthenticationF
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Slf4j
 @Component
@@ -25,12 +27,21 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
+        String path = requestPath();
         var authSupplier = event.getAuthentication();
         if (authSupplier != null && authSupplier.get() != null) {
-            log.warn("auth.denied: authorities={}",
-                    authSupplier.get().getAuthorities());
+            log.warn("auth.denied: authorities={}, path={}",
+                    authSupplier.get().getAuthorities(), path);
         } else {
-            log.warn("auth.denied: reason=anonymous");
+            log.warn("auth.denied: reason=anonymous, path={}", path);
         }
+    }
+
+    private static String requestPath() {
+        var attrs = RequestContextHolder.getRequestAttributes();
+        if (attrs instanceof ServletRequestAttributes sra) {
+            return sra.getRequest().getRequestURI();
+        }
+        return "-";
     }
 }

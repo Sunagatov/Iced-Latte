@@ -2,6 +2,7 @@ package com.zufar.icedlatte.payment.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.payment.api.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +25,12 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     private final PaymentProcessor paymentProcessor;
     private final WebhookEventProcessor webhookEventProcessor;
     private final RedirectEventProcessor redirectEventProcessor;
+    private final HttpServletRequest httpRequest;
 
     @Override
     @PostMapping
     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
-        var response = paymentProcessor.processPayment(null);
+        var response = paymentProcessor.processPayment(httpRequest);
         log.info("payment.session.created: sessionId={}", response.getSessionId());
         return ResponseEntity.ok(response);
     }
