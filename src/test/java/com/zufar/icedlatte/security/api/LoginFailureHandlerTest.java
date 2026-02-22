@@ -15,7 +15,6 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,7 +54,7 @@ class LoginFailureHandlerTest {
 
         loginFailureHandler.handle(userEmail);
 
-        verify(failedLoginAttemptIncrementor, times(1)).increment(userEmail);
+        verify(failedLoginAttemptIncrementor).increment(userEmail);
         verify(userAccountLocker, never()).lockUserAccount(userEmail);
     }
 
@@ -75,7 +74,7 @@ class LoginFailureHandlerTest {
 
         loginFailureHandler.handle(userEmail);
 
-        verify(failedLoginAttemptIncrementor, times(1)).increment(userEmail);
-        verify(userAccountLocker, times(1)).lockUserAccount(userEmail);
+        verify(failedLoginAttemptIncrementor).increment(userEmail);
+        verify(userAccountLocker).lockUserAccount(userEmail);
     }
 }

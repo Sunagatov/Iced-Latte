@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.config;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,17 +23,20 @@ import static org.junit.jupiter.api.Assertions.*;
     "pagination.reviews.defaultSortAttribute=createdAt",
     "pagination.reviews.defaultSortDirection=desc"
 })
+@DisplayName("PaginationConfig Tests")
 class PaginationConfigTest {
 
     @Autowired
     private PaginationConfig paginationConfig;
 
     @Test
+    @DisplayName("Should load default pagination configuration")
     void shouldLoadDefaultPaginationConfiguration() {
         assertEquals(0, paginationConfig.getDefaultPageNumber());
     }
 
     @Test
+    @DisplayName("Should load products pagination configuration")
     void shouldLoadProductsPaginationConfiguration() {
         assertEquals(50, paginationConfig.getProducts().getDefaultPageSize());
         assertEquals("name", paginationConfig.getProducts().getDefaultSortAttribute());
@@ -40,6 +44,7 @@ class PaginationConfigTest {
     }
 
     @Test
+    @DisplayName("Should load reviews pagination configuration")
     void shouldLoadReviewsPaginationConfiguration() {
         assertEquals(10, paginationConfig.getReviews().getDefaultPageSize());
         assertEquals("createdAt", paginationConfig.getReviews().getDefaultSortAttribute());

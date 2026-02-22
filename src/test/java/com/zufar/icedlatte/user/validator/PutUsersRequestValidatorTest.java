@@ -4,13 +4,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
-public class PutUsersRequestValidatorTest {
+@DisplayName("PutUsersRequestValidator Tests")
+class PutUsersRequestValidatorTest {
 
     private PutUsersRequestValidator validator;
 
@@ -20,6 +21,7 @@ public class PutUsersRequestValidatorTest {
     }
 
     @Test
+    @DisplayName("Should not throw exception when all parameters are correct")
     void shouldNotThrowExceptionWhenAllParametersAreCorrect() {
         String firstName = "name";
         String lastName = "surname";
@@ -38,6 +40,7 @@ public class PutUsersRequestValidatorTest {
     }
 
     @Test
+    @DisplayName("Should not throw exception when only required parameters are provided")
     void shouldNotThrowExceptionWhenHasOnlyRequiredParameters() {
         String firstName = "name";
         String lastName = "surname";
@@ -46,6 +49,7 @@ public class PutUsersRequestValidatorTest {
     }
 
     @Test
+    @DisplayName("Should throw PutUsersBadRequestException when parameters are incorrect")
     void shouldThrowPutUserBadRequestExceptionWhenParametersAreIncorrect() {
         String firstName = null;
         String lastName = "s";

@@ -9,7 +9,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -31,8 +30,8 @@ class UnlockAccountSchedulerTest {
     void shouldExecuteScheduledTaskToUnlockAccounts() {
         unlockAccountScheduler.unlockLockoutExpiredAccounts();
 
-        verify(loginAttemptRepository, times(1)).resetLockedAccounts();
-        verify(userRepository, times(1)).unlockUsers();
+        verify(loginAttemptRepository).resetLockedAccounts();
+        verify(userRepository).unlockUsers();
         verifyNoMoreInteractions(loginAttemptRepository, userRepository);
     }
 }

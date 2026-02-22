@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,9 +52,9 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartProvider, times(1)).getByUserId(userId);
+        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartProvider).getByUserId(userId);
     }
 
     @Test
@@ -76,9 +75,9 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartProvider, times(1)).getByUserId(userId);
+        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartProvider).getByUserId(userId);
     }
 
     @Test
@@ -97,8 +96,8 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository, times(1)).deleteAllByIdInBatch(itemIdsForDelete);
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartProvider, times(1)).getByUserId(userId);
+        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartProvider).getByUserId(userId);
     }
 }

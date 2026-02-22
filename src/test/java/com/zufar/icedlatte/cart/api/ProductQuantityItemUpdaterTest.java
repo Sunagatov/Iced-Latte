@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -69,10 +69,10 @@ class ProductQuantityItemUpdaterTest {
 
         assertEquals(expectedResult, actualResult);
 
-        verify(shoppingCartItemRepository, times(1)).findById(shoppingCartItem.getId());
-        verify(shoppingCartProvider, times(1)).getByUserId(userDto.getId());
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartItemRepository, times(1)).save(shoppingCartItem);
+        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
+        verify(shoppingCartProvider).getByUserId(userDto.getId());
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).save(shoppingCartItem);
     }
 
     @Test
@@ -98,10 +98,10 @@ class ProductQuantityItemUpdaterTest {
 
         assertEquals(expectedResult, actualResult);
 
-        verify(shoppingCartItemRepository, times(1)).findById(shoppingCartItem.getId());
-        verify(shoppingCartProvider, times(1)).getByUserId(userDto.getId());
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartItemRepository, times(1)).save(shoppingCartItem);
+        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
+        verify(shoppingCartProvider).getByUserId(userDto.getId());
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).save(shoppingCartItem);
     }
 
     @Test
@@ -122,10 +122,10 @@ class ProductQuantityItemUpdaterTest {
 
         Assertions.assertThrows(InvalidShoppingCartIdException.class, () -> productQuantityItemUpdater.update(itemId, productQuantityChange));
 
-        verify(shoppingCartItemRepository, times(1)).findById(itemId);
-        verify(shoppingCartProvider, times(1)).getByUserId(userDto.getId());
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartItemRepository, times(1)).save(item);
+        verify(shoppingCartItemRepository).findById(itemId);
+        verify(shoppingCartProvider).getByUserId(userDto.getId());
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).save(item);
     }
 
     @Test
@@ -177,9 +177,9 @@ class ProductQuantityItemUpdaterTest {
 
         verify(shoppingCartItemRepository).findById(nonExistedShoppingCartItemId);
 
-        verify(shoppingCartItemRepository, times(1)).findById(nonExistedShoppingCartItemId);
-        verify(shoppingCartProvider, times(0)).getByUserId(any(UUID.class));
-        verify(securityPrincipalProvider, times(0)).getUserId();
-        verify(shoppingCartItemRepository, times(0)).save(any(ShoppingCartItem.class));
+        verify(shoppingCartItemRepository).findById(nonExistedShoppingCartItemId);
+        verify(shoppingCartProvider, never()).getByUserId(any(UUID.class));
+        verify(securityPrincipalProvider, never()).getUserId();
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 }

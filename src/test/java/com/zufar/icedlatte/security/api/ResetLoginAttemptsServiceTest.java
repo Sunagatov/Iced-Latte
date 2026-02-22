@@ -16,7 +16,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
@@ -51,7 +50,7 @@ class ResetLoginAttemptsServiceTest {
 
         resetLoginAttemptsService.reset(userEmail);
 
-        verify(userAccountLocker, times(1)).unlockUserAccount(userEmail);
+        verify(userAccountLocker).unlockUserAccount(userEmail);
         verify(loginAttemptRepository, never()).save(any());
         assertEquals(0, existingLoginAttempt.getAttempts());
         assertFalse(existingLoginAttempt.getIsUserLocked());

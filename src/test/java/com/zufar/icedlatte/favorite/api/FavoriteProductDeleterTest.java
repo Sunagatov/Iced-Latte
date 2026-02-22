@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +46,6 @@ class FavoriteProductDeleterTest {
 
         assertDoesNotThrow(() -> favoriteProductDeleter.delete(productId, userId));
 
-        verify(favoriteListProvider, times(1)).getFavoriteListEntity(userId);
+        verify(favoriteListProvider).getFavoriteListEntity(userId);
     }
 }

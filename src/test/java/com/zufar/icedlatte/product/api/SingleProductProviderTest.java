@@ -6,6 +6,7 @@ import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("SingleProductProvider Tests")
 class SingleProductProviderTest {
 
     @Mock
@@ -40,6 +42,7 @@ class SingleProductProviderTest {
     private SingleProductProvider productProvider;
 
     @Test
+    @DisplayName("Should return product when product ID exists")
     void shouldReturnProductWhenProductIdExists() {
         UUID productId = UUID.randomUUID();
 
@@ -55,6 +58,7 @@ class SingleProductProviderTest {
     }
 
     @Test
+    @DisplayName("Should throw ProductNotFoundException when product ID does not exist")
     void shouldThrowExceptionWhenProductIdNotExists() {
         UUID productId = UUID.randomUUID();
 

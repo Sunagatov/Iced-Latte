@@ -6,6 +6,7 @@ import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
+@DisplayName("PageableProductsProvider Tests")
 class PageableProductsProviderTest {
 
     @Mock private ProductInfoRepository productRepository;
@@ -37,6 +39,7 @@ class PageableProductsProviderTest {
     private PageableProductsProvider productsProvider;
 
     @Test
+    @DisplayName("Should fetch products using page attributes")
     void shouldFetchProductsUsingPageAttributes() {
         Page<ProductInfo> page = new PageImpl<>(List.of(mock(ProductInfo.class)));
         when(productRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
