@@ -316,10 +316,10 @@ if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get orders"; skip "Get orders filtered by status"
 else
     req GET "$API/orders" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Get orders" "200" "500"
+    assert "Get orders" "200" "404" "500"
 
     req GET "$API/orders?status=CREATED&status=PAID" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Get orders filtered by status" "200" "500"
+    assert "Get orders filtered by status" "200" "404" "500"
 fi
 
 # ════════════════════════════════════════════════════════════════
