@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════╗
-# ║           Iced Latte — API Integration Test Suite           ║
+# ║           Iced Latte - API Integration Test Suite           ║
 # ╚══════════════════════════════════════════════════════════════╝
 
 set -uo pipefail
@@ -13,7 +13,7 @@ GRN='\033[0;32m'; RED='\033[0;31m'; YLW='\033[0;33m'
 BLU='\033[0;34m'; CYN='\033[0;36m'; DIM='\033[2m'
 BLD='\033[1m';    NC='\033[0m'
 
-PASS="✅"; FAIL="❌"; SKIP="⏭ "; INFO="ℹ️ "
+PASS="[PASS]"; FAIL="[FAIL]"; SKIP="[SKIP]"; INFO="[INFO]"
 
 # ── State ────────────────────────────────────────────────────────
 JWT_TOKEN=""
@@ -28,7 +28,7 @@ TOTAL=0; PASSED=0; FAILED=0; SKIPPED=0
 declare -a FAILURES=()
 
 # ── Helpers ──────────────────────────────────────────────────────
-section() { echo -e "\n${BLD}${BLU}━━━  $1  ━━━${NC}"; }
+section() { echo -e "\n${BLD}${BLU}---  $1  ---${NC}"; }
 
 pass()  { TOTAL=$((TOTAL+1)); PASSED=$((PASSED+1));
           echo -e "  ${GRN}${PASS} $1${NC}"; }
@@ -36,14 +36,14 @@ pass()  { TOTAL=$((TOTAL+1)); PASSED=$((PASSED+1));
 fail()  { TOTAL=$((TOTAL+1)); FAILED=$((FAILED+1));
           FAILURES+=("$1");
           echo -e "  ${RED}${FAIL} $1${NC}"
-          [[ -n "${2:-}" ]] && echo -e "  ${DIM}    ↳ $2${NC}"; }
+          [[ -n "${2:-}" ]] && echo -e "  ${DIM}    > $2${NC}"; }
 
 skip()  { TOTAL=$((TOTAL+1)); SKIPPED=$((SKIPPED+1));
           echo -e "  ${YLW}${SKIP} $1 ${DIM}(${2:-missing prerequisite})${NC}"; }
 
 info()  { echo -e "  ${DIM}${INFO}  $1${NC}"; }
 
-# Sets globals CODE and BODY — never called in a subshell
+# Sets globals CODE and BODY - never called in a subshell
 _BODY_FILE=$(mktemp)
 trap 'rm -f "$_BODY_FILE"' EXIT
 
@@ -55,18 +55,18 @@ req() {
     BODY=$(cat "$_BODY_FILE")
 }
 
-# assert LABEL [expected_codes...] — treats 429 as skip
+# assert LABEL [expected_codes...] - treats 429 as skip
 assert() {
     local label="$1"; shift
     local codes=("$@")
     if [[ "$CODE" == "429" ]]; then
-        skip "$label" "rate limited — 429"
+        skip "$label" "rate limited - 429"
         return
     fi
     for c in "${codes[@]}"; do
-        [[ "$CODE" == "$c" ]] && { pass "$label → $CODE"; return; }
+        [[ "$CODE" == "$c" ]] && { pass "$label -> $CODE"; return; }
     done
-    fail "$label → expected $(IFS=/; echo "${codes[*]}"), got $CODE" "$BODY"
+    fail "$label -> expected $(IFS=/; echo "${codes[*]}"), got $CODE" "$BODY"
 }
 
 json_val() { echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('$1',''))" 2>/dev/null; }
@@ -74,7 +74,7 @@ json_val() { echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin);
 # ════════════════════════════════════════════════════════════════
 #  AUTH
 # ════════════════════════════════════════════════════════════════
-section "🔐 Auth"
+section "Auth"
 
 req POST "$API/auth/authenticate" \
     -H "Content-Type: application/json" \
@@ -83,15 +83,15 @@ if [[ "$CODE" == "200" ]]; then
     JWT_TOKEN=$(json_val token)
     REFRESH_TOKEN=$(json_val refreshToken)
     if [[ -n "$JWT_TOKEN" ]]; then
-        pass "Login → 200"
-        info "token: ${JWT_TOKEN:0:32}…"
+        pass "Login -> 200"
+        info "token: ${JWT_TOKEN:0:32}..."
     else
-        fail "Login → token missing in response" "$BODY"
+        fail "Login -> token missing in response" "$BODY"
     fi
 elif [[ "$CODE" == "429" ]]; then
-    skip "Login" "rate limited — 429"
+    skip "Login" "rate limited - 429"
 else
-    fail "Login → expected 200, got $CODE" "$BODY"
+    fail "Login -> expected 200, got $CODE" "$BODY"
 fi
 
 req POST "$API/auth/authenticate" \
@@ -115,12 +115,12 @@ assert "Protected endpoint without token (rejected)" "401" "403"
 # ════════════════════════════════════════════════════════════════
 #  PRODUCTS  (public)
 # ════════════════════════════════════════════════════════════════
-section "☕ Products"
+section "Products"
 
 req GET "$API/products?page=0&size=5"
 if [[ "$CODE" == "200" ]]; then
     PRODUCT_ID=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['products'][0]['id'])" 2>/dev/null)
-    pass "List products → 200"
+    pass "List products -> 200"
     [[ -n "$PRODUCT_ID" ]] && info "first product id: $PRODUCT_ID"
 else
     assert "List products" "200"
@@ -160,7 +160,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  USER PROFILE
 # ════════════════════════════════════════════════════════════════
-section "👤 User Profile"
+section "User Profile"
 
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get user profile"; skip "Update user profile"
@@ -188,7 +188,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  SHOPPING CART
 # ════════════════════════════════════════════════════════════════
-section "🛒 Shopping Cart"
+section "Shopping Cart"
 
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get cart"; skip "Add item to cart"
@@ -204,7 +204,7 @@ else
             -d "{\"items\":[{\"productId\":\"$PRODUCT_ID\",\"productQuantity\":1}]}"
         if [[ "$CODE" == "200" ]]; then
             CART_ITEM_ID=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['items'][0]['id'])" 2>/dev/null)
-            pass "Add item to cart → 200"
+            pass "Add item to cart -> 200"
             [[ -n "$CART_ITEM_ID" ]] && info "cart item id: $CART_ITEM_ID"
         else
             assert "Add item to cart" "200"
@@ -234,7 +234,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  FAVORITES
 # ════════════════════════════════════════════════════════════════
-section "❤️  Favorites"
+section "Favorites"
 
 if [[ -z "$JWT_TOKEN" || -z "$PRODUCT_ID" ]]; then
     skip "Add to favorites"; skip "Get favorites"; skip "Remove from favorites"
@@ -255,7 +255,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  PRODUCT REVIEWS
 # ════════════════════════════════════════════════════════════════
-section "⭐ Product Reviews"
+section "Product Reviews"
 
 if [[ -n "$PRODUCT_ID" ]]; then
     req GET "$API/products/$PRODUCT_ID/reviews?page=0&size=5"
@@ -282,10 +282,10 @@ else
         -d '{"text":"Great coffee, highly recommend!","rating":5}'
     if [[ "$CODE" == "200" ]]; then
         REVIEW_ID=$(json_val productReviewId)
-        pass "Add product review → 200"
+        pass "Add product review -> 200"
         [[ -n "$REVIEW_ID" ]] && info "review id: $REVIEW_ID"
     elif [[ "$CODE" == "400" ]]; then
-        pass "Add product review → 400 (already exists — expected)"
+        pass "Add product review -> 400 (already exists - expected)"
         req GET "$API/products/$PRODUCT_ID/review" -H "Authorization: Bearer $JWT_TOKEN"
         [[ "$CODE" == "200" ]] && REVIEW_ID=$(json_val productReviewId)
     else
@@ -310,7 +310,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  ORDERS
 # ════════════════════════════════════════════════════════════════
-section "📦 Orders"
+section "Orders"
 
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get orders"; skip "Get orders filtered by status"
@@ -323,9 +323,9 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════
-#  PAYMENT  (smoke — Stripe not wired in local env)
+#  PAYMENT  (smoke - Stripe not wired in local env)
 # ════════════════════════════════════════════════════════════════
-section "💳 Payment"
+section "Payment"
 
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Create Stripe session (smoke)"
@@ -337,7 +337,7 @@ fi
 # ════════════════════════════════════════════════════════════════
 #  LOGOUT
 # ════════════════════════════════════════════════════════════════
-section "🚪 Logout"
+section "Logout"
 
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Logout"; skip "Token rejected after logout"
@@ -353,14 +353,14 @@ fi
 #  SUMMARY DASHBOARD
 # ════════════════════════════════════════════════════════════════
 echo ""
-echo -e "${BLD}${CYN}╔══════════════════════════════════════╗${NC}"
-echo -e "${BLD}${CYN}║         Test Results Summary         ║${NC}"
-echo -e "${BLD}${CYN}╠══════════════════════════════════════╣${NC}"
-printf "${BLD}${CYN}║${NC}  %-10s ${BLD}%s${NC}\n"  "Total:"   "$TOTAL"
-printf "${BLD}${CYN}║${NC}  ${GRN}%-10s %s${NC}\n"  "Passed:"  "$PASSED"
-printf "${BLD}${CYN}║${NC}  ${RED}%-10s %s${NC}\n"  "Failed:"  "$FAILED"
-printf "${BLD}${CYN}║${NC}  ${YLW}%-10s %s${NC}\n"  "Skipped:" "$SKIPPED"
-echo -e "${BLD}${CYN}╚══════════════════════════════════════╝${NC}"
+echo -e "${BLD}${CYN}+--------------------------------------+${NC}"
+echo -e "${BLD}${CYN}|         Test Results Summary         |${NC}"
+echo -e "${BLD}${CYN}+--------------------------------------+${NC}"
+printf "${BLD}${CYN}|${NC}  %-10s ${BLD}%s${NC}\n"  "Total:"   "$TOTAL"
+printf "${BLD}${CYN}|${NC}  ${GRN}%-10s %s${NC}\n"  "Passed:"  "$PASSED"
+printf "${BLD}${CYN}|${NC}  ${RED}%-10s %s${NC}\n"  "Failed:"  "$FAILED"
+printf "${BLD}${CYN}|${NC}  ${YLW}%-10s %s${NC}\n"  "Skipped:" "$SKIPPED"
+echo -e "${BLD}${CYN}+--------------------------------------+${NC}"
 
 if [[ ${#FAILURES[@]} -gt 0 ]]; then
     echo -e "\n${RED}${BLD}Failed tests:${NC}"
@@ -371,7 +371,7 @@ fi
 
 echo ""
 if [[ "$FAILED" -eq 0 ]]; then
-    echo -e "${GRN}${BLD}All tests passed! ☕${NC}"
+    echo -e "${GRN}${BLD}All tests passed! ${NC}"
     exit 0
 else
     echo -e "${RED}${BLD}$FAILED test(s) failed.${NC}"
