@@ -19,7 +19,6 @@ import java.util.UUID;
 import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_ITEMS_QUANTITY;
 import static com.zufar.icedlatte.cart.entity.ShoppingCart.DEFAULT_PRODUCTS_QUANTITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,14 +39,16 @@ class ShoppingCartProviderTest {
     void shouldReturnCorrectShoppingCartDtoWhenUserExists() throws ShoppingCartNotFoundException {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
         ShoppingCart expectedShoppingCart = CartDtoTestStub.createShoppingCart();
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
 
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(expectedShoppingCart);
+        when(shoppingCartDtoConverter.toDto(expectedShoppingCart)).thenReturn(expectedDto);
 
         ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
 
-        assertEquals(shoppingCartDtoConverter.toDto(expectedShoppingCart), actualShoppingCartDto);
-        verify(shoppingCartCreator, times(1)).getOrCreate(userId);
-        verify(shoppingCartDtoConverter, times(2)).toDto(expectedShoppingCart);
+        assertEquals(expectedDto, actualShoppingCartDto);
+        verify(shoppingCartCreator).getOrCreate(userId);
+        verify(shoppingCartDtoConverter).toDto(expectedShoppingCart);
     }
 
     @Test
@@ -61,13 +62,15 @@ class ShoppingCartProviderTest {
                 .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
 
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(shoppingCart);
+        when(shoppingCartDtoConverter.toDto(shoppingCart)).thenReturn(expectedDto);
 
         ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
 
-        assertEquals(shoppingCartDtoConverter.toDto(shoppingCart), actualShoppingCartDto);
-        verify(shoppingCartCreator, times(1)).getOrCreate(userId);
-        verify(shoppingCartDtoConverter, times(2)).toDto(shoppingCart);
+        assertEquals(expectedDto, actualShoppingCartDto);
+        verify(shoppingCartCreator).getOrCreate(userId);
+        verify(shoppingCartDtoConverter).toDto(shoppingCart);
     }
 }

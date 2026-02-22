@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class FavoriteProductAdderTest {
@@ -92,9 +91,9 @@ class FavoriteProductAdderTest {
 
         assertEquals(expectedFavoriteListDto, result);
 
-        verify(favoriteListProvider, times(1)).getFavoriteListEntity(userId);
-        verify(productInfoRepository, times(1)).findAllById(any());
-        verify(favoriteRepository, times(1)).save(favoriteList);
-        verify(favoriteListDtoConverter, times(1)).toDto(favoriteList);
+        verify(favoriteListProvider).getFavoriteListEntity(userId);
+        verify(productInfoRepository).findAllById(any());
+        verify(favoriteRepository).save(favoriteList);
+        verify(favoriteListDtoConverter).toDto(favoriteList);
     }
 }

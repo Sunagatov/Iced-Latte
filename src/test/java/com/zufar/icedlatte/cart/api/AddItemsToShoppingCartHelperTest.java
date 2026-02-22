@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,10 +78,10 @@ class AddItemsToShoppingCartHelperTest {
 
         assertEquals(result, expectedShoppingCartDto);
 
-        verify(securityPrincipalProvider, times(1)).getUserId();
-        verify(shoppingCartCreator, times(1)).getOrCreate(userId);
-        verify(shoppingCartRepository, times(1)).save(shoppingCart);
-        verify(shoppingCartDtoConverter, times(1)).toDto(updatedShoppingCart);
+        verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartCreator).getOrCreate(userId);
+        verify(shoppingCartRepository).save(shoppingCart);
+        verify(shoppingCartDtoConverter).toDto(updatedShoppingCart);
 
     }
 }
