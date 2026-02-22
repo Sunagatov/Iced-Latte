@@ -47,6 +47,7 @@ public class PageableProductsProvider {
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
         log.info("product.list.fetching: page={}, size={}, sort_attribute={}, sort_direction={}", page, size, sortAttr, sortDir);
+        long t0 = System.currentTimeMillis();
 
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 
@@ -63,6 +64,7 @@ public class PageableProductsProvider {
                 .map(productInfoDtoConverter::toDto)
                 .map(productPictureLinkUpdater::update);
 
+        log.info("product.list.fetched: count={}, durationMs={}", result.getNumberOfElements(), System.currentTimeMillis() - t0);
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 }

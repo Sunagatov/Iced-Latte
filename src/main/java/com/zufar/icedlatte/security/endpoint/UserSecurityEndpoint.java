@@ -74,7 +74,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         log.info("auth.authenticating");
         var response = userAuthenticationService.authenticate(request);
-        log.debug("auth.authenticated");
+        log.info("auth.authenticated");
         return ResponseEntity.ok(response);
     }
 

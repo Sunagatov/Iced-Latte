@@ -18,7 +18,7 @@ public class UserAvatarLinkProvider {
         try {
             return fileProvider.getRelatedObjectUrl(userId)
                     .orElseGet(() -> {
-                        log.warn("user.avatar.not_found: userId={}", userId);
+                        log.debug("user.avatar.not_found: userId={}", userId);
                         return "default file";
                     });
         } catch (RuntimeException exception) {
