@@ -83,3 +83,4 @@ public class GoogleAuthCallbackHandler {
         log.info("user.registered.google: userId={}", savedUser.getId());
         return savedUser;
     }
+}

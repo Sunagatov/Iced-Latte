@@ -55,9 +55,21 @@
         </rollingPolicy>
     </appender>
 
+    <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="ConsoleAppender"/>
+    </appender>
+
+    <appender name="AsyncFile" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FileAppender"/>
+    </appender>
+
     <root level="INFO">
-        <appender-ref ref="ConsoleAppender" />
-        <appender-ref ref="FileAppender" />
+        <appender-ref ref="AsyncConsole" />
+        <appender-ref ref="AsyncFile" />
     </root>
 
 </configuration>

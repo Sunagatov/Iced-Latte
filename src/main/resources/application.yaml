@@ -15,6 +15,7 @@ server:
     include-exception: false
     whitelabel:
       enabled: false
+    # dev profile overrides these to always
 
 #
 # Spring Properties
@@ -25,12 +26,16 @@ spring:
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: false
+    lazy-initialization: true
+  threads:
+    virtual:
+      enabled: true
   banner:
     charset: UTF-8
     location: classpath:banner.txt
   output:
     ansi:
-      enabled: detect
+      enabled: never
   ai:
     openai:
       api-key: ${SPRING_AI_OPENAI_API_KEY}
@@ -51,17 +56,23 @@ spring:
     url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=require
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 10
+      connection-timeout: 20000
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        temp:
+          use_jdbc_metadata_defaults: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${spring.datasource.url}
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
-    drop-first: true
+    drop-first: false
 
   #
   # AWS Properties
@@ -174,6 +185,8 @@ springdoc:
   swagger-ui:
     path: /api/docs/swagger-ui
     enabled: true
+  pre-loading-enabled: false
+  default-produces-media-type: application/json
 
 #
 # Management Properties
@@ -207,7 +220,8 @@ management:
       enabled: false
   tracing:
     sampling:
-      probability: 1.0
+      probability: 0.1
+    # dev profile overrides to 1.0
 
 #
 # OpenTelemetry Properties

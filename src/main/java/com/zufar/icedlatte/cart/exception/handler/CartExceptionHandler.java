@@ -26,9 +26,8 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleInvalidItemProductQuantityException(final InvalidItemProductQuantityException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-
         log.error("exception.cart.quantity_invalid: message={}", apiErrorResponse.message());
-
+        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 
@@ -37,7 +36,7 @@ public class CartExceptionHandler {
     public ApiErrorResponse handleInvalidShoppingCartIdException(final InvalidShoppingCartIdException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.error("exception.cart.id_invalid: message={}", apiErrorResponse.message());
-
+        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 
@@ -46,7 +45,7 @@ public class CartExceptionHandler {
     public ApiErrorResponse handleShoppingCartItemNotFoundException(final ShoppingCartItemNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("exception.cart.item_not_found: message={}", apiErrorResponse.message());
-
+        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 
@@ -55,7 +54,7 @@ public class CartExceptionHandler {
     public ApiErrorResponse handleShoppingCartNotFoundException(final ShoppingCartNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("exception.cart.not_found: message={}", apiErrorResponse.message());
-
+        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 }

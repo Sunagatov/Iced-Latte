@@ -41,6 +41,7 @@ public class RedisConfig {
                 .withCacheConfiguration("productById", defaultConfig.entryTtl(cacheProperties.getProductTtl()))
                 .withCacheConfiguration("brands", defaultConfig.entryTtl(cacheProperties.getBrandsTtl()))
                 .withCacheConfiguration("sellers", defaultConfig.entryTtl(cacheProperties.getSellersTtl()))
+                .withCacheConfiguration("productImageUrl", defaultConfig.entryTtl(cacheProperties.getImageUrlTtl()))
                 .build();
     }
 

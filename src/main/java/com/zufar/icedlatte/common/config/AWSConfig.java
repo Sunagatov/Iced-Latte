@@ -14,6 +14,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -58,6 +59,28 @@ public class AWSConfig {
             log.error("S3 Client Error: {}. Application will continue without S3 functionality.", ace.getMessage());
             throw new RuntimeException("Failed to create S3Client", ace);
         }
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
+    public S3Presigner s3Presigner() {
+        String sessionToken = System.getenv("AWS_SESSION_TOKEN");
+        S3Presigner.Builder builder;
+        if (StringUtils.hasText(sessionToken)) {
+            builder = S3Presigner.builder()
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsSessionCredentials.create(accessKey, secretKey, sessionToken)))
+                    .region(Region.of(region));
+        } else {
+            builder = S3Presigner.builder()
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create(accessKey, secretKey)))
+                    .region(Region.of(region));
+        }
+        if (StringUtils.hasText(endpointUrl)) {
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+        return builder.build();
     }
 
     private void applyEndpointOverride(S3ClientBuilder builder) {

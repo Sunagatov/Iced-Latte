@@ -24,9 +24,8 @@ public class ProductExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleProductNotFoundException(final ProductNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-
         log.error("exception.product.not_found: message={}", apiErrorResponse.message());
-
+        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 

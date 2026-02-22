@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.api.filestorage;
 import com.zufar.icedlatte.filestorage.file.FileProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class ProductImageReceiver {
 
     private final FileProvider fileProvider;
 
+    @Cacheable(cacheNames = "productImageUrl", key = "#productId", unless = "#result.startsWith('/assets/')")
     public String getProductFileUrl(final UUID productId) {
         try {
             return fileProvider.getRelatedObjectUrl(productId)

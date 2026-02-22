@@ -33,7 +33,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
     private final UserAvatarLinkProvider userAvatarLinkProvider;
-    private final EmailTokenSender emailTokenSender;
     private final EmailTokenConformer emailTokenConformer;
 
     @Override
@@ -41,7 +40,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<UserDto> getUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.profile.get: userId={}", userId);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(singleUserProvider.getUserById(userId));
     }
 
     @Override
@@ -49,13 +48,14 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.profile.update: userId={}", userId);
-        return ResponseEntity.ok(updatedUser);
+        return ResponseEntity.ok(updateUserOperationPerformer.updateUser(updateUserAccountRequest));
     }
 
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
         log.info("user.password.change");
+        changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
         return ResponseEntity.ok().build();
     }
 
@@ -64,6 +64,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.account.delete: userId={}", userId);
+        deleteUserOperationPerformer.deleteUser(userId);
         return ResponseEntity.ok().build();
     }
 
@@ -72,6 +73,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.avatar.upload: userId={}", userId);
+        userAvatarUploader.uploadUserAvatar(userId, file);
         return ResponseEntity.ok().build();
     }
 
@@ -80,7 +82,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<String> getUserAvatarLink() {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.avatar.get: userId={}", userId);
-        return ResponseEntity.ok(avatarLink);
+        return ResponseEntity.ok(userAvatarLinkProvider.getLink(userId));
     }
 
     @Override
@@ -88,6 +90,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> deleteUserAvatar() {
         var userId = securityPrincipalProvider.getUserId();
         log.info("user.avatar.delete: userId={}", userId);
+        fileDeleter.delete(userId);
         return ResponseEntity.ok().build();
     }
 
@@ -103,6 +106,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PostMapping(path = "/password/reset/confirm")
     public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
         log.info("user.password.reset.confirm");
+        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(confirmEmailRequest.getToken()));
         return ResponseEntity.ok().build();
     }
 

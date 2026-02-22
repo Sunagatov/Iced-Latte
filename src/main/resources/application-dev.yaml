@@ -1,0 +1,26 @@
+server:
+  error:
+    include-stacktrace: always
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  output:
+    ansi:
+      enabled: always
+  liquibase:
+    drop-first: true
+  jpa:
+    show-sql: true
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    com.zufar: DEBUG

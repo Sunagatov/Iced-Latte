@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -17,14 +19,23 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductReviewRepository productReviewRepository;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
-        productInfoRepository.updateAllAverageRatings();
-        productInfoRepository.updateAllReviewsCounts();
-        productReviewRepository.updateAllLikesCounts();
-        productReviewRepository.updateAllDislikesCounts();
-        log.info("Product reviews and ratings update completed successfully");
+        var executor = Executors.newVirtualThreadPerTaskExecutor();
+        CompletableFuture.runAsync(() ->
+                transactionTemplate.executeWithoutResult(status -> {
+                    productInfoRepository.updateAllAverageRatings();
+                    productInfoRepository.updateAllReviewsCounts();
+                    productReviewRepository.updateAllLikesCounts();
+                    productReviewRepository.updateAllDislikesCounts();
+                    log.info("Product reviews and ratings update completed successfully");
+                }), executor)
+            .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+            .whenComplete((v, e) -> {
+                executor.close();
+                if (e != null) log.warn("Ratings update completed with warnings", e);
+            });
     }
 }

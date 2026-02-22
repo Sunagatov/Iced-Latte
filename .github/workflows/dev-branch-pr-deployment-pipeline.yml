@@ -95,6 +95,7 @@ jobs:
               --restart=unless-stopped \
               --env-file <(cat <<EOF
             APP_SERVER_PORT=${{ vars.APP_SERVER_PORT }}
+            SPRING_PROFILES_ACTIVE=prod
             APP_JWT_SECRET=${{ secrets.APP_JWT_SECRET }}
             APP_JWT_REFRESH_SECRET=${{ secrets.APP_JWT_REFRESH_SECRET }}
             DATASOURCE_PORT=${{ vars.DATASOURCE_PORT }}

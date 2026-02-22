@@ -30,6 +30,7 @@ services:
       dockerfile: Dockerfile.local
     container_name: iced-latte-backend
     environment:
+      SPRING_PROFILES_ACTIVE: dev
       APP_SERVER_PORT: 8083
       APP_JWT_SECRET: ${APP_JWT_SECRET:-local_jwt_secret_placeholder}
       APP_JWT_REFRESH_SECRET: ${APP_JWT_REFRESH_SECRET:-local_jwt_refresh_secret_placeholder}
