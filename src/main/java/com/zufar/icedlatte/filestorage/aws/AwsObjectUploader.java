@@ -42,10 +42,10 @@ public class AwsObjectUploader {
             
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (S3Exception ase) {
-            log.error("AWS couldn't process operation", ase);
+            log.error("aws.s3.upload.error", ase);
             throw new FileUploadException(fileName, ase);
         } catch (SdkClientException sce) {
-            log.error("AWS couldn't be contacted for a response", sce);
+            log.error("aws.s3.upload.unreachable", sce);
             throw new FileUploadException(fileName, sce);
         } catch (IOException e) {
             throw new FileReadException(fileName, e);
@@ -73,10 +73,10 @@ public class AwsObjectUploader {
                                     .build();
                             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
                         } catch (S3Exception e) {
-                            log.error("AWS S3 error uploading file: {}", filePath, e);
+                            log.error("aws.s3.upload.file_error: key={}", filePath, e);
                             throw new FileUploadException(filePath.toString(), e);
                         } catch (SdkClientException e) {
-                            log.error("AWS SDK client error uploading file: {}", filePath, e);
+                            log.error("aws.s3.upload.file_unreachable: key={}", filePath, e);
                             throw new FileUploadException(filePath.toString(), e);
                         }
                     });

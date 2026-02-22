@@ -34,7 +34,7 @@ public class JwtTokenFromAuthHeaderExtractor {
                 .map(this::extractTokenFromHeader)
                 .filter(this::isValidTokenFormat)
                 .orElseThrow(() -> {
-                    log.warn("Invalid or missing Authorization header");
+                    log.warn("jwt.header.invalid");
                     return new AbsentBearerHeaderException(
                         "Missing or invalid Authorization header. Expected format: " + BEARER_PREFIX + "<token>"
                     );
@@ -51,19 +51,19 @@ public class JwtTokenFromAuthHeaderExtractor {
 
     private boolean isValidTokenFormat(String token) {
         if (!StringUtils.hasText(token)) {
-            log.debug("Token extraction failed: empty token");
+            log.debug("jwt.header.empty_token");
             return false;
         }
         
         if (token.length() < MIN_TOKEN_LENGTH || token.length() > MAX_TOKEN_LENGTH) {
-            log.debug("Token extraction failed: invalid token length");
+            log.debug("jwt.header.invalid_length");
             return false;
         }
         
         // Basic JWT format validation (should have 2 dots for 3 parts)
         long dotCount = token.chars().filter(ch -> ch == '.').count();
         if (dotCount != 2) {
-            log.debug("Token extraction failed: invalid JWT format");
+            log.debug("jwt.header.invalid_format");
             return false;
         }
         

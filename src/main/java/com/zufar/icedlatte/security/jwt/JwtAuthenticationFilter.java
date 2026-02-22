@@ -87,10 +87,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         };
         
         if (errorInfo.statusCode() >= 500) {
-            log.error("Authentication error: {} - Request ID: {}", errorInfo.message(), requestId, exception);
+            log.error("auth.error: message={}, requestId={}", errorInfo.message(), requestId, exception);
         } else {
-            log.warn("Authentication failed: {} - Request ID: {}", errorInfo.message(), requestId);
-            log.debug("Authentication failure details", exception);
+            log.warn("auth.failed: message={}, requestId={}", errorInfo.message(), requestId);
+            log.debug("auth.failed.details", exception);
         }
         
         httpResponse.setStatus(errorInfo.statusCode());

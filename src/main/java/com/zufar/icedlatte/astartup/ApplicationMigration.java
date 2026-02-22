@@ -47,7 +47,7 @@ public class ApplicationMigration implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (!isAwsConfigured()) {
-            log.info("AWS configuration not available, skipping file migration");
+            log.info("migration.aws.skipped: reason=not_configured");
             return;
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
@@ -57,7 +57,7 @@ public class ApplicationMigration implements ApplicationRunner {
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((v, e) -> {
                     executor.close();
-                    if (e != null) log.warn("Migration completed with warnings", e);
+                    if (e != null) log.warn("migration.aws.warning", e);
                 });
     }
 
@@ -69,30 +69,30 @@ public class ApplicationMigration implements ApplicationRunner {
 
     private void uploadFiles() {
         try {
-            log.info("Product pictures upload started, directory path: {}", directoryPath);
+            log.info("migration.upload.start: path={}", directoryPath);
             fileUploader.uploadDirectory(productPictureBucket, directoryPath);
-            log.info("Product pictures upload finished");
+            log.info("migration.upload.finish");
         } catch (FileUploadException e) {
-            log.warn("Upload failed, continuing without AWS: {}", e.getMessage(), e);
+            log.warn("migration.upload.error: reason={}", e.getMessage(), e);
         } catch (FileReadException e) {
-            log.warn("File read error during upload, continuing without AWS: {}", e.getMessage(), e);
+            log.warn("migration.upload.read_error: reason={}", e.getMessage(), e);
         }
     }
 
     private List<FileMetadataDto> fetchMetadata() {
         try {
             var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
-            log.info("Product pictures metadata retrieved from AWS");
+            log.info("migration.metadata.fetched");
             return fileMetadataDtos;
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
-            log.warn("Metadata retrieval failed due to AWS SDK error, continuing without AWS: {}", e.getMessage(), e);
+            log.warn("migration.metadata.fetch_error: reason={}", e.getMessage(), e);
             return List.of();
         }
     }
 
     private void saveMetadata(List<FileMetadataDto> fileMetadataDtos) {
         if (fileMetadataDtos.isEmpty()) {
-            log.info("No metadata to save, skipping database operation");
+            log.info("migration.metadata.skipped: reason=empty");
             return;
         }
         try {
@@ -100,9 +100,9 @@ public class ApplicationMigration implements ApplicationRunner {
                 fileMetadataDeleter.deleteByBucketName(productPictureBucket);
             }
             fileMetadataSaver.saveAll(fileMetadataDtos);
-            log.info("Product pictures metadata saved in database");
+            log.info("migration.metadata.saved");
         } catch (DataAccessException e) {
-            log.warn("Failed to save product pictures metadata: {}", e.getMessage(), e);
+            log.warn("migration.metadata.save_error: reason={}", e.getMessage(), e);
         }
     }
 }

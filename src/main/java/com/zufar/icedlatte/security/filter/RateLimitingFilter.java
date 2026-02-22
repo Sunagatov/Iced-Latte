@@ -86,7 +86,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     
     private void handleRateLimitExceeded(HttpServletResponse response, String clientIp, String requestPath,
                                           Duration windowDuration) throws IOException {
-        log.warn("Rate limit exceeded for IP: {} on path: {}", sanitize(clientIp), sanitize(requestPath));
+        log.warn("rate_limit.exceeded: ip={}, path={}", sanitize(clientIp), sanitize(requestPath));
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");

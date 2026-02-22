@@ -25,7 +25,7 @@ public class WebhookEventProvider {
         try {
             return Webhook.constructEvent(paymentPayload, stripeSignatureHeader, webHookSecret);
         } catch (SignatureVerificationException ex) {
-            log.error("Error during Stripe payment event creating", ex);
+            log.warn("payment.webhook.signature_invalid");
             throw new PaymentEventProcessingException(stripeSignatureHeader);
         }
     }

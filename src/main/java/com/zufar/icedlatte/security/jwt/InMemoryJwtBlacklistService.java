@@ -29,23 +29,23 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     public synchronized void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Attempted to blacklist empty token");
+            log.warn("jwt.blacklist.empty_token");
             return;
         }
 
         if (blacklistedTokens.size() >= MAX_TOKENS) {
-            log.warn("Maximum blacklist capacity reached, performing cleanup");
+            log.warn("jwt.blacklist.capacity_cleanup");
             cleanupExpiredTokens();
         }
 
         Instant expiryTime = Instant.now().plus(jwtProperties.expiration());
         blacklistedTokens.put(sha256(token), new TokenEntry(expiryTime));
-        log.debug("Token blacklisted in memory, expires at: {}", expiryTime);
+        log.debug("jwt.blacklist.added: expiresAt={}", expiryTime);
     }
 
     public boolean isBlacklisted(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Token validation attempted with empty token");
+            log.warn("jwt.blacklist.validate.empty_token");
             return true;
         }
 
@@ -58,7 +58,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
         if (entry.isExpired()) {
             blacklistedTokens.remove(tokenKey);
-            log.debug("Expired blacklisted token removed during lookup");
+            log.debug("jwt.blacklist.expired_removed");
             return false;
         }
 
@@ -75,7 +75,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
     public void shutdown() {
         int finalCount = blacklistedTokens.size();
         blacklistedTokens.clear();
-        log.info("In-memory JWT blacklist service shutdown, cleared {} tokens", finalCount);
+        log.info("jwt.blacklist.shutdown: cleared={}", finalCount);
     }
 
     private record TokenEntry(Instant expiryTime) {

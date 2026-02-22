@@ -46,7 +46,7 @@ public class PageableProductsProvider {
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
-        log.info("Getting products: page={}, size={}, sort_attribute={}, sort_direction={}", page, size, sortAttr, sortDir);
+        log.info("product.list.fetching: page={}, size={}, sort_attribute={}, sort_direction={}", page, size, sortAttr, sortDir);
 
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 

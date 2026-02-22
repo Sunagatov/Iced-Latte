@@ -23,15 +23,15 @@ public class RedirectEventProcessor {
     private final SessionCompletedScenarioHandler sessionCompletedScenarioHandler;
 
     public PaymentConfirmationEmail processPaymentEvent(final String sessionId) {
-        log.info("Started to process Stripe payment event after redirect");
+        log.info("payment.redirect.processing");
         Session session = stripeSessionProvider.get(sessionId);
         String status = session.getStatus();
         if (!SESSION_COMPLETE.equals(status)) {
-            log.error("Payment event cannot be processed, because session is not completed, session status: {}", status);
+            log.warn("payment.redirect.session_not_complete: status={}", status);
             throw new StripeSessionIsNotComplete(sessionId, status);
         }
         sessionCompletedScenarioHandler.handle(session);
-        log.info("Finished to process Stripe payment event after redirect");
+        log.info("payment.redirect.processed");
         var response = new PaymentConfirmationEmail();
         response.customerEmail(session.getCustomerEmail());
         return response;

@@ -24,9 +24,9 @@ public class AuditAspect {
             String entityId = extractEntityId(result);
             auditService.logOperation(entityType, entityId, auditable.operation(), null, result);
         } catch (org.springframework.dao.DataAccessException e) {
-            log.error("Failed to audit method due to database error: {}", joinPoint.getSignature().getName(), e);
+            log.error("audit.error.db: method={}", joinPoint.getSignature().getName(), e);
         } catch (IllegalArgumentException e) {
-            log.error("Failed to audit method due to invalid argument: {}", joinPoint.getSignature().getName(), e);
+            log.error("audit.error.invalid_arg: method={}", joinPoint.getSignature().getName(), e);
         }
     }
 

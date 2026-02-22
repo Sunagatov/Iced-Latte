@@ -35,7 +35,7 @@ public class UserAuthenticationService {
         String userEmail = request.getEmail();
         String userPassword = request.getPassword();
 
-        log.info("Authenticating user");
+        log.info("auth.authenticating");
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -48,17 +48,17 @@ public class UserAuthenticationService {
             return buildResponse(userDetails, userEmail);
 
         } catch (UsernameNotFoundException exception) {
-            log.warn("Authentication failed: user not found", exception);
+            log.warn("auth.failed: reason=user_not_found", exception);
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            log.warn("Authentication failed: invalid credentials", exception);
+            log.warn("auth.failed: reason=invalid_credentials", exception);
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
-            log.warn("Authentication failed: account locked", exception);
+            log.warn("auth.failed: reason=account_locked", exception);
             throw new UserAccountLockedException(userAccountLockoutDurationMinutes);
         } catch (AuthenticationException exception) {
-            log.error("Authentication error occurred", exception);
+            log.error("auth.error", exception);
             throw exception;
         }
     }
@@ -71,7 +71,7 @@ public class UserAuthenticationService {
     private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
         String jwtToken = jwtTokenProvider.generateToken(userDetails);
         String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        log.debug("Generated JWT token for user");
+        log.debug("auth.token.generated");
         resetLoginAttemptsService.reset(userEmail);
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(jwtToken);

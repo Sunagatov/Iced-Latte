@@ -80,19 +80,19 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
         var ids = productIdsDto.getProductIds();
         if (ids == null || ids.isEmpty()) {
-            log.warn("Empty products ids payload");
+            log.warn("product.ids.empty");
             return ResponseEntity.badRequest().build();
         }
-        log.info("Getting {} products by IDs", ids.size());
+        log.info("product.ids.fetching: count={}", ids.size());
         var products = productsProvider.getProducts(ids);
-        log.info("Retrieved {} products by IDs", products.size());
+        log.info("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);
     }
 
     @Override
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
-        log.info("Getting product by id: {}", productId);
+        log.info("product.get: productId={}", productId);
         return ResponseEntity.ok(singleProductProvider.getProductById(productId));
     }
 }

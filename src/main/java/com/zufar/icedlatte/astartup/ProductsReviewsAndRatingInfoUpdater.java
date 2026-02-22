@@ -30,12 +30,12 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
                     productInfoRepository.updateAllReviewsCounts();
                     productReviewRepository.updateAllLikesCounts();
                     productReviewRepository.updateAllDislikesCounts();
-                    log.info("Product reviews and ratings update completed successfully");
+                    log.info("migration.ratings.finish");
                 }), executor)
             .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
             .whenComplete((v, e) -> {
                 executor.close();
-                if (e != null) log.warn("Ratings update completed with warnings", e);
+                if (e != null) log.warn("migration.ratings.warning", e);
             });
     }
 }

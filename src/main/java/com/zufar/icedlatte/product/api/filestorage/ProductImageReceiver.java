@@ -25,11 +25,11 @@ public class ProductImageReceiver {
         try {
             return fileProvider.getRelatedObjectUrl(productId)
                     .orElseGet(() -> {
-                        log.warn("File with id = {} was not found.", productId);
+                        log.warn("product.image.not_found: productId={}", productId);
                         return DEFAULT_FILE_URL;
                     });
         } catch (RuntimeException ex) {
-            log.error("FileProvider error while resolving image for product {}", productId, ex);
+            log.error("product.image.error: productId={}", productId, ex);
             return DEFAULT_FILE_URL;
         }
     }
@@ -39,7 +39,7 @@ public class ProductImageReceiver {
         try {
             fileUrls = fileProvider.getRelatedObjectUrls(productIds);
         } catch (RuntimeException ex) {
-            log.error("FileProvider error while resolving images for products {}", productIds, ex);
+            log.error("product.images.error: count={}", productIds.size(), ex);
             fileUrls = Map.of();
         }
         final Map<UUID, String> resolved = fileUrls;

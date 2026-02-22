@@ -38,10 +38,10 @@ public class AwsProvider {
                     .toList();
             return getFileMetadataDtos(allObjects, bucketName);
         } catch (S3Exception e) {
-            log.warn("Error accessing AWS S3 bucket", e);
+            log.warn("aws.s3.list.error", e);
             return List.of();
         } catch (SdkClientException e) {
-            log.warn("AWS SDK client error", e);
+            log.warn("aws.s3.list.unreachable", e);
             return List.of();
         }
     }

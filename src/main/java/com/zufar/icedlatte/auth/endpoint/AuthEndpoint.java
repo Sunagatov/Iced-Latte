@@ -31,9 +31,9 @@ public class AuthEndpoint {
 
     @GetMapping("/google")
     public ResponseEntity<String> getGoogleAuthorizationServerUrl() {
-        log.info("Initiating Google authentication");
+        log.info("auth.google.url.creating");
         var authorizationUrl = authorizationServerUrlCreator.create();
-        log.info("Google authentication URL created successfully");
+        log.info("auth.google.url.created");
         
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
                 .header(HttpHeaders.LOCATION, authorizationUrl)
@@ -44,7 +44,7 @@ public class AuthEndpoint {
     public CompletableFuture<ResponseEntity<UserAuthenticationResponse>> googleAuthCallback(
             @RequestParam("code") String authorizationCode) {
         
-        log.info("Processing Google authentication callback");
+        log.info("auth.google.callback.processing");
         
         return validateAuthorizationCode(authorizationCode)
                 .map(this::processValidCode)
@@ -59,7 +59,7 @@ public class AuthEndpoint {
                 .filter(c -> c.matches(AUTH_CODE_PATTERN))
                 .filter(c -> c.length() >= MIN_CODE_LENGTH && c.length() <= MAX_CODE_LENGTH)
                 .or(() -> {
-                    log.warn("Invalid authorization code format");
+                    log.warn("auth.google.callback.invalid_code");
                     return Optional.empty();
                 });
     }
@@ -68,14 +68,14 @@ public class AuthEndpoint {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var response = googleAuthCallbackHandler.googleAuthCallback(code);
-                log.info("Google authentication completed successfully");
+                log.info("auth.google.callback.completed");
                 
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(response);
                         
             } catch (Exception e) {
-                log.error("Google authentication failed", e);
+                log.error("auth.google.callback.failed", e);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         });

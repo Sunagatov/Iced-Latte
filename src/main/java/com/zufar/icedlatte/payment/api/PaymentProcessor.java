@@ -26,7 +26,7 @@ public class PaymentProcessor {
     }
 
     public SessionWithClientSecretDto processPayment(final HttpServletRequest request) {
-        log.info("Initiating payment session");
+        log.info("payment.session.initiating");
         Session stripeSession = stripeSessionCreator.createSession(request);
 
         SessionWithClientSecretDto sessionDto = new SessionWithClientSecretDto();

@@ -56,7 +56,7 @@ public class AWSConfig {
                 return builder.build();
             }
         } catch (SdkClientException ace) {
-            log.error("S3 Client Error: {}. Application will continue without S3 functionality.", ace.getMessage());
+            log.error("aws.s3.client.init_error", ace);
             throw new RuntimeException("Failed to create S3Client", ace);
         }
     }

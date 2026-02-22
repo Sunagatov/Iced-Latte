@@ -27,17 +27,17 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
     @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
     public void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Attempted to blacklist empty token");
+            log.warn("jwt.blacklist.empty_token");
             return;
         }
         String key = buildBlacklistKey(token);
         redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtProperties.expiration());
-        log.debug("Token blacklisted successfully with TTL: {} seconds", jwtProperties.expiration().toSeconds());
+        log.debug("jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
     }
 
     public boolean isBlacklisted(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Token validation attempted with empty token");
+            log.warn("jwt.blacklist.validate.empty_token");
             return true;
         }
         String key = buildBlacklistKey(token);
@@ -45,12 +45,12 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
             Boolean hasKey = redisTemplate.hasKey(key);
             //noinspection ConstantConditions - hasKey is @Nullable per Spring's RedisOperations contract
             boolean isBlacklisted = hasKey != null && hasKey;
-            log.debug("Token blacklist check: {} - {}", key.substring(0, Math.min(key.length(), 50)),
+            log.debug("jwt.blacklist.check: key={}, result={}", key.substring(0, Math.min(key.length(), 50)),
                     isBlacklisted ? "BLACKLISTED" : "VALID");
             // amazonq-ignore-next-line
             return isBlacklisted;
         } catch (RuntimeException ex) {
-            log.error("Redis isBlacklisted failed - failing secure", ex);
+            log.error("jwt.blacklist.redis_error", ex);
             return true;
         }
     }

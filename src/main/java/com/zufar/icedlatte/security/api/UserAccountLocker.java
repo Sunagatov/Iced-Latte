@@ -30,9 +30,9 @@ public class UserAccountLocker {
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userRepository.setAccountLockedStatus(userEmail, false);
         if (attemptRows == 0 || userRows == 0) {
-            log.error("Failed to lock account: loginAttemptRows={}, userRows={}", attemptRows, userRows);
+            log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}", attemptRows, userRows);
         } else {
-            log.warn("Account locked due to excessive failed login attempts. Lockout duration: {} minutes", userAccountLockoutDurationMinutes);
+            log.warn("auth.account.locked: durationMinutes={}", userAccountLockoutDurationMinutes);
         }
     }
 
@@ -40,9 +40,9 @@ public class UserAccountLocker {
     public void unlockUserAccount(String userEmail) {
         int userRows = userRepository.setAccountLockedStatus(userEmail, true);
         if (userRows == 0) {
-            log.error("Failed to unlock account: no rows updated");
+            log.error("auth.account.unlock_failed");
         } else {
-            log.info("User account has been unlocked.");
+            log.info("auth.account.unlocked");
         }
     }
 }

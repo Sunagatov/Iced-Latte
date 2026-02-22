@@ -26,7 +26,7 @@ public class FileUploader {
         if (awsObjectUploader != null) {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
         } else {
-            log.warn("AWS not configured, skipping file upload: {}", fileName);
+            log.warn("file.upload.skipped: reason=aws_not_configured");
         }
     }
 
@@ -37,11 +37,11 @@ public class FileUploader {
             try {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
-                log.error("I/O error occurred while uploading directory", e);
+                log.error("file.upload.io_error", e);
                 throw new RuntimeException("Failed to upload directory due to I/O error", e);
             }
         } else {
-            log.warn("AWS not configured, skipping directory upload: {}", directoryPath);
+            log.warn("file.dir_upload.skipped: reason=aws_not_configured");
         }
     }
 }

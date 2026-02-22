@@ -13,14 +13,14 @@ import org.springframework.stereotype.Service;
 public class WebhookEventParser {
 
     public Session parseEventToSession(final Event stripePaymentEvent) {
-        log.info("Trying to parse StripePaymentEvent = '{}'", stripePaymentEvent.getType());
+        log.debug("payment.webhook.parse: eventType={}", stripePaymentEvent.getType());
 
         return stripePaymentEvent.getDataObjectDeserializer()
                 .getObject()
                 .filter(Session.class::isInstance)
                 .map(Session.class::cast)
                 .orElseGet(() -> {
-                    log.info("Event = '{}' is not related to Stripe session, skipping", stripePaymentEvent.getType());
+                    log.debug("payment.webhook.parse.skipped: eventType={}", stripePaymentEvent.getType());
                     return null;
                 });
     }

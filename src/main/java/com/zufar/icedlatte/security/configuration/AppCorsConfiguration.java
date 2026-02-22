@@ -53,7 +53,7 @@ public class AppCorsConfiguration {
         configuration.setAllowCredentials(allowCredentials);
         configuration.setMaxAge(maxAge);
 
-        log.debug("CORS configuration initialized with origins: {}, methods: {}, allowCredentials: {}",
+        log.debug("cors.config.initialized: origins={}, methods={}, allowCredentials={}",
                 allowedOrigins, allowedMethods, allowCredentials);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

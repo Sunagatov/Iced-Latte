@@ -54,58 +54,58 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
-        log.info("Registering user");
+        log.info("auth.register.processing");
         emailTokenSender.sendEmailVerificationCode(request);
-        log.debug("Verification email sent");
+        log.debug("auth.register.email_sent");
         return ResponseEntity.ok("Email verification token sent");
     }
 
     @Override
     @PostMapping(value = "/confirm")
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.info("Confirming email verification");
+        log.info("auth.email.confirming");
         var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
-        log.info("Email verification completed");
+        log.info("auth.email.confirmed");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        log.info("Authenticating user");
+        log.info("auth.authenticating");
         var response = userAuthenticationService.authenticate(request);
-        log.debug("Authentication completed");
+        log.debug("auth.authenticated");
         return ResponseEntity.ok(response);
     }
 
     @Override
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
-        log.info("Refreshing token");
+        log.info("auth.token.refreshing");
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         var userDetails = userDetailsService.loadUserByUsername(userEmail);
         var response = userAuthenticationService.authenticate(userDetails, userEmail);
-        log.debug("Token refreshed");
+        log.debug("auth.token.refreshed");
         return ResponseEntity.ok(response);
     }
 
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        log.info("Processing logout request");
+        log.info("auth.logout.processing");
         
         String authHeader = httpRequest.getHeader("Authorization");
         if (!StringUtils.hasText(authHeader)) {
-            log.debug("Logout request without Authorization header - treating as successful");
+            log.debug("auth.logout.no_token");
             return ResponseEntity.ok().build();
         }
         
         try {
             String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
             jwtBlacklistValidator.addToBlacklist(token);
-            log.info("User logout completed successfully");
+            log.info("auth.logout.completed");
         } catch (AbsentBearerHeaderException ex) {
-            log.warn("Failed to extract token during logout: {}", ex.getMessage(), ex);
+            log.warn("auth.logout.token_error: reason={}", ex.getMessage(), ex);
             // Still return success to prevent information leakage
         }
         
@@ -115,13 +115,13 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        log.info("Processing forgot password request");
+        log.info("auth.password.forgot.processing");
         try {
             var user = singleUserProvider.getUserByEmail(request.getEmail());
             var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
             emailTokenSender.sendEmailVerificationCode(verificationRequest);
         } catch (UserNotFoundException e) {
-            log.warn("Forgot password requested for unknown email");
+            log.warn("auth.password.forgot.unknown_email");
         }
         return ResponseEntity.ok().build();
     }
@@ -130,11 +130,11 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        log.info("Changing password");
+        log.info("auth.password.changing");
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
         changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
-        log.debug("Password changed");
+        log.debug("auth.password.changed");
         return ResponseEntity.ok().build();
     }
 }

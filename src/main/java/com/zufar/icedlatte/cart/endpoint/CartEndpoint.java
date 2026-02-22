@@ -8,6 +8,7 @@ import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.Valid;
@@ -57,10 +58,10 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @GetMapping
     public ResponseEntity<ShoppingCartDto> getShoppingCart() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Getting shopping cart for user: {}", userId);
+        log.info("cart.get: userId={}", userId);
         var shoppingCart = shoppingCartProvider.getByUserId(userId);
         enrichProductImages(shoppingCart);
-        log.info("Shopping cart retrieved for user: {}", userId);
+        log.info("cart.retrieved: userId={}", userId);
         return ResponseEntity.ok(shoppingCart);
     }
 
@@ -95,7 +96,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     private void enrichProductImages(ShoppingCartDto cart) {
         if (cart.getItems() == null) return;
         productPictureLinkUpdater.updateBatch(
-                cart.getItems().stream().map(item -> item.getProductInfo()).toList()
+                cart.getItems().stream().map(ShoppingCartItemDto::getProductInfo).toList()
         );
     }
 }

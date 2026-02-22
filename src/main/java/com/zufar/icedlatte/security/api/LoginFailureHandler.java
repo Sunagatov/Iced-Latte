@@ -33,7 +33,7 @@ public class LoginFailureHandler {
         if (loginAttempt.getAttempts() >= maxLoginAttempts) {
             userAccountLocker.lockUserAccount(userEmail);
         }
-        log.warn("Failed login attempt, attempts: {}, remaining: {}", loginAttempt.getAttempts(), remaining);
+        log.warn("login.failed: attempts={}, remaining={}", loginAttempt.getAttempts(), remaining);
     }
 }
 
