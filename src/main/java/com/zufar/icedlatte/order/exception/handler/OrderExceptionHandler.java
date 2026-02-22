@@ -28,8 +28,7 @@ public class OrderExceptionHandler {
         String message = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.error("Handle method argument type mismatch exception: failed: message: {}, debugMessage: {}.",
-                message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.order.type_mismatch: message={}", message);
 
         return apiErrorResponse;
     }

@@ -6,7 +6,6 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -14,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShoppingCartProvider {
@@ -33,9 +31,6 @@ public class ShoppingCartProvider {
     public ShoppingCartDto getByUserIdOrThrow(final UUID userId) {
         return shoppingCartRepository.findShoppingCartByUserId(userId)
                 .map(shoppingCartDtoConverter::toDto)
-                .orElseThrow(() -> {
-                    log.warn("Shopping cart for user with id = {} was not found.", userId);
-                    return new ShoppingCartNotFoundException(userId);
-                });
+                .orElseThrow(() -> new ShoppingCartNotFoundException(userId));
     }
 }

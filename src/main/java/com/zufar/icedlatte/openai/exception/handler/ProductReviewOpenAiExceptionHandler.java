@@ -24,8 +24,7 @@ public class ProductReviewOpenAiExceptionHandler {
     public ApiErrorResponse handleInappropriateContentException(final InappropriateContentException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle inappropriate content product review exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.openai.inappropriate_content: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 }

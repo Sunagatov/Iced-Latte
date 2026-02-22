@@ -19,6 +19,7 @@ public class DeleteUserOperationPerformer {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteUser(final UUID userId) {
+        log.info("user.delete: userId={}", userId);
         userRepository.deleteById(userId);
     }
 }

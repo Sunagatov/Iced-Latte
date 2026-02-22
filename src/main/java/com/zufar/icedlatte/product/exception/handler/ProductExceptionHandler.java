@@ -25,8 +25,7 @@ public class ProductExceptionHandler {
     public ApiErrorResponse handleProductNotFoundException(final ProductNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
 
-        log.error("Handle product not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.product.not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -36,8 +35,7 @@ public class ProductExceptionHandler {
     public ApiErrorResponse handleGetProductsBadRequestException(final GetProductsBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle product invalid property exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.product.invalid_property: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FavoriteProductDeleter {
@@ -20,5 +22,6 @@ public class FavoriteProductDeleter {
         FavoriteListEntity favoriteList = favoriteListProvider.getFavoriteListEntity(userId);
         favoriteList.getFavoriteItems()
                 .removeIf(item -> item.getProductInfo().getId().equals(productId));
+        log.info("favourites.removed: productId={}, userId={}", productId, userId);
     }
 }

@@ -40,9 +40,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Getting user profile: {}", userId);
-        var user = singleUserProvider.getUserById(userId);
-        log.info("User profile retrieved: {}", userId);
+        log.info("user.profile.get: userId={}", userId);
         return ResponseEntity.ok(user);
     }
 
@@ -50,18 +48,14 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Updating user profile: {}", userId);
-        var updatedUser = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
-        log.info("User profile updated: {}", userId);
+        log.info("user.profile.update: userId={}", userId);
         return ResponseEntity.ok(updatedUser);
     }
 
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
-        log.info("Changing user password");
-        changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
-        log.info("User password changed");
+        log.info("user.password.change");
         return ResponseEntity.ok().build();
     }
 
@@ -69,9 +63,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Deleting user account: {}", userId);
-        deleteUserOperationPerformer.deleteUser(userId);
-        log.info("User account deleted: {}", userId);
+        log.info("user.account.delete: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 
@@ -79,9 +71,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Uploading avatar for user: {}", userId);
-        userAvatarUploader.uploadUserAvatar(userId, file);
-        log.info("Avatar uploaded for user: {}", userId);
+        log.info("user.avatar.upload: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 
@@ -89,9 +79,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Getting avatar link for user: {}", userId);
-        var avatarLink = userAvatarLinkProvider.getLink(userId);
-        log.info("Avatar link retrieved for user: {}", userId);
+        log.info("user.avatar.get: userId={}", userId);
         return ResponseEntity.ok(avatarLink);
     }
 
@@ -99,9 +87,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("Deleting avatar for user: {}", userId);
-        fileDeleter.delete(userId);
-        log.info("Avatar deleted for user: {}", userId);
+        log.info("user.avatar.delete: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 
@@ -109,19 +95,14 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PostMapping(path = "/password/reset")
     public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest initiatePasswordResetRequest) {
         var user = singleUserProvider.getUserByEmail(initiatePasswordResetRequest.getEmail());
-        log.info("Resetting password for user: {}", user.getId());
-        var request = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
-        emailTokenSender.sendEmailVerificationCode(request);
-        log.info("Password reset email sent for user: {}", user.getId());
+        log.info("user.password.reset: userId={}", user.getId());
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset/confirm")
     public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
-        log.info("Confirming password reset");
-        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(confirmEmailRequest.getToken()));
-        log.info("Password reset confirmed");
+        log.info("user.password.reset.confirm");
         return ResponseEntity.ok().build();
     }
 

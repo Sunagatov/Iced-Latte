@@ -23,7 +23,7 @@ public class PutUsersRequestValidatorTest {
     void shouldNotThrowExceptionWhenAllParametersAreCorrect() {
         String firstName = "name";
         String lastName = "surname";
-        String phoneNumber = "+7900000000";
+        String phoneNumber = "+79000000000";
         String birthDate = "2000-12-01";
         String addressJSONAsString = """
                 {
@@ -58,16 +58,14 @@ public class PutUsersRequestValidatorTest {
                 "postcode": "00000"
                 }""";
         JsonObject addressJSON = JsonParser.parseString(addressJSONAsString).getAsJsonObject();
-        String expectedMessage = String.format("PutUsersRequest parameters are incorrect. Error messages are [ " +
-                " Error: { First name is the mandatory attribute. }. " +
-                " Error: { Last name should have a length between 2 and 128 characters. }. " +
-                " Error: { Phone should contain only digits. The first symbol is allowed to be \"+\". }. " +
-                " Error: { Birth date should be in format YYYY-MM-DD. }. " +
-                " Error: { The field `town` in the JSON string is not defined in the `AddressDto` properties. JSON: %s }. " +
-                " Error: { Expected the field `country` to be a primitive type in the JSON string but got `[\"Country\",\"Another country\"]` }. " +
-                " Error: { The required field `city` is not found in the JSON string: %s }. " +
-                " Error: { The required field `line` is not found in the JSON string: %s }. " +
-                " ].", addressJSON.toString(), addressJSON, addressJSON);
+        String expectedMessage = "PutUsersRequest parameters are incorrect. Error messages are [" +
+                "  Error: { First name is required. }. " +
+                " Error: { Last name must be between 2 and 64 characters. }. " +
+                " Error: { Phone must be in international E.164 format, e.g. +12025550123. }. " +
+                " Error: { Date of birth must be in format YYYY-MM-DD. }. " +
+                " Error: { Unknown address field `town`. }. " +
+                " Error: { Address field `country` must be a string. }.  " +
+                "].";
 
         PutUsersBadRequestException thrownException = assertThrows(PutUsersBadRequestException.class, () -> validator.validate(firstName, lastName, phoneNumber, birthDate, addressJSON));
 

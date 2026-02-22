@@ -50,6 +50,7 @@ public class ProductReviewCreator {
                 .build();
 
         reviewRepository.saveAndFlush(productReview);
+        log.info("review.created: productId={}, userId={}", productId, userId);
 
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);

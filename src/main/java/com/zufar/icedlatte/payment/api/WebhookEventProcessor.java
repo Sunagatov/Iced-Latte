@@ -22,11 +22,11 @@ public class WebhookEventProcessor {
     private final WebhookEventHandler webhookEventHandler;
 
     public void processPaymentEvent(String paymentPayload, String stripeSignatureHeader) {
-        log.info("Started to process Stripe payment event after webhook");
+        log.info("payment.webhook.processing");
         Event stripePaymentEvent = webhookEventProvider.createPaymentEvent(paymentPayload, stripeSignatureHeader);
         Session stripeSession = webhookEventParser.parseEventToSession(stripePaymentEvent);
         webhookEventHandler.handlePaymentEvent(stripePaymentEvent, stripeSession);
-        log.info("Successfully finished to process Stripe payment event after webhook");
+        log.info("payment.webhook.processed");
     }
 
 }

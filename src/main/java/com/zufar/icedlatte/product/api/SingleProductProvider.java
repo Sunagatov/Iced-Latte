@@ -6,7 +6,6 @@ import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "productById")
@@ -32,9 +30,6 @@ public class SingleProductProvider {
         return productInfoRepository.findById(productId)
                 .map(productInfoDtoConverter::toDto)
                 .map(productPictureLinkUpdater::update)
-                .orElseThrow(() -> {
-                    log.error("The product with id = {} was not found.", productId);
-                    return new ProductNotFoundException(productId);
-                });
+                .orElseThrow(() -> new ProductNotFoundException(productId));
     }
 }

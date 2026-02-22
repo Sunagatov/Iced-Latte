@@ -370,12 +370,18 @@ components:
         firstName:
           type: "string"
           description: "The first name of the user."
-          x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"First name is the mandatory attribute\")"
+          minLength: 2
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"First name is required\")"
           example: "John"
         lastName:
           type: "string"
           description: "The last name of the user."
-          x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"Last name is the mandatory attribute\")"
+          minLength: 2
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"Last name is required\")"
           example: "Doe"
         birthDate:
           type: "string"
@@ -426,12 +432,12 @@ components:
         firstName:
           type: "string"
           minLength: 2
-          maxLength: 128
+          maxLength: 64
           description: "The first name of the user."
         lastName:
           type: "string"
           minLength: 2
-          maxLength: 128
+          maxLength: 64
           description: "The last name of the user."
         birthDate:
           type: "string"
@@ -456,11 +462,6 @@ components:
     AddressDto:
       type: "object"
       description: "Address details of the user."
-      required:
-        - country
-        - city
-        - line
-        - postcode
       properties:
         country:
           type: "string"

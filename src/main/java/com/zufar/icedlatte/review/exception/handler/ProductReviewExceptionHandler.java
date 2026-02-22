@@ -28,8 +28,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleUnsupportedReviewFormatException(final EmptyProductReviewException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle unsupported review format exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.empty: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -39,8 +38,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleDeniedProductReviewDeletionException(final DeniedProductReviewDeletionException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle denied product review deletion exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.deletion_denied: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -50,8 +48,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleDeniedProductReviewCreationException(final DeniedProductReviewCreationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle denied product review creation exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.creation_denied: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -61,8 +58,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleProductNotFoundForReviewException(final ProductNotFoundForReviewException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle product not found for the provided review exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.product_not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -72,8 +68,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleGetReviewsBadRequestException(final GetReviewsBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle get product's reviews invalid parameters exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.invalid_params: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }

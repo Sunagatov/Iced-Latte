@@ -32,7 +32,7 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
         log.info("Processing payment request");
         var response = paymentProcessor.processPayment(null);
-        log.info("Payment session created: {}", response.getSessionId());
+        log.info("payment.session.created: sessionId={}", response.getSessionId());
         return ResponseEntity.ok(response);
     }
 

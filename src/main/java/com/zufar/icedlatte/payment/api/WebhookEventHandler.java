@@ -23,11 +23,12 @@ public class WebhookEventHandler {
 
     public void handlePaymentEvent(final Event stripePaymentEvent, final Session stripeSession) {
         if (Objects.isNull(stripeSession) || Objects.isNull(stripePaymentEvent)) {
+            log.warn("payment.webhook.null_event_or_session");
             return;
         }
         SessionScenarioHandler handler = handlers.get(stripePaymentEvent.getType());
         if (handler == null) {
-            log.warn("No handler registered for Stripe event type: {}", stripePaymentEvent.getType());
+            log.warn("payment.webhook.no_handler: eventType={}", stripePaymentEvent.getType());
             return;
         }
         handler.handle(stripeSession);

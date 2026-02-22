@@ -5,12 +5,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
+
+import java.net.URI;
 
 @Slf4j
 @Configuration
@@ -25,27 +30,40 @@ public class AWSConfig {
     @Value("${spring.aws.region}")
     private String region;
 
+    @Value("${spring.aws.endpoint-url:}")
+    private String endpointUrl;
+
     @Bean
     @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Client s3Client() {
         try {
+            AwsBasicCredentials awsCreds;
             String sessionToken = System.getenv("AWS_SESSION_TOKEN");
-            if (sessionToken != null && !sessionToken.isEmpty()) {
-                AwsSessionCredentials awsCreds = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
-                return S3Client.builder()
-                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-                        .region(Region.of(region))
-                        .build();
+            if (StringUtils.hasText(sessionToken)) {
+                AwsSessionCredentials sessionCreds = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
+                var builder = S3Client.builder()
+                        .credentialsProvider(StaticCredentialsProvider.create(sessionCreds))
+                        .region(Region.of(region));
+                applyEndpointOverride(builder);
+                return builder.build();
             } else {
-                AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
-                return S3Client.builder()
+                awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+                var builder = S3Client.builder()
                         .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-                        .region(Region.of(region))
-                        .build();
+                        .region(Region.of(region));
+                applyEndpointOverride(builder);
+                return builder.build();
             }
         } catch (SdkClientException ace) {
-            log.error("AWS S3 Client Error: {}. Application will continue without S3 functionality.", ace.getMessage());
+            log.error("S3 Client Error: {}. Application will continue without S3 functionality.", ace.getMessage());
             throw new RuntimeException("Failed to create S3Client", ace);
+        }
+    }
+
+    private void applyEndpointOverride(S3ClientBuilder builder) {
+        if (StringUtils.hasText(endpointUrl)) {
+            builder.endpointOverride(URI.create(endpointUrl))
+                   .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
         }
     }
 }

@@ -3,7 +3,7 @@
 # Server Properties
 #
 server:
-  port: ${APP_SERVER_PORT}
+  port: ${PORT:${APP_SERVER_PORT}}
   tomcat:
     accept-count: 100
     max-http-form-post-size: 2MB
@@ -68,10 +68,12 @@ spring:
   #
   aws:
     enabled: ${AWS_ENABLED:true}
-    account-id: ${AWS_ACCOUNT_ID}
+    account-id: ${AWS_ACCOUNT_ID:}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
+    endpoint-url: ${AWS_ENDPOINT_URL:}
+    public-url-base: ${AWS_PUBLIC_URL_BASE:}
     buckets:
       products: ${AWS_PRODUCT_BUCKET}
       user-avatar: ${AWS_USER_BUCKET}
@@ -203,6 +205,19 @@ management:
   health:
     redis:
       enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
+
+#
+# OpenTelemetry Properties
+#
+management.otlp:
+  tracing:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  metrics:
+    export:
+      url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
 
 #
 # JWT Security Properties

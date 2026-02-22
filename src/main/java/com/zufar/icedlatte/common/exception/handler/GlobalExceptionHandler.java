@@ -30,8 +30,7 @@ public class GlobalExceptionHandler {
                 .toString();
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.error("Handle method argument not valid exception: failed: message: {}, debugMessage: {}.",
-                message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.method_argument_invalid: message={}", message);
 
         return apiErrorResponse;
     }
@@ -41,8 +40,7 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
 
-        log.warn("Handle resource not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.resource_not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -51,8 +49,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("Handle constraint violation exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.constraint_violation: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 }

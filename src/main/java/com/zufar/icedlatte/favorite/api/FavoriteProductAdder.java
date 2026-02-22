@@ -8,6 +8,7 @@ import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FavoriteProductAdder {
@@ -37,6 +39,7 @@ public class FavoriteProductAdder {
         favoriteListEntity.getFavoriteItems().addAll(newFavoriteItems);
 
         FavoriteListEntity updatedFavoriteListEntity = favoriteRepository.save(favoriteListEntity);
+        log.info("favourites.added: count={}, userId={}", newFavoriteItems.size(), userId);
         return favoriteListDtoConverter.toDto(updatedFavoriteListEntity);
     }
 

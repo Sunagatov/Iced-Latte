@@ -48,9 +48,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
-        log.info("Adding product review for productId: {}", productId);
+        log.info("review.adding: productId={}", productId);
         var review = productReviewCreator.create(productId, productReviewRequest);
-        log.info("Product review created with id: {} for productId: {}", review.getProductReviewId(), productId);
+        log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
     }
 
@@ -58,9 +58,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
-        log.info("Deleting product review: {} for productId: {}", productReviewId, productId);
+        log.info("review.deleting: reviewId={}, productId={}", productReviewId, productId);
         productReviewDeleter.delete(productId, productReviewId);
-        log.info("Product review deleted: {}", productReviewId);
+        log.info("review.deleted: reviewId={}", productReviewId);
         return ResponseEntity.ok().build();
     }
 
@@ -95,9 +95,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable @Validated final UUID productId,
                                                                  @PathVariable @Validated final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {
-        log.info("Rating review: {} for productId: {} as {}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
+        log.info("review.rating: reviewId={}, productId={}, vote={}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
-        log.info("Review {} successfully {}", productReviewId, request.getIsLike() ? "liked" : "disliked");
+        log.info("review.rated: reviewId={}, vote={}", productReviewId, request.getIsLike() ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }
 }

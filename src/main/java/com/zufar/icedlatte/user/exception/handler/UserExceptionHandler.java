@@ -27,8 +27,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.user.not_found: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -36,8 +35,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.user.username_not_found: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -45,8 +43,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleInvalidOldPasswordException(final InvalidOldPasswordException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("Handle user's invalid old password exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.user.invalid_password: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -54,8 +51,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePutUsersBadRequestException(final PutUsersBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("Handle user's invalid property exception: failed: message: {}, debugMessage: {}",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.user.invalid_property: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 

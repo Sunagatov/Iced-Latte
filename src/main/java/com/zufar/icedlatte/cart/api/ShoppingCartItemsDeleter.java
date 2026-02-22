@@ -29,6 +29,7 @@ public class ShoppingCartItemsDeleter {
         shoppingCartItemRepository.deleteAllByIdInBatch(itemIds);
 
         UUID userId = securityPrincipalProvider.getUserId();
+        log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
 
         return shoppingCartProvider.getByUserId(userId);
     }

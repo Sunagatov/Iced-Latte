@@ -22,8 +22,7 @@ public class CommonExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleFileReadException(final FileReadException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("Handle file read exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.file.read_failed: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 
@@ -31,8 +30,7 @@ public class CommonExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleFileUploadException(final FileUploadException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("Handle file upload exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.file.upload_failed: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 }

@@ -27,8 +27,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle payment not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.payment.not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -37,8 +36,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event processing exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.payment.event_processing: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -47,8 +45,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePaymentEventParsingException(final PaymentEventParsingException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event parsing exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.payment.event_parsing: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -57,8 +54,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle stripe session creation exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.payment.session_creation: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -67,8 +63,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle stripe session id not complete exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.payment.session_incomplete: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }

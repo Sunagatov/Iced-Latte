@@ -27,9 +27,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
         String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
         return userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> {
-                    log.warn("User not found");
-                    return new UsernameNotFoundException("User not found");
-                });
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

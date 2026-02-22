@@ -24,8 +24,7 @@ public class ChatServiceUnavailableExceptionHandler {
     public ApiErrorResponse handleChatServiceUnavailableException(final ChatServiceUnavailableException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle chat service unavailable exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.openai.chat_unavailable: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 }

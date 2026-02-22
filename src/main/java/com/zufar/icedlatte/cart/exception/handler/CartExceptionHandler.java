@@ -27,8 +27,7 @@ public class CartExceptionHandler {
     public ApiErrorResponse handleInvalidItemProductQuantityException(final InvalidItemProductQuantityException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.error("Handle invalid item's product quantity exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.cart.quantity_invalid: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -37,8 +36,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleInvalidShoppingCartIdException(final InvalidShoppingCartIdException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle invalid shopping cartId exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.error("exception.cart.id_invalid: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -47,8 +45,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleShoppingCartItemNotFoundException(final ShoppingCartItemNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle shopping cart item not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.cart.item_not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -57,8 +54,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleShoppingCartNotFoundException(final ShoppingCartNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle shopping cart not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.cart.not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }

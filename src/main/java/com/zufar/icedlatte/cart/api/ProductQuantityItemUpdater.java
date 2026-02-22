@@ -38,7 +38,7 @@ public class ProductQuantityItemUpdater {
         ShoppingCartDto shoppingCart = getShoppingCart();
 
         if (!shoppingCart.getId().equals(updatedItem.getShoppingCart().getId())) {
-            log.warn("Failed to update the productQuantity with the change = {} in the shoppingCartItem with id: {} of the shoppingCart with the id = {}.",
+        log.warn("cart.item.quantity.invalid: itemId={}, change={}, cartId={}",
                     productQuantityChange, shoppingCartItemId, shoppingCart.getId());
             throw new InvalidShoppingCartIdException(shoppingCart.getId());
         }
@@ -47,10 +47,7 @@ public class ProductQuantityItemUpdater {
 
     private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
         return shoppingCartItemRepository.findById(shoppingCartItemId)
-                .orElseThrow(() -> {
-                    log.warn("Shopping cart item  with id = {} is not found.", shoppingCartItemId);
-                    return new ShoppingCartItemNotFoundException(shoppingCartItemId);
-                });
+                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
     }
 
     private ShoppingCartItem updateItemProductQuantity(final UUID shoppingCartItemId,
@@ -58,11 +55,11 @@ public class ProductQuantityItemUpdater {
                                                        ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 0) {
-            log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingCartItemId);
+            log.warn("cart.item.quantity.negative: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         if (productQuantityChange == 0) {
-            log.warn("productQuantityChange for item with id: {} must be not equal to zero.", shoppingCartItemId);
+            log.warn("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         item.setProductQuantity(newQuantity);

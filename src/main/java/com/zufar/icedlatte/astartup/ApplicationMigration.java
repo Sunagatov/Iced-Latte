@@ -5,6 +5,7 @@ import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.aws.AwsProvider;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
+import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +32,16 @@ public class ApplicationMigration implements ApplicationRunner {
     private final FileUploader fileUploader;
     private final AwsProvider awsProvider;
     private final FileMetadataSaver fileMetadataSaver;
+    private final FileMetadataDeleter fileMetadataDeleter;
 
     public ApplicationMigration(@Autowired(required = false) FileUploader fileUploader,
                                 @Autowired(required = false) AwsProvider awsProvider,
-                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver) {
+                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver,
+                                @Autowired(required = false) FileMetadataDeleter fileMetadataDeleter) {
         this.fileUploader = fileUploader;
         this.awsProvider = awsProvider;
         this.fileMetadataSaver = fileMetadataSaver;
+        this.fileMetadataDeleter = fileMetadataDeleter;
     }
 
     @Override
@@ -92,6 +96,9 @@ public class ApplicationMigration implements ApplicationRunner {
             return;
         }
         try {
+            if (fileMetadataDeleter != null) {
+                fileMetadataDeleter.deleteByBucketName(productPictureBucket);
+            }
             fileMetadataSaver.saveAll(fileMetadataDtos);
             log.info("Product pictures metadata saved in database");
         } catch (DataAccessException e) {

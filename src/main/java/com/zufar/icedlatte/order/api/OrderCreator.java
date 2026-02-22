@@ -38,26 +38,26 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
     public boolean createOrderAndDeleteCart(Session stripeSession) {
         String sessionId = stripeSession.getId();
-        log.info("Handling completion of stripe checkout session with id = '{}'.", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
+        log.info("order.session.handling: sessionId={}", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
 
         UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
 
         Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
-            log.info("Session completion has been already handled, order has been created");
+        log.info("order.session.already_handled");
             return false;
         }
 
         ShoppingCartDto shoppingCartDto = shoppingCartProvider.getByUserIdOrThrow(userId);
         UserEntity user = singleUserProvider.getUserEntityById(userId);
 
-        log.info("Creating new order for user with id = '{}'", userId);
+        log.info("order.creating: userId={}", userId);
         Order orderEntity = createOrderEntity(user, shoppingCartDto, sessionId);
         orderRepository.saveAndFlush(orderEntity);
-        log.info("New order created and saved to database for user");
+        log.info("order.created: userId={}", userId);
 
         shoppingCartRepository.deleteByUserId(userId);
-        log.info("Deleted the shopping cart for user");
+        log.info("cart.deleted: userId={}", userId);
 
         return true;
     }

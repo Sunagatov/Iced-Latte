@@ -28,6 +28,7 @@ public class ProductReviewDeleter {
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
         reviewRepository.deleteById(productReviewId);
+        log.info("review.deleted: reviewId={}, productId={}", productReviewId, productId);
 
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);

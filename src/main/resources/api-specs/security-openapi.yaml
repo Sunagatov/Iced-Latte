@@ -264,16 +264,16 @@ components:
       properties:
         firstName:
           type: "string"
-          description: "User's first name. Must be between 2 and 128 characters."
+          description: "User's first name."
           minLength: 2
-          maxLength: 128
-          pattern: "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z\\s-]*$"
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
         lastName:
           type: "string"
-          description: "User's last name. Must be between 2 and 128 characters."
+          description: "User's last name."
           minLength: 2
-          maxLength: 128
-          pattern: "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z\\s-]*$"
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
         birthDate:
           type: "string"
           format: "date"
@@ -284,8 +284,8 @@ components:
         email:
           type: "string"
           format: "email"
-          maxLength: 128
-          description: "User's email address must be a valid email format"
+          maxLength: 254
+          description: "User's email address."
           pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         password:
           $ref: "#/components/schemas/PasswordField"

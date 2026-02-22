@@ -6,7 +6,6 @@ import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +15,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductsProvider {
@@ -42,8 +40,6 @@ public class ProductsProvider {
 
         List<UUID> missing = uuids.stream().filter(id -> !dtosById.containsKey(id)).toList();
         if (!missing.isEmpty()) {
-            log.error("Products with ids = {} are not found.", missing.stream()
-                    .map(UUID::toString).collect(Collectors.joining(", ")));
             throw new ProductNotFoundException(missing);
         }
 

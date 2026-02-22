@@ -24,10 +24,7 @@ public class ShoppingCartCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCart getOrCreate(UUID userId) {
         return shoppingCartRepository.findShoppingCartByUserId(userId)
-                .orElseGet(() -> {
-                    log.info("The shopping cart was not found.");
-                    return createNewShoppingCart(userId);
-                });
+                .orElseGet(() -> createNewShoppingCart(userId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -39,9 +36,8 @@ public class ShoppingCartCreator {
                 .items(new HashSet<>())
                 .build();
 
-        this.shoppingCartRepository.save(shoppingCart);
-
-        log.info("The new shopping cart was created and saved in database.");
+        shoppingCartRepository.save(shoppingCart);
+        log.info("cart.created: userId={}", userId);
         return shoppingCart;
     }
 }

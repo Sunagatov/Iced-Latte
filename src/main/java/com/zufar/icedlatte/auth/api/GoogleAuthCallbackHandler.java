@@ -79,6 +79,7 @@ public class GoogleAuthCallbackHandler {
                 .enabled(true)
                 .build();
 
-        return userCrudRepository.save(userEntity);
+        UserEntity savedUser = userCrudRepository.save(userEntity);
+        log.info("user.registered.google: userId={}", savedUser.getId());
+        return savedUser;
     }
-}

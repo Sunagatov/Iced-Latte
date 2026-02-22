@@ -7,6 +7,8 @@ volumes:
   pg_data:
   nginx_data:
   backend_logs: {}
+  tempo_data: {}
+  loki_data: {}
 
 services:
 
@@ -50,6 +52,7 @@ services:
       GOOGLE_AUTH_REDIRECT_URI: ${GOOGLE_AUTH_REDIRECT_URI:?GOOGLE_AUTH_REDIRECT_URI is required}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?STRIPE_WEBHOOK_SECRET is required}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     ports:
       - '8083:8083'
       - '5005:5005' # port for remote debugging
@@ -60,6 +63,8 @@ services:
         condition: service_healthy
       iced-latte-redis:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8083/actuator/health" ]
       interval: 30s
@@ -119,4 +124,63 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    restart: on-failure
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus metrics scrape
+    networks:
+      - iced-latte-network
+    restart: on-failure
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+    networks:
+      - iced-latte-network
+    restart: on-failure
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo-config.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317"        # OTLP gRPC (internal only)
+    networks:
+      - iced-latte-network
+    restart: on-failure
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - iced-latte-network
+    depends_on:
+      - loki
+      - tempo
+      - otel-collector
     restart: on-failure

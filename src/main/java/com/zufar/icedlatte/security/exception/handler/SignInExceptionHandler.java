@@ -62,7 +62,7 @@ public class SignInExceptionHandler {
 
     private ApiErrorResponse handle(Exception exception, HttpStatus status) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
-        log.warn("Handle {}: message: {}",
+        log.warn("exception.sign_in.{}: message={}",
                 exception.getClass().getSimpleName(), response.message(), exception);
         return response;
     }

@@ -4,7 +4,6 @@ import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -31,16 +30,6 @@ public class AwsObjectUploader {
 
     private final S3Client s3Client;
 
-    @Value("${aws.account-id}")
-    private String awsAccountId;
-
-    @jakarta.annotation.PostConstruct
-    private void validateConfig() {
-        if (!org.springframework.util.StringUtils.hasText(awsAccountId)) {
-            throw new IllegalStateException("aws.account-id must be configured");
-        }
-    }
-
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
         try (InputStream inputStream = file.getInputStream()) {
@@ -49,7 +38,6 @@ public class AwsObjectUploader {
                     .key(fileName)
                     .contentType(file.getContentType())
                     .contentLength(file.getSize())
-                    .expectedBucketOwner(awsAccountId)
                     .build();
             
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
@@ -82,7 +70,6 @@ public class AwsObjectUploader {
                             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                                     .bucket(bucketName)
                                     .key(key)
-                                    .expectedBucketOwner(awsAccountId)
                                     .build();
                             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
                         } catch (S3Exception e) {

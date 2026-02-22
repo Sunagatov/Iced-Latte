@@ -23,4 +23,8 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID
     @Modifying
     @Query("DELETE FROM FileMetadata f WHERE f.relatedObjectId = :relatedObjectId")
     void deleteByRelatedObjectId(@Param("relatedObjectId") UUID relatedObjectId);
+
+    @Modifying
+    @Query("DELETE FROM FileMetadata f WHERE f.bucketName = :bucketName")
+    void deleteByBucketName(@Param("bucketName") String bucketName);
 }

@@ -147,6 +147,27 @@ test_reviews() {
     fi
 }
 
+test_change_password() {
+    if [[ -z "$JWT_TOKEN" ]]; then
+        fail "No token for change password test"
+        return 1
+    fi
+
+    echo "Testing change password..."
+    response=$(curl -s -w "%{http_code}" -X PATCH "$API_BASE/users" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"oldPassword": "p@ss1logic11", "newPassword": "p@ss1logic11"}')
+
+    http_code=$(http_code_of "$response")
+    if [[ "$http_code" == "200" ]]; then
+        pass "Change password successful"
+    else
+        fail "Change password failed (HTTP $http_code)"
+        echo "Response: $(body_of "$response")"
+    fi
+}
+
 test_logout() {
     if [[ -z "$JWT_TOKEN" ]]; then
         fail "No token for logout"
@@ -176,6 +197,8 @@ sleep $SLEEP_BETWEEN_TESTS
 test_user_profile
 sleep $SLEEP_BETWEEN_TESTS
 test_reviews
+sleep $SLEEP_BETWEEN_TESTS
+test_change_password
 sleep $SLEEP_BETWEEN_TESTS
 test_logout
 echo "=== Done ==="
