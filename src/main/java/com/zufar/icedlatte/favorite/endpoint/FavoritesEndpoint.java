@@ -2,7 +2,6 @@ package com.zufar.icedlatte.favorite.endpoint;
 
 import com.zufar.icedlatte.favorite.api.*;
 import com.zufar.icedlatte.favorite.converter.*;
-import com.zufar.icedlatte.favorite.dto.*;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;

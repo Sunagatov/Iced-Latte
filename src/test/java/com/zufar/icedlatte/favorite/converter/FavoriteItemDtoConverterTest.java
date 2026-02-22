@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.favorite.converter;
 
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.mapstruct.factory.Mappers;
@@ -13,12 +12,10 @@ import java.util.UUID;
 public class FavoriteItemDtoConverterTest {
 
     private FavoriteItemDtoConverter converter;
-    private ProductInfoDtoConverter productInfoDtoConverter;
 
     @BeforeEach
     void setup() {
         converter = Mappers.getMapper(FavoriteItemDtoConverter.class);
-        productInfoDtoConverter = Mappers.getMapper(ProductInfoDtoConverter.class);
     }
 
     @Test
@@ -31,7 +28,7 @@ public class FavoriteItemDtoConverterTest {
         FavoriteItemEntity expectedFavoriteItem = new FavoriteItemEntity();
         expectedFavoriteItem.setProductInfo(productInfo);
 
-        converter.toDto(productInfoDtoConverter, expectedFavoriteItem);
+        converter.toDto(expectedFavoriteItem);
         // FIXME: different types of sets
         //assertThat(actualFavoriteItemDto.productInfo()).isEqualTo(expectedFavoriteItem.getProductInfo());
     }
