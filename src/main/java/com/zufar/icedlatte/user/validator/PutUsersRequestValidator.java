@@ -13,16 +13,15 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PutUsersRequestValidator {
 
-    private final int MIN_NAME_LENGTH = 2;
-    private final int MAX_NAME_LENGTH = 64;
-    private final String PHONE_REGEXP = "^\\+[1-9]\\d{6,14}$";
-    private final String PHONE_ERROR = "Phone must be in international E.164 format, e.g. +12025550123.";
+    private static final int MIN_NAME_LENGTH = 2;
+    private static final int MAX_NAME_LENGTH = 64;
+    private static final String PHONE_REGEXP = "^\\+[1-9]\\d{6,14}$";
+    private static final String PHONE_ERROR = "Phone must be in international E.164 format, e.g. +12025550123.";
 
     public void validate(String firstName,
                          String lastName,
@@ -59,7 +58,7 @@ public class PutUsersRequestValidator {
             errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " must not be blank."));
         } else if (name.length() < MIN_NAME_LENGTH || name.length() > MAX_NAME_LENGTH) {
             errorMessages.append(createErrorMessage(String.format("%s must be between %d and %d characters.", parameterTypeForErrorMessage, MIN_NAME_LENGTH, MAX_NAME_LENGTH)));
-        } else if (!name.matches("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$")) {
+        } else if (!name.matches("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s'\\u2019\\-]+$")) {
             errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " can only contain letters, spaces, hyphens, and apostrophes."));
         }
         return errorMessages;
@@ -96,7 +95,7 @@ public class PutUsersRequestValidator {
             List<Field> allFields = List.of(AddressDto.class.getDeclaredFields());
             List<String> allFieldNames = allFields.stream()
                     .map(field -> getFieldNameFromDeclaredField(field.getName()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             for (Entry<String, JsonElement> entry : addressJsonObject.entrySet()) {
                 if (!allFieldNames.contains(entry.getKey())) {

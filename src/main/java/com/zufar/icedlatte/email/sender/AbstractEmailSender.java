@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.email.sender;
 
 import com.zufar.icedlatte.email.exception.MessageBuilderNotFoundException;
+import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -25,13 +26,11 @@ public abstract class AbstractEmailSender<T> {
         javaMailSender.send(mailMessage);
     }
 
-// import java.util.Locale;
-// Importing Locale to use Locale.ROOT for locale-neutral processing
-protected String getMessage(Class<?> clazz, T event) {
+protected String getMessage(T event) {
     return messageBuilders.stream()
-            .filter(builder -> builder.supports(clazz))
+            .filter(builder -> builder.supports(EmailConfirmMessage.class))
             .findFirst()
-            .orElseThrow(() -> new MessageBuilderNotFoundException(clazz.getName()))
+            .orElseThrow(() -> new MessageBuilderNotFoundException(EmailConfirmMessage.class.getName()))
             .buildMessage(event, Locale.ROOT);
 }
 }

@@ -41,7 +41,8 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
     @Query(nativeQuery = true, value = """
-            UPDATE product p
+            -- noinspection SqlWithoutWhere
+UPDATE product p
                SET average_rating = COALESCE((SELECT AVG(pr.rating)
                                                FROM product_reviews pr
                                               WHERE pr.product_id = p.id), 0)
@@ -51,7 +52,8 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
     @Query(nativeQuery = true, value = """
-            UPDATE product p
+            -- noinspection SqlWithoutWhere
+UPDATE product p
                SET reviews_count = (SELECT COUNT(pr.id)
                                       FROM product_reviews pr
                                      WHERE pr.product_id = p.id)

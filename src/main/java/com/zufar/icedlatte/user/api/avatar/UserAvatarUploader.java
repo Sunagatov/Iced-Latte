@@ -27,11 +27,11 @@ public class UserAvatarUploader {
     private final FileMetadataDeleter fileMetadataDeleter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FileMetadataDto uploadUserAvatar(final UUID userId, final MultipartFile file) {
+    public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
         fileMetadataDeleter.deleteByRelatedObjectId(userId);
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
         fileUploader.upload(file, bucketName, fileName);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
-        return fileMetadataSaver.save(fileMetadataDto);
+        fileMetadataSaver.save(fileMetadataDto);
     }
 }

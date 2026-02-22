@@ -54,10 +54,6 @@ public class GetReviewsRequestValidator {
         return errorMessages;
     }
     
-    private String createNullRatingError() {
-        return createErrorMessage(String.format("product's rating is required. Allowed 'productRating' values are '%s'.", ALLOWED_PRODUCT_RATING_VALUES));
-    }
-    
     private boolean hasInvalidValues(final List<Integer> productRatings) {
         return productRatings.stream().anyMatch(Objects::isNull) || !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings);
     }
