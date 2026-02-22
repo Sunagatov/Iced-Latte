@@ -77,9 +77,6 @@
         <jakarta.mail-api.version>2.1.3</jakarta.mail-api.version>
         <aws-sdk-bom.version>2.32.25</aws-sdk-bom.version>
 
-        <!-- ========== NETTY (CVE-2025-58057, CVE-2025-58056, CVE-2025-67735) ========== -->
-        <netty.version>4.1.131.Final</netty.version>
-
         <!-- ========== UTILITIES VERSIONS ========== -->
         <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
         <apache-commons-text.version>1.13.1</apache-commons-text.version>
@@ -143,10 +140,16 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
-            <artifactId>ses</artifactId>
+            <artifactId>url-connection-client</artifactId>
         </dependency>
 
         <!-- ========== DATABASE ========== -->
@@ -359,12 +362,6 @@
                     <value>dev</value>
                 </property>
             </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>software.amazon.awssdk</groupId>
-                    <artifactId>s3</artifactId>
-                </dependency>
-            </dependencies>
         </profile>
     </profiles>
 
