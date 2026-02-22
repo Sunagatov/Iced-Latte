@@ -134,10 +134,6 @@ google:
   authenticate-uri: "http://localhost:8083/auth/login"
   redirect-uri: "http://localhost:8083"
 
-stripe:
-  secret-key: "sk_test_placeholder"
-  webhook-secret: "whsec_test_placeholder"
-
 aws:
   account-id: test-account-id
 

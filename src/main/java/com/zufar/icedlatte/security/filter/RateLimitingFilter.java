@@ -19,10 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 
-/**
- * Rate limiting filter to prevent abuse and enhance security.
- * Uses Java 21 features for improved performance and readability.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -42,12 +38,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     
     @Value("${security.rate-limit.auth-window-duration:PT1M}")
     private Duration authWindowDuration;
-
-    @Value("${security.rate-limit.payment-max-requests:10}")
-    private int paymentMaxRequests;
-
-    @Value("${security.rate-limit.payment-window-duration:PT1M}")
-    private Duration paymentWindowDuration;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -69,15 +59,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
     
     private RateLimitConfig getRateLimitConfig(String requestPath) {
-        // Using Java 21 pattern matching for switch expressions
-        return switch (requestPath) {
-            case String path when path.startsWith("/api/v1/auth/") -> 
-                new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case String path when path.startsWith("/api/v1/payment/") ->
-                new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
-            default -> 
-                new RateLimitConfig(maxRequests, windowDuration);
-        };
+        return requestPath.startsWith("/api/v1/auth/")
+                ? new RateLimitConfig(authMaxRequests, authWindowDuration)
+                : new RateLimitConfig(maxRequests, windowDuration);
     }
     
     private String getClientIpAddress(HttpServletRequest request) {
