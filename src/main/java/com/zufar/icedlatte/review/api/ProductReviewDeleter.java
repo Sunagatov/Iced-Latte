@@ -4,7 +4,6 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductReviewDeleter {
@@ -28,7 +26,6 @@ public class ProductReviewDeleter {
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
         reviewRepository.deleteById(productReviewId);
-        log.info("review.deleted: reviewId={}, productId={}", productReviewId, productId);
 
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);

@@ -50,7 +50,7 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
             // amazonq-ignore-next-line
             return isBlacklisted;
         } catch (RuntimeException ex) {
-            log.error("jwt.blacklist.redis_error", ex);
+            log.error("jwt.blacklist.redis_error: message={}", ex.getMessage(), ex);
             return true;
         }
     }

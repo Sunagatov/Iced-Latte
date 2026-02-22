@@ -10,7 +10,6 @@ import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductReviewCreator {
@@ -50,7 +48,6 @@ public class ProductReviewCreator {
                 .build();
 
         reviewRepository.saveAndFlush(productReview);
-        log.info("review.created: productId={}, userId={}", productId, userId);
 
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);

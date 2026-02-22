@@ -51,7 +51,7 @@ public class JwtTokenProvider {
                     .signWith(key)
                     .compact();
         } catch (JwtException exception) {
-            log.error("jwt.create.error", exception);
+            log.error("jwt.create.error: message={}", exception.getMessage(), exception);
             throw new JwtTokenException(exception);
         }
     }

@@ -22,7 +22,7 @@ public class UserAvatarLinkProvider {
                         return "default file";
                     });
         } catch (RuntimeException exception) {
-            log.error("user.avatar.error", exception);
+            log.error("user.avatar.error: message={}", exception.getMessage(), exception);
         }
         return "default file";
     }

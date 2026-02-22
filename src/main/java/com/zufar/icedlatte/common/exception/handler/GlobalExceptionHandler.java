@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -52,5 +51,12 @@ public class GlobalExceptionHandler {
         log.warn("exception.constraint_violation: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
-}
 
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiErrorResponse handleUnhandledException(final Exception exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("exception.unhandled: message={}", exception.getMessage(), exception);
+        return apiErrorResponse;
+    }
+}

@@ -40,7 +40,7 @@ public class UserAccountLocker {
     public void unlockUserAccount(String userEmail) {
         int userRows = userRepository.setAccountLockedStatus(userEmail, true);
         if (userRows == 0) {
-            log.error("auth.account.unlock_failed");
+            log.error("auth.account.unlock_failed: userRows={}", userRows);
         } else {
             log.info("auth.account.unlocked");
         }

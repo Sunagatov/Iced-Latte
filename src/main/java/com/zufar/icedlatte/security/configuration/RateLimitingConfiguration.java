@@ -29,7 +29,7 @@ public class RateLimitingConfiguration {
             try {
                 return windows.get(key, () -> new SlidingWindow(maxRequests, windowSize)).isAllowed();
             } catch (Exception e) {
-                log.error("rate_limit.cache_error: key={}", key, e);
+                log.error("rate_limit.cache_error: key={}, message={}", key, e.getMessage(), e);
                 return true;
             }
         }

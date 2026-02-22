@@ -75,7 +75,7 @@ public class AuthEndpoint {
                         .body(response);
                         
             } catch (Exception e) {
-                log.error("auth.google.callback.failed", e);
+                log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         });

@@ -57,7 +57,7 @@ public class ApplicationMigration implements ApplicationRunner {
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((v, e) -> {
                     executor.close();
-                    if (e != null) log.warn("migration.aws.warning", e);
+                    if (e != null) log.error("migration.aws.error: message={}", e.getMessage(), e);
                 });
     }
 

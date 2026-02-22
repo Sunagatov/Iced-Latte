@@ -30,9 +30,9 @@ public class UnlockAccountScheduler {
 
             log.debug("scheduler.unlock.finish");
         } catch (DataAccessException dae) {
-            log.error("scheduler.unlock.db_error", dae);
+            log.error("scheduler.unlock.db_error: message={}", dae.getMessage(), dae);
         } catch (RuntimeException re) {
-            log.error("scheduler.unlock.error", re);
+            log.error("scheduler.unlock.error: message={}", re.getMessage(), re);
         }
     }
 }

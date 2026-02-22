@@ -56,7 +56,7 @@ public class AWSConfig {
                 return builder.build();
             }
         } catch (SdkClientException ace) {
-            log.error("aws.s3.client.init_error", ace);
+            log.error("aws.s3.client.init_error: message={}", ace.getMessage(), ace);
             throw new RuntimeException("Failed to create S3Client", ace);
         }
     }

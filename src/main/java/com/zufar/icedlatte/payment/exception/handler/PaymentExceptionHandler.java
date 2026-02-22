@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.payment.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.payment.exception.PaymentEventParsingException;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
@@ -21,13 +20,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class PaymentExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(PaymentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("exception.payment.not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.payment.not_found: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -36,7 +34,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.payment.event_processing: message={}", apiErrorResponse.message());
+        log.warn("exception.payment.event_processing: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -45,7 +43,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePaymentEventParsingException(final PaymentEventParsingException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.payment.event_parsing: message={}", apiErrorResponse.message());
+        log.warn("exception.payment.event_parsing: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -54,7 +52,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.payment.session_creation: message={}", apiErrorResponse.message());
+        log.warn("exception.payment.session_creation: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
@@ -63,7 +61,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("exception.payment.session_incomplete: message={}", apiErrorResponse.message());
+        log.warn("exception.payment.session_incomplete: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }

@@ -37,7 +37,7 @@ public class FileUploader {
             try {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
-                log.error("file.upload.io_error", e);
+                log.error("file.upload.io_error: message={}", e.getMessage(), e);
                 throw new RuntimeException("Failed to upload directory due to I/O error", e);
             }
         } else {

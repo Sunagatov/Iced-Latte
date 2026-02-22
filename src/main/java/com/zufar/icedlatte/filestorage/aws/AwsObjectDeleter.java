@@ -32,10 +32,10 @@ public class AwsObjectDeleter {
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception ase) {
-            log.error("aws.s3.delete.error", ase);
+            log.error("aws.s3.delete.error: message={}", ase.getMessage(), ase);
             throw ase;
         } catch (SdkClientException sce) {
-            log.error("aws.s3.delete.unreachable", sce);
+            log.error("aws.s3.delete.unreachable: message={}", sce.getMessage(), sce);
             throw sce;
         }
     }

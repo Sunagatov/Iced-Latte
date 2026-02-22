@@ -42,10 +42,10 @@ public class AwsObjectUploader {
             
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (S3Exception ase) {
-            log.error("aws.s3.upload.error", ase);
+            log.error("aws.s3.upload.error: message={}", ase.getMessage(), ase);
             throw new FileUploadException(fileName, ase);
         } catch (SdkClientException sce) {
-            log.error("aws.s3.upload.unreachable", sce);
+            log.error("aws.s3.upload.unreachable: message={}", sce.getMessage(), sce);
             throw new FileUploadException(fileName, sce);
         } catch (IOException e) {
             throw new FileReadException(fileName, e);
@@ -73,10 +73,10 @@ public class AwsObjectUploader {
                                     .build();
                             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
                         } catch (S3Exception e) {
-                            log.error("aws.s3.upload.file_error: key={}", filePath, e);
+                            log.error("aws.s3.upload.file_error: key={}, message={}", filePath, e.getMessage(), e);
                             throw new FileUploadException(filePath.toString(), e);
                         } catch (SdkClientException e) {
-                            log.error("aws.s3.upload.file_unreachable: key={}", filePath, e);
+                            log.error("aws.s3.upload.file_unreachable: key={}, message={}", filePath, e.getMessage(), e);
                             throw new FileUploadException(filePath.toString(), e);
                         }
                     });

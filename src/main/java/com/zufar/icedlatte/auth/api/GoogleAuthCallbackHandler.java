@@ -33,7 +33,7 @@ public class GoogleAuthCallbackHandler {
     public UserAuthenticationResponse googleAuthCallback(String authorizationCode) throws GeneralSecurityException, IOException {
         GoogleIdToken idToken = googleIdTokenCreator.createGoogleIdToken(authorizationCode);
         if (idToken == null) {
-            log.error("auth.google.invalid_token");
+            log.warn("auth.google.invalid_token");
             throw new IllegalStateException("Invalid ID token.");
         }
 
@@ -43,7 +43,7 @@ public class GoogleAuthCallbackHandler {
         String lastName = (String) payload.get("family_name");
 
         if (StringUtils.isEmpty(email)) {
-            log.error("auth.google.empty_email");
+            log.warn("auth.google.empty_email");
             throw new IllegalStateException("Error during Google authentication callback. The user's email is empty.");
         }
 

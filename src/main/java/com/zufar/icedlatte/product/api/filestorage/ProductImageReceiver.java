@@ -29,7 +29,7 @@ public class ProductImageReceiver {
                         return DEFAULT_FILE_URL;
                     });
         } catch (RuntimeException ex) {
-            log.error("product.image.error: productId={}", productId, ex);
+            log.error("product.image.error: productId={}, message={}", productId, ex.getMessage(), ex);
             return DEFAULT_FILE_URL;
         }
     }
@@ -39,7 +39,7 @@ public class ProductImageReceiver {
         try {
             fileUrls = fileProvider.getRelatedObjectUrls(productIds);
         } catch (RuntimeException ex) {
-            log.error("product.images.error: count={}", productIds.size(), ex);
+            log.error("product.images.error: count={}, message={}", productIds.size(), ex.getMessage(), ex);
             fileUrls = Map.of();
         }
         final Map<UUID, String> resolved = fileUrls;

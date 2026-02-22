@@ -48,17 +48,17 @@ public class UserAuthenticationService {
             return buildResponse(userDetails, userEmail);
 
         } catch (UsernameNotFoundException exception) {
-            log.warn("auth.failed: reason=user_not_found", exception);
+            log.warn("auth.failed: reason=user_not_found");
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            log.warn("auth.failed: reason=invalid_credentials", exception);
+            log.warn("auth.failed: reason=invalid_credentials");
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
-            log.warn("auth.failed: reason=account_locked", exception);
+            log.warn("auth.failed: reason=account_locked");
             throw new UserAccountLockedException(userAccountLockoutDurationMinutes);
         } catch (AuthenticationException exception) {
-            log.error("auth.error", exception);
+            log.error("auth.error: message={}", exception.getMessage(), exception);
             throw exception;
         }
     }
