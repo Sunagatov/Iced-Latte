@@ -394,6 +394,7 @@
                         <arg>-Amapstruct.suppressGeneratorTimestamp=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
                     </compilerArgs>
+                    <showWarnings>false</showWarnings>
                 </configuration>
             </plugin>
 

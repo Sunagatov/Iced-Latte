@@ -42,7 +42,10 @@ paths:
             examples:
               add-multiple:
                 summary: "Add Multiple Items"
-                value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
+                value:
+                  items:
+                    - productId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      productQuantity: 2
       responses:
         "200":
           description: "Items added successfully."

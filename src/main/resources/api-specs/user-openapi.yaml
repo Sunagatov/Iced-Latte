@@ -273,6 +273,7 @@ paths:
         content:
           multipart/form-data:
             schema:
+              title: "uploadUserAvatar_request"
               type: "object"
               properties:
                 file:
