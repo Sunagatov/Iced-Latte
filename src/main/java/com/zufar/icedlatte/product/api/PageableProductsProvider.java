@@ -40,7 +40,8 @@ public class PageableProductsProvider {
                                                         final BigDecimal maxPrice,
                                                         final Integer minimumAverageRating,
                                                         final List<String> brandNames,
-                                                        final List<String> sellerNames) {
+                                                        final List<String> sellerNames,
+                                                        final String keyword) {
         int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
@@ -56,7 +57,8 @@ public class PageableProductsProvider {
                 maxPriceSpec(maxPrice),
                 minRatingSpec(minAvg),
                 brandNamesSpec(brandNames),
-                sellerNamesSpec(sellerNames)
+                sellerNamesSpec(sellerNames),
+                nameContainsSpec(keyword)
         );
 
         Page<ProductInfoDto> result = productInfoRepository

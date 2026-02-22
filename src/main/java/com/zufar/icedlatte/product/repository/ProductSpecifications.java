@@ -27,4 +27,10 @@ public class ProductSpecifications {
     public static Specification<ProductInfo> sellerNamesSpec(List<String> sellerNames) {
         return (sellerNames == null || sellerNames.isEmpty()) ? null : (r, q, cb) -> r.get("sellerName").in(sellerNames);
     }
+
+    public static Specification<ProductInfo> nameContainsSpec(String keyword) {
+        if (keyword == null || keyword.isBlank()) return null;
+        String pattern = "%" + keyword.toLowerCase() + "%";
+        return (r, q, cb) -> cb.like(cb.lower(r.get("name")), pattern);
+    }
 }

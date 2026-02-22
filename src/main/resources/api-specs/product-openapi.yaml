@@ -177,6 +177,13 @@ paths:
             type: "array"
             items:
               type: "string"
+        - name: "keyword"
+          description: "Search keyword to filter products by name (case-insensitive)."
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            maxLength: 200
       responses:
         "200":
           description: "Paginated list of products retrieved successfully."
