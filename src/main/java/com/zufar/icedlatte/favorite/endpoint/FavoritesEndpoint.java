@@ -54,6 +54,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = securityPrincipalProvider.getUserId();
+        log.info("favourites.fetching: userId={}", userId);
         var favoriteList = favoriteListProvider.getFavoriteListDto(userId);
         var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
         productPictureLinkUpdater.updateBatch(response.getProducts());

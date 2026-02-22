@@ -52,8 +52,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.payment.session_creation: message={}", apiErrorResponse.message());
-
+        log.warn("payment.session.failed: message={}", apiErrorResponse.message());
         return apiErrorResponse;
     }
 

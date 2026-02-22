@@ -75,6 +75,11 @@
          that JPA repositories are not Redis repositories. Zero operational value. -->
     <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
 
+    <!-- Suppress Spring Security advisory WARN fired on first authenticated request when a
+         custom AuthenticationProvider is registered. The configuration is intentional;
+         the warning is not actionable. -->
+    <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
+
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>

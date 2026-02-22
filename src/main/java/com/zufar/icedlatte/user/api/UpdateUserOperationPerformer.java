@@ -13,7 +13,6 @@ import com.zufar.icedlatte.user.validator.PutUsersRequestValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UpdateUserOperationPerformer {
@@ -37,7 +35,6 @@ public class UpdateUserOperationPerformer {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateUser(final UpdateUserAccountRequest updateUserAccountRequest) {
         UUID userId = securityPrincipalProvider.getUserId();
-        log.info("user.profile.update: userId={}", userId);
 
         AddressDto addressDto = updateUserAccountRequest.getAddress();
         JsonObject addressJson = addressDto != null ? gson.toJsonTree(addressDto).getAsJsonObject() : null;

@@ -12,6 +12,6 @@ import org.springframework.stereotype.Service;
 public class SessionExpiredScenarioHandler implements SessionScenarioHandler {
 
     public void handle(Session stripeSession) {
-        log.info("payment.session.expired: sessionId='{}'", stripeSession.getId());
+        log.info("payment.session.expired: sessionId={}", stripeSession.getId());
     }
 }
