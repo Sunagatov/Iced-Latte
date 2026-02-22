@@ -5,6 +5,7 @@ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
@@ -12,6 +13,7 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,  injectionStrategy = InjectionStrategy.FIELD)
 public interface FavoriteItemDtoConverter {
 
+    @Mapping(target = "productInfo.dateAdded", source = "productInfo.dateAdded", qualifiedByName = "localToOffsetDate")
     FavoriteItemDto toDto(final FavoriteItemEntity favoriteItemEntity);
 
 }
