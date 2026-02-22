@@ -34,7 +34,7 @@ public class JwtTokenFromAuthHeaderExtractor {
                 .map(this::extractTokenFromHeader)
                 .filter(this::isValidTokenFormat)
                 .orElseThrow(() -> {
-                    log.warn("jwt.header.invalid");
+                    log.debug("jwt.header.invalid");
                     return new AbsentBearerHeaderException(
                         "Missing or invalid Authorization header. Expected format: " + BEARER_PREFIX + "<token>"
                     );

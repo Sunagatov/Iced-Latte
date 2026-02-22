@@ -23,7 +23,6 @@ public class RedirectEventProcessor {
     private final SessionCompletedScenarioHandler sessionCompletedScenarioHandler;
 
     public PaymentConfirmationEmail processPaymentEvent(final String sessionId) {
-        log.info("payment.redirect.processing");
         Session session = stripeSessionProvider.get(sessionId);
         String status = session.getStatus();
         if (!SESSION_COMPLETE.equals(status)) {
@@ -31,7 +30,6 @@ public class RedirectEventProcessor {
             throw new StripeSessionIsNotComplete(sessionId, status);
         }
         sessionCompletedScenarioHandler.handle(session);
-        log.info("payment.redirect.processed");
         var response = new PaymentConfirmationEmail();
         response.customerEmail(session.getCustomerEmail());
         return response;

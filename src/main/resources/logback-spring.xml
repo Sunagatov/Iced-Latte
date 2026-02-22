@@ -4,7 +4,7 @@
     <!--  CONSOLE LOGGING CONFIGURATION  -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -67,9 +67,17 @@
         <appender-ref ref="FileAppender"/>
     </appender>
 
+    <!-- Suppress OTEL exporter connection errors when no collector is running locally.
+         These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
+    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
+
+    <!-- Suppress Spring Data Redis bootstrap noise: 13 INFO lines per startup explaining
+         that JPA repositories are not Redis repositories. Zero operational value. -->
+    <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
+
     <root level="INFO">
-        <appender-ref ref="AsyncConsole" />
-        <appender-ref ref="AsyncFile" />
+        <appender-ref ref="AsyncConsole"/>
+        <appender-ref ref="AsyncFile"/>
     </root>
 
 </configuration>

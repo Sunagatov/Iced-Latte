@@ -66,9 +66,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        temp:
-          use_jdbc_metadata_defaults: false
+        allow_jdbc_metadata_access: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
