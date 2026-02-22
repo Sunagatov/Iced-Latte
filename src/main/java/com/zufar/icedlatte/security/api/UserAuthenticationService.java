@@ -35,8 +35,6 @@ public class UserAuthenticationService {
         String userEmail = request.getEmail();
         String userPassword = request.getPassword();
 
-        log.info("auth.authenticating");
-
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userEmail, userPassword)
@@ -68,10 +66,16 @@ public class UserAuthenticationService {
         return buildResponse(userDetails, userEmail);
     }
 
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        int at = email.indexOf('@');
+        return (at > 1 ? email.charAt(0) + "***" : "***") + email.substring(at);
+    }
+
     private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
         String jwtToken = jwtTokenProvider.generateToken(userDetails);
         String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        log.debug("auth.token.generated");
+        log.info("auth.token.generated: email={}", maskEmail(userEmail));
         resetLoginAttemptsService.reset(userEmail);
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(jwtToken);

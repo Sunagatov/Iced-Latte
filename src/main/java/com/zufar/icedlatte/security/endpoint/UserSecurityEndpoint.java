@@ -85,7 +85,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         var userDetails = userDetailsService.loadUserByUsername(userEmail);
         var response = userAuthenticationService.authenticate(userDetails, userEmail);
-        log.debug("auth.token.refreshed");
+        log.info("auth.token.refreshed");
         return ResponseEntity.ok(response);
     }
 
@@ -134,7 +134,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
         changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
-        log.debug("auth.password.changed");
+        log.info("auth.password.changed");
         return ResponseEntity.ok().build();
     }
 }

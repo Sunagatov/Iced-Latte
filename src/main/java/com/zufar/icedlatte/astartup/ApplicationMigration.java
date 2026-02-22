@@ -70,8 +70,9 @@ public class ApplicationMigration implements ApplicationRunner {
     private void uploadFiles() {
         try {
             log.info("migration.upload.start: path={}", directoryPath);
+            long t0 = System.currentTimeMillis();
             fileUploader.uploadDirectory(productPictureBucket, directoryPath);
-            log.info("migration.upload.finish");
+            log.info("migration.upload.finish: durationMs={}", System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: reason={}", e.getMessage(), e);
         } catch (FileReadException e) {

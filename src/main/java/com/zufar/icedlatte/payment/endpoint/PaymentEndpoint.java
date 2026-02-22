@@ -28,7 +28,6 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @Override
     @PostMapping
     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
-        log.info("payment.processing");
         var response = paymentProcessor.processPayment(null);
         log.info("payment.session.created: sessionId={}", response.getSessionId());
         return ResponseEntity.ok(response);
@@ -39,16 +38,14 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
                                                      @RequestBody String payload) {
         log.info("payment.webhook.receiving");
         webhookEventProcessor.processPaymentEvent(payload, stripeSignature);
-        log.info("payment.webhook.received");
         return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping("/order")
     public ResponseEntity<PaymentConfirmationEmail> processRedirectEvent(@RequestParam String sessionId) {
-        log.info("payment.redirect.processing");
+        log.info("payment.redirect.processing: sessionId={}", sessionId);
         var confirmation = redirectEventProcessor.processPaymentEvent(sessionId);
-        log.info("payment.redirect.processed");
         return ResponseEntity.ok(confirmation);
     }
 }
