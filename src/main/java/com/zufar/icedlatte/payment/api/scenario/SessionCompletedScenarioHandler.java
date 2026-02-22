@@ -19,7 +19,7 @@ public class SessionCompletedScenarioHandler implements SessionScenarioHandler {
         boolean orderWasCreated = orderCreator.createOrderAndDeleteCart(stripeSession);
         if (orderWasCreated) {
             paymentEmailConfirmation.send(stripeSession);
-            log.info("payment.session.email.sent");
+            log.info("payment.session.email.sent: sessionId={}", stripeSession.getId());
         } else {
             log.info("payment.session.already_processed: sessionId={}", stripeSession.getId());
         }

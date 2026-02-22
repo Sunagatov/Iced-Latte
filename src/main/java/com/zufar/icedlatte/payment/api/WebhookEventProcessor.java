@@ -26,7 +26,7 @@ public class WebhookEventProcessor {
         Event stripePaymentEvent = webhookEventProvider.createPaymentEvent(paymentPayload, stripeSignatureHeader);
         Session stripeSession = webhookEventParser.parseEventToSession(stripePaymentEvent);
         webhookEventHandler.handlePaymentEvent(stripePaymentEvent, stripeSession);
-        log.info("payment.webhook.processed");
+        log.info("payment.webhook.processed: eventType={}", stripePaymentEvent.getType());
     }
 
 }

@@ -44,7 +44,7 @@ public class OrderCreator {
 
         Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
-        log.info("order.session.already_handled");
+            log.info("order.session.already_handled: sessionId={}", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
             return false;
         }
 

@@ -31,7 +31,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleMessageBuilderNotFoundException(final MessageBuilderNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.email.builder_not_found: message={}", apiErrorResponse.message());
+        log.error("exception.email.builder_not_found: message={}", exception.getMessage(), exception);
         return apiErrorResponse;
     }
 
