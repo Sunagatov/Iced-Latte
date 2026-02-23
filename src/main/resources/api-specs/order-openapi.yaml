@@ -154,6 +154,28 @@ components:
           minLength: 2
           maxLength: 128
           example: "Doe"
+        recipientPhone:
+          type: "string"
+          description: "Phone number for delivery notifications."
+          example: "+12025550123"
+
+    OrderItemDto:
+      type: "object"
+      description: "A single item within an order."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productId:
+          type: "string"
+          format: "uuid"
+        productName:
+          type: "string"
+        productPrice:
+          type: "number"
+          format: "double"
+        productsQuantity:
+          type: "integer"
 
     OrderDto:
       type: "object"
@@ -173,6 +195,17 @@ components:
           type: "string"
           format: "date-time"
           description: "The date and time when the order was created."
+        itemsQuantity:
+          type: "integer"
+        itemsTotalPrice:
+          type: "number"
+          format: "double"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OrderItemDto"
+        deliveryAddress:
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

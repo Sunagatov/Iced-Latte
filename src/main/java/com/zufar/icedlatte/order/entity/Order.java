@@ -62,6 +62,15 @@ public class Order extends AuditableEntity {
     @JoinColumn(name = "address_id", referencedColumnName = "id", nullable = false)
     private Address deliveryAddress;
 
+    @Column(name = "recipient_name", nullable = false)
+    private String recipientName;
+
+    @Column(name = "recipient_surname", nullable = false)
+    private String recipientSurname;
+
+    @Column(name = "recipient_phone")
+    private String recipientPhone;
+
     @Column(name = "items_quantity", nullable = false)
     private Integer itemsQuantity;
 
