@@ -70,7 +70,7 @@ Please support Iced Latte by giving it a ⭐ on GitHub — your stars help more 
 ## Tech Stack
 
 - **Architecture:** Monolith.
-- **Computer language:** Java 17.
+- **Computer language:** Java 21.
 - **Framework:** Spring Web, Spring Boot 3, Spring Data, Spring Security, Spring Actuator, Spring Web, Spring Retry, Lombok, Apache Commons, Spring Mail, Google Guava.
 - **Security:** JWT, TLS.
 - **Migration tool:** Liquabase.
