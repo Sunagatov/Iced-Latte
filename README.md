@@ -48,7 +48,7 @@ The backend repository reached [GitHub's Trending page](https://archive.ph/DRsD8
 
 | Repository | Stars | Forks | Lines of Code |
 |---|---|---|---|
-| [Iced Latte Backend](https://github.com/Sunagatov/Iced-Latte) | 590 ⭐ | 97 | 19.3K |
+| [Iced Latte Backend](https://github.com/Sunagatov/Iced-Latte) | 625 ⭐ | 97 | 19.3K |
 | [Iced Latte Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | 209 ⭐ | 46 | 8.4K |
 | [Iced Latte QA](https://github.com/Sunagatov/Iced-Latte-QA) | 146 ⭐ | 32 | 8K |
 
