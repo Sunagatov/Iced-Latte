@@ -22,6 +22,18 @@
 
 ---
 
+**📊 Key stats across all three repositories:**
+
+| Repository | ⭐ Stars | 🍴 Forks |
+|---|---|---|
+| [🔧 Backend](https://github.com/Sunagatov/Iced-Latte) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat) |
+| [🎨 Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat) |
+| [🧪 QA](https://github.com/Sunagatov/Iced-Latte-QA) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat) |
+
+> ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
+
+---
+
 ## 🚀 Quick Start
 
 **📋 Prerequisites:** Java 21, Maven 3.9+, Docker Desktop
@@ -91,14 +103,6 @@ Iced Latte has earned recognition from the broader tech community.
 
   - Iced Latte was [recommended by Eddie Jaoude](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) — one of the most influential open-source experts, a [GitHub Star](https://stars.github.com/) with 174K followers on X and 17.6K on LinkedIn — who called it a great example of a Java open-source project. Many Iced Latte contributors shared their positive experience in the comments.
 
-**📊 Key stats across all three repositories:**
-
-| Repository | ⭐ Stars | 🍴 Forks |
-|---|---|---|
-| [🔧 Backend](https://github.com/Sunagatov/Iced-Latte) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat) |
-| [🎨 Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat) |
-| [🧪 QA](https://github.com/Sunagatov/Iced-Latte-QA) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat) |
-
 ---
 
 ## 🛠️ Tech Stack
@@ -163,6 +167,8 @@ The full production setup is in [docker-compose.local.yml](docker-compose.local.
 | 👨💻 Ready to code | Pick a [`good first issue`](https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22), comment "I'm on it" |
 | 🔧 Big change | Comment on the issue before writing code — many tickets have hidden constraints |
 
+---
+
 ### 🏷️ Issue labels
 
 | 🏷️ Label | 📝 Meaning |
@@ -174,17 +180,23 @@ The full production setup is in [docker-compose.local.yml](docker-compose.local.
 | 🟠 `new feature` | New functionality — discuss before starting |
 | ⚪ `idea` | Needs design discussion — don't implement yet |
 
+---
+
 ### 🐛 Bug reports
 
 - 🔍 Search existing issues before opening a new one
 - 📝 Clearly describe **observed** vs **expected** behaviour
 - 🚀 For minor fixes, just open a PR directly
 
+---
+
 ### 🔄 Pull requests
 
 - 🎯 Keep PRs focused — one concern per PR
 - ✅ Make sure `mvn test` passes locally before pushing
 - 🔗 Reference the issue number in your PR description
+
+---
 
 ### 🍴 Forking
 

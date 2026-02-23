@@ -97,3 +97,6 @@ local.env
 **/*.log
 /src/main/resources/stripe.yaml
 /docker-compose.override.yml
+/docs/RATE_LIMITER.md
+/docs/RATE_LIMITER_QUICK_REF.md
+/docs/RATE_LIMITER_SUMMARY.md
