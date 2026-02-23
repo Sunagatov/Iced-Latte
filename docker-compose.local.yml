@@ -12,17 +12,16 @@ volumes:
 
 services:
 
-#  iced-latte-frontend:
-#    image: 'zufarexplainedit/iced-latte-frontend:latest'
-#    container_name: iced-latte-frontend
-##    build:
-##      context: /Users/astriganova/Desktop/Projects/Iced-Latte-Frontend
-##      dockerfile: Dockerfile.local
-#    restart: 'always'
-#    ports:
-#      - '3000:3000'
-#    networks:
-#      - iced-latte-network
+  iced-latte-frontend:
+    image: 'zufarexplainedit/iced-latte-frontend:latest'
+    container_name: iced-latte-frontend
+    restart: 'always'
+    ports:
+      - '3000:3000'
+    networks:
+      - iced-latte-network
+    depends_on:
+      - iced-latte-backend
 
   iced-latte-backend:
     build:

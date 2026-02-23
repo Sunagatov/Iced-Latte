@@ -257,6 +257,55 @@ If you want to debug the app running inside Docker:
 
 ---
 
+## Running the Frontend
+
+The frontend lives in a separate repository: [Iced-Latte-Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend).
+
+### Prerequisites
+
+| Tool | Version |
+|------|---------|
+| Node.js | 18+ |
+| npm | 9+ |
+
+### Option 1 — npm (local dev)
+
+```bash
+# 1. Clone the frontend repository
+git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git
+cd Iced-Latte-Frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the dev server
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`.
+
+> Make sure the backend is running before starting the frontend.
+
+### Option 2 — Docker
+
+The frontend service is included in `docker-compose.local.yml`. Start it alongside the backend:
+
+```bash
+docker-compose -f docker-compose.local.yml up -d iced-latte-frontend
+```
+
+Or start the full stack at once:
+
+```bash
+docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb iced-latte-redis iced-latte-backend iced-latte-frontend
+```
+
+The frontend will be available at `http://localhost:3000`.
+
+> ⚠️ **Port conflict**: Grafana also uses port `3000`. Do not start both `grafana` and `iced-latte-frontend` at the same time.
+
+---
+
 ## Troubleshooting
 
 **App fails to start with "Connection refused" on port 5432**
