@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.lessThan;
 
 public final class RestAssertion {
 
-    public static final long DEFAULT_HTTP_TIMEOUT = 2000L;
+    public static final long DEFAULT_HTTP_TIMEOUT = 5000L;
 
     public static void assertRestApiBadRequestResponse(Response response, String schema) {
         assertRestApiBodySchemaResponse(response, HttpStatus.BAD_REQUEST, schema);

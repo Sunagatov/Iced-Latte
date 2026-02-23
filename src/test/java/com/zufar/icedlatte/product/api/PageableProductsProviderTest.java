@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
@@ -35,6 +36,7 @@ class PageableProductsProviderTest {
     @Mock private ProductInfoRepository productRepository;
     @Mock private ProductInfoDtoConverter productInfoConverter;
     @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
+    @Mock @SuppressWarnings("unused") private PaginationConfig paginationConfig;
     @InjectMocks
     private PageableProductsProvider productsProvider;
 
@@ -48,7 +50,7 @@ class PageableProductsProviderTest {
         when(productInfoConverter.toProductPaginationDto(any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
 
         ProductListWithPaginationInfoDto result = productsProvider.getProducts(
-                1, 10, "name", "ASC", null, null, null, null, null);
+                1, 10, "name", "ASC", null, null, null, null, null, null);
 
         assertNotNull(result);
         verify(productInfoConverter, times(1)).toProductPaginationDto(any());
