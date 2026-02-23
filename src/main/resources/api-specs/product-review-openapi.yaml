@@ -278,6 +278,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/users/reviews:
+    get:
+      tags:
+        - "Product Review"
+      summary: "Get all reviews written by the authenticated user"
+      operationId: "getUserReviews"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 50
+        - name: "sort_attribute"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "createdAt"
+            enum: ["createdAt", "productRating"]
+        - name: "sort_direction"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "asc"
+            enum: ["asc", "desc"]
+      responses:
+        "200":
+          description: "Reviews written by the authenticated user."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
+        "401":
+          description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/products/{productId}/reviews/statistics:
     get:
       tags:

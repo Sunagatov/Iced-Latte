@@ -250,10 +250,18 @@ cors:
 #
 security:
   rate-limit:
-    max-requests: 200
-    auth-max-requests: 50
-    window-duration: PT1M
-    auth-window-duration: PT1M
+    global:
+      max-requests: 60
+      window-duration: PT1M
+    auth:
+      max-requests: 10
+      window-duration: PT1M
+    ai:
+      max-requests: 5
+      window-duration: PT1M
+    search:
+      max-requests: 30
+      window-duration: PT1M
 
 #
 # Login Attempts Properties

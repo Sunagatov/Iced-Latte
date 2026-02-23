@@ -133,3 +133,9 @@ databaseChangeLog:
       file: db/changelog/version-1.0/22.08.2025.add-version-column-to-product-table.sql
       errorIfMissing: true
 
+  # ========== PERFORMANCE ==========
+  # Index on favorite_list.user_id for findByUserId queries
+  - include:
+      file: db/changelog/version-1.0/23.02.2026.part1.add-index-favorite-list-user-id.sql
+      errorIfMissing: true
+

@@ -19,6 +19,8 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
 
     Optional<ProductReview> findByUserIdAndProductId(UUID userId, UUID productId);
 
+    Page<ProductReview> findAllByUserId(UUID userId, Pageable pageable);
+
     @Query("SELECT review FROM ProductReview review " +
             "WHERE review.productId = :productId AND " +
             "(:productRatings IS NULL OR review.productRating IN :productRatings) ")

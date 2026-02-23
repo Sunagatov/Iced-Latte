@@ -80,6 +80,7 @@
         <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
         <apache-commons-text.version>1.13.1</apache-commons-text.version>
         <guava.version>33.4.0-jre</guava.version>
+        <caffeine.version>3.1.8</caffeine.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -282,6 +283,11 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${caffeine.version}</version>
         </dependency>
 
         <!-- ========== TESTING ========== -->

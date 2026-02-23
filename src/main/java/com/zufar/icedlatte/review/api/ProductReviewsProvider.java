@@ -69,4 +69,20 @@ public class ProductReviewsProvider {
                 .map(productReviewDtoConverter::toProductReviewDto)
                 .orElse(EMPTY_PRODUCT_REVIEW_RESPONSE);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public ProductReviewsAndRatingsWithPagination getUserReviews(final Integer pageNumber,
+                                                                 final Integer pageSize,
+                                                                 final String sortAttribute,
+                                                                 final String sortDirection) {
+        var userId = securityPrincipalProvider.getUserId();
+        int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
+        int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
+        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
+        String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
+        var responsePage = reviewRepository
+                .findAllByUserId(userId, createPageableObject(page, size, sortAttr, sortDir))
+                .map(productReviewDtoConverter::toProductReviewDto);
+        return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
+    }
 }

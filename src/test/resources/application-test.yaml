@@ -149,15 +149,23 @@ logging:
     org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration: ERROR
 
 #
-# Rate Limiting Properties (relaxed for tests)
+# Rate Limiting Properties (disabled for tests)
 #
 security:
   argon2:
     memory: 1024     # minimum required by Argon2
     iterations: 1    # reduced from 2 to speed up tests
   rate-limit:
-    max-requests: 10000
-    auth-max-requests: 10000
-    window-duration: PT1M
-    auth-window-duration: PT1M
+    global:
+      max-requests: 100000
+      window-duration: PT1M
+    auth:
+      max-requests: 100000
+      window-duration: PT1M
+    ai:
+      max-requests: 100000
+      window-duration: PT1M
+    search:
+      max-requests: 100000
+      window-duration: PT1M
 
