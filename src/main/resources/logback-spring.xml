@@ -4,7 +4,7 @@
     <!--  CONSOLE LOGGING CONFIGURATION  -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -32,7 +32,9 @@
                         "trace": {
                         "traceId": "%X{traceId}",
                         "spanId": "%X{spanId}",
-                        "userId": "%X{userId}"
+                        "userId": "%X{userId}",
+                        "correlationId": "%X{correlationId}",
+                        "sessionId": "%X{sessionId}"
                         }
                         }
                     </pattern>

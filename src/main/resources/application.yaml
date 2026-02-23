@@ -265,6 +265,12 @@ login-attempts:
 unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 
 #
+# Monitoring Properties
+#
+monitoring:
+  slow-query-threshold-ms: 200
+
+#
 # Logging Properties
 #
 logging:

@@ -22,17 +22,27 @@ import java.util.UUID;
 @Component
 @Order(1)
 public class CorrelationFilter extends OncePerRequestFilter {
-    
+
     private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
     private static final String CORRELATION_ID_MDC_KEY = "correlationId";
-    
+    private static final String SESSION_ID_HEADER = "X-Session-ID";
+    private static final String SESSION_ID_MDC_KEY = "sessionId";
+    private static final String TRACE_ID_HEADER = "X-Trace-ID";
+    private static final String TRACE_ID_MDC_KEY = "traceId";
+
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) 
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String correlationId = getOrGenerateCorrelationId(request);
+        String sessionId = request.getHeader(SESSION_ID_HEADER);
+        String traceId = request.getHeader(TRACE_ID_HEADER);
+
         response.setHeader(CORRELATION_ID_HEADER, correlationId);
         MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
+        if (sessionId != null) MDC.put(SESSION_ID_MDC_KEY, sessionId);
+        if (traceId != null) MDC.put(TRACE_ID_MDC_KEY, traceId);
+
         try {
             CorrelationContext.runWithCorrelationId(correlationId, () -> {
                 filterChain.doFilter(request, response);
@@ -44,6 +54,8 @@ public class CorrelationFilter extends OncePerRequestFilter {
             throw new ServletException("Unexpected error in correlation filter", e);
         } finally {
             MDC.remove(CORRELATION_ID_MDC_KEY);
+            MDC.remove(SESSION_ID_MDC_KEY);
+            MDC.remove(TRACE_ID_MDC_KEY);
         }
     }
     

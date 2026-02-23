@@ -27,7 +27,7 @@ public class AppCorsConfiguration {
     @Value("${cors.allowed-headers:*}")
     private List<String> allowedHeaders;
 
-    @Value("${cors.exposed-headers:Authorization,Content-Type,X-Request-ID}")
+    @Value("${cors.exposed-headers:Authorization,Content-Type,X-Request-ID,X-Correlation-ID,X-Session-ID,X-Trace-ID}")
     private List<String> exposedHeaders;
 
     @Value("${cors.allow-credentials:true}")
