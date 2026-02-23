@@ -59,9 +59,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
     
     private RateLimitConfig getRateLimitConfig(String requestPath) {
-        return requestPath.startsWith("/api/v1/auth/")
-                ? new RateLimitConfig(authMaxRequests, authWindowDuration)
-                : new RateLimitConfig(maxRequests, windowDuration);
+        if (requestPath.startsWith("/api/v1/auth/")) {
+            return new RateLimitConfig(authMaxRequests, authWindowDuration);
+        }
+        if (requestPath.startsWith("/api/v1/telemetry/")) {
+            // telemetry is high-volume by design; use a generous but bounded limit
+            return new RateLimitConfig(maxRequests * 5, windowDuration);
+        }
+        return new RateLimitConfig(maxRequests, windowDuration);
     }
     
     private String getClientIpAddress(HttpServletRequest request) {

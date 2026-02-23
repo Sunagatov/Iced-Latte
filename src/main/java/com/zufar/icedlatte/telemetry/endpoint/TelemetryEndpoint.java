@@ -21,7 +21,9 @@ public class TelemetryEndpoint {
 
         if (report == null) return ResponseEntity.badRequest().build();
 
-        String sessionId = nullSafe(request.getHeader("X-Session-ID"));
+        String sessionId = nullSafe(request.getHeader("X-Session-ID") != null
+                ? request.getHeader("X-Session-ID")
+                : request.getParameter("sid"));
         String traceId = nullSafe(request.getHeader("X-Trace-ID"));
 
         log.info("perf.report: page={}, pageLoadMs={}, apiCalls={}, errorCount={}, p95DurationMs={}, sessionId={}, traceId={}",

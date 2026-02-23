@@ -137,6 +137,12 @@ google:
 aws:
   account-id: test-account-id
 
+#
+# Monitoring Properties
+#
+monitoring:
+  slow-query-threshold-ms: 200
+
 logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
