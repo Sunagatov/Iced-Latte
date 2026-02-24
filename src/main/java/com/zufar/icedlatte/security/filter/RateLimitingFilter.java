@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
+import com.zufar.icedlatte.security.configuration.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private final RateLimitingConfiguration.InMemoryRateLimiter rateLimiter;
+    private final RateLimiter rateLimiter;
     private final Counter allowedCounter;
     private final Counter blockedCounter;
     
@@ -57,7 +58,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.search.window-duration:PT1M}")
     private Duration searchWindowDuration;
 
-    public RateLimitingFilter(RateLimitingConfiguration.InMemoryRateLimiter rateLimiter, MeterRegistry meterRegistry) {
+    public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry) {
         this.rateLimiter = rateLimiter;
         this.allowedCounter = Counter.builder("rate_limit.requests.allowed")
                 .description("Number of requests allowed by rate limiter")

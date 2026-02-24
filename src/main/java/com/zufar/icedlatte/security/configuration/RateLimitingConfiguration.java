@@ -2,23 +2,62 @@ package com.zufar.icedlatte.security.configuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Configuration
 public class RateLimitingConfiguration {
 
+    private static final DefaultRedisScript<List> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>("""
+            local current = redis.call('INCR', KEYS[1])
+            if current == 1 then
+                redis.call('PEXPIRE', KEYS[1], ARGV[1])
+            end
+            local pttl = redis.call('PTTL', KEYS[1])
+            return {current, pttl}
+            """, List.class);
+
     @Bean
-    public InMemoryRateLimiter inMemoryRateLimiter() {
-        return new InMemoryRateLimiter();
+    @ConditionalOnProperty(name = "spring.data.redis.host")
+    public RateLimiter redisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        return (key, maxTokens, windowDuration) -> {
+            try {
+                List result = redisTemplate.execute(
+                        RATE_LIMIT_SCRIPT,
+                        List.of("rate:" + key),
+                        String.valueOf(windowDuration.toMillis())
+                );
+                long count = ((Number) result.get(0)).longValue();
+                long pttl = ((Number) result.get(1)).longValue();
+                long resetTimeMillis = System.currentTimeMillis() + Math.max(0, pttl);
+                int remaining = (int) Math.max(0, maxTokens - count);
+                return new RateLimitResult(count <= maxTokens, maxTokens, remaining, resetTimeMillis);
+            } catch (Exception e) {
+                log.error("rate_limit.redis_error: key={}, message={}", key, e.getMessage(), e);
+                return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + windowDuration.toMillis());
+            }
+        };
     }
 
-    public static class InMemoryRateLimiter {
+    @Bean
+    @ConditionalOnMissingBean(RateLimiter.class)
+    public RateLimiter caffeineRateLimiter() {
+        log.info("rate_limit.fallback: Redis unavailable, using in-memory Caffeine rate limiter");
+        return new CaffeineRateLimiter();
+    }
+
+    static class CaffeineRateLimiter implements RateLimiter {
         private final Cache<String, TokenBucket> buckets = Caffeine.newBuilder()
                 .maximumSize(10_000)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
@@ -32,40 +71,30 @@ public class RateLimitingConfiguration {
                 return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + refillPeriod.toMillis());
             }
         }
-        
+
         private static class TokenBucket {
             private final int capacity;
-            private final long refillIntervalNanos;
             private final long nanosPerToken;
             private double tokens;
             private long lastRefillNanos;
-            
-            public TokenBucket(int capacity, Duration refillPeriod) {
+
+            TokenBucket(int capacity, Duration refillPeriod) {
                 this.capacity = capacity;
-                this.refillIntervalNanos = refillPeriod.toNanos();
-                this.nanosPerToken = refillIntervalNanos / capacity;
+                this.nanosPerToken = refillPeriod.toNanos() / capacity;
                 this.tokens = capacity;
                 this.lastRefillNanos = System.nanoTime();
             }
-            
-            public synchronized RateLimitResult tryConsume() {
-                refill();
+
+            synchronized RateLimitResult tryConsume() {
+                long now = System.nanoTime();
+                tokens = Math.min(capacity, tokens + (double)(now - lastRefillNanos) / nanosPerToken);
+                lastRefillNanos = now;
                 long resetTime = System.currentTimeMillis() + TimeUnit.NANOSECONDS.toMillis(nanosPerToken * (long)(capacity - tokens));
                 if (tokens >= 1.0) {
                     tokens -= 1.0;
                     return new RateLimitResult(true, capacity, (int) tokens, resetTime);
                 }
                 return new RateLimitResult(false, capacity, 0, resetTime);
-            }
-            
-            private void refill() {
-                long now = System.nanoTime();
-                long elapsed = now - lastRefillNanos;
-                if (elapsed > 0) {
-                    double tokensToAdd = (double) elapsed / nanosPerToken;
-                    tokens = Math.min(capacity, tokens + tokensToAdd);
-                    lastRefillNanos = now;
-                }
             }
         }
     }

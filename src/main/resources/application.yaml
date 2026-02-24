@@ -95,12 +95,15 @@ spring:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
-  # Redis Properties (DISABLED - using HashMap cache)
+  # Redis Properties
   #
-  # data:
-  #   redis:
-  #     host: ${REDIS_HOST}
-  #     port: ${REDIS_PORT}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   #
   # Email Properties
@@ -206,7 +209,7 @@ management:
       application: ${spring.application.name}
   health:
     redis:
-      enabled: false
+      enabled: true
   tracing:
     sampling:
       probability: 0.1

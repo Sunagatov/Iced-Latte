@@ -17,7 +17,7 @@ class TokenCacheTest {
 
     @BeforeEach
     void setUp() {
-        tokenCache = new TokenCache(5); // 5 minutes TTL
+        tokenCache = new InMemoryTokenCache(5);
         request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
     }
 
@@ -25,8 +25,7 @@ class TokenCacheTest {
     @DisplayName("addToken and getToken returns stored request")
     void addAndGet_validToken_returnsRequest() {
         tokenCache.addToken("123456789", request);
-        UserRegistrationRequest result = tokenCache.getToken("123456789");
-        assertThat(result).isEqualTo(request);
+        assertThat(tokenCache.getToken("123456789")).isEqualTo(request);
     }
 
     @Test
@@ -49,6 +48,5 @@ class TokenCacheTest {
     @DisplayName("removeToken on non-existent key does not throw")
     void removeToken_nonExistentKey_doesNotThrow() {
         tokenCache.removeToken("nonexistent");
-        // no exception expected
     }
 }
