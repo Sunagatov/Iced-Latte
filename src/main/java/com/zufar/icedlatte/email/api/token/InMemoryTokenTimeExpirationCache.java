@@ -20,7 +20,7 @@ public class InMemoryTokenTimeExpirationCache implements TokenTimeExpirationCach
     private final Cache<String, OffsetDateTime> cache;
 
     public InMemoryTokenTimeExpirationCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
-        log.info("token_expiration_cache.fallback: Redis unavailable, using in-memory Guava expiration cache");
+        log.info("token_expiration_cache.mode: in-memory (Redis not configured)");
         this.expireTimeMinutes = expireTime;
         this.cache = CacheBuilder.newBuilder().expireAfterWrite(expireTime, TimeUnit.MINUTES).build();
     }

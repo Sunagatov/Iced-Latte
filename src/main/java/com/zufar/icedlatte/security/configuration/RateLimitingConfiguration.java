@@ -31,6 +31,7 @@ public class RateLimitingConfiguration {
     @Bean
     @ConditionalOnProperty(name = "spring.data.redis.host")
     public RateLimiter redisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.mode: Redis");
         return (key, maxTokens, windowDuration) -> {
             try {
                 @SuppressWarnings("rawtypes")
@@ -54,7 +55,7 @@ public class RateLimitingConfiguration {
     @Bean
     @ConditionalOnMissingBean(RateLimiter.class)
     public RateLimiter caffeineRateLimiter() {
-        log.info("rate_limit.fallback: Redis unavailable, using in-memory Caffeine rate limiter");
+        log.info("rate_limit.mode: in-memory Caffeine (Redis not configured)");
         return new CaffeineRateLimiter();
     }
 

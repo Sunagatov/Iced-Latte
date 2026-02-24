@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.email.exception.IncorrectTokenException;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.data.redis.host")
@@ -24,6 +27,9 @@ public class RedisTokenCache implements TokenCache {
 
     @Value("${temporary-cache.time.token}")
     private int expireTimeMinutes;
+
+    @PostConstruct
+    void init() { log.info("token_cache.mode: Redis"); }
 
     @Override
     public void addToken(String tokenKey, UserRegistrationRequest request) {

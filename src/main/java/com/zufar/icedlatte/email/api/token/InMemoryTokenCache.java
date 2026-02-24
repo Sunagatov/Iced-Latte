@@ -19,7 +19,7 @@ public class InMemoryTokenCache implements TokenCache {
     private final Cache<String, UserRegistrationRequest> cache;
 
     public InMemoryTokenCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
-        log.info("token_cache.fallback: Redis unavailable, using in-memory Guava token cache");
+        log.info("token_cache.mode: in-memory (Redis not configured)");
         this.cache = CacheBuilder.newBuilder().expireAfterWrite(expireTime, TimeUnit.MINUTES).build();
     }
 
