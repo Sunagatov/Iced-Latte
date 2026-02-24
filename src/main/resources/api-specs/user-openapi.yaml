@@ -260,6 +260,141 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/users/addresses:
+    get:
+      tags:
+        - "User"
+      summary: "Get delivery addresses"
+      operationId: "getDeliveryAddresses"
+      responses:
+        "200":
+          description: "List of delivery addresses."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeliveryAddressDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - "User"
+      summary: "Add delivery address"
+      operationId: "addDeliveryAddress"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryAddressRequest"
+      responses:
+        "201":
+          description: "Address created."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryAddressDto"
+        "400":
+          description: "Invalid input."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/addresses/{addressId}:
+    put:
+      tags:
+        - "User"
+      summary: "Update delivery address"
+      operationId: "updateDeliveryAddress"
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryAddressRequest"
+      responses:
+        "200":
+          description: "Address updated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryAddressDto"
+        "404":
+          description: "Address not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - "User"
+      summary: "Delete delivery address"
+      operationId: "deleteDeliveryAddress"
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: "Address deleted."
+        "404":
+          description: "Address not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/addresses/{addressId}/default:
+    patch:
+      tags:
+        - "User"
+      summary: "Set default delivery address"
+      operationId: "setDefaultDeliveryAddress"
+      parameters:
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "Default address updated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryAddressDto"
+        "404":
+          description: "Address not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/users/avatar:
     post:
       tags:
@@ -514,6 +649,66 @@ components:
           allOf:
             - $ref: "#/components/schemas/PasswordField"
           example: "NewSecurePassword123!"
+
+    DeliveryAddressDto:
+      type: "object"
+      description: "A saved delivery address."
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+          example: "Home"
+        line:
+          type: string
+          example: "123 Coffee St"
+        city:
+          type: string
+          example: "London"
+        country:
+          type: string
+          example: "United Kingdom"
+        postcode:
+          type: string
+          example: "E1 6AN"
+        isDefault:
+          type: boolean
+
+    DeliveryAddressRequest:
+      type: "object"
+      required:
+        - label
+        - line
+        - city
+        - country
+        - postcode
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: "Home"
+        line:
+          type: string
+          minLength: 1
+          maxLength: 256
+          example: "123 Coffee St"
+        city:
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: "London"
+        country:
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: "United Kingdom"
+        postcode:
+          type: string
+          minLength: 1
+          maxLength: 16
+          example: "E1 6AN"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

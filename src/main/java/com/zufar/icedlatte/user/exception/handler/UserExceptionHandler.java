@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.exception.handler;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -22,6 +23,14 @@ public class UserExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
     private final ErrorDebugMessageCreator errorDebugMessageCreator;
+
+    @ExceptionHandler(DeliveryAddressNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleDeliveryAddressNotFoundException(final DeliveryAddressNotFoundException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+        log.warn("exception.delivery_address.not_found: message={}", apiErrorResponse.message());
+        return apiErrorResponse;
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

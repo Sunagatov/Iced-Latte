@@ -62,7 +62,7 @@ export $(cat .env | xargs) && mvn spring-boot:run
 ```bash
 mvn test
 ```
-✅ Expected: 154 tests pass, 0 failures. Tests use Testcontainers — Docker must be running.
+✅ Expected: 346 tests pass, 0 failures. Tests use Testcontainers — Docker must be running.
 
 ---
 

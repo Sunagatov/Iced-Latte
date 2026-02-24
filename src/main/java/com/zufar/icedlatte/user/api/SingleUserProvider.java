@@ -37,6 +37,6 @@ public class SingleUserProvider {
     public UserDto getUserByEmail(final String email) throws UserNotFoundException {
         return userCrudRepository.findByEmail(email)
                 .map(userDtoConverter::toDto)
-                .orElseThrow(() -> new UserNotFoundException(null));
+                .orElseThrow(() -> new UserNotFoundException(email));
     }
 }

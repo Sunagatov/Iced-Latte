@@ -139,3 +139,9 @@ databaseChangeLog:
       file: db/changelog/version-1.0/23.02.2026.part1.add-index-favorite-list-user-id.sql
       errorIfMissing: true
 
+  # ========== DELIVERY ADDRESSES ==========
+  # Multiple delivery addresses per user
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part1.create-delivery-address-table.sql
+      errorIfMissing: true
+
