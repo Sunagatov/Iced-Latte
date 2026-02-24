@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.configuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class RateLimitingConfiguration {
 
+    @SuppressWarnings("rawtypes")
     private static final DefaultRedisScript<List> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>("""
             local current = redis.call('INCR', KEYS[1])
             if current == 1 then
@@ -33,6 +33,7 @@ public class RateLimitingConfiguration {
     public RateLimiter redisRateLimiter(RedisTemplate<String, String> redisTemplate) {
         return (key, maxTokens, windowDuration) -> {
             try {
+                @SuppressWarnings("rawtypes")
                 List result = redisTemplate.execute(
                         RATE_LIMIT_SCRIPT,
                         List.of("rate:" + key),
