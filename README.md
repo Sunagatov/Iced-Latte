@@ -125,6 +125,21 @@ Iced Latte has earned recognition from the broader tech community.
 
 ---
 
+## 📚 Guides & Features
+
+| 📄 Document | 📝 Description |
+|---|---|
+| [START.md](START.md) | IDE setup, Docker-only mode, troubleshooting |
+| [FEATURES.md](FEATURES.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
+| [CORS_SETUP.md](CORS_SETUP.md) | CORS configuration for local frontend development |
+| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
+| [CHANGELOG.md](CHANGELOG.md) | History of notable changes across releases |
+| [LICENSE](LICENSE) | CC BY-NC 4.0 — free for educational use, commercial use requires permission |
+
+---
+
 ## 📁 Project Structure
 
 ```
