@@ -30,7 +30,7 @@ public class GoogleAuthCallbackHandler {
     public UserAuthenticationResponse handle(String authorizationCode) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleTokenExchanger.exchange(authorizationCode);
 
-        String email = (String) payload.get("email");
+        String email = payload.getEmail();
         if (email == null || email.isBlank()) {
             throw new IllegalStateException("Google account has no email");
         }
@@ -50,13 +50,18 @@ public class GoogleAuthCallbackHandler {
                 .lastName(lastName)
                 .email(email)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                .authorities(Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)
                 .enabled(true)
                 .build();
         UserEntity saved = userRepository.save(user);
+        UserGrantedAuthority authority = UserGrantedAuthority.builder()
+                .authority(Authority.USER)
+                .user(saved)
+                .build();
+        saved.setAuthorities(Set.of(authority));
+        userRepository.save(saved);
         log.info("user.registered.google: userId={}", saved.getId());
         return saved;
     }

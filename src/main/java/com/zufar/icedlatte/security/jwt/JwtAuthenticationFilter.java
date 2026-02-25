@@ -40,7 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return "/api/v1/auth/refresh".equals(request.getRequestURI());
+        String uri = request.getRequestURI();
+        return "/api/v1/auth/refresh".equals(uri)
+                || "/api/v1/auth/google".equals(uri)
+                || "/api/v1/auth/google/callback".equals(uri);
     }
 
     @Override
