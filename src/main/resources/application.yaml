@@ -310,3 +310,9 @@ google:
   client-id: ${GOOGLE_AUTH_CLIENT_ID}
   client-secret: ${GOOGLE_AUTH_CLIENT_SECRET}
   redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
+
+#
+# Frontend Properties
+#
+frontend:
+  url: ${FRONTEND_URL:http://localhost:3001}

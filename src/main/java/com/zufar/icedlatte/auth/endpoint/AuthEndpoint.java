@@ -1,83 +1,69 @@
 package com.zufar.icedlatte.auth.endpoint;
 
-import com.zufar.icedlatte.auth.api.AuthorizationServerUrlCreator;
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
+import java.net.URI;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@Validated
 @RequestMapping("/api/v1/auth")
 public class AuthEndpoint {
 
-    private static final String AUTH_CODE_PATTERN = "^[a-zA-Z0-9_-]+$";
-    private static final int MIN_CODE_LENGTH = 10;
-    private static final int MAX_CODE_LENGTH = 512;
+    @Value("${google.auth.server.url}")
+    private String googleAuthServerUrl;
+
+    @Value("${google.client-id}")
+    private String clientId;
+
+    @Value("${google.scope}")
+    private String scope;
+
+    @Value("${google.redirect-uri}")
+    private String redirectUri;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
-    private final AuthorizationServerUrlCreator authorizationServerUrlCreator;
 
     @GetMapping("/google")
-    public ResponseEntity<String> getGoogleAuthorizationServerUrl() {
-        log.info("auth.google.url.creating");
-        var authorizationUrl = authorizationServerUrlCreator.create();
-        log.info("auth.google.url.created");
-        
-        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
-                .header(HttpHeaders.LOCATION, authorizationUrl)
-                .build();
+    public ResponseEntity<Void> initiateGoogleAuth() {
+        log.info("auth.google.initiate");
+        URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
+                .queryParam("scope", scope)
+                .queryParam("access_type", "offline")
+                .queryParam("response_type", "code")
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("client_id", clientId)
+                .build().toUri();
+        return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
     }
 
     @GetMapping("/google/callback")
-    public CompletableFuture<ResponseEntity<UserAuthenticationResponse>> googleAuthCallback(
-            @RequestParam("code") String authorizationCode) {
-        
-        log.info("auth.google.callback.processing");
-        
-        return validateAuthorizationCode(authorizationCode)
-                .map(this::processValidCode)
-                .orElseGet(() -> CompletableFuture.completedFuture(
-                    ResponseEntity.badRequest().build()));
-    }
-
-    private Optional<String> validateAuthorizationCode(String code) {
-        return Optional.ofNullable(code)
-                .map(String::trim)
-                .filter(Predicate.not(String::isEmpty))
-                .filter(c -> c.matches(AUTH_CODE_PATTERN))
-                .filter(c -> c.length() >= MIN_CODE_LENGTH && c.length() <= MAX_CODE_LENGTH)
-                .or(() -> {
-                    log.warn("auth.google.callback.invalid_code");
-                    return Optional.empty();
-                });
-    }
-
-    private CompletableFuture<ResponseEntity<UserAuthenticationResponse>> processValidCode(String code) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                var response = googleAuthCallbackHandler.googleAuthCallback(code);
-                log.info("auth.google.callback.completed");
-                
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-                        
-            } catch (Exception e) {
-                log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-        });
+    public ResponseEntity<Void> googleCallback(@RequestParam("code") String code) {
+        try {
+            var tokens = googleAuthCallbackHandler.handle(code);
+            URI destination = UriComponentsBuilder.fromUriString(frontendUrl + "/auth/google/callback")
+                    .queryParam("token", tokens.getToken())
+                    .queryParam("refreshToken", tokens.getRefreshToken())
+                    .build().toUri();
+            return ResponseEntity.status(HttpStatus.FOUND).location(destination).build();
+        } catch (Exception e) {
+            log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendUrl + "/signin?error=auth_failed"))
+                    .build();
+        }
     }
 }

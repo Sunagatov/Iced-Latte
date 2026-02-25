@@ -72,9 +72,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        log.info("auth.authenticating");
         var response = userAuthenticationService.authenticate(request);
-        log.info("auth.authenticated");
         return ResponseEntity.ok(response);
     }
 
@@ -93,13 +91,12 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         log.info("auth.logout.processing");
-        
         String authHeader = httpRequest.getHeader("Authorization");
         if (!StringUtils.hasText(authHeader)) {
             log.debug("auth.logout.no_token");
             return ResponseEntity.ok().build();
         }
-        
+
         try {
             String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
             jwtBlacklistValidator.addToBlacklist(token);
@@ -108,7 +105,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             log.warn("auth.logout.token_error: reason={}", ex.getMessage(), ex);
             // Still return success to prevent information leakage
         }
-        
+
         return ResponseEntity.ok().build();
     }
 
@@ -130,7 +127,6 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        log.info("auth.password.changing");
         var user = singleUserProvider.getUserByEmail(request.getEmail());
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
         changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());

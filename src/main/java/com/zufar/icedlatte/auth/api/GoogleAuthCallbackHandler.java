@@ -9,13 +9,11 @@ import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,63 +22,42 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GoogleAuthCallbackHandler {
 
-    private final GoogleIdTokenCreator googleIdTokenCreator;
+    private final GoogleTokenExchanger googleTokenExchanger;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userCrudRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserAuthenticationResponse googleAuthCallback(String authorizationCode) throws GeneralSecurityException, IOException {
-        GoogleIdToken idToken = googleIdTokenCreator.createGoogleIdToken(authorizationCode);
-        if (idToken == null) {
-            log.warn("auth.google.invalid_token");
-            throw new IllegalStateException("Invalid ID token.");
-        }
+    public UserAuthenticationResponse handle(String authorizationCode) throws GeneralSecurityException, IOException {
+        GoogleIdToken.Payload payload = googleTokenExchanger.exchange(authorizationCode);
 
-        GoogleIdToken.Payload payload = idToken.getPayload();
         String email = (String) payload.get("email");
-        String firstName = (String) payload.get("given_name");
-        String lastName = (String) payload.get("family_name");
-
-        if (StringUtils.isEmpty(email)) {
-            log.warn("auth.google.empty_email");
-            throw new IllegalStateException("Error during Google authentication callback. The user's email is empty.");
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("Google account has no email");
         }
 
-        UserEntity userEntity = userRepository
-                .findByEmail(email)
-                .orElseGet(() -> registerNewUser(firstName, lastName, email));
-
-        final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity);
-        final String jwtToken = jwtTokenProvider.generateToken(userEntity);
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseGet(() -> createUser((String) payload.get("given_name"), (String) payload.get("family_name"), email));
 
         UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(jwtToken);
-        response.setRefreshToken(jwtRefreshToken);
+        response.setToken(jwtTokenProvider.generateToken(user));
+        response.setRefreshToken(jwtTokenProvider.generateRefreshToken(user));
         return response;
     }
 
-    private UserEntity registerNewUser(final String firstName,
-                                       final String lastName,
-                                       final String email) {
-        String password = UUID.randomUUID().toString();
-        String encodedPassword = passwordEncoder.encode(password);
-        Set<UserGrantedAuthority> authorities = Collections.singleton(UserGrantedAuthority.builder().authority(Authority.USER).build());
-
-        UserEntity userEntity = UserEntity.builder()
+    private UserEntity createUser(String firstName, String lastName, String email) {
+        UserEntity user = UserEntity.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .password(encodedPassword)
-                .authorities(authorities)
+                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                .authorities(Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)
                 .enabled(true)
                 .build();
-
-        UserEntity savedUser = userCrudRepository.save(userEntity);
-        log.info("user.registered.google: userId={}", savedUser.getId());
-        return savedUser;
+        UserEntity saved = userRepository.save(user);
+        log.info("user.registered.google: userId={}", saved.getId());
+        return saved;
     }
 }
