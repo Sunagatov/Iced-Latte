@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RestController
@@ -38,23 +40,35 @@ public class AuthEndpoint {
     private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
 
     @GetMapping("/google")
-    public ResponseEntity<Void> initiateGoogleAuth() {
+    public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
         log.info("auth.google.initiate");
+        String callbackBase = redirectUrl != null && !redirectUrl.isBlank() ? redirectUrl : frontendUrl;
+        String state = Base64.getUrlEncoder().encodeToString(callbackBase.getBytes(StandardCharsets.UTF_8));
         URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
                 .queryParam("scope", scope)
                 .queryParam("access_type", "offline")
                 .queryParam("response_type", "code")
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("client_id", clientId)
+                .queryParam("state", state)
                 .build().toUri();
         return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
     }
 
     @GetMapping("/google/callback")
-    public ResponseEntity<Void> googleCallback(@RequestParam("code") String code) {
+    public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
+                                               @RequestParam(required = false) String state) {
+        String callbackBase = frontendUrl;
+        if (state != null && !state.isBlank()) {
+            try {
+                callbackBase = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                log.warn("auth.google.callback.invalid-state");
+            }
+        }
         try {
             var tokens = googleAuthCallbackHandler.handle(code);
-            URI destination = UriComponentsBuilder.fromUriString(frontendUrl + "/auth/google/callback")
+            URI destination = UriComponentsBuilder.fromUriString(callbackBase + "/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())
                     .build().toUri();
@@ -62,7 +76,7 @@ public class AuthEndpoint {
         } catch (Exception e) {
             log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signin?error=auth_failed"))
+                    .location(URI.create(callbackBase + "/signin?error=auth_failed"))
                     .build();
         }
     }

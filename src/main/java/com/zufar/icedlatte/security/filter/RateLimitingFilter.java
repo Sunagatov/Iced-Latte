@@ -118,6 +118,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
     
     private RateLimitConfig getRateLimitConfig(String requestPath) {
+        if (requestPath.startsWith("/api/v1/auth/google")) {
+            return new RateLimitConfig(globalMaxRequests, globalWindowDuration);
+        }
         if (requestPath.startsWith("/api/v1/auth/")) {
             return new RateLimitConfig(authMaxRequests, authWindowDuration);
         }

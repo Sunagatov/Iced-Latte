@@ -60,6 +60,8 @@ spring:
       minimum-idle: 2
       maximum-pool-size: 10
       connection-timeout: 20000
+      max-lifetime: 600000
+      keepalive-time: 30000
   jpa:
     hibernate:
       ddl-auto: validate

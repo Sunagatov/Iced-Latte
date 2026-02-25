@@ -27,21 +27,27 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         log.info("cache.mode: Redis");
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
-        
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-        
+        ObjectMapper typedMapper = new ObjectMapper();
+        typedMapper.registerModule(new JavaTimeModule());
+        typedMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+        GenericJackson2JsonRedisSerializer typedSerializer = new GenericJackson2JsonRedisSerializer(typedMapper);
+
+        ObjectMapper plainMapper = new ObjectMapper();
+        plainMapper.registerModule(new JavaTimeModule());
+        GenericJackson2JsonRedisSerializer plainSerializer = new GenericJackson2JsonRedisSerializer(plainMapper);
+
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(cacheProperties.getDefaultTtl())
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(typedSerializer));
+
+        RedisCacheConfiguration plainConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(plainSerializer));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withCacheConfiguration("productById", defaultConfig.entryTtl(cacheProperties.getProductTtl()))
-                .withCacheConfiguration("brands", defaultConfig.entryTtl(cacheProperties.getBrandsTtl()))
-                .withCacheConfiguration("sellers", defaultConfig.entryTtl(cacheProperties.getSellersTtl()))
+                .withCacheConfiguration("brands", plainConfig.entryTtl(cacheProperties.getBrandsTtl()))
+                .withCacheConfiguration("sellers", plainConfig.entryTtl(cacheProperties.getSellersTtl()))
                 .withCacheConfiguration("productImageUrl", defaultConfig.entryTtl(cacheProperties.getImageUrlTtl()))
                 .build();
     }
