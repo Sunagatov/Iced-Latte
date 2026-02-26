@@ -36,18 +36,6 @@ spring:
   output:
     ansi:
       enabled: never
-  ai:
-    openai:
-      api-key: ${SPRING_AI_OPENAI_API_KEY}
-      prompt: "You are an assistant who checks texts for appropriateness.
-            Analyze the following text {review} and determine if it contains political statements,
-            non-English language, or inappropriate language.
-            If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets. 
-            Only the reason should be in curly brackets.
-            Else return OK"
-      chat:
-        options:
-          model: gpt-3.5-turbo
 
   #
   # Database Properties
@@ -294,12 +282,12 @@ logging:
 #
 # AI Properties
 #
-ai:
-  # https://platform.openai.com/docs/api-reference/moderations/create
-  url: "https://api.openai.com/v1/moderations"
-  api-key: ${SPRING_AI_OPENAI_API_KEY:}
-  request-body: '{"input": "$message"}'
-  message-replacement-pattern: "$message"
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: ${OPENAI_API_KEY:}
+      model-name: gpt-4o-mini
+      temperature: 0.0
 
 #
 # Google Auth Properties

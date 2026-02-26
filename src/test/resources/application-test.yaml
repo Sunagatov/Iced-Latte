@@ -36,22 +36,6 @@ spring:
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     drop-first: true
-  #
-  # Spring AI Properties (disabled in tests - fake key prevents real API calls)
-  #
-  ai:
-    openai:
-      api-key: "sk-proj-"
-      prompt: |
-        You are an assistant who checks texts for appropriateness.
-        Analyze the following text {review} and determine if it contains political statements,
-        non-English language, or inappropriate language.
-        If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets.
-        Only the reason should be in curly brackets.
-        Else return OK
-      chat:
-        options:
-          model: gpt-3.5-turbo
 
   #
   # Aws Properties
@@ -114,12 +98,12 @@ jwt:
 #
 # AI Properties
 #
-ai:
-  # https://platform.openai.com/docs/api-reference/moderations/create
-  url: "https://api.openai.com/v1/moderations"
-  api-key: "sk-api-key"
-  request-body: '{"input": "$message"}'
-  message-replacement-pattern: "$message"
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: "sk-test-placeholder"
+      model-name: gpt-4o-mini
+      temperature: 0.0
 
 #
 # Google Auth Properties

@@ -45,7 +45,7 @@
 
         <!-- ========== SPRING FRAMEWORK VERSIONS ========== -->
         <spring-boot.version>3.5.11</spring-boot.version>
-        <spring-ai-bom.version>1.0.0</spring-ai-bom.version>
+        <langchain4j.version>1.0.0-beta5</langchain4j.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
         <postgresql.version>42.7.7</postgresql.version>
@@ -265,6 +265,18 @@
             <groupId>jakarta.mail</groupId>
             <artifactId>jakarta.mail-api</artifactId>
             <version>${jakarta.mail-api.version}</version>
+        </dependency>
+
+        <!-- ========== AI ========== -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
         </dependency>
 
         <!-- ========== UTILITIES ========== -->
