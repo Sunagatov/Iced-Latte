@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.ai.provider;
 
 import com.zufar.icedlatte.ai.api.AiModerationService;
-import com.zufar.icedlatte.openai.exception.InappropriateContentException;
+import com.zufar.icedlatte.ai.exception.InappropriateContentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
