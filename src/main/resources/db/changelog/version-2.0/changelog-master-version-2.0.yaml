@@ -1,3 +1,5 @@
 # Database Changelog - Version 2.0
 
-databaseChangeLog: []
+databaseChangeLog:
+  - include:
+      file: db/changelog/version-2.0/add-ai-summary-to-product-reviews.sql

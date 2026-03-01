@@ -36,7 +36,7 @@
 
 ## 🚀 Quick Start
 
-**📋 Prerequisites:** Java 21, Maven 3.9+, Docker Desktop
+**📋 Prerequisites:** Java 25, Maven 3.9+, Docker Desktop
 
 ```bash
 # 1. 📥 Clone
@@ -109,7 +109,7 @@ Iced Latte has earned recognition from the broader tech community.
 
 | 📂 Category | 🔧 Technology |
 |---|---|
-| 💻 Language | Java 21 |
+| 💻 Language | Java 25 |
 | 🏗️ Framework | Spring Boot 3.5, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
 | 🗄️ Database | PostgreSQL 42.7, Liquibase 4.32 |
 | ⚡ Cache | Redis, Caffeine |

@@ -39,9 +39,9 @@
         <project.version>0.0.1</project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>25</java.version>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
 
         <!-- ========== SPRING FRAMEWORK VERSIONS ========== -->
         <spring-boot.version>3.5.11</spring-boot.version>
@@ -60,7 +60,7 @@
         <gson.version>2.11.0</gson.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
@@ -83,9 +83,9 @@
         <caffeine.version>3.1.8</caffeine.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
-        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>4.0.0.4121</sonar-maven-plugin.version>
 
         <!-- ========== OPENAPI CONFIGURATION ========== -->

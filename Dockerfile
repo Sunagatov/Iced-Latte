@@ -1,7 +1,7 @@
 # =============================================================================
 # BUILD STAGE
 # =============================================================================
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 # Build arguments
 ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
@@ -24,7 +24,7 @@ RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION}
 # =============================================================================
 # EXTRACT STAGE — split fat JAR into layers for Docker cache efficiency
 # =============================================================================
-FROM eclipse-temurin:21-jre-alpine AS extract
+FROM eclipse-temurin:25-jre-alpine AS extract
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
@@ -32,7 +32,7 @@ RUN java -Djarmode=layertools -jar app.jar extract
 # =============================================================================
 # CDS TRAINING STAGE — generate class-data sharing archive
 # =============================================================================
-FROM eclipse-temurin:21-jre-alpine AS cds-train
+FROM eclipse-temurin:25-jre-alpine AS cds-train
 WORKDIR /app
 COPY --from=extract /app/dependencies/ ./
 COPY --from=extract /app/spring-boot-loader/ ./
@@ -46,7 +46,7 @@ RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
 # =============================================================================
 # RUNTIME STAGE
 # =============================================================================
-FROM gcr.io/distroless/java21-debian12:nonroot
+FROM gcr.io/distroless/java25-debian12:nonroot
 
 # Build arguments for runtime
 ARG VERSION=0.0.1

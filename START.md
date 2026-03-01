@@ -14,14 +14,14 @@ Make sure you have all of the following installed before you start:
 
 | Tool | Version | Download |
 |------|---------|----------|
-| Java JDK | 21 | https://adoptium.net/ |
+| Java JDK | 25 | https://adoptium.net/ |
 | Maven | 3.9+ | https://maven.apache.org/download.cgi |
 | Docker Desktop | latest | https://www.docker.com/products/docker-desktop/ |
 | IntelliJ IDEA | any edition | https://www.jetbrains.com/idea/download/ (for Option A) |
 
 To verify your installations, run these commands in a terminal:
 ```bash
-java -version       # should print: openjdk 21...
+java -version       # should print: openjdk 25...
 mvn -version        # should print: Apache Maven 3.9...
 docker --version    # should print: Docker version...
 ```
