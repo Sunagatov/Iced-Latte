@@ -97,12 +97,6 @@ databaseChangeLog:
       file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql
       errorIfMissing: true
       
-  # ========== PAYMENT SYSTEM ==========
-  # Payment records
-  - include:
-      file: db/changelog/version-1.0/20.07.2023.create-payment-table.sql
-      errorIfMissing: true
-      
   # ========== REVIEW & RATING SYSTEM ==========
   # Product reviews, ratings, and likes
   - include:
