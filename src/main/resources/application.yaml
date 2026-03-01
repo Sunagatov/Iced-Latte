@@ -5,7 +5,10 @@
 server:
   port: ${PORT:${APP_SERVER_PORT}}
   tomcat:
-    accept-count: 100
+    accept-count: 20
+    threads:
+      max: 50
+      min-spare: 5
     max-http-form-post-size: 2MB
     max-swallow-size: 2MB
   error:
@@ -41,12 +44,12 @@ spring:
   # Database Properties
   #
   datasource:
-    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=require
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=${DATASOURCE_SSL_MODE:disable}
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
     hikari:
-      minimum-idle: 2
-      maximum-pool-size: 10
+      minimum-idle: 1
+      maximum-pool-size: 5
       connection-timeout: 20000
       max-lifetime: 600000
       keepalive-time: 30000
@@ -267,6 +270,8 @@ logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+  level:
+    io.opentelemetry.exporter: WARN
 
 #
 # AI Properties

@@ -17,7 +17,12 @@ management:
       show-details: when-authorized
   tracing:
     sampling:
-      probability: 0.1
+      probability: 0.05
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+      headers:
+        dd-api-key: ${DD_API_KEY}
 
 springdoc:
   api-docs:
