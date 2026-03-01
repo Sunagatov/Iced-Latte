@@ -121,6 +121,10 @@ google:
 aws:
   account-id: test-account-id
 
+stripe:
+  secret-key: "sk_test_placeholder"
+  webhook-secret: "whsec_test_placeholder"
+
 #
 # Monitoring Properties
 #

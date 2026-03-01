@@ -121,6 +121,9 @@ spring:
   messages:
     basename: messages/messages
 
+  config:
+    import: optional:stripe.yaml
+
   # Avatar Upload Properties
   #
   servlet:
@@ -161,7 +164,12 @@ temporary-cache:
     token: 1
   get-token-enabled: true
 
-  #
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+#
+# Spring Doc Properties
 #
 springdoc:
   api-docs:

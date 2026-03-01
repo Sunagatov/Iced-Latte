@@ -57,6 +57,8 @@ public class SpringSecurityConfiguration {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
+                        .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
+                        .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
                         .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()

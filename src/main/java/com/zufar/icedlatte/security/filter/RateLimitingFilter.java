@@ -58,6 +58,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.search.window-duration:PT1M}")
     private Duration searchWindowDuration;
 
+    @Value("${security.rate-limit.payment-max-requests:10}")
+    private int paymentMaxRequests;
+
+    @Value("${security.rate-limit.payment-window-duration:PT1M}")
+    private Duration paymentWindowDuration;
+
     public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry) {
         this.rateLimiter = rateLimiter;
         this.allowedCounter = Counter.builder("rate_limit.requests.allowed")
@@ -123,6 +129,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
         if (requestPath.startsWith("/api/v1/auth/")) {
             return new RateLimitConfig(authMaxRequests, authWindowDuration);
+        }
+        if (requestPath.startsWith("/api/v1/payment/")) {
+            return new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
         }
         if (requestPath.contains("/ai/") || requestPath.contains("/openai/")) {
             return new RateLimitConfig(aiMaxRequests, aiWindowDuration);

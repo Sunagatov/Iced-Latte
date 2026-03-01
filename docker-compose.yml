@@ -12,3 +12,19 @@ services:
       - '8083:8083'
     networks:
       - iced-latte-network
+
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: datadog-agent
+    hostname: iced-latte-local
+    environment:
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=datadoghq.eu
+      - DD_HOSTNAME=iced-latte-local
+      - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
+      - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+    networks:
+      - iced-latte-network
