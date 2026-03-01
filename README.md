@@ -42,13 +42,10 @@
 # 1. 📥 Clone
 git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 
-# 2. 📝 Copy the example env file (all defaults work out of the box)
-cp local.env .env
+# 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
+docker compose up -d postgres redis minio minio-init
 
-# 3. 🐳 Start PostgreSQL + Redis
-docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb iced-latte-redis
-
-# 4. ▶️ Run
+# 3. ▶️ Run (uses committed .env with safe local defaults)
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
 
@@ -132,10 +129,8 @@ Iced Latte has earned recognition from the broader tech community.
 | [START.md](START.md) | IDE setup, Docker-only mode, troubleshooting |
 | [FEATURES.md](FEATURES.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
-| [CORS_SETUP.md](CORS_SETUP.md) | CORS configuration for local frontend development |
 | [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
-| [CHANGELOG.md](CHANGELOG.md) | History of notable changes across releases |
 | [LICENSE](LICENSE) | CC BY-NC 4.0 — free for educational use, commercial use requires permission |
 
 ---
@@ -165,7 +160,7 @@ src/main/java/com/zufar/icedlatte/
 
 🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker container directly via SSH.
 
-The full production setup is in [docker-compose.local.yml](docker-compose.local.yml). On every merge to `master`, [GitHub Actions](.github/workflows/dev-branch-pr-deployment-pipeline.yml) builds, tests, and deploys to production automatically. Only maintainers can merge to `master`.
+The full production setup is in [docker-compose.yml](docker-compose.yml). On every merge to `master`, [GitHub Actions](.github/workflows/dev-branch-pr-deployment-pipeline.yml) builds, tests, and deploys to production automatically. Only maintainers can merge to `master`.
 
 🔍 Explore the [`.github/`](.github/workflows/) folder for the full CI/CD pipeline.
 
