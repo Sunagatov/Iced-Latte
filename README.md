@@ -58,6 +58,13 @@ export $(cat .env | xargs) && mvn spring-boot:run
 
 > 💡 Using IntelliJ? See [START.md](START.md) for IDE run configuration, Docker-only setup, and troubleshooting.
 
+> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [START.md](START.md):
+> ```bash
+> git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git  # sibling of Iced-Latte/
+> docker compose --profile backend --profile frontend up -d --build
+> ```
+> Frontend at http://localhost:3000 — built from source every time.
+
 **🧪 Run the tests:**
 ```bash
 mvn test

@@ -6,7 +6,7 @@ Pick the setup that fits you:
 |--------|----------------|----------|
 | **A** | Backend in IDE + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Active development, debugging |
 | **B** | Backend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Quick smoke test, no IDE needed |
-| **C** | Backend + Frontend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Testing the UI against the backend |
+| **C** | Backend + Frontend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Testing the UI against the backend (requires both repos cloned side by side) |
 
 ---
 
@@ -171,16 +171,17 @@ docker compose --profile backend up -d --build
 
 ## Option C — Backend + Frontend + Infrastructure (database, cache, file storage) in Docker
 
-> Best for: testing the UI against the backend. Adds the React frontend on top of Option B — no Node.js installation needed.
+> Best for: testing the UI against the backend. Builds the React frontend from source — no Node.js installation needed, but the first build takes several extra minutes.
 
-### Step 1 — Clone the repository
+### Step 1 — Clone both repositories (side by side)
 
 ```bash
 git clone https://github.com/Sunagatov/Iced-Latte.git
+git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git
 cd Iced-Latte
 ```
 
-✅ You should see a new `Iced-Latte/` folder created locally.
+✅ Both folders must sit next to each other: `Iced-Latte/` and `Iced-Latte-Frontend/`.
 
 ### Step 2 — Start everything including the frontend
 
@@ -191,7 +192,7 @@ docker compose --profile backend --profile frontend up -d --build
 This builds and starts everything from Option B plus:
 - `iced-latte-frontend` — React app on port `3000`
 
-> ⏳ The first build takes several minutes. Subsequent builds are faster.
+> ⏳ The first build takes several minutes (Maven + npm). Subsequent builds are faster.
 
 ✅ When the build finishes, all 5 containers should be running. You can verify with `docker ps`.
 

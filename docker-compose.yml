@@ -114,11 +114,13 @@ services:
   # ── Frontend (profile: frontend) ───────────────────────────────────────────
 
   frontend:
-    image: ghcr.io/sunagatov/iced-latte-frontend:latest
+    build:
+      context: ../Iced-Latte-Frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8083
     container_name: iced-latte-frontend
     profiles: [frontend]
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8083
     ports:
       - '3000:3000'
     networks:
