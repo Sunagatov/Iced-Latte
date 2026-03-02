@@ -2,7 +2,6 @@ package com.zufar.icedlatte.product.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,9 +25,6 @@ class ProductExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
-    @Mock
-    private ErrorDebugMessageCreator errorDebugMessageCreator;
-
     @InjectMocks
     private ProductExceptionHandler productExceptionHandler;
 
@@ -45,7 +41,6 @@ class ProductExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = productExceptionHandler.handleProductNotFoundException(exception);
 
@@ -54,6 +49,5 @@ class ProductExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

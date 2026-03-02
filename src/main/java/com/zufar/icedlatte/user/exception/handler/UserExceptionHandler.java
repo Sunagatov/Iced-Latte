@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.user.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class UserExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(DeliveryAddressNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -37,7 +35,6 @@ public class UserExceptionHandler {
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("exception.user.not_found: message={}", apiErrorResponse.message());
-        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 
@@ -46,7 +43,6 @@ public class UserExceptionHandler {
     public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
         log.warn("exception.user.username_not_found: message={}", apiErrorResponse.message());
-        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 
@@ -55,7 +51,6 @@ public class UserExceptionHandler {
     public ApiErrorResponse handleInvalidOldPasswordException(final InvalidOldPasswordException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
         log.warn("exception.user.invalid_password: message={}", apiErrorResponse.message());
-        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 

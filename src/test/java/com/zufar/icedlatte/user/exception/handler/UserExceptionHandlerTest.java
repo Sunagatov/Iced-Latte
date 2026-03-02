@@ -2,7 +2,6 @@ package com.zufar.icedlatte.user.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -28,9 +27,6 @@ class UserExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
-    @Mock
-    private ErrorDebugMessageCreator errorDebugMessageCreator;
-
     @InjectMocks
     private UserExceptionHandler userExceptionHandler;
 
@@ -47,7 +43,6 @@ class UserExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUserNotFoundException(exception);
 
@@ -56,7 +51,6 @@ class UserExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -71,7 +65,6 @@ class UserExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUsernameNotFoundException(exception);
 
@@ -80,7 +73,6 @@ class UserExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -95,7 +87,6 @@ class UserExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleInvalidOldPasswordException(exception);
 
@@ -104,6 +95,5 @@ class UserExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

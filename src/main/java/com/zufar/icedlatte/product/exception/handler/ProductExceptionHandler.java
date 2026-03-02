@@ -2,7 +2,6 @@ package com.zufar.icedlatte.product.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -20,14 +19,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ProductExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(ProductNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleProductNotFoundException(final ProductNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("exception.product.not_found: message={}", apiErrorResponse.message());
-        errorDebugMessageCreator.buildErrorDebugMessage(exception);
         return apiErrorResponse;
     }
 

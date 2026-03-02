@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.email.sender;
 
 import com.zufar.icedlatte.email.exception.MessageBuilderNotFoundException;
-import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -28,9 +27,9 @@ public abstract class AbstractEmailSender<T> {
 
 protected String getMessage(T event) {
     return messageBuilders.stream()
-            .filter(builder -> builder.supports(EmailConfirmMessage.class))
+            .filter(builder -> builder.supports(event.getClass()))
             .findFirst()
-            .orElseThrow(() -> new MessageBuilderNotFoundException(EmailConfirmMessage.class.getName()))
+            .orElseThrow(() -> new MessageBuilderNotFoundException(event.getClass().getName()))
             .buildMessage(event, Locale.ROOT);
 }
 }

@@ -46,8 +46,11 @@ git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 docker compose up -d postgres redis minio minio-init
 
 # 3. ▶️ Run (uses committed .env with safe local defaults)
+# Linux / macOS / Git Bash on Windows:
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
+
+> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [START.md](START.md).
 
 🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
 
@@ -59,7 +62,7 @@ export $(cat .env | xargs) && mvn spring-boot:run
 ```bash
 mvn test
 ```
-✅ Expected: 346 tests pass, 0 failures. Tests use Testcontainers — Docker must be running.
+✅ Tests use Testcontainers — Docker must be running.
 
 ---
 
@@ -108,11 +111,10 @@ Iced Latte has earned recognition from the broader tech community.
 |---|---|
 | 💻 Language | Java 25 |
 | 🏗️ Framework | Spring Boot 3.5, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
-| 🗄️ Database | PostgreSQL 42.7, Liquibase 4.32 |
+| 🗄️ Database | PostgreSQL, Liquibase 4.32 |
 | ⚡ Cache | Redis, Caffeine |
 | 🔒 Security | JWT (JJWT 0.12), Google OAuth2, TLS |
 | ☁️ Cloud | AWS S3 SDK 2.x |
-| 💳 Payments | Stripe |
 | 📊 Monitoring | Micrometer, Prometheus, OpenTelemetry |
 | 🧪 Testing | JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco |
 | 📝 Logging | Logback, Logstash encoder, SLF4J |
@@ -140,6 +142,7 @@ Iced Latte has earned recognition from the broader tech community.
 ```
 src/main/java/com/zufar/icedlatte/
 ├── 🔒 security/       # JWT auth, Google OAuth2, registration, login
+├── 🔑 auth/           # Google OAuth2 callback, auth redirects
 ├── 👤 user/           # User profile management
 ├── 📦 product/        # Product catalog
 ├── 🛒 cart/           # Shopping cart
@@ -148,9 +151,8 @@ src/main/java/com/zufar/icedlatte/
 ├── ❤️ favorite/       # Favorites list
 ├── 📧 email/          # Email verification & notifications
 ├── 📁 filestorage/    # AWS S3 file upload/download
-├── 🤖 openai/         # AI integration
-├── 📊 telemetry/      # Metrics & tracing endpoints
 ├── 🔧 common/         # Shared utilities, validation, monitoring
+├── 💳 payment/        # Stripe webhook & session handling
 └── 🚀 astartup/       # Startup data migration
 ```
 

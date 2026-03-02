@@ -29,7 +29,7 @@ public class RedisConfig {
         log.info("cache.mode: Redis");
         ObjectMapper typedMapper = new ObjectMapper();
         typedMapper.registerModule(new JavaTimeModule());
-        typedMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+        typedMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
         GenericJackson2JsonRedisSerializer typedSerializer = new GenericJackson2JsonRedisSerializer(typedMapper);
 
         ObjectMapper plainMapper = new ObjectMapper();

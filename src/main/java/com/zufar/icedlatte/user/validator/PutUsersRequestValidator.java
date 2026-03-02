@@ -1,18 +1,13 @@
 package com.zufar.icedlatte.user.validator;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Map.Entry;
 
 @Service
 @RequiredArgsConstructor
@@ -27,23 +22,14 @@ public class PutUsersRequestValidator {
                          String lastName,
                          String phoneNumber,
                          String birthDate,
-                         JsonObject addressDto) {
+                         AddressDto addressDto) {
         StringBuilder errorMessages = new StringBuilder();
 
-        StringBuilder firstNameParameterMessages = validateNameParameter(firstName, "First name");
-        errorMessages.append(firstNameParameterMessages);
-
-        StringBuilder secondNameParameterMessages = validateNameParameter(lastName, "Last name");
-        errorMessages.append(secondNameParameterMessages);
-
-        StringBuilder phoneNumberParameterMessages = validatePhoneParameter(phoneNumber);
-        errorMessages.append(phoneNumberParameterMessages);
-
-        StringBuilder birthDateParameterMessages = validateBirthDateParameter(birthDate);
-        errorMessages.append(birthDateParameterMessages);
-
-        StringBuilder addressJSONParameterMessages = validateAddressJSONParameter(addressDto);
-        errorMessages.append(addressJSONParameterMessages);
+        errorMessages.append(validateNameParameter(firstName, "First name"));
+        errorMessages.append(validateNameParameter(lastName, "Last name"));
+        errorMessages.append(validatePhoneParameter(phoneNumber));
+        errorMessages.append(validateBirthDateParameter(birthDate));
+        errorMessages.append(validateAddressParameter(addressDto));
 
         if (!errorMessages.isEmpty()) {
             throw new PutUsersBadRequestException(errorMessages.toString());
@@ -89,37 +75,24 @@ public class PutUsersRequestValidator {
         return errorMessages;
     }
 
-    private StringBuilder validateAddressJSONParameter(JsonObject addressJsonObject) {
+    private StringBuilder validateAddressParameter(AddressDto addressDto) {
         StringBuilder errorMessages = new StringBuilder();
-        if (addressJsonObject != null) {
-            List<Field> allFields = List.of(AddressDto.class.getDeclaredFields());
-            List<String> allFieldNames = allFields.stream()
-                    .map(field -> getFieldNameFromDeclaredField(field.getName()))
-                    .toList();
-
-            for (Entry<String, JsonElement> entry : addressJsonObject.entrySet()) {
-                if (!allFieldNames.contains(entry.getKey())) {
-                    errorMessages.append(createErrorMessage(String.format(
-                            "Unknown address field `%s`.", entry.getKey())));
-                }
-            }
-
-            for (String name : allFieldNames) {
-                JsonElement jsonElement = addressJsonObject.get(name);
-                if (jsonElement != null && !jsonElement.isJsonNull() && !jsonElement.isJsonPrimitive()) {
-                    errorMessages.append(createErrorMessage(String.format(
-                            "Address field `%s` must be a string.", name)));
-                }
-            }
+        if (addressDto != null) {
+            validateAddressField(errorMessages, addressDto.getCountry(), "country");
+            validateAddressField(errorMessages, addressDto.getCity(), "city");
+            validateAddressField(errorMessages, addressDto.getLine(), "line");
+            validateAddressField(errorMessages, addressDto.getPostcode(), "postcode");
         }
         return errorMessages;
     }
 
-    private String createErrorMessage(String errorMessage) {
-        return String.format(" Error: { %s }. ", errorMessage);
+    private void validateAddressField(StringBuilder errors, String value, String fieldName) {
+        if (value != null && value.isBlank()) {
+            errors.append(createErrorMessage(String.format("Address field `%s` must not be blank.", fieldName)));
+        }
     }
 
-    private String getFieldNameFromDeclaredField(String declaredFieldName) {
-        return declaredFieldName.substring(declaredFieldName.lastIndexOf(".") + 1);
+    private String createErrorMessage(String errorMessage) {
+        return String.format(" Error: { %s }. ", errorMessage);
     }
 }
