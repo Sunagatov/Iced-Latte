@@ -164,9 +164,37 @@ temporary-cache:
     token: 1
   get-token-enabled: true
 
+#
+# Feature Flags
+# Set to true only when you have real credentials for that service.
+#
+google:
+  enabled: ${GOOGLE_ENABLED:false}
+  auth:
+    server:
+      url: "https://accounts.google.com/o/oauth2/v2/auth"
+  scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
+  client-id: ${GOOGLE_AUTH_CLIENT_ID:local}
+  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:local}
+  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI:http://localhost:8083/api/v1/auth/google/callback}
+
+ai:
+  enabled: ${AI_ENABLED:false}
+  api-key: ${SPRING_AI_OPENAI_API_KEY:local}
+
+email:
+  enabled: ${EMAIL_ENABLED:false}
+
 stripe:
-  secret-key: ${STRIPE_SECRET_KEY}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  enabled: ${STRIPE_ENABLED:false}
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+
+#
+# Frontend Properties
+#
+frontend:
+  url: ${FRONTEND_URL:http://localhost:3000}
 
 #
 # Spring Doc Properties
@@ -291,20 +319,4 @@ langchain4j:
       model-name: gpt-4o-mini
       temperature: 0.0
 
-#
-# Google Auth Properties
-#
-google:
-  auth:
-    server:
-      url: "https://accounts.google.com/o/oauth2/v2/auth"
-  scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
-  client-id: ${GOOGLE_AUTH_CLIENT_ID}
-  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET}
-  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
 
-#
-# Frontend Properties
-#
-frontend:
-  url: ${FRONTEND_URL:http://localhost:3001}

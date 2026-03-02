@@ -4,6 +4,7 @@ import com.zufar.icedlatte.email.dto.EmailTokenDto;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "email.enabled", havingValue = "true")
 public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDto> {
 
     @Value("${spring.mail.subject.confirmation}")

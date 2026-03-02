@@ -46,7 +46,7 @@ RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
 # =============================================================================
 # RUNTIME STAGE
 # =============================================================================
-FROM gcr.io/distroless/java25-debian12:nonroot
+FROM eclipse-temurin:25-jre-alpine
 
 # Build arguments for runtime
 ARG VERSION=0.0.1
@@ -80,5 +80,5 @@ ENTRYPOINT ["java", \
     "-XX:+UseStringDeduplication", \
     "-XX:SharedArchiveFile=app-cds.jsa", \
     "-Djava.security.egd=file:/dev/./urandom", \
-    "-Dspring.profiles.active=${PROFILE}", \
+    "-Dspring.profiles.active=prod", \
     "org.springframework.boot.loader.launch.JarLauncher"]

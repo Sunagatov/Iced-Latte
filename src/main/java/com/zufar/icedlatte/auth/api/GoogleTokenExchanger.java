@@ -7,6 +7,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "google.enabled", havingValue = "true")
 public class GoogleTokenExchanger {
 
     private final String redirectUri;

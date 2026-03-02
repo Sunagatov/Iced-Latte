@@ -9,6 +9,7 @@ import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "google.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class GoogleAuthCallbackHandler {
 

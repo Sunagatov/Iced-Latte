@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,32 +15,41 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 public class AuthEndpoint {
 
-    @Value("${google.auth.server.url}")
+    @Value("${google.auth.server.url:}")
     private String googleAuthServerUrl;
 
-    @Value("${google.client-id}")
+    @Value("${google.client-id:}")
     private String clientId;
 
-    @Value("${google.scope}")
+    @Value("${google.scope:}")
     private String scope;
 
-    @Value("${google.redirect-uri}")
+    @Value("${google.redirect-uri:}")
     private String redirectUri;
 
     @Value("${frontend.url}")
     private String frontendUrl;
 
-    private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
+    private final Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler;
+
+    @Autowired
+    public AuthEndpoint(Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler) {
+        this.googleAuthCallbackHandler = googleAuthCallbackHandler;
+    }
 
     @GetMapping("/google")
     public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
+        if (googleAuthCallbackHandler.isEmpty()) {
+            log.warn("auth.google.disabled");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         log.info("auth.google.initiate");
         String callbackBase = redirectUrl != null && !redirectUrl.isBlank() ? redirectUrl : frontendUrl;
         String state = Base64.getUrlEncoder().encodeToString(callbackBase.getBytes(StandardCharsets.UTF_8));
@@ -58,6 +67,9 @@ public class AuthEndpoint {
     @GetMapping("/google/callback")
     public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
                                                @RequestParam(required = false) String state) {
+        if (googleAuthCallbackHandler.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         String callbackBase = frontendUrl;
         if (state != null && !state.isBlank()) {
             try {
@@ -67,7 +79,7 @@ public class AuthEndpoint {
             }
         }
         try {
-            var tokens = googleAuthCallbackHandler.handle(code);
+            var tokens = googleAuthCallbackHandler.get().handle(code);
             URI destination = UriComponentsBuilder.fromUriString(callbackBase + "/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())

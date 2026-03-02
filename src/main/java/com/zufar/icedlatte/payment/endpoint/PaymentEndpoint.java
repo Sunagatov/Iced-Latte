@@ -7,19 +7,15 @@ import com.zufar.icedlatte.payment.api.StripeWebhookService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(PaymentEndpoint.PAYMENT_URL)
+@ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
 public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
 
     public static final String PAYMENT_URL = "/api/v1/payment";

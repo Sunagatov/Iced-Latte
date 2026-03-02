@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.email.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ public class EmailConfig {
     private String password;
 
     @Bean
+    @ConditionalOnProperty(name = "email.enabled", havingValue = "true")
     public JavaMailSender getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(host);
@@ -41,6 +43,7 @@ public class EmailConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "email.enabled", havingValue = "true")
     public SimpleMailMessage simpleMailMessage() {
         return new SimpleMailMessage();
     }
