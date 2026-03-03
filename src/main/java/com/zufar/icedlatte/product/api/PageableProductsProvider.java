@@ -10,6 +10,7 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -61,10 +62,16 @@ public class PageableProductsProvider {
                 nameContainsSpec(keyword)
         );
 
-        Page<ProductInfoDto> result = productInfoRepository
-                .findAll(spec, createPageableObject(page, size, sortAttr, sortDir))
+        Page<ProductInfo> rawPage = productInfoRepository
+                .findAll(spec, createPageableObject(page, size, sortAttr, sortDir));
+
+        List<ProductInfoDto> dtos = rawPage.getContent().stream()
                 .map(productInfoDtoConverter::toDto)
-                .map(productPictureLinkUpdater::update);
+                .toList();
+        List<ProductInfoDto> updatedDtos = productPictureLinkUpdater.updateBatch(dtos);
+
+        Page<ProductInfoDto> result = new PageImpl<>(
+                updatedDtos, rawPage.getPageable(), rawPage.getTotalElements());
 
         log.info("product.list.fetched: count={}, durationMs={}", result.getNumberOfElements(), System.currentTimeMillis() - t0);
         return productInfoDtoConverter.toProductPaginationDto(result);

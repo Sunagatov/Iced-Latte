@@ -1,7 +1,7 @@
 # =============================================================================
 # BUILD STAGE
 # =============================================================================
-FROM maven:3.9-eclipse-temurin-25-alpine AS build
+FROM zufarexplainedit/iced-latte-deps:latest AS build
 
 # Build arguments
 ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
@@ -10,11 +10,8 @@ ARG VERSION=0.0.1
 
 WORKDIR /app
 
-# --- Dependency Layer (cached when pom.xml unchanged) ---
+# --- Source & POM ---
 COPY pom.xml ./
-RUN mvn dependency:go-offline -B
-
-# --- Source Code Layer ---
 COPY src ./src
 
 # --- Build Application ---

@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [development]
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Build, test and generate coverage
+        run: mvn -B package --file pom.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./target/site/jacoco/jacoco.xml
+          fail_ci_if_error: true
+
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mvn -B sonar:sonar \
+            -Dsonar.projectKey=Sunagatov_Iced-Latte \
+            -Dsonar.organization=sunagatov \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            --no-transfer-progress
+
+  owasp:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Run OWASP Dependency-Check
+        run: |
+          mvn -B org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -DsuppressionFile=.github/owasp-suppressions.xml \
+            --no-transfer-progress || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-report
+          path: target/dependency-check-report.html
+
+  openapi-diff:
+    name: OpenAPI Breaking Change Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install oasdiff
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/tufin/oasdiff/main/install.sh | sh
+
+      - name: Check for breaking changes in API specs
+        run: |
+          BASE_BRANCH=${{ github.base_ref }}
+          BREAKING=0
+          for spec in src/main/resources/api-specs/*-openapi.yaml; do
+            name=$(basename "$spec")
+            base_spec=$(git show origin/${BASE_BRANCH}:"$spec" 2>/dev/null) || continue
+            echo "$base_spec" > /tmp/base-"$name"
+            if oasdiff breaking /tmp/base-"$name" "$spec" --fail-on ERR; then
+              echo "✅ No breaking changes in $name"
+            else
+              echo "❌ Breaking changes detected in $name"
+              BREAKING=1
+            fi
+          done
+          exit $BREAKING

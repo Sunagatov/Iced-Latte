@@ -46,7 +46,7 @@ class PageableProductsProviderTest {
         Page<ProductInfo> page = new PageImpl<>(List.of(mock(ProductInfo.class)));
         when(productRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productPictureLinkUpdater.updateBatch(any(List.class))).thenReturn(List.of(mock(ProductInfoDto.class)));
         when(productInfoConverter.toProductPaginationDto(any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
 
         ProductListWithPaginationInfoDto result = productsProvider.getProducts(

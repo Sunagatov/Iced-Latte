@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+    <!-- Test-scope only: rhino excluded from rest-assured per pom.xml CVE-2025-66453 -->
+    <suppress>
+        <notes>CVE-2025-66453 - rhino excluded from rest-assured in pom.xml</notes>
+        <packageUrl regex="true">^pkg:maven/org\.mozilla/rhino@.*$</packageUrl>
+        <cve>CVE-2025-66453</cve>
+    </suppress>
+
+</suppressions>

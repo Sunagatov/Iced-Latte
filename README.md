@@ -10,7 +10,8 @@
     <a href="https://t.me/zufarexplained">💬 Community</a>
   </p>
 
-  [![CI Status](https://github.com/Sunagatov/Iced-Latte/actions/workflows/dev-branch-pr-deployment-pipeline.yml/badge.svg)](https://github.com/Sunagatov/Iced-Latte/actions)
+  [![CI Status](https://github.com/Sunagatov/Iced-Latte/actions/workflows/ci.yml/badge.svg)](https://github.com/Sunagatov/Iced-Latte/actions)
+  [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Sunagatov_Iced-Latte&metric=alert_status)](https://sonarcloud.io/project/overview?id=Sunagatov_Iced-Latte)
   [![codecov](https://codecov.io/github/Sunagatov/Iced-Latte/branch/development/graph/badge.svg?token=515f0ca9-2c4d-4458-ba0b-baf1de67635e)](https://app.codecov.io/github/Sunagatov/Iced-Latte)
   [![License: CC BY-NC 4.0](https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
 
@@ -159,7 +160,6 @@ src/main/java/com/zufar/icedlatte/
 ├── 📧 email/          # Email verification & notifications
 ├── 📁 filestorage/    # AWS S3 file upload/download
 ├── 🔧 common/         # Shared utilities, validation, monitoring
-├── 💳 payment/        # Stripe webhook & session handling
 └── 🚀 astartup/       # Startup data migration
 ```
 
@@ -167,11 +167,16 @@ src/main/java/com/zufar/icedlatte/
 
 ## 🚢 Deployment
 
-🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker container directly via SSH.
+🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to Render.
 
-The full production setup is in [docker-compose.yml](docker-compose.yml). On every merge to `master`, [GitHub Actions](.github/workflows/dev-branch-pr-deployment-pipeline.yml) builds, tests, and deploys to production automatically. Only maintainers can merge to `master`.
+On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and deploys to Render automatically. Only maintainers can merge to `master`.
 
-🔍 Explore the [`.github/`](.github/workflows/) folder for the full CI/CD pipeline.
+| Pipeline | Trigger | What it does |
+|---|---|---|
+| [CI](.github/workflows/ci.yml) | PR → `development` | Build, test, Codecov, SonarCloud, OWASP, OpenAPI breaking-change check |
+| [CD](.github/workflows/cd.yml) | Push to `master` | Build Docker image, push to Docker Hub, deploy to Render, smoke test, Telegram notify |
+| [Build deps image](.github/workflows/build-deps-image.yml) | `pom.xml` changed on `master` or `development` | Rebuilds the Maven deps base image to keep builds fast |
+| [Stale](.github/workflows/stale.yml) | Every Monday | Marks issues/PRs stale after 60 days, closes after 30 |
 
 ---
 
