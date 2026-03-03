@@ -173,9 +173,9 @@ On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and de
 
 | Pipeline | Trigger | What it does |
 |---|---|---|
-| [CI](.github/workflows/ci.yml) | PR → `development` | Build, test, Codecov, SonarCloud, OWASP, OpenAPI breaking-change check |
+| [CI](.github/workflows/ci.yml) | Push + PR → `development` | Build, test, Codecov, SonarCloud, OWASP, OpenAPI breaking-change check (PR only), Telegram on failure |
 | [CD](.github/workflows/cd.yml) | Push to `master` | Build Docker image, push to Docker Hub, deploy to Render, smoke test, Telegram notify |
-| [Build deps image](.github/workflows/build-deps-image.yml) | `pom.xml` changed on `master` or `development` | Rebuilds the Maven deps base image to keep builds fast |
+| [Build deps image](.github/workflows/build-deps-image.yml) | `pom.xml` changed on `master` or `development` | Rebuilds the Maven deps base image to keep builds fast, Telegram on failure |
 | [Stale](.github/workflows/stale.yml) | Every Monday | Marks issues/PRs stale after 60 days, closes after 30 |
 
 ---

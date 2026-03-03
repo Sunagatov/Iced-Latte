@@ -44,6 +44,14 @@ jobs:
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --no-transfer-progress
 
+      - name: Notify Telegram on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="❌ <b>CI: Build/Test failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+
   owasp:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
@@ -58,11 +66,24 @@ jobs:
           cache: maven
 
       - name: Run OWASP Dependency-Check
+        id: owasp
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           mvn -B org.owasp:dependency-check-maven:check \
             -DfailBuildOnCVSS=7 \
             -DsuppressionFile=.github/owasp-suppressions.xml \
-            --no-transfer-progress || true
+            -DnvdApiKey=${NVD_API_KEY} \
+            --no-transfer-progress
+          echo "status=clean" >> $GITHUB_OUTPUT
+
+      - name: Notify Telegram on vulnerability found
+        if: failure() && steps.owasp.outputs.status != 'clean'
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="🚨 <b>OWASP vulnerability found</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ACommit: <code>${{ github.sha }}</code>%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
 
       - name: Upload report
         if: always()
@@ -74,6 +95,7 @@ jobs:
   openapi-diff:
     name: OpenAPI Breaking Change Check
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,3 +121,11 @@ jobs:
             fi
           done
           exit $BREAKING
+
+      - name: Notify Telegram on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="❌ <b>CI: Breaking API change detected</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
