@@ -111,7 +111,6 @@ jobs:
   openapi-diff:
     name: OpenAPI Breaking Change Check
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -123,13 +122,17 @@ jobs:
 
       - name: Check for breaking changes in API specs
         run: |
-          BASE_BRANCH=${{ github.base_ref }}
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+          else
+            BASE_REF="HEAD~1"
+          fi
           BREAKING=0
           BASE_DIR=/tmp/base-api-specs
           mkdir -p "$BASE_DIR"
           for f in src/main/resources/api-specs/*.yaml; do
             name=$(basename "$f")
-            git show origin/${BASE_BRANCH}:"$f" > "$BASE_DIR/$name" 2>/dev/null || true
+            git show ${BASE_REF}:"$f" > "$BASE_DIR/$name" 2>/dev/null || true
           done
           for spec in src/main/resources/api-specs/*-openapi.yaml; do
             name=$(basename "$spec")
