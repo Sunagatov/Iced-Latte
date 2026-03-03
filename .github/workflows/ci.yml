@@ -39,7 +39,7 @@ jobs:
         run: |
           mvn -B sonar:sonar \
             -Dsonar.projectKey=Sunagatov_Iced-Latte \
-            -Dsonar.organization=sunagatov \
+            -Dsonar.organization=zufar \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --no-transfer-progress
@@ -47,7 +47,7 @@ jobs:
   owasp:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
