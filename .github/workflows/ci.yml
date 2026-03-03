@@ -1,8 +1,5 @@
 name: CI
 
-permissions:
-  contents: read
-
 on:
   push:
     branches: [development]
@@ -13,6 +10,8 @@ jobs:
   test:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -66,6 +65,8 @@ jobs:
   owasp:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
@@ -114,6 +115,8 @@ jobs:
   openapi-diff:
     name: OpenAPI Breaking Change Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
