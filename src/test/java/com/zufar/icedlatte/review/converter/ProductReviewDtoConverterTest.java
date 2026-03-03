@@ -59,7 +59,7 @@ public class ProductReviewDtoConverterTest {
     void convertToProductReviewsAndRatingsWithPagination() {
 
         ProductReviewDto productReviewDto = new ProductReviewDto(UUID.randomUUID(), UUID.randomUUID(),1, "",
-                OffsetDateTime.now(), "John", "Doe", 0,0 );
+                OffsetDateTime.now(), "John", "Doe", 0, 0);
 
         List<ProductReviewDto> productReviewDtos = Arrays.asList(productReviewDto, productReviewDto);
         Page<ProductReviewDto> page = new PageImpl<>(productReviewDtos, PageRequest.of(0, 5), productReviewDtos.size());

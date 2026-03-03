@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -15,25 +16,16 @@ import java.util.UUID;
 public class AsyncReviewProcessingService {
 
     private final ReviewModerationService moderationService;
-    private final ReviewSummarizationService summarizationService;
     private final ProductReviewRepository reviewRepository;
 
     @Async
-    @Transactional
-    public void process(UUID reviewId, String text, int rating) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void process(UUID reviewId, String text) {
         try {
             moderationService.moderate(text);
         } catch (ReviewModerationException e) {
-            log.warn("Review {} failed moderation, deleting. reason={}", reviewId, e.getMessage());
+            log.warn("review.moderation.failed: reviewId={} reason={}", reviewId, e.getMessage());
             reviewRepository.deleteById(reviewId);
-            return;
         }
-
-        reviewRepository.findById(reviewId).ifPresent(review -> {
-            var summary = summarizationService.summarize(text, rating);
-            review.setAiSummary(summary);
-            reviewRepository.save(review);
-            log.debug("Review {} processed: summary stored.", reviewId);
-        });
     }
 }

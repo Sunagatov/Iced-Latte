@@ -5,6 +5,7 @@ import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,13 +24,16 @@ public class SingleProductProvider {
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
+    private final ProductReviewSummaryDebouncer summaryDebouncer;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     @Cacheable(key = "#productId")
     public ProductInfoDto getProductById(final UUID productId) {
-        return productInfoRepository.findById(productId)
-                .map(productInfoDtoConverter::toDto)
-                .map(productPictureLinkUpdater::update)
+        var product = productInfoRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
+        if (product.getAiSummary() == null) {
+            summaryDebouncer.schedule(productId);
+        }
+        return productPictureLinkUpdater.update(productInfoDtoConverter.toDto(product));
     }
 }

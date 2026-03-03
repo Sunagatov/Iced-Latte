@@ -16,7 +16,7 @@ class AiDisabledConfig {
     }
 
     @Bean
-    ReviewSummarizationService noOpSummarizationService() {
-        return (text, rating) -> "";
+    ProductSummaryService noOpProductSummaryService() {
+        return productId -> null;
     }
 }

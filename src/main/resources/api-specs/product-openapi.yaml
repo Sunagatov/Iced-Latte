@@ -311,6 +311,9 @@ components:
           type: "integer"
           format: "int32"
           description: "Number of reviews for the product."
+        aiSummary:
+          type: "string"
+          description: "AI-generated summary of customer reviews. Null until generated."
         brandName:
           type: "string"
           description: "Brand of the product."

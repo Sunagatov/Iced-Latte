@@ -63,7 +63,7 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    drop-first: true
+    drop-first: false
 
   #
   # AWS Properties
@@ -316,6 +316,7 @@ langchain4j:
   open-ai:
     chat-model:
       api-key: ${OPENAI_API_KEY:}
+      base-url: https://models.inference.ai.azure.com
       model-name: gpt-4o-mini
       temperature: 0.0
 

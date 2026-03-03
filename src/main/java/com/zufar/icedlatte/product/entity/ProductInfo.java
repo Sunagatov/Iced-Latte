@@ -103,6 +103,9 @@ public class ProductInfo extends AuditableEntity {
     @Column(name = "popularity_score")
     private int popularityScore;
 
+    @Column(name = "ai_summary", columnDefinition = "TEXT")
+    private String aiSummary;
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {

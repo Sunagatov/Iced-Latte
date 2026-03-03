@@ -1,20 +1,25 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @ConditionalOnProperty(name = "ai.enabled", havingValue = "true")
 @RequiredArgsConstructor
-class LangChain4jReviewAiService implements ReviewModerationService, ReviewSummarizationService {
+class LangChain4jReviewAiService implements ReviewModerationService, ProductSummaryService {
 
     private static final String OK = "OK";
     private static final String FALLBACK_SUMMARY = "Summary unavailable.";
 
     private final ReviewAiService reviewAiService;
+    private final ProductReviewRepository reviewRepository;
 
     @Override
     public void moderate(String text) {
@@ -32,11 +37,16 @@ class LangChain4jReviewAiService implements ReviewModerationService, ReviewSumma
     }
 
     @Override
-    public String summarize(String text, int rating) {
+    public String summarize(UUID productId) {
         try {
-            return reviewAiService.summarize(text, rating);
+            var reviews = reviewRepository.findAllByProductId(productId);
+            if (reviews.isEmpty()) return null;
+            var combined = reviews.stream()
+                    .map(r -> "- " + r.getText())
+                    .collect(Collectors.joining("\n"));
+            return reviewAiService.aggregateSummary(combined);
         } catch (Exception e) {
-            log.warn("AI summarization unavailable, using fallback. cause={}", e.getMessage());
+            log.warn("AI product summary unavailable. cause={}", e.getMessage());
             return FALLBACK_SUMMARY;
         }
     }

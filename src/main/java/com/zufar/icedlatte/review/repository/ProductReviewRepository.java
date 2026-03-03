@@ -44,6 +44,8 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
             "GROUP BY productReview.productRating")
     List<ProductRatingCount> getRatingsMapByProductId(UUID productId);
 
+    List<ProductReview> findAllByProductId(UUID productId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(nativeQuery = true,
             value = "UPDATE product_reviews " +

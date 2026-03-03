@@ -3,6 +3,8 @@ package com.zufar.icedlatte.review.api;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.review.ai.AsyncReviewProcessingService;
+import com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -27,6 +29,8 @@ public class ProductReviewCreator {
     private final SingleUserProvider singleUserProvider;
     private final ProductReviewValidator productReviewValidator;
     private final ProductInfoRepository productInfoRepository;
+    private final AsyncReviewProcessingService asyncReviewProcessingService;
+    private final ProductReviewSummaryDebouncer summaryDebouncer;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(final UUID productId,
@@ -48,6 +52,9 @@ public class ProductReviewCreator {
                 .build();
 
         reviewRepository.saveAndFlush(productReview);
+
+        asyncReviewProcessingService.process(productReview.getId(), productReviewText.trim());
+        summaryDebouncer.schedule(productId);
 
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);

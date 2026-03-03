@@ -3,3 +3,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/add-ai-summary-to-product-reviews.sql
+  - include:
+      file: db/changelog/version-2.0/add-ai-summary-to-product.sql

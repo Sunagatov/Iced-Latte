@@ -57,9 +57,6 @@ public class ProductReview {
     @Column(name = "dislikes_count", nullable = false)
     private Integer dislikesCount;
 
-    @Column(name = "ai_summary")
-    private String aiSummary;
-
     @Override
     public String toString() {
         return "Product Review {" +

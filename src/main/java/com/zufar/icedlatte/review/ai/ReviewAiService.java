@@ -2,7 +2,6 @@ package com.zufar.icedlatte.review.ai;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
-import dev.langchain4j.service.V;
 import dev.langchain4j.service.spring.AiService;
 
 @AiService
@@ -17,8 +16,8 @@ interface ReviewAiService {
 
     @SystemMessage("""
             You are a product review analyst for a coffee marketplace.
-            Write a single concise sentence summarizing the review, factoring in the numeric rating (1-5).
-            Return only the summary sentence, no preamble.
+            Given a list of customer reviews, write a single concise sentence summarizing the overall sentiment.
+            Start with "Customers". Return only the summary sentence, no preamble.
             """)
-    String summarize(@UserMessage String text, @V("rating") int rating);
+    String aggregateSummary(@UserMessage String reviews);
 }
