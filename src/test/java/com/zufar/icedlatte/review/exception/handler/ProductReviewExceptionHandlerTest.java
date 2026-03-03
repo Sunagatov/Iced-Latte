@@ -103,7 +103,7 @@ class ProductReviewExceptionHandlerTest {
 
     @Test
     @DisplayName("handleInvalidProductReviewTextException returns BAD_REQUEST response")
-    void handleInvalidText_returnsBadRequest() {
+    void handleInvalidTextReturnsBadRequest() {
         var ex = new InvalidProductReviewTextException();
         ApiErrorResponse expected = stubResponse("The Product Review Text Is Invalid.");
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.BAD_REQUEST)).thenReturn(expected);

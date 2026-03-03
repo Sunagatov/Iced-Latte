@@ -65,7 +65,7 @@ class ProductReviewValidatorTest {
 
     @Test
     @DisplayName("validateReviewText: text with forbidden characters throws InvalidProductReviewTextException")
-    void validateReviewText_forbiddenChars_throwsInvalidProductReviewTextException() {
+    void validateReviewTextForbiddenCharsThrowsInvalidProductReviewTextException() {
         assertThatThrownBy(() -> validator.validateReviewText("Bad <script>"))
                 .isInstanceOf(InvalidProductReviewTextException.class);
     }
