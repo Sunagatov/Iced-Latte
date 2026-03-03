@@ -6,6 +6,7 @@ import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
+import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -96,6 +97,18 @@ class ProductReviewExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.BAD_REQUEST)).thenReturn(expected);
 
         ApiErrorResponse result = handler.handleGetReviewsBadRequestException(ex);
+
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("handleInvalidProductReviewTextException returns BAD_REQUEST response")
+    void handleInvalidText_returnsBadRequest() {
+        var ex = new InvalidProductReviewTextException();
+        ApiErrorResponse expected = stubResponse("The Product Review Text Is Invalid.");
+        when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.BAD_REQUEST)).thenReturn(expected);
+
+        ApiErrorResponse result = handler.handleInvalidProductReviewTextException(ex);
 
         assertThat(result).isEqualTo(expected);
     }

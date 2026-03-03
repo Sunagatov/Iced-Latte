@@ -6,6 +6,7 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
+import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -60,6 +61,13 @@ class ProductReviewValidatorTest {
     void validateReviewText_empty_throwsEmptyProductReviewException() {
         assertThatThrownBy(() -> validator.validateReviewText(""))
                 .isInstanceOf(EmptyProductReviewException.class);
+    }
+
+    @Test
+    @DisplayName("validateReviewText: text with forbidden characters throws InvalidProductReviewTextException")
+    void validateReviewText_forbiddenChars_throwsInvalidProductReviewTextException() {
+        assertThatThrownBy(() -> validator.validateReviewText("Bad <script>"))
+                .isInstanceOf(InvalidProductReviewTextException.class);
     }
 
     // ── validateProductExists ───────────────────────────────────────────────
