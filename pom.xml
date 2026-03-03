@@ -56,7 +56,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
-        <springdoc-openapi.version>2.8.11</springdoc-openapi.version>
+        <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
         <openapi-generator.version>7.15.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
