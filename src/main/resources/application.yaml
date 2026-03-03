@@ -76,6 +76,7 @@ spring:
     region: ${AWS_REGION}
     endpoint-url: ${AWS_ENDPOINT_URL:}
     public-url-base: ${AWS_PUBLIC_URL_BASE:}
+    cloudfront-distribution-id: ${AWS_CLOUDFRONT_DISTRIBUTION_ID:}
     buckets:
       products: ${AWS_PRODUCT_BUCKET}
       user-avatar: ${AWS_USER_BUCKET}

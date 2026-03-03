@@ -11,6 +11,7 @@ import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -33,6 +34,9 @@ public class AWSConfig {
 
     @Value("${spring.aws.endpoint-url:}")
     private String endpointUrl;
+
+    @Value("${spring.aws.public-url-base:}")
+    private String publicUrlBase;
 
     @Bean
     @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
@@ -81,6 +85,19 @@ public class AWSConfig {
             builder.endpointOverride(URI.create(endpointUrl));
         }
         return builder.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.aws.public-url-base", matchIfMissing = false)
+    public CloudFrontClient cloudFrontClient() {
+        String sessionToken = System.getenv("AWS_SESSION_TOKEN");
+        StaticCredentialsProvider creds = StringUtils.hasText(sessionToken)
+                ? StaticCredentialsProvider.create(AwsSessionCredentials.create(accessKey, secretKey, sessionToken))
+                : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
+        return CloudFrontClient.builder()
+                .credentialsProvider(creds)
+                .region(Region.AWS_GLOBAL)
+                .build();
     }
 
     private void applyEndpointOverride(S3ClientBuilder builder) {
