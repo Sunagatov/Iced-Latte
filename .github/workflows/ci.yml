@@ -51,22 +51,28 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>CI: Build/Test passed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="✅ <b>CI: Build/Test passed</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="❌ <b>CI: Build/Test failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="❌ <b>CI: Build/Test failed</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"
 
   owasp:
     name: OWASP Dependency Check
@@ -100,22 +106,28 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>OWASP: No vulnerabilities found</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
+            -d text="✅ <b>OWASP: No vulnerabilities found</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View report</a>"
 
       - name: Notify Telegram on failure
         if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="🚨 <b>OWASP check failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ACommit: <code>${{ github.sha }}</code>%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
+            -d text="🚨 <b>OWASP check failed</b>%0ABranch: <code>${BRANCH}</code>%0ACommit: <code>${SHA}</code>%0A<a href='${RUN_URL}'>View report</a>"
 
       - name: Upload report
         if: always()
@@ -139,18 +151,21 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/tufin/oasdiff/main/install.sh | sh
 
       - name: Check for breaking changes in API specs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="origin/${{ github.base_ref }}"
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            REF="origin/${BASE_REF}"
           else
-            BASE_REF="HEAD~1"
+            REF="HEAD~1"
           fi
           BREAKING=0
           BASE_DIR=/tmp/base-api-specs
           mkdir -p "$BASE_DIR"
           for f in src/main/resources/api-specs/*.yaml; do
             name=$(basename "$f")
-            git show ${BASE_REF}:"$f" > "$BASE_DIR/$name" 2>/dev/null || true
+            git show ${REF}:"$f" > "$BASE_DIR/$name" 2>/dev/null || true
           done
           for spec in src/main/resources/api-specs/*-openapi.yaml; do
             name=$(basename "$spec")
@@ -169,19 +184,25 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>CI: No breaking API changes</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="✅ <b>CI: No breaking API changes</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="❌ <b>CI: Breaking API change detected</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="❌ <b>CI: Breaking API change detected</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"

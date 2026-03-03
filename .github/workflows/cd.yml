@@ -76,19 +76,25 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>Iced Latte deployed to production</b>%0ACommit: <code>${{ github.sha }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="✅ <b>Iced Latte deployed to production</b>%0ACommit: <code>${SHA}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"
 
       - name: Notify failure
         if: failure()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="❌ <b>Iced Latte deploy FAILED</b>%0ACommit: <code>${{ github.sha }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+            -d text="❌ <b>Iced Latte deploy FAILED</b>%0ACommit: <code>${SHA}</code>%0ABy: ${ACTOR}%0A<a href='${RUN_URL}'>View run</a>"
