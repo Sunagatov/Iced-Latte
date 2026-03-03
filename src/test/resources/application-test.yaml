@@ -26,16 +26,15 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: true
     open-in-view: false
+    properties:
+      hibernate:
+        allow_jdbc_metadata_access: true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${spring.datasource.url}
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
-    drop-first: true
 
   #
   # Aws Properties
@@ -98,12 +97,9 @@ jwt:
 #
 # AI Properties
 #
-langchain4j:
-  open-ai:
-    chat-model:
-      api-key: "sk-test-placeholder"
-      model-name: gpt-4o-mini
-      temperature: 0.0
+ai:
+  api-key: "sk-test-placeholder"
+  model-name: gpt-4o-mini
 
 #
 # Google Auth Properties
@@ -134,7 +130,7 @@ monitoring:
 logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
-    org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration: ERROR
+    org.springframework.boot.hibernate.autoconfigure.HibernateJpaConfiguration: ERROR
 
 #
 # Rate Limiting Properties (disabled for tests)

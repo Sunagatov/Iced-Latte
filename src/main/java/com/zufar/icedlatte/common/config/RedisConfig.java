@@ -25,6 +25,13 @@ public class RedisConfig {
     private final CacheProperties cacheProperties;
 
     @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper;
+    }
+
+    @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         log.info("cache.mode: Redis");
         ObjectMapper typedMapper = new ObjectMapper();

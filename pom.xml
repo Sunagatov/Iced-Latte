@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.11</version>
+        <version>4.0.3</version>
         <relativePath/>
     </parent>
 
@@ -42,9 +42,7 @@
 
         <!-- ========== DATABASE VERSIONS ========== -->
         <postgresql.version>42.7.10</postgresql.version>
-        <liquibase.version>4.32.0</liquibase.version>
-
-        <!-- ========== SECURITY VERSIONS ========== -->
+<!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
@@ -70,7 +68,7 @@
         <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
-        <langchain4j.version>1.11.0-beta19</langchain4j.version>
+        <langchain4j.version>1.0.0</langchain4j.version>
 
         <!-- ========== UTILITIES VERSIONS ========== -->
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
@@ -124,11 +122,12 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
+            <version>2.0.12</version>
         </dependency>
 
         <!-- ========== AWS ========== -->
@@ -158,9 +157,8 @@
             <version>${postgresql.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>${liquibase.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
         </dependency>
 
         <!-- ========== BOUNCYCASTLE (required by Argon2PasswordEncoder) ========== -->
@@ -259,12 +257,12 @@
         <!-- ========== AI ========== -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <artifactId>langchain4j</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <artifactId>langchain4j-open-ai</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
 
@@ -297,7 +295,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -307,17 +305,19 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <version>6.0.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>json-schema-validator</artifactId>
+            <version>6.0.0</version>
             <scope>test</scope>
             <exclusions>
                 <!-- CVE-2025-66453: no patched version available -->

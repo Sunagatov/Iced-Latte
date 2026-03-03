@@ -11,7 +11,6 @@ import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
 import com.zufar.icedlatte.review.api.ProductReviewsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewsStatisticsProvider;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +46,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
-                                                                @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
+                                                                @RequestBody final ProductReviewRequest productReviewRequest) {
         log.info("review.adding: productId={}", productId);
         var review = productReviewCreator.create(productId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
@@ -68,11 +67,11 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @GetMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getProductReviewsAndRatings(
             @PathVariable final UUID productId,
-            @RequestParam(name = "page", required = false) final Integer pageNumber,
-            @RequestParam(name = "size", required = false) final Integer pageSize,
-            @RequestParam(name = "sort_attribute", required = false) final String sortAttribute,
-            @RequestParam(name = "sort_direction", required = false) final String sortDirection,
-            @RequestParam(name = "product_ratings", required = false) List<Integer> productRatings) {
+            @RequestParam(name = "page", required = false, defaultValue = "0") final Integer pageNumber,
+            @RequestParam(name = "size", required = false, defaultValue = "50") final Integer pageSize,
+            @RequestParam(name = "sortAttribute", required = false, defaultValue = "createdAt") final String sortAttribute,
+            @RequestParam(name = "sortDirection", required = false, defaultValue = "asc") final String sortDirection,
+            @RequestParam(name = "productRatings", required = false) List<Integer> productRatings) {
         getReviewsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
         return ResponseEntity.ok(productReviewsProvider.getProductReviews(
                 productId, pageNumber, pageSize, sortAttribute, sortDirection, productRatings));
@@ -92,9 +91,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
 
     @Override
     @PostMapping(value = "/{productId}/reviews/{productReviewId}/likes")
-    public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable @Validated final UUID productId,
-                                                                 @PathVariable @Validated final UUID productReviewId,
-                                                                 @Valid @RequestBody final ProductReviewLikeDto request) {
+    public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
+                                                                 @PathVariable final UUID productReviewId,
+                                                                 @RequestBody final ProductReviewLikeDto request) {
         log.info("review.rating: reviewId={}, productId={}, vote={}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
         log.info("review.rated: reviewId={}, vote={}", productReviewId, request.getIsLike() ? "liked" : "disliked");

@@ -63,7 +63,6 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    drop-first: false
 
   #
   # AWS Properties
@@ -182,6 +181,8 @@ google:
 ai:
   enabled: ${AI_ENABLED:false}
   api-key: ${SPRING_AI_OPENAI_API_KEY:local}
+  base-url: https://models.inference.ai.azure.com
+  model-name: gpt-4o-mini
 
 email:
   enabled: ${EMAIL_ENABLED:false}
@@ -309,16 +310,4 @@ logging:
   config: classpath:logback-spring.xml
   level:
     io.opentelemetry.exporter: WARN
-
-#
-# AI Properties
-#
-langchain4j:
-  open-ai:
-    chat-model:
-      api-key: ${OPENAI_API_KEY:}
-      base-url: https://models.inference.ai.azure.com
-      model-name: gpt-4o-mini
-      temperature: 0.0
-
 
