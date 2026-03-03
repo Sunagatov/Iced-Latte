@@ -30,7 +30,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./target/site/jacoco/jacoco.xml
-          fail_ci_if_error: true
+          fail_ci_if_error: ${{ github.actor != 'dependabot[bot]' }}
 
       - name: SonarCloud analysis
         env:
