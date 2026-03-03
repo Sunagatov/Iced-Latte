@@ -118,7 +118,7 @@ services:
       context: ../Iced-Latte-Frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8083
+        NEXT_PUBLIC_API_URL: http://iced-latte-backend:8083/api/v1
     container_name: iced-latte-frontend
     profiles: [frontend]
     ports:
