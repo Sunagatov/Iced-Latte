@@ -1,0 +1,7 @@
+version: 2
+ignore-paths:
+  - .env
+  - docker-compose.yml
+  - docker-compose.local.yml
+  - api-test.sh
+  - src/test/
