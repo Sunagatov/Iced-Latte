@@ -84,7 +84,7 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>Iced Latte deployed to production</b>%0ACommit: <code>${SHA}</code>%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="✅ <b>Iced Latte deployed to production</b>%0ACommit: ${SHA}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
 
       - name: Notify failure
         if: failure()
@@ -99,4 +99,4 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="❌ <b>Iced Latte deploy FAILED</b>%0ACommit: <code>${SHA}</code>%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="❌ <b>Iced Latte deploy FAILED</b>%0ACommit: ${SHA}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"

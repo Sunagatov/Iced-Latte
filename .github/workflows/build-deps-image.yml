@@ -43,7 +43,7 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="✅ <b>Deps image built successfully</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="✅ <b>Deps image built successfully</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -58,4 +58,4 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
-            -d text="❌ <b>Deps image build failed</b>%0ABranch: <code>${BRANCH}</code>%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="❌ <b>Deps image build failed</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
