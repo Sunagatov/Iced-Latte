@@ -7,6 +7,7 @@ import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
+import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -31,6 +34,11 @@ public class ProductReviewValidator {
     public void validateReviewText(final String productReviewText) {
         if (productReviewText.trim().isEmpty()) {
             throw new EmptyProductReviewException();
+        }
+        Pattern p = Pattern.compile("[^a-zA-Z0-9\\u00C0-\\u017F.,! ]");
+        Matcher matcher = p.matcher(productReviewText);
+        if(matcher.find()) {
+            throw new InvalidProductReviewTextException();
         }
     }
 
