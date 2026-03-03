@@ -27,6 +27,8 @@ class ProductReviewDeleterTest {
     private ProductReviewValidator productReviewValidator;
     @Mock
     private ProductInfoRepository productInfoRepository;
+    @Mock
+    private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
     @InjectMocks
     private ProductReviewDeleter deleter;
 

@@ -37,6 +37,8 @@ class SingleProductProviderTest {
     @Mock
     private ProductPictureLinkUpdater productPictureLinkUpdater;
 
+    @Mock
+    private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
 
     @InjectMocks
     private SingleProductProvider productProvider;

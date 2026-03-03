@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -7,8 +9,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -17,6 +24,9 @@ class LangChain4jReviewAiServiceTest {
 
     @Mock
     private ReviewAiService reviewAiService;
+
+    @Mock
+    private ProductReviewRepository reviewRepository;
 
     @InjectMocks
     private LangChain4jReviewAiService service;
@@ -48,9 +58,13 @@ class LangChain4jReviewAiServiceTest {
     @Test
     @DisplayName("summarize: returns AI summary on success")
     void summarize_success_returnsSummary() {
-        when(reviewAiService.summarize("Loved it", 5)).thenReturn("A highly positive review praising the coffee.");
+        UUID productId = UUID.randomUUID();
+        ProductReview review = mock(ProductReview.class);
+        when(review.getText()).thenReturn("Loved it");
+        when(reviewRepository.findAllByProductId(productId)).thenReturn(List.of(review));
+        when(reviewAiService.aggregateSummary(anyString())).thenReturn("A highly positive review praising the coffee.");
 
-        var result = service.summarize("Loved it", 5);
+        var result = service.summarize(productId);
 
         assertThat(result).isEqualTo("A highly positive review praising the coffee.");
     }
@@ -58,10 +72,25 @@ class LangChain4jReviewAiServiceTest {
     @Test
     @DisplayName("summarize: returns fallback when AI is unavailable")
     void summarize_aiUnavailable_returnsFallback() {
-        when(reviewAiService.summarize("Loved it", 5)).thenThrow(new RuntimeException("timeout"));
+        UUID productId = UUID.randomUUID();
+        ProductReview review = mock(ProductReview.class);
+        when(review.getText()).thenReturn("Loved it");
+        when(reviewRepository.findAllByProductId(productId)).thenReturn(List.of(review));
+        when(reviewAiService.aggregateSummary(anyString())).thenThrow(new RuntimeException("timeout"));
 
-        var result = service.summarize("Loved it", 5);
+        var result = service.summarize(productId);
 
         assertThat(result).isEqualTo("Summary unavailable.");
+    }
+
+    @Test
+    @DisplayName("summarize: returns null when product has no reviews")
+    void summarize_noReviews_returnsNull() {
+        UUID productId = UUID.randomUUID();
+        when(reviewRepository.findAllByProductId(productId)).thenReturn(List.of());
+
+        var result = service.summarize(productId);
+
+        assertThat(result).isNull();
     }
 }

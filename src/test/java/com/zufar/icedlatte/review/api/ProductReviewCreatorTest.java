@@ -44,6 +44,10 @@ class ProductReviewCreatorTest {
     private ProductReviewValidator productReviewValidator;
     @Mock
     private ProductInfoRepository productInfoRepository;
+    @Mock
+    private com.zufar.icedlatte.review.ai.AsyncReviewProcessingService asyncReviewProcessingService;
+    @Mock
+    private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
     @InjectMocks
     private ProductReviewCreator creator;
 
