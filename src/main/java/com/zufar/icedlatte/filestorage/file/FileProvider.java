@@ -48,10 +48,11 @@ public class FileProvider {
         Map<UUID, String> urls = fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue())
-                ));
+                .flatMap(entry -> Optional.ofNullable(
+                        awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue()))
+                        .map(url -> Map.entry(entry.getKey(), url))
+                        .stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         log.debug("file.urls.generated: count={}", urls.size());
         return urls;
     }

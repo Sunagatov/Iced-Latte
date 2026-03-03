@@ -6,9 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -30,7 +27,6 @@ public class AwsObjectUploader {
 
     private final S3Client s3Client;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
         try (InputStream inputStream = file.getInputStream()) {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -54,7 +50,6 @@ public class AwsObjectUploader {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadFileDirectory(String bucketName, String directoryPath) throws IOException {
         Path normalizedPath = Paths.get(directoryPath).normalize();
         if (!normalizedPath.toFile().getCanonicalPath().startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
