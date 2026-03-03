@@ -48,17 +48,23 @@ jobs:
 
       - name: Notify Telegram on success
         if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="✅ <b>CI: Build/Test passed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="❌ <b>CI: Build/Test failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
 
@@ -91,17 +97,23 @@ jobs:
 
       - name: Notify Telegram on success
         if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="✅ <b>OWASP: No vulnerabilities found</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
 
       - name: Notify Telegram on failure
         if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="🚨 <b>OWASP check failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ACommit: <code>${{ github.sha }}</code>%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
 
@@ -154,16 +166,22 @@ jobs:
 
       - name: Notify Telegram on success
         if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="✅ <b>CI: No breaking API changes</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
+            -d chat_id=${CHAT_ID} \
             -d parse_mode=HTML \
             -d text="❌ <b>CI: Breaking API change detected</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
