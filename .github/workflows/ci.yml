@@ -109,11 +109,16 @@ jobs:
         run: |
           BASE_BRANCH=${{ github.base_ref }}
           BREAKING=0
+          BASE_DIR=/tmp/base-api-specs
+          mkdir -p "$BASE_DIR"
+          for f in src/main/resources/api-specs/*.yaml; do
+            name=$(basename "$f")
+            git show origin/${BASE_BRANCH}:"$f" > "$BASE_DIR/$name" 2>/dev/null || true
+          done
           for spec in src/main/resources/api-specs/*-openapi.yaml; do
             name=$(basename "$spec")
-            base_spec=$(git show origin/${BASE_BRANCH}:"$spec" 2>/dev/null) || continue
-            echo "$base_spec" > /tmp/base-"$name"
-            if oasdiff breaking /tmp/base-"$name" "$spec" --fail-on ERR; then
+            [ -f "$BASE_DIR/$name" ] || continue
+            if oasdiff breaking "$BASE_DIR/$name" "$spec" --fail-on ERR; then
               echo "✅ No breaking changes in $name"
             else
               echo "❌ Breaking changes detected in $name"
