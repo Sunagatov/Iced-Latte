@@ -41,45 +41,45 @@
         <java.version>25</java.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
-        <postgresql.version>42.7.7</postgresql.version>
+        <postgresql.version>42.7.10</postgresql.version>
         <liquibase.version>4.32.0</liquibase.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
-        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+        <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
         <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
-        <openapi-generator.version>7.15.0</openapi-generator.version>
+        <openapi-generator.version>7.20.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
-        <instancio-junit.version>5.5.0</instancio-junit.version>
+        <instancio-junit.version>5.5.1</instancio-junit.version>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
         <stripe.version>31.4.0</stripe.version>
-        <google-api-client.version>2.8.1</google-api-client.version>
+        <google-api-client.version>2.9.0</google-api-client.version>
 
         <!-- ========== AWS VERSIONS ========== -->
-        <aws-sdk-bom.version>2.32.25</aws-sdk-bom.version>
+        <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
-        <langchain4j.version>1.0.0-beta5</langchain4j.version>
+        <langchain4j.version>1.11.0-beta19</langchain4j.version>
 
         <!-- ========== UTILITIES VERSIONS ========== -->
-        <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
-        <guava.version>33.4.0-jre</guava.version>
+        <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
+        <guava.version>33.5.0-jre</guava.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
 
         <!-- ========== OPENAPI CONFIGURATION ========== -->
@@ -167,7 +167,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.78.1</version>
+            <version>1.83</version>
         </dependency>
 
         <!-- ========== SECURITY & JWT ========== -->
