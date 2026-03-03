@@ -58,8 +58,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="✅ <b>CI: Build/Test passed</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="✅ CI: Build/Test passed%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -73,8 +72,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="❌ <b>CI: Build/Test failed</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="❌ CI: Build/Test failed%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
 
   owasp:
     name: OWASP Dependency Check
@@ -115,8 +113,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="✅ <b>OWASP: No vulnerabilities found</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View report</a>"
+            -d text="✅ OWASP: No vulnerabilities found%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -130,8 +127,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="🚨 <b>OWASP check failed</b>%0ABranch: ${BRANCH}%0ACommit: ${SHA}%0A${MSG}%0A<a href='${RUN_URL}'>View report</a>"
+            -d text="🚨 OWASP check failed%0ABranch: ${BRANCH}%0ACommit: ${SHA}%0A${MSG}%0A${RUN_URL}"
 
       - name: Upload report
         if: always()
@@ -195,8 +191,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="✅ <b>CI: No breaking API changes</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="✅ CI: No breaking API changes%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -210,5 +205,4 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d parse_mode=HTML \
-            -d text="❌ <b>CI: Breaking API change detected</b>%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A<a href='${RUN_URL}'>View run</a>"
+            -d text="❌ CI: Breaking API change detected%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
