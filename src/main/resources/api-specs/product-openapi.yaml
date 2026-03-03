@@ -46,30 +46,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductInfoDto"
         "400":
-          description: "Invalid UUID format for productId."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/BadRequest"
         "404":
-          description: "Product not found for the given ID."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
-          description: "Internal server error."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/products/sellers:
     get:
       tags:
         - "Product"
       summary: "List all product sellers"
-      description: "Retrieve a list of all sellers from the hardcoded data."
+      description: "Retrieve a list of all distinct sellers from the database."
       operationId: "getAllSellers"
       responses:
         "200":
@@ -78,19 +68,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SellersDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
-          description: "Internal server error."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/products/brands:
     get:
       tags:
         - "Product"
       summary: "List all product brands"
-      description: "Retrieve a list of all brands from the hardcoded data."
+      description: "Retrieve a list of all distinct brands from the database."
       operationId: "getAllBrands"
       responses:
         "200":
@@ -99,12 +89,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BrandsDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
-          description: "Internal server error."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/products:
     get:
@@ -115,152 +105,85 @@ paths:
       operationId: "getProducts"
       parameters:
         - name: "page"
-          description: "The page number (starting from 0) for pagination. Possible allowed values: 1) page=0 or 2) page=1 or 3) any other non negative value."
+          description: "Zero-based page number."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
             default: 0
-          examples:
-            example1:
-              description: "Retrieve the first page of product's list."
-              value: "page=0"
-            example2:
-              description: "Retrieve the second page of product's list."
-              value: "page=1"
+            minimum: 0
         - name: "size"
-          description: "The number of products per page. Possible allowed values: 1) size=3 or 2) size=15 or 3) any other non negative value."
+          description: "Number of products per page."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
             default: 50
-          examples:
-            example1:
-              description: "Display only 3 products per page in the product list."
-              value: "size=3"
-            example2:
-              description: "Display only 15 products per page in the product list."
-              value: "size=15"
-        - name: "sort_attribute"
-          description: "The field name of the product by which the results should be sorted. Possible allowed values: 1) sort_attribute=name or 2) sort_attribute=price or 3) sort_attribute=quantity or 4) sort_attribute=averageRating or 5) sort_attribute=reviewsCount."
+            minimum: 1
+        - name: "sortAttribute"
+          description: "Field to sort results by."
           in: "query"
           required: false
           schema:
             type: "string"
+            enum: ["name", "price", "quantity", "averageRating", "reviewsCount"]
             default: "name"
-          examples:
-            example1:
-              description: "Display the product list sorted by the provided sort attribute 'name' (the product's name)."
-              value: "sort_attribute=name"
-            example2:
-              description: "Display the product list sorted by the provided sort attribute 'price' (the product's price)."
-              value: "sort_attribute=price"
-            example3:
-              description: "Display the product list sorted by the provided sort attribute 'quantity' (the product's quantity)."
-              value: "sort_attribute=quantity"
-            example4:
-              description: "Display the product list sorted by the provided sort attribute 'averageRating' (the product's averageRating)."
-              value: "sort_attribute=averageRating"
-            example5:
-              description: "Display the product list sorted by the provided sort attribute 'reviewsCount' (the product's reviewsCount)."
-              value: "sort_attribute=reviewsCount"
-        - name: "sort_direction"
-          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
+        - name: "sortDirection"
+          description: "Sort direction."
           in: "query"
           required: false
           schema:
             type: "string"
             enum: ["asc", "desc"]
             default: "asc"
-          examples:
-            example1:
-              description: "Display the product list in ascending order."
-              value: "sort_direction=asc"
-            example2:
-              description: "Display the product list in descending order."
-              value: "sort_direction=desc"
-        - name: "min_price"
-          description: "Filter products by the lower limit of the product's price. Possible allowed values: 1) min_price=5 or 2) min_price=17.25 or 3) any other non negative integer or decimal number value."
+        - name: "minPrice"
+          description: "Minimum product price filter."
           in: "query"
           required: false
           schema:
             type: "number"
-            format: "decimal"
-          examples:
-            example1:
-              description: "Display the product list filtered by the lower limit of the product's price (min_price=5)."
-              value: "min_price=5"
-            example2:
-              description: "Display the product list filtered by the lower limit of the product's price (min_price=17.25)."
-              value: "min_price=17.25"
-        - name: "max_price"
-          description: "Filter products by the upper limit of the product's price. Possible allowed values: 1) max_price=5 or 2) max_price=17.25 or 3) any other non negative integer or decimal number value."
+            minimum: 0
+        - name: "maxPrice"
+          description: "Maximum product price filter."
           in: "query"
           required: false
           schema:
             type: "number"
-            format: "decimal"
-          examples:
-            example1:
-              description: "Display the product list filtered by the upper limit of the product's price (max_price=5)."
-              value: "max_price=5"
-            example2:
-              description: "Display the product list filtered by the upper limit of the product's price (max_price=17.25)."
-              value: "max_price=17.25"
-        - name: "minimum_average_rating"
-          description: "Filter products by the minimum average rating.
-          Possible allowed values: 1) minimum_average_rating=1 or 2) minimum_average_rating=2 or 3) minimum_average_rating=3 or 4) minimum_average_rating=4 "
+            minimum: 0
+        - name: "minimumAverageRating"
+          description: "Minimum average rating filter (1–4)."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
-          examples:
-            example1:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=1)."
-              value: "minimum_average_rating=1"
-            example2:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=2)."
-              value: "minimum_average_rating=2"
-            example3:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=3)."
-              value: "minimum_average_rating=3"
-            example4:
-              description: "Display the product list filtered by the minimum average rating of a product (minimum_average_rating=4)."
-              value: "minimum_average_rating=4"
-        - name: "brand_names"
-          description: "Filter products by selected brand names (comma-separated list). Possible allowed values: 1) brand_names=Starbucks or 2) brand_names=Starbucks,Folgers or 3) any other comma-separated list"
-          examples:
-            example1:
-              description: "Display the product list filtered by selected brand names (brand_names=Starbucks,Folgers)."
-              value: "brand_names=Starbucks,Folgers"
-            example2:
-              description: "Display the product list filtered by selected brand names (brand_names=Starbucks)."
-              value: "brand_names=Starbucks"
+            minimum: 1
+            maximum: 4
+        - name: "brandNames"
+          description: "Filter by brand names."
           in: "query"
           required: false
           schema:
             type: "array"
             items:
               type: "string"
-        - name: "seller_names"
-          description: "Filter products by selected seller names (comma-separated list). Possible allowed values: 1) seller_names=BeanBrewers,JavaBeanCoffee,MorningMug or 2) seller_names=BeanBrewers or 3) any other comma-separated list"
+        - name: "sellerNames"
+          description: "Filter by seller names."
           in: "query"
           required: false
           schema:
             type: "array"
             items:
               type: "string"
-          examples:
-            example1:
-              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers,JavaBeanCoffee,MorningMug)."
-              value: "seller_names=BeanBrewers,JavaBeanCoffee,MorningMug"
-            example2:
-              description: "Display the product list filtered by selected seller names (seller_names=BeanBrewers)."
-              value: "seller_names=BeanBrewers"
+        - name: "keyword"
+          description: "Search keyword to filter products by name (case-insensitive)."
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            maxLength: 200
       responses:
         "200":
           description: "Paginated list of products retrieved successfully."
@@ -269,17 +192,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductListWithPaginationInfoDto"
         "400":
-          description: "Invalid parameters provided."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
-          description: "Internal server error."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/products/ids:
     post:
@@ -304,22 +221,45 @@ paths:
                 items:
                   $ref: "#/components/schemas/ProductInfoDto"
         "400":
-          description: "Invalid parameters provided."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
-          description: "Internal server error."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InternalServerError"
 
 components:
+  responses:
+    BadRequest:
+      description: "Invalid parameters provided."
+      content:
+        application/json:
+          schema:
+            $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+    NotFound:
+      description: "Resource not found."
+      content:
+        application/json:
+          schema:
+            $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: "Authentication is required to access this resource."
+      content:
+        application/json:
+          schema:
+            $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: "Internal server error."
+      content:
+        application/json:
+          schema:
+            $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+
   schemas:
     ProductInfoDto:
       type: "object"
+      description: "Detailed information about a product in the Iced Latte catalog."
       required:
         - id
         - name
@@ -333,9 +273,9 @@ components:
         - sellerName
         - originCountry
         - weight
-        - lengthSize
-        - widthSize
-        - heightSize
+        - length
+        - width
+        - height
         - soldProductsCount
         - discount
         - dateAdded
@@ -353,7 +293,6 @@ components:
           description: "Description of the product."
         price:
           type: "number"
-          format: "decimal"
           description: "Price of the product."
         quantity:
           type: "integer"
@@ -367,12 +306,14 @@ components:
           description: "URL of the product's image or file."
         averageRating:
           type: "number"
-          format: "decimal"
           description: "Average rating of the product."
         reviewsCount:
           type: "integer"
           format: "int32"
           description: "Number of reviews for the product."
+        aiSummary:
+          type: "string"
+          description: "AI-generated summary of customer reviews. Null until generated."
         brandName:
           type: "string"
           description: "Brand of the product."
@@ -385,27 +326,29 @@ components:
         weight:
           type: "integer"
           format: "int32"
-          description: "Weight of the product."
-        lengthSize:
+          description: "Weight of the product in grams."
+        length:
           type: "integer"
           format: "int32"
-          description: "Length size of the product."
-        widthSize:
+          description: "Length of the product in millimetres."
+        width:
           type: "integer"
           format: "int32"
-          description: "Width size of the product."
-        heightSize:
+          description: "Width of the product in millimetres."
+        height:
           type: "integer"
           format: "int32"
-          description: "Height size of the product."
+          description: "Height of the product in millimetres."
         soldProductsCount:
           type: "integer"
           format: "int32"
-          description: "Number of products sold."
+          description: "Total number of units of this product sold across all orders."
         discount:
           type: "integer"
           format: "int32"
-          description: "Discount applied to the product."
+          minimum: 0
+          maximum: 100
+          description: "Discount applied to the product as a percentage (0–100)."
         dateAdded:
           type: "string"
           format: "date-time"
@@ -413,10 +356,11 @@ components:
         popularityScore:
           type: "integer"
           format: "int32"
-          description: "Popularity score of the product."
+          description: "Computed popularity score based on sales volume and average rating."
 
     ProductListWithPaginationInfoDto:
       type: "object"
+      description: "Paginated list of products with pagination metadata."
       required:
         - products
         - page
@@ -426,9 +370,9 @@ components:
       properties:
         products:
           type: "array"
+          description: "List of products."
           items:
             $ref: "#/components/schemas/ProductInfoDto"
-          description: "List of products."
         page:
           type: "integer"
           format: "int32"
@@ -460,24 +404,24 @@ components:
 
     SellersDto:
       type: "object"
+      description: "List of distinct product sellers."
       required:
         - sellers
       properties:
         sellers:
           type: "array"
+          description: "List of product sellers."
           items:
             type: "string"
-          description: "List of product sellers."
 
     BrandsDto:
       type: "object"
+      description: "List of distinct product brands."
       required:
         - brands
       properties:
         brands:
           type: "array"
+          description: "List of product brands."
           items:
             type: "string"
-          description: "List of product brands."
-
-

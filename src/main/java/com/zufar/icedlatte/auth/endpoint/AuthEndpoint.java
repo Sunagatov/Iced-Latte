@@ -1,90 +1,95 @@
 package com.zufar.icedlatte.auth.endpoint;
 
-import com.zufar.icedlatte.auth.api.AuthorizationServerUrlCreator;
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
-@Validated
 @RequestMapping("/api/v1/auth")
 public class AuthEndpoint {
 
-    private static final String AUTH_CODE_PATTERN = "^[a-zA-Z0-9_-]+$";
-    private static final int MIN_CODE_LENGTH = 10;
-    private static final int MAX_CODE_LENGTH = 512;
+    @Value("${google.auth.server.url:}")
+    private String googleAuthServerUrl;
 
-    private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
-    private final AuthorizationServerUrlCreator authorizationServerUrlCreator;
+    @Value("${google.client-id:}")
+    private String clientId;
+
+    @Value("${google.scope:}")
+    private String scope;
+
+    @Value("${google.redirect-uri:}")
+    private String redirectUri;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
+    private final Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler;
+
+    @Autowired
+    public AuthEndpoint(Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler) {
+        this.googleAuthCallbackHandler = googleAuthCallbackHandler;
+    }
 
     @GetMapping("/google")
-    public ResponseEntity<String> getGoogleAuthorizationServerUrl() {
-        log.info("Initiating Google authentication");
-        var authorizationUrl = authorizationServerUrlCreator.create();
-        log.info("Google authentication URL created successfully");
-        
-        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
-                .header(HttpHeaders.LOCATION, authorizationUrl)
-                .build();
+    public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
+        if (googleAuthCallbackHandler.isEmpty()) {
+            log.warn("auth.google.disabled");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        log.info("auth.google.initiate");
+        String callbackBase = redirectUrl != null && !redirectUrl.isBlank() ? redirectUrl : frontendUrl;
+        String state = Base64.getUrlEncoder().encodeToString(callbackBase.getBytes(StandardCharsets.UTF_8));
+        URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
+                .queryParam("scope", scope)
+                .queryParam("access_type", "offline")
+                .queryParam("response_type", "code")
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("client_id", clientId)
+                .queryParam("state", state)
+                .build().toUri();
+        return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
     }
 
     @GetMapping("/google/callback")
-    public CompletableFuture<ResponseEntity<UserAuthenticationResponse>> googleAuthCallback(
-            @RequestParam("code") String authorizationCode) {
-        
-        log.info("Processing Google authentication callback");
-        
-        return validateAuthorizationCode(authorizationCode)
-                .map(this::processValidCode)
-                .orElseGet(() -> CompletableFuture.completedFuture(
-                    ResponseEntity.badRequest().build()));
-    }
-
-    private Optional<String> validateAuthorizationCode(String code) {
-        return Optional.ofNullable(code)
-                .map(String::trim)
-                .filter(Predicate.not(String::isEmpty))
-                .filter(c -> c.matches(AUTH_CODE_PATTERN))
-                .filter(c -> c.length() >= MIN_CODE_LENGTH && c.length() <= MAX_CODE_LENGTH)
-                .or(() -> {
-                    log.warn("Invalid authorization code format");
-                    return Optional.empty();
-                });
-    }
-
-    private CompletableFuture<ResponseEntity<UserAuthenticationResponse>> processValidCode(String code) {
-        return CompletableFuture.supplyAsync(() -> {
+    public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
+                                               @RequestParam(required = false) String state) {
+        if (googleAuthCallbackHandler.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        String callbackBase = frontendUrl;
+        if (state != null && !state.isBlank()) {
             try {
-                var response = googleAuthCallbackHandler.googleAuthCallback(code);
-                log.info("Google authentication completed successfully");
-                
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-                        
+                callbackBase = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
             } catch (Exception e) {
-                var errorMessage = switch (e) {
-                    case SecurityException se -> "Security error during authentication: " + se.getMessage();
-                    case IllegalArgumentException iae -> "Invalid authentication data: " + iae.getMessage();
-                    case Exception ex -> "Authentication failed: " + ex.getMessage();
-                };
-                
-                log.error(errorMessage, e);
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                log.warn("auth.google.callback.invalid-state");
             }
-        });
+        }
+        try {
+            var tokens = googleAuthCallbackHandler.get().handle(code);
+            URI destination = UriComponentsBuilder.fromUriString(callbackBase + "/auth/google/callback")
+                    .queryParam("token", tokens.getToken())
+                    .queryParam("refreshToken", tokens.getRefreshToken())
+                    .build().toUri();
+            return ResponseEntity.status(HttpStatus.FOUND).location(destination).build();
+        } catch (Exception e) {
+            log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(callbackBase + "/signin?error=auth_failed"))
+                    .build();
+        }
     }
 }

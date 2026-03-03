@@ -15,4 +15,5 @@ public class CacheProperties {
     private Duration productTtl = Duration.ofMinutes(10);
     private Duration brandsTtl = Duration.ofHours(24);
     private Duration sellersTtl = Duration.ofHours(24);
+    private Duration imageUrlTtl = Duration.ofMinutes(50);
 }

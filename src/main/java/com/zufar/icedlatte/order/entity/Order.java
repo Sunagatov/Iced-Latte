@@ -8,6 +8,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -36,6 +38,7 @@ import java.util.UUID;
 public class Order extends AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "user_id", updatable = false, nullable = false)
@@ -59,6 +62,15 @@ public class Order extends AuditableEntity {
     @JoinColumn(name = "address_id", referencedColumnName = "id", nullable = false)
     private Address deliveryAddress;
 
+    @Column(name = "recipient_name", nullable = false)
+    private String recipientName;
+
+    @Column(name = "recipient_surname", nullable = false)
+    private String recipientSurname;
+
+    @Column(name = "recipient_phone")
+    private String recipientPhone;
+
     @Column(name = "items_quantity", nullable = false)
     private Integer itemsQuantity;
 
@@ -67,9 +79,6 @@ public class Order extends AuditableEntity {
 
     @PrePersist
     public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
         for (OrderItem orderItem : items) {
             orderItem.setOrderId(this.id);
         }

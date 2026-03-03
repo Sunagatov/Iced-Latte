@@ -19,9 +19,9 @@ import java.time.ZoneOffset;
 public interface ProductInfoDtoConverter {
 
     @Named("toProductInfoDto")
-    @Mapping(target = "id", source = "productId")
     @Mapping(target = "averageRating", source = "averageRating", qualifiedByName = "roundAverageRatingValue")
     @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
+    @Mapping(target = "productFileUrl", ignore = true)
     ProductInfoDto toDto(ProductInfo entity);
 
     @Mapping(target = "products", source = "content")

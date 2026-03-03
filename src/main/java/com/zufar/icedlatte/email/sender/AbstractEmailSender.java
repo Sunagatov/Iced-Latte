@@ -25,13 +25,11 @@ public abstract class AbstractEmailSender<T> {
         javaMailSender.send(mailMessage);
     }
 
-// import java.util.Locale;
-// Importing Locale to use Locale.ROOT for locale-neutral processing
-protected String getMessage(Class<?> clazz, T event) {
+protected String getMessage(T event) {
     return messageBuilders.stream()
-            .filter(builder -> builder.supports(clazz))
+            .filter(builder -> builder.supports(event.getClass()))
             .findFirst()
-            .orElseThrow(() -> new MessageBuilderNotFoundException(clazz.getName()))
+            .orElseThrow(() -> new MessageBuilderNotFoundException(event.getClass().getName()))
             .buildMessage(event, Locale.ROOT);
 }
 }

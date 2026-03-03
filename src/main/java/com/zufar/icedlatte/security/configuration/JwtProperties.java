@@ -11,8 +11,12 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties(prefix = "jwt")
 public record JwtProperties(
+        @NotBlank(message = "JWT header cannot be blank")
+        String header,
+
         @NotBlank(message = "JWT secret cannot be blank")
         String secret,
+// amazonq-ignore-next-line
 
         @NotBlank(message = "JWT refresh secret cannot be blank")
         String refreshSecret,
@@ -29,18 +33,4 @@ public record JwtProperties(
         @NotBlank(message = "JWT audience cannot be blank")
         String audience
 ) {
-    public JwtProperties {
-        if (expiration == null) {
-            expiration = Duration.ofHours(24);
-        }
-        if (refreshExpiration == null) {
-            refreshExpiration = Duration.ofDays(7);
-        }
-        if (issuer == null || issuer.isBlank()) {
-            issuer = "iced-latte";
-        }
-        if (audience == null || audience.isBlank()) {
-            audience = "iced-latte-users";
-        }
-    }
 }

@@ -1,26 +1,7 @@
 # Database Changelog - Version 2.0
-# Future enhancements and new features
-# 
-# This version will include:
-# - Performance optimizations
-# - New feature additions
-# - Schema improvements
-# - Data migrations
 
 databaseChangeLog:
-  
-  # ========== PERFORMANCE OPTIMIZATIONS ==========
-  # Database indexing and query optimization improvements
-  
-  # ========== NEW FEATURES ==========
-  # Additional functionality and feature enhancements
-  
-  # ========== SCHEMA IMPROVEMENTS ==========
-  # Database structure refinements and normalizations
-  
-  # ========== DATA MIGRATIONS ==========
-  # Data transformation and cleanup operations
-
-  # Example future migration (commented out):
-  # - include:
-  #     file: db/changelog/version-2.0/01.02.2025.part1.add-product-categories.sql
+  - include:
+      file: db/changelog/version-2.0/add-ai-summary-to-product-reviews.sql
+  - include:
+      file: db/changelog/version-2.0/add-ai-summary-to-product.sql

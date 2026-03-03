@@ -6,6 +6,8 @@ import com.zufar.icedlatte.security.exception.JwtTokenException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
@@ -28,6 +30,15 @@ public class JwtTokenProvider {
 
     public String generateToken(final Map<String, Object> extraClaims,
                                final UserDetails userDetails) {
+        return buildToken(extraClaims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
+    }
+
+    public String generateRefreshToken(final UserDetails userDetails) {
+        return buildToken(Map.of(), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails,
+                              Duration expiration, SecretKey key) {
         try {
             Instant now = Instant.now();
             return Jwts.builder()
@@ -36,28 +47,11 @@ public class JwtTokenProvider {
                     .issuer(jwtProperties.issuer())
                     .audience().add(jwtProperties.audience()).and()
                     .issuedAt(Date.from(now))
-                    .expiration(Date.from(now.plus(jwtProperties.expiration())))
-                    .signWith(jwtSignKeyProvider.get())
+                    .expiration(Date.from(now.plus(expiration)))
+                    .signWith(key)
                     .compact();
         } catch (JwtException exception) {
-            log.error("JWT token creation failed for user: {}", userDetails.getUsername(), exception);
-            throw new JwtTokenException(exception);
-        }
-    }
-
-    public String generateRefreshToken(final UserDetails userDetails) {
-        try {
-            Instant now = Instant.now();
-            return Jwts.builder()
-                    .subject(userDetails.getUsername())
-                    .issuer(jwtProperties.issuer())
-                    .audience().add(jwtProperties.audience()).and()
-                    .issuedAt(Date.from(now))
-                    .expiration(Date.from(now.plus(jwtProperties.refreshExpiration())))
-                    .signWith(jwtSignKeyProvider.getRefresh())
-                    .compact();
-        } catch (JwtException exception) {
-            log.error("JWT refresh token creation failed for user: {}", userDetails.getUsername(), exception);
+            log.error("jwt.create.error: message={}", exception.getMessage(), exception);
             throw new JwtTokenException(exception);
         }
     }

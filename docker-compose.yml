@@ -1,18 +1,146 @@
-version: '3.9'
-
 networks:
   iced-latte-network:
     name: iced-latte-network
-    external: true
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
 
 services:
-  latte-backend:
-    image: 'zufarexplainedit/iced-latte-backend:${DOCKER_IMAGE_TAG}'
-    container_name: latte-backend
+
+  # ── Infrastructure (always available) ──────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: iced-latte-postgresdb
+    environment:
+      POSTGRES_DB: ${DATASOURCE_NAME:-postgres}
+      POSTGRES_USER: ${DATASOURCE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD:-postgres}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - iced-latte-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATASOURCE_USERNAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: iced-latte-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - iced-latte-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Local S3-compatible object storage (replaces AWS S3 for local dev)
+  minio:
+    image: minio/minio:latest
+    container_name: iced-latte-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_KEY:-minioadmin}
+    ports:
+      - '9000:9000'   # S3 API
+      - '9001:9001'   # Web console  →  http://localhost:9001
+    volumes:
+      - minio-data:/data
+    networks:
+      - iced-latte-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Creates the required S3 buckets on first start
+  minio-init:
+    image: minio/mc:latest
+    container_name: iced-latte-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - iced-latte-network
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 ${AWS_ACCESS_KEY:-minioadmin} ${AWS_SECRET_KEY:-minioadmin};
+        mc mb --ignore-existing local/${AWS_PRODUCT_BUCKET:-iced-latte-products};
+        mc mb --ignore-existing local/${AWS_USER_BUCKET:-iced-latte-users};
+        mc anonymous set public local/${AWS_PRODUCT_BUCKET:-iced-latte-products};
+        mc anonymous set public local/${AWS_USER_BUCKET:-iced-latte-users};
+      "
+    restart: on-failure
+
+  # ── Backend (profile: backend) ─────────────────────────────────────────────
+
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: iced-latte-backend
+    profiles: [backend]
+    env_file: .env
+    environment:
+      DATASOURCE_HOST: postgres
+      REDIS_HOST: redis
+      AWS_ENDPOINT_URL: http://minio:9000
+      AWS_ENABLED: "true"
     ports:
       - '8083:8083'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    networks:
+      - iced-latte-network
+
+  # ── Frontend (profile: frontend) ───────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ../Iced-Latte-Frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://iced-latte-backend:8083/api/v1
+    container_name: iced-latte-frontend
+    profiles: [frontend]
+    ports:
+      - '3000:3000'
+    networks:
+      - iced-latte-network
+
+  # ── Observability (profile: monitoring) ────────────────────────────────────
+
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: datadog-agent
+    profiles: [monitoring]
+    hostname: iced-latte-local
+    environment:
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=datadoghq.eu
+      - DD_HOSTNAME=iced-latte-local
+      - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
+      - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
+    ports:
+      - '4317:4317'
+      - '4318:4318'
     networks:
       - iced-latte-network

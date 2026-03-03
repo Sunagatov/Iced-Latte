@@ -101,6 +101,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User or cart not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -118,7 +124,7 @@ components:
 
   schemas:
     OrderStatus:
-      type: string
+      type: "string"
       description: "The status of an order."
       enum:
         - CREATED
@@ -135,14 +141,41 @@ components:
         - recipientSurname
       properties:
         address:
-          # amazonq-ignore-next-line
-          $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
         recipientName:
           type: "string"
           description: "Name of the order recipient. Can be different from the user's name."
+          minLength: 2
+          maxLength: 128
+          example: "John"
         recipientSurname:
           type: "string"
           description: "Surname of the order recipient. Can be different from the user's surname."
+          minLength: 2
+          maxLength: 128
+          example: "Doe"
+        recipientPhone:
+          type: "string"
+          description: "Phone number for delivery notifications."
+          example: "+12025550123"
+
+    OrderItemDto:
+      type: "object"
+      description: "A single item within an order."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productId:
+          type: "string"
+          format: "uuid"
+        productName:
+          type: "string"
+        productPrice:
+          type: "number"
+          format: "double"
+        productsQuantity:
+          type: "integer"
 
     OrderDto:
       type: "object"
@@ -157,35 +190,22 @@ components:
           format: "uuid"
           description: "Unique identifier for the order."
         status:
-          $ref: '#/components/schemas/OrderStatus'
+          $ref: "#/components/schemas/OrderStatus"
         createdAt:
           type: "string"
           format: "date-time"
           description: "The date and time when the order was created."
-
-    ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
+        itemsQuantity:
+          type: "integer"
+        itemsTotalPrice:
+          type: "number"
+          format: "double"
+        items:
           type: "array"
           items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+            $ref: "#/components/schemas/OrderItemDto"
+        deliveryAddress:
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

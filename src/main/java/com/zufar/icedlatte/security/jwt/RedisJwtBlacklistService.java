@@ -1,103 +1,57 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.data.redis.host")
-public class RedisJwtBlacklistService {
+public class RedisJwtBlacklistService implements JwtBlacklistService {
 
     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
     private static final String BLACKLIST_VALUE = "revoked";
-    private static final int MAX_RETRY_ATTEMPTS = 3;
-    private static final Duration RETRY_DELAY = Duration.ofMillis(100);
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.expiration}")
-    private Duration jwtTtl;
-
+    @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
     public void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Attempted to blacklist empty token");
+            log.warn("jwt.blacklist.empty_token");
             return;
         }
-
         String key = buildBlacklistKey(token);
-        executeWithRetry(() -> {
-            redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtTtl);
-            log.debug("Token blacklisted successfully with TTL: {} seconds", jwtTtl.getSeconds());
-            return null;
-        }, "blacklist token");
+        redisTemplate.opsForValue().set(key, BLACKLIST_VALUE, jwtProperties.expiration());
+        log.debug("jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
     }
 
     public boolean isBlacklisted(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("Token validation attempted with empty token");
+            log.warn("jwt.blacklist.validate.empty_token");
             return true;
         }
-
         String key = buildBlacklistKey(token);
-        
-        return executeWithRetry(() -> {
-            boolean isBlacklisted = redisTemplate.hasKey(key);
-            log.debug("Token blacklist check: {} - {}", key.substring(0, Math.min(key.length(), 50)), 
-                     isBlacklisted ? "BLACKLISTED" : "VALID");
-            return isBlacklisted;
-        }, "check token blacklist status");
+        try {
+            Boolean hasKey = redisTemplate.hasKey(key);
+            //noinspection ConstantConditions - hasKey is @Nullable per Spring's RedisOperations contract
+            return hasKey != null && hasKey;
+        } catch (RuntimeException ex) {
+            log.error("jwt.blacklist.redis_error: message={}", ex.getMessage(), ex);
+            return true;
+        }
     }
 
     private String buildBlacklistKey(String token) {
-        return BLACKLIST_KEY_PREFIX + token.hashCode();
-    }
-
-    private <T> T executeWithRetry(RedisOperation<T> operation, String operationName) {
-        Exception lastException = null;
-        
-        for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
-            try {
-                return operation.execute();
-            } catch (Exception ex) {
-                lastException = ex;
-                log.warn("Redis operation '{}' failed on attempt {}/{}: {}", 
-                        operationName, attempt, MAX_RETRY_ATTEMPTS, ex.getMessage());
-                
-                if (attempt < MAX_RETRY_ATTEMPTS) {
-                    try {
-                        Thread.sleep(RETRY_DELAY.toMillis() * attempt);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                }
-            }
-        }
-        
-        log.error("Redis operation '{}' failed after {} attempts - failing secure", 
-                 operationName, MAX_RETRY_ATTEMPTS, lastException);
-        
-        // For blacklist checks, fail secure by returning true (treat as blacklisted)
-        // For blacklist operations, throw exception to indicate failure
-        if (operationName.contains("check")) {
-            @SuppressWarnings("unchecked")
-            T result = (T) Boolean.TRUE;
-            return result;
-        } else {
-            throw new RuntimeException("Redis operation failed: " + operationName, lastException);
-        }
-    }
-
-    @FunctionalInterface
-    private interface RedisOperation<T> {
-        T execute() throws Exception;
+        return BLACKLIST_KEY_PREFIX + sha256(token);
     }
 }

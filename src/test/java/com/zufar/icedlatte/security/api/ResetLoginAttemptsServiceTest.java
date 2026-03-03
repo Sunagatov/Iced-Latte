@@ -9,16 +9,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.any;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ResetLoginAttemptsService Tests")
@@ -30,42 +30,30 @@ class ResetLoginAttemptsServiceTest {
     @Mock
     private UserAccountLocker userAccountLocker;
 
-    @Mock
-    private LoginAttemptFactory loginAttemptFactory;
-
     @InjectMocks
     private ResetLoginAttemptsService resetLoginAttemptsService;
 
     private final String userEmail = "user@example.com";
 
     @Test
-    @DisplayName("Should reset login attempts for existing user")
+    @DisplayName("Should reset login attempts and unlock account for locked user")
     void shouldResetLoginAttemptsForExistingUser() {
         LoginAttemptEntity existingLoginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(0)
+                .attempts(3)
                 .isUserLocked(true)
-                .lastModified(LocalDateTime.now())
-                .build();
-
-        LoginAttemptEntity resetLoginAttempt = LoginAttemptEntity.builder()
-                .id(existingLoginAttempt.getId())
-                .userEmail(userEmail)
-                .attempts(0)
-                .isUserLocked(false)
-                .lastModified(LocalDateTime.now())
+                .lastModified(Instant.now())
                 .build();
 
         when(loginAttemptRepository.findByUserEmail(userEmail)).thenReturn(Optional.of(existingLoginAttempt));
-        when(loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail)).thenReturn(resetLoginAttempt);
 
         resetLoginAttemptsService.reset(userEmail);
 
-        verify(userAccountLocker, times(1)).unlockUserAccount(userEmail);
-        verify(loginAttemptRepository, times(1)).findByUserEmail(userEmail);
-        verify(loginAttemptFactory, times(1)).createInitialFailedLoggedAttemptEntity(userEmail);
-        verify(loginAttemptRepository, times(1)).save(resetLoginAttempt);
+        verify(userAccountLocker).unlockUserAccount(userEmail);
+        verify(loginAttemptRepository, never()).save(any());
+        assertEquals(0, existingLoginAttempt.getAttempts());
+        assertFalse(existingLoginAttempt.getIsUserLocked());
     }
 
     @Test
@@ -75,9 +63,7 @@ class ResetLoginAttemptsServiceTest {
 
         resetLoginAttemptsService.reset(userEmail);
 
-        verify(userAccountLocker, times(1)).unlockUserAccount(userEmail);
-        verify(loginAttemptRepository, times(1)).findByUserEmail(userEmail);
-        verify(loginAttemptFactory, never()).createInitialFailedLoggedAttemptEntity(userEmail);
-        verify(loginAttemptRepository, never()).save(any(LoginAttemptEntity.class));
+        verify(userAccountLocker, never()).unlockUserAccount(userEmail);
+        verify(loginAttemptRepository, never()).save(any());
     }
 }

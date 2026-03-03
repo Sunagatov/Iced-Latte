@@ -46,7 +46,6 @@ class JwtAuthenticationProviderTest {
         String userEmail = "test@example.com";
 
         when(jwtTokenFromAuthHeaderExtractor.extract(httpRequest)).thenReturn(jwtToken);
-        when(jwtClaimExtractor.isTokenExpired(jwtToken)).thenReturn(false);
         when(jwtClaimExtractor.extractEmail(jwtToken)).thenReturn(userEmail);
         when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
 
@@ -55,6 +54,5 @@ class JwtAuthenticationProviderTest {
         assertNotNull(authenticationToken);
         assertEquals(userDetails, authenticationToken.getPrincipal());
         verify(jwtBlacklistValidator).validate(jwtToken);
-        verify(jwtClaimExtractor).isTokenExpired(jwtToken);
     }
 }

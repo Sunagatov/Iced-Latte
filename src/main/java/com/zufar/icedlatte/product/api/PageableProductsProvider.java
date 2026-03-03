@@ -1,19 +1,26 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
+import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
 
 @Slf4j
 @Service
@@ -22,35 +29,51 @@ public class PageableProductsProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
-    private final ProductUpdater productUpdater;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
+    private final PaginationConfig paginationConfig;
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public ProductListWithPaginationInfoDto getProducts(final Pageable pageable,
+    public ProductListWithPaginationInfoDto getProducts(final Integer pageNumber,
+                                                        final Integer pageSize,
+                                                        final String sortAttribute,
+                                                        final String sortDirection,
                                                         final BigDecimal minPrice,
                                                         final BigDecimal maxPrice,
                                                         final Integer minimumAverageRating,
                                                         final List<String> brandNames,
-                                                        final List<String> sellerNames) {
-        BigDecimal minAvg = (minimumAverageRating == null) ? null : BigDecimal.valueOf(minimumAverageRating);
-        List<String> brands = nullIfEmpty(brandNames);
-        List<String> sellers = nullIfEmpty(sellerNames);
+                                                        final List<String> sellerNames,
+                                                        final String keyword) {
+        int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
+        int size = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
+        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
+        String sortDir = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
-        Page<ProductInfoDto> productsWithPageInfo = productInfoRepository
-                .findAllProducts(minPrice, maxPrice, minAvg, brands, sellers, pageable)
-                .map(productInfoDtoConverter::toDto);
-        
-        List<ProductInfoDto> updatedProducts = productUpdater.updateBatch(productsWithPageInfo.getContent());
-        
-        Page<ProductInfoDto> updatedProductsPage = new org.springframework.data.domain.PageImpl<>(
-                updatedProducts,
-                productsWithPageInfo.getPageable(),
-                productsWithPageInfo.getTotalElements()
+        log.info("product.list.fetching: page={}, size={}, sort_attribute={}, sort_direction={}", page, size, sortAttr, sortDir);
+        long t0 = System.currentTimeMillis();
+
+        BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
+
+        Specification<ProductInfo> spec = Specification.allOf(
+                minPriceSpec(minPrice),
+                maxPriceSpec(maxPrice),
+                minRatingSpec(minAvg),
+                brandNamesSpec(brandNames),
+                sellerNamesSpec(sellerNames),
+                nameContainsSpec(keyword)
         );
 
-        return productInfoDtoConverter.toProductPaginationDto(updatedProductsPage);
-    }
+        Page<ProductInfo> rawPage = productInfoRepository
+                .findAll(spec, createPageableObject(page, size, sortAttr, sortDir));
 
-    private static <T> List<T> nullIfEmpty(List<T> list) {
-        return (list == null || list.isEmpty()) ? null : list;
+        List<ProductInfoDto> dtos = rawPage.getContent().stream()
+                .map(productInfoDtoConverter::toDto)
+                .toList();
+        List<ProductInfoDto> updatedDtos = productPictureLinkUpdater.updateBatch(dtos);
+
+        Page<ProductInfoDto> result = new PageImpl<>(
+                updatedDtos, rawPage.getPageable(), rawPage.getTotalElements());
+
+        log.info("product.list.fetched: count={}, durationMs={}", result.getNumberOfElements(), System.currentTimeMillis() - t0);
+        return productInfoDtoConverter.toProductPaginationDto(result);
     }
 }

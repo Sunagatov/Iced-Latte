@@ -2,7 +2,6 @@ package com.zufar.icedlatte.order.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 public class OrderExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -28,8 +26,7 @@ public class OrderExceptionHandler {
         String message = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.error("Handle method argument type mismatch exception: failed: message: {}, debugMessage: {}.",
-                message, errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.order.type_mismatch: message={}", message);
 
         return apiErrorResponse;
     }

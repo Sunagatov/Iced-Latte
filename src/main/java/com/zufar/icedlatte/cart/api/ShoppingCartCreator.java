@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -18,24 +17,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingCartCreator {
 
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
     public static final int DEFAULT_ITEMS_QUANTITY = 0;
 
     private final ShoppingCartRepository shoppingCartRepository;
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ShoppingCart getOrCreate(UUID userId) {
+        return shoppingCartRepository.findShoppingCartByUserId(userId)
+                .orElseGet(() -> createNewShoppingCart(userId));
+    }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCart createNewShoppingCart(UUID userId) {
         ShoppingCart shoppingCart = ShoppingCart.builder()
                 .userId(userId)
                 .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
-                .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
+                .productsQuantity(ShoppingCart.DEFAULT_PRODUCTS_QUANTITY)
                 .items(new HashSet<>())
-                .createdAt(OffsetDateTime.now())
                 .build();
 
-        this.shoppingCartRepository.save(shoppingCart);
-
-        log.info("The new shopping cart was created and saved in database.");
+        shoppingCartRepository.save(shoppingCart);
+        log.info("cart.created: userId={}", userId);
         return shoppingCart;
     }
 }

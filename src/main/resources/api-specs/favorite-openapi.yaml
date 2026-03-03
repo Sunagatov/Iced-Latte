@@ -56,12 +56,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "The specified favorite product was not found."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
           content:
@@ -89,12 +83,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: "The favorite products list is empty."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
           content:
@@ -116,7 +104,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ListOfFavoriteProducts"
       responses:
-        "201":
+        "200":
           description: "The products were successfully added to favorites."
           content:
             application/json:
@@ -130,6 +118,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "One or more specified products were not found."
           content:
             application/json:
               schema:
@@ -151,24 +145,24 @@ components:
 
   schemas:
     ListOfFavoriteProducts:
-      type: object
+      type: "object"
       description: "A list of product IDs to be added to the user's favorite list."
       properties:
         productIds:
-          type: array
+          type: "array"
           description: "An array of unique identifiers for the products."
           items:
-            type: string
-            format: uuid
+            type: "string"
+            format: "uuid"
       required:
         - productIds
 
     ListOfFavoriteProductsDto:
-      type: object
+      type: "object"
       description: "A list of products marked as favorites by the user."
       properties:
         products:
-          type: array
+          type: "array"
           description: "An array of product details for the favorite products."
           items:
             $ref: "./product-openapi.yaml#/components/schemas/ProductInfoDto"
@@ -176,28 +170,4 @@ components:
         - products
 
     ErrorResponse:
-      type: "object"
-      description: "Standard error response format"
-      required:
-        - message
-        - timestamp
-        - status
-      properties:
-        message:
-          type: "string"
-          description: "Error message"
-        details:
-          type: "array"
-          items:
-            type: "string"
-          description: "Additional error details"
-        timestamp:
-          type: "string"
-          format: "date-time"
-          description: "Error timestamp"
-        status:
-          type: "integer"
-          description: "HTTP status code"
-        path:
-          type: "string"
-          description: "Request path that caused the error"
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

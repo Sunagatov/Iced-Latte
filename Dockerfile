@@ -1,46 +1,81 @@
 # =============================================================================
 # BUILD STAGE
 # =============================================================================
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+FROM zufarexplainedit/iced-latte-deps:latest AS build
+
+# Build arguments
+ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+ARG PROFILE=dev
+ARG VERSION=0.0.1
+
 WORKDIR /app
 
-# --- Dependency Layer (cached when pom.xml unchanged) ---
+# --- Source & POM ---
 COPY pom.xml ./
-RUN mvn dependency:go-offline -B
-
-# --- Source Code Layer ---
 COPY src ./src
 
 # --- Build Application ---
-RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=0.0.1 && \
-    mvn package -Pdev -DskipTests -B
+RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION} && \
+    mvn package -P${PROFILE} -DskipTests -B --no-transfer-progress
+
+# =============================================================================
+# EXTRACT STAGE — split fat JAR into layers for Docker cache efficiency
+# =============================================================================
+FROM eclipse-temurin:25-jre-alpine AS extract
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
+# =============================================================================
+# CDS TRAINING STAGE — generate class-data sharing archive
+# =============================================================================
+FROM eclipse-temurin:25-jre-alpine AS cds-train
+WORKDIR /app
+COPY --from=extract /app/dependencies/ ./
+COPY --from=extract /app/spring-boot-loader/ ./
+COPY --from=extract /app/snapshot-dependencies/ ./
+COPY --from=extract /app/application/ ./
+RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
+        -Dspring.context.exit=onRefresh \
+        -Dspring.profiles.active=prod \
+        org.springframework.boot.loader.launch.JarLauncher 2>/dev/null || true
 
 # =============================================================================
 # RUNTIME STAGE
 # =============================================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
-# --- Security Setup ---
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Build arguments for runtime
+ARG VERSION=0.0.1
+ARG PROFILE=prod
+
+# Metadata
+LABEL maintainer="Iced-Latte Team" \
+      version="${VERSION}" \
+      description="Iced-Latte Backend Application"
 
 WORKDIR /app
 
-# --- Application Setup ---
-COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+# --- Layered copy: dependencies change rarely, application layer changes every build ---
+COPY --from=extract /app/dependencies/ ./
+COPY --from=extract /app/spring-boot-loader/ ./
+COPY --from=extract /app/snapshot-dependencies/ ./
+COPY --from=extract /app/application/ ./
+COPY --from=cds-train /app/app-cds.jsa ./
 
 # --- Runtime Configuration ---
-USER appuser
 EXPOSE 8080
-
-# --- Health Monitoring ---
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # --- Application Startup ---
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:MaxRAMPercentage=60.0", \
+    "-XX:MaxMetaspaceSize=128m", \
     "-XX:+ExitOnOutOfMemoryError", \
+    "-XX:+UseG1GC", \
+    "-XX:G1HeapRegionSize=4m", \
+    "-XX:+UseStringDeduplication", \
+    "-XX:SharedArchiveFile=app-cds.jsa", \
     "-Djava.security.egd=file:/dev/./urandom", \
-    "-jar", "app.jar"]
+    "-Dspring.profiles.active=prod", \
+    "org.springframework.boot.loader.launch.JarLauncher"]

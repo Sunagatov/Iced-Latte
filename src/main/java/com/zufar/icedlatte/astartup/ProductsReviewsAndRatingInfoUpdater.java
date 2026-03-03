@@ -1,17 +1,16 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -20,32 +19,25 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductReviewRepository productReviewRepository;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
-    @Transactional
-    public void run(ApplicationArguments args) throws SQLException {
-        try {
-            productInfoRepository.findAll().stream()
-                .map(ProductInfo::getProductId)
-                .forEach(productId -> {
-                    productInfoRepository.updateAverageRating(productId);
-                    productInfoRepository.updateReviewsCount(productId);
-                });
-
-            productReviewRepository.findAll().stream()
-                .map(ProductReview::getId)
-                .forEach(reviewId -> {
-                    productReviewRepository.updateLikesCount(reviewId);
-                    productReviewRepository.updateDislikesCount(reviewId);
-                });
-
-            log.info("Product reviews and ratings update completed successfully");
-            
-        } catch (Exception e) {
-            RuntimeException re = (RuntimeException) e;
-            var errorMessage = "Runtime error during product update: " + re.getMessage();
-            log.error(errorMessage, e);
-            throw new SQLException(errorMessage, e);
-        }
+    public void run(ApplicationArguments args) {
+        var executor = Executors.newVirtualThreadPerTaskExecutor();
+        CompletableFuture.runAsync(() ->
+                transactionTemplate.executeWithoutResult(status -> {
+                    log.info("migration.ratings.start");
+                    long t0 = System.currentTimeMillis();
+                    productInfoRepository.updateAllAverageRatings();
+                    productInfoRepository.updateAllReviewsCounts();
+                    productReviewRepository.updateAllLikesCounts();
+                    productReviewRepository.updateAllDislikesCounts();
+                    log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
+                }), executor)
+            .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+            .whenComplete((v, e) -> {
+                executor.close();
+                if (e != null) log.error("migration.ratings.error: message={}", e.getMessage(), e);
+            });
     }
 }

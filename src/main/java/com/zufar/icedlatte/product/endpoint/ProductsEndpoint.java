@@ -1,16 +1,20 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.common.config.PaginationConfig;
-import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.product.api.*;
+import com.zufar.icedlatte.openapi.dto.BrandsDto;
+import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.openapi.dto.SellersDto;
+import com.zufar.icedlatte.product.api.PageableProductsProvider;
+import com.zufar.icedlatte.product.api.ProductFilterOptionsProvider;
+import com.zufar.icedlatte.product.api.ProductsProvider;
+import com.zufar.icedlatte.product.api.SingleProductProvider;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-
-import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
 
 @Slf4j
 @RestController
@@ -38,14 +40,18 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final PageableProductsProvider pageableProductsProvider;
     private final GetProductsRequestValidator getProductsRequestValidator;
     private final SingleProductProvider singleProductProvider;
-    private final PaginationConfig paginationConfig;
+    private final ProductFilterOptionsProvider productFilterOptionsProvider;
 
     @Override
-    @GetMapping("/{productId}")
-    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
-        log.info("Getting product by id: {}", productId);
-        var product = singleProductProvider.getProductById(productId);
-        return ResponseEntity.ok(product);
+    @GetMapping("/sellers")
+    public ResponseEntity<SellersDto> getAllSellers() {
+        return ResponseEntity.ok(new SellersDto(productFilterOptionsProvider.getSellerNames()));
+    }
+
+    @Override
+    @GetMapping("/brands")
+    public ResponseEntity<BrandsDto> getAllBrands() {
+        return ResponseEntity.ok(new BrandsDto(productFilterOptionsProvider.getBrandNames()));
     }
 
     @Override
@@ -59,23 +65,15 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
             @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
             @RequestParam(name = "minimum_average_rating", required = false) Integer minimumAverageRating,
             @RequestParam(name = "brand_names", required = false) List<String> brandNames,
-            @RequestParam(name = "seller_names", required = false) List<String> sellerNames) {
+            @RequestParam(name = "seller_names", required = false) List<String> sellerNames,
+            @RequestParam(name = "keyword", required = false) String keyword) {
 
-        // Apply default values from configuration
-        pageNumber = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
-        pageSize = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
-        sortAttribute = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
-        sortDirection = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
-
-        log.info("Getting products: page={}, size={}, sort={} {}", pageNumber, pageSize, sortAttribute, sortDirection);
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
 
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
-        var products = pageableProductsProvider.getProducts(pageable, minPrice, maxPrice,
-                minimumAverageRating, brandNames, sellerNames);
-
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(pageableProductsProvider.getProducts(
+                pageNumber, pageSize, sortAttribute, sortDirection,
+                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
     }
 
     @Override
@@ -83,35 +81,19 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
         var ids = productIdsDto.getProductIds();
         if (ids == null || ids.isEmpty()) {
-            log.warn("Empty products ids payload");
+            log.warn("product.ids.empty");
             return ResponseEntity.badRequest().build();
         }
-        log.info("Getting {} products by IDs", ids.size());
+        log.info("product.ids.fetching: count={}", ids.size());
         var products = productsProvider.getProducts(ids);
-        log.info("Retrieved {} products by IDs", products.size());
+        log.info("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);
     }
 
     @Override
-    @GetMapping("/sellers")
-    @Cacheable(cacheNames = "sellers")
-    public ResponseEntity<SellersDto> getAllSellers() {
-        log.info("Getting all sellers");
-        var sellers = new SellersDto(List.of(
-                "JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium",
-                "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"
-        ));
-        log.info("Retrieved {} sellers", sellers.getSellers().size());
-        return ResponseEntity.ok(sellers);
-    }
-
-    @Override
-    @GetMapping("/brands")
-    @Cacheable(cacheNames = "brands")
-    public ResponseEntity<BrandsDto> getAllBrands() {
-        log.info("Getting all brands");
-        var brands = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
-        log.info("Retrieved {} brands", brands.getBrands().size());
-        return ResponseEntity.ok(brands);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
+        log.info("product.get: productId={}", productId);
+        return ResponseEntity.ok(singleProductProvider.getProductById(productId));
     }
 }

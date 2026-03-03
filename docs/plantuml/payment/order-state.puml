@@ -1,9 +1,0 @@
-@startuml
-
-title Order States
-
-[*] --> CREATED : BE receives Stripe Webhook\n"checkout.session.completed"
-
-CREATED: New Order
-
-@enduml

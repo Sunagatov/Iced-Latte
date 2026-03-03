@@ -32,7 +32,7 @@ public class FileProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("AWS not configured, returning empty URL for: {}", relatedObjectId);
+            log.warn("file.url.skipped: reason=aws_not_configured");
             return Optional.empty();
         }
         return fileMetadataProvider.getFileMetadataDto(relatedObjectId)
@@ -42,15 +42,18 @@ public class FileProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, String> getRelatedObjectUrls(final List<UUID> relatedObjectIds) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("AWS not configured, returning empty URLs for: {}", relatedObjectIds);
+            log.warn("file.urls.skipped: reason=aws_not_configured");
             return Map.of();
         }
-        return fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
+        Map<UUID, String> urls = fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue())
-                ));
+                .flatMap(entry -> Optional.ofNullable(
+                        awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue()))
+                        .map(url -> Map.entry(entry.getKey(), url))
+                        .stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        log.debug("file.urls.generated: count={}", urls.size());
+        return urls;
     }
 }

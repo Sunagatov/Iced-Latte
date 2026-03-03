@@ -8,7 +8,7 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -30,7 +29,7 @@ public class ProductQuantityItemUpdater {
     private final ShoppingCartProvider shoppingCartProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
-    @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
+    @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto update(final UUID shoppingCartItemId,
                                   final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
@@ -38,8 +37,8 @@ public class ProductQuantityItemUpdater {
         ShoppingCartItem updatedItem = updateItemProductQuantity(shoppingCartItemId, productQuantityChange, item);
         ShoppingCartDto shoppingCart = getShoppingCart();
 
-        if (shoppingCart.getId() != updatedItem.getShoppingCart().getId()) {
-            log.warn("Failed to update the productQuantity with the change = {} in the shoppingCartItem with id: {} of the shoppingCart with the id = {}.",
+        if (!shoppingCart.getId().equals(updatedItem.getShoppingCart().getId())) {
+        log.warn("cart.item.quantity.invalid: itemId={}, change={}, cartId={}",
                     productQuantityChange, shoppingCartItemId, shoppingCart.getId());
             throw new InvalidShoppingCartIdException(shoppingCart.getId());
         }
@@ -48,10 +47,7 @@ public class ProductQuantityItemUpdater {
 
     private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
         return shoppingCartItemRepository.findById(shoppingCartItemId)
-                .orElseThrow(() -> {
-                    log.warn("Shopping cart item  with id = {} is not found.", shoppingCartItemId);
-                    return new ShoppingCartItemNotFoundException(shoppingCartItemId);
-                });
+                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
     }
 
     private ShoppingCartItem updateItemProductQuantity(final UUID shoppingCartItemId,
@@ -59,11 +55,11 @@ public class ProductQuantityItemUpdater {
                                                        ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 0) {
-            log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingCartItemId);
+            log.warn("cart.item.quantity.negative: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         if (productQuantityChange == 0) {
-            log.warn("productQuantityChange for item with id: {} must be not equal to zero.", shoppingCartItemId);
+            log.warn("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         item.setProductQuantity(newQuantity);
@@ -72,8 +68,6 @@ public class ProductQuantityItemUpdater {
     }
 
     private ShoppingCartDto getShoppingCart() throws ShoppingCartNotFoundException {
-        UserDto userDto = securityPrincipalProvider.get();
-        UUID userId = userDto.getId();
-        return shoppingCartProvider.getByUserId(userId);
+        return shoppingCartProvider.getByUserId(securityPrincipalProvider.getUserId());
     }
 }

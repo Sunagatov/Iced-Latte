@@ -1,26 +1,36 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenFromAuthHeaderExtractor Tests")
 class JwtTokenFromAuthHeaderExtractorTest {
+
+    private static final String VALID_JWT_TOKEN_FIXTURE = "test-header.test-payload.test-signature";
+
+    @Mock
+    private JwtProperties jwtProperties;
 
     private JwtTokenFromAuthHeaderExtractor extractor;
     private MockHttpServletRequest request;
 
     @BeforeEach
     void setUp() {
-        extractor = new JwtTokenFromAuthHeaderExtractor();
+        when(jwtProperties.header()).thenReturn("Authorization");
+        extractor = new JwtTokenFromAuthHeaderExtractor(jwtProperties);
         request = new MockHttpServletRequest();
-        ReflectionTestUtils.setField(extractor, "jwtHttpRequestHeader", "Authorization");
     }
 
     @Test
@@ -67,11 +77,10 @@ class JwtTokenFromAuthHeaderExtractorTest {
     @Test
     @DisplayName("Should extract valid JWT token")
     void shouldExtractValidJwtToken() {
-        String validJwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-        request.addHeader("Authorization", "Bearer " + validJwtToken);
-        
+        request.addHeader("Authorization", "Bearer " + VALID_JWT_TOKEN_FIXTURE);
+
         String actualToken = extractor.extract(request);
-        
-        assertEquals(validJwtToken, actualToken);
+
+        assertEquals(VALID_JWT_TOKEN_FIXTURE, actualToken);
     }
 }

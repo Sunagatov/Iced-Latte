@@ -7,4 +7,8 @@ public class JwtTokenHasNoUserEmailException extends AuthenticationException {
 	public JwtTokenHasNoUserEmailException(String message) {
 		super(message);
 	}
+
+	public JwtTokenHasNoUserEmailException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

@@ -8,15 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,14 +31,12 @@ class LoginFailureHandlerTest {
     @InjectMocks
     private LoginFailureHandler loginFailureHandler;
 
-    @Value("${security.max-login-attempts}")
-    private int maxLoginAttempts;
-
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
     private final String userEmail = "user@example.com";
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", maxLoginAttempts);
+        ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
     }
 
     @Test
@@ -49,16 +45,16 @@ class LoginFailureHandlerTest {
         LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(maxLoginAttempts - 2)
+                .attempts(MAX_LOGIN_ATTEMPTS - 2)
                 .isUserLocked(false)
-                .lastModified(LocalDateTime.now())
+                .lastModified(Instant.now())
                 .build();
 
         when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
 
         loginFailureHandler.handle(userEmail);
 
-        verify(failedLoginAttemptIncrementor, times(1)).increment(userEmail);
+        verify(failedLoginAttemptIncrementor).increment(userEmail);
         verify(userAccountLocker, never()).lockUserAccount(userEmail);
     }
 
@@ -68,9 +64,9 @@ class LoginFailureHandlerTest {
         LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
                 .id(UUID.randomUUID())
                 .userEmail(userEmail)
-                .attempts(maxLoginAttempts)
+                .attempts(MAX_LOGIN_ATTEMPTS)
                 .isUserLocked(false)
-                .lastModified(LocalDateTime.now())
+                .lastModified(Instant.now())
                 .build();
 
         when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
@@ -78,7 +74,7 @@ class LoginFailureHandlerTest {
 
         loginFailureHandler.handle(userEmail);
 
-        verify(failedLoginAttemptIncrementor, times(1)).increment(userEmail);
-        verify(userAccountLocker, times(1)).lockUserAccount(userEmail);
+        verify(failedLoginAttemptIncrementor).increment(userEmail);
+        verify(userAccountLocker).lockUserAccount(userEmail);
     }
 }

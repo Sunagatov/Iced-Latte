@@ -6,7 +6,6 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +28,6 @@ class CartExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
-    @Mock
-    private ErrorDebugMessageCreator errorDebugMessageCreator;
-
     @InjectMocks
     private CartExceptionHandler shoppingExceptionHandler;
 
@@ -48,7 +44,6 @@ class CartExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartNotFoundException(exception);
 
@@ -57,7 +52,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -73,7 +67,6 @@ class CartExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartItemNotFoundException(exception);
 
@@ -82,7 +75,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -98,7 +90,6 @@ class CartExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidShoppingCartIdException(exception);
 
@@ -107,7 +98,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -123,7 +113,6 @@ class CartExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidItemProductQuantityException(exception);
 
@@ -132,6 +121,5 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

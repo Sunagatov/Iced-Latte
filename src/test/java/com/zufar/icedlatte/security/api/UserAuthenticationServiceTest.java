@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 
@@ -19,9 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")
 class UserAuthenticationServiceTest {
@@ -69,18 +68,17 @@ class UserAuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw BadCredentialsException when invalid credentials are provided")
-    void shouldThrowBadCredentialsExceptionWhenInvalidCredentialsProvided() {
-        String errorMessage = "Invalid credentials";
+    @DisplayName("Should throw InvalidCredentialsException when invalid credentials are provided")
+    void shouldThrowInvalidCredentialsExceptionWhenInvalidCredentialsProvided() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException(errorMessage));
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        BadCredentialsException exception = assertThrows(
-            BadCredentialsException.class, 
+        InvalidCredentialsException exception = assertThrows(
+            InvalidCredentialsException.class,
             () -> userAuthenticationService.authenticate(request)
         );
-        
-        assertTrue(exception.getMessage().contains("Invalid credentials"));
+
+        assertEquals("Invalid credentials", exception.getMessage());
         verify(loginFailureHandler).handle(request.getEmail());
         verifyNoInteractions(resetLoginAttemptsService);
     }

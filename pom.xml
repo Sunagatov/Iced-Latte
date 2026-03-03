@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.5</version>
+        <version>3.5.11</version>
         <relativePath/>
     </parent>
 
@@ -20,6 +20,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- CVE-2024-25710, CVE-2024-26308 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.28.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -30,63 +36,57 @@
 
     <properties>
         <!-- ========== PROJECT CONFIGURATION ========== -->
-        <project.version>0.0.1</project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-
-        <!-- ========== SPRING FRAMEWORK VERSIONS ========== -->
-        <spring-boot.version>3.5.5</spring-boot.version>
-        <spring-ai-bom.version>1.0.0</spring-ai-bom.version>
+        <java.version>25</java.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
-        <postgresql.version>42.7.7</postgresql.version>
+        <postgresql.version>42.7.10</postgresql.version>
         <liquibase.version>4.32.0</liquibase.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
-        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
-        <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
-        <gson.version>2.11.0</gson.version>
+        <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
+        <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
-        <springdoc-openapi.version>2.8.11</springdoc-openapi.version>
-        <openapi-generator.version>7.15.0</openapi-generator.version>
+        <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
+        <openapi-generator.version>7.20.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
-        <instancio-junit.version>5.5.0</instancio-junit.version>
+        <instancio-junit.version>5.5.1</instancio-junit.version>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
-        <stripe.version>28.4.0</stripe.version>
-        <google-api-client.version>2.8.1</google-api-client.version>
-        <google-auth-library.version>1.38.0</google-auth-library.version>
-        <jakarta.mail-api.version>2.1.3</jakarta.mail-api.version>
-        <aws-sdk-bom.version>2.32.25</aws-sdk-bom.version>
+        <stripe.version>31.4.0</stripe.version>
+        <google-api-client.version>2.9.0</google-api-client.version>
+
+        <!-- ========== AWS VERSIONS ========== -->
+        <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
+
+        <!-- ========== AI VERSIONS ========== -->
+        <langchain4j.version>1.11.0-beta19</langchain4j.version>
 
         <!-- ========== UTILITIES VERSIONS ========== -->
-        <apache-commons-lang3.version>3.18.0</apache-commons-lang3.version>
-        <guava.version>33.4.0-jre</guava.version>
+        <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
+        <guava.version>33.5.0-jre</guava.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
-        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <sonar-maven-plugin.version>4.0.0.4121</sonar-maven-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
 
         <!-- ========== OPENAPI CONFIGURATION ========== -->
         <openapi-package>com.zufar.icedlatte.openapi</openapi-package>
         <openapi-package-with-dto>${openapi-package}.dto</openapi-package-with-dto>
     </properties>
 
-    <!-- Dependencies -->
     <dependencies>
 
         <!-- ========== SPRING FRAMEWORK ========== -->
@@ -130,13 +130,25 @@
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
+
+        <!-- ========== AWS ========== -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
-            <artifactId>ses</artifactId>
+            <artifactId>url-connection-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cloudfront</artifactId>
         </dependency>
 
         <!-- ========== DATABASE ========== -->
@@ -151,6 +163,13 @@
             <version>${liquibase.version}</version>
         </dependency>
 
+        <!-- ========== BOUNCYCASTLE (required by Argon2PasswordEncoder) ========== -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.83</version>
+        </dependency>
+
         <!-- ========== SECURITY & JWT ========== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -161,18 +180,16 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- ========== SERIALIZATION & LOGGING ========== -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -186,11 +203,6 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logstash-logback-encoder.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
         </dependency>
 
         <!-- ========== CODE GENERATION & MAPPING ========== -->
@@ -217,17 +229,20 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+        </dependency>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>${stripe.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.auth</groupId>
-            <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>${google-auth-library.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -240,10 +255,17 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- ========== AI ========== -->
         <dependency>
-            <groupId>jakarta.mail</groupId>
-            <artifactId>jakarta.mail-api</artifactId>
-            <version>${jakarta.mail-api.version}</version>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
         </dependency>
 
         <!-- ========== UTILITIES ========== -->
@@ -256,7 +278,10 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
 
         <!-- ========== TESTING ========== -->
@@ -294,6 +319,13 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>json-schema-validator</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- CVE-2025-66453: no patched version available -->
+                <exclusion>
+                    <groupId>org.mozilla</groupId>
+                    <artifactId>rhino</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.instancio</groupId>
@@ -303,36 +335,6 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <!-- Production Profile -->
-        <profile>
-            <id>prod</id>
-            <dependencies>
-                <dependency>
-                    <groupId>io.micrometer</groupId>
-                    <artifactId>micrometer-registry-prometheus</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <!-- Development Profile -->
-        <profile>
-            <id>dev</id>
-            <activation>
-                <property>
-                    <name>ENV</name>
-                    <value>dev</value>
-                </property>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>software.amazon.awssdk</groupId>
-                    <artifactId>s3</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
-
     <build>
         <plugins>
             <!-- Maven Compiler Plugin -->
@@ -341,8 +343,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -359,6 +360,7 @@
                         <arg>-Amapstruct.suppressGeneratorTimestamp=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
                     </compilerArgs>
+                    <showWarnings>false</showWarnings>
                 </configuration>
             </plugin>
 
@@ -373,6 +375,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
                 </configuration>
             </plugin>
 
@@ -403,7 +408,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
-                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>@{argLine} -XX:+EnableDynamicAgentLoading</argLine>
                 </configuration>
             </plugin>
 
@@ -431,7 +436,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.product.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -450,7 +454,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.user.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -469,7 +472,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.cart.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -488,7 +490,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -505,10 +506,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.payment.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.payment.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -523,10 +524,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/favorite-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.favorite.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.favorite.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -541,10 +542,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/order-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.order.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.order.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -559,10 +560,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/product-review-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.product.review.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.product.review.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>

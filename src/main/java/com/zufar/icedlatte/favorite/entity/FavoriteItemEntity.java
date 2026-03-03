@@ -53,9 +53,10 @@ public class FavoriteItemEntity {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(id)
+                .append(favoriteListEntity)
                 .append(productInfo)
-                .toHashCode();    }
+                .toHashCode();
+    }
 
     @Override
     public String toString() {

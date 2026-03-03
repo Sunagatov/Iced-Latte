@@ -22,16 +22,17 @@ public class UnlockAccountScheduler {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void unlockLockoutExpiredAccounts() {
         try {
-            log.debug("Starting unlockLockoutExpiredAccounts scheduled task.");
+            log.debug("scheduler.unlock.start");
 
-            loginAttemptRepository.resetLockedAccounts();
+            int released = loginAttemptRepository.resetLockedAccounts();
+            log.debug("scheduler.unlock.released: count={}", released);
             userRepository.unlockUsers();
 
-            log.debug("Finished unlockLockoutExpiredAccounts scheduled task.");
+            log.debug("scheduler.unlock.finish");
         } catch (DataAccessException dae) {
-            log.error("Database error during unlockLockoutExpiredAccounts scheduled task.", dae);
+            log.error("scheduler.unlock.db_error: message={}", dae.getMessage(), dae);
         } catch (RuntimeException re) {
-            log.error("Unexpected error during unlockLockoutExpiredAccounts scheduled task.", re);
+            log.error("scheduler.unlock.error: message={}", re.getMessage(), re);
         }
     }
 }

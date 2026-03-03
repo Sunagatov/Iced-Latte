@@ -5,13 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
@@ -27,27 +23,21 @@ public class AwsProvider {
 
     private final S3Client s3Client;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
         try {
-            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .build();
-            List<S3Object> allObjects = new ArrayList<>();
-            ListObjectsV2Response result;
-            do {
-                result = s3Client.listObjectsV2(listObjectsV2Request);
-                allObjects.addAll(result.contents());
-                listObjectsV2Request = listObjectsV2Request.toBuilder()
-                        .continuationToken(result.nextContinuationToken())
-                        .build();
-            } while (result.isTruncated());
+            List<S3Object> allObjects = s3Client.listObjectsV2Paginator(request)
+                    .contents()
+                    .stream()
+                    .toList();
             return getFileMetadataDtos(allObjects, bucketName);
         } catch (S3Exception e) {
-            log.warn("Error accessing AWS S3 bucket", e);
+            log.error("aws.s3.list.error: message={}", e.getMessage(), e);
             return List.of();
         } catch (SdkClientException e) {
-            log.warn("AWS SDK client error", e);
+            log.error("aws.s3.list.unreachable: message={}", e.getMessage(), e);
             return List.of();
         }
     }
@@ -59,13 +49,15 @@ public class AwsProvider {
             String fileName = s3Object.key();
             String[] parts = fileName.split("/");
             String[] packageName = parts[0].split("_");
-            String relatedObjectId = packageName[1];
-            FileMetadataDto fileMetadataDto = new FileMetadataDto(
-                    UUID.fromString(relatedObjectId),
-                    bucketName,
-                    fileName
-            );
-            fileMetadataDtos.add(fileMetadataDto);
+            if (packageName.length < 2) {
+                log.warn("aws.s3.key.skipped: key={}", fileName);
+                return;
+            }
+            try {
+                fileMetadataDtos.add(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
+            } catch (IllegalArgumentException e) {
+                log.warn("aws.s3.key.invalid_uuid: key={}", fileName);
+            }
         });
 
         return fileMetadataDtos;

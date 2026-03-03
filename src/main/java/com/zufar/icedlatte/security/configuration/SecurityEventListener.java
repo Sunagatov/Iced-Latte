@@ -6,6 +6,8 @@ import org.springframework.security.authentication.event.AbstractAuthenticationF
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Slf4j
 @Component
@@ -13,29 +15,33 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        String username = event.getAuthentication().getName();
-        var authorities = event.getAuthentication().getAuthorities();
-        log.info("Authentication successful for user: {} with authorities: {}", username, authorities);
+        log.debug("auth.success: authorities={}",
+                event.getAuthentication().getAuthorities());
     }
 
     @EventListener
     public void onAuthenticationFailure(AbstractAuthenticationFailureEvent event) {
-        String username = event.getAuthentication().getName();
-        String reason = event.getException().getMessage();
-        var exceptionType = event.getException().getClass().getSimpleName();
-        log.warn("Authentication failed for user: {} - Type: {} - Reason: {}", username, exceptionType, reason);
+        log.warn("auth.failed: reason={}",
+                event.getException().getClass().getSimpleName());
     }
 
     @EventListener
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
-        if (event.getAuthentication().get() != null) {
-            String username = event.getAuthentication().get().getName();
-            log.warn("Authorization denied for user: {} - Resource: {}",
-                    username,
-                    event.getAuthorizationResult());
+        String path = requestPath();
+        var authSupplier = event.getAuthentication();
+        if (authSupplier != null && authSupplier.get() != null) {
+            log.warn("auth.denied: authorities={}, path={}",
+                    authSupplier.get().getAuthorities(), path);
         } else {
-            log.warn("Authorization denied for anonymous user - Resource: {}",
-                    event.getAuthorizationResult());
+            log.warn("auth.denied: reason=anonymous, path={}", path);
         }
+    }
+
+    private static String requestPath() {
+        var attrs = RequestContextHolder.getRequestAttributes();
+        if (attrs instanceof ServletRequestAttributes sra) {
+            return sra.getRequest().getRequestURI();
+        }
+        return "-";
     }
 }

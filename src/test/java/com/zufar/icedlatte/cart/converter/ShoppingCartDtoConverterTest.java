@@ -7,11 +7,13 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,30 +21,19 @@ import static org.hamcrest.Matchers.*;
 
 import java.math.BigDecimal;
 
-@SpringBootTest(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
 class ShoppingCartDtoConverterTest {
-
-    @Autowired
-    ShoppingCartDtoConverter shoppingCartDtoConverter;
 
     @Configuration
     public static class Config {
-
-        @Bean
-        public ShoppingCartDtoConverter shoppingCartDtoConverter() {
-            return Mappers.getMapper(ShoppingCartDtoConverter.class);
-        }
-
-        @Bean
-        public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter() {
-            return Mappers.getMapper(ShoppingCartItemDtoConverter.class);
-        }
-
-        @Bean
-        public ProductInfoDtoConverter productInfoDtoConverter() {
-            return Mappers.getMapper(ProductInfoDtoConverter.class);
-        }
+        @Bean public ShoppingCartDtoConverter shoppingCartDtoConverter() { return Mappers.getMapper(ShoppingCartDtoConverter.class); }
+        @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter() { return Mappers.getMapper(ShoppingCartItemDtoConverter.class); }
+        @Bean public ProductInfoDtoConverter productInfoDtoConverter() { return Mappers.getMapper(ProductInfoDtoConverter.class); }
     }
+
+    @Autowired
+    ShoppingCartDtoConverter shoppingCartDtoConverter;
 
     @Test
     @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")

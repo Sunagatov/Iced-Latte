@@ -1,11 +1,8 @@
 package com.zufar.icedlatte.payment.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.payment.exception.PaymentEventParsingException;
+import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
-import com.zufar.icedlatte.payment.exception.PaymentNotFoundException;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.zufar.icedlatte.payment.exception.StripeSessionIsNotComplete;
 import lombok.RequiredArgsConstructor;
@@ -21,55 +18,28 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class PaymentExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-    private final ErrorDebugMessageCreator errorDebugMessageCreator;
-
-    @ExceptionHandler(PaymentNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handlePaymentNotFoundException(final PaymentNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.error("Handle payment not found exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
-    }
 
     @ExceptionHandler(PaymentEventProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handlePaymentEventProcessingException(final PaymentEventProcessingException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event processing exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler(PaymentEventParsingException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handlePaymentEventParsingException(final PaymentEventParsingException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle payment event parsing exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
+    public ApiErrorResponse handlePaymentEventProcessingException(final PaymentEventProcessingException e) {
+        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
+        log.warn("exception.payment.event_processing: message={}", response.message());
+        return response;
     }
 
     @ExceptionHandler(StripeSessionCreationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle stripe session creation exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
+    public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException e) {
+        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
+        log.warn("payment.session.failed: message={}", response.message());
+        return response;
     }
 
     @ExceptionHandler(StripeSessionIsNotComplete.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.error("Handle stripe session id not complete exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
-
-        return apiErrorResponse;
+    public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete e) {
+        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
+        log.warn("exception.payment.session_incomplete: message={}", response.message());
+        return response;
     }
 }

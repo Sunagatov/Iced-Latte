@@ -15,14 +15,12 @@ import org.mapstruct.ReportingPolicy;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
-import java.util.Optional;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = ProductReviewDtoConverter.class, unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
 
-   public static final ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE =
-            new ProductReviewDto(null, null, null, null, null, null, null, null, null);
+   ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE = new ProductReviewDto();
 
     @Mapping(target = "productReviewId", source = "id")
     @Mapping(target = "userName", source = "user", qualifiedByName = "toUserName")
@@ -37,44 +35,29 @@ public interface ProductReviewDtoConverter {
     ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewDto> page);
 
     @Named("toUserName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserName"
     default String convertToUserName(UserEntity user) {
-        Optional<UserEntity> userOptional = Optional.of(user);
-        Optional<String> firstNameOptional = userOptional.map(UserEntity::getFirstName);
-        return firstNameOptional.orElse(null);
+        return user == null ? null : user.getFirstName();
     }
 
     @Named("toUserLastName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserLastName"
     default String convertToUserLastName(UserEntity user) {
-        Optional<UserEntity> userOptional = Optional.of(user);
-        Optional<String> lastNameOptional = userOptional.map(UserEntity::getLastName);
-        return lastNameOptional.orElse(null);
+        return user == null ? null : user.getLastName();
     }
 
     default RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
         var productRatingMap = new RatingMap();
-
         for (ProductRatingCount productRatingCount : productRatingCountPairs) {
-            var productRating = productRatingCount.productRating();
-            var count = (int) productRatingCount.count();
-
-            switch (productRating) {
-                case 5:
-                    productRatingMap.setStar5(count);
-                    break;
-                case 4:
-                    productRatingMap.setStar4(count);
-                    break;
-                case 3:
-                    productRatingMap.setStar3(count);
-                    break;
-                case 2:
-                    productRatingMap.setStar2(count);
-                    break;
-                case 1:
-                    productRatingMap.setStar1(count);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected product's rating value: " + productRating);
+            int count = (int) productRatingCount.count();
+            int rating = productRatingCount.productRating();
+            switch (rating) {
+                case 5 -> productRatingMap.setStar5(count);
+                case 4 -> productRatingMap.setStar4(count);
+                case 3 -> productRatingMap.setStar3(count);
+                case 2 -> productRatingMap.setStar2(count);
+                case 1 -> productRatingMap.setStar1(count);
+                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + rating);
             }
         }
         return productRatingMap;

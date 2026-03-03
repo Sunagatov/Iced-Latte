@@ -22,16 +22,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         if (!StringUtils.hasText(email)) {
-            log.warn("Attempted to load user with empty or null email");
+            log.warn("auth.user_details.empty_email");
             throw new UsernameNotFoundException("Email cannot be empty");
         }
         String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
-        log.debug("Loading user details for email: {}", normalizedEmail);
-
         return userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> {
-                    log.warn("User not found with email: {}", normalizedEmail);
-                    return new UsernameNotFoundException("Invalid credentials for user's account with email = '" + normalizedEmail + "'");
-                });
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }
