@@ -63,9 +63,16 @@ class PaginationParametersValidatorTest {
     }
 
     @Test
-    @DisplayName("Null params are skipped without error")
-    void validate_nullParams_noErrors() {
+    @DisplayName("Null pageSize produces an error; other null params are skipped")
+    void validate_nullPageSize_producesError() {
         var result = validator.validate(null, null, null, null, allowed);
+        assertThat(result.toString()).contains("PageSize");
+    }
+
+    @Test
+    @DisplayName("Non-null params with valid values produce no error")
+    void validate_validParams_noErrors() {
+        var result = validator.validate(null, 10, null, null, allowed);
         assertThat(result.toString()).isEmpty();
     }
 

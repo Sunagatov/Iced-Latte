@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -28,16 +27,16 @@ public class ProductReviewValidator {
     private final ProductReviewRepository productReviewRepository;
     private final ProductInfoRepository productInfoRepository;
 
+    private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
+
     /**
-     * Check if the product review's text is not empty
+     * Check if the product review's text is not empty and contains no forbidden characters
      */
     public void validateReviewText(final String productReviewText) {
         if (productReviewText.trim().isEmpty()) {
             throw new EmptyProductReviewException();
         }
-        Pattern p = Pattern.compile("[^a-zA-Z0-9\\u00C0-\\u017F.,! ]");
-        Matcher matcher = p.matcher(productReviewText);
-        if(matcher.find()) {
+        if (INVALID_REVIEW_TEXT_PATTERN.matcher(productReviewText).find()) {
             throw new InvalidProductReviewTextException();
         }
     }

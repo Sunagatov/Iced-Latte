@@ -39,8 +39,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleInvalidProductReviewTextException(final InvalidProductReviewTextException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("Handle invalid product review text exception: failed: message: {}, debugMessage: {}.",
-                apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+        log.warn("exception.review.invalid_text: message={}", apiErrorResponse.message());
 
         return apiErrorResponse;
     }
