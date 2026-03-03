@@ -44,6 +44,14 @@ jobs:
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             --no-transfer-progress
 
+      - name: Notify Telegram on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="✅ <b>CI: Build/Test passed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
+
       - name: Notify Telegram on failure
         if: failure()
         run: |
@@ -76,6 +84,14 @@ jobs:
             -DnvdApiKey=${NVD_API_KEY} \
             --no-transfer-progress
           echo "status=clean" >> $GITHUB_OUTPUT
+
+      - name: Notify Telegram on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="✅ <b>OWASP: No vulnerabilities found</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View report</a>"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -126,6 +142,14 @@ jobs:
             fi
           done
           exit $BREAKING
+
+      - name: Notify Telegram on success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="✅ <b>CI: No breaking API changes</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"
 
       - name: Notify Telegram on failure
         if: failure()
