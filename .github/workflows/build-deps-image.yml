@@ -37,12 +37,14 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="✅ Deps image built successfully%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[OK] Deps image built successfully%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -51,9 +53,11 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="❌ Deps image build failed%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[FAIL] Deps image build failed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"

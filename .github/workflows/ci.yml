@@ -53,12 +53,14 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="✅ CI: Build/Test passed%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[OK] CI: Build/Test passed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -67,12 +69,14 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="❌ CI: Build/Test failed%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[FAIL] CI: Build/Test failed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
   owasp:
     name: OWASP Dependency Check
@@ -108,12 +112,14 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="✅ OWASP: No vulnerabilities found%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[OK] OWASP: No vulnerabilities found%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -121,13 +127,15 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
           SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="🚨 OWASP check failed%0ABranch: ${BRANCH}%0ACommit: ${SHA}%0A${MSG}%0A${RUN_URL}"
+            -d text="[ALERT] OWASP check failed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
       - name: Upload report
         if: always()
@@ -171,9 +179,9 @@ jobs:
             name=$(basename "$spec")
             [ -f "$BASE_DIR/$name" ] || continue
             if oasdiff breaking "$BASE_DIR/$name" "$spec" --fail-on ERR; then
-              echo "✅ No breaking changes in $name"
+              echo "[OK] No breaking changes in $name"
             else
-              echo "❌ Breaking changes detected in $name"
+              echo "[FAIL] Breaking changes detected in $name"
               BREAKING=1
             fi
           done
@@ -186,12 +194,14 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="✅ CI: No breaking API changes%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[OK] CI: No breaking API changes%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
       - name: Notify Telegram on failure
         if: failure()
@@ -200,9 +210,11 @@ jobs:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
           ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
           MSG: ${{ github.event.pull_request.title || github.event.head_commit.message }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="❌ CI: Breaking API change detected%0ABranch: ${BRANCH}%0ABy: ${ACTOR}%0A${MSG}%0A${RUN_URL}"
+            -d text="[FAIL] CI: Breaking API change detected%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
