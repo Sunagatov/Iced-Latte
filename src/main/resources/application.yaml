@@ -3,9 +3,22 @@
 # Server Properties
 #
 server:
-  port: ${APP_SERVER_PORT}
+  port: ${PORT:${APP_SERVER_PORT}}
   tomcat:
-    accept-count: 100
+    accept-count: 20
+    threads:
+      max: 50
+      min-spare: 5
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+    whitelabel:
+      enabled: false
+    # dev profile overrides these to always
 
 #
 # Spring Properties
@@ -13,65 +26,86 @@ server:
 spring:
   application:
     name: Iced Latte Application
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: false
+    lazy-initialization: true
+  threads:
+    virtual:
+      enabled: true
   banner:
     charset: UTF-8
     location: classpath:banner.txt
   output:
     ansi:
-      enabled: detect
+      enabled: never
 
   #
   # Database Properties
   #
   datasource:
-    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC
+    url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=${DATASOURCE_SSL_MODE:disable}
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+      connection-timeout: 20000
+      max-lifetime: 600000
+      keepalive-time: 30000
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        allow_jdbc_metadata_access: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
-    url: ${spring.datasource.url}
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
-    drop-first: true
 
   #
-  # Aws Properties
+  # AWS Properties
   #
   aws:
+    enabled: ${AWS_ENABLED:true}
+    account-id: ${AWS_ACCOUNT_ID:}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
+    endpoint-url: ${AWS_ENDPOINT_URL:}
+    public-url-base: ${AWS_PUBLIC_URL_BASE:}
+    cloudfront-distribution-id: ${AWS_CLOUDFRONT_DISTRIBUTION_ID:}
     buckets:
       products: ${AWS_PRODUCT_BUCKET}
       user-avatar: ${AWS_USER_BUCKET}
-    link-expiration-time: P7D
+    link-expiration-time: PT1H
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
-    secure: false
+    secure: true
     default-image-directory:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   #
-  # Redis
+  # Redis Properties
   #
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   #
-  # Email
+  # Email Properties
   #
   mail:
     host: smtp.gmail.com
     port: 587
-    username: youricedlatteshop@gmail.com
-    password: "kfcf kyba hrab nyij"   #https://support.google.com/mail/answer/7104828?hl=en&rd=3&visit_id=638195765566773400-3814427644
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     subject:
       confirmation: "Iced Latte - Email Confirmation"
     properties:
@@ -87,29 +121,82 @@ spring:
   messages:
     basename: messages/messages
 
-#
-# Temporary Cache
-#
-temporary-cache:
-  time:
-    token: 5
-  get-token-enabled: true
-
-#
-# Stripe Api Properties
-#
   config:
     import: optional:stripe.yaml
 
-#
-#Avatar Upload Properties (AWS/Minio)
-#
+  # Avatar Upload Properties
+  #
   servlet:
     multipart:
       enabled: true
       max-file-size: 5MB
       max-request-size: 10MB
       file-size-threshold: 2KB
+
+#
+# Pagination Properties
+#
+pagination:
+  default-page-number: 0
+  products:
+    default-page-size: 50
+    default-sort-attribute: "name"
+    default-sort-direction: "desc"
+  reviews:
+    default-page-size: 10
+    default-sort-attribute: "createdAt"
+    default-sort-direction: "desc"
+
+#
+# Cache Properties
+#
+cache:
+  default-ttl: PT10M
+  product-ttl: PT10M
+  brands-ttl: PT24H
+  sellers-ttl: PT24H
+
+#
+# Temporary Cache
+#
+temporary-cache:
+  time:
+    token: 1
+  get-token-enabled: true
+
+#
+# Feature Flags
+# Set to true only when you have real credentials for that service.
+#
+google:
+  enabled: ${GOOGLE_ENABLED:false}
+  auth:
+    server:
+      url: "https://accounts.google.com/o/oauth2/v2/auth"
+  scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
+  client-id: ${GOOGLE_AUTH_CLIENT_ID:local}
+  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:local}
+  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI:http://localhost:8083/api/v1/auth/google/callback}
+
+ai:
+  enabled: ${AI_ENABLED:false}
+  api-key: ${SPRING_AI_OPENAI_API_KEY:local}
+  base-url: https://models.inference.ai.azure.com
+  model-name: gpt-4o-mini
+
+email:
+  enabled: ${EMAIL_ENABLED:false}
+
+stripe:
+  enabled: ${STRIPE_ENABLED:false}
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+
+#
+# Frontend Properties
+#
+frontend:
+  url: ${FRONTEND_URL:http://localhost:3000}
 
 #
 # Spring Doc Properties
@@ -121,6 +208,8 @@ springdoc:
   swagger-ui:
     path: /api/docs/swagger-ui
     enabled: true
+  pre-loading-enabled: false
+  default-produces-media-type: application/json
 
 #
 # Management Properties
@@ -132,14 +221,16 @@ management:
     prometheus:
       enabled: true
     shutdown:
-      enabled: true
+      enabled: false
     health:
       enabled: true
-      show-details: always
+      show-details: when-authorized
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, shutdown, prometheus
+        include: health, info, metrics, prometheus
+        # metrics and prometheus are internal; restrict to authorized access only via show-details: when-authorized
+      base-path: /actuator
   prometheus:
     metrics:
       export:
@@ -149,7 +240,10 @@ management:
       application: ${spring.application.name}
   health:
     redis:
-      enabled: false
+      enabled: true
+  tracing:
+    sampling:
+      probability: 0.1
 
 #
 # JWT Security Properties
@@ -157,10 +251,40 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: 240000 # 4 minutes
-  refresh:
-    secret: ${APP_JWT_REFRESH_SECRET}
-    expiration: 420000 # 7 minutes
+  expiration: PT24H # 1 day
+  refresh-secret: ${APP_JWT_REFRESH_SECRET}
+  refresh-expiration: PT24H # 1 day
+  issuer: ${APP_JWT_ISSUER:iced-latte}
+  audience: ${APP_JWT_AUDIENCE:iced-latte-client}
+
+#
+# CORS Properties
+#
+cors:
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+  allowed-headers: "*"
+  exposed-headers: Authorization,Content-Type,X-Request-ID
+  allow-credentials: true
+  max-age: 3600
+
+#
+# Rate Limiting Properties
+#
+security:
+  rate-limit:
+    global:
+      max-requests: 60
+      window-duration: PT1M
+    auth:
+      max-requests: 10
+      window-duration: PT1M
+    ai:
+      max-requests: 5
+      window-duration: PT1M
+    search:
+      max-requests: 30
+      window-duration: PT1M
 
 #
 # Login Attempts Properties
@@ -172,31 +296,18 @@ login-attempts:
 unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
 
 #
+# Monitoring Properties
+#
+monitoring:
+  slow-query-threshold-ms: 200
+
+#
 # Logging Properties
 #
 logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
   config: classpath:logback-spring.xml
+  level:
+    io.opentelemetry.exporter: WARN
 
-#
-# AI Properties
-#
-ai:
-# https://platform.openai.com/docs/api-reference/moderations/create
-  url:          "https://api.openai.com/v1/moderations"
-  api_key:      "sk-api-key"
-  request_body: '{ "input": "$message"}'
-  message_replacement_pattern: "$message"
-
-#
-# Google Auth Properties
-#
-google:
-  auth:
-    server:
-      url: "https://accounts.google.com/o/oauth2/v2/auth"
-  scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
-  client-id: ${GOOGLE_AUTH_CLIENT_ID}
-  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET}
-  redirectUri: ${GOOGLE_AUTH_REDIRECT_URI}

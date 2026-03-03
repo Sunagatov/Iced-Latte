@@ -20,6 +20,10 @@ public class PaginationParametersValidator {
                     "'PageNumber' value should be non negative integer number value.", pageNumber);
             errorMessages.append(createErrorMessage(errorMessage));
         }
+        if (pageSize == null) {
+            String errorMessage = "PageSize value should not be null or empty. Please provide some numeric value.";
+            errorMessages.append(createErrorMessage(errorMessage));
+        }
         if (pageSize != null && pageSize < 1) {
             String errorMessage = String.format("'%s' is the incorrect 'PageSize' attribute value. " +
                     "'PageSize' value should be non negative integer number value which is bigger than 1.", pageSize);
@@ -30,7 +34,7 @@ public class PaginationParametersValidator {
                     sortAttribute, allowedSortAttributeValues);
             errorMessages.append(createErrorMessage(errorMessage));
         }
-        if (sortDirection != null && !ALLOWED_SORT_DIRECTION_VALUES.contains(sortDirection.toLowerCase())) {
+        if (sortDirection != null && !ALLOWED_SORT_DIRECTION_VALUES.contains(sortDirection.toLowerCase(java.util.Locale.ROOT))) {
             String errorMessage = String.format("'%s' is incorrect 'sortDirection' value. Allowed 'sortDirection' values are '%s'.",
                     sortDirection, ALLOWED_SORT_DIRECTION_VALUES);
             errorMessages.append(createErrorMessage(errorMessage));

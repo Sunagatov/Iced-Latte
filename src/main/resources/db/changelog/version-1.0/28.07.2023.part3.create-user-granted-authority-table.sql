@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS user_granted_authority
+CREATE TABLE IF NOT EXISTS public.user_granted_authority
 (
     id        UUID PRIMARY KEY,
     user_id   UUID           NOT NULL,

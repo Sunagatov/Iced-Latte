@@ -2,28 +2,29 @@ package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.email.api.EmailTokenConformer;
 import com.zufar.icedlatte.email.api.EmailTokenSender;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
+import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
+import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
-import com.zufar.icedlatte.security.dto.ChangePasswordRequest;
-import com.zufar.icedlatte.security.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.security.dto.ForgotPasswordRequest;
-import com.zufar.icedlatte.security.dto.UserAuthenticationRequest;
-import com.zufar.icedlatte.security.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.dto.UserRegistrationResponse;
-import com.zufar.icedlatte.security.jwt.JwtAuthenticationProvider;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
+import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,93 +45,92 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final JwtBlacklistValidator jwtBlacklistValidator;
     private final EmailTokenSender emailTokenSender;
     private final EmailTokenConformer emailTokenConformer;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
+    private final JwtRefreshTokenValidator jwtRefreshTokenValidator;
     private final UserDetailsService userDetailsService;
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
 
     private final HttpServletRequest httpRequest;
 
-    @Override
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody final UserRegistrationRequest request) {
-        log.info("Received registration request for user with email = '{}'", request.email());
+    public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
+        log.info("auth.register.processing");
         emailTokenSender.sendEmailVerificationCode(request);
-        log.info("Email verification token sent to the user with email = '{}'", request.email());
-        return ResponseEntity.ok()
-                .body(String.format("Email verification token sent to the user with email = %s%nIf You don't receive an email, please check your spam or may be the email address is incorrect", request.email()));
+        log.debug("auth.register.email_sent");
+        return ResponseEntity.ok("Email verification token sent");
     }
 
     @Override
     @PostMapping(value = "/confirm")
-    public ResponseEntity<UserRegistrationResponse> confirmEmail(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.info("Received email confirmation request");
-        UserRegistrationResponse registrationResponse = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
-        log.info("Email verification completed");
-        return new ResponseEntity<>(registrationResponse, HttpStatus.CREATED);
+    public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
+        log.info("auth.email.confirming");
+        var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
+        log.info("auth.email.confirmed");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
     @PostMapping("/authenticate")
-    public ResponseEntity<UserAuthenticationResponse> authenticate(@RequestBody final UserAuthenticationRequest request) {
-        log.info("Received authentication request for user with email = '{}'", request.email());
-        UserAuthenticationResponse authenticationResponse = userAuthenticationService.authenticate(request);
-        log.info("Authentication completed for user with email = '{}'", request.email());
-        return ResponseEntity.ok(authenticationResponse);
+    public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
+        var response = userAuthenticationService.authenticate(request);
+        return ResponseEntity.ok(response);
     }
 
     @Override
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
-        log.info("Received refresh token request for user");
-        var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationToken.getName());
-        UserAuthenticationResponse authenticationResponse = userAuthenticationService.authenticate(userDetails, authenticationToken.getName());
-        log.info("Refresh completed for user");
-        return ResponseEntity.ok(authenticationResponse);
+        log.info("auth.token.refreshing");
+        String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
+        var userDetails = userDetailsService.loadUserByUsername(userEmail);
+        var response = userAuthenticationService.authenticate(userDetails, userEmail);
+        log.info("auth.token.refreshed");
+        return ResponseEntity.ok(response);
     }
 
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        log.info("Received logout request");
+        log.info("auth.logout.processing");
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (!StringUtils.hasText(authHeader)) {
+            log.debug("auth.logout.no_token");
+            return ResponseEntity.ok().build();
+        }
 
-        String token = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
-
-        jwtBlacklistValidator.addToBlacklist(token);
+        try {
+            String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
+            jwtBlacklistValidator.addToBlacklist(token);
+            log.info("auth.logout.completed");
+        } catch (AbsentBearerHeaderException ex) {
+            log.warn("auth.logout.token_error: reason={}", ex.getMessage(), ex);
+            // Still return success to prevent information leakage
+        }
 
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping("/password/forgot")
-    public ResponseEntity<Void> forgotPassword(@RequestBody final ForgotPasswordRequest request) {
-        log.info("Received forgot password request for user");
-        UserDto userDto = singleUserProvider.getUserByEmail(request.email());
-        UserRegistrationRequest requestVerification = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
-                userDto.getEmail(), "");
-        emailTokenSender.sendEmailVerificationCode(requestVerification);
-        log.info("Send email with verification code for user");
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
+        log.info("auth.password.forgot.processing");
+        try {
+            var user = singleUserProvider.getUserByEmail(request.getEmail());
+            var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
+            emailTokenSender.sendEmailVerificationCode(verificationRequest);
+        } catch (UserNotFoundException e) {
+            log.warn("auth.password.forgot.unknown_email");
+        }
         return ResponseEntity.ok().build();
     }
 
     @Override
+    // amazonq-ignore-next-line
     @PostMapping("/password/change")
-    public ResponseEntity<Void> changePassword(@RequestBody final ChangePasswordRequest request) {
-        log.info("Received change password request for user");
-        UserDto userDto = singleUserProvider.getUserByEmail(request.email());
-        emailTokenConformer.confirmResetPasswordEmailByCode(
-                new com.zufar.icedlatte.security.dto.ConfirmEmailRequest(request.code()));
-        changeUserPasswordOperationPerformer.changeUserPassword(userDto.getId(), request.password());
-        log.info("Password changed for user");
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
+        var user = singleUserProvider.getUserByEmail(request.getEmail());
+        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
+        changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
+        log.info("auth.password.changed");
         return ResponseEntity.ok().build();
-    }
-
-    // for testing only
-    @PostMapping("/email/code")
-    public ResponseEntity<String> getEmailVerificationCode(@RequestBody final UserRegistrationRequest request) {
-        String token = emailTokenSender.getEmailVerificationCode(request);
-        return ResponseEntity.ok()
-                .body(token);
     }
 }

@@ -38,18 +38,37 @@ public class GetReviewsRequestValidator {
 
     private StringBuilder validateProductRatingsParameter(final List<Integer> productRatings) {
         final StringBuilder errorMessages = new StringBuilder();
-        if ((productRatings != null && productRatings.stream().anyMatch(Objects::isNull))
-                || (productRatings != null && !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings))) {
-            String errorMessage = String.format("Some values of this product's rating list = '%s' are incorrect. Allowed 'productRating' values are '%s'.",
-                    productRatings, ALLOWED_PRODUCT_RATING_VALUES);
-            errorMessages.append(createErrorMessage(errorMessage));
+        
+        if (productRatings == null) {
+            return errorMessages; // null is allowed for optional parameter
         }
-        if (productRatings != null && productRatings.stream().noneMatch(Objects::isNull) &&
-                productRatings.stream().distinct().count() < productRatings.size()) {
-            String errorMessage = String.format("This list of product's rating values '%s' has duplicates. Product's rating values must be unique.", productRatings);
-            errorMessages.append(createErrorMessage(errorMessage));
+        
+        if (hasInvalidValues(productRatings)) {
+            errorMessages.append(createInvalidValuesError(productRatings));
         }
+        
+        if (hasDuplicates(productRatings)) {
+            errorMessages.append(createDuplicatesError(productRatings));
+        }
+        
         return errorMessages;
+    }
+    
+    private boolean hasInvalidValues(final List<Integer> productRatings) {
+        return productRatings.stream().anyMatch(Objects::isNull) || !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings);
+    }
+    
+    private String createInvalidValuesError(final List<Integer> productRatings) {
+        return createErrorMessage(String.format("Some values of this product's rating list = '%s' are incorrect. Allowed 'productRating' values are '%s'.",
+                productRatings, ALLOWED_PRODUCT_RATING_VALUES));
+    }
+    
+    private boolean hasDuplicates(final List<Integer> productRatings) {
+        return productRatings.stream().noneMatch(Objects::isNull) && productRatings.stream().distinct().count() < productRatings.size();
+    }
+    
+    private String createDuplicatesError(final List<Integer> productRatings) {
+        return createErrorMessage(String.format("This list of product's rating values '%s' has duplicates. Product's rating values must be unique.", productRatings));
     }
 
     private static String createErrorMessage(final String errorMessage) {

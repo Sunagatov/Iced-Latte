@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.email.api.token;
 
-import com.zufar.icedlatte.security.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.security.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ public class TokenManager {
     private final TokenTimeExpirationCache tokenTimeExpirationCache;
 
     public String generateToken(final UserRegistrationRequest request) {
-        final String email = request.email();
+        final String email = request.getEmail();
         tokenTimeExpirationCache.validateTimeToken(email);
         final String token = tokenGenerator.nextToken();
         tokenCache.addToken(token, request);
@@ -23,16 +23,15 @@ public class TokenManager {
     }
 
     public UserRegistrationRequest validateToken(final ConfirmEmailRequest confirmEmailRequest) {
-        final String token = confirmEmailRequest.token();
+        final String token = confirmEmailRequest.getToken();
         tokenGenerator.tokenIsValid(token);
         return deleteTokenFromCache(token);
     }
 
     public UserRegistrationRequest deleteTokenFromCache(String token) {
         UserRegistrationRequest userRegistrationRequest = tokenCache.getToken(token);
-        final String email = userRegistrationRequest.email();
         tokenCache.removeToken(token);
-        tokenTimeExpirationCache.removeToken(email);
+        tokenTimeExpirationCache.removeToken(userRegistrationRequest.getEmail());
         return userRegistrationRequest;
     }
 }

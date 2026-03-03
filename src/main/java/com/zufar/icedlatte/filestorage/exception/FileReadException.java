@@ -7,8 +7,8 @@ public class FileReadException extends RuntimeException {
 
     private final String fileName;
 
-    public FileReadException(String fileName) {
-        super("Failed to read file: " + fileName);
+    public FileReadException(String fileName, Throwable cause) {
+        super("Failed to read file: " + fileName, cause);
         this.fileName = fileName;
     }
 }

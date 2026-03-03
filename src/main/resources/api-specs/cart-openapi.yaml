@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Shopping Cart"
@@ -35,7 +42,10 @@ paths:
             examples:
               add-multiple:
                 summary: "Add Multiple Items"
-                value: {"items": [{"productId": "a1b2c3d4", "productQuantity": 2}]}
+                value:
+                  items:
+                    - productId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      productQuantity: 2
       responses:
         "200":
           description: "Items added successfully."
@@ -45,10 +55,22 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
     patch:
       tags:
         - "Shopping Cart"
@@ -64,7 +86,9 @@ paths:
             examples:
               increment-quantity:
                 summary: "Increment Quantity"
-                value: {"shoppingCartItemId": "e5f6g7h8", "productQuantityChange": 1}
+                value:
+                  shoppingCartItemId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  productQuantityChange: 1
       responses:
         "200":
           description: "Shopping cart item quantity was updated successfully."
@@ -74,10 +98,28 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: "Shopping cart item not found."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
     delete:
       tags:
         - "Shopping Cart"
@@ -99,32 +141,69 @@ paths:
                 $ref: "#/components/schemas/ShoppingCartDto"
         "400":
           description: "Invalid input, object invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: "One or more shopping cart items not found."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
   /api/v1/cart:
     get:
       tags:
         - "Shopping Cart"
       summary: "Get the shopping cart of authorized user"
-      description: "Get the shopping cart of authorized user"
+      description: "Retrieves the full shopping cart including all items for the currently authenticated user."
       operationId: "getShoppingCart"
       responses:
         "200":
-          description: "OK"
+          description: "Shopping cart retrieved successfully."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShoppingCartDto"
-        "400":
-          description: "Invalid input, object invalid."
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: "Shopping cart not found."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     NewShoppingCartItemDto:
       type: "object"
@@ -167,7 +246,7 @@ components:
           format: "int32"
         itemsTotalPrice:
           type: "number"
-          format: "decimal"
+          description: "Total price of all items in the cart."
         productsQuantity:
           type: "integer"
           format: "int32"
@@ -210,6 +289,8 @@ components:
         productQuantityChange:
           type: "integer"
           format: "int32"
+          minimum: -100
+          maximum: 100
       required:
         - shoppingCartItemId
         - productQuantityChange

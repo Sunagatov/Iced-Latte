@@ -7,6 +7,10 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
@@ -16,48 +20,81 @@ servers:
 
 tags:
   - name: "Security"
-    description: "An API for user registration and authentication"
+    description: "API for user registration, authentication, and password management"
 
 paths:
   /api/v1/auth/register:
     post:
       tags:
         - "Security"
-      summary: "Register a user"
+      summary: "Register a new user"
       operationId: "register"
       requestBody:
+        description: "User registration data"
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UserRegistrationRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
+          description: "Registration successful, email verification token sent"
           content:
             application/json:
               schema:
                 type: string
+                example: "Email verification token sent"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/confirm:
     post:
       tags:
         - "Security"
-      summary: "Confirm an email"
+      summary: "Confirm user's email"
       operationId: "confirmEmail"
       requestBody:
+        description: "Email confirmation data"
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ConfirmEmailRequest"
-        required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "Email verification completed"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserRegistrationResponse"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/authenticate:
     post:
@@ -66,164 +103,266 @@ paths:
       summary: "Authenticate a user"
       operationId: "authenticate"
       requestBody:
+        description: "User credentials"
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UserAuthenticationRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
+          description: "Authentication successful"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/logout:
     post:
       tags:
         - "Security"
-      summary: "Logout user"
+      summary: "Logout a user"
       operationId: "logout"
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: "OK"
+          description: "Logout successful"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/refresh:
     post:
       tags:
         - "Security"
-      summary: "Refresh user token"
+      summary: "Refresh user authentication token"
       operationId: "refreshToken"
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: "OK"
+          description: "Token refreshed successfully"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
         "401":
-          description: "Unauthorized access. Authentication required"
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/password/forgot:
     post:
       tags:
         - "Security"
-      summary: "Send email with verification code"
+      summary: "Request password reset"
       operationId: "forgotPassword"
       requestBody:
+        description: "Email address of the user requesting a password reset"
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ForgotPasswordRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
-        "401":
-          description: "Unauthorized access. Authentication required"
+          description: "Password reset request accepted"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/password/change:
     post:
       tags:
         - "Security"
-      summary: "Change password with verification code"
+      summary: "Change user password"
       operationId: "changePassword"
       requestBody:
+        description: "Password change request data"
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ChangePasswordRequest"
-        required: true
       responses:
         "200":
-          description: "OK"
-        "401":
-          description: "Unauthorized access. Authentication required"
-        "500":
-          description: "Internal Server Error"
-  /api/v1/auth/email/code:
-    post:
-      tags:
-        - "Security"
-      summary: "Get email code"
-      operationId: "getEmailVerificationCode"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserRegistrationRequest"
-        required: true
-      responses:
-        "200":
-          description: "OK"
+          description: "Password changed successfully"
+        "400":
+          description: "Bad request"
           content:
             application/json:
               schema:
-                type: string
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     UserRegistrationRequest:
       type: "object"
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
       properties:
         firstName:
           type: "string"
+          description: "User's first name."
+          minLength: 2
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
         lastName:
           type: "string"
+          description: "User's last name."
+          minLength: 2
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+        birthDate:
+          type: "string"
+          format: "date"
+          description: "User's birth date in YYYY-MM-DD format."
+        phoneNumber:
+          type: "string"
+          description: "User's phone number."
         email:
           type: "string"
+          format: "email"
+          maxLength: 254
+          description: "User's email address."
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         password:
-          type: "string"
+          $ref: "#/components/schemas/PasswordField"
+        addressDto:
+          $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
 
     UserRegistrationResponse:
-      type: "object"
-      properties:
-        token:
-          type: "string"
-        refreshToken:
-          type: "string"
+      $ref: "#/components/schemas/UserAuthenticationResponse"
 
     UserAuthenticationRequest:
       type: "object"
+      required:
+        - email
+        - password
       properties:
         email:
           type: "string"
+          format: "email"
+          description: "User's email address."
         password:
-          type: "string"
-
-    ConfirmEmailRequest:
-      type: "object"
-      properties:
-        token:
-          type: "string"
+          $ref: "#/components/schemas/PasswordField"
 
     UserAuthenticationResponse:
       type: "object"
+      required:
+        - token
+        - refreshToken
       properties:
         token:
           type: "string"
+          description: "JWT token for authenticated user."
         refreshToken:
           type: "string"
+          description: "Refresh token for generating a new JWT."
+
+    ConfirmEmailRequest:
+      type: "object"
+      required:
+        - token
+      properties:
+        token:
+          type: "string"
+          description: "Token for confirming the email address."
 
     ForgotPasswordRequest:
       type: "object"
+      required:
+        - email
       properties:
         email:
           type: "string"
+          format: "email"
+          description: "Email address of the user requesting a password reset."
 
     ChangePasswordRequest:
       type: "object"
+      required:
+        - code
+        - email
+        - password
       properties:
-        email:
-          type: "string"
         code:
           type: "string"
-        password:
+          description: "Verification code sent to the user's email."
+        email:
           type: "string"
+          format: "email"
+          description: "User's email address."
+        password:
+          $ref: "#/components/schemas/PasswordField"
+
+    PasswordField:
+      type: "string"
+      description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
+      minLength: 8
+      maxLength: 128
+      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

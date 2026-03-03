@@ -1,4 +1,4 @@
-CREATE TABLE login_attempts
+CREATE TABLE public.login_attempts
 (
     id                  UUID        NOT NULL PRIMARY KEY,
     user_email          VARCHAR(55) NOT NULL UNIQUE,

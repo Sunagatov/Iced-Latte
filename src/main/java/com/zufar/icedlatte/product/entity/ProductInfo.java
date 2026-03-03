@@ -1,11 +1,14 @@
 package com.zufar.icedlatte.product.entity;
 
+import com.zufar.icedlatte.common.audit.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,8 +16,10 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -22,30 +27,43 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "product")
-public class ProductInfo {
+@Table(
+        name = "product",
+        indexes = {
+                @Index(name = "idx_product_price", columnList = "price"),
+                @Index(name = "idx_product_brand", columnList = "brand_name"),
+                @Index(name = "idx_product_seller", columnList = "seller_name"),
+                @Index(name = "idx_product_avg_rating", columnList = "average_rating"),
+                @Index(name = "idx_product_popularity", columnList = "popularity_score")
+        }
+)
+public class ProductInfo extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false)
-    private UUID productId;
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
+
+    @Version
+    @Column(name = "version")
+    private long version;
 
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description", nullable = false, length = 4000)
     private String description;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "price", nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+    @Column(name = "quantity")
+    private int quantity;
 
-    @Column(name = "active", nullable = false)
-    private Boolean active;
+    @Column(name = "active")
+    private boolean active;
 
-    @Column(name = "average_rating")
+    @Column(name = "average_rating", precision = 2, scale = 1)
     private BigDecimal averageRating;
 
     @Column(name = "reviews_count")
@@ -57,6 +75,37 @@ public class ProductInfo {
     @Column(name = "seller_name", nullable = false)
     private String sellerName;
 
+    @Column(name = "origin_country", nullable = false, length = 128)
+    private String originCountry;
+
+    @Column(name = "weight")
+    private int weight;
+
+    @Column(name = "size_length")
+    private int length;
+
+    @Column(name = "size_width")
+    private int width;
+
+    @Column(name = "size_height")
+    private int height;
+
+    @Column(name = "sold_products_count")
+    private int soldProductsCount;
+
+    @Column(name = "discount")
+    private int discount;
+
+    @CreationTimestamp
+    @Column(name = "date_added", nullable = false, updatable = false)
+    private LocalDateTime dateAdded;
+
+    @Column(name = "popularity_score")
+    private int popularityScore;
+
+    @Column(name = "ai_summary", columnDefinition = "TEXT")
+    private String aiSummary;
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {
@@ -66,21 +115,21 @@ public class ProductInfo {
             return false;
         }
         return new EqualsBuilder()
-                .append(productId, productInfo.productId)
+                .append(id, productInfo.id)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
-                .append(productId)
+                .append(id)
                 .toHashCode();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("productId", productId)
+                .append("id", id)
                 .toString();
     }
 }

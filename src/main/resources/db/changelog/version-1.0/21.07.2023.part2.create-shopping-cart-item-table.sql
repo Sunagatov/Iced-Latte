@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS shopping_cart_item
+CREATE TABLE IF NOT EXISTS public.shopping_cart_item
 (
     id                UUID PRIMARY KEY,
     shopping_cart_id  UUID NOT NULL,

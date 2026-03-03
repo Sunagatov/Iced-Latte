@@ -5,65 +5,59 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.ReportingPolicy;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
-public class ProductReviewDtoConverter {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+public interface ProductReviewDtoConverter {
 
-    public static final ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE =
-            new ProductReviewDto(null, null,null, null, null, null, null, null, null);
+   ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE = new ProductReviewDto();
 
-    public ProductReviewDto toProductReviewDto(ProductReview productReview) {
-        return new ProductReviewDto(
-                productReview.getId(),
-                productReview.getProductId(),
-                productReview.getProductRating(),
-                productReview.getText(),
-                productReview.getCreatedAt(),
-                productReview.getUser().getFirstName(),
-                productReview.getUser().getLastName(),
-                productReview.getLikesCount(),
-                productReview.getDislikesCount());
+    @Mapping(target = "productReviewId", source = "id")
+    @Mapping(target = "userName", source = "user", qualifiedByName = "toUserName")
+    @Mapping(target = "userLastname", source = "user", qualifiedByName = "toUserLastName")
+    ProductReviewDto toProductReviewDto(ProductReview productReview);
+
+    @Mapping(target = "page", expression = "java(page.getNumber())")
+    @Mapping(target = "size", expression = "java(page.getSize())")
+    @Mapping(target = "totalElements", expression = "java(page.getTotalElements())")
+    @Mapping(target = "totalPages", expression = "java(page.getTotalPages())")
+    @Mapping(target = "reviewsWithRatings", expression = "java(page.getContent())")
+    ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewDto> page);
+
+    @Named("toUserName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserName"
+    default String convertToUserName(UserEntity user) {
+        return user == null ? null : user.getFirstName();
     }
 
-    public ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewDto> page) {
-        var result = new ProductReviewsAndRatingsWithPagination();
-        result.setPage(page.getTotalPages());
-        result.setSize(page.getSize());
-        result.setTotalElements(page.getTotalElements());
-        result.setTotalPages(page.getTotalPages());
-        result.setReviewsWithRatings(page.getContent());
-        return result;
+    @Named("toUserLastName")
+    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserLastName"
+    default String convertToUserLastName(UserEntity user) {
+        return user == null ? null : user.getLastName();
     }
 
-    public RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
-        var productRatingMap = new RatingMap(0, 0, 0, 0, 0);
-
+    default RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
+        var productRatingMap = new RatingMap();
         for (ProductRatingCount productRatingCount : productRatingCountPairs) {
-            var productRating = productRatingCount.productRating();
-            var count = (int) productRatingCount.count();
-
-            switch (productRating) {
-                case 5:
-                    productRatingMap.setStar5(count);
-                    break;
-                case 4:
-                    productRatingMap.setStar4(count);
-                    break;
-                case 3:
-                    productRatingMap.setStar3(count);
-                    break;
-                case 2:
-                    productRatingMap.setStar2(count);
-                    break;
-                case 1:
-                    productRatingMap.setStar1(count);
-                    break;
-                default:
-                    assert false : "Unexpected product's rating value";
+            int count = (int) productRatingCount.count();
+            int rating = productRatingCount.productRating();
+            switch (rating) {
+                case 5 -> productRatingMap.setStar5(count);
+                case 4 -> productRatingMap.setStar4(count);
+                case 3 -> productRatingMap.setStar3(count);
+                case 2 -> productRatingMap.setStar2(count);
+                case 1 -> productRatingMap.setStar1(count);
+                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + rating);
             }
         }
         return productRatingMap;

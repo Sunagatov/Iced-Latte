@@ -1,26 +1,31 @@
 package com.zufar.icedlatte.order.converter;
 
-import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
-import com.zufar.icedlatte.order.api.OrderItemsCalculator;
+import com.zufar.icedlatte.openapi.dto.OrderDto;
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.openapi.dto.OrderRequestDto;
+import com.zufar.icedlatte.order.entity.OrderItem;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
+
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = {OrderItemDtoConverter.class, OrderItemsCalculator.class},
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        injectionStrategy = InjectionStrategy.FIELD)
+        injectionStrategy = InjectionStrategy.FIELD,
+        uses = {OrderStatus.class})
 public interface OrderDtoConverter {
 
-    @Mapping(target = "items", source = "items")
-    Order toOrderEntity(final OrderRequestDto orderDto);
+    OrderDto toResponseDto(final Order orderEntity);
 
-    @Mapping(target = "items", source = "order.items", qualifiedByName = {"toOrderItemResponseDto"})
-    @Mapping(target = "itemsTotalPrice", source = "order.items", qualifiedByName = {"toItemsTotalPrice"})
-    @Mapping(target = "totalOrderCost", expression = "java(OrderItemsCalculator.calculate(orderResponseDto.getItemsTotalPrice(), order.getDeliveryCost(), order.getTaxCost()))")
-    OrderResponseDto toResponseDto(final Order order);
+    @Named("toOrderItemDto")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "productId", source = "productInfo.id")
+    @Mapping(target = "productName", source = "productInfo.name")
+    @Mapping(target = "productPrice", source = "productInfo.price")
+    @Mapping(target = "productsQuantity", source = "productQuantity")
+    OrderItem toOrderItem(ShoppingCartItemDto cartItem);
 }

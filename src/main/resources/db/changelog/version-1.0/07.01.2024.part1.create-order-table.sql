@@ -1,15 +1,19 @@
-CREATE TABLE IF NOT EXISTS orders
+CREATE TABLE IF NOT EXISTS public.orders
 (
     id                          UUID        PRIMARY KEY,
     user_id                     UUID        NOT NULL,
-    created_at                  TIMESTAMPTZ NOT NULL,
-    order_status                VARCHAR(55) NOT NULL,
+    session_id                  VARCHAR(255) NOT NULL,
+    created_at                  TIMESTAMPTZ DEFAULT current_timestamp,
+    status                      VARCHAR(55) NOT NULL,
     items_quantity              INT         NOT NULL CHECK (items_quantity >= 0),
-    delivery_cost               DECIMAL     NOT NULL CHECK (delivery_cost > 0),
-    tax_cost                    DECIMAL     NOT NULL CHECK (tax_cost > -1),
-    delivery_info               VARCHAR(55) NOT NULL,
-    recipient_name              VARCHAR(55) NOT NULL,
-    recipient_surname           VARCHAR(55) NOT NULL,
-    email                       VARCHAR(55) NOT NULL,
-    phone_number                VARCHAR(25)
+    address_id                  UUID        NOT NULL,
+    items_total_price           DECIMAL     NOT NULL CHECK (items_total_price > 0),
+    recipient_name              VARCHAR(128) NOT NULL DEFAULT '',
+    recipient_surname           VARCHAR(128) NOT NULL DEFAULT '',
+    recipient_phone             VARCHAR(32),
+
+    CONSTRAINT fk_address
+        FOREIGN KEY (address_id)
+            REFERENCES address (id)
+            ON DELETE CASCADE
 )

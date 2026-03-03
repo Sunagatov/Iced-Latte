@@ -1,24 +1,33 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtBlacklistValidator {
 
-    private final Set<String> blacklistedTokens = Collections.synchronizedSet(new HashSet<>());
+    private final JwtBlacklistService blacklistService;
 
     public void addToBlacklist(String token) {
-        blacklistedTokens.add(token);
+        if (!StringUtils.hasText(token)) {
+            log.warn("jwt.blacklist.empty_token");
+            return;
+        }
+        blacklistService.blacklistToken(token);
     }
 
     public void validate(String token) {
-        if (blacklistedTokens.contains(token)) {
-            throw new JwtTokenBlacklistedException();
+        if (!StringUtils.hasText(token)) {
+            throw new JwtTokenBlacklistedException("Invalid token format");
+        }
+        if (blacklistService.isBlacklisted(token)) {
+            log.warn("jwt.blacklist.token_revoked");
+            throw new JwtTokenBlacklistedException("Token has been revoked");
         }
     }
 }

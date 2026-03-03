@@ -2,6 +2,7 @@ package com.zufar.icedlatte.filestorage.filemetadata;
 
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,8 +10,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +27,15 @@ public class FileMetadataProvider {
     public Optional<FileMetadataDto> getFileMetadataDto(final UUID relatedObjectId) {
         return fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
                 .map(fileMetadataDtoConverter::toDto);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public Map<UUID, FileMetadataDto> getFileMetadataDtos(final List<UUID> relatedObjectIds) {
+        return fileMetadataRepository.findAvatarInfoByRelatedObjectIds(relatedObjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        FileMetadata::getRelatedObjectId,
+                        fileMetadataDtoConverter::toDto
+                ));
     }
 }

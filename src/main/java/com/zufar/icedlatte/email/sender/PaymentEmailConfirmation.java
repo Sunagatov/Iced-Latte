@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.sender;
 
-import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +13,7 @@ import java.util.List;
 @Component
 public class PaymentEmailConfirmation extends AbstractEmailSender<EmailConfirmMessage> {
 
-
-    private static final String DEFAULT_SUCCESSFUL_EMAIL_MESSAGE = "You're payment with total amount - %d %s was successfully processed";
-
+    private static final String DEFAULT_SUCCESSFUL_EMAIL_MESSAGE = "Your payment with total amount - %.2f %s was successfully processed";
     private static final String DEFAULT_EMAIL_SUBJECT = "Payment Confirmation for Your Recent Purchase";
 
     @Autowired
@@ -25,10 +23,10 @@ public class PaymentEmailConfirmation extends AbstractEmailSender<EmailConfirmMe
         super(javaMailSender, mailMessage, messageBuilders);
     }
 
-    public void send(PaymentIntent paymentIntent) {
+    public void send(Session stripeSession) {
         sendNotification(
-                paymentIntent.getReceiptEmail(),
-                DEFAULT_SUCCESSFUL_EMAIL_MESSAGE.formatted(paymentIntent.getAmount(), paymentIntent.getCurrency()),
+                stripeSession.getCustomerEmail(),
+                DEFAULT_SUCCESSFUL_EMAIL_MESSAGE.formatted(stripeSession.getAmountTotal() / 100.0, stripeSession.getCurrency()),
                 DEFAULT_EMAIL_SUBJECT
         );
     }

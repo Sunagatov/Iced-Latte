@@ -1,4 +1,4 @@
-create TABLE IF NOT EXISTS file_metadata
+create TABLE IF NOT EXISTS public.file_metadata
 (
     id                UUID NOT NULL PRIMARY KEY,
     related_object_id UUID NOT NULL,

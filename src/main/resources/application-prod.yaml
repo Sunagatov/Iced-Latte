@@ -1,0 +1,31 @@
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+spring:
+  output:
+    ansi:
+      enabled: never
+  liquibase:
+    drop-first: false
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  tracing:
+    sampling:
+      probability: 0.05
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+      headers:
+        dd-api-key: ${DD_API_KEY}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

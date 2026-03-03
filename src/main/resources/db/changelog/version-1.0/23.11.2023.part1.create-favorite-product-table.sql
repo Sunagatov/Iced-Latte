@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS favorite_list
+CREATE TABLE IF NOT EXISTS public.favorite_list
 (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,

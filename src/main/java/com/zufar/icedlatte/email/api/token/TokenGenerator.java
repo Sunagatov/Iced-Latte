@@ -7,30 +7,17 @@ import java.security.SecureRandom;
 
 @Component
 public class TokenGenerator {
+
+    private static final int TOKEN_LENGTH = 9;
     private static final SecureRandom random = new SecureRandom();
-    private static final String BASE = "0123456789";
-    private static final String PATTERN = "#########";
-    private static final char REPLACE_HOOK = '#';
 
     public String nextToken() {
-        PatternReplacer token = new PatternReplacer(PATTERN, REPLACE_HOOK);
-        while (token.isReplaceable()) {
-            int randomSymbolIndex = random.nextInt(BASE.length());
-            token.replace(BASE.charAt(randomSymbolIndex));
-        }
-        return token.toString();
+        return String.format("%0" + TOKEN_LENGTH + "d", random.nextInt((int) Math.pow(10, TOKEN_LENGTH)));
     }
 
     public void tokenIsValid(String token) {
-        if (token.length() != PATTERN.length()) {
-            throw new IncorrectTokenFormatException(PATTERN);
-        }
-
-        for (int i = 0; i < PATTERN.length(); i++) {
-            if (PATTERN.charAt(i) != REPLACE_HOOK) continue;
-            if (!BASE.contains(String.valueOf(token.charAt(i)))) {
-                throw new IncorrectTokenFormatException(PATTERN);
-            }
+        if (token == null || token.length() != TOKEN_LENGTH || !token.chars().allMatch(Character::isDigit)) {
+            throw new IncorrectTokenFormatException("#".repeat(TOKEN_LENGTH));
         }
     }
 }

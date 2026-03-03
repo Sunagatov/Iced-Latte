@@ -32,12 +32,12 @@ class ProductInfoDtoConverterTest {
 
         ProductInfoDto actualProductInfoDto = converter.toDto(expectedProductInfoDto);
 
-        assertThat(actualProductInfoDto.getId()).isEqualTo(expectedProductInfoDto.getProductId());
+        assertThat(actualProductInfoDto.getId()).isEqualTo(expectedProductInfoDto.getId());
         assertThat(actualProductInfoDto.getName()).isEqualTo(expectedProductInfoDto.getName());
         assertThat(actualProductInfoDto.getDescription()).isEqualTo(expectedProductInfoDto.getDescription());
         assertThat(actualProductInfoDto.getPrice()).isEqualTo(expectedProductInfoDto.getPrice());
         assertThat(actualProductInfoDto.getQuantity()).isEqualTo(expectedProductInfoDto.getQuantity());
-        assertThat(actualProductInfoDto.getActive()).isEqualTo(expectedProductInfoDto.getActive());
+        assertThat(actualProductInfoDto.getActive()).isEqualTo(expectedProductInfoDto.isActive());
 
     }
 

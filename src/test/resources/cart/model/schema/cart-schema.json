@@ -91,7 +91,7 @@
                 "type": "string"
               },
               "closedAt": {
-                "type": "string"
+                "type": ["string", "null"]
               }
             }
           }
@@ -111,7 +111,7 @@
       "type": "string"
     },
     "closedAt": {
-      "type": "string"
+      "type": ["string", "null"]
     }
   }
 }

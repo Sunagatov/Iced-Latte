@@ -1,72 +1,48 @@
-# Various IDEs
+# Version control
+.git/
+.gitignore
+.gitguardian.yml
+
+# IDE
 .idea/
 .vscode/
 *.iml
-*.idea
-*.vs
 
-# Git and version control
-.git/
-.gitignore
+# Amazon Q rules
+.amazonq/
+
+# CI/CD (not needed in image)
+.github/
 
 # Docker override files
-docker-compose.override.yml
-docker-compose.override.yaml
+docker-compose*.yml
+docker-compose*.yaml
 
-# Environment files
-.env.local
-.env.local.dist
+# Environment files (injected at runtime)
 .env.*
+.env.local
+local.env
 
-# Dependency directories
-**/node_modules/
-**/bower_components/
+# Test sources (not needed in image)
+src/test/
 
-# Log files
-logs/
-*.log
-
-# Compiled output
-/dist
-/tmp
-/out
-/target
-/build
-
-# Dependencies
+# Maven build output and metadata
+target/
 **/pom.xml.versionsBackup
 **/pom.xml.tag
 **/pom.xml.releaseBackup
 **/pom.xml.next
 **/pom.xml.backup
-
-# Maven Wrapper files
 **/.mvn/wrapper/maven-wrapper.jar
-**/.mvn/wrapper/MavenWrapperDownloader.java
 
-# Others
-**/README.md
-**/LICENSE
-**/CODE_OF_CONDUCT.md
-**/SECURITY.md
-**/START.md
+# Docs and markdown
+docs/
 *.md
 
-# Operating system files
+# OS
 .DS_Store
 Thumbs.db
 
-# Test directories
-**/test-results
-**/.tmp
-**/test-report
-
-# CI/CD
-.github/
-.gitlab-ci.yml
-.travis.yml
-
-# Documentation
-docs/
-
-./products
+# Logs
+logs/
+*.log

@@ -1,0 +1,1 @@
+ALTER TABLE public.product ADD COLUMN version BIGINT NOT NULL DEFAULT 0;

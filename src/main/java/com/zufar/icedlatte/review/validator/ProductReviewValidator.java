@@ -5,9 +5,9 @@ import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
-import com.zufar.icedlatte.review.exception.ProductIdsAreNotMatchException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
+import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -26,12 +27,17 @@ public class ProductReviewValidator {
     private final ProductReviewRepository productReviewRepository;
     private final ProductInfoRepository productInfoRepository;
 
+    private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
+
     /**
-     * Check if the product review's text is not empty
+     * Check if the product review's text is not empty and contains no forbidden characters
      */
     public void validateReviewText(final String productReviewText) {
-        if (productReviewText.isEmpty()) {
+        if (productReviewText.trim().isEmpty()) {
             throw new EmptyProductReviewException();
+        }
+        if (INVALID_REVIEW_TEXT_PATTERN.matcher(productReviewText).find()) {
+            throw new InvalidProductReviewTextException();
         }
     }
 
@@ -52,17 +58,7 @@ public class ProductReviewValidator {
                                             final UUID productId) {
         var productReview = productReviewRepository.findByUserIdAndProductId(userId, productId);
         if (productReview.isPresent()) {
-            throw new DeniedProductReviewCreationException(productId, userId, productReview.get().getId());
-        }
-    }
-
-    /**
-     * Check if the user has already created a review for this product
-     */
-    public void validateReviewExistsForUser(final UUID productReviewId) {
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
-            throw new ProductReviewNotFoundException(productReviewId);
+            throw new DeniedProductReviewCreationException(userId, productId, productReview.get().getId());
         }
     }
 
@@ -79,20 +75,14 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the product's review deletion is allowed
+     * Check if the product and review both exist
      */
-    public void validateProductIdIsValid(final UUID productId,
-                                         final UUID productReviewId) {
-        var productInfo = productInfoRepository.findById(productId);
-        if (productInfo.isEmpty()) {
+    public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
+        if (!productInfoRepository.existsById(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
+        if (!productReviewRepository.existsById(productReviewId)) {
             throw new ProductReviewNotFoundException(productReviewId);
-        }
-        if (!productInfo.get().getProductId().equals(productReview.get().getProductId())) {
-            throw new ProductIdsAreNotMatchException(productReviewId);
         }
     }
 }

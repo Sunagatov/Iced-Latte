@@ -11,25 +11,31 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ProductInfoDtoConverter {
 
     @Named("toProductInfoDto")
-    @Mapping(target = "id", source = "productId")
     @Mapping(target = "averageRating", source = "averageRating", qualifiedByName = "roundAverageRatingValue")
-    ProductInfoDto toDto(final ProductInfo entity);
+    @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
+    @Mapping(target = "productFileUrl", ignore = true)
+    ProductInfoDto toDto(ProductInfo entity);
 
     @Mapping(target = "products", source = "content")
     @Mapping(target = "page", source = "number")
     @Mapping(target = "size", source = "size")
-    ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto);
+    ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
 
     @Named("roundAverageRatingValue")
     default BigDecimal roundAverageRatingValue(BigDecimal averageRating) {
-        if (averageRating != null) {
-            averageRating = averageRating.setScale(1, RoundingMode.HALF_DOWN);
-        }
-        return averageRating;
+        return (averageRating == null) ? null : averageRating.setScale(1, RoundingMode.HALF_UP);
+    }
+
+    @Named("localToOffsetDate")
+    default OffsetDateTime localToOffsetDate(LocalDateTime value) {
+        return (value == null) ? null : value.atOffset(ZoneOffset.UTC);
     }
 }

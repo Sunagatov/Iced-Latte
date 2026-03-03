@@ -3,7 +3,6 @@ package com.zufar.icedlatte.cart.api;
 import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +17,8 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_ITEMS_QUANTITY;
-import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_PRODUCTS_QUANTITY;
+import static com.zufar.icedlatte.cart.entity.ShoppingCart.DEFAULT_PRODUCTS_QUANTITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,9 +27,6 @@ class ShoppingCartProviderTest {
 
     @InjectMocks
     ShoppingCartProvider shoppingCartProvider;
-
-    @Mock
-    ShoppingCartRepository shoppingCartRepository;
 
     @Mock
     ShoppingCartCreator shoppingCartCreator;
@@ -44,15 +39,16 @@ class ShoppingCartProviderTest {
     void shouldReturnCorrectShoppingCartDtoWhenUserExists() throws ShoppingCartNotFoundException {
         UUID userId = UUID.fromString("2eebb17c-5a55-43dd-add7-c15d49521f14");
         ShoppingCart expectedShoppingCart = CartDtoTestStub.createShoppingCart();
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
 
-        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(expectedShoppingCart);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(expectedShoppingCart);
+        when(shoppingCartDtoConverter.toDto(expectedShoppingCart)).thenReturn(expectedDto);
 
         ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
 
-        assertEquals(shoppingCartDtoConverter.toDto(expectedShoppingCart), actualShoppingCartDto);
-        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(userId);
-        verify(shoppingCartCreator, times(0)).createNewShoppingCart(userId);
-        verify(shoppingCartDtoConverter, times(2)).toDto(expectedShoppingCart);
+        assertEquals(expectedDto, actualShoppingCartDto);
+        verify(shoppingCartCreator).getOrCreate(userId);
+        verify(shoppingCartDtoConverter).toDto(expectedShoppingCart);
     }
 
     @Test
@@ -66,15 +62,15 @@ class ShoppingCartProviderTest {
                 .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
 
-        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(null);
-        when(shoppingCartCreator.createNewShoppingCart(userId)).thenReturn(shoppingCart);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(shoppingCart);
+        when(shoppingCartDtoConverter.toDto(shoppingCart)).thenReturn(expectedDto);
 
         ShoppingCartDto actualShoppingCartDto = shoppingCartProvider.getByUserId(userId);
 
-        assertEquals(shoppingCartDtoConverter.toDto(shoppingCart), actualShoppingCartDto);
-        verify(shoppingCartRepository, times(1)).findShoppingCartByUserId(userId);
-        verify(shoppingCartCreator, times(1)).createNewShoppingCart(userId);
-        verify(shoppingCartDtoConverter, times(2)).toDto(shoppingCart);
+        assertEquals(expectedDto, actualShoppingCartDto);
+        verify(shoppingCartCreator).getOrCreate(userId);
+        verify(shoppingCartDtoConverter).toDto(shoppingCart);
     }
 }

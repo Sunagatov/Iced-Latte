@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -17,18 +17,21 @@ import java.time.LocalDateTime;
 public class FailedLoginAttemptIncrementor {
 
     private final LoginAttemptRepository loginAttemptRepository;
-    private final LoginAttemptFactory loginAttemptFactory;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public LoginAttemptEntity increment(String userEmail) {
         LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
                 .orElseGet(() -> {
-                    log.info("No login attempt record found for email: {}. Creating a new record.", userEmail);
-                    return loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+                    log.debug("auth.login_attempts.new_record");
+                    return LoginAttemptEntity.builder()
+                            .userEmail(userEmail)
+                            .attempts(0)
+                            .isUserLocked(false)
+                            .lastModified(Instant.now())
+                            .build();
                 });
         loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
-        loginAttempt.setLastModified(LocalDateTime.now());
+        loginAttempt.setLastModified(Instant.now());
         return loginAttemptRepository.save(loginAttempt);
     }
-
 }

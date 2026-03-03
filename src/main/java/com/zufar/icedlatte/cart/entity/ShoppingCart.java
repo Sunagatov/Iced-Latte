@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Set;
@@ -49,13 +51,14 @@ public class ShoppingCart {
     @Column(name = "products_quantity", nullable = false)
     private Integer productsQuantity;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
 
-    private static final int DEFAULT_PRODUCTS_QUANTITY = 0;
+    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
 
     public Integer getItemsQuantity() {
         return this.items.size();

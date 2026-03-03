@@ -6,33 +6,28 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = ShoppingCartItemDtoConverterTest.Config.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = ShoppingCartItemDtoConverterTest.Config.class)
 class ShoppingCartItemDtoConverterTest {
-
-    @Autowired
-    ShoppingCartItemDtoConverter shoppingCartItemDtoConverter;
 
     @Configuration
     public static class Config {
-
-        @Bean
-        public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter() {
-            return Mappers.getMapper(ShoppingCartItemDtoConverter.class);
-        }
-
-        @Bean
-        public ProductInfoDtoConverter productInfoDtoConverter() {
-            return Mappers.getMapper(ProductInfoDtoConverter.class);
-        }
+        @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter() { return Mappers.getMapper(ShoppingCartItemDtoConverter.class); }
+        @Bean public ProductInfoDtoConverter productInfoDtoConverter() { return Mappers.getMapper(ProductInfoDtoConverter.class); }
     }
+
+    @Autowired
+    ShoppingCartItemDtoConverter shoppingCartItemDtoConverter;
 
     @Test
     @DisplayName("ToDto should convert ShoppingCartItem to ShoppingCartItemDto with complete shopping cart item information")
@@ -41,7 +36,7 @@ class ShoppingCartItemDtoConverterTest {
         ShoppingCartItemDto shoppingCartItemDto = shoppingCartItemDtoConverter.toDto(shoppingCartItem);
 
         assertEquals(shoppingCartItem.getId(), shoppingCartItemDto.getId());
-        assertEquals(shoppingCartItem.getProductInfo().getProductId(), shoppingCartItemDto.getProductInfo().getId());
+        assertEquals(shoppingCartItem.getProductInfo().getId(), shoppingCartItemDto.getProductInfo().getId());
         assertEquals(shoppingCartItem.getProductQuantity(), shoppingCartItemDto.getProductQuantity());
     }
 }

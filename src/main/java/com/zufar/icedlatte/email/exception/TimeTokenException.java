@@ -17,9 +17,9 @@ public class TimeTokenException extends RuntimeException {
 
     private static String buildMessageError(String email, OffsetDateTime expireTime) {
         StringBuilder stringBuilder = new StringBuilder();
-        Duration restTime = Duration.between(OffsetDateTime.now(), expireTime);
-        long minutes = restTime.toMinutesPart();
-        long seconds = restTime.toSecondsPart();
+        Duration remainingTime = Duration.between(OffsetDateTime.now(), expireTime);
+        long minutes = remainingTime.toMinutesPart();
+        long seconds = remainingTime.toSecondsPart();
 
         stringBuilder.append("Token for email '").append(email).append("' will be expired after: ");
         if (minutes != 0) {

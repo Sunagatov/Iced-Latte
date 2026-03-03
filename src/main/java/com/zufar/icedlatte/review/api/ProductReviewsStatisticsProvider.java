@@ -29,25 +29,18 @@ public class ProductReviewsStatisticsProvider {
     public ProductReviewRatingStats get(final UUID productId) {
         productReviewValidator.validateProductExists(productId);
 
-        String formattedAvgRating = getFormattedAverageProductRating(productId);
-        Integer reviewsCount = reviewRepository.getReviewCountProductById(productId);
-        RatingMap productRatingMap = getProductRatingMap(productId);
-
-        return new ProductReviewRatingStats(productId, formattedAvgRating, reviewsCount, productRatingMap);
-    }
-
-    private String getFormattedAverageProductRating(UUID productId) {
-        Double avgRating = reviewRepository.getAvgRatingByProductId(productId);
-        if (avgRating == null) {
-            avgRating = 0.0;
-        }
-        return String.format("%.1f", avgRating);
+        Double avg = reviewRepository.getAvgRatingByProductId(productId);
+        double avgRating = avg != null ? avg : 0.0;
+        return new ProductReviewRatingStats(productId,
+                Math.round(avgRating * 10.0) / 10.0,
+                reviewRepository.getReviewCountProductById(productId),
+                getProductRatingMap(productId));
     }
 
     private RatingMap getProductRatingMap(UUID productId) {
         List<ProductRatingCount> productRatingCountPairs = reviewRepository.getRatingsMapByProductId(productId);
         if (productRatingCountPairs == null) {
-            return new RatingMap(0, 0, 0, 0, 0);
+            return new RatingMap();
         }
         return productReviewDtoConverter.convertToProductRatingMap(productRatingCountPairs);
     }

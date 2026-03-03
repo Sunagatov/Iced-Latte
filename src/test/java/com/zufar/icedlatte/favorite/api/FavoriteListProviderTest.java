@@ -18,9 +18,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class FavoriteListProviderTest {
@@ -47,7 +47,7 @@ class FavoriteListProviderTest {
         FavoriteListEntity result = favoriteListProvider.getFavoriteListEntity(userId);
 
         assertEquals(expectedFavoriteList, result);
-        verify(favoriteRepository, times(1)).findByUserId(userId);
+        verify(favoriteRepository).findByUserId(userId);
     }
 
     @Test
@@ -56,10 +56,11 @@ class FavoriteListProviderTest {
         UUID userId = UUID.randomUUID();
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(favoriteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FavoriteListEntity result = favoriteListProvider.getFavoriteListEntity(userId);
 
-        verify(favoriteRepository, times(1)).findByUserId(userId);
+        verify(favoriteRepository).findByUserId(userId);
 
         assertEquals(userId, result.getUserId());
         assertTrue(result.getFavoriteItems().isEmpty());
@@ -86,7 +87,7 @@ class FavoriteListProviderTest {
 
         assertEquals(expectedFavoriteList, result);
 
-        verify(favoriteRepository, times(1)).findByUserId(userId);
-        verify(favoriteListDtoConverter, times(1)).toDto(favoriteList);
+        verify(favoriteRepository).findByUserId(userId);
+        verify(favoriteListDtoConverter).toDto(favoriteList);
     }
 }

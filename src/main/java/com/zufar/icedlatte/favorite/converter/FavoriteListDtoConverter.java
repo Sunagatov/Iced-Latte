@@ -10,46 +10,39 @@ import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         uses = FavoriteItemDtoConverter.class, unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
 public interface FavoriteListDtoConverter {
+    @Mapping(target = "favoriteItems", source = "favoriteItems", qualifiedByName = "mapFavoriteItems")
+    FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity);
 
-    default FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity) {
-        UUID id = favoriteListEntity.getId();
-        UUID userId = favoriteListEntity.getUserId();
-        Set<FavoriteItemDto> favoriteItemsDto = new HashSet<>();
+    @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
+    ProductInfoDto convertProductInfoDto(ProductInfo productInfo);
 
-        for (FavoriteItemEntity itemEntity : favoriteListEntity.getFavoriteItems()) {
-            UUID favoriteItemEntityId = itemEntity.getId();
-            ProductInfo productInfo = itemEntity.getProductInfo();
+    @Named("mapFavoriteItems")
+    default FavoriteItemDto toFavoriteItemDto(FavoriteItemEntity itemEntity) {
+        UUID favoriteItemEntityId = itemEntity.getId();
+        ProductInfo productInfo = itemEntity.getProductInfo();
 
-            ProductInfoDto productInfoDto = convertProductInfoDto(productInfo);
+        ProductInfoDto productInfoDto = convertProductInfoDto(productInfo);
 
-            FavoriteItemDto favoriteItemDto = new FavoriteItemDto(favoriteItemEntityId, productInfoDto);
-            favoriteItemsDto.add(favoriteItemDto);
+        return new FavoriteItemDto(favoriteItemEntityId, productInfoDto);
+    }
+
+    @Named("localToOffsetDate")
+    default OffsetDateTime offsetToLocalDate(LocalDateTime value) {
+        if (value != null) {
+            return OffsetDateTime.of(value, ZoneOffset.UTC);
         }
-
-        return new FavoriteListDto(id, userId, favoriteItemsDto, favoriteListEntity.getUpdatedAt());
+        return null;
     }
 
-    private static ProductInfoDto convertProductInfoDto(ProductInfo productInfo) {
-        return new ProductInfoDto(
-                productInfo.getProductId(),
-                productInfo.getName(),
-                productInfo.getDescription(),
-                productInfo.getPrice(),
-                productInfo.getQuantity(),
-                productInfo.getActive(),
-                productInfo.getAverageRating(),
-                productInfo.getReviewsCount(),
-                productInfo.getBrandName(),
-                productInfo.getSellerName()
-
-        );
-    }
 }

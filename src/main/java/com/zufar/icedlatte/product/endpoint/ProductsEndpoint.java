@@ -5,13 +5,14 @@ import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.openapi.dto.SellersDto;
+import com.zufar.icedlatte.product.api.PageableProductsProvider;
+import com.zufar.icedlatte.product.api.ProductFilterOptionsProvider;
 import com.zufar.icedlatte.product.api.ProductsProvider;
 import com.zufar.icedlatte.product.api.SingleProductProvider;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
-import com.zufar.icedlatte.product.api.PageableProductsProvider;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,15 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)
+@RequestMapping(ProductsEndpoint.PRODUCTS_URL)
 public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api.ProductApi {
 
     public static final String PRODUCTS_URL = "/api/v1/products";
@@ -42,68 +40,60 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     private final PageableProductsProvider pageableProductsProvider;
     private final GetProductsRequestValidator getProductsRequestValidator;
     private final SingleProductProvider singleProductProvider;
-
-    @Override
-    @GetMapping("/{productId}")
-    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
-        log.info("Received the request to get the product with productId - {}.", productId);
-        ProductInfoDto product = singleProductProvider.getProductById(productId);
-        log.info("The product with productId: {} was retrieved successfully", productId);
-        return ResponseEntity.ok()
-                .body(product);
-    }
-
-    @Override
-    @GetMapping
-    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = "page", defaultValue = "0") Integer pageNumber,
-                                                                        @RequestParam(name = "size", defaultValue = "50") Integer pageSize,
-                                                                        @RequestParam(name = "sort_attribute", defaultValue = "name") String sortAttribute,
-                                                                        @RequestParam(name = "sort_direction", defaultValue = "desc") String sortDirection,
-                                                                        @RequestParam(name = "min_price", required = false) BigDecimal minPrice,
-                                                                        @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
-                                                                        @RequestParam(name = "minimum_average_rating", required = false) Integer minimumAverageRating,
-                                                                        @RequestParam(name = "brand_names", required = false) List<String> brandNames,
-                                                                        @RequestParam(name = "seller_names", required = false) List<String> sellersNames) {
-        log.info("Received the request to get products with these pagination and sorting attributes: " +
-                "page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
-        getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);
-        Pageable pageable = createPageableObject(pageNumber, pageSize, sortAttribute, sortDirection);
-        ProductListWithPaginationInfoDto productPaginationDto = pageableProductsProvider.getProducts(pageable, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);
-        log.info("Products were retrieved successfully with these pagination and sorting attributes: " +
-                "page - {}, size - {}, sort_attribute - {}, sort_direction - {}", pageNumber, pageSize, sortAttribute, sortDirection);
-        return ResponseEntity.ok()
-                .body(productPaginationDto);
-    }
-
-    @Override
-    @PostMapping("/ids")
-    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@RequestBody final ProductIdsDto productIdsDto) {
-        List<UUID> productIds = productIdsDto.getProductIds();
-        var stringIDs = productIds.stream().map(UUID::toString).collect(Collectors.joining(", "));
-        log.info("Received the request to get the products with productIds - {}.", stringIDs);
-        List<ProductInfoDto> products = productsProvider.getProducts(productIds);
-        log.info("Products with productIds: {} was retrieved successfully", stringIDs);
-        return ResponseEntity.ok()
-                .body(products);
-    }
+    private final ProductFilterOptionsProvider productFilterOptionsProvider;
 
     @Override
     @GetMapping("/sellers")
     public ResponseEntity<SellersDto> getAllSellers() {
-        log.info("Received the request to get a list of all hardcoded sellers of products");
-        SellersDto sellersDto = new SellersDto(List.of("JavaBeanCoffee", "FreshCup", "BrewedBliss", "EspressoEmporium", "MorningMug", "CoffeeCorner", "CuppaCafe", "BeanBrewers"));
-        log.info("The list of all hardcoded sellers of products was retrieved successfully");
-        return ResponseEntity.ok()
-                .body(sellersDto);
+        return ResponseEntity.ok(new SellersDto(productFilterOptionsProvider.getSellerNames()));
     }
 
     @Override
     @GetMapping("/brands")
     public ResponseEntity<BrandsDto> getAllBrands() {
-        log.info("Received the request to get a list of all hardcoded brands of products");
-        BrandsDto brandsDto = new BrandsDto(List.of("Folgers", "Illy", "Dunkin-Donuts", "Nescafe", "Lavazza", "Peets-Coffee", "Starbucks"));
-        log.info("The list of all hardcoded brands of products was retrieved successfully");
-        return ResponseEntity.ok()
-                .body(brandsDto);
+        return ResponseEntity.ok(new BrandsDto(productFilterOptionsProvider.getBrandNames()));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(
+            @RequestParam(name = "page", required = false) Integer pageNumber,
+            @RequestParam(name = "size", required = false) Integer pageSize,
+            @RequestParam(name = "sort_attribute", required = false) String sortAttribute,
+            @RequestParam(name = "sort_direction", required = false) String sortDirection,
+            @RequestParam(name = "min_price", required = false) BigDecimal minPrice,
+            @RequestParam(name = "max_price", required = false) BigDecimal maxPrice,
+            @RequestParam(name = "minimum_average_rating", required = false) Integer minimumAverageRating,
+            @RequestParam(name = "brand_names", required = false) List<String> brandNames,
+            @RequestParam(name = "seller_names", required = false) List<String> sellerNames,
+            @RequestParam(name = "keyword", required = false) String keyword) {
+
+        getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
+                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
+
+        return ResponseEntity.ok(pageableProductsProvider.getProducts(
+                pageNumber, pageSize, sortAttribute, sortDirection,
+                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
+    }
+
+    @Override
+    @PostMapping("/ids")
+    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
+        var ids = productIdsDto.getProductIds();
+        if (ids == null || ids.isEmpty()) {
+            log.warn("product.ids.empty");
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("product.ids.fetching: count={}", ids.size());
+        var products = productsProvider.getProducts(ids);
+        log.info("product.ids.fetched: count={}", products.size());
+        return ResponseEntity.ok(products);
+    }
+
+    @Override
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
+        log.info("product.get: productId={}", productId);
+        return ResponseEntity.ok(singleProductProvider.getProductById(productId));
     }
 }

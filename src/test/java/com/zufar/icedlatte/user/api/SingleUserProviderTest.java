@@ -15,6 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
 
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
@@ -65,5 +68,16 @@ class SingleUserProviderTest {
 
         assertThrows(UserNotFoundException.class, () -> singleUserProvider.getUserById(nonExistentUserId));
         verify(userCrudRepository).findById(nonExistentUserId);
+    }
+
+    @Test
+    @DisplayName("getUserByEmail should throw UserNotFoundException with email in message when not found")
+    void getUserByEmail_notFound_messageContainsEmail() {
+        String email = "missing@example.com";
+        when(userCrudRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> singleUserProvider.getUserByEmail(email))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining(email);
     }
 }

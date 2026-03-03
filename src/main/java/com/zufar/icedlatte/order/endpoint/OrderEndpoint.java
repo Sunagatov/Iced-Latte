@@ -1,50 +1,55 @@
 package com.zufar.icedlatte.order.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.OrderRequestDto;
-import com.zufar.icedlatte.openapi.dto.OrderResponseDto;
+import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
+import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.order.api.OrderManager;
+import com.zufar.icedlatte.order.api.OrderCreator;
+import com.zufar.icedlatte.order.api.OrdersProvider;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = OrderEndpoint.ORDER_URL)
-public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.OrdersApi {
+@RequestMapping(value = OrderEndpoint.ORDERS_URL)
+public class OrderEndpoint {
 
-    public static final String ORDER_URL = "/api/v1/orders";
+    public static final String ORDERS_URL = "/api/v1/orders";
 
-    private final OrderManager orderManager;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final OrdersProvider ordersProvider;
+    private final OrderCreator orderCreator;
 
-    @Override
-    @PostMapping
-    public ResponseEntity<OrderResponseDto> createNewOrder(final OrderRequestDto orderRequest) {
-        log.info("Received orderRequest to add order.");
-        var order = orderManager.createNewOrder(orderRequest);
-        log.info("Order was added with id: {}", order.getId());
-        return ResponseEntity.ok()
-                .body(order);
+    @GetMapping
+    public ResponseEntity<List<OrderDto>> getOrders(
+            @RequestParam(required = false) final List<OrderStatus> status) {
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("orders.get: userId={}", userId);
+        var orders = ordersProvider.getOrders(userId, status);
+        log.info("orders.retrieved: userId={}, count={}", userId, orders.size());
+        return ResponseEntity.ok(orders);
     }
 
-    @Override
-    @GetMapping
-    public ResponseEntity<List<OrderResponseDto>> getOrders(final List<OrderStatus> statusList) {
-        var status = statusList == null ? "Not provided" : statusList.stream().map(OrderStatus::toString).collect(Collectors.joining(", "));
-        log.info("Received request to get all orders with status: {}.", status);
-        var lisOfOrders = orderManager.getOrders(statusList);
-        log.info("Orders retrieval processed.");
-        return ResponseEntity.ok()
-                .body(lisOfOrders);
+    @PostMapping
+    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody final CreateNewOrderRequestDto request) {
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("orders.create: userId={}", userId);
+        var order = orderCreator.create(userId, request);
+        log.info("orders.created: userId={}, orderId={}", userId, order.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 }

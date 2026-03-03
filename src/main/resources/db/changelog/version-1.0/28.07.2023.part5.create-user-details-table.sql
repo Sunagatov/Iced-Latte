@@ -1,4 +1,4 @@
-CREATE TABLE user_details
+CREATE TABLE public.user_details
 (
     id                      UUID         NOT NULL PRIMARY KEY,
     first_name              VARCHAR(128)  NOT NULL,

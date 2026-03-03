@@ -10,7 +10,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
@@ -25,15 +26,23 @@ public class UserAccountLocker {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void lockUserAccount(String userEmail) {
-        LocalDateTime expirationDatetime = LocalDateTime.now().plusMinutes(userAccountLockoutDurationMinutes);
-        loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
-        userRepository.setAccountLockedStatus(userEmail, false);
-        log.warn("User {} is locked out due to excessive failed login attempts. Lockout duration: {} minutes", userEmail, userAccountLockoutDurationMinutes);
+        Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, ChronoUnit.MINUTES);
+        int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
+        int userRows = userRepository.setAccountLockedStatus(userEmail, false);
+        if (attemptRows == 0 || userRows == 0) {
+            log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated", attemptRows, userRows);
+        } else {
+            log.warn("auth.account.locked: durationMinutes={}", userAccountLockoutDurationMinutes);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void unlockUserAccount(String userEmail) {
-        userRepository.setAccountLockedStatus(userEmail, true);
-        log.info("User account with the email = '{}' has been unlocked.", userEmail);
+        int userRows = userRepository.setAccountLockedStatus(userEmail, true);
+        if (userRows == 0) {
+            log.error("auth.account.unlock_failed: userRows={}, message=no rows updated", userRows);
+        } else {
+            log.info("auth.account.unlocked");
+        }
     }
 }

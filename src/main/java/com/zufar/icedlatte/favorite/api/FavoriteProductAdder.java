@@ -42,7 +42,7 @@ public class FavoriteProductAdder {
 
     private Set<UUID> extractFavoriteProductIds(FavoriteListEntity favoriteListEntity) {
         return favoriteListEntity.getFavoriteItems().stream()
-                .map(item -> item.getProductInfo().getProductId())
+                .map(item -> item.getProductInfo().getId())
                 .collect(Collectors.toSet());
     }
 

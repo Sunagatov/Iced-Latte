@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS product_reviews_likes
+CREATE TABLE IF NOT EXISTS public.product_reviews_likes
 (
     id         UUID PRIMARY KEY,
     review_id  UUID    NOT NULL,

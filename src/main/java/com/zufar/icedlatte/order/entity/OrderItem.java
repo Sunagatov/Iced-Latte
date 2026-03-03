@@ -1,22 +1,18 @@
 package com.zufar.icedlatte.order.entity;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -32,40 +28,20 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @Column(name = "order_id", nullable = false)
+    private UUID orderId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = false)
-    private ProductInfo productInfo;
+    @Column(name = "product_id")
+    private UUID productId;
+
+    @Column(name = "product_price")
+    private BigDecimal productPrice;
+
+    @Column(name = "product_name")
+    private String productName;
 
     @Column(name = "products_quantity", nullable = false)
-    private Integer productQuantity;
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object)
-            return true;
-
-        if (object == null || getClass() != object.getClass())
-            return false;
-
-        var that = (OrderItem) object;
-
-        return new EqualsBuilder()
-                .append(id, that.id)
-                .append(productInfo, that.productInfo)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(productInfo)
-                .toHashCode();
-    }
+    private Integer productsQuantity;
 
     @Override
     public String toString() {

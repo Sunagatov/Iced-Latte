@@ -25,16 +25,6 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 ##############################
-## Gradle
-##############################
-bin/
-build/
-.gradle
-.gradletasknamecache
-gradle-app.setting
-!gradle-wrapper.jar
-
-##############################
 ## IntelliJ
 ##############################
 out/
@@ -77,10 +67,17 @@ nb-configuration.xml
 .code-workspace
 
 ##############################
+## Amazon Q
+##############################
+.amazonq/
+
+##############################
 ## OS X
 ##############################
 .DS_Store
 /.env.local
+.env.prod
+local.env
 /README.local.md
 /docker-compose.override.yaml
 
@@ -90,3 +87,7 @@ nb-configuration.xml
 **/*.log
 /src/main/resources/stripe.yaml
 /docker-compose.override.yml
+/docs/RATE_LIMITER.md
+/docs/RATE_LIMITER_QUICK_REF.md
+/docs/RATE_LIMITER_SUMMARY.md
+META-INF/

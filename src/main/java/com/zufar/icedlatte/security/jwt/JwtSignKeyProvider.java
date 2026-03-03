@@ -1,29 +1,24 @@
 package com.zufar.icedlatte.security.jwt;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.security.Key;
-
+import com.zufar.icedlatte.security.configuration.JwtProperties;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
 
 @Service
 public class JwtSignKeyProvider {
 
-	@Value("${jwt.secret}")
-	private String secretKey;
+    private final SecretKey signingKey;
+    private final SecretKey refreshKey;
 
-	@Value("${jwt.refresh.secret}")
-	private String secretRefreshKey;
+    public JwtSignKeyProvider(JwtProperties jwtProperties) {
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.secret()));
+        this.refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.refreshSecret()));
+    }
 
-	public Key get() {
-		byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-		return Keys.hmacShaKeyFor(keyBytes);
-	}
+    public SecretKey get() { return signingKey; }
 
-	public Key getRefresh() {
-		byte[] keyBytes = Decoders.BASE64.decode(secretRefreshKey);
-		return Keys.hmacShaKeyFor(keyBytes);
-	}
+    public SecretKey getRefresh() { return refreshKey; }
 }
