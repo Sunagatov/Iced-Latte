@@ -20,6 +20,10 @@ public class PaginationParametersValidator {
                     "'PageNumber' value should be non negative integer number value.", pageNumber);
             errorMessages.append(createErrorMessage(errorMessage));
         }
+        if (pageSize == null) {
+            String errorMessage = "PageSize value should not be null or empty. Please provide some numeric value.";
+            errorMessages.append(createErrorMessage(errorMessage));
+        }
         if (pageSize != null && pageSize < 1) {
             String errorMessage = String.format("'%s' is the incorrect 'PageSize' attribute value. " +
                     "'PageSize' value should be non negative integer number value which is bigger than 1.", pageSize);

@@ -104,6 +104,10 @@ public class OrderCreator {
                 .map(orderDtoConverter::toOrderItem)
                 .toList();
 
+        if (user.getAddress() == null) {
+            throw new IllegalStateException("User does not have a delivery address. Cannot create order.");
+        }
+        
         return Order.builder()
                 .userId(user.getId())
                 .sessionId(sessionId)
