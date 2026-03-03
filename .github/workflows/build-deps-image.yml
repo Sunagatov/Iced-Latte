@@ -1,5 +1,8 @@
 name: Build deps base image
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [master, development]
