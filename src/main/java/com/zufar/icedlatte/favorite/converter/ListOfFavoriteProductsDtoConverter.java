@@ -13,6 +13,7 @@ import org.mapstruct.Named;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
@@ -25,6 +26,14 @@ public interface ListOfFavoriteProductsDtoConverter {
     default List<ProductInfoDto> toProductInfoDto(final Set<FavoriteItemDto> favoriteItems) {
         return favoriteItems.stream()
                 .map(FavoriteItemDto::productInfo)
+                .filter(p -> p.getId() != null)
+                .collect(Collectors.toMap(
+                        ProductInfoDto::getId,
+                        p -> p,
+                        (a, b) -> a
+                ))
+                .values()
+                .stream()
                 .toList();
     }
 }

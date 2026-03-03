@@ -19,29 +19,23 @@ import java.time.ZoneOffset;
 public interface ProductInfoDtoConverter {
 
     @Named("toProductInfoDto")
-    @Mapping(target = "id", source = "productId")
     @Mapping(target = "averageRating", source = "averageRating", qualifiedByName = "roundAverageRatingValue")
     @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
-    ProductInfoDto toDto(final ProductInfo entity);
+    @Mapping(target = "productFileUrl", ignore = true)
+    ProductInfoDto toDto(ProductInfo entity);
 
     @Mapping(target = "products", source = "content")
     @Mapping(target = "page", source = "number")
     @Mapping(target = "size", source = "size")
-    ProductListWithPaginationInfoDto toProductPaginationDto(final Page<ProductInfoDto> pageProductResponseDto);
+    ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
 
     @Named("roundAverageRatingValue")
     default BigDecimal roundAverageRatingValue(BigDecimal averageRating) {
-        if (averageRating != null) {
-            averageRating = averageRating.setScale(1, RoundingMode.HALF_DOWN);
-        }
-        return averageRating;
+        return (averageRating == null) ? null : averageRating.setScale(1, RoundingMode.HALF_UP);
     }
 
     @Named("localToOffsetDate")
-    default OffsetDateTime offsetToLocalDate(LocalDateTime value) {
-        if (value != null) {
-            return OffsetDateTime.of(value, ZoneOffset.UTC); // Adjust to the appropriate zone if needed
-        }
-        return null;
+    default OffsetDateTime localToOffsetDate(LocalDateTime value) {
+        return (value == null) ? null : value.atOffset(ZoneOffset.UTC);
     }
 }

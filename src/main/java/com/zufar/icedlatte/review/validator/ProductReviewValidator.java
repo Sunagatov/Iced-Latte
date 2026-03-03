@@ -5,9 +5,9 @@ import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
-import com.zufar.icedlatte.review.exception.ProductIdsAreNotMatchException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
+import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -32,6 +34,11 @@ public class ProductReviewValidator {
     public void validateReviewText(final String productReviewText) {
         if (productReviewText.trim().isEmpty()) {
             throw new EmptyProductReviewException();
+        }
+        Pattern p = Pattern.compile("[^a-zA-Z0-9\\u00C0-\\u017F.,! ]");
+        Matcher matcher = p.matcher(productReviewText);
+        if(matcher.find()) {
+            throw new InvalidProductReviewTextException();
         }
     }
 
@@ -57,16 +64,6 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the user has already created a review for this product
-     */
-    public void validateReviewExistsForUser(final UUID productReviewId) {
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
-            throw new ProductReviewNotFoundException(productReviewId);
-        }
-    }
-
-    /**
      * Check if the product's review deletion is allowed
      */
     public void validateProductReviewDeletionAllowed(final UUID productReviewId) {
@@ -79,20 +76,14 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the product's review deletion is allowed
+     * Check if the product and review both exist
      */
-    public void validateProductIdIsValid(final UUID productId,
-                                         final UUID productReviewId) {
-        var productInfo = productInfoRepository.findById(productId);
-        if (productInfo.isEmpty()) {
+    public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
+        if (!productInfoRepository.existsById(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
-        var productReview = productReviewRepository.findById(productReviewId);
-        if (productReview.isEmpty()) {
+        if (!productReviewRepository.existsById(productReviewId)) {
             throw new ProductReviewNotFoundException(productReviewId);
-        }
-        if (!productInfo.get().getProductId().equals(productReview.get().getProductId())) {
-            throw new ProductIdsAreNotMatchException(productReviewId);
         }
     }
 }

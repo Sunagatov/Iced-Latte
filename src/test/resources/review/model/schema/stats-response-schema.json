@@ -6,7 +6,7 @@
       "type": "string"
     },
     "avgRating": {
-      "type": "string"
+      "type": "number"
     },
     "reviewsCount": {
       "type": "number"

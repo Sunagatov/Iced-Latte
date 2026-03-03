@@ -46,6 +46,6 @@ public class ListOfFavoriteProductsDtoConverterTest {
 
         assertThat(actualListOfFavoriteProductsDto.getProducts()).isEqualTo(converter.toProductInfoDto(expectedFavoriteListDto.favoriteItems()));
 
-        assertEquals(actualListOfFavoriteProductsDto.getProducts().get(0), productInfoDto);
+        assertEquals(actualListOfFavoriteProductsDto.getProducts().getFirst(), productInfoDto);
     }
 }

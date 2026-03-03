@@ -25,11 +25,11 @@ public abstract class AbstractEmailSender<T> {
         javaMailSender.send(mailMessage);
     }
 
-    protected String getMessage(Class<?> clazz, T event) {
-        return messageBuilders.stream()
-                .filter(builder -> builder.supports(clazz))
-                .findFirst()
-                .orElseThrow(() -> new MessageBuilderNotFoundException(clazz.getName()))
-                .buildMessage(event, Locale.ENGLISH);
-    }
+protected String getMessage(T event) {
+    return messageBuilders.stream()
+            .filter(builder -> builder.supports(event.getClass()))
+            .findFirst()
+            .orElseThrow(() -> new MessageBuilderNotFoundException(event.getClass().getName()))
+            .buildMessage(event, Locale.ROOT);
+}
 }

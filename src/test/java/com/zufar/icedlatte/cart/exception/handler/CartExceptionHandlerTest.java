@@ -6,7 +6,6 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.handler.ErrorDebugMessageCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +28,6 @@ class CartExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
-    @Mock
-    private ErrorDebugMessageCreator errorDebugMessageCreator;
-
     @InjectMocks
     private CartExceptionHandler shoppingExceptionHandler;
 
@@ -48,7 +44,6 @@ class CartExceptionHandlerTest {
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartNotFoundException(exception);
 
@@ -57,7 +52,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -67,13 +61,12 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         ShoppingCartItemNotFoundException exception = new ShoppingCartItemNotFoundException(shoppingCartItemId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping cart item with id = " + shoppingCartItemId + " is not found.",
+                "The shopping cart item with shoppingCartItemId = " + shoppingCartItemId + " is not found.",
                 HttpStatus.NOT_FOUND.value(),
                 currentDateTime
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleShoppingCartItemNotFoundException(exception);
 
@@ -82,7 +75,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -92,13 +84,12 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         InvalidShoppingCartIdException exception = new InvalidShoppingCartIdException(shoppingCartId);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The shopping cart id = " + shoppingCartId + " is invalid.",
+                "The shopping cart id = " + shoppingCartId + " is invalid in UpdateProductsQuantityInShoppingCartItemRequest.",
                 HttpStatus.BAD_REQUEST.value(),
                 currentDateTime
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidShoppingCartIdException(exception);
 
@@ -107,7 +98,6 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 
     @Test
@@ -117,13 +107,12 @@ class CartExceptionHandlerTest {
         LocalDateTime currentDateTime = LocalDateTime.now();
         InvalidItemProductQuantityException exception = new InvalidItemProductQuantityException(itemProductQuantity);
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Invalid product quantity = " + itemProductQuantity + " or product quantity without changes.",
+                "Invalid product quantity = " + itemProductQuantity + " or product quantity without changes",
                 HttpStatus.BAD_REQUEST.value(),
                 currentDateTime
         );
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
-        when(errorDebugMessageCreator.buildErrorDebugMessage(exception)).thenReturn("Error Debug Message");
 
         ApiErrorResponse actualResponse = shoppingExceptionHandler.handleInvalidItemProductQuantityException(exception);
 
@@ -132,6 +121,5 @@ class CartExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
-        verify(errorDebugMessageCreator).buildErrorDebugMessage(exception);
     }
 }

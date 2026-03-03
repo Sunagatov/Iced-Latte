@@ -6,12 +6,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        imports = BigDecimal.class)
+        imports = BigDecimal.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface StripeSessionLineItemListConverter {
 
     List<SessionCreateParams.LineItem> toLineItems(List<ShoppingCartItemDto> shoppingCartItems);

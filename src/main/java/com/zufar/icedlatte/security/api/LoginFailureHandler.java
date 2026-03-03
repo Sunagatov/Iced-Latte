@@ -29,12 +29,11 @@ public class LoginFailureHandler {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void handle(final String userEmail) {
         LoginAttemptEntity loginAttempt = failedLoginAttemptIncrementor.increment(userEmail);
-
+        int remaining = Math.max(0, maxLoginAttempts - loginAttempt.getAttempts());
         if (loginAttempt.getAttempts() >= maxLoginAttempts) {
             userAccountLocker.lockUserAccount(userEmail);
         }
-        log.warn("Failed login attempt for user {}, attempts: {}, remaining attempts: {}",
-                userEmail, loginAttempt.getAttempts(), maxLoginAttempts - loginAttempt.getAttempts());
+        log.warn("login.failed: attempts={}, remaining={}", loginAttempt.getAttempts(), remaining);
     }
 }
 

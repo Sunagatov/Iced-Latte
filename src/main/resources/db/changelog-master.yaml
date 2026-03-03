@@ -1,3 +1,21 @@
+# Iced-Latte Database Changelog Master File
+# This file orchestrates all database migrations for the Iced-Latte application
+# 
+# Migration Strategy:
+# - Version-based organization (version-1.0, version-1.1, etc.)
+# - Chronological ordering within versions
+# - Separate files for schema and data changes
+# 
+# Naming Convention:
+# - DD.MM.YYYY.partN.description.sql
+# - Use descriptive names for better tracking
+
 databaseChangeLog:
+  # Version 1.0 - Initial Release
+  # Contains all foundational database structures
   - include:
       file: db/changelog/version-1.0/changelog-master-version-1.0.yaml
+
+  # Version 2.0
+  - include:
+      file: db/changelog/version-2.0/changelog-master-version-2.0.yaml

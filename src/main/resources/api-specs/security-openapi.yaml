@@ -1,4 +1,5 @@
 openapi: "3.0.3"
+
 info:
   title: "Iced Latte Security API"
   description: "API for accessing security and related operations in the Iced-Latte platform"
@@ -6,6 +7,10 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
@@ -38,7 +43,19 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "Email verification token sent to the user with email = user@example.com"
+                example: "Email verification token sent"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/confirm:
     post:
@@ -54,12 +71,30 @@ paths:
             schema:
               $ref: "#/components/schemas/ConfirmEmailRequest"
       responses:
-        "200":
+        "201":
           description: "Email verification completed"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserRegistrationResponse"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/authenticate:
     post:
@@ -81,6 +116,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/logout:
     post:
@@ -88,11 +141,23 @@ paths:
         - "Security"
       summary: "Logout a user"
       operationId: "logout"
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: "Logout successful"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/refresh:
     post:
@@ -100,6 +165,8 @@ paths:
         - "Security"
       summary: "Refresh user authentication token"
       operationId: "refreshToken"
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: "Token refreshed successfully"
@@ -108,9 +175,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
         "401":
-          description: "Unauthorized access. Authentication required"
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/password/forgot:
     post:
@@ -128,10 +203,18 @@ paths:
       responses:
         "200":
           description: "Password reset request accepted"
-        "401":
-          description: "Unauthorized access"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/auth/password/change:
     post:
@@ -149,12 +232,27 @@ paths:
       responses:
         "200":
           description: "Password changed successfully"
-        "401":
-          description: "Unauthorized access"
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: "Internal Server Error"
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     UserRegistrationRequest:
       type: "object"
@@ -166,16 +264,16 @@ components:
       properties:
         firstName:
           type: "string"
-          description: "User's first name. Must be between 2 and 128 characters."
+          description: "User's first name."
           minLength: 2
-          maxLength: 128
-          pattern: "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z\\s-]*$"
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
         lastName:
           type: "string"
-          description: "User's last name. Must be between 2 and 128 characters."
+          description: "User's last name."
           minLength: 2
-          maxLength: 128
-          pattern: "^(?!\\s)(?!.*\\s$)(?!.*?--)[A-Za-z\\s-]*$"
+          maxLength: 64
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
         birthDate:
           type: "string"
           format: "date"
@@ -186,27 +284,16 @@ components:
         email:
           type: "string"
           format: "email"
-          maxLength: 128
-          description: "User's email address must be a valid email format"
+          maxLength: 254
+          description: "User's email address."
           pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         password:
-          type: "string"
-          description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
-          minLength: 8
-          maxLength: 128
-          pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+          $ref: "#/components/schemas/PasswordField"
         addressDto:
           $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
 
     UserRegistrationResponse:
-      type: "object"
-      properties:
-        token:
-          type: "string"
-          description: "JWT token for authenticated user."
-        refreshToken:
-          type: "string"
-          description: "Refresh token for generating a new JWT."
+      $ref: "#/components/schemas/UserAuthenticationResponse"
 
     UserAuthenticationRequest:
       type: "object"
@@ -219,18 +306,20 @@ components:
           format: "email"
           description: "User's email address."
         password:
-          type: "string"
-          description: "User's password."
+          $ref: "#/components/schemas/PasswordField"
 
     UserAuthenticationResponse:
       type: "object"
+      required:
+        - token
+        - refreshToken
       properties:
         token:
           type: "string"
           description: "JWT token for authenticated user."
         refreshToken:
           type: "string"
-          description: "Refresh token."
+          description: "Refresh token for generating a new JWT."
 
     ConfirmEmailRequest:
       type: "object"
@@ -266,5 +355,14 @@ components:
           format: "email"
           description: "User's email address."
         password:
-          type: "string"
-          description: "New password for the user. Must be at least 8 characters long, contain at least one letter, one digit, and may include special characters @$!%*?&."
+          $ref: "#/components/schemas/PasswordField"
+
+    PasswordField:
+      type: "string"
+      description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
+      minLength: 8
+      maxLength: 128
+      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

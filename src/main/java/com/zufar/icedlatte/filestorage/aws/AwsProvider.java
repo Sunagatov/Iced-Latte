@@ -1,15 +1,15 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,35 +18,46 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnBean(S3Client.class)
 public class AwsProvider {
 
-    private final AmazonS3 amazonS3;
+    private final S3Client s3Client;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
         try {
-            ObjectListing objectListing = amazonS3.listObjects(bucketName);
-            return getFileMetadataDtos(objectListing.getObjectSummaries(), bucketName);
-        } catch (Exception e) {
-            log.warn("Product's files upload error", e);
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .build();
+            List<S3Object> allObjects = s3Client.listObjectsV2Paginator(request)
+                    .contents()
+                    .stream()
+                    .toList();
+            return getFileMetadataDtos(allObjects, bucketName);
+        } catch (S3Exception e) {
+            log.error("aws.s3.list.error: message={}", e.getMessage(), e);
+            return List.of();
+        } catch (SdkClientException e) {
+            log.error("aws.s3.list.unreachable: message={}", e.getMessage(), e);
             return List.of();
         }
     }
 
-    private List<FileMetadataDto> getFileMetadataDtos(List<S3ObjectSummary> objectSummaries, String bucketName) {
+    private List<FileMetadataDto> getFileMetadataDtos(List<S3Object> objects, String bucketName) {
         List<FileMetadataDto> fileMetadataDtos = new ArrayList<>();
 
-        objectSummaries.forEach(objectSummary -> {
-            String fileName = objectSummary.getKey();
+        objects.forEach(s3Object -> {
+            String fileName = s3Object.key();
             String[] parts = fileName.split("/");
             String[] packageName = parts[0].split("_");
-            String relatedObjectId = packageName[1];
-            FileMetadataDto fileMetadataDto = new FileMetadataDto(
-                    UUID.fromString(relatedObjectId),
-                    bucketName,
-                    fileName
-            );
-            fileMetadataDtos.add(fileMetadataDto);
+            if (packageName.length < 2) {
+                log.warn("aws.s3.key.skipped: key={}", fileName);
+                return;
+            }
+            try {
+                fileMetadataDtos.add(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
+            } catch (IllegalArgumentException e) {
+                log.warn("aws.s3.key.invalid_uuid: key={}", fileName);
+            }
         });
 
         return fileMetadataDtos;

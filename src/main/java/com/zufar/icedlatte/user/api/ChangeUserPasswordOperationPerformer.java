@@ -1,12 +1,10 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChangeUserPasswordOperationPerformer {
@@ -27,22 +24,14 @@ public class ChangeUserPasswordOperationPerformer {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void changeUserPassword(final ChangeUserPasswordRequest changeUserPasswordRequest) throws InvalidOldPasswordException {
-        UserDto userDto = securityPrincipalProvider.get();
-        UUID userId = userDto.getId();
-        String userEmail = userDto.getEmail();
+        UUID userId = securityPrincipalProvider.getUserId();
+        var userEntity = singleUserProvider.getUserEntityById(userId);
 
-        String oldPasswordFromRequest = changeUserPasswordRequest.getOldPassword();
-        String oldPasswordInDatabase = singleUserProvider.getUserEntityById(userId).getPassword();
-
-        if (!passwordEncoder.matches(oldPasswordFromRequest, oldPasswordInDatabase)) {
-            log.warn("User with userEmail = '{}' provided incorrect password.", userEmail);
-            throw new InvalidOldPasswordException(userEmail);
+        if (!passwordEncoder.matches(changeUserPasswordRequest.getOldPassword(), userEntity.getPassword())) {
+            throw new InvalidOldPasswordException(userEntity.getEmail());
         }
 
-        String newPassword = changeUserPasswordRequest.getNewPassword();
-        String newEncryptedPassword = passwordEncoder.encode(newPassword);
-
-        userRepository.changeUserPassword(newEncryptedPassword, userId);
+        userRepository.changeUserPassword(passwordEncoder.encode(changeUserPasswordRequest.getNewPassword()), userId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)

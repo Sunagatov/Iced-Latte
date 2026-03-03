@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Payment"
@@ -24,6 +31,7 @@ paths:
       tags:
         - "Payment"
       summary: "Creates Stripe Session for an authorized user"
+      description: "Initiates a Stripe payment session for the authenticated user's current order and returns the client secret."
       operationId: "processPayment"
       responses:
         "200":
@@ -37,13 +45,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorHandler"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/payment/order:
     get:
       tags:
         - "Payment"
-      summary: "Creates Order after Stripe checkout session completion"
+      summary: "Stripe checkout redirect callback"
+      description: "Called by Stripe after a successful checkout session. Processes the session and creates the corresponding order."
       operationId: "processRedirectEvent"
       parameters:
         - name: "sessionId"
@@ -64,44 +85,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorHandler"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Stripe session not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
-    PaymentStatus:
-      type: "object"
-      properties:
-        status:
-          type: "string"
-        description:
-          type: "string"
-
     SessionWithClientSecretDto:
       type: "object"
+      description: "Contains the Stripe session ID and client secret required to complete the payment on the frontend."
+      required:
+        - sessionId
+        - clientSecret
       properties:
         sessionId:
           type: "string"
+          description: "The Stripe checkout session ID."
         clientSecret:
           type: "string"
+          description: "The client secret used to confirm the payment on the client side."
 
     PaymentConfirmationEmail:
       type: "object"
+      description: "Contains the customer email address for payment confirmation notification."
+      required:
+        - customerEmail
       properties:
         customerEmail:
           type: "string"
+          description: "The email address of the customer who completed the payment."
 
-    ErrorHandler:
-      type: "object"
-      properties:
-        messages:
-          type: "array"
-          items:
-            format: "string"
-        description:
-          type: "string"
-        httpStatusCode:
-          type: "integer"
-          format: "int32"
-        timestamp:
-          type: "string"
-          format: "date-time"
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Favorite Products"
@@ -39,12 +46,22 @@ paths:
           description: "The product was successfully removed from favorites."
         "400":
           description: "The provided input is invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
-        "404":
-          description: "The specified favorite product was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/favorites:
     get:
@@ -62,10 +79,16 @@ paths:
                 $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "401":
           description: "Unauthorized access."
-        "404":
-          description: "The favorite products list is empty."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
@@ -89,35 +112,62 @@ paths:
                 $ref: "#/components/schemas/ListOfFavoriteProductsDto"
         "400":
           description: "The provided input is invalid."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "One or more specified products were not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "An internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
-  schemas:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
 
+  schemas:
     ListOfFavoriteProducts:
-      type: object
+      type: "object"
       description: "A list of product IDs to be added to the user's favorite list."
       properties:
         productIds:
-          type: array
+          type: "array"
           description: "An array of unique identifiers for the products."
           items:
-            type: string
-            format: uuid
+            type: "string"
+            format: "uuid"
       required:
         - productIds
 
     ListOfFavoriteProductsDto:
-      type: object
+      type: "object"
       description: "A list of products marked as favorites by the user."
       properties:
         products:
-          type: array
+          type: "array"
           description: "An array of product details for the favorite products."
           items:
-            $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+            $ref: "./product-openapi.yaml#/components/schemas/ProductInfoDto"
       required:
-        - productsDto
+        - products
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

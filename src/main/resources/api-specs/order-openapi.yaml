@@ -7,12 +7,19 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
   - url: "http://localhost:8083"
     description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
 
 tags:
   - name: "Orders"
@@ -37,19 +44,31 @@ paths:
               $ref: "#/components/schemas/OrderStatus"
       responses:
         "200":
-          description: "List of orders successfully retrieved."
+          description: "List of orders successfully retrieved. Returns an empty array if no orders match the criteria."
           content:
             application/json:
               schema:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/OrderDto"
+        "400":
+          description: "Invalid query parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
-        "404":
-          description: "No orders found matching the specified criteria."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
@@ -57,8 +76,14 @@ paths:
       summary: "Place a new order for the authorized user"
       description: "Creates a new order for the authenticated user. Requires address and recipient information."
       operationId: "createOrder"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNewOrderRequestDto"
       responses:
-        "200":
+        "201":
           description: "Order successfully placed."
           content:
             application/json:
@@ -66,15 +91,40 @@ paths:
                 $ref: "#/components/schemas/OrderDto"
         "400":
           description: "Invalid input data."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "User or cart not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     OrderStatus:
-      type: string
+      type: "string"
       description: "The status of an order."
       enum:
         - CREATED
@@ -91,13 +141,41 @@ components:
         - recipientSurname
       properties:
         address:
-          $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
         recipientName:
           type: "string"
           description: "Name of the order recipient. Can be different from the user's name."
+          minLength: 2
+          maxLength: 128
+          example: "John"
         recipientSurname:
           type: "string"
           description: "Surname of the order recipient. Can be different from the user's surname."
+          minLength: 2
+          maxLength: 128
+          example: "Doe"
+        recipientPhone:
+          type: "string"
+          description: "Phone number for delivery notifications."
+          example: "+12025550123"
+
+    OrderItemDto:
+      type: "object"
+      description: "A single item within an order."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        productId:
+          type: "string"
+          format: "uuid"
+        productName:
+          type: "string"
+        productPrice:
+          type: "number"
+          format: "double"
+        productsQuantity:
+          type: "integer"
 
     OrderDto:
       type: "object"
@@ -112,8 +190,22 @@ components:
           format: "uuid"
           description: "Unique identifier for the order."
         status:
-          $ref: '#/components/schemas/OrderStatus'
+          $ref: "#/components/schemas/OrderStatus"
         createdAt:
           type: "string"
           format: "date-time"
           description: "The date and time when the order was created."
+        itemsQuantity:
+          type: "integer"
+        itemsTotalPrice:
+          type: "number"
+          format: "double"
+        items:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OrderItemDto"
+        deliveryAddress:
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

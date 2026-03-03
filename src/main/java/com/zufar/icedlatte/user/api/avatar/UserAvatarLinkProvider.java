@@ -18,11 +18,11 @@ public class UserAvatarLinkProvider {
         try {
             return fileProvider.getRelatedObjectUrl(userId)
                     .orElseGet(() -> {
-                        log.warn("File with id = {} was not found.", userId);
+                        log.debug("user.avatar.not_found: userId={}", userId);
                         return "default file";
                     });
-        } catch (Throwable exception) {
-            log.error("FileProvider error", exception);
+        } catch (RuntimeException exception) {
+            log.error("user.avatar.error: message={}", exception.getMessage(), exception);
         }
         return "default file";
     }

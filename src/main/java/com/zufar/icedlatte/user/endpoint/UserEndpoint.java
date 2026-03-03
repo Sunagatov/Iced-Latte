@@ -1,35 +1,19 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.email.api.EmailTokenConformer;
-import com.zufar.icedlatte.email.api.EmailTokenSender;
+import com.zufar.icedlatte.email.api.*;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
-import com.zufar.icedlatte.user.api.DeleteUserOperationPerformer;
-import com.zufar.icedlatte.user.api.SingleUserProvider;
-import com.zufar.icedlatte.user.api.UpdateUserOperationPerformer;
-import com.zufar.icedlatte.filestorage.file.FileDeleter;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarLinkProvider;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
+import com.zufar.icedlatte.security.api.*;
+import com.zufar.icedlatte.user.api.*;
+import com.zufar.icedlatte.user.api.avatar.*;
+import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.UUID;
 
 
 @Slf4j
@@ -49,102 +33,81 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
     private final UserAvatarLinkProvider userAvatarLinkProvider;
-    private final EmailTokenSender emailTokenSender;
     private final EmailTokenConformer emailTokenConformer;
 
     @Override
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the user with userId - {}.", userId);
-        UserDto userDto = singleUserProvider.getUserById(userId);
-        log.info("The request to retrieve the user's account was handled.");
-        return ResponseEntity.ok()
-                .body(userDto);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.profile.get: userId={}", userId);
+        return ResponseEntity.ok(singleUserProvider.getUserById(userId));
     }
 
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to edit the User with userId - {}.", userId);
-        UserDto updatedUserDto = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
-        log.info("The request to update the user's account was handled.");
-        return ResponseEntity.ok()
-                .body(updatedUserDto);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.profile.update: userId={}", userId);
+        return ResponseEntity.ok(updateUserOperationPerformer.updateUser(updateUserAccountRequest));
     }
 
     @Override
     @PatchMapping
-    public ResponseEntity<Void> changeUserPassword(ChangeUserPasswordRequest changeUserPasswordRequest) {
-        log.info("Received the request to change the user's password.");
+    public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
+        log.info("user.password.change: userId={}", securityPrincipalProvider.getUserId());
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
-        log.info("The request to change the user's password was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to delete the user's account.");
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.account.delete: userId={}", userId);
         deleteUserOperationPerformer.deleteUser(userId);
-        log.info("The request to delete the user's account was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestParam(value = "file") MultipartFile file) {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to upload the user avatar.");
+    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.avatar.upload: userId={}", userId);
         userAvatarUploader.uploadUserAvatar(userId, file);
-        log.info("The request to upload the user's avatar was handled.");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to get the user avatar link.");
-        String userAvatar = userAvatarLinkProvider.getLink(userId);
-        log.info("The request to retrieve the user's avatar link was handled.");
-        return ResponseEntity.ok().body(userAvatar);
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.avatar.get: userId={}", userId);
+        return ResponseEntity.ok(userAvatarLinkProvider.getLink(userId));
     }
 
     @Override
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        log.info("Received the request to delete the user avatar.");
+        var userId = securityPrincipalProvider.getUserId();
+        log.info("user.avatar.delete: userId={}", userId);
         fileDeleter.delete(userId);
-        log.info("The request to delete the user avatar was handled.");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset")
-    public ResponseEntity<Void> resetUserPassword() {
-        UserDto userDto = securityPrincipalProvider.get();
-        log.info("Received the request to reset password for user with id: {}", userDto.getId());
-        UserRegistrationRequest request = new UserRegistrationRequest(userDto.getFirstName(), userDto.getLastName(),
-                userDto.getEmail(), "");
-        emailTokenSender.sendEmailVerificationCode(request);
-        log.info("The request to reset the user's password was handled.");
-        return ResponseEntity.status(HttpStatus.OK)
-                .build();
+    public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest initiatePasswordResetRequest) {
+        var user = singleUserProvider.getUserByEmail(initiatePasswordResetRequest.getEmail());
+        log.info("user.password.reset: userId={}", user.getId());
+        return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.info("Received email confirmation request to reset password");
+    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
+        log.info("user.password.reset.confirm");
         emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(confirmEmailRequest.getToken()));
-        log.info("Email verification to reset password completed");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().build();
     }
 
 }

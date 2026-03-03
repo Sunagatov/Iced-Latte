@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@DisplayName("SingleProductProvider Tests")
 class SingleProductProviderTest {
 
     @Mock
@@ -32,19 +35,22 @@ class SingleProductProviderTest {
     private ProductInfoDtoConverter productInfoConverter;
 
     @Mock
-    private ProductUpdater productUpdater;
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
 
+    @Mock
+    private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
 
     @InjectMocks
     private SingleProductProvider productProvider;
 
     @Test
+    @DisplayName("Should return product when product ID exists")
     void shouldReturnProductWhenProductIdExists() {
         UUID productId = UUID.randomUUID();
 
         when(productRepository.findById(any(UUID.class))).thenReturn(Optional.of(mock(ProductInfo.class)));
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productPictureLinkUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
 
         ProductInfoDto result = productProvider.getProductById(productId);
 
@@ -54,10 +60,10 @@ class SingleProductProviderTest {
     }
 
     @Test
+    @DisplayName("Should throw ProductNotFoundException when product ID does not exist")
     void shouldThrowExceptionWhenProductIdNotExists() {
         UUID productId = UUID.randomUUID();
 
-        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(any(ProductInfoDto.class));
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
         ProductNotFoundException thrownException = assertThrows(

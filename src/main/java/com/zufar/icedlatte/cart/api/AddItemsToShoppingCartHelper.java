@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,8 +26,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AddItemsToShoppingCartHelper {
-
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
@@ -40,11 +37,7 @@ public class AddItemsToShoppingCartHelper {
     public ShoppingCartDto add(final Set<NewShoppingCartItemDto> itemsToAdd) {
         UUID userId = securityPrincipalProvider.getUserId();
 
-        ShoppingCart shoppingCart = Optional.ofNullable(shoppingCartRepository.findShoppingCartByUserId(userId))
-                .orElseGet(() -> {
-                    log.info("The shopping cart was not found.");
-                    return shoppingCartCreator.createNewShoppingCart(userId);
-                });
+        ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
 
         List<ShoppingCartItem> items = createItems(itemsToAdd, shoppingCart);
 
@@ -60,7 +53,7 @@ public class AddItemsToShoppingCartHelper {
 
         Set<UUID> existingProductIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductInfo)
-                .map(ProductInfo::getProductId)
+                .map(ProductInfo::getId)
                 .collect(Collectors.toSet());
 
         Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
@@ -71,7 +64,7 @@ public class AddItemsToShoppingCartHelper {
                 .map(productInfo ->
                         ShoppingCartItem.builder()
                                 .shoppingCart(shoppingCart)
-                                .productQuantity(productsWithQuantity.get(productInfo.getProductId()))
+                                .productQuantity(productsWithQuantity.get(productInfo.getId()))
                                 .productInfo(productInfo)
                                 .build()
                 )
@@ -81,9 +74,8 @@ public class AddItemsToShoppingCartHelper {
     private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
                                                            List<ShoppingCartItem> shoppingCartItems) {
         int productsQuantity = shoppingCartItems.stream()
-                .map(ShoppingCartItem::getProductQuantity)
-                .reduce(Integer::sum)
-                .orElse(DEFAULT_PRODUCTS_QUANTITY);
+                .mapToInt(ShoppingCartItem::getProductQuantity)
+                .sum();
 
         existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
         existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);

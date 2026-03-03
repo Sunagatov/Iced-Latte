@@ -1,23 +1,24 @@
 package com.zufar.icedlatte.product.api;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import org.instancio.Instancio;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,47 +28,31 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unchecked")
+@DisplayName("PageableProductsProvider Tests")
 class PageableProductsProviderTest {
 
-    @Mock
-    private ProductInfoRepository productRepository;
-
-    @Mock
-    private ProductInfoDtoConverter productInfoConverter;
-
-    @Mock
-    private ProductUpdater productUpdater;
-
+    @Mock private ProductInfoRepository productRepository;
+    @Mock private ProductInfoDtoConverter productInfoConverter;
+    @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
+    @Mock @SuppressWarnings("unused") private PaginationConfig paginationConfig;
     @InjectMocks
     private PageableProductsProvider productsProvider;
 
-    private List<ProductInfo> products;
-
-    @BeforeEach
-    void setUp() {
-        products = Instancio.ofList(ProductInfo.class).create();
-    }
-
     @Test
+    @DisplayName("Should fetch products using page attributes")
     void shouldFetchProductsUsingPageAttributes() {
-        Page<ProductInfo> page = new PageImpl<>(products);
-        final int pageNumber = 1;
-        final int pageSize = 10;
-        final String sortAttribute = "name";
-        Sort.Direction sortDirection = Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, sortDirection, sortAttribute);
-
-        when(productRepository.findAllProducts( null, null, null, null, null, pageable)).thenReturn(page);
+        Page<ProductInfo> page = new PageImpl<>(List.of(mock(ProductInfo.class)));
+        when(productRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
         when(productInfoConverter.toDto(any(ProductInfo.class))).thenReturn(mock(ProductInfoDto.class));
-        when(productInfoConverter.toProductPaginationDto(ArgumentMatchers.any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
-        when(productUpdater.update(any(ProductInfoDto.class))).thenReturn(mock(ProductInfoDto.class));
+        when(productPictureLinkUpdater.updateBatch(any(List.class))).thenReturn(List.of(mock(ProductInfoDto.class)));
+        when(productInfoConverter.toProductPaginationDto(any())).thenReturn(mock(ProductListWithPaginationInfoDto.class));
 
-        ProductListWithPaginationInfoDto productList = productsProvider.getProducts(pageable, null, null, null, null, null);
+        ProductListWithPaginationInfoDto result = productsProvider.getProducts(
+                1, 10, "name", "ASC", null, null, null, null, null, null);
 
-        assertNotNull(productList);
-
-        verify(productRepository, times(1)).findAllProducts( null, null, null, null, null, pageable);
-        verify(productInfoConverter, times(1)).toProductPaginationDto(ArgumentMatchers.any());
+        assertNotNull(result);
+        verify(productInfoConverter, times(1)).toProductPaginationDto(any());
     }
 }

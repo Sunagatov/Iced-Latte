@@ -3,6 +3,11 @@
 #
 server:
   port: 8083
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
 
 #
 # Management Properties
@@ -16,17 +21,14 @@ spring:
   # Database Properties
   #
   datasource:
-    host: iced-latte-postgresdb
-    port: 5432
-    name: testdb
+    url: jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC
     username: postgres
     password: postgres
-    url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.name}?serverTimezone=UTC
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql:
-      true
+    show-sql: true
+    open-in-view: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
@@ -34,33 +36,20 @@ spring:
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     drop-first: true
-  #
-  # Spring AI Properties
-  #
-  ai:
-    openai:
-      api-key: "sk-proj-"
-      prompt: "You are an assistant who checks texts for appropriateness.
-            Analyze the following text {review} and determine if it contains political statements,
-            non-English language, or inappropriate language.
-            If you find any of these issues, return the phrase 'not appropriate', after return the reason in curly brackets. 
-            Only the reason should be in curly brackets.
-            Else return OK"
-    chat:
-      options:
-        model: gpt-3.5-turbo
 
   #
   # Aws Properties
   #
   aws:
+    enabled: false
+    account-id: test-account-id
     access-key: vbfgngfdndgndgndgndgndgndgndg
     secret-key: vbfgngfdndgndgndgndgndgndgndg
-    region: eu-west-1
+    region: us-east-1
     buckets:
       products: products
       user-avatar: users
-    link-expiration-time: P7D
+    link-expiration-time: PT1H
     read-timeout: 10s
     connect-timeout: 10s
     write-timeout: 60s
@@ -69,18 +58,18 @@ spring:
       products: ./products
 
   #
-  # Redis
+  # Redis (used by RedisJwtBlacklistService in tests via Testcontainers)
   #
   data:
     redis:
       host: localhost
-      port: 6380
+      port: 6379
 
   mail:
     host: smtp.gmail.com
     port: 587
     username: youricedlatteshop@gmail.com
-    password: 35346432634
+    password: test_mail_password_placeholder
 
 #
 # Temporary Cache
@@ -95,23 +84,26 @@ temporary-cache:
 #
 jwt:
   header: Authorization
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration: 1800000
-  email: jane@example.com
-  password: pass54321
-  refresh:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-    expiration: 604800000 # 7 days
+  # Dummy base64 secrets - test-only, not used in production
+  secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=
+  expiration: PT30M
+  refresh-secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA0MDRFNTM1MjY2NTU2QTU4NkUzMjcyMzU3NTM4NzgyRjQxM0E0NDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==
+  refresh-expiration: PT168H
+  issuer: iced-latte
+  audience: iced-latte-users
+  # Test user fixture credentials - not a production secret
+  email: olivia@example.com
+  password: p@ss1logic11
 
 #
 # AI Properties
 #
-ai:
-  # https://platform.openai.com/docs/api-reference/moderations/create
-  url: "https://api.openai.com/v1/moderations"
-  api_key: "sk-api-key"
-  request_body: '{ "input": "$message"}'
-  message_replacement_pattern: "$message"
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: "sk-test-placeholder"
+      model-name: gpt-4o-mini
+      temperature: 0.0
 
 #
 # Google Auth Properties
@@ -123,9 +115,45 @@ google:
   scope: "https://www.googleapis.com/auth/userinfo.profile"
   client-id: "sk-api-client"
   client-secret: "sk-api-secret"
-  authenticateUri: "http://localhost:8083/auth/login"
-  redirectUri: "http://localhost:8083"
+  authenticate-uri: "http://localhost:8083/auth/login"
+  redirect-uri: "http://localhost:8083"
+
+aws:
+  account-id: test-account-id
 
 stripe:
-  secret-key: "sk_test_51PJxciHA4AopuQMMeXaJNETc7RUAITeMTKJei07L8iEHrRiWLQalKsr756dnOzmKPUXufkUVNUSaiPyktJG9dGY500x0cM817f"
-  webhook-secret: "sk-test-secret"
+  secret-key: "sk_test_placeholder"
+  webhook-secret: "whsec_test_placeholder"
+
+#
+# Monitoring Properties
+#
+monitoring:
+  slow-query-threshold-ms: 200
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration: ERROR
+
+#
+# Rate Limiting Properties (disabled for tests)
+#
+security:
+  argon2:
+    memory: 1024     # minimum required by Argon2
+    iterations: 1    # reduced from 2 to speed up tests
+  rate-limit:
+    global:
+      max-requests: 100000
+      window-duration: PT1M
+    auth:
+      max-requests: 100000
+      window-duration: PT1M
+    ai:
+      max-requests: 100000
+      window-duration: PT1M
+    search:
+      max-requests: 100000
+      window-duration: PT1M
+

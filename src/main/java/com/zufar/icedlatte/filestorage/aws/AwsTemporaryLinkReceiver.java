@@ -1,35 +1,57 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import com.amazonaws.HttpMethod;
-import com.amazonaws.services.s3.AmazonS3;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
-import java.net.URL;
 import java.time.Duration;
-import java.util.Date;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(S3Client.class)
 public class AwsTemporaryLinkReceiver {
 
     @Value("${spring.aws.link-expiration-time}")
     private String linkExpirationTime;
 
-    private final AmazonS3 amazonS3;
+    /**
+     * Optional: when set, files are served via a direct public URL
+     * (e.g. {@code https://<bucket>.<region>.render.com}).
+     */
+    @Value("${spring.aws.public-url-base:}")
+    private String publicUrlBase;
+
+    private final S3Presigner s3Presigner;
 
     public String generatePresignedUrlAsString(FileMetadataDto fileMetadata) {
-        return generatePresignedUrl(fileMetadata).toString();
-    }
+        if (StringUtils.hasText(publicUrlBase)) {
+            return publicUrlBase.stripTrailing() + "/" + fileMetadata.fileName();
+        }
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(fileMetadata.bucketName())
+                    .key(fileMetadata.fileName())
+                    .build();
 
-    public URL generatePresignedUrl(FileMetadataDto fileMetadata) {
-        final String bucketName = fileMetadata.bucketName();
-        final String fileName = fileMetadata.fileName();
-        Date expirationDate = new Date(System.currentTimeMillis() + Duration.parse(linkExpirationTime).toMillis());
-        HttpMethod httpMethod = HttpMethod.GET;
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.parse(linkExpirationTime))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
 
-        return amazonS3.generatePresignedUrl(bucketName, fileName, expirationDate, httpMethod);
+            return s3Presigner.presignGetObject(presignRequest).url().toString();
+        } catch (SdkClientException e) {
+            log.error("aws.s3.presign.error: message={}", e.getMessage(), e);
+            return null;
+        }
     }
 }

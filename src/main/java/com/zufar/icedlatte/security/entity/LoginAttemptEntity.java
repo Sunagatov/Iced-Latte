@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Setter
@@ -28,19 +28,20 @@ public class LoginAttemptEntity {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+// amazonq-ignore-next-line
 
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
 
     @Column(name = "attempts", nullable = false)
-    private Integer attempts;
+    private int attempts;
 
-    @Column(name = "expiration_datetime", nullable = true)
-    private LocalDateTime expirationDatetime;
+    @Column(name = "expiration_datetime")
+    private Instant expirationDatetime;
 
     @Column(name = "is_user_locked", nullable = false)
     private Boolean isUserLocked;
 
     @Column(name = "last_modified", nullable = false)
-    private LocalDateTime lastModified;
+    private Instant lastModified;
 }

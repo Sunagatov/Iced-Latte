@@ -1,0 +1,36 @@
+name: Build deps base image
+
+on:
+  push:
+    branches: [master, development]
+    paths:
+      - pom.xml
+  workflow_dispatch:
+
+jobs:
+  build-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push deps image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.deps
+          push: true
+          tags: zufarexplainedit/iced-latte-deps:latest
+
+      - name: Notify Telegram on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d text="❌ <b>Deps image build failed</b>%0ABranch: <code>${{ github.ref_name }}</code>%0ABy: ${{ github.actor }}%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View run</a>"

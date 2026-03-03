@@ -16,14 +16,18 @@ public class SecurityPrincipalProvider {
     private final UserDtoConverter userDtoConverter;
 
     public UserDto get() {
-        UserEntity userEntity = (UserEntity) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-        return userDtoConverter.toDto(userEntity);
+        return userDtoConverter.toDto(getAuthenticatedUser());
     }
 
     public UUID getUserId() {
-        return get().getId();
+        return getAuthenticatedUser().getId();
+    }
+
+    private UserEntity getAuthenticatedUser() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof UserEntity userEntity)) {
+            throw new IllegalStateException("No authenticated UserEntity in security context");
+        }
+        return userEntity;
     }
 }

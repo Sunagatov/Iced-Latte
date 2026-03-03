@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 50%
+        threshold: 2%
+    patch:
+      default:
+        target: 50%
+        threshold: 5%
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "target/**"
+  - "src/main/java/com/zufar/icedlatte/openapi/**"
+  - "src/main/java/**/IcedLatteApplication.java"

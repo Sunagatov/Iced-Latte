@@ -2,9 +2,10 @@ package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
-import org.instancio.Instancio;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,14 +19,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")
 class UserAuthenticationServiceTest {
@@ -45,44 +40,83 @@ class UserAuthenticationServiceTest {
     @Mock
     private ResetLoginAttemptsService resetLoginAttemptsService;
 
-    private final UserAuthenticationRequest request = Instancio.create(UserAuthenticationRequest.class);
-    private final UserDetails userDetails = Instancio.create(UserDetails.class);
+    private final UserAuthenticationRequest request = mock(UserAuthenticationRequest.class);
+    private final UserDetails userDetails = mock(UserDetails.class);
 
     @Test
-    @DisplayName("Should Return JWT Token When Valid Credentials Are Provided")
+    @DisplayName("Should return JWT token when valid credentials are provided")
     void shouldReturnJwtTokenWhenValidCredentialsProvided() {
         Authentication authentication = mock(Authentication.class);
-        UserAuthenticationResponse userAuthenticationResponse = new UserAuthenticationResponse();
-        userAuthenticationResponse.setToken("TestJwtToken");
+        String expectedToken = "TestJwtToken";
+        String expectedRefreshToken = "TestRefreshToken";
+        
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(jwtTokenProvider.generateToken(userDetails)).thenReturn("TestJwtToken");
+        when(jwtTokenProvider.generateToken(userDetails)).thenReturn(expectedToken);
+        when(jwtTokenProvider.generateRefreshToken(userDetails)).thenReturn(expectedRefreshToken);
 
         UserAuthenticationResponse response = userAuthenticationService.authenticate(request);
 
-        assertEquals(userAuthenticationResponse, response);
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtTokenProvider, times(1)).generateToken(userDetails);
-        verify(resetLoginAttemptsService, times(1)).reset(request.getEmail());
+        assertNotNull(response);
+        assertEquals(expectedToken, response.getToken());
+        assertEquals(expectedRefreshToken, response.getRefreshToken());
+        
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(jwtTokenProvider).generateToken(userDetails);
+        verify(jwtTokenProvider).generateRefreshToken(userDetails);
+        verify(resetLoginAttemptsService).reset(request.getEmail());
     }
 
     @Test
-    @DisplayName("Should Throw BadCredentialsException When Invalid Credentials Are Provided")
-    void shouldThrowBadCredentialsExceptionWhenInvalidCredentialsProvided() {
+    @DisplayName("Should throw InvalidCredentialsException when invalid credentials are provided")
+    void shouldThrowInvalidCredentialsExceptionWhenInvalidCredentialsProvided() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("Invalid credentials"));
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        assertThrows(BadCredentialsException.class, () -> userAuthenticationService.authenticate(request));
+        InvalidCredentialsException exception = assertThrows(
+            InvalidCredentialsException.class,
+            () -> userAuthenticationService.authenticate(request)
+        );
 
-        verify(loginFailureHandler, times(1)).handle(request.getEmail());
+        assertEquals("Invalid credentials", exception.getMessage());
+        verify(loginFailureHandler).handle(request.getEmail());
+        verifyNoInteractions(resetLoginAttemptsService);
     }
 
     @Test
-    @DisplayName("Should Throw UserAccountLockedException When User Account Is Locked")
+    @DisplayName("Should throw UserAccountLockedException when user account is locked")
     void shouldThrowUserAccountLockedExceptionWhenUserAccountIsLocked() {
+        String errorMessage = "User account is locked";
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new LockedException("User account is locked"));
+                .thenThrow(new LockedException(errorMessage));
 
-        assertThrows(UserAccountLockedException.class, () -> userAuthenticationService.authenticate(request));
+        UserAccountLockedException exception = assertThrows(
+            UserAccountLockedException.class, 
+            () -> userAuthenticationService.authenticate(request)
+        );
+        
+        assertNotNull(exception);
+        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+    }
+    
+    @Test
+    @DisplayName("Should authenticate with UserDetails and email")
+    void shouldAuthenticateWithUserDetailsAndEmail() {
+        String email = "test@example.com";
+        String expectedToken = "TestJwtToken";
+        String expectedRefreshToken = "TestRefreshToken";
+        
+        when(jwtTokenProvider.generateToken(userDetails)).thenReturn(expectedToken);
+        when(jwtTokenProvider.generateRefreshToken(userDetails)).thenReturn(expectedRefreshToken);
+
+        UserAuthenticationResponse response = userAuthenticationService.authenticate(userDetails, email);
+
+        assertNotNull(response);
+        assertEquals(expectedToken, response.getToken());
+        assertEquals(expectedRefreshToken, response.getRefreshToken());
+        
+        verify(jwtTokenProvider).generateToken(userDetails);
+        verify(jwtTokenProvider).generateRefreshToken(userDetails);
+        verify(resetLoginAttemptsService).reset(email);
     }
 }

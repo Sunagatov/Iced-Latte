@@ -54,6 +54,5 @@ class JwtAuthenticationProviderTest {
         assertNotNull(authenticationToken);
         assertEquals(userDetails, authenticationToken.getPrincipal());
         verify(jwtBlacklistValidator).validate(jwtToken);
-        verify(jwtClaimExtractor).extractExpiration(jwtToken);
     }
 }

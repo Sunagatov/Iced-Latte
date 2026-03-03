@@ -2,15 +2,18 @@ package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -20,8 +23,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
-    private static final int USER_ACCOUNT_LOCKOUT_DURATION_MINUTES = 60;
-    private static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials for user's account with email = '%s'";
+    @Value("${login-attempts.lockout-duration-minutes}")
+    private int userAccountLockoutDurationMinutes;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -32,68 +35,51 @@ public class UserAuthenticationService {
         String userEmail = request.getEmail();
         String userPassword = request.getPassword();
 
-        log.info("Authenticating user with email = '{}'", userEmail);
-
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userEmail, userPassword)
             );
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-            String jwtToken = jwtTokenProvider.generateToken(userDetails);
-            log.info("Generated JWT token for user with email = '{}'", request.getEmail());
-
-            resetLoginAttemptsService.reset(userEmail);
-
-            UserAuthenticationResponse response = new UserAuthenticationResponse();
-            response.setToken(jwtToken);
-            response.setRefreshToken(jwtRefreshToken);
-            return response;
+            if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+                // amazonq-ignore-next-line
+                throw new InvalidCredentialsException();
+            }
+            return buildResponse(userDetails, userEmail);
 
         } catch (UsernameNotFoundException exception) {
-            log.warn("User with the provided email='{}' does not exist", userEmail, exception);
-            throw new UsernameNotFoundException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
+            log.warn("auth.failed: reason=user_not_found");
+            throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
+            log.warn("auth.failed: reason=invalid_credentials");
             loginFailureHandler.handle(userEmail);
-            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
-
+            throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
-            log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
-
-        } catch (Exception exception) {
-            log.error("Error occurred during authentication", exception);
+            log.warn("auth.failed: reason=account_locked");
+            throw new UserAccountLockedException(userAccountLockoutDurationMinutes);
+        } catch (AuthenticationException exception) {
+            log.error("auth.error: message={}", exception.getMessage(), exception);
             throw exception;
         }
     }
+// amazonq-ignore-next-line
 
     public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
-        try {
-            String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-            String jwtToken = jwtTokenProvider.generateToken(userDetails);
-            log.info("Generated JWT token for user with email = '{}'", userEmail);
+        return buildResponse(userDetails, userEmail);
+    }
 
-            resetLoginAttemptsService.reset(userEmail);
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return "***";
+        int at = email.indexOf('@');
+        return (at > 1 ? email.charAt(0) + "***" : "***") + email.substring(at);
+    }
 
-            UserAuthenticationResponse response = new UserAuthenticationResponse();
-            response.setToken(jwtToken);
-            response.setRefreshToken(jwtRefreshToken);
-            return response;
-        } catch (BadCredentialsException exception) {
-            log.warn("Invalid credentials for user's account with email = '{}'", userEmail, exception);
-            loginFailureHandler.handle(userEmail);
-            throw new BadCredentialsException(String.format(INVALID_CREDENTIALS_ERROR_MESSAGE, userEmail), exception);
-
-        } catch (LockedException exception) {
-            log.warn("User's account with email = '{}' is locked", userEmail, exception);
-            throw new UserAccountLockedException(userEmail, USER_ACCOUNT_LOCKOUT_DURATION_MINUTES);
-
-        } catch (Exception exception) {
-            log.error("Error occurred during authentication", exception);
-            throw exception;
-        }
+    private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
+        String jwtToken = jwtTokenProvider.generateToken(userDetails);
+        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+        log.info("auth.token.generated: email={}", maskEmail(userEmail));
+        resetLoginAttemptsService.reset(userEmail);
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken(jwtToken);
+        response.setRefreshToken(jwtRefreshToken);
+        return response;
     }
 }

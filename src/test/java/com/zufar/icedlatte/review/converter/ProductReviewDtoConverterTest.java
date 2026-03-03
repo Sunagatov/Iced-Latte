@@ -59,15 +59,15 @@ public class ProductReviewDtoConverterTest {
     void convertToProductReviewsAndRatingsWithPagination() {
 
         ProductReviewDto productReviewDto = new ProductReviewDto(UUID.randomUUID(), UUID.randomUUID(),1, "",
-                OffsetDateTime.now(), "John", "Doe", 0,0 );
+                OffsetDateTime.now(), "John", "Doe", 0, 0);
 
-        List<ProductReviewDto> productReviewDtos = Arrays.asList(productReviewDto, productReviewDto);;
+        List<ProductReviewDto> productReviewDtos = Arrays.asList(productReviewDto, productReviewDto);
         Page<ProductReviewDto> page = new PageImpl<>(productReviewDtos, PageRequest.of(0, 5), productReviewDtos.size());
 
         ProductReviewsAndRatingsWithPagination productReviewsAndRatingsWithPagination = converter.toProductReviewsAndRatingsWithPagination(page);
 
         assertThat(productReviewsAndRatingsWithPagination.getReviewsWithRatings()).hasSize(productReviewDtos.size());
-        assertThat(productReviewsAndRatingsWithPagination.getPage()).isEqualTo(page.getTotalPages());
+        assertThat(productReviewsAndRatingsWithPagination.getPage()).isEqualTo(page.getNumber());
         assertThat(productReviewsAndRatingsWithPagination.getSize()).isEqualTo(page.getSize());
         assertThat(productReviewsAndRatingsWithPagination.getTotalElements()).isEqualTo(page.getTotalElements());
         assertThat(productReviewsAndRatingsWithPagination.getTotalPages()).isEqualTo(page.getTotalPages());

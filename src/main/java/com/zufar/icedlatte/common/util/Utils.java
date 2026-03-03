@@ -13,12 +13,10 @@ public final class Utils {
                                                 final Integer size,
                                                 final String sortAttribute,
                                                 final String sortDirection) {
-        Sort sort;
-        if (sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()))
-            sort = Sort.by(sortAttribute).ascending();
-        else
-            sort = Sort.by(sortAttribute).descending();
-
+        Sort sort = Sort.by(sortAttribute);
+        sort = Sort.Direction.fromString(sortDirection) == Sort.Direction.ASC
+                ? sort.ascending()
+                : sort.descending();
         return PageRequest.of(page, size, sort);
     }
 }

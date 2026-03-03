@@ -7,47 +7,26 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
+        <version>3.5.11</version>
         <relativePath/>
     </parent>
-
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-bom</artifactId>
-                <version>${log4j-bom.version}</version>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-                <dependency>
-                    <groupId>org.springframework.ai</groupId>
-                    <artifactId>spring-ai-bom</artifactId>
-                    <version>${spring-ai-bom.version}</version>
-                    <type>pom</type>
-                    <scope>import</scope>
-                </dependency>
+            <!-- CVE-2024-25710, CVE-2024-26308 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.28.0</version>
+            </dependency>
         </dependencies>
-
     </dependencyManagement>
 
     <groupId>com.zufar-project</groupId>
@@ -56,190 +35,164 @@
     <description>Iced Latte is the modern online marketplace</description>
 
     <properties>
-        <!-- Project Version -->
-        <project.version>0.0.1</project.version>
-
-        <!-- Encoding -->
+        <!-- ========== PROJECT CONFIGURATION ========== -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>25</java.version>
 
-        <!-- Java Version -->
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <!-- ========== DATABASE VERSIONS ========== -->
+        <postgresql.version>42.7.10</postgresql.version>
+        <liquibase.version>4.32.0</liquibase.version>
 
-        <!-- Logging and Serialization Dependencies Versions -->
-        <slf4j-api.version>2.0.5</slf4j-api.version>
-        <jackson-core.version>2.15.2</jackson-core.version>
-        <jackson-databind.version>2.15.2</jackson-databind.version>
-        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
-        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+        <!-- ========== SECURITY VERSIONS ========== -->
+        <jjwt.version>0.13.0</jjwt.version>
 
-        <!-- Testing Dependencies Versions -->
-        <junit-jupiter-engine.version>5.4.2</junit-jupiter-engine.version>
-        <junit-jupiter-api.version>5.4.2</junit-jupiter-api.version>
-        <junit-platform-commons.version>1.4.0</junit-platform-commons.version>
-        <junit-platform-launcher.version>1.4.0</junit-platform-launcher.version>
-        <junit-jupiter.version>5.11.0</junit-jupiter.version>
-        <testcontainers.version>1.19.8</testcontainers.version>
-        <instancio-junit.version>3.0.1</instancio-junit.version>
-        <rest-assured.version>5.4.0</rest-assured.version>
-        <json-schema-validator.version>5.4.0</json-schema-validator.version>
+        <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
+        <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
+        <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
 
-        <!-- Spring Dependencies Versions -->
-        <spring-boot-starter-web.version>3.3.0</spring-boot-starter-web.version>
-        <spring-retry.version>2.0.6</spring-retry.version>
-        <spring-boot-maven-plugin.version>3.1.2</spring-boot-maven-plugin.version>
-        <spring-cloud-starter-aws.version>2.2.6.RELEASE</spring-cloud-starter-aws.version>
-        <spring-boot-starter-mail.version>3.3.0</spring-boot-starter-mail.version>
+        <!-- ========== CODE GENERATION VERSIONS ========== -->
+        <lombok.version>1.18.42</lombok.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
 
-        <!-- JWT Dependencies Versions -->
-        <jjwt-impl.version>0.11.5</jjwt-impl.version>
-        <jjwt-api.version>0.11.5</jjwt-api.version>
-        <jjwt-jackson.version>0.11.5</jjwt-jackson.version>
+        <!-- ========== DOCUMENTATION VERSIONS ========== -->
+        <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
+        <openapi-generator.version>7.20.0</openapi-generator.version>
 
-        <!-- Validation Dependencies Versions -->
-        <validation-api.version>2.0.1.Final</validation-api.version>
-        <modelmapper.version>3.1.1</modelmapper.version>
+        <!-- ========== TESTING VERSIONS ========== -->
+        <instancio-junit.version>5.5.1</instancio-junit.version>
 
-        <!-- Swagger and OpenAPI Dependencies Versions -->
+        <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
+        <stripe.version>31.4.0</stripe.version>
+        <google-api-client.version>2.9.0</google-api-client.version>
+
+        <!-- ========== AWS VERSIONS ========== -->
+        <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
+
+        <!-- ========== AI VERSIONS ========== -->
+        <langchain4j.version>1.11.0-beta19</langchain4j.version>
+
+        <!-- ========== UTILITIES VERSIONS ========== -->
+        <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
+        <guava.version>33.5.0-jre</guava.version>
+
+        <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
+
+        <!-- ========== OPENAPI CONFIGURATION ========== -->
         <openapi-package>com.zufar.icedlatte.openapi</openapi-package>
         <openapi-package-with-dto>${openapi-package}.dto</openapi-package-with-dto>
-        <springfox.swagger.version>3.0.0</springfox.swagger.version>
-        <swagger-core-version>2.2.8</swagger-core-version>
-        <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
-
-        <!-- Database Dependencies Versions -->
-        <postgresql.version>42.7.3</postgresql.version>
-        <liquibase.version>4.29.1</liquibase.version>
-
-        <!-- Redis Dependencies Versions -->
-        <spring-boot-starter-data-redis.version>3.3.0</spring-boot-starter-data-redis.version>
-
-        <!-- Apache Maven Plugin Dependencies Versions -->
-        <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
-        <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-
-        <!-- Java EE Annotations Versions -->
-        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
-        <servlet-api.version>2.5</servlet-api.version>
-
-        <!-- Other Dependencies Versions -->
-        <stripe.version>26.9.0</stripe.version>
-        <lombok.version>1.18.34</lombok.version>
-        <mapstruct.version>1.6.0</mapstruct.version>
-        <apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
-        <jakarta.mail-api.version>2.1.3</jakarta.mail-api.version>
-        <guava.version>33.2.1-jre</guava.version>
-        <gson.version>2.11.0</gson.version>
-        <google-oauth.version>1.35.0</google-oauth.version>
-        <google-api-client.version>2.6.0</google-api-client.version>
-        <google-auth-library-oauth2-http.version>1.23.0</google-auth-library-oauth2-http.version>
-        <amaxzon-aws-version>1.12.744</amaxzon-aws-version>
-        <spring-ai-bom.version>1.0.0-SNAPSHOT</spring-ai-bom.version>
-        <log4j-bom.version>2.23.1</log4j-bom.version>
     </properties>
 
-    <!-- Dependencies -->
     <dependencies>
 
-        <!-- Spring Dependencies -->
+        <!-- ========== SPRING FRAMEWORK ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring-boot-starter-web.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.retry</groupId>
-            <artifactId>spring-retry</artifactId>
-            <version>${spring-retry.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-aws</artifactId>
-            <version>${spring-cloud-starter-aws.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- Monitoring Dependencies -->
-        <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
-        </dependency>
-
-        <!-- Project Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- MapStruct -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
-        </dependency>
-
-        <!-- Validation Dependencies -->
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>${validation-api.version}</version>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
 
-        <!-- JWT Dependencies -->
+        <!-- ========== AWS ========== -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cloudfront</artifactId>
+        </dependency>
+
+        <!-- ========== DATABASE ========== -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.version}</version>
+        </dependency>
+
+        <!-- ========== BOUNCYCASTLE (required by Argon2PasswordEncoder) ========== -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.83</version>
+        </dependency>
+
+        <!-- ========== SECURITY & JWT ========== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jjwt-api.version}</version>
+            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt-impl.version}</version>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt-jackson.version}</version>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
-        <!-- Logging Dependencies -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson-core.version}</version>
-        </dependency>
+        <!-- ========== SERIALIZATION & LOGGING ========== -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
@@ -252,186 +205,135 @@
             <version>${logstash-logback-encoder.version}</version>
         </dependency>
 
-        <!-- Spring Data JPA and Database Driver -->
+        <!-- ========== CODE GENERATION & MAPPING ========== -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-
-        <!-- Liquibase for Database Migrations -->
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>${liquibase.version}</version>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- Stripe Java Library -->
+        <!-- ========== DOCUMENTATION ========== -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-openapi.version}</version>
+        </dependency>
+
+        <!-- ========== MONITORING ========== -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+        </dependency>
+
+        <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>${stripe.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>${google-api-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-        <!-- Apache Commons Lang -->
+        <!-- ========== AI ========== -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- ========== UTILITIES ========== -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${apache-commons-lang3.version}</version>
         </dependency>
-
-        <!-- Redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-            <version>${spring-boot-starter-data-redis.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
-        </dependency>
-
-        <!-- Mail -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-            <version>${spring-boot-starter-mail.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.mail</groupId>
-            <artifactId>jakarta.mail-api</artifactId>
-            <version>${jakarta.mail-api.version}</version>
-        </dependency>
-
-        <!-- Temporary cache -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- Google OAuth -->
+        <!-- ========== TESTING ========== -->
         <dependency>
-            <groupId>com.google.auth</groupId>
-            <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>${google-auth-library-oauth2-http.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
-            <version>${google-api-client.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-            <version>${jacoco-maven-plugin.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <!-- CVE-2025-66453: no patched version available -->
+                <exclusion>
+                    <groupId>org.mozilla</groupId>
+                    <artifactId>rhino</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.instancio</groupId>
+            <artifactId>instancio-junit</artifactId>
+            <version>${instancio-junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <!-- Production Profile -->
-        <profile>
-            <id>prod</id>
-            <dependencies>
-                <dependency>
-                    <groupId>io.micrometer</groupId>
-                    <artifactId>micrometer-registry-prometheus</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <!-- Development Profile -->
-        <profile>
-            <id>dev</id>
-            <activation>
-                <property>
-                    <name>ENV</name>
-                    <value>dev</value>
-                </property>
-            </activation>
-            <dependencies>
-                <!-- Testing Dependencies -->
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-test</artifactId>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>junit</groupId>
-                            <artifactId>junit</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.instancio</groupId>
-                    <artifactId>instancio-junit</artifactId>
-                    <version>${instancio-junit.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                    <version>${junit.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.junit.jupiter</groupId>
-                    <artifactId>junit-jupiter</artifactId>
-                    <version>${junit-jupiter.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.testcontainers</groupId>
-                    <artifactId>junit-jupiter</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-testcontainers</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.testcontainers</groupId>
-                    <artifactId>postgresql</artifactId>
-                    <version>${testcontainers.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-test</artifactId>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.rest-assured</groupId>
-                    <artifactId>rest-assured</artifactId>
-                    <version>${rest-assured.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.rest-assured</groupId>
-                    <artifactId>json-schema-validator</artifactId>
-                    <version>${json-schema-validator.version}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-s3</artifactId>
-                    <version>${amaxzon-aws-version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 
     <build>
         <plugins>
@@ -441,8 +343,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -459,6 +360,7 @@
                         <arg>-Amapstruct.suppressGeneratorTimestamp=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
                     </compilerArgs>
+                    <showWarnings>false</showWarnings>
                 </configuration>
             </plugin>
 
@@ -473,6 +375,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
                 </configuration>
             </plugin>
 
@@ -497,6 +402,16 @@
                 </executions>
             </plugin>
 
+            <!-- Maven Surefire Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <argLine>@{argLine} -XX:+EnableDynamicAgentLoading</argLine>
+                </configuration>
+            </plugin>
+
             <!-- SonarQube Scanner Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
@@ -508,7 +423,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${openapi-generator-maven-plugin.version}</version>
+                <version>${openapi-generator.version}</version>
                 <executions>
                     <!-- Generate from Product OpenAPI Spec -->
                     <execution>
@@ -521,7 +436,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.product.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -540,7 +454,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.user.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -559,7 +472,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.cart.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -578,7 +490,6 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>${openapi-package}.security.api</apiPackage>
                             <modelPackage>${openapi-package-with-dto}</modelPackage>
-                            <generateModels>true</generateModels>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <interfaceOnly>true</interfaceOnly>
@@ -595,10 +506,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/payment-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.payment.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.payment.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -613,10 +524,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/favorite-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.favorite.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.favorite.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -631,10 +542,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/order-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.order.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.order.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>
@@ -649,10 +560,10 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api-specs/product-review-openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.product.review.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
-                                <apiPackage>${openapi-package}.product.review.api</apiPackage>
-                                <modelPackage>${openapi-package-with-dto}</modelPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
                             </configOptions>

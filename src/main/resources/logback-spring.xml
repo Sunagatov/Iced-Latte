@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-   <!--  CONSOLE LOGGING CONFIGURATION  -->
+    <!--  CONSOLE LOGGING CONFIGURATION  -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} %X{user.id.key2value} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
     <springProperty scope="context" name="application_name" source="spring.application.name"/>
-
 
     <!--  FILE LOGGING CONFIGURATION  -->
     <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -31,11 +30,11 @@
                     <pattern>
                         {
                         "trace": {
-                        "trace_id": "%mdc{X-B3-TraceId}",
-                        "span_id": "%mdc{X-B3-SpanId}",
-                        "parent_span_id": "%mdc{X-B3-ParentSpanId}",
-                        "exportable": "%mdc{X-Span-Export}",
-                        "userId": "%X{user.id.key2value}"
+                        "traceId": "%X{traceId}",
+                        "spanId": "%X{spanId}",
+                        "userId": "%X{userId}",
+                        "correlationId": "%X{correlationId}",
+                        "sessionId": "%X{sessionId}"
                         }
                         }
                     </pattern>
@@ -44,11 +43,6 @@
                     <excludeMdcKeyName>traceId</excludeMdcKeyName>
                     <excludeMdcKeyName>spanId</excludeMdcKeyName>
                     <excludeMdcKeyName>parentId</excludeMdcKeyName>
-                    <excludeMdcKeyName>spanExportable</excludeMdcKeyName>
-                    <excludeMdcKeyName>X-B3-TraceId</excludeMdcKeyName>
-                    <excludeMdcKeyName>X-B3-SpanId</excludeMdcKeyName>
-                    <excludeMdcKeyName>X-B3-ParentSpanId</excludeMdcKeyName>
-                    <excludeMdcKeyName>X-Span-Export</excludeMdcKeyName>
                 </mdc>
                 <stackTrace/>
             </providers>
@@ -63,11 +57,34 @@
         </rollingPolicy>
     </appender>
 
+    <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="ConsoleAppender"/>
+    </appender>
 
+    <appender name="AsyncFile" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FileAppender"/>
+    </appender>
+
+    <!-- Suppress OTEL exporter connection errors when no collector is running locally.
+         These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
+    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
+
+    <!-- Suppress Spring Data Redis bootstrap noise: 13 INFO lines per startup explaining
+         that JPA repositories are not Redis repositories. Zero operational value. -->
+    <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
+
+    <!-- Suppress Spring Security advisory WARN fired on first authenticated request when a
+         custom AuthenticationProvider is registered. The configuration is intentional;
+         the warning is not actionable. -->
+    <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
 
     <root level="INFO">
-        <appender-ref ref="ConsoleAppender" />
-        <appender-ref ref="FileAppender" />
+        <appender-ref ref="AsyncConsole"/>
+        <appender-ref ref="AsyncFile"/>
     </root>
 
 </configuration>

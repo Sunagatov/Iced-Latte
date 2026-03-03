@@ -7,10 +7,20 @@ info:
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "MIT"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
   - url: "https://iced-latte.uk/backend"
     description: "Production server"
+
+security:
+  - bearerAuth: []
+  - {}
 
 tags:
   - name: "Product Review"
@@ -21,6 +31,7 @@ paths:
     get:
       tags:
         - "Product Review"
+      summary: "List product reviews with pagination, sorting and filtering"
       description: "List product's Reviews with pagination, sorting and filtering features. Endpoint is available for unauthorized users"
       operationId: "getProductReviewsAndRatings"
       parameters:
@@ -47,7 +58,7 @@ paths:
               description: "Retrieve the second page of product's list."
               value: "page=1"
         - name: "size"
-          description: "The number of products per page. Possible allowed values: 1) size=3 or 2) size=15 or 3) any other non negative value."
+          description: "The number of reviews per page. Possible allowed values: 1) size=3 or 2) size=15 or 3) any other non negative value."
           in: "query"
           required: false
           schema:
@@ -56,51 +67,55 @@ paths:
             default: 50
           examples:
             example1:
-              description: "Display only 3 products per page in the product's review list."
-              value: "size=3"
+              description: "Display only 3 reviews per page in the product's review list."
+              value: 3
             example2:
-              description: "Display only 15 products per page in the product's review list."
-              value: "size=15"
-        - name: "sort_attribute"
-          description: "The field name of the product's review by which the results should be sorted. Possible allowed values: 1) sort_attribute=createdAt or 2) sort_attribute=productRating."
+              description: "Display only 15 reviews per page in the product's review list."
+              value: 15
+        - name: "sortAttribute"
+          description: "The field name of the product's review by which the results should be sorted. Possible allowed values: 1) sortAttribute=createdAt or 2) sortAttribute=productRating."
           in: "query"
           required: false
           schema:
             type: "string"
-            default: "name"
+            default: "createdAt"
+            enum: ["createdAt", "productRating"]
           examples:
             example1:
+              summary: "Sort by creation date"
               description: "Display the product's review list sorted by the provided sort attribute 'createdAt' (the product's date of creation)."
-              value: "sort_attribute=createdAt"
+              value: "createdAt"
             example2:
+              summary: "Sort by product rating"
               description: "Display the product's review list sorted by the provided sort attribute 'productRating' (the product's review rating)."
-              value: "sort_attribute=averageRating"
-        - name: "sort_direction"
-          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=disc."
+              value: "productRating"
+        - name: "sortDirection"
+          description: "The direction of sorting. Possible allowed values: 1) sortDirection=asc or 2) sortDirection=desc."
           in: "query"
           required: false
           schema:
             type: "string"
             default: "asc"
+            enum: ["asc", "desc"]
           examples:
             example1:
               description: "Display the product's review list in ascending order."
-              value: "sort_direction=asc"
+              value: "asc"
             example2:
               description: "Display the product's review list in descending order."
-              value: "sort_direction=disc"
-        - name: "product_ratings"
-          description: "Filter product's reviews by selected product's ratings (comma-separated list). Possible allowed values: 1) product_ratings=1 or 2) product_ratings=1,2,3,4 or 3) product_ratings=1,3,5 or 4) any other comma-separated list within 1,2,3,4,5."
+              value: "desc"
+        - name: "productRatings"
+          description: "Filter product's reviews by selected product's ratings (comma-separated list). Possible allowed values: 1) productRatings=1 or 2) productRatings=1,2,3,4 or 3) productRatings=1,3,5 or 4) any other comma-separated list within 1,2,3,4,5."
           examples:
             example1:
-              description: "Display the product's review list filtered by selected product's ratings (product_ratings=1)."
-              value: "product_ratings=1"
+              description: "Filter by a single rating."
+              value: "1"
             example2:
-              description: "Display the product's review list filtered by selected product's ratings (product_ratings==1,2,3,4)."
-              value: "product_ratings=1,2,3,4"
+              description: "Filter by multiple ratings."
+              value: "1,2,3,4"
             example3:
-              description: "Display the product's review list filtered by selected product's ratings (product_ratings==1,3,5)."
-              value: "product_ratings=1,3,5"
+              description: "Filter by non-consecutive ratings."
+              value: "1,3,5"
           in: "query"
           required: false
           schema:
@@ -115,22 +130,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
         "400":
-          description: "Bad request, e.g. the query parameters are invalid."
-        "404":
-          description: "Product's review was not found."
+          description: "Bad request, e.g. the query parameters are invalid or product not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       tags:
         - "Product Review"
       summary: "Add a new product's review for a specific product by an authorized user. If product's review exists, then 400 error will be returned"
+      description: "Creates a new review and rating for the specified product by the authenticated user. Returns 400 if the user has already submitted a review for this product."
       operationId: "addNewProductReview"
       parameters:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -142,25 +164,36 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "Product review created successfully."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewDto"
         "400":
           description: "Bad request, e.g. product's review exists"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access occurred."
-        "404":
-          description: "Product's review was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
       tags:
         - "Product Review"
       summary: "Delete an existing product's review created by an authorized user"
+      description: "Permanently deletes the specified product review. Only the review's author can delete their own review."
       operationId: "deleteProductReview"
       parameters:
         - name: "productId"
@@ -179,13 +212,31 @@ paths:
             format: "uuid"
       responses:
         "200":
-          description: "OK"
+          description: "Product review deleted successfully."
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Deletion denied - you can only delete your own review."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Product's review was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/review:
     get:
@@ -197,7 +248,7 @@ paths:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -208,10 +259,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewDto"
+        "400":
+          description: "Product not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/reviews:
+    get:
+      tags:
+        - "Product Review"
+      summary: "Get all reviews written by the authenticated user"
+      operationId: "getUserReviews"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 50
+        - name: "sort_attribute"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "createdAt"
+            enum: ["createdAt", "productRating"]
+        - name: "sort_direction"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "asc"
+            enum: ["asc", "desc"]
+      responses:
+        "200":
+          description: "Reviews written by the authenticated user."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewsAndRatingsWithPagination"
+        "401":
+          description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/statistics:
     get:
@@ -234,10 +354,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewRatingStats"
-        "404":
-          description: "Product's review was not found"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/reviews/{productReviewId}/likes:
     post:
@@ -249,7 +371,7 @@ paths:
         - name: "productId"
           in: "path"
           required: true
-          description: "Unique identifier of the product's review."
+          description: "Unique identifier of the product."
           schema:
             type: "string"
             format: "uuid"
@@ -261,6 +383,7 @@ paths:
             type: "string"
             format: "uuid"
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -274,10 +397,31 @@ paths:
                 $ref: "#/components/schemas/ProductReviewDto"
         "401":
           description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Product or product review not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
   schemas:
     ProductReviewRequest:
       type: "object"
@@ -296,6 +440,12 @@ components:
 
     ProductReviewsAndRatingsWithPagination:
       type: "object"
+      required:
+        - reviewsWithRatings
+        - page
+        - size
+        - totalElements
+        - totalPages
       properties:
         reviewsWithRatings:
           type: "array"
@@ -331,36 +481,48 @@ components:
         productReviewId:
           type: "string"
           format: "uuid"
+          description: "Unique identifier of the product review."
         productId:
           type: "string"
           format: "uuid"
+          description: "Unique identifier of the reviewed product."
         productRating:
           type: "integer"
           format: "int32"
+          minimum: 1
+          maximum: 5
+          description: "Rating given by the user (1–5)."
         text:
           type: "string"
+          description: "Review text written by the user."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "Date and time when the review was created."
         userName:
           type: "string"
+          description: "First name of the user who wrote the review."
         userLastname:
           type: "string"
+          description: "Last name of the user who wrote the review."
         likesCount:
           type: "integer"
           format: "int32"
+          description: "Number of likes the review has received."
         dislikesCount:
           type: "integer"
           format: "int32"
+          description: "Number of dislikes the review has received."
 
     ProductReviewRatingStats:
-      type: object
+      type: "object"
       properties:
         productId:
-          type: string
+          type: "string"
           format: "uuid"
         avgRating:
-          type: string
+          type: "number"
+          format: "double"
         reviewsCount:
           type: "integer"
           format: "int32"
@@ -373,7 +535,13 @@ components:
         - ratingMap
 
     RatingMap:
-      type: object
+      type: "object"
+      required:
+        - star5
+        - star4
+        - star3
+        - star2
+        - star1
       properties:
         star5:
           type: "integer"
@@ -395,17 +563,14 @@ components:
           type: "integer"
           format: "int32"
           default: 0
-      required:
-        - "star1"
-        - "star2"
-        - "star3"
-        - "star4"
-        - "star5"
 
     ProductReviewLikeDto:
-      type: object
+      type: "object"
       properties:
         isLike:
           type: "boolean"
       required:
         - isLike
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

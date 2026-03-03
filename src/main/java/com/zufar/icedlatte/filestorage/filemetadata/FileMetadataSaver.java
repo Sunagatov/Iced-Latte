@@ -20,10 +20,9 @@ public class FileMetadataSaver {
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FileMetadataDto save(final FileMetadataDto fileMetadataDto) {
+    public void save(final FileMetadataDto fileMetadataDto) {
         FileMetadata fileMetadata = fileMetadataDtoConverter.toEntity(fileMetadataDto);
-        FileMetadata savedFileMetadata = fileMetadataRepository.save(fileMetadata);
-        return fileMetadataDtoConverter.toDto(savedFileMetadata);
+        fileMetadataRepository.save(fileMetadata);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
