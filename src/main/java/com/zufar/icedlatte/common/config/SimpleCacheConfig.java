@@ -14,6 +14,6 @@ public class SimpleCacheConfig {
     @Bean
     @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("productById", "brands", "sellers", "productImageUrl");
+        return new ConcurrentMapCacheManager("productById", "brands", "sellers", "productImageUrl", "productImageUrls");
     }
 }

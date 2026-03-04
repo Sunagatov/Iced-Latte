@@ -3,7 +3,7 @@ package com.zufar.icedlatte.auth.api;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,9 +28,9 @@ public class GoogleTokenExchanger {
             @Value("${google.client-id}") String clientId,
             @Value("${google.client-secret}") String clientSecret,
             @Value("${google.redirect-uri}") String redirectUri,
-            @Value("${google.scope}") String scope) throws GeneralSecurityException, IOException {
+            @Value("${google.scope}") String scope) throws IOException {
         this.redirectUri = redirectUri;
-        var transport = GoogleNetHttpTransport.newTrustedTransport();
+        var transport = new NetHttpTransport();
         var json = GsonFactory.getDefaultInstance();
         this.verifier = new GoogleIdTokenVerifier.Builder(transport, json)
                 .setAudience(Collections.singletonList(clientId))

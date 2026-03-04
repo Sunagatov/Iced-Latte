@@ -303,7 +303,13 @@ components:
           description: "Indicates if the product is active."
         productFileUrl:
           type: "string"
-          description: "URL of the product's image or file."
+          description: "URL of the product's primary image or file."
+        productImageUrls:
+          type: "array"
+          description: "URLs of all product images (max 10)."
+          maxItems: 10
+          items:
+            type: "string"
         averageRating:
           type: "number"
           description: "Average rating of the product."

@@ -35,7 +35,7 @@
     <description>Iced Latte is the modern online marketplace</description>
 
     <properties>
-        <sonar.coverage.exclusions>**/review/ai/AiEnabledConfig.java,**/review/ai/AiDisabledConfig.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>**/review/ai/AiEnabledConfig.java,**/review/ai/AiDisabledConfig.java,**/astartup/AiProductSummaryGenerator.java</sonar.coverage.exclusions>
         <!-- ========== PROJECT CONFIGURATION ========== -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

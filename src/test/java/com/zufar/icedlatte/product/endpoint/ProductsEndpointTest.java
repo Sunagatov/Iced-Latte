@@ -142,7 +142,7 @@ class ProductsEndpointTest extends IntegrationTestBase {
     @DisplayName("Should contain product with name 'Nitro Coffee'")
     void shouldContainProductWithNameNitroCoffee() {
         Map<String, Object> params = new HashMap<>();
-        params.put(PaginationAndSortingAttribute.PAGE, 5);
+        params.put(PaginationAndSortingAttribute.PAGE, 9);
         params.put(PaginationAndSortingAttribute.SIZE, 1);
         params.put(PaginationAndSortingAttribute.SORT_ATTRIBUTE, NAME_ATTRIBUTE);
         params.put(PaginationAndSortingAttribute.SORT_DIRECTION, Sort.Direction.DESC.name().toLowerCase(Locale.ROOT));

@@ -513,6 +513,9 @@ components:
           type: "integer"
           format: "int32"
           description: "Number of dislikes the review has received."
+        aiSummary:
+          type: "string"
+          description: "AI-generated summary of this review. Null if not yet generated."
 
     ProductReviewRatingStats:
       type: "object"

@@ -35,6 +35,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
     private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
     private static final String AFFOGATO_ID = "ba5f15c4-1f72-4b97-b9cf-4437e5c6c2fa";
+    private static final String COCONUT_COLD_BREW_ID = "d1a2b3c4-0001-4000-8000-000000000007";
     private static final String START_OF_REVIEW_FOR_AMERICANO = "Review for Americano";
     private static final String RATING_RESPONSE_SCHEMA = "review/model/schema/stats-response-schema.json";
     private static final String ESPRESSO_ID = "ad0ef2b7-816b-4a11-b361-dfcbe705fc96";
@@ -77,14 +78,17 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should add review successfully and return object containing review")
     void shouldAddReviewSuccessfully() {
         Response response = given(specification).body(getRequestBody(REVIEW_ADD_BODY))
-                .post("/{productId}/reviews", AFFOGATO_ID);
+                .post("/{productId}/reviews", COCONUT_COLD_BREW_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", equalTo(EXPECTED_REVIEW))
                 .body("productRating", equalTo(EXPECTED_PRODUCT_RATING))
                 .body("productReviewId", notNullValue());
 
-        removeReview(response);
+        var reviewId = response.getBody().path("productReviewId");
+        if (reviewId != null) {
+            given(specification).delete("/{productId}/reviews/{reviewId}", COCONUT_COLD_BREW_ID, reviewId);
+        }
     }
 
     @Test
@@ -108,7 +112,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should fetch review successfully for an authorized user")
     void shouldFetchReviewSuccessfully() {
-        assertRestApiBodySchemaResponse(given(specification).get("/{productId}/review", AFFOGATO_ID), HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+        assertRestApiBodySchemaResponse(given(specification).get("/{productId}/review", COCONUT_COLD_BREW_ID), HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", nullValue())
                 .body("productRating", nullValue());
 
@@ -124,14 +128,14 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).accept(ContentType.JSON);
 
         assertRestApiBodySchemaResponse(given(noAuth).get("/{productId}/reviews/statistics", ESPRESSO_ID), HttpStatus.OK, RATING_RESPONSE_SCHEMA)
-                .body("avgRating", equalTo(3.0f))
-                .body("reviewsCount", equalTo(1))
+                .body("avgRating", equalTo(3.3f))
+                .body("reviewsCount", equalTo(8))
                 .body("productId", notNullValue())
-                .body("ratingMap.star1", equalTo(0))
-                .body("ratingMap.star2", equalTo(0))
-                .body("ratingMap.star3", equalTo(1))
-                .body("ratingMap.star4", equalTo(0))
-                .body("ratingMap.star5", equalTo(0));
+                .body("ratingMap.star1", equalTo(1))
+                .body("ratingMap.star2", equalTo(1))
+                .body("ratingMap.star3", equalTo(3))
+                .body("ratingMap.star4", equalTo(1))
+                .body("ratingMap.star5", equalTo(2));
     }
 
     @Test
@@ -181,11 +185,11 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should delete existing review successfully")
     void shouldDeleteExistingReviewSuccessfully() {
         Response responsePost = given(specification).body(getRequestBody(REVIEW_ADD_BODY))
-                .post("/{productId}/reviews", AFFOGATO_ID);
+                .post("/{productId}/reviews", COCONUT_COLD_BREW_ID);
         responsePost.then().statusCode(HttpStatus.OK.value());
 
         given(specification)
-                .delete("/{productId}/reviews/{productReviewId}", AFFOGATO_ID, responsePost.then().extract().path("productReviewId").toString())
+                .delete("/{productId}/reviews/{productReviewId}", COCONUT_COLD_BREW_ID, responsePost.then().extract().path("productReviewId").toString())
                 .then().statusCode(HttpStatus.OK.value());
     }
 

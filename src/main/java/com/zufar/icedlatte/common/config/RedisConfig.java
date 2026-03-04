@@ -36,12 +36,16 @@ public class RedisConfig {
         log.info("cache.mode: Redis");
         ObjectMapper typedMapper = new ObjectMapper();
         typedMapper.registerModule(new JavaTimeModule());
-        typedMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        GenericJackson2JsonRedisSerializer typedSerializer = new GenericJackson2JsonRedisSerializer(typedMapper);
+        typedMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+        GenericJackson2JsonRedisSerializer typedSerializer = GenericJackson2JsonRedisSerializer.builder()
+                .objectMapper(typedMapper)
+                .build();
 
         ObjectMapper plainMapper = new ObjectMapper();
         plainMapper.registerModule(new JavaTimeModule());
-        GenericJackson2JsonRedisSerializer plainSerializer = new GenericJackson2JsonRedisSerializer(plainMapper);
+        GenericJackson2JsonRedisSerializer plainSerializer = GenericJackson2JsonRedisSerializer.builder()
+                .objectMapper(plainMapper)
+                .build();
 
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(cacheProperties.getDefaultTtl())

@@ -17,6 +17,9 @@ public final class Utils {
         sort = Sort.Direction.fromString(sortDirection) == Sort.Direction.ASC
                 ? sort.ascending()
                 : sort.descending();
+        if (!"id".equals(sortAttribute)) {
+            sort = sort.and(Sort.by(Sort.Direction.ASC, "id"));
+        }
         return PageRequest.of(page, size, sort);
     }
 }

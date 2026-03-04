@@ -143,3 +143,36 @@ databaseChangeLog:
       file: db/changelog/version-1.0/01.07.2026.part1.create-delivery-address-table.sql
       errorIfMissing: true
 
+  # ========== NEW PRODUCTS 2026 ==========
+  # Allow zero-discount products (relax discount > 0 to discount >= 0)
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part1b.fix-product-discount-check.sql
+      errorIfMissing: true
+
+  # Modern trending coffee products and their reviews
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part2.insert-new-product-data.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part3.insert-new-product-review-data.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part4.insert-extra-reviews.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part5.insert-extra-reviews-batch2.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part6.insert-extra-reviews-batch3.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part7.insert-extra-reviews-batch4.sql
+      errorIfMissing: true
+
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part8a.add-ai-summary-column.sql
+      errorIfMissing: true
+
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part8.insert-ai-summaries.sql
+      errorIfMissing: true
