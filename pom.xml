@@ -69,7 +69,7 @@
         <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
-        <langchain4j.version>1.0.0</langchain4j.version>
+        <langchain4j.version>1.11.0</langchain4j.version>
 
         <!-- ========== UTILITIES VERSIONS ========== -->
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
