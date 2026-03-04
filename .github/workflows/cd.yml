@@ -48,18 +48,34 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger Render deploy
+      - name: Deploy to Oracle Cloud VM
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl -fsSL -X POST "${RENDER_DEPLOY_HOOK_URL}"
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+          OCI_SSH_KEY: ${{ secrets.OCI_SSH_KEY }}
+          IMAGE: zufarexplainedit/iced-latte-backend:latest
+        run: |
+          echo "${OCI_SSH_KEY}" > /tmp/oci_key && chmod 600 /tmp/oci_key
+          ssh -o StrictHostKeyChecking=no -i /tmp/oci_key ${OCI_USER}@${OCI_HOST} "
+            docker pull ${IMAGE} &&
+            docker stop iced-latte-backend 2>/dev/null || true &&
+            docker rm   iced-latte-backend 2>/dev/null || true &&
+            docker run -d --name iced-latte-backend --restart unless-stopped \
+              --env-file /home/${OCI_USER}/iced-latte.env \
+              -p 8083:8083 \
+              --memory=768m --memory-swap=768m \
+              -e JAVA_TOOL_OPTIONS='-Xmx512m' \
+              ${IMAGE}
+          "
+          rm -f /tmp/oci_key
 
       - name: Wait for application to come up
         env:
-          RENDER_APP_URL: ${{ secrets.RENDER_APP_URL }}
+          OCI_HOST: ${{ secrets.OCI_HOST }}
         run: |
           echo "Waiting for deploy to complete..."
           for i in $(seq 1 36); do
-            STATUS=$(curl -sf "${RENDER_APP_URL}/actuator/health" \
+            STATUS=$(curl -sf "http://${OCI_HOST}:8083/actuator/health" \
               | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
             if [ "$STATUS" = "UP" ]; then
               echo "[OK] Application is UP"
