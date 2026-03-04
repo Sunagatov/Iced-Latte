@@ -14,6 +14,13 @@ interface ReviewAiService {
 
     @SystemMessage("""
             You are a product review analyst for a coffee marketplace.
+            Given a single customer review, write 1-2 sentences in third person summarizing the key sentiment.
+            Return only the summary, no preamble.
+            """)
+    String summarizeReview(@UserMessage String reviewText);
+
+    @SystemMessage("""
+            You are a product review analyst for a coffee marketplace.
             Given a list of customer reviews, write a single concise sentence summarizing the overall sentiment.
             Start with "Customers". Return only the summary sentence, no preamble.
             """)

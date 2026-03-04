@@ -170,5 +170,9 @@ databaseChangeLog:
       errorIfMissing: true
 
   - include:
+      file: db/changelog/version-1.0/01.07.2026.part8a.add-ai-summary-column.sql
+      errorIfMissing: true
+
+  - include:
       file: db/changelog/version-1.0/01.07.2026.part8.insert-ai-summaries.sql
       errorIfMissing: true
