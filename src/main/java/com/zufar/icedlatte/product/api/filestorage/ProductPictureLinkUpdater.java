@@ -19,6 +19,7 @@ public class ProductPictureLinkUpdater {
     public ProductInfoDto update(ProductInfoDto productInfoDto) {
         UUID id = productInfoDto.getId();
         productInfoDto.setProductFileUrl(productImageReceiver.getProductFileUrl(id));
+        productInfoDto.setProductImageUrls(productImageReceiver.getProductImageUrls(id));
         return productInfoDto;
     }
 
@@ -26,13 +27,15 @@ public class ProductPictureLinkUpdater {
         List<UUID> productIds = productInfoDtos.stream()
                 .map(ProductInfoDto::getId)
                 .toList();
-        
+
         Map<UUID, String> fileUrls = productImageReceiver.getProductFileUrls(productIds);
-        
-        productInfoDtos.forEach(product -> 
-                product.setProductFileUrl(fileUrls.get(product.getId()))
-        );
-        
+        Map<UUID, List<String>> imageUrls = productImageReceiver.getProductImageUrlsBatch(productIds);
+
+        productInfoDtos.forEach(product -> {
+            product.setProductFileUrl(fileUrls.get(product.getId()));
+            product.setProductImageUrls(imageUrls.getOrDefault(product.getId(), List.of()));
+        });
+
         return productInfoDtos;
     }
 }
