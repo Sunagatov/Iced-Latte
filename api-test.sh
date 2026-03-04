@@ -308,6 +308,63 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════
+#  DELIVERY ADDRESSES
+# ════════════════════════════════════════════════════════════════
+section "Delivery Addresses"
+
+ADDRESS_ID=""
+if [[ -z "$JWT_TOKEN" ]]; then
+    skip "Get delivery addresses"; skip "Create delivery address"
+    skip "Update delivery address"; skip "Set default address"; skip "Delete delivery address"
+else
+    req GET "$API/users/addresses" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get delivery addresses" "200"
+
+    req POST "$API/users/addresses" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"label":"Home","line":"123 Test St","city":"London","country":"UK","postcode":"SW1A 1AA"}'
+    if [[ "$CODE" == "201" ]]; then
+        ADDRESS_ID=$(json_val id)
+        pass "Create delivery address -> 201"
+        [[ -n "$ADDRESS_ID" ]] && info "address id: $ADDRESS_ID"
+    else
+        assert "Create delivery address" "201"
+    fi
+
+    if [[ -n "$ADDRESS_ID" ]]; then
+        req PUT "$API/users/addresses/$ADDRESS_ID" \
+            -H "Authorization: Bearer $JWT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"label":"Home","line":"456 Updated St","city":"London","country":"UK","postcode":"SW1A 2BB"}'
+        assert "Update delivery address" "200"
+
+        req PATCH "$API/users/addresses/$ADDRESS_ID/default" \
+            -H "Authorization: Bearer $JWT_TOKEN"
+        assert "Set default address" "200"
+
+        req DELETE "$API/users/addresses/$ADDRESS_ID" \
+            -H "Authorization: Bearer $JWT_TOKEN"
+        assert "Delete delivery address" "204"
+    else
+        skip "Update delivery address"; skip "Set default address"; skip "Delete delivery address"
+    fi
+fi
+
+# ════════════════════════════════════════════════════════════════
+#  USER REVIEWS
+# ════════════════════════════════════════════════════════════════
+section "User Reviews"
+
+if [[ -z "$JWT_TOKEN" ]]; then
+    skip "Get user reviews"
+else
+    req GET "$API/users/reviews?page=0&size=5&sort_attribute=createdAt&sort_direction=desc" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get user reviews" "200"
+fi
+
+# ════════════════════════════════════════════════════════════════
 #  ORDERS
 # ════════════════════════════════════════════════════════════════
 section "Orders"
@@ -342,11 +399,21 @@ section "Logout"
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Logout"; skip "Token rejected after logout"
 else
+    LOGOUT_OK=false
     req POST "$API/auth/logout" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Logout" "200"
+    if [[ "$CODE" == "200" ]]; then
+        LOGOUT_OK=true
+        pass "Logout -> 200"
+    else
+        assert "Logout" "200"
+    fi
 
-    req GET "$API/users" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Token rejected after logout" "401" "403"
+    if [[ "$LOGOUT_OK" == true ]]; then
+        req GET "$API/users" -H "Authorization: Bearer $JWT_TOKEN"
+        assert "Token rejected after logout" "401" "403"
+    else
+        skip "Token rejected after logout" "logout did not complete"
+    fi
 fi
 
 # ════════════════════════════════════════════════════════════════
