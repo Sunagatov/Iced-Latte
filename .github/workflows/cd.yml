@@ -65,6 +65,7 @@ jobs:
               -p 8083:8083 \
               --memory=768m --memory-swap=768m \
               -e JAVA_TOOL_OPTIONS='-Xmx384m -XX:MaxMetaspaceSize=128m' \
+              -e APP_VERSION=${{ github.sha }} \
               ${IMAGE}
           "
           rm -f /tmp/oci_key
