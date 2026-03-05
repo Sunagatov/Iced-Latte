@@ -64,7 +64,7 @@ jobs:
               --env-file /home/${OCI_USER}/iced-latte.env \
               -p 8083:8083 \
               --memory=768m --memory-swap=768m \
-              -e JAVA_TOOL_OPTIONS='-Xmx512m' \
+              -e JAVA_TOOL_OPTIONS='-Xmx384m -XX:MaxMetaspaceSize=128m' \
               ${IMAGE}
           "
           rm -f /tmp/oci_key
