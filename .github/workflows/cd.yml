@@ -74,6 +74,7 @@ jobs:
           OCI_HOST: ${{ secrets.OCI_HOST }}
         run: |
           echo "Waiting for deploy to complete..."
+          sleep 60
           for i in $(seq 1 36); do
             STATUS=$(curl -sf "http://${OCI_HOST}:8083/actuator/health" \
               | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
