@@ -26,6 +26,7 @@ server:
 spring:
   application:
     name: Iced Latte Application
+    version: ${APP_VERSION:1}
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: false
@@ -155,6 +156,8 @@ cache:
   product-ttl: PT10M
   brands-ttl: PT24H
   sellers-ttl: PT24H
+  image-url-ttl: PT50M
+  image-urls-ttl: PT24H
 
 #
 # Temporary Cache
