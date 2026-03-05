@@ -29,6 +29,9 @@ public class ApplicationMigration implements ApplicationRunner {
     @Value("${spring.aws.default-image-directory.products:}")
     private String directoryPath;
 
+    @Value("${migration.upload.enabled:true}")
+    private boolean uploadEnabled;
+
     private final FileUploader fileUploader;
     private final AwsProvider awsProvider;
     private final FileMetadataSaver fileMetadataSaver;
@@ -51,7 +54,7 @@ public class ApplicationMigration implements ApplicationRunner {
             return;
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
-        CompletableFuture.runAsync(this::uploadFiles, executor)
+        CompletableFuture.runAsync(uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled"), executor)
                 .thenComposeAsync(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor), executor)
                 .thenAcceptAsync(this::saveMetadata, executor)
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
