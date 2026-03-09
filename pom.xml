@@ -62,7 +62,7 @@
         <instancio-junit.version>5.5.1</instancio-junit.version>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
-        <stripe.version>31.4.0</stripe.version>
+        <stripe.version>31.4.1</stripe.version>
         <google-api-client.version>2.9.0</google-api-client.version>
 
         <!-- ========== AWS VERSIONS ========== -->
