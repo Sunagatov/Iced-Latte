@@ -66,7 +66,7 @@
         <google-api-client.version>2.9.0</google-api-client.version>
 
         <!-- ========== AWS VERSIONS ========== -->
-        <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
+        <aws-sdk-bom.version>2.42.8</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.11.0</langchain4j.version>
