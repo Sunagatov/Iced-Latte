@@ -128,7 +128,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.56.1
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.56.1
         with:
           image-ref: zufarexplainedit/iced-latte-backend:latest
           format: table
