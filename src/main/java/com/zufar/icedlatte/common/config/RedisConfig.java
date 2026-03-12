@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,11 +12,13 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import tools.jackson.databind.DefaultTyping;
-import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.type.TypeFactory;
+
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -37,32 +40,37 @@ public class RedisConfig {
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         log.info("cache.mode: Redis");
 
-        tools.jackson.databind.ObjectMapper typedMapper = new tools.jackson.databind.ObjectMapper().rebuild()
-                .activateDefaultTyping(
-                        BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-                        DefaultTyping.OBJECT_AND_NON_CONCRETE)
-                .build();
-        GenericJacksonJsonRedisSerializer typedSerializer = new GenericJacksonJsonRedisSerializer(typedMapper);
-        GenericJacksonJsonRedisSerializer plainSerializer = new GenericJacksonJsonRedisSerializer(new tools.jackson.databind.ObjectMapper());
+        tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
+        TypeFactory tf = mapper.getTypeFactory();
 
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(cacheProperties.getDefaultTtl())
-                .prefixCacheNameWith("v" + appVersion + ":")
-                .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(typedSerializer));
+        JavaType listOfString = tf.constructCollectionType(List.class, String.class);
 
-        RedisCacheConfiguration plainConfig = RedisCacheConfiguration.defaultCacheConfig()
+        var productSerializer    = new JacksonJsonRedisSerializer<>(mapper, ProductInfoDto.class);
+        var stringSerializer     = new JacksonJsonRedisSerializer<>(mapper, String.class);
+        var listStringSerializer = new JacksonJsonRedisSerializer<>(mapper, listOfString);
+
+        RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
                 .prefixCacheNameWith("v" + appVersion + ":")
-                .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(plainSerializer));
+                .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .withCacheConfiguration("productById", defaultConfig.entryTtl(cacheProperties.getProductTtl()))
-                .withCacheConfiguration("brands", plainConfig.entryTtl(cacheProperties.getBrandsTtl()))
-                .withCacheConfiguration("sellers", plainConfig.entryTtl(cacheProperties.getSellersTtl()))
-                .withCacheConfiguration("productImageUrl", defaultConfig.entryTtl(cacheProperties.getImageUrlTtl()))
-                .withCacheConfiguration("productImageUrls", plainConfig.entryTtl(cacheProperties.getImageUrlsTtl()))
+                .cacheDefaults(base.entryTtl(cacheProperties.getDefaultTtl())
+                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
+                .withCacheConfiguration("productById",
+                        base.entryTtl(cacheProperties.getProductTtl())
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(productSerializer)))
+                .withCacheConfiguration("productImageUrl",
+                        base.entryTtl(cacheProperties.getImageUrlTtl())
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
+                .withCacheConfiguration("productImageUrls",
+                        base.entryTtl(cacheProperties.getImageUrlsTtl())
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
+                .withCacheConfiguration("brands",
+                        base.entryTtl(cacheProperties.getBrandsTtl())
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
+                .withCacheConfiguration("sellers",
+                        base.entryTtl(cacheProperties.getSellersTtl())
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
                 .build();
     }
 
