@@ -14,8 +14,9 @@ COPY pom.xml ./
 
 # --- Download dependencies with BuildKit cache mount ---
 # Cache persists on build machine, not in image layers
+# -U is intentional here to avoid stale negative resolution cache entries in mounted .m2
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn dependency:go-offline -B --no-transfer-progress
+    mvn -U dependency:go-offline -B --no-transfer-progress
 
 # --- Copy source code ---
 COPY src ./src
