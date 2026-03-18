@@ -100,12 +100,12 @@ tasks:
   health:
     desc: Check backend health endpoint
     cmds:
-      - curl -fsS {{.BACKEND_HEALTH_URL}}
+      - 'curl -fsS {{.BACKEND_HEALTH_URL}}'
 
   urls:
     desc: Print useful local URLs
     cmds:
-      - echo "Backend health: {{.BACKEND_HEALTH_URL}}"
-      - echo "Swagger UI:     {{.SWAGGER_URL}}"
-      - echo "Frontend:       {{.FRONTEND_URL}}"
-      - echo "MinIO console:  {{.MINIO_CONSOLE_URL}}"
+      - 'echo "Backend health: {{.BACKEND_HEALTH_URL}}"'
+      - 'echo "Swagger UI:     {{.SWAGGER_URL}}"'
+      - 'echo "Frontend:       {{.FRONTEND_URL}}"'
+      - 'echo "MinIO console:  {{.MINIO_CONSOLE_URL}}"'
