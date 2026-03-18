@@ -4,8 +4,9 @@
 FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 # Build arguments
-# BUILD_PROFILE: Maven profile for build-time optimizations (separate from runtime profile)
-ARG BUILD_PROFILE=prod
+# BUILD_PROFILE: optional Maven profile for build-time optimizations.
+# Leave empty by default because the project currently has no `prod` Maven profile.
+ARG BUILD_PROFILE=
 
 WORKDIR /app
 
@@ -24,7 +25,7 @@ COPY src ./src
 
 # --- Build Application with cached dependencies ---
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn package -P${BUILD_PROFILE} -DskipTests -B --no-transfer-progress
+    mvn -U package ${BUILD_PROFILE:+-P${BUILD_PROFILE}} -DskipTests -B --no-transfer-progress
 
 # =============================================================================
 # EXTRACT STAGE — split fat JAR into layers for Docker cache efficiency
