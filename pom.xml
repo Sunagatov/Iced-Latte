@@ -49,6 +49,7 @@
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
         <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
+        <loki-logback-appender.version>1.5.2</loki-logback-appender.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
         <lombok.version>1.18.42</lombok.version>
@@ -70,6 +71,9 @@
 
         <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.12.2</langchain4j.version>
+
+        <!-- ========== OBSERVABILITY VERSIONS ========== -->
+        <sentry.version>8.36.0</sentry.version>
 
         <!-- ========== UTILITIES VERSIONS ========== -->
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
@@ -203,6 +207,12 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logstash-logback-encoder.version}</version>
         </dependency>
+        <!-- Grafana Loki Appender -->
+        <dependency>
+            <groupId>com.github.loki4j</groupId>
+            <artifactId>loki-logback-appender</artifactId>
+            <version>${loki-logback-appender.version}</version>
+        </dependency>
 
         <!-- ========== CODE GENERATION & MAPPING ========== -->
         <dependency>
@@ -235,6 +245,18 @@
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp</artifactId>
+        </dependency>
+
+        <!-- ========== OBSERVABILITY ========== -->
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-spring-boot-4</artifactId>
+            <version>${sentry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-logback</artifactId>
+            <version>${sentry.version}</version>
         </dependency>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->

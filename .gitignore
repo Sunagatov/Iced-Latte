@@ -69,7 +69,11 @@ nb-configuration.xml
 ##############################
 ## Amazon Q
 ##############################
-.amazonq/
+# Commit documentation and guides
+# Only ignore private/local files
+.amazonq/local-notes.md
+.amazonq/private/
+.amazonq/secrets.md
 
 ##############################
 ## OS X

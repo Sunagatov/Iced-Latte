@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!--  CONSOLE LOGGING CONFIGURATION  -->
+    <springProperty scope="context" name="application_name" source="spring.application.name"/>
+    <springProperty scope="context" name="application_version" source="spring.application.version" defaultValue="unknown"/>
+    <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
+
+    <!-- ========================================== -->
+    <!-- CONSOLE APPENDER (Human-Readable)         -->
+    <!-- ========================================== -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <springProperty scope="context" name="application_name" source="spring.application.name"/>
-
-    <!--  FILE LOGGING CONFIGURATION  -->
+    <!-- ========================================== -->
+    <!-- FILE APPENDER (JSON Format)               -->
+    <!-- ========================================== -->
     <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/iced-latte.log</file>
 
@@ -29,6 +35,9 @@
                     <omitEmptyFields>true</omitEmptyFields>
                     <pattern>
                         {
+                        "application": "${application_name}",
+                        "version": "${application_version}",
+                        "environment": "${environment}",
                         "trace": {
                         "traceId": "%X{traceId}",
                         "spanId": "%X{spanId}",
@@ -50,13 +59,164 @@
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/iced-latte-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>1MB</maxFileSize>
+            <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>10MB</totalSizeCap>
+            <totalSizeCap>100MB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
     </appender>
 
+    <!-- ========================================== -->
+    <!-- GRAFANA LOKI APPENDER                     -->
+    <!-- ========================================== -->
+    <springProperty scope="context" name="loki_enabled" source="logging.loki.enabled" defaultValue="false"/>
+    <springProperty scope="context" name="loki_url" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+
+    <if condition='property("loki_enabled").equals("true")'>
+        <then>
+            <appender name="LokiAppender" class="com.github.loki4j.logback.Loki4jAppender">
+                <http>
+                    <url>${loki_url}</url>
+                </http>
+                <format>
+                    <label>
+                        <pattern>application=${application_name},environment=${environment},level=%level</pattern>
+                    </label>
+                    <message>
+                        <pattern>
+                            {
+                            "level": "%level",
+                            "logger": "%logger",
+                            "thread": "%thread",
+                            "message": "%message",
+                            "traceId": "%X{traceId}",
+                            "spanId": "%X{spanId}",
+                            "userId": "%X{userId}",
+                            "correlationId": "%X{correlationId}",
+                            "sessionId": "%X{sessionId}"
+                            }
+                        </pattern>
+                    </message>
+                    <sortByTime>true</sortByTime>
+                </format>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ========================================== -->
+    <!-- ELASTICSEARCH/LOGSTASH APPENDER           -->
+    <!-- ========================================== -->
+    <springProperty scope="context" name="logstash_enabled" source="logging.logstash.enabled" defaultValue="false"/>
+    <springProperty scope="context" name="logstash_host" source="logging.logstash.host" defaultValue="localhost"/>
+    <springProperty scope="context" name="logstash_port" source="logging.logstash.port" defaultValue="5000"/>
+
+    <if condition='property("logstash_enabled").equals("true")'>
+        <then>
+            <appender name="LogstashAppender" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+                <destination>${logstash_host}:${logstash_port}</destination>
+                <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                    <providers>
+                        <timestamp>
+                            <timeZone>UTC</timeZone>
+                        </timestamp>
+                        <version/>
+                        <logLevel/>
+                        <message/>
+                        <loggerName/>
+                        <threadName/>
+                        <pattern>
+                            <omitEmptyFields>true</omitEmptyFields>
+                            <pattern>
+                                {
+                                "application": "${application_name}",
+                                "version": "${application_version}",
+                                "environment": "${environment}",
+                                "traceId": "%X{traceId}",
+                                "spanId": "%X{spanId}",
+                                "userId": "%X{userId}",
+                                "correlationId": "%X{correlationId}",
+                                "sessionId": "%X{sessionId}"
+                                }
+                            </pattern>
+                        </pattern>
+                        <mdc/>
+                        <stackTrace/>
+                    </providers>
+                </encoder>
+                <keepAliveDuration>5 minutes</keepAliveDuration>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ========================================== -->
+    <!-- DATADOG APPENDER                          -->
+    <!-- ========================================== -->
+    <springProperty scope="context" name="datadog_enabled" source="logging.datadog.enabled" defaultValue="false"/>
+    <springProperty scope="context" name="datadog_api_key" source="logging.datadog.api-key" defaultValue=""/>
+    <springProperty scope="context" name="datadog_host" source="logging.datadog.host" defaultValue="http-intake.logs.datadoghq.com"/>
+
+    <if condition='property("datadog_enabled").equals("true")'>
+        <then>
+            <appender name="DatadogAppender" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                    <providers>
+                        <timestamp>
+                            <timeZone>UTC</timeZone>
+                            <fieldName>timestamp</fieldName>
+                        </timestamp>
+                        <logLevel>
+                            <fieldName>status</fieldName>
+                        </logLevel>
+                        <message>
+                            <fieldName>message</fieldName>
+                        </message>
+                        <loggerName>
+                            <fieldName>logger.name</fieldName>
+                        </loggerName>
+                        <threadName>
+                            <fieldName>logger.thread_name</fieldName>
+                        </threadName>
+                        <pattern>
+                            <omitEmptyFields>true</omitEmptyFields>
+                            <pattern>
+                                {
+                                "ddsource": "java",
+                                "service": "${application_name}",
+                                "version": "${application_version}",
+                                "env": "${environment}",
+                                "dd.trace_id": "%X{traceId}",
+                                "dd.span_id": "%X{spanId}",
+                                "usr.id": "%X{userId}",
+                                "correlation_id": "%X{correlationId}",
+                                "session_id": "%X{sessionId}"
+                                }
+                            </pattern>
+                        </pattern>
+                        <mdc/>
+                        <stackTrace/>
+                    </providers>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ========================================== -->
+    <!-- SENTRY APPENDER                           -->
+    <!-- ========================================== -->
+    <springProperty scope="context" name="sentry_enabled" source="sentry.enabled" defaultValue="false"/>
+
+    <if condition='property("sentry_enabled").equals("true")'>
+        <then>
+            <appender name="SentryAppender" class="io.sentry.logback.SentryAppender">
+                <minimumEventLevel>ERROR</minimumEventLevel>
+                <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ========================================== -->
+    <!-- ASYNC WRAPPERS                            -->
+    <!-- ========================================== -->
     <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>512</queueSize>
         <discardingThreshold>0</discardingThreshold>
@@ -69,6 +229,39 @@
         <appender-ref ref="FileAppender"/>
     </appender>
 
+    <if condition='property("loki_enabled").equals("true")'>
+        <then>
+            <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
+                <queueSize>1000</queueSize>
+                <discardingThreshold>0</discardingThreshold>
+                <appender-ref ref="LokiAppender"/>
+            </appender>
+        </then>
+    </if>
+
+    <if condition='property("logstash_enabled").equals("true")'>
+        <then>
+            <appender name="AsyncLogstash" class="ch.qos.logback.classic.AsyncAppender">
+                <queueSize>1000</queueSize>
+                <discardingThreshold>0</discardingThreshold>
+                <appender-ref ref="LogstashAppender"/>
+            </appender>
+        </then>
+    </if>
+
+    <if condition='property("datadog_enabled").equals("true")'>
+        <then>
+            <appender name="AsyncDatadog" class="ch.qos.logback.classic.AsyncAppender">
+                <queueSize>1000</queueSize>
+                <discardingThreshold>0</discardingThreshold>
+                <appender-ref ref="DatadogAppender"/>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ========================================== -->
+    <!-- LOGGER SUPPRESSIONS                       -->
+    <!-- ========================================== -->
     <!-- Suppress OTEL exporter connection errors when no collector is running locally.
          These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
     <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
@@ -82,9 +275,39 @@
          the warning is not actionable. -->
     <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
 
+    <!-- Suppress Loki connection errors in development -->
+    <logger name="com.github.loki4j" level="WARN"/>
+
+    <!-- ========================================== -->
+    <!-- ROOT LOGGER                               -->
+    <!-- ========================================== -->
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
+        
+        <if condition='property("sentry_enabled").equals("true")'>
+            <then>
+                <appender-ref ref="SentryAppender"/>
+            </then>
+        </if>
+        
+        <if condition='property("loki_enabled").equals("true")'>
+            <then>
+                <appender-ref ref="AsyncLoki"/>
+            </then>
+        </if>
+        
+        <if condition='property("logstash_enabled").equals("true")'>
+            <then>
+                <appender-ref ref="AsyncLogstash"/>
+            </then>
+        </if>
+        
+        <if condition='property("datadog_enabled").equals("true")'>
+            <then>
+                <appender-ref ref="AsyncDatadog"/>
+            </then>
+        </if>
     </root>
 
 </configuration>

@@ -11,6 +11,15 @@ spring:
   liquibase:
     drop-first: false
 
+# Production Sentry Configuration
+sentry:
+  # Capture all errors in production
+  sample-rate: 1.0
+  # Trace 5% of transactions to reduce overhead
+  traces-sample-rate: 0.05
+  # Profile 5% of traced transactions
+  profiles-sample-rate: 0.05
+
 management:
   endpoint:
     health:

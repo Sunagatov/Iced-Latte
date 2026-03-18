@@ -215,6 +215,50 @@ springdoc:
   default-produces-media-type: application/json
 
 #
+# Observability Properties
+#
+sentry:
+  enabled: ${SENTRY_ENABLED:false}
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  
+  # Error Sampling - capture all errors in production
+  sample-rate: 1.0
+  
+  # Performance Monitoring - trace 10% of transactions
+  traces-sample-rate: 0.1
+  
+  # Profiling - profile 10% of traced transactions
+  profiles-sample-rate: 0.1
+  
+  # Privacy & Security
+  send-default-pii: false
+  attach-stacktrace: true
+  attach-threads: true
+  
+  # Performance Monitoring
+  enable-tracing: true
+  enable-profiling: true
+  
+  # Logging Integration
+  logging:
+    minimum-event-level: error
+    minimum-breadcrumb-level: info
+  
+  # Performance Thresholds (in milliseconds)
+  tracing:
+    origins:
+      - ".*"
+  
+  # Ignore specific exceptions (optional)
+  ignored-exceptions-for-type:
+    - java.lang.IllegalArgumentException
+  
+  # In-App Packages (auto-configured by Spring Boot)
+  in-app-packages:
+    - com.zufar.icedlatte
+
+#
 # Management Properties
 #
 management:
@@ -247,6 +291,9 @@ management:
   tracing:
     sampling:
       probability: 0.1
+  observations:
+    key-values:
+      application: ${spring.application.name}
 
 #
 # JWT Security Properties
@@ -313,4 +360,21 @@ logging:
   config: classpath:logback-spring.xml
   level:
     io.opentelemetry.exporter: WARN
+  
+  # Grafana Loki Configuration
+  loki:
+    enabled: ${LOKI_ENABLED:false}
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+  
+  # Elasticsearch/Logstash Configuration
+  logstash:
+    enabled: ${LOGSTASH_ENABLED:false}
+    host: ${LOGSTASH_HOST:localhost}
+    port: ${LOGSTASH_PORT:5000}
+  
+  # Datadog Configuration
+  datadog:
+    enabled: ${DATADOG_ENABLED:false}
+    api-key: ${DATADOG_API_KEY:}
+    host: ${DATADOG_HOST:http-intake.logs.datadoghq.com}
 
