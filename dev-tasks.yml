@@ -2,6 +2,7 @@ version: '3'
 
 vars:
   COMPOSE_FILE: docker-compose.yml
+  BACKEND_IMAGE: zufarexplainedit/iced-latte-backend:latest
   BACKEND_HEALTH_URL: http://localhost:8083/actuator/health
   FRONTEND_URL: http://localhost:3000
   SWAGGER_URL: http://localhost:8083/api/docs/swagger-ui/index.html
@@ -61,11 +62,13 @@ tasks:
 
   backend-up:
     silent: true
-    desc: Start backend + infrastructure in Docker for START.md Option B
+    desc: Start backend + infrastructure in Docker for START.md Option B using the published backend image
     deps: [docker-ready]
     cmds:
-      - echo "🚀 Building and starting backend + infrastructure..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --build
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - echo "🚀 Starting backend + infrastructure without local backend rebuild..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --no-build backend
       - echo "✅ Backend Docker stack is starting."
 
   backend-down:
@@ -79,11 +82,15 @@ tasks:
 
   fullstack-up:
     silent: true
-    desc: Start backend + frontend + infrastructure in Docker for START.md Option C
+    desc: Start backend + frontend + infrastructure in Docker for START.md Option C using published backend image
     deps: [docker-ready]
     cmds:
-      - echo "🚀 Building and starting full stack (backend + frontend + infrastructure)..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --build
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - echo "🏗️ Building frontend image from source..."
+      - docker compose -f {{.COMPOSE_FILE}} build frontend
+      - echo "🚀 Starting full stack (published backend + local frontend + infrastructure)..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --no-build backend frontend
       - echo "✅ Full stack is starting."
 
   fullstack-down:
