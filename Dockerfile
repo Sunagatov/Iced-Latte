@@ -12,11 +12,12 @@ WORKDIR /app
 # --- Copy POM first for dependency caching ---
 COPY pom.xml ./
 
-# --- Download dependencies with BuildKit cache mount ---
-# Cache persists on build machine, not in image layers
-# -U is intentional here to avoid stale negative resolution cache entries in mounted .m2
+# --- Warm Maven cache ---
+# Best-effort only: some ecosystems/plugins can break go-offline resolution even though
+# the actual package build succeeds. Do not fail the image build at this stage.
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -U dependency:go-offline -B --no-transfer-progress
+    (mvn -U dependency:go-offline -B --no-transfer-progress || \
+     echo "⚠️ Maven go-offline failed; continuing with package step which will resolve dependencies directly.")
 
 # --- Copy source code ---
 COPY src ./src
