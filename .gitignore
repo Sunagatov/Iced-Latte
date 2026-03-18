@@ -71,6 +71,7 @@ nb-configuration.xml
 ##############################
 # Commit documentation and guides
 # Only ignore private/local files
+/.amazonq/
 .amazonq/local-notes.md
 .amazonq/private/
 .amazonq/secrets.md
