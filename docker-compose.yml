@@ -88,6 +88,7 @@ services:
   # ── Backend (profile: backend) ─────────────────────────────────────────────
 
   backend:
+    image: zufarexplainedit/iced-latte-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
