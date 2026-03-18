@@ -1,0 +1,28 @@
+filebeat.inputs:
+  # Docker container logs
+  - type: container
+    enabled: true
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      - decode_json_fields:
+          fields: ["message"]
+          target: ""
+          overwrite_keys: true
+
+  # Local log files
+  - type: log
+    enabled: true
+    paths:
+      - /logs/*.log
+    fields:
+      source: local-logs
+      app: iced-latte
+
+output.logstash:
+  hosts: ["logstash:5000"]
+
+logging.level: info
+logging.to_files: false

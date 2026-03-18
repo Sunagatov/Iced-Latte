@@ -4,9 +4,8 @@
 FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 # Build arguments
-ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
-ARG PROFILE=dev
-ARG VERSION=0.0.1
+# BUILD_PROFILE: Maven profile for build-time optimizations (separate from runtime profile)
+ARG BUILD_PROFILE=prod
 
 WORKDIR /app
 
@@ -23,7 +22,7 @@ COPY src ./src
 
 # --- Build Application with cached dependencies ---
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn package -P${PROFILE} -DskipTests -B --no-transfer-progress
+    mvn package -P${BUILD_PROFILE} -DskipTests -B --no-transfer-progress
 
 # =============================================================================
 # EXTRACT STAGE — split fat JAR into layers for Docker cache efficiency
@@ -36,8 +35,7 @@ RUN java -Djarmode=layertools -jar app.jar extract
 # =============================================================================
 # CDS TRAINING STAGE — generate class-data sharing archive
 # =============================================================================
-# CDS training is optional: if it fails, the build continues without CDS optimization.
-# The runtime will fall back to normal class loading if app-cds.jsa is missing or invalid.
+# CDS archive creation is REQUIRED. If it fails, the build fails.
 FROM eclipse-temurin:25-jre-alpine AS cds-train
 WORKDIR /app
 COPY --from=extract /app/dependencies/ ./
@@ -47,9 +45,13 @@ COPY --from=extract /app/application/ ./
 RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
         -Dspring.context.exit=onRefresh \
         -Dspring.profiles.active=prod \
-        org.springframework.boot.loader.launch.JarLauncher 2>&1 || true && \
-    if [ -f app-cds.jsa ]; then echo "CDS archive created: $(du -h app-cds.jsa)"; \
-    else echo "CDS archive not created (non-critical, continuing)"; fi
+        org.springframework.boot.loader.launch.JarLauncher && \
+    if [ -f app-cds.jsa ] && [ -s app-cds.jsa ]; then \
+        echo "CDS archive created successfully: $(du -h app-cds.jsa)"; \
+    else \
+        echo "ERROR: CDS archive creation failed or produced empty file"; \
+        exit 1; \
+    fi
 
 # =============================================================================
 # RUNTIME STAGE
@@ -57,12 +59,14 @@ RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
 FROM eclipse-temurin:25-jre-alpine
 
 # Build arguments for runtime
-ARG VERSION=0.0.1
+# IMAGE_VERSION: Docker image metadata version (does not change application version in JAR)
+ARG IMAGE_VERSION=0.0.1
 
-# Metadata
-LABEL maintainer="Iced-Latte Team" \
-      version="${VERSION}" \
-      description="Iced-Latte Backend Application"
+# OCI-compliant metadata labels
+LABEL org.opencontainers.image.title="Iced-Latte Backend" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.description="Production-grade Java coffee marketplace backend" \
+      org.opencontainers.image.vendor="Iced-Latte Team"
 
 # --- Create non-root user for security hardening ---
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
@@ -74,7 +78,7 @@ COPY --from=extract --chown=appuser:appgroup /app/dependencies/ ./
 COPY --from=extract --chown=appuser:appgroup /app/spring-boot-loader/ ./
 COPY --from=extract --chown=appuser:appgroup /app/snapshot-dependencies/ ./
 COPY --from=extract --chown=appuser:appgroup /app/application/ ./
-COPY --from=cds-train --chown=appuser:appgroup /app/app-cds.jsa ./ 2>/dev/null || true
+COPY --from=cds-train --chown=appuser:appgroup /app/app-cds.jsa ./
 
 # --- Switch to non-root user ---
 USER appuser
