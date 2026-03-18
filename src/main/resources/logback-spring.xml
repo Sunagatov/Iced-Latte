@@ -201,20 +201,6 @@
     </if>
 
     <!-- ========================================== -->
-    <!-- SENTRY APPENDER                           -->
-    <!-- ========================================== -->
-    <springProperty scope="context" name="sentry_enabled" source="sentry.enabled" defaultValue="false"/>
-
-    <if condition='property("sentry_enabled").equals("true")'>
-        <then>
-            <appender name="SentryAppender" class="io.sentry.logback.SentryAppender">
-                <minimumEventLevel>ERROR</minimumEventLevel>
-                <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
-            </appender>
-        </then>
-    </if>
-
-    <!-- ========================================== -->
     <!-- ASYNC WRAPPERS                            -->
     <!-- ========================================== -->
     <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
@@ -281,15 +267,12 @@
     <!-- ========================================== -->
     <!-- ROOT LOGGER                               -->
     <!-- ========================================== -->
+    <!-- Note: Sentry logging is automatically configured by Spring Boot
+         via sentry.logging.* properties in application.yaml.
+         No manual SentryAppender needed. -->
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
-        
-        <if condition='property("sentry_enabled").equals("true")'>
-            <then>
-                <appender-ref ref="SentryAppender"/>
-            </then>
-        </if>
         
         <if condition='property("loki_enabled").equals("true")'>
             <then>
