@@ -8,58 +8,92 @@ vars:
   MINIO_CONSOLE_URL: http://localhost:9001
 
 tasks:
+  docker-ready:
+    internal: true
+    desc: Check that Docker and Docker Compose are installed and Docker Desktop/daemon is running
+    cmds:
+      - |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "❌ Docker is not installed."
+          echo "💡 Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
+          exit 1
+        fi
+      - |
+        if ! docker compose version >/dev/null 2>&1; then
+          echo "❌ Docker Compose is not available."
+          echo "💡 Ensure Docker Desktop is installed correctly and 'docker compose' works in your terminal."
+          exit 1
+        fi
+      - |
+        if ! docker info >/dev/null 2>&1; then
+          echo "❌ Docker is installed but not running."
+          echo "💡 Start Docker Desktop (or Docker daemon) and wait until it is ready."
+          exit 1
+        fi
+
   infra-up:
     desc: Start local infrastructure only (PostgreSQL, Redis, MinIO, bucket init) for START.md Option A
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} up -d postgres redis minio minio-init
 
   infra-down:
     desc: Stop local infrastructure containers without deleting volumes
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} stop postgres redis minio minio-init
 
   infra-reset:
     desc: Full local reset — stop all local containers from docker-compose.yml and delete volumes
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down -v --remove-orphans
 
   backend-up:
     desc: Start backend + infrastructure in Docker for START.md Option B
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --build
 
   backend-down:
     desc: Stop backend + infrastructure Docker setup from START.md Option B
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile backend down --remove-orphans
 
   fullstack-up:
     desc: Start backend + frontend + infrastructure in Docker for START.md Option C
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --build
 
   fullstack-down:
     desc: Stop backend + frontend + infrastructure Docker setup from START.md Option C
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
 
   backend-logs:
     desc: Follow backend logs
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} logs -f backend
 
   frontend-logs:
     desc: Follow frontend logs
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} logs -f frontend
 
   infra-logs:
     desc: Follow infrastructure logs (PostgreSQL, Redis, MinIO)
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} logs -f postgres redis minio minio-init
 
   status:
     desc: Show container status for the local development stack
+    deps: [docker-ready]
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} ps
 
