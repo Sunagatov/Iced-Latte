@@ -23,7 +23,6 @@ COPY src ./src
 
 # --- Build Application with cached dependencies ---
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION} && \
     mvn package -P${PROFILE} -DskipTests -B --no-transfer-progress
 
 # =============================================================================
@@ -37,6 +36,8 @@ RUN java -Djarmode=layertools -jar app.jar extract
 # =============================================================================
 # CDS TRAINING STAGE — generate class-data sharing archive
 # =============================================================================
+# CDS training is optional: if it fails, the build continues without CDS optimization.
+# The runtime will fall back to normal class loading if app-cds.jsa is missing or invalid.
 FROM eclipse-temurin:25-jre-alpine AS cds-train
 WORKDIR /app
 COPY --from=extract /app/dependencies/ ./
@@ -46,7 +47,9 @@ COPY --from=extract /app/application/ ./
 RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
         -Dspring.context.exit=onRefresh \
         -Dspring.profiles.active=prod \
-        org.springframework.boot.loader.launch.JarLauncher 2>/dev/null || true
+        org.springframework.boot.loader.launch.JarLauncher 2>&1 || true && \
+    if [ -f app-cds.jsa ]; then echo "CDS archive created: $(du -h app-cds.jsa)"; \
+    else echo "CDS archive not created (non-critical, continuing)"; fi
 
 # =============================================================================
 # RUNTIME STAGE
@@ -55,24 +58,29 @@ FROM eclipse-temurin:25-jre-alpine
 
 # Build arguments for runtime
 ARG VERSION=0.0.1
-ARG PROFILE=prod
 
 # Metadata
 LABEL maintainer="Iced-Latte Team" \
       version="${VERSION}" \
       description="Iced-Latte Backend Application"
 
+# --- Create non-root user for security hardening ---
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 
 # --- Layered copy: dependencies change rarely, application layer changes every build ---
-COPY --from=extract /app/dependencies/ ./
-COPY --from=extract /app/spring-boot-loader/ ./
-COPY --from=extract /app/snapshot-dependencies/ ./
-COPY --from=extract /app/application/ ./
-COPY --from=cds-train /app/app-cds.jsa ./
+COPY --from=extract --chown=appuser:appgroup /app/dependencies/ ./
+COPY --from=extract --chown=appuser:appgroup /app/spring-boot-loader/ ./
+COPY --from=extract --chown=appuser:appgroup /app/snapshot-dependencies/ ./
+COPY --from=extract --chown=appuser:appgroup /app/application/ ./
+COPY --from=cds-train --chown=appuser:appgroup /app/app-cds.jsa ./ 2>/dev/null || true
+
+# --- Switch to non-root user ---
+USER appuser
 
 # --- Runtime Configuration ---
-EXPOSE 8080
+EXPOSE 8083
 
 # --- Application Startup ---
 ENTRYPOINT ["java", \
@@ -82,6 +90,5 @@ ENTRYPOINT ["java", \
     "-XX:+UseG1GC", \
     "-XX:+UseStringDeduplication", \
     "-XX:SharedArchiveFile=app-cds.jsa", \
-    "-Djava.security.egd=file:/dev/./urandom", \
     "-Dspring.profiles.active=prod", \
     "org.springframework.boot.loader.launch.JarLauncher"]
