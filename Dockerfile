@@ -1,7 +1,7 @@
 # =============================================================================
-# BUILD STAGE
+# BUILD STAGE — Modern 2026 approach with BuildKit cache mounts
 # =============================================================================
-FROM zufarexplainedit/iced-latte-deps:latest AS build
+FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 # Build arguments
 ARG MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
@@ -10,12 +10,20 @@ ARG VERSION=0.0.1
 
 WORKDIR /app
 
-# --- Source & POM ---
+# --- Copy POM first for dependency caching ---
 COPY pom.xml ./
+
+# --- Download dependencies with BuildKit cache mount ---
+# Cache persists on build machine, not in image layers
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline -B --no-transfer-progress
+
+# --- Copy source code ---
 COPY src ./src
 
-# --- Build Application ---
-RUN mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION} && \
+# --- Build Application with cached dependencies ---
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn versions:set-property -Dproperty=project.version -DnewVersion=${VERSION} && \
     mvn package -P${PROFILE} -DskipTests -B --no-transfer-progress
 
 # =============================================================================

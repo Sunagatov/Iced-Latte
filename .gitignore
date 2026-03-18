@@ -69,12 +69,9 @@ nb-configuration.xml
 ##############################
 ## Amazon Q
 ##############################
-# Commit documentation and guides
-# Only ignore private/local files
-/.amazonq/
-.amazonq/local-notes.md
-.amazonq/private/
-.amazonq/secrets.md
+# Amazon Q agent workspace - contains local notes, deployment details, and AI-generated artifacts
+# These files are for local development workflow only and should not be committed
+.amazonq/
 
 ##############################
 ## OS X
@@ -85,6 +82,11 @@ nb-configuration.xml
 local.env
 /README.local.md
 /docker-compose.override.yaml
+
+##############################
+## Deployment
+##############################
+ssh-key-*.key
 
 ##############################
 ## Logs

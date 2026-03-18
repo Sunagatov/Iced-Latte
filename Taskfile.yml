@@ -1,0 +1,50 @@
+version: '3'
+
+vars:
+  PROJECT_CONFIG: .env.prod
+
+tasks:
+  build:
+    desc: Build Docker image for ARM64 (Hetzner server architecture)
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/build.sh
+
+  push:
+    desc: Push Docker image to Docker Hub
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/push.sh
+
+  sync-compose:
+    desc: Copy local docker-compose.prod.yml to remote server
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/sync-compose.sh
+
+  deploy:
+    desc: Deploy to Hetzner server (pull + recreate container)
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/deploy.sh
+
+  logs:
+    desc: Show recent logs from production container
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/logs.sh
+
+  smoke:
+    desc: Run smoke test against production endpoint
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/smoke.sh
+
+  build-and-push:
+    desc: Build and push in one step
+    cmds:
+      - task: build
+      - task: push
+
+  full-deploy:
+    desc: Complete deployment flow (build → push → sync-compose → deploy → smoke)
+    cmds:
+      - task: build
+      - task: push
+      - task: sync-compose
+      - task: deploy
+      - task: smoke
