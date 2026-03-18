@@ -43,7 +43,7 @@
 
         <!-- ========== DATABASE VERSIONS ========== -->
         <postgresql.version>42.7.10</postgresql.version>
-<!-- ========== SECURITY VERSIONS ========== -->
+        <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
