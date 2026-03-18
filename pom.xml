@@ -26,6 +26,17 @@
                 <artifactId>commons-compress</artifactId>
                 <version>1.28.0</version>
             </dependency>
+            <!-- GHSA-72hv-8253-57qq, CVE-2026-29062 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.20.3</version>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>3.0.5</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -168,8 +179,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-liquibase</artifactId>
         </dependency>
+        <!-- H2 for CDS training only (Docker build stage) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
-        <!-- ========== BOUNCYCASTLE (required by Argon2PasswordEncoder) ========== -->
+        <!-- ========== BouncyCastle (required by Argon2PasswordEncoder) ========== -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
@@ -468,7 +485,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Jacoco Plugin -->
+            <!-- JaCoCo Plugin -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>

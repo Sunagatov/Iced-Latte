@@ -39,6 +39,7 @@ RUN java -Djarmode=layertools -jar app.jar extract
 # CDS TRAINING STAGE — generate class-data sharing archive
 # =============================================================================
 # CDS archive creation is REQUIRED. If it fails, the build fails.
+# Uses dedicated 'cds' profile with minimal safe defaults (no external services).
 FROM eclipse-temurin:25-jre-alpine AS cds-train
 WORKDIR /app
 COPY --from=extract /app/dependencies/ ./
@@ -47,7 +48,7 @@ COPY --from=extract /app/snapshot-dependencies/ ./
 COPY --from=extract /app/application/ ./
 RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
         -Dspring.context.exit=onRefresh \
-        -Dspring.profiles.active=prod \
+        -Dspring.profiles.active=cds \
         org.springframework.boot.loader.launch.JarLauncher && \
     if [ -f app-cds.jsa ] && [ -s app-cds.jsa ]; then \
         echo "CDS archive created successfully: $(du -h app-cds.jsa)"; \

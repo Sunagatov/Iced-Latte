@@ -60,9 +60,9 @@ docker ps
 
 ### Step 3 — Configure environment
 
-The `.env` file in the project root is committed with safe defaults — it works out of the box for local development. You don't need to change anything to get started.
+The `.env` file in the project root is committed with local development values and placeholders — it works out of the box for local development. You don't need to change anything to get started.
 
-> 🔒 Never commit real secrets to `.env`. If you add real credentials locally, keep them out of git.
+> 🔒 Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI). Never commit real secrets to git.
 
 > 🪟 **Windows users:** use the IntelliJ EnvFile plugin (Step 4) to load `.env` — the `export` command only works on Linux/macOS/Git Bash.
 
@@ -221,6 +221,24 @@ docker compose --profile backend --profile frontend up -d --build
 
 ---
 
+## 🔍 Observability (Optional)
+
+Observability is optional and disabled by default — normal local development does not require it.
+
+The repo contains optional observability and logging playground pieces:
+- Sentry
+- Datadog-related setup
+- Loki / Prometheus / Grafana
+- ELK (Elasticsearch, Logstash, Kibana)
+
+To explore them, check the existing config files:
+- `docker-compose.yml`
+- `docker-compose.logging.yml`
+- `src/main/resources/application.yaml`
+- `src/main/resources/logback-spring.xml`
+
+---
+
 ## 🧪 Running the tests
 
 ```bash
@@ -295,12 +313,13 @@ src/
 │   ├── product/        # Product catalog
 │   ├── cart/           # Shopping cart
 │   ├── order/          # Orders
-│   ├── review/         # Product reviews & ratings
+│   ├── payment/        # Stripe webhook & session handling
+│   ├── review/         # Product reviews, ratings, AI moderation
 │   ├── favorite/       # Favorites list
 │   ├── email/          # Email verification & notifications
 │   ├── filestorage/    # AWS S3 file upload/download
+│   ├── observability/  # Telemetry, Sentry integration
 │   ├── common/         # Shared utilities, validation, monitoring
-│   ├── payment/        # Stripe webhook & session handling
 │   └── astartup/       # Startup data migration
 └── test/               # Unit and integration tests
 ```

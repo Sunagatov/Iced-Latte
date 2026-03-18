@@ -46,7 +46,7 @@ git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 # 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
 docker compose up -d postgres redis minio minio-init
 
-# 3. ▶️ Run (uses committed .env with safe local defaults)
+# 3. ▶️ Run (uses committed .env — local development values and placeholders)
 # Linux / macOS / Git Bash on Windows:
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
@@ -118,17 +118,18 @@ Iced Latte has earned recognition from the broader tech community.
 | 📂 Category | 🔧 Technology |
 |---|---|
 | 💻 Language | Java 25 |
-| 🏗️ Framework | Spring Boot 3.5, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
-| 🗄️ Database | PostgreSQL, Liquibase 4.32 |
+| 🏗️ Framework | Spring Boot 4.0, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
+| 🗄️ Database | PostgreSQL, Liquibase |
 | ⚡ Cache | Redis, Caffeine |
-| 🔒 Security | JWT (JJWT 0.12), Google OAuth2, TLS |
-| ☁️ Cloud | AWS S3 SDK 2.x |
-| 📊 Monitoring | Micrometer, Prometheus, OpenTelemetry |
+| 🔒 Security | JWT (JJWT 0.13), Google OAuth2, Argon2 |
+| ☁️ Cloud | AWS S3 SDK 2.x, CloudFront |
+| 💳 Payment | Stripe |
+| 🤖 AI | LangChain4j, OpenAI |
+| 📊 Observability | Micrometer, Prometheus, OpenTelemetry, Sentry, Loki |
 | 🧪 Testing | JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco |
-| 📝 Logging | Logback, Logstash encoder, SLF4J |
-| 📋 API | OpenAPI 3, SpringDoc 2.8, OpenAPI Generator 7 |
+| 📋 API | OpenAPI 3, SpringDoc 3.0, OpenAPI Generator 7 |
 | 🔄 Mapping | MapStruct 1.6, Lombok |
-| 🚢 Deployment | Docker, GitHub Actions |
+| 🚢 Deployment | Docker, Taskfile-based deployment, VPS hosting |
 
 ---
 
@@ -155,10 +156,12 @@ src/main/java/com/zufar/icedlatte/
 ├── 📦 product/        # Product catalog
 ├── 🛒 cart/           # Shopping cart
 ├── 📋 order/          # Orders
-├── ⭐ review/         # Product reviews & ratings
+├── 💳 payment/        # Stripe payment, webhooks
+├── ⭐ review/         # Product reviews, ratings, AI moderation
 ├── ❤️ favorite/       # Favorites list
 ├── 📧 email/          # Email verification & notifications
 ├── 📁 filestorage/    # AWS S3 file upload/download
+├── 📊 observability/  # Telemetry, Sentry integration
 ├── 🔧 common/         # Shared utilities, validation, monitoring
 └── 🚀 astartup/       # Startup data migration
 ```
@@ -167,16 +170,18 @@ src/main/java/com/zufar/icedlatte/
 
 ## 🚢 Deployment
 
-🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to Render.
+🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to a VPS.
 
-On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and deploys to Render automatically. Only maintainers can merge to `master`.
+Deployment is managed via Taskfile. The typical flow:
 
-| Pipeline | Trigger | What it does |
-|---|---|---|
-| [CI](.github/workflows/ci.yml) | Push + PR → `development` | Build, test, Codecov, SonarCloud, OWASP, OpenAPI breaking-change check (PR only), Telegram on failure |
-| [CD](.github/workflows/cd.yml) | Push to `master` | Build Docker image, push to Docker Hub, deploy to Render, smoke test, Telegram notify |
-| [Build deps image](.github/workflows/build-deps-image.yml) | `pom.xml` changed on `master` or `development` | Rebuilds the Maven deps base image to keep builds fast, Telegram on failure |
-| [Stale](.github/workflows/stale.yml) | Every Monday | Marks issues/PRs stale after 60 days, closes after 30 |
+- `task build` — build Docker image for ARM64 (server architecture)
+- `task push` — push to Docker Hub
+- `task sync-compose` — copy compose file to remote server
+- `task deploy` — pull and recreate container on the server
+- `task smoke` — run smoke test against production endpoint
+- `task full-deploy` — complete flow (build → push → sync-compose → deploy → smoke)
+
+See `Taskfile.yml` for all available tasks.
 
 ---
 
