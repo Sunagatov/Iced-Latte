@@ -89,9 +89,6 @@ services:
 
   backend:
     image: zufarexplainedit/iced-latte-backend:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: iced-latte-backend
     profiles: [backend]
     env_file: .env
