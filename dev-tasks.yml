@@ -136,11 +136,20 @@ tasks:
 
   health:
     silent: true
-    desc: Check backend health endpoint
+    desc: Wait for backend startup and check health endpoint
     cmds:
-      - echo "🏥 Checking backend health endpoint..."
-      - 'curl -fsS {{.BACKEND_HEALTH_URL}}'
-      - echo
+      - |
+        echo "🏥 Waiting for backend health endpoint..."
+        for i in $(seq 1 30); do
+          if curl -fsS {{.BACKEND_HEALTH_URL}}; then
+            echo
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "❌ Backend did not become healthy within 60 seconds."
+        echo "💡 Run: task -t dev-tasks.yml backend-logs"
+        exit 1
 
   urls:
     silent: true
