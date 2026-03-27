@@ -1,3 +1,6 @@
+-- liquibase formatted sql
+
+-- changeset zufar:add-product-image-table
 CREATE TABLE product_image (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID         NOT NULL REFERENCES product (id) ON DELETE CASCADE,

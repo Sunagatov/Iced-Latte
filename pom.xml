@@ -41,41 +41,52 @@
             **/astartup/AiProductSummaryGenerator.java
         </sonar.coverage.exclusions>
 
+        <!-- ========== PROJECT CONFIGURATION ========== -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>25</java.version>
 
+        <!-- ========== DATABASE VERSIONS ========== -->
         <postgresql.version>42.7.10</postgresql.version>
-
+        <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
         <spring-retry.version>2.0.12</spring-retry.version>
         <bcprov.version>1.83</bcprov.version>
 
+        <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
         <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
         <loki-logback-appender.version>1.5.2</loki-logback-appender.version>
 
+        <!-- ========== CODE GENERATION VERSIONS ========== -->
         <lombok.version>1.18.42</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
+        <!-- ========== DOCUMENTATION VERSIONS ========== -->
         <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
         <openapi-generator.version>7.20.0</openapi-generator.version>
 
+        <!-- ========== TESTING VERSIONS ========== -->
         <instancio-junit.version>5.5.1</instancio-junit.version>
         <rest-assured.version>6.0.0</rest-assured.version>
 
+        <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
         <stripe.version>31.4.1</stripe.version>
         <google-api-client.version>2.9.0</google-api-client.version>
 
+        <!-- ========== AWS VERSIONS ========== -->
         <aws-sdk-bom.version>2.42.8</aws-sdk-bom.version>
 
+        <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.12.2</langchain4j.version>
 
+        <!-- ========== OBSERVABILITY VERSIONS ========== -->
         <sentry.version>8.36.0</sentry.version>
 
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <guava.version>33.5.0-jre</guava.version>
 
+        <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
         <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
@@ -85,6 +96,7 @@
         <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
 
+        <!-- ========== OPENAPI CONFIGURATION ========== -->
         <openapi-package>com.zufar.icedlatte.openapi</openapi-package>
         <openapi-package-with-dto>${openapi-package}.dto</openapi-package-with-dto>
         <openapi-output-dir>${project.build.directory}/generated-sources/openapi</openapi-output-dir>
@@ -92,6 +104,7 @@
 
     <dependencies>
 
+        <!-- ========== SPRING FRAMEWORK ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -134,6 +147,7 @@
             <version>${spring-retry.version}</version>
         </dependency>
 
+        <!-- ========== AWS ========== -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
@@ -153,6 +167,7 @@
             <artifactId>cloudfront</artifactId>
         </dependency>
 
+        <!-- ========== DATABASE ========== -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -162,18 +177,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-liquibase</artifactId>
         </dependency>
+        <!-- H2 for CDS training only (Docker build stage) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ========== BouncyCastle (required by Argon2PasswordEncoder) ========== -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bcprov.version}</version>
         </dependency>
 
+        <!-- ========== SECURITY & JWT ========== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -192,6 +210,11 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ========== SERIALIZATION & LOGGING ========== -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
@@ -203,6 +226,7 @@
             <version>${logstash-logback-encoder.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Grafana Loki Appender -->
         <dependency>
             <groupId>com.github.loki4j</groupId>
             <artifactId>loki-logback-appender</artifactId>
@@ -210,6 +234,7 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ========== CODE GENERATION & MAPPING ========== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -221,12 +246,14 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- ========== DOCUMENTATION ========== -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi.version}</version>
         </dependency>
 
+        <!-- ========== MONITORING ========== -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
@@ -240,6 +267,7 @@
             <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
 
+        <!-- ========== OBSERVABILITY ========== -->
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry-spring-boot-4</artifactId>
@@ -252,6 +280,7 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
@@ -269,6 +298,7 @@
             </exclusions>
         </dependency>
 
+        <!-- ========== AI ========== -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
@@ -280,6 +310,7 @@
             <version>${langchain4j.version}</version>
         </dependency>
 
+        <!-- ========== UTILITIES ========== -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -295,6 +326,7 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- ========== TESTING ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -339,10 +371,16 @@
             <version>${instancio-junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Maven Enforcer Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -374,6 +412,7 @@
                 </executions>
             </plugin>
 
+            <!-- CycloneDX SBOM Plugin -->
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
@@ -392,6 +431,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -418,6 +458,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -441,6 +482,7 @@
                 </configuration>
             </plugin>
 
+            <!-- JaCoCo Plugin -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -461,6 +503,7 @@
                 </executions>
             </plugin>
 
+            <!-- Maven Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -474,6 +517,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Maven Failsafe Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -495,17 +539,20 @@
                 </configuration>
             </plugin>
 
+            <!-- SonarQube Scanner Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>${sonar-maven-plugin.version}</version>
             </plugin>
 
+            <!-- OpenAPI Generator Plugin -->
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>${openapi-generator.version}</version>
                 <executions>
+                    <!-- Generate from Product OpenAPI Spec -->
                     <execution>
                         <id>generate-from-product-openapi-spec</id>
                         <goals>
@@ -526,7 +573,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from User OpenAPI Spec -->
                     <execution>
                         <id>generate-from-user-openapi-spec</id>
                         <goals>
@@ -547,7 +594,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from ShoppingCart OpenAPI Spec -->
                     <execution>
                         <id>generate-from-cart-openapi-spec</id>
                         <goals>
@@ -568,7 +615,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from Security OpenAPI Spec -->
                     <execution>
                         <id>generate-from-security-openapi-spec</id>
                         <goals>
@@ -589,7 +636,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from Payment OpenAPI Spec -->
                     <execution>
                         <id>generate-from-payment-openapi-spec</id>
                         <goals>
@@ -610,7 +657,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from Favorite OpenAPI Spec -->
                     <execution>
                         <id>generate-from-favorite-openapi-spec</id>
                         <goals>
@@ -631,7 +678,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from Order OpenAPI Spec -->
                     <execution>
                         <id>generate-from-order-openapi-spec</id>
                         <goals>
@@ -652,7 +699,7 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
+                    <!-- Generate from Product Review OpenAPI Spec -->
                     <execution>
                         <id>generate-from-product-review-openapi-spec</id>
                         <goals>
