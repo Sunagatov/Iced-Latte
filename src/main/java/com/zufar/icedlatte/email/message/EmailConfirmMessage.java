@@ -20,6 +20,6 @@ public class EmailConfirmMessage implements MessageBuilder<EmailTokenDto> {
 
     @Override
     public boolean supports(Class<?> clazz) {
-        return clazz == EmailConfirmMessage.class;
+        return EmailTokenDto.class.isAssignableFrom(clazz);
     }
 }
