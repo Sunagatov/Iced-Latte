@@ -32,8 +32,8 @@ echo ""
 # Show last 100 lines, follow if -f flag is passed
 if [[ "${1:-}" == "-f" ]]; then
   ssh -i "$SSH_KEY_EXPANDED" "${SSH_USER}@${SSH_HOST}" \
-    "cd ${REMOTE_APP_DIR} && docker-compose -f ${REMOTE_COMPOSE_FILE} logs -f --tail 100"
+    "cd ${REMOTE_APP_DIR} && docker compose -f ${REMOTE_COMPOSE_FILE} logs -f --tail 100"
 else
   ssh -i "$SSH_KEY_EXPANDED" "${SSH_USER}@${SSH_HOST}" \
-    "cd ${REMOTE_APP_DIR} && docker-compose -f ${REMOTE_COMPOSE_FILE} logs --tail 100"
+    "cd ${REMOTE_APP_DIR} && docker compose -f ${REMOTE_COMPOSE_FILE} logs --tail 100"
 fi

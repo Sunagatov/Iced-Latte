@@ -58,16 +58,22 @@ fi
 echo "📥 Pulling latest image..."
 export DOCKER_IMAGE=${DOCKER_IMAGE}
 export DOCKER_TAG=${DOCKER_TAG}
-docker-compose -f ${REMOTE_COMPOSE_FILE} pull
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "❌ Docker Compose v2 is not available on remote server"
+  exit 1
+fi
+
+docker compose -f ${REMOTE_COMPOSE_FILE} pull
 
 echo "🚀 Recreating containers..."
-docker-compose -f ${REMOTE_COMPOSE_FILE} up -d
+docker compose -f ${REMOTE_COMPOSE_FILE} up -d --remove-orphans
 
 echo "⏳ Waiting for containers to stabilize..."
 sleep 5
 
 echo "📊 Container status:"
-docker-compose -f ${REMOTE_COMPOSE_FILE} ps
+docker compose -f ${REMOTE_COMPOSE_FILE} ps
 
 echo ""
 echo "✅ Deployment complete"

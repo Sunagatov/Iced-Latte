@@ -44,7 +44,7 @@ cd Iced-Latte
 ### Step 2 — Start the infrastructure
 
 ```bash
-docker-compose up -d postgres redis minio minio-init
+docker compose up -d postgres redis minio minio-init
 ```
 
 This starts:
@@ -128,7 +128,7 @@ cd Iced-Latte
 ### Step 2 — Start everything
 
 ```bash
-docker-compose --profile backend up -d --build
+docker compose --profile backend up -d --build
 ```
 
 This builds the backend image and starts:
@@ -155,16 +155,16 @@ curl "http://localhost:8083/api/v1/products?page=0&size=3"
 
 ```bash
 # Live logs
-docker-compose logs -f backend
+docker compose logs -f backend
 
 # Stop (keeps data)
-docker-compose --profile backend down
+docker compose --profile backend down
 
 # Stop and wipe all data (fresh start)
-docker-compose --profile backend down -v
+docker compose --profile backend down -v
 
 # Rebuild after code changes
-docker-compose --profile backend up -d --build
+docker compose --profile backend up -d --build
 ```
 
 ---
@@ -186,7 +186,7 @@ cd Iced-Latte
 ### Step 2 — Start everything including the frontend
 
 ```bash
-docker-compose --profile backend --profile frontend up -d --build
+docker compose --profile backend --profile frontend up -d --build
 ```
 
 This builds and starts everything from Option B plus:
@@ -206,17 +206,17 @@ This builds and starts everything from Option B plus:
 
 ```bash
 # Live logs
-docker-compose logs -f frontend
-docker-compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f backend
 
 # Stop (keeps data)
-docker-compose --profile backend --profile frontend down
+docker compose --profile backend --profile frontend down
 
 # Stop and wipe all data (fresh start)
-docker-compose --profile backend --profile frontend down -v
+docker compose --profile backend --profile frontend down -v
 
 # Rebuild after code changes
-docker-compose --profile backend --profile frontend up -d --build
+docker compose --profile backend --profile frontend up -d --build
 ```
 
 ---
@@ -280,10 +280,10 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 ## 🔧 Troubleshooting
 
 **❌ "Connection refused" on port 5432**
-→ PostgreSQL is not running. Run: `docker-compose up -d postgres`
+→ PostgreSQL is not running. Run: `docker compose up -d postgres`
 
 **❌ "Connection refused" on port 6379**
-→ Redis is not running. Run: `docker-compose up -d redis`
+→ Redis is not running. Run: `docker compose up -d redis`
 
 **❌ "Could not resolve placeholder"**
 → A required env var is missing. Check the console output for the variable name and add it to `.env`.
@@ -295,7 +295,7 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 → Stop the conflicting process or change `APP_SERVER_PORT` in `.env`.
 
 **❌ Windows: `export` command not found**
-→ The `export $(cat .env | xargs)` command only works on Linux/macOS/Git Bash. On Windows, use the IntelliJ EnvFile plugin (Step 4) or run the full Docker stack with `docker-compose --profile backend up -d --build` (Option B) — no manual env loading needed.
+→ The `export $(cat .env | xargs)` command only works on Linux/macOS/Git Bash. On Windows, use the IntelliJ EnvFile plugin (Step 4) or run the full Docker stack with `docker compose --profile backend up -d --build` (Option B) — no manual env loading needed.
 
 **❌ Tests fail with "Connection refused"**
 → Docker Desktop must be running — Testcontainers needs it.

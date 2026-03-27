@@ -80,7 +80,7 @@ PROJECT_CONFIG=.env.staging task deploy
 | `build.sh` | Build Docker image for linux/arm64 |
 | `push.sh` | Push image to Docker Hub |
 | `sync-compose.sh` | Copy local compose file to server |
-| `deploy.sh` | SSH to server, cd to app dir, docker-compose pull + up -d |
+| `deploy.sh` | SSH to server, cd to app dir, docker compose pull + up -d |
 | `logs.sh` | Show recent compose logs (use `-f` to follow) |
 | `smoke.sh` | Check health + smoke endpoints with retries |
 
@@ -89,7 +89,7 @@ PROJECT_CONFIG=.env.staging task deploy
 1. **Build**: Creates ARM64 Docker image locally
 2. **Push**: Uploads image to Docker Hub
 3. **Sync Compose**: Copies `docker-compose.prod.yml` to server (prevents config drift)
-4. **Deploy**: SSH to server, cd to `REMOTE_APP_DIR`, run `docker-compose pull` and `docker-compose up -d`
+4. **Deploy**: SSH to server, cd to `REMOTE_APP_DIR`, run `docker compose pull` and `docker compose up -d`
 5. **Smoke**: Verifies deployment by calling health and business endpoints
 
 ## First-Time Server Setup
@@ -134,7 +134,7 @@ task sync-compose
 ```
 
 ### Smoke test fails
-- Check container status: `ssh -i ~/.ssh/id_rsa root@116.203.197.65 "cd /opt/iced-latte && docker-compose ps"`
+- Check container status: `ssh -i ~/.ssh/id_rsa root@116.203.197.65 "cd /opt/iced-latte && docker compose ps"`
 - Check logs: `task logs`
 - Verify health URL: `curl https://api.iced-latte.uk/actuator/health`
 - Verify smoke URL: `curl https://api.iced-latte.uk/api/v1/products?page=0&size=1`

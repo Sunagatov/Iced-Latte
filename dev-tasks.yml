@@ -21,7 +21,7 @@ tasks:
           exit 1
         fi
 
-        if ! docker-compose version >/dev/null 2>&1; then
+        if ! docker compose version >/dev/null 2>&1; then
           echo "❌ Docker Compose is not available."
           echo "💡 Ensure Docker Desktop is installed correctly and 'docker-compose' works in your terminal."
           exit 1
@@ -39,7 +39,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🚀 Starting local infrastructure (PostgreSQL, Redis, MinIO)..."
-      - docker-compose -f {{.COMPOSE_FILE}} up -d postgres redis minio minio-init
+      - docker compose -f {{.COMPOSE_FILE}} up -d postgres redis minio minio-init
       - echo "✅ Local infrastructure is up."
 
   infra-down:
@@ -48,7 +48,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping local infrastructure..."
-      - docker-compose -f {{.COMPOSE_FILE}} stop postgres redis minio minio-init
+      - docker compose -f {{.COMPOSE_FILE}} stop postgres redis minio minio-init
       - echo "✅ Local infrastructure stopped."
 
   infra-reset:
@@ -57,7 +57,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "♻️ Resetting local Docker environment and deleting volumes..."
-      - docker-compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down -v --remove-orphans
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down -v --remove-orphans
       - echo "✅ Local Docker environment reset complete."
 
   backend-up:
@@ -68,7 +68,7 @@ tasks:
       - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
       - docker pull {{.BACKEND_IMAGE}}
       - echo "🚀 Starting backend + infrastructure without local backend rebuild..."
-      - docker-compose -f {{.COMPOSE_FILE}} --profile backend up -d --no-build backend
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --no-build backend
       - echo "✅ Backend Docker stack is starting."
 
   backend-down:
@@ -77,7 +77,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping backend + infrastructure Docker stack..."
-      - docker-compose -f {{.COMPOSE_FILE}} --profile backend down --remove-orphans
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend down --remove-orphans
       - echo "✅ Backend Docker stack stopped."
 
   fullstack-up:
@@ -88,9 +88,9 @@ tasks:
       - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
       - docker pull {{.BACKEND_IMAGE}}
       - echo "🏗️ Building frontend image from source..."
-      - docker-compose -f {{.COMPOSE_FILE}} build frontend
+      - docker compose -f {{.COMPOSE_FILE}} build frontend
       - echo "🚀 Starting full stack (published backend + local frontend + infrastructure)..."
-      - docker-compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --no-build backend frontend
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --no-build backend frontend
       - echo "✅ Full stack is starting."
 
   fullstack-down:
@@ -99,7 +99,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping full stack..."
-      - docker-compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
       - echo "✅ Full stack stopped."
 
   backend-logs:
@@ -108,7 +108,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📜 Following backend logs..."
-      - docker-compose -f {{.COMPOSE_FILE}} logs -f backend
+      - docker compose -f {{.COMPOSE_FILE}} logs -f backend
 
   frontend-logs:
     silent: true
@@ -116,7 +116,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📜 Following frontend logs..."
-      - docker-compose -f {{.COMPOSE_FILE}} logs -f frontend
+      - docker compose -f {{.COMPOSE_FILE}} logs -f frontend
 
   infra-logs:
     silent: true
@@ -124,7 +124,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📜 Following infrastructure logs..."
-      - docker-compose -f {{.COMPOSE_FILE}} logs -f postgres redis minio minio-init
+      - docker compose -f {{.COMPOSE_FILE}} logs -f postgres redis minio minio-init
 
   status:
     silent: true
@@ -132,7 +132,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📊 Local Docker stack status:"
-      - docker-compose -f {{.COMPOSE_FILE}} ps
+      - docker compose -f {{.COMPOSE_FILE}} ps
 
   health:
     silent: true

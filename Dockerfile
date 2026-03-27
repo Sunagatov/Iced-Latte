@@ -84,6 +84,11 @@ COPY --from=extract --chown=appuser:appgroup /app/snapshot-dependencies/ ./
 COPY --from=extract --chown=appuser:appgroup /app/application/ ./
 COPY --from=cds-train --chown=appuser:appgroup /app/app-cds.jsa ./
 
+RUN mkdir -p /app/logs \
+    && chown -R appuser:appgroup /app \
+    && chmod 755 /app \
+    && chmod 775 /app/logs
+
 # --- Switch to non-root user ---
 USER appuser
 
