@@ -44,7 +44,7 @@
 git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 
 # 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
-docker compose up -d postgres redis minio minio-init
+docker-compose up -d postgres redis minio minio-init
 
 # 3. ▶️ Run (uses committed .env — local development values and placeholders)
 # Linux / macOS / Git Bash on Windows:
@@ -62,7 +62,7 @@ export $(cat .env | xargs) && mvn spring-boot:run
 > 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [START.md](START.md):
 > ```bash
 > git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git  # sibling of Iced-Latte/
-> docker compose --profile backend --profile frontend up -d --build
+> docker-compose --profile backend --profile frontend up -d --build
 > ```
 > Frontend at http://localhost:3000 — built from source every time.
 

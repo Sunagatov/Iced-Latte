@@ -3,7 +3,7 @@ version: '3'
 vars:
   COMPOSE_FILE: docker-compose.logging.yml
   LOGGING_NETWORK: iced-latte-network
-  GRAFANA_URL: http://localhost:3000
+  GRAFANA_URL: http://localhost:3001
   PROMETHEUS_URL: http://localhost:9090
   LOKI_URL: http://localhost:3100
   KIBANA_URL: http://localhost:5601
@@ -22,9 +22,9 @@ tasks:
           exit 1
         fi
 
-        if ! docker compose version >/dev/null 2>&1; then
+        if ! docker-compose version >/dev/null 2>&1; then
           echo "❌ Docker Compose is not available."
-          echo "💡 Ensure Docker Desktop is installed correctly and 'docker compose' works in your terminal."
+          echo "💡 Ensure Docker Desktop is installed correctly and 'docker-compose' works in your terminal."
           exit 1
         fi
 
@@ -52,7 +52,7 @@ tasks:
     deps: [docker-ready, logging-network-ready]
     cmds:
       - echo "🚀 Starting Loki / Grafana / Prometheus stack..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile loki up -d
+      - docker-compose -f {{.COMPOSE_FILE}} --profile loki up -d
       - echo "✅ Loki stack is starting."
 
   loki-down:
@@ -61,7 +61,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping Loki stack..."
-      - docker compose -f {{.COMPOSE_FILE}} stop loki promtail prometheus grafana
+      - docker-compose -f {{.COMPOSE_FILE}} stop loki promtail prometheus grafana
       - echo "✅ Loki stack stopped."
 
   elk-up:
@@ -70,7 +70,7 @@ tasks:
     deps: [docker-ready, logging-network-ready]
     cmds:
       - echo "🚀 Starting ELK stack..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile elk up -d
+      - docker-compose -f {{.COMPOSE_FILE}} --profile elk up -d
       - echo "✅ ELK stack is starting."
 
   elk-down:
@@ -79,7 +79,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping ELK stack..."
-      - docker compose -f {{.COMPOSE_FILE}} stop elasticsearch logstash filebeat kibana
+      - docker-compose -f {{.COMPOSE_FILE}} stop elasticsearch logstash filebeat kibana
       - echo "✅ ELK stack stopped."
 
   down:
@@ -88,7 +88,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "🛑 Stopping all observability stacks..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile loki --profile elk down --remove-orphans
+      - docker-compose -f {{.COMPOSE_FILE}} --profile loki --profile elk down --remove-orphans
       - echo "✅ Observability stacks stopped."
 
   reset:
@@ -97,7 +97,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "♻️ Resetting observability stacks and deleting volumes..."
-      - docker compose -f {{.COMPOSE_FILE}} --profile loki --profile elk down -v --remove-orphans
+      - docker-compose -f {{.COMPOSE_FILE}} --profile loki --profile elk down -v --remove-orphans
       - echo "✅ Observability reset complete."
 
   status:
@@ -106,7 +106,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📊 Observability stack status:"
-      - docker compose -f {{.COMPOSE_FILE}} ps
+      - docker-compose -f {{.COMPOSE_FILE}} ps
 
   logs-loki:
     silent: true
@@ -114,7 +114,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📜 Following Loki stack logs..."
-      - docker compose -f {{.COMPOSE_FILE}} logs -f loki promtail prometheus grafana
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f loki promtail prometheus grafana
 
   logs-elk:
     silent: true
@@ -122,7 +122,7 @@ tasks:
     deps: [docker-ready]
     cmds:
       - echo "📜 Following ELK stack logs..."
-      - docker compose -f {{.COMPOSE_FILE}} logs -f elasticsearch logstash filebeat kibana
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f elasticsearch logstash filebeat kibana
 
   urls:
     silent: true

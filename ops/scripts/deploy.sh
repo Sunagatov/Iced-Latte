@@ -35,7 +35,7 @@ echo "📂 Remote dir: ${REMOTE_APP_DIR}"
 echo "📄 Compose file: ${REMOTE_COMPOSE_FILE}"
 echo ""
 
-# Deploy via SSH using docker compose
+# Deploy via SSH using docker-compose
 ssh -i "$SSH_KEY_EXPANDED" "${SSH_USER}@${SSH_HOST}" bash <<EOF
 set -euo pipefail
 
@@ -58,16 +58,16 @@ fi
 echo "📥 Pulling latest image..."
 export DOCKER_IMAGE=${DOCKER_IMAGE}
 export DOCKER_TAG=${DOCKER_TAG}
-docker compose -f ${REMOTE_COMPOSE_FILE} pull
+docker-compose -f ${REMOTE_COMPOSE_FILE} pull
 
 echo "🚀 Recreating containers..."
-docker compose -f ${REMOTE_COMPOSE_FILE} up -d
+docker-compose -f ${REMOTE_COMPOSE_FILE} up -d
 
 echo "⏳ Waiting for containers to stabilize..."
 sleep 5
 
 echo "📊 Container status:"
-docker compose -f ${REMOTE_COMPOSE_FILE} ps
+docker-compose -f ${REMOTE_COMPOSE_FILE} ps
 
 echo ""
 echo "✅ Deployment complete"

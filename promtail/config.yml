@@ -32,4 +32,4 @@ scrape_configs:
           - localhost
         labels:
           job: iced-latte-logs
-          __path__: /logs/*.log
+          __path__: /logs/iced-latte.log
