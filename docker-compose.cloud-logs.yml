@@ -1,0 +1,20 @@
+services:
+  backend:
+    volumes:
+      - ./logs:/app/logs
+
+  promtail-cloud:
+    image: grafana/promtail:3.0.0
+    container_name: iced-latte-promtail-cloud
+    profiles: [cloud-logs]
+    env_file:
+      - .env.observability
+    command:
+      - -config.file=/etc/promtail/config.cloud.yml
+      - -config.expand-env=true
+    volumes:
+      - ./promtail/config.cloud.yml:/etc/promtail/config.cloud.yml:ro
+      - ./logs:/logs:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
