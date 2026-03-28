@@ -3,7 +3,6 @@
     <springProperty scope="context" name="application_name" source="spring.application.name"/>
     <springProperty scope="context" name="application_version" source="spring.application.version" defaultValue="unknown"/>
     <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
-    <springProperty scope="context" name="loki_enabled" source="LOKI_ENABLED" defaultValue="false"/>
     <springProperty scope="context" name="loki_url" source="LOKI_URL" defaultValue="https://logs-prod-012.grafana.net/loki/api/v1/push"/>
     <springProperty scope="context" name="loki_username" source="LOKI_USERNAME" defaultValue=""/>
     <springProperty scope="context" name="loki_password" source="LOKI_PASSWORD" defaultValue=""/>
@@ -46,32 +45,25 @@
         </rollingPolicy>
     </appender>
 
-    <if condition='property("loki_enabled").equals("true")'>
-        <then>
-            <appender name="LokiAppender" class="com.github.loki4j.logback.Loki4jAppender">
-                <http>
-                    <url>${loki_url}</url>
-                    <auth>
-                        <username>${loki_username}</username>
-                        <password>${loki_password}</password>
-                    </auth>
-                    <requestTimeoutMs>15000</requestTimeoutMs>
-                </http>
-                <batch>
-                    <maxBytes>65536</maxBytes>
-                </batch>
-                <format>
-                    <label>
-                        <pattern>application=${application_name},environment=${environment},level=%level</pattern>
-                    </label>
-                    <message>
-                        <pattern>{"level":"%level","logger":"%logger","thread":"%thread","message":"%message","traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}"}</pattern>
-                    </message>
-                    <sortByTime>true</sortByTime>
-                </format>
-            </appender>
-        </then>
-    </if>
+    <appender name="LokiAppender" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${loki_url}</url>
+            <auth>
+                <username>${loki_username}</username>
+                <password>${loki_password}</password>
+            </auth>
+            <requestTimeoutMs>15000</requestTimeoutMs>
+        </http>
+        <format>
+            <label>
+                <pattern>application=${application_name},environment=${environment},level=%level</pattern>
+            </label>
+            <message>
+                <pattern>{"level":"%level","logger":"%logger","thread":"%thread","message":"%message","traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}"}</pattern>
+            </message>
+            <sortByTime>true</sortByTime>
+        </format>
+    </appender>
 
     <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>512</queueSize>
@@ -85,15 +77,11 @@
         <appender-ref ref="FileAppender"/>
     </appender>
 
-    <if condition='property("loki_enabled").equals("true")'>
-        <then>
-            <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
-                <queueSize>1000</queueSize>
-                <discardingThreshold>0</discardingThreshold>
-                <appender-ref ref="LokiAppender"/>
-            </appender>
-        </then>
-    </if>
+    <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="LokiAppender"/>
+    </appender>
 
     <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="WARN"/>
     <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
@@ -103,10 +91,6 @@
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
-        <if condition='property("loki_enabled").equals("true")'>
-            <then>
-                <appender-ref ref="AsyncLoki"/>
-            </then>
-        </if>
+        <appender-ref ref="AsyncLoki"/>
     </root>
 </configuration>
