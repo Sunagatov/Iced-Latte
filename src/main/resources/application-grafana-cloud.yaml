@@ -1,0 +1,13 @@
+sentry:
+  traces-sample-rate: 1.0
+  profiles-sample-rate: 0.25
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+      headers:
+        Authorization: ${OTEL_EXPORTER_OTLP_AUTHORIZATION:${GRAFANA_CLOUD_OTLP_AUTHORIZATION:}}
