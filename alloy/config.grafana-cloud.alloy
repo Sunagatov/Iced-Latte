@@ -1,0 +1,52 @@
+prometheus.scrape "iced_latte_backend" {
+  targets = [{
+    __address__    = "backend:8083",
+    __metrics_path__ = "/actuator/prometheus",
+    job            = "iced-latte-backend",
+  }]
+
+  forward_to = [prometheus.remote_write.grafanacloud.receiver]
+}
+
+prometheus.remote_write "grafanacloud" {
+  endpoint {
+    url = env("GRAFANA_CLOUD_PROMETHEUS_REMOTE_WRITE_URL")
+
+    basic_auth {
+      username = env("GRAFANA_CLOUD_PROMETHEUS_USERNAME")
+      password = env("GRAFANA_CLOUD_PROMETHEUS_TOKEN")
+    }
+  }
+}
+
+otelcol.auth.basic "grafanacloud" {
+  username = env("GRAFANA_CLOUD_TEMPO_USERNAME")
+  password = env("GRAFANA_CLOUD_TEMPO_TOKEN")
+}
+
+otelcol.receiver.otlp "otlp_receiver" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    traces = [otelcol.exporter.otlp.grafanacloud.input]
+  }
+}
+
+otelcol.exporter.otlp "grafanacloud" {
+  client {
+    endpoint = env("GRAFANA_CLOUD_TEMPO_ENDPOINT")
+    auth     = otelcol.auth.basic.grafanacloud.handler
+  }
+}
