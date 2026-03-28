@@ -1,0 +1,55 @@
+networks:
+  iced-latte-network:
+    external: true
+    name: iced-latte-network
+
+services:
+  backend:
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy-cloud:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: iced-latte-backend
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=prod,service.namespace=iced-latte
+
+  promtail-grafana-cloud:
+    image: grafana/promtail:3.0.0
+    container_name: iced-latte-promtail-grafana-cloud
+    profiles: [cloud-observability]
+    env_file:
+      - .env.prod
+    command:
+      - -config.file=/etc/promtail/config.grafana-cloud.yml
+      - -config.expand-env=true
+    volumes:
+      - ./promtail/config.grafana-cloud.yml:/etc/promtail/config.grafana-cloud.yml:ro
+      - ./logs:/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - backend
+    networks:
+      - iced-latte-network
+    restart: unless-stopped
+
+  grafana-alloy-cloud:
+    image: grafana/alloy:latest
+    container_name: iced-latte-grafana-alloy-cloud
+    profiles: [cloud-observability]
+    env_file:
+      - .env.prod
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.grafana-cloud.alloy
+    volumes:
+      - ./alloy/config.grafana-cloud.alloy:/etc/alloy/config.grafana-cloud.alloy:ro
+    depends_on:
+      - backend
+    networks:
+      - iced-latte-network
+    restart: unless-stopped
