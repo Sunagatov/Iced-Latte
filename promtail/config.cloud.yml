@@ -1,0 +1,26 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions-cloud.yaml
+
+clients:
+  - url: ${GRAFANA_CLOUD_LOKI_URL}
+    basic_auth:
+      username: ${GRAFANA_CLOUD_LOKI_USERNAME}
+      password: ${GRAFANA_CLOUD_LOKI_TOKEN}
+    external_labels:
+      application: ${OBSERVABILITY_APPLICATION}
+      environment: ${OBSERVABILITY_ENVIRONMENT}
+
+scrape_configs:
+  - job_name: iced-latte-backend-file-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: iced-latte-backend-file
+          application: ${OBSERVABILITY_APPLICATION}
+          environment: ${OBSERVABILITY_ENVIRONMENT}
+          __path__: /logs/iced-latte*.log
