@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,26 +39,43 @@ public class AddItemsToShoppingCartHelper {
         UUID userId = securityPrincipalProvider.getUserId();
 
         ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
+        Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
 
-        List<ShoppingCartItem> items = createItems(itemsToAdd, shoppingCart);
+        increaseExistingItemQuantities(shoppingCart, productsWithQuantity);
+        List<ShoppingCartItem> newItems = createNewItems(productsWithQuantity, shoppingCart);
 
-        ShoppingCart updatedShoppingCart = updateExistingShoppingCart(shoppingCart, items);
+        ShoppingCart updatedShoppingCart = updateExistingShoppingCart(shoppingCart, newItems, productsWithQuantity);
 
         ShoppingCart persistedShoppingCart = shoppingCartRepository.save(updatedShoppingCart);
         return shoppingCartDtoConverter.toDto(persistedShoppingCart);
     }
 
-    private List<ShoppingCartItem> createItems(Set<NewShoppingCartItemDto> itemsToAdd, ShoppingCart shoppingCart) {
-        Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
-                .collect(Collectors.toMap(NewShoppingCartItemDto::getProductId, NewShoppingCartItemDto::getProductQuantity));
+    private static Map<UUID, Integer> extractProductsWithQuantity(Set<NewShoppingCartItemDto> itemsToAdd) {
+        return itemsToAdd.stream()
+                .collect(Collectors.toMap(
+                        NewShoppingCartItemDto::getProductId,
+                        NewShoppingCartItemDto::getProductQuantity,
+                        Integer::sum
+                ));
+    }
 
-        Set<UUID> existingProductIds = shoppingCart.getItems().stream()
-                .map(ShoppingCartItem::getProductInfo)
-                .map(ProductInfo::getId)
-                .collect(Collectors.toSet());
+    private static void increaseExistingItemQuantities(ShoppingCart shoppingCart, Map<UUID, Integer> productsWithQuantity) {
+        shoppingCart.getItems().forEach(item -> {
+            UUID productId = item.getProductInfo().getId();
+            Integer quantityToAdd = productsWithQuantity.get(productId);
+
+            if (quantityToAdd != null) {
+                item.setProductQuantity(item.getProductQuantity() + quantityToAdd);
+            }
+        });
+    }
+
+    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity, ShoppingCart shoppingCart) {
+        Map<UUID, ShoppingCartItem> existingItemsByProductId = shoppingCart.getItems().stream()
+                .collect(Collectors.toMap(item -> item.getProductInfo().getId(), Function.identity()));
 
         Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
-                .filter(productId -> !existingProductIds.contains(productId))
+                .filter(productId -> !existingItemsByProductId.containsKey(productId))
                 .collect(Collectors.toSet());
 
         return productInfoRepository.findAllById(newProductIds).stream()
@@ -72,13 +90,14 @@ public class AddItemsToShoppingCartHelper {
     }
 
     private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
-                                                           List<ShoppingCartItem> shoppingCartItems) {
-        int productsQuantity = shoppingCartItems.stream()
-                .mapToInt(ShoppingCartItem::getProductQuantity)
+                                                           List<ShoppingCartItem> shoppingCartItems,
+                                                           Map<UUID, Integer> productsWithQuantity) {
+        int addedProductsQuantity = productsWithQuantity.values().stream()
+                .mapToInt(Integer::intValue)
                 .sum();
 
         existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
-        existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);
+        existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + addedProductsQuantity);
         existingShoppingCart.getItems().addAll(shoppingCartItems);
         return existingShoppingCart;
     }
