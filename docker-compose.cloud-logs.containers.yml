@@ -1,0 +1,15 @@
+services:
+  promtail-cloud-containers:
+    image: grafana/promtail:3.0.0
+    container_name: iced-latte-promtail-cloud-containers
+    profiles: [cloud-logs]
+    env_file:
+      - .env.observability
+    command:
+      - -config.file=/etc/promtail/config.cloud.containers.yml
+      - -config.expand-env=true
+    volumes:
+      - ./promtail/config.cloud.containers.yml:/etc/promtail/config.cloud.containers.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
