@@ -59,7 +59,7 @@
         <loki-logback-appender.version>1.5.2</loki-logback-appender.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
-        <lombok.version>1.18.42</lombok.version>
+        <lombok.version>1.18.44</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
