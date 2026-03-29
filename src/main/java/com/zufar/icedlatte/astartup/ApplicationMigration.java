@@ -8,6 +8,7 @@ import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -48,17 +49,17 @@ public class ApplicationMigration implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) {
+    public void run(@NonNull ApplicationArguments args) {
         if (!isAwsConfigured()) {
             log.info("migration.aws.skipped: reason=not_configured");
             return;
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         CompletableFuture.runAsync(uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled"), executor)
-                .thenComposeAsync(v -> CompletableFuture.supplyAsync(this::fetchMetadata, executor), executor)
+                .thenComposeAsync(_ -> CompletableFuture.supplyAsync(this::fetchMetadata, executor), executor)
                 .thenAcceptAsync(this::saveMetadata, executor)
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
-                .whenComplete((v, e) -> {
+                .whenComplete((_, e) -> {
                     executor.close();
                     if (e != null) log.error("migration.aws.error: message={}", e.getMessage(), e);
                 });

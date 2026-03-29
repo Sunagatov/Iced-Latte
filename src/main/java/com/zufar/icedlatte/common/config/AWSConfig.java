@@ -35,9 +35,6 @@ public class AWSConfig {
     @Value("${spring.aws.endpoint-url:}")
     private String endpointUrl;
 
-    @Value("${spring.aws.public-url-base:}")
-    private String publicUrlBase;
-
     @Bean
     @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Client s3Client() {
@@ -88,7 +85,7 @@ public class AWSConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.aws.public-url-base", matchIfMissing = false)
+    @ConditionalOnProperty(name = "spring.aws.public-url-base")
     public CloudFrontClient cloudFrontClient() {
         String sessionToken = System.getenv("AWS_SESSION_TOKEN");
         StaticCredentialsProvider creds = StringUtils.hasText(sessionToken)
@@ -106,4 +103,5 @@ public class AWSConfig {
                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
         }
     }
+
 }

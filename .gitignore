@@ -79,6 +79,7 @@ nb-configuration.xml
 .DS_Store
 /.env.local
 .env.prod
+.amazonq/.env.prod
 local.env
 /README.local.md
 /docker-compose.override.yaml

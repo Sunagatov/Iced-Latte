@@ -1,9 +1,8 @@
-package com.zufar.icedlatte.observability.sentry;
+package com.zufar.icedlatte.common.monitoring;
 
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
-import io.sentry.protocol.TransactionNameSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,7 +22,7 @@ public class SentryConfiguration {
 
     @Bean
     public SentryOptions.BeforeSendCallback beforeSendCallback() {
-        return (event, hint) -> {
+        return (event, _) -> {
             sanitizePii(event);
             addCustomTags(event);
             return event;
@@ -32,7 +31,7 @@ public class SentryConfiguration {
 
     @Bean
     public SentryOptions.BeforeBreadcrumbCallback beforeBreadcrumbCallback() {
-        return (breadcrumb, hint) -> {
+        return (breadcrumb, _) -> {
             sanitizeBreadcrumb(breadcrumb);
             return breadcrumb;
         };
@@ -64,7 +63,7 @@ public class SentryConfiguration {
 
     @Bean
     public SentryOptions.BeforeSendTransactionCallback beforeSendTransactionCallback() {
-        return (transaction, hint) -> {
+        return (transaction, _) -> {
             // Add custom tags to transactions
             transaction.setTag("application", applicationName);
             transaction.setTag("version", applicationVersion);
@@ -86,23 +85,13 @@ public class SentryConfiguration {
                 request.getHeaders().remove("Authorization");
                 request.getHeaders().remove("Cookie");
             }
-            if (request.getData() != null) {
-                var data = request.getData();
-                if (data instanceof String dataStr) {
-                    dataStr = dataStr.replaceAll("\"email\"\\s*:\\s*\"[^\"]+\"", "\"email\":\"<redacted>\"");
-                    dataStr = dataStr.replaceAll("\"password\"\\s*:\\s*\"[^\"]+\"", "\"password\":\"<redacted>\"");
-                    dataStr = dataStr.replaceAll("\"phone\"\\s*:\\s*\"[^\"]+\"", "\"phone\":\"<redacted>\"");
-                }
-            }
         }
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
-        if (breadcrumb.getData() != null) {
-            breadcrumb.getData().remove("email");
-            breadcrumb.getData().remove("password");
-            breadcrumb.getData().remove("phone");
-        }
+        breadcrumb.getData().remove("email");
+        breadcrumb.getData().remove("password");
+        breadcrumb.getData().remove("phone");
     }
 
     private void addCustomTags(SentryEvent event) {

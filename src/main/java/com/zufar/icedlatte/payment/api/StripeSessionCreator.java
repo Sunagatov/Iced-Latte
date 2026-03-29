@@ -52,12 +52,11 @@ public class StripeSessionCreator {
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setUiMode(SessionCreateParams.UiMode.EMBEDDED)
                 .setCustomerEmail(user.getEmail())
                 .setReturnUrl(buildReturnUrl(request))
                 .addAllLineItem(lineItemConverter.toLineItems(cart.getItems()))
                 .addAllShippingOption(shippingOptions())
-                .putMetadata("userId", userId.toString())
+                .putMetadata("userId", userId != null ? userId.toString() : "")
                 .build();
 
         try {
@@ -86,7 +85,10 @@ public class StripeSessionCreator {
         );
     }
 
-    private SessionCreateParams.ShippingOption buildShippingOption(String name, long amountCents, long minDays, long maxDays) {
+    private SessionCreateParams.ShippingOption buildShippingOption(String name,
+                                                                   long amountCents,
+                                                                   long minDays,
+                                                                   long maxDays) {
         return SessionCreateParams.ShippingOption.builder()
                 .setShippingRateData(
                         SessionCreateParams.ShippingOption.ShippingRateData.builder()

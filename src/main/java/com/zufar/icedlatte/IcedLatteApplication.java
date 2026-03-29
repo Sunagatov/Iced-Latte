@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 public class IcedLatteApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(IcedLatteApplication.class, args);
     }
 }

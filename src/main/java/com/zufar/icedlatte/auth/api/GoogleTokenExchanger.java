@@ -28,7 +28,7 @@ public class GoogleTokenExchanger {
             @Value("${google.client-id}") String clientId,
             @Value("${google.client-secret}") String clientSecret,
             @Value("${google.redirect-uri}") String redirectUri,
-            @Value("${google.scope}") String scope) throws IOException {
+            @Value("${google.scope}") String scope) {
         this.redirectUri = redirectUri;
         var transport = new NetHttpTransport();
         var json = GsonFactory.getDefaultInstance();

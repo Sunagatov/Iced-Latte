@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.observability.sentry;
+package com.zufar.icedlatte.common.monitoring;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import io.sentry.Sentry;
@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,9 @@ public class SentryUserContextFilter extends OncePerRequestFilter {
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         try {
             var userId = securityPrincipalProvider.getUserId();

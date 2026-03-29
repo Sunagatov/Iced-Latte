@@ -41,7 +41,7 @@ public class SpringSecurityConfiguration {
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
                                                    final RateLimitingFilter rateLimitingFilter,
-                                                   final CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                                   final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
                 // amazonq-ignore-next-line
                 .csrf(AbstractHttpConfigurer::disable)
@@ -77,7 +77,7 @@ public class SpringSecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
+                        .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)

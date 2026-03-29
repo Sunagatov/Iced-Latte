@@ -4,6 +4,7 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -22,10 +23,10 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     private final TransactionTemplate transactionTemplate;
 
     @Override
-    public void run(ApplicationArguments args) {
+    public void run(@NonNull ApplicationArguments args) {
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         CompletableFuture.runAsync(() ->
-                transactionTemplate.executeWithoutResult(status -> {
+                transactionTemplate.executeWithoutResult(_ -> {
                     log.info("migration.ratings.start");
                     long t0 = System.currentTimeMillis();
                     productInfoRepository.updateAllAverageRatings();
@@ -35,7 +36,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
                     log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
                 }), executor)
             .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
-            .whenComplete((v, e) -> {
+            .whenComplete((_, e) -> {
                 executor.close();
                 if (e != null) log.error("migration.ratings.error: message={}", e.getMessage(), e);
             });
