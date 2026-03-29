@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.4</version>
+        <version>4.0.5</version>
         <relativePath/>
     </parent>
 
@@ -54,9 +54,9 @@
         <bcprov.version>1.83</bcprov.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
-        <jackson-databind-nullable.version>0.2.9</jackson-databind-nullable.version>
+        <jackson-databind-nullable.version>0.2.10</jackson-databind-nullable.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
-        <loki-logback-appender.version>1.5.2</loki-logback-appender.version>
+        <loki-logback-appender.version>2.0.3</loki-logback-appender.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
         <lombok.version>1.18.44</lombok.version>
@@ -71,17 +71,17 @@
         <rest-assured.version>6.0.0</rest-assured.version>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
-        <stripe.version>31.4.1</stripe.version>
+        <stripe.version>32.0.0</stripe.version>
         <google-api-client.version>2.9.0</google-api-client.version>
 
         <!-- ========== AWS VERSIONS ========== -->
-        <aws-sdk-bom.version>2.42.22</aws-sdk-bom.version>
+        <aws-sdk-bom.version>2.42.23</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.12.2</langchain4j.version>
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
-        <sentry.version>8.36.0</sentry.version>
+        <sentry.version>8.37.1</sentry.version>
 
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <guava.version>33.5.0-jre</guava.version>
