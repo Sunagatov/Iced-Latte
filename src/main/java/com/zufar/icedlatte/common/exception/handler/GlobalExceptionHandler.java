@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -69,6 +71,28 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleJwtTokenHasNoUserEmailException(final JwtTokenHasNoUserEmailException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
         log.warn("exception.auth.invalid_token: message={}", exception.getMessage());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    public ApiErrorResponse handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Uploaded file is too large",
+                HttpStatus.PAYLOAD_TOO_LARGE
+        );
+        log.warn("exception.multipart.max_size_exceeded: message={}", exception.getMessage());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleMultipartException(final MultipartException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Malformed multipart request",
+                HttpStatus.BAD_REQUEST
+        );
+        log.warn("exception.multipart.invalid_request: message={}", exception.getMessage());
         return apiErrorResponse;
     }
 
