@@ -14,8 +14,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -45,10 +45,10 @@ public class ShoppingCart {
             fetch = FetchType.EAGER)
     private Set<ShoppingCartItem> items;
 
-    @Column(name = "items_quantity", nullable = false)
+    @Formula("(SELECT COUNT(*) FROM shopping_cart_item sci WHERE sci.shopping_cart_id = id)")
     private Integer itemsQuantity;
 
-    @Column(name = "products_quantity", nullable = false)
+    @Formula("(SELECT COALESCE(SUM(sci.products_quantity), 0) FROM shopping_cart_item sci WHERE sci.shopping_cart_id = id)")
     private Integer productsQuantity;
 
     @CreationTimestamp
@@ -58,18 +58,6 @@ public class ShoppingCart {
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
 
-    public static final int DEFAULT_PRODUCTS_QUANTITY = 0;
-
-    public Integer getItemsQuantity() {
-        return this.items.size();
-    }
-
-    public Integer getProductsQuantity() {
-        return this.items.stream()
-                .map(ShoppingCartItem::getProductQuantity)
-                .reduce(Integer::sum)
-                .orElse(DEFAULT_PRODUCTS_QUANTITY);
-    }
 
     @Override
     public boolean equals(Object object) {

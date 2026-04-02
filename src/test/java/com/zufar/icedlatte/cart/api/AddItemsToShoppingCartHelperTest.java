@@ -95,8 +95,6 @@ class AddItemsToShoppingCartHelperTest {
 
         ShoppingCart shoppingCart = new ShoppingCart();
         shoppingCart.setId(UUID.randomUUID());
-        shoppingCart.setItemsQuantity(1);
-        shoppingCart.setProductsQuantity(1);
 
         ProductInfo existingProduct = new ProductInfo(
                 existingProductId, 1L, "Existing coffee", "Existing description", BigDecimal.valueOf(2.5), 10, true,
@@ -118,8 +116,6 @@ class AddItemsToShoppingCartHelperTest {
         newProductToAdd.setProductId(newProductId);
         newProductToAdd.setProductQuantity(3);
 
-        Set<NewShoppingCartItemDto> itemsToAdd = Set.of(existingProductToAdd, newProductToAdd);
-
         ProductInfo newProduct = new ProductInfo(
                 newProductId, 1L, "New coffee", "New description", BigDecimal.valueOf(3.5), 8, true,
                 BigDecimal.ZERO, 0, "brandName", "sellerName", "originCountry", 100, 10, 4, 25, 200, 20,
@@ -134,19 +130,26 @@ class AddItemsToShoppingCartHelperTest {
         when(shoppingCartRepository.save(shoppingCart)).thenAnswer(invocation -> invocation.getArgument(0));
         when(shoppingCartDtoConverter.toDto(shoppingCart)).thenReturn(expectedShoppingCartDto);
 
-        ShoppingCartDto result = addItemsToShoppingCartHelper.add(itemsToAdd);
+        addItemsToShoppingCartHelper.add(Set.of(existingProductToAdd, newProductToAdd));
 
-        assertEquals(expectedShoppingCartDto, result);
-        assertEquals(2, shoppingCart.getItemsQuantity());
-        assertEquals(6, shoppingCart.getProductsQuantity());
+        assertEquals(2, shoppingCart.getItems().size());
 
         ShoppingCartItem updatedExistingItem = shoppingCart.getItems().stream()
                 .filter(item -> item.getProductInfo().getId().equals(existingProductId))
                 .findFirst()
                 .orElseThrow();
-
         assertEquals(3, updatedExistingItem.getProductQuantity());
-        assertEquals(2, shoppingCart.getItems().size());
+
+        ShoppingCartItem addedNewItem = shoppingCart.getItems().stream()
+                .filter(item -> item.getProductInfo().getId().equals(newProductId))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(3, addedNewItem.getProductQuantity());
+
+        int totalProductsQuantity = shoppingCart.getItems().stream()
+                .mapToInt(ShoppingCartItem::getProductQuantity)
+                .sum();
+        assertEquals(6, totalProductsQuantity);
 
         verify(productInfoRepository).findAllById(Set.of(newProductId));
         verify(shoppingCartRepository).save(shoppingCart);

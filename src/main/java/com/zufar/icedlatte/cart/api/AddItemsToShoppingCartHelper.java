@@ -41,11 +41,9 @@ public class AddItemsToShoppingCartHelper {
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
 
         increaseExistingItemQuantities(shoppingCart, productsWithQuantity);
-        List<ShoppingCartItem> newItems = createNewItems(productsWithQuantity, shoppingCart);
+        shoppingCart.getItems().addAll(createNewItems(productsWithQuantity, shoppingCart));
 
-        ShoppingCart updatedShoppingCart = updateExistingShoppingCart(shoppingCart, newItems, productsWithQuantity);
-
-        ShoppingCart persistedShoppingCart = shoppingCartRepository.save(updatedShoppingCart);
+        ShoppingCart persistedShoppingCart = shoppingCartRepository.save(shoppingCart);
         return shoppingCartDtoConverter.toDto(persistedShoppingCart);
     }
 
@@ -88,16 +86,4 @@ public class AddItemsToShoppingCartHelper {
                 .toList();
     }
 
-    private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
-                                                           List<ShoppingCartItem> shoppingCartItems,
-                                                           Map<UUID, Integer> productsWithQuantity) {
-        int addedProductsQuantity = productsWithQuantity.values().stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
-        existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + addedProductsQuantity);
-        existingShoppingCart.getItems().addAll(shoppingCartItems);
-        return existingShoppingCart;
-    }
 }
