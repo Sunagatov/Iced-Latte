@@ -9,8 +9,8 @@ server:
     threads:
       max: 50
       min-spare: 5
-    max-http-form-post-size: 2MB
-    max-swallow-size: 2MB
+    max-http-form-post-size: 10MB
+    max-swallow-size: 10MB
   error:
     include-stacktrace: never
     include-message: never
