@@ -65,18 +65,11 @@ public class UserAuthenticationService {
     public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails, String userEmail,
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
-        log.info("auth.token.generated: email={}", maskEmail(userEmail));
+        log.info("auth.sign_in.succeeded");
         resetLoginAttemptsService.reset(userEmail);
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);
         return response;
     }
-
-    private static String maskEmail(String email) {
-        if (email == null || !email.contains("@")) return "***";
-        int at = email.indexOf('@');
-        return (at > 1 ? email.charAt(0) + "***" : "***") + email.substring(at);
-    }
-
 }

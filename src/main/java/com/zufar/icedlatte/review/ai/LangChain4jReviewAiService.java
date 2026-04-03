@@ -32,7 +32,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
         } catch (ReviewModerationException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("AI moderation unavailable, allowing review through. cause={}", e.getMessage());
+            log.warn("ai.moderation.unavailable: cause={}", e.getMessage());
         }
     }
 
@@ -46,7 +46,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
                     .collect(Collectors.joining("\n"));
             return reviewAiService.aggregateSummary(combined);
         } catch (Exception e) {
-            log.warn("AI product summary unavailable. cause={}", e.getMessage());
+            log.warn("ai.summary.unavailable: productId={}, cause={}", productId, e.getMessage());
             return FALLBACK_SUMMARY;
         }
     }

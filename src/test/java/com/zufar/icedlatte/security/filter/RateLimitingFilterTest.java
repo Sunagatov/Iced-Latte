@@ -67,8 +67,8 @@ class RateLimitingFilterTest {
     @CsvSource({
         "/api/v1/auth/login,           auth",
         "/api/v1/auth/register,        auth",
-        "/api/v1/auth/google/callback, auth",
-        "/api/v1/auth/google,          auth",
+        "/api/v1/auth/google/callback, global",
+        "/api/v1/auth/google,          global",
         "/api/v1/telemetry/report,     telemetry",
         "/api/v1/cart,                 global",
         "/api/v1/users/me,             global",

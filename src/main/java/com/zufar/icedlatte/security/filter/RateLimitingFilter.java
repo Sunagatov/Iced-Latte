@@ -3,8 +3,8 @@ package com.zufar.icedlatte.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
+import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -88,7 +88,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
-            handleRateLimitExceeded(response, request, result);
+            handleRateLimitExceeded(response, request, category, result);
             return;
         }
 
@@ -108,6 +108,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private String getRateLimitCategory(HttpServletRequest request) {
         String path = request.getRequestURI();
+        // Google OAuth paths involve browser redirects that can fire several times per login;
+        // keep them under the looser global bucket to avoid 429s during normal OAuth flows.
+        if (path.startsWith("/api/v1/auth/google")) return "global";
         if (path.startsWith("/api/v1/auth/")) return "auth";
         if (path.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";
         if (path.startsWith("/api/v1/telemetry/")) return "telemetry";
@@ -130,14 +133,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request,
+                                         String category,
                                          RateLimitingConfiguration.RateLimitResult result) throws IOException {
-        String category = getRateLimitCategory(request);
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String identityType = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
         long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         log.warn("rate_limit.exceeded: category={}, identityType={}, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
-                category, identityType, clientIp, request.getMethod(), sanitize(request.getRequestURI()),
+                category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
                 retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -152,10 +155,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(responseBytes.length);
         response.getOutputStream().write(responseBytes);
-    }
-
-    private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\r\n]", "_");
     }
 
     private record RateLimitConfig(int maxRequests, Duration windowDuration) {

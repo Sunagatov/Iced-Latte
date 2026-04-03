@@ -50,7 +50,8 @@ public class AwsTemporaryLinkReceiver {
 
             return s3Presigner.presignGetObject(presignRequest).url().toString();
         } catch (SdkClientException e) {
-            log.error("aws.s3.presign.error: message={}", e.getMessage(), e);
+            log.error("aws.s3.presign.error: bucket={}, key={}, cause={}",
+                    fileMetadata.bucketName(), fileMetadata.fileName(), e.getMessage(), e);
             return null;
         }
     }

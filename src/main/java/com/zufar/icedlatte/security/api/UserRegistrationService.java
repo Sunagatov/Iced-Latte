@@ -51,12 +51,14 @@ public class UserRegistrationService {
             final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity, sessionId);
             authSessionService.createSession(sessionId, userEntity.getId(), jwtBlacklistService.sha256(jwtRefreshToken), httpRequest);
             final String jwtToken = jwtTokenProvider.generateToken(userEntity, sessionId);
+            log.info("auth.registration.succeeded: userId={}", userEntity.getId());
             UserAuthenticationResponse response = new UserAuthenticationResponse();
             response.setToken(jwtToken);
             response.setRefreshToken(jwtRefreshToken);
             // amazonq-ignore-next-line
             return response;
         } catch (DataIntegrityViolationException e) {
+            log.warn("auth.registration.failed: reason=email_already_registered");
             throw new UserRegistrationException("Email already registered.", e);
         }
     }

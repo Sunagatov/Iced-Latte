@@ -71,6 +71,17 @@ class ClientIpExtractorTest {
     }
 
     @Test
+    @DisplayName("falls back to remoteAddr when XFF contains a hostname (no DNS resolution)")
+    void trustedProxy_hostnameInXff_returnsRemoteAddr() {
+        setTrustedProxies(List.of("10.0.0.1"));
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("10.0.0.1");
+        when(request.getHeader("X-Forwarded-For")).thenReturn("evil.attacker.com");
+
+        assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
+    }
+
+    @Test
     @DisplayName("ignores XFF when remoteAddr is not in trusted proxies list")
     void untrustedRemoteAddr_ignoresXff() {
         setTrustedProxies(List.of("10.0.0.1"));

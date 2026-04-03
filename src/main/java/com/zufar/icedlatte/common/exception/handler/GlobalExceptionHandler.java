@@ -29,8 +29,12 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 exception.getMessage(), HttpStatus.BAD_REQUEST);
-        log.warn("exception.method_argument_invalid: errorCount={}, status=400",
-                exception.getBindingResult().getErrorCount());
+        String fieldNames = exception.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getField)
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+        log.warn("exception.validation: errorCount={}, fields={}, status=400",
+                exception.getBindingResult().getErrorCount(), fieldNames);
         return apiErrorResponse;
     }
 
@@ -38,9 +42,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-
-        log.warn("exception.resource_not_found: message={}", apiErrorResponse.message());
-
+        log.warn("exception.resource_not_found: exceptionClass={}, status=404",
+                exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -48,8 +51,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.constraint_violation: errorCount={}, status=400",
-                exception.getConstraintViolations().size());
+        String fieldNames = exception.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath().toString())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+        log.warn("exception.constraint_violation: errorCount={}, fields={}, status=400",
+                exception.getConstraintViolations().size(), fieldNames);
         return apiErrorResponse;
     }
 
