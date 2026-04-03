@@ -1,0 +1,162 @@
+version: '3'
+
+vars:
+  COMPOSE_FILE: docker-compose.yml
+  BACKEND_IMAGE: zufarexplainedit/iced-latte-backend:latest
+  BACKEND_HEALTH_URL: http://localhost:8083/actuator/health
+  FRONTEND_URL: http://localhost:3000
+  SWAGGER_URL: http://localhost:8083/api/docs/swagger-ui/index.html
+  MINIO_CONSOLE_URL: http://localhost:9001
+
+tasks:
+  docker-ready:
+    internal: true
+    silent: true
+    desc: Check that Docker and Docker Compose are installed and Docker Desktop/daemon is running
+    cmds:
+      - |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "❌ Docker is not installed."
+          echo "💡 Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
+          exit 1
+        fi
+
+        if ! docker compose version >/dev/null 2>&1; then
+          echo "❌ Docker Compose is not available."
+          echo "💡 Ensure Docker Desktop is installed correctly and 'docker-compose' works in your terminal."
+          exit 1
+        fi
+
+        if ! docker info >/dev/null 2>&1; then
+          echo "❌ Docker is installed but not running."
+          echo "💡 Start Docker Desktop (or Docker daemon) and wait until it is ready."
+          exit 1
+        fi
+
+  infra-up:
+    silent: true
+    desc: Start local infrastructure only (PostgreSQL, Redis, MinIO, bucket init) for START.md Option A
+    deps: [docker-ready]
+    cmds:
+      - echo "🚀 Starting local infrastructure (PostgreSQL, Redis, MinIO)..."
+      - docker compose -f {{.COMPOSE_FILE}} up -d postgres redis minio minio-init
+      - echo "✅ Local infrastructure is up."
+
+  infra-down:
+    silent: true
+    desc: Stop local infrastructure containers without deleting volumes
+    deps: [docker-ready]
+    cmds:
+      - echo "🛑 Stopping local infrastructure..."
+      - docker compose -f {{.COMPOSE_FILE}} stop postgres redis minio minio-init
+      - echo "✅ Local infrastructure stopped."
+
+  infra-reset:
+    silent: true
+    desc: Full local reset — stop all local containers from docker-compose.yml and delete volumes
+    deps: [docker-ready]
+    cmds:
+      - echo "♻️ Resetting local Docker environment and deleting volumes..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down -v --remove-orphans
+      - echo "✅ Local Docker environment reset complete."
+
+  backend-up:
+    silent: true
+    desc: Start backend + infrastructure in Docker for START.md Option B using the published backend image
+    deps: [docker-ready]
+    cmds:
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - echo "🚀 Starting backend + infrastructure without local backend rebuild..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --no-build backend
+      - echo "✅ Backend Docker stack is starting."
+
+  backend-down:
+    silent: true
+    desc: Stop backend + infrastructure Docker setup from START.md Option B
+    deps: [docker-ready]
+    cmds:
+      - echo "🛑 Stopping backend + infrastructure Docker stack..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend down --remove-orphans
+      - echo "✅ Backend Docker stack stopped."
+
+  fullstack-up:
+    silent: true
+    desc: Start backend + frontend + infrastructure in Docker for START.md Option C using published backend image
+    deps: [docker-ready]
+    cmds:
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - echo "🏗️ Building frontend image from source..."
+      - docker compose -f {{.COMPOSE_FILE}} build frontend
+      - echo "🚀 Starting full stack (published backend + local frontend + infrastructure)..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --no-build backend frontend
+      - echo "✅ Full stack is starting."
+
+  fullstack-down:
+    silent: true
+    desc: Stop backend + frontend + infrastructure Docker setup from START.md Option C
+    deps: [docker-ready]
+    cmds:
+      - echo "🛑 Stopping full stack..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
+      - echo "✅ Full stack stopped."
+
+  backend-logs:
+    silent: true
+    desc: Follow backend logs
+    deps: [docker-ready]
+    cmds:
+      - echo "📜 Following backend logs..."
+      - docker compose -f {{.COMPOSE_FILE}} logs -f backend
+
+  frontend-logs:
+    silent: true
+    desc: Follow frontend logs
+    deps: [docker-ready]
+    cmds:
+      - echo "📜 Following frontend logs..."
+      - docker compose -f {{.COMPOSE_FILE}} logs -f frontend
+
+  infra-logs:
+    silent: true
+    desc: Follow infrastructure logs (PostgreSQL, Redis, MinIO)
+    deps: [docker-ready]
+    cmds:
+      - echo "📜 Following infrastructure logs..."
+      - docker compose -f {{.COMPOSE_FILE}} logs -f postgres redis minio minio-init
+
+  status:
+    silent: true
+    desc: Show container status for the local development stack
+    deps: [docker-ready]
+    cmds:
+      - echo "📊 Local Docker stack status:"
+      - docker compose -f {{.COMPOSE_FILE}} ps
+
+  health:
+    silent: true
+    desc: Wait for backend startup and check health endpoint
+    cmds:
+      - |
+        echo "🏥 Waiting for backend health endpoint..."
+        for i in $(seq 1 30); do
+          if curl -fsS {{.BACKEND_HEALTH_URL}}; then
+            echo
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "❌ Backend did not become healthy within 60 seconds."
+        echo "💡 Run: task -t dev-tasks.yml backend-logs"
+        exit 1
+
+  urls:
+    silent: true
+    desc: Print useful local URLs
+    cmds:
+      - echo "🔗 Useful local URLs:"
+      - 'echo "Backend health: {{.BACKEND_HEALTH_URL}}"'
+      - 'echo "Swagger UI:     {{.SWAGGER_URL}}"'
+      - 'echo "Frontend:       {{.FRONTEND_URL}}"'
+      - 'echo "MinIO console:  {{.MINIO_CONSOLE_URL}}"'

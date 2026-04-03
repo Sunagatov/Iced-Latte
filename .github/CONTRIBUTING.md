@@ -36,11 +36,10 @@ Thanks for your interest in contributing! Here's everything you need to get star
 
 ## Local setup
 
-See [START.md](START.md) for full setup instructions.
+See [Getting Started](../docs/getting-started.md) for full setup instructions.
 
 Quick version:
 ```bash
-cp local.env .env
-docker-compose -f docker-compose.local.yml up -d iced-latte-postgresdb iced-latte-redis
+docker compose up -d postgres redis minio minio-init
 export $(cat .env | xargs) && mvn spring-boot:run
 ```

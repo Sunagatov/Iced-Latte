@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class JwtClaimExtractor {
@@ -27,6 +28,15 @@ public class JwtClaimExtractor {
             throw ex;
         } catch (Exception ex) {
             throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token", ex);
+        }
+    }
+
+    public Optional<UUID> extractSessionId(final String jwtToken) {
+        try {
+            String sid = (String) extractAllClaims(jwtToken).get("sid");
+            return StringUtils.hasText(sid) ? Optional.of(UUID.fromString(sid)) : Optional.empty();
+        } catch (Exception ex) {
+            return Optional.empty();
         }
     }
 

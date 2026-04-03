@@ -16,8 +16,6 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.cart.api.ShoppingCartCreator.DEFAULT_ITEMS_QUANTITY;
-import static com.zufar.icedlatte.cart.entity.ShoppingCart.DEFAULT_PRODUCTS_QUANTITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,8 +55,6 @@ class ShoppingCartProviderTest {
         UUID userId = UUID.randomUUID();
         ShoppingCart shoppingCart = ShoppingCart.builder()
                 .userId(userId)
-                .itemsQuantity(DEFAULT_ITEMS_QUANTITY)
-                .productsQuantity(DEFAULT_PRODUCTS_QUANTITY)
                 .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();

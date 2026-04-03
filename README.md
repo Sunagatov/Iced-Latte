@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src="iced-latte-avatar.jpg" alt="Iced Latte" width="500">
+  <img src="docs/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="716">
   <h1>Iced Latte</h1>
   <p><strong>A production-grade Java coffee marketplace — built in the open, for engineers who want real experience.</strong></p>
   <p>
@@ -26,7 +26,7 @@
 **📊 Key stats across all three repositories:**
 
 | Repository | ⭐ Stars | 🍴 Forks |
-|---|---|---|
+| --- | --- | --- |
 | [🔧 Backend](https://github.com/Sunagatov/Iced-Latte) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat) |
 | [🎨 Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat) |
 | [🧪 QA](https://github.com/Sunagatov/Iced-Latte-QA) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat) |
@@ -43,23 +43,26 @@
 # 1. 📥 Clone
 git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 
-# 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
+# 2. 🔑 Copy env file
+cp .env.example .env
+
+# 3. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
 docker compose up -d postgres redis minio minio-init
 
-# 3. ▶️ Run (uses committed .env with safe local defaults)
+# 4. ▶️ Run
 # Linux / macOS / Git Bash on Windows:
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
 
-> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [START.md](START.md).
+> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [Getting Started](docs/getting-started.md).
 
 🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
 
 **🔐 Test login:** `olivia@example.com` / `p@ss1logic11` (15 seed users, all share this password)
 
-> 💡 Using IntelliJ? See [START.md](START.md) for IDE run configuration, Docker-only setup, and troubleshooting.
+> 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for IDE run configuration, Docker-only setup, and troubleshooting.
 
-> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [START.md](START.md):
+> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [Getting Started](docs/getting-started.md):
 > ```bash
 > git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git  # sibling of Iced-Latte/
 > docker compose --profile backend --profile frontend up -d --build
@@ -77,7 +80,7 @@ mvn test
 ## 📸 Preview
 
 <div align="center">
-  <img src="Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="800">
+  <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="1880">
   <p><em>Live application interface</em></p>
 </div>
 
@@ -116,31 +119,31 @@ Iced Latte has earned recognition from the broader tech community.
 ## 🛠️ Tech Stack
 
 | 📂 Category | 🔧 Technology |
-|---|---|
+| --- | --- |
 | 💻 Language | Java 25 |
-| 🏗️ Framework | Spring Boot 3.5, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
-| 🗄️ Database | PostgreSQL, Liquibase 4.32 |
+| 🏗️ Framework | Spring Boot 4.0, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
+| 🗄️ Database | PostgreSQL, Liquibase |
 | ⚡ Cache | Redis, Caffeine |
-| 🔒 Security | JWT (JJWT 0.12), Google OAuth2, TLS |
-| ☁️ Cloud | AWS S3 SDK 2.x |
-| 📊 Monitoring | Micrometer, Prometheus, OpenTelemetry |
+| 🔒 Security | JWT (JJWT 0.13), Google OAuth2, Argon2 |
+| ☁️ Cloud | AWS S3 SDK 2.x, CloudFront |
+| 💳 Payment | Stripe |
+| 🤖 AI | LangChain4j, OpenAI |
+| 📊 Observability | Micrometer, Prometheus, OpenTelemetry, Sentry, Loki |
 | 🧪 Testing | JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco |
-| 📝 Logging | Logback, Logstash encoder, SLF4J |
-| 📋 API | OpenAPI 3, SpringDoc 2.8, OpenAPI Generator 7 |
+| 📋 API | OpenAPI 3, SpringDoc 3.0, OpenAPI Generator 7 |
 | 🔄 Mapping | MapStruct 1.6, Lombok |
-| 🚢 Deployment | Docker, GitHub Actions |
 
 ---
 
 ## 📚 Guides & Features
 
 | 📄 Document | 📝 Description |
-|---|---|
-| [START.md](START.md) | IDE setup, Docker-only mode, troubleshooting |
-| [FEATURES.md](FEATURES.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
-| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
+| --- | --- |
+| [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
+| [Infrastructure](docs/infrastructure.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
+| [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
+| [Security Policy](.github/SECURITY.md) | Security policy and vulnerability reporting |
+| [Code of Conduct](.github/CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
 | [LICENSE](LICENSE) | CC BY-NC 4.0 — free for educational use, commercial use requires permission |
 
 ---
@@ -155,28 +158,15 @@ src/main/java/com/zufar/icedlatte/
 ├── 📦 product/        # Product catalog
 ├── 🛒 cart/           # Shopping cart
 ├── 📋 order/          # Orders
-├── ⭐ review/         # Product reviews & ratings
+├── 💳 payment/        # Stripe payment, webhooks
+├── ⭐ review/         # Product reviews, ratings, AI moderation
 ├── ❤️ favorite/       # Favorites list
 ├── 📧 email/          # Email verification & notifications
 ├── 📁 filestorage/    # AWS S3 file upload/download
+├── 📊 observability/  # Telemetry, Sentry integration
 ├── 🔧 common/         # Shared utilities, validation, monitoring
-└── 🚀 astartup/       # Startup data migration
+└── 🚀 startup/        # Startup data migration
 ```
-
----
-
-## 🚢 Deployment
-
-🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to Render.
-
-On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and deploys to Render automatically. Only maintainers can merge to `master`.
-
-| Pipeline | Trigger | What it does |
-|---|---|---|
-| [CI](.github/workflows/ci.yml) | Push + PR → `development` | Build, test, Codecov, SonarCloud, OWASP, OpenAPI breaking-change check (PR only), Telegram on failure |
-| [CD](.github/workflows/cd.yml) | Push to `master` | Build Docker image, push to Docker Hub, deploy to Render, smoke test, Telegram notify |
-| [Build deps image](.github/workflows/build-deps-image.yml) | `pom.xml` changed on `master` or `development` | Rebuilds the Maven deps base image to keep builds fast, Telegram on failure |
-| [Stale](.github/workflows/stale.yml) | Every Monday | Marks issues/PRs stale after 60 days, closes after 30 |
 
 ---
 
@@ -185,7 +175,7 @@ On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and de
 🎉 Contributions are welcome. Here's how to get involved:
 
 | 🎯 Situation | 🚀 Action |
-|---|---|
+| --- | --- |
 | 🐛 Found a bug | [Open an issue](https://github.com/Sunagatov/Iced-Latte/issues/new) with the `bug` label |
 | 💡 Want a feature | Start a [Discussion](https://github.com/Sunagatov/Iced-Latte/discussions) first |
 | 👨💻 Ready to code | Pick a [`good first issue`](https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22), comment "I'm on it" |
@@ -196,7 +186,7 @@ On every merge to `master`, the CD pipeline builds, pushes to Docker Hub, and de
 ### 🏷️ Issue labels
 
 | 🏷️ Label | 📝 Meaning |
-|---|---|
+| --- | --- |
 | 🟢 `good first issue` | Simple, well-scoped — great for first-timers |
 | 🔴 `bug` | Something is broken |
 | 🔵 `high priority` | Do this first |

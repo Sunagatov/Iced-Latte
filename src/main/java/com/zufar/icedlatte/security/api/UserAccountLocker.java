@@ -32,7 +32,7 @@ public class UserAccountLocker {
         if (attemptRows == 0 || userRows == 0) {
             log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated", attemptRows, userRows);
         } else {
-            log.warn("auth.account.locked: durationMinutes={}", userAccountLockoutDurationMinutes);
+            log.warn("auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}", userAccountLockoutDurationMinutes);
         }
     }
 

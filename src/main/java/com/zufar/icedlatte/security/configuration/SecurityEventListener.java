@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.configuration;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
@@ -15,33 +14,20 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        log.debug("auth.success: authorities={}",
-                event.getAuthentication().getAuthorities());
+        log.debug("auth.success: authType={}",
+                event.getAuthentication().getClass().getSimpleName());
     }
 
     @EventListener
-    public void onAuthenticationFailure(AbstractAuthenticationFailureEvent event) {
-        log.warn("auth.failed: reason={}",
-                event.getException().getClass().getSimpleName());
-    }
-
-    @EventListener
+    @SuppressWarnings("unused")
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
-        String path = requestPath();
-        var authSupplier = event.getAuthentication();
-        if (authSupplier != null && authSupplier.get() != null) {
-            log.warn("auth.denied: authorities={}, path={}",
-                    authSupplier.get().getAuthorities(), path);
-        } else {
-            log.warn("auth.denied: reason=anonymous, path={}", path);
-        }
-    }
-
-    private static String requestPath() {
         var attrs = RequestContextHolder.getRequestAttributes();
+        String method = "-";
+        String path = "-";
         if (attrs instanceof ServletRequestAttributes sra) {
-            return sra.getRequest().getRequestURI();
+            method = sra.getRequest().getMethod();
+            path = sra.getRequest().getRequestURI();
         }
-        return "-";
+        log.warn("auth.denied: method={}, path={}", method, path);
     }
 }

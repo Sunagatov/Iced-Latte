@@ -30,7 +30,7 @@ class ShoppingCartCreatorTest {
 
     @Test
     @DisplayName("getOrCreate returns existing cart without creating a new one")
-    void getOrCreate_existingCart_returnsExisting() {
+    void getOrCreateExistingCartReturnsExisting() {
         UUID userId = UUID.randomUUID();
         ShoppingCart existing = ShoppingCart.builder().userId(userId).build();
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(existing));
@@ -43,7 +43,7 @@ class ShoppingCartCreatorTest {
 
     @Test
     @DisplayName("getOrCreate creates and saves new cart when none exists")
-    void getOrCreate_noExistingCart_createsNew() {
+    void getOrCreateNoExistingCartCreatesNew() {
         UUID userId = UUID.randomUUID();
         ShoppingCart newCart = ShoppingCart.builder().userId(userId).build();
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.empty());
@@ -55,12 +55,12 @@ class ShoppingCartCreatorTest {
         ArgumentCaptor<ShoppingCart> captor = ArgumentCaptor.forClass(ShoppingCart.class);
         verify(shoppingCartRepository).save(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(userId);
-        assertThat(captor.getValue().getItemsQuantity()).isEqualTo(ShoppingCartCreator.DEFAULT_ITEMS_QUANTITY);
+        assertThat(captor.getValue().getItems()).isNotNull();
     }
 
     @Test
     @DisplayName("createNewShoppingCart initialises cart with empty items set for userId")
-    void createNewShoppingCart_setsDefaults() {
+    void createNewShoppingCartSetsDefaults() {
         UUID userId = UUID.randomUUID();
         ShoppingCart saved = ShoppingCart.builder().userId(userId).items(new java.util.HashSet<>()).build();
         when(shoppingCartRepository.save(any(ShoppingCart.class))).thenReturn(saved);

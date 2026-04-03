@@ -6,6 +6,8 @@ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,7 +56,17 @@ public class FavoriteProductAdder {
     }
 
     private Set<FavoriteItemEntity> createFavoriteItems(Set<UUID> productIds, FavoriteListEntity favoriteListEntity) {
-        return productInfoRepository.findAllById(productIds).stream()
+        List<ProductInfo> foundProducts = productInfoRepository.findAllById(productIds);
+        Set<UUID> foundIds = foundProducts.stream()
+                .map(ProductInfo::getId)
+                .collect(Collectors.toSet());
+        List<UUID> missingIds = productIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+        if (!missingIds.isEmpty()) {
+            throw new ProductNotFoundException(missingIds);
+        }
+        return foundProducts.stream()
                 .map(productInfo -> FavoriteItemEntity.builder()
                         .favoriteListEntity(favoriteListEntity)
                         .productInfo(productInfo)

@@ -28,7 +28,7 @@ public class ChangeUserPasswordOperationPerformer {
         var userEntity = singleUserProvider.getUserEntityById(userId);
 
         if (!passwordEncoder.matches(changeUserPasswordRequest.getOldPassword(), userEntity.getPassword())) {
-            throw new InvalidOldPasswordException(userEntity.getEmail());
+            throw new InvalidOldPasswordException();
         }
 
         userRepository.changeUserPassword(passwordEncoder.encode(changeUserPasswordRequest.getNewPassword()), userId);

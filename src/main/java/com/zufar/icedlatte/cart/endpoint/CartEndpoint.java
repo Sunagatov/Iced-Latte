@@ -47,10 +47,10 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
             log.warn("cart.items.add.invalid: reason=empty_items");
             return ResponseEntity.badRequest().build();
         }
-        log.info("cart.items.adding: count={}", request.getItems().size());
+        log.debug("cart.items.adding: count={}", request.getItems().size());
         var shoppingCart = addItemsToShoppingCartHelper.add(request.getItems());
         enrichProductImages(shoppingCart);
-        log.info("cart.items.added: cartId={}", shoppingCart.getId());
+        log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }
 
@@ -58,10 +58,10 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @GetMapping
     public ResponseEntity<ShoppingCartDto> getShoppingCart() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("cart.get: userId={}", userId);
+        log.debug("cart.get: userId={}", userId);
         var shoppingCart = shoppingCartProvider.getByUserId(userId);
         enrichProductImages(shoppingCart);
-        log.info("cart.retrieved: userId={}", userId);
+        log.debug("cart.retrieved: userId={}", userId);
         return ResponseEntity.ok(shoppingCart);
     }
 
@@ -70,26 +70,25 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Validated @Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
         var itemId = request.getShoppingCartItemId();
         var quantityChange = request.getProductQuantityChange();
-        log.info("cart.items.quantity.updating: itemId={}, change={}", itemId, quantityChange);
+        log.debug("cart.items.quantity.updating: itemId={}, change={}", itemId, quantityChange);
         var shoppingCart = productQuantityItemUpdater.update(itemId, quantityChange);
         enrichProductImages(shoppingCart);
-        log.info("cart.items.quantity.updated: itemId={}", itemId);
+        log.debug("cart.items.quantity.updated: itemId={}", itemId);
         return ResponseEntity.ok(shoppingCart);
     }
 
     @Override
     @DeleteMapping(value = "/items")
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
-        // Validate input to prevent code injection
-        if (request.getShoppingCartItemIds() == null || request.getShoppingCartItemIds().isEmpty()) {
+        if (request.getShoppingCartItemIds().isEmpty()) {
             log.warn("cart.items.delete.invalid: reason=empty_ids");
             return ResponseEntity.badRequest().build();
         }
         
-        log.info("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());
+        log.debug("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());
         var shoppingCart = shoppingCartItemsDeleter.delete(request);
         enrichProductImages(shoppingCart);
-        log.info("cart.items.deleted");
+        log.debug("cart.items.deleted");
         return ResponseEntity.ok(shoppingCart);
     }
 

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.order.exception.handler;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +17,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.contains;
@@ -45,6 +47,19 @@ class OrderExceptionHandlerTest {
                 .thenReturn(expected);
 
         ApiErrorResponse result = handler.handleMethodArgumentNotValidException(ex);
+
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("Returns BAD_REQUEST for EmptyShoppingCartException")
+    void handleEmptyShoppingCartExceptionReturnsBadRequest() {
+        UUID userId = UUID.randomUUID();
+        EmptyShoppingCartException ex = new EmptyShoppingCartException(userId);
+        ApiErrorResponse expected = new ApiErrorResponse(ex.getMessage(), 400, LocalDateTime.now());
+        when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.BAD_REQUEST)).thenReturn(expected);
+
+        ApiErrorResponse result = handler.handleEmptyShoppingCartException(ex);
 
         assertThat(result).isEqualTo(expected);
     }

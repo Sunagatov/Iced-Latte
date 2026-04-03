@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,8 +47,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
-                                                                @RequestBody final ProductReviewRequest productReviewRequest) {
-        log.info("review.adding: productId={}", productId);
+                                                                @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
         var review = productReviewCreator.create(productId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
@@ -57,7 +57,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
-        log.info("review.deleting: reviewId={}, productId={}", productReviewId, productId);
         productReviewDeleter.delete(productId, productReviewId);
         log.info("review.deleted: reviewId={}", productReviewId);
         return ResponseEntity.ok().build();
@@ -93,10 +92,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @PostMapping(value = "/{productId}/reviews/{productReviewId}/likes")
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
-                                                                 @RequestBody final ProductReviewLikeDto request) {
-        log.info("review.rating: reviewId={}, productId={}, vote={}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
+                                                                 @Valid @RequestBody final ProductReviewLikeDto request) {
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
-        log.info("review.rated: reviewId={}, vote={}", productReviewId, request.getIsLike() ? "liked" : "disliked");
+        log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }
 }

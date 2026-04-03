@@ -23,7 +23,7 @@ public class EmailExceptionHandler {
     public ApiErrorResponse handleInvalidTokenException(final InvalidTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.email.invalid_token: message={}", apiErrorResponse.message());
+        log.warn("exception.email.invalid_token: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -31,7 +31,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleMessageBuilderNotFoundException(final MessageBuilderNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.email.builder_not_found: message={}", exception.getMessage(), exception);
+        log.error("exception.email.builder_not_found: exceptionClass={}, status=500", exception.getClass().getSimpleName(), exception);
         return apiErrorResponse;
     }
 
@@ -39,7 +39,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.TOO_EARLY)
     public ApiErrorResponse handleTimeTokenException(final TimeTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.email.time_token: message={}", apiErrorResponse.message());
+        log.warn("exception.email.time_token: exceptionClass={}, status=425", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -47,7 +47,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleTokenTimeExpiredException(final IncorrectTokenException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.email.token_expired: message={}", apiErrorResponse.message());
+        log.warn("exception.email.token_expired: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -55,7 +55,7 @@ public class EmailExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleIncorrectTokenFormatException(final IncorrectTokenFormatException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.email.invalid_token_format: message={}", apiErrorResponse.message());
+        log.warn("exception.email.invalid_token_format: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 }

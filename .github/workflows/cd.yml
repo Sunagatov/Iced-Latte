@@ -21,17 +21,17 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: zufarexplainedit/iced-latte-backend
           tags: |
@@ -39,7 +39,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -64,7 +64,8 @@ jobs:
               --env-file /home/${OCI_USER}/iced-latte.env \
               -p 8083:8083 \
               --memory=768m --memory-swap=768m \
-              -e JAVA_TOOL_OPTIONS='-Xmx512m' \
+              -e JAVA_TOOL_OPTIONS='-Xmx384m -XX:MaxMetaspaceSize=128m' \
+              -e APP_VERSION=${{ github.sha }} \
               ${IMAGE}
           "
           rm -f /tmp/oci_key
@@ -74,6 +75,7 @@ jobs:
           OCI_HOST: ${{ secrets.OCI_HOST }}
         run: |
           echo "Waiting for deploy to complete..."
+          sleep 60
           for i in $(seq 1 36); do
             STATUS=$(curl -sf "http://${OCI_HOST}:8083/actuator/health" \
               | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
@@ -126,7 +128,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.56.1
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.56.1
         with:
           image-ref: zufarexplainedit/iced-latte-backend:latest
           format: table

@@ -34,9 +34,9 @@ public class SingleUserProvider {
     }
 
     @Transactional(readOnly = true)
-    public UserDto getUserByEmail(final String email) throws UserNotFoundException {
+    public UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
         return userCrudRepository.findByEmail(email)
-                .map(userDtoConverter::toDto)
                 .orElseThrow(() -> new UserNotFoundException(email));
     }
+
 }

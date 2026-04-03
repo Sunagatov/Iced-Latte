@@ -4,6 +4,7 @@ import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,6 +30,9 @@ class SignInExceptionHandlerTest {
     @Mock
     private ApiErrorResponseCreator apiErrorResponseCreator;
 
+    @Mock
+    private HttpServletRequest request;
+
     @InjectMocks
     private SignInExceptionHandler signInExceptionHandler;
 
@@ -46,7 +50,7 @@ class SignInExceptionHandlerTest {
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserNotFoundException(exception);
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserNotFoundException(exception, request);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());
@@ -68,7 +72,7 @@ class SignInExceptionHandlerTest {
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUsernameNotFoundException(exception);
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleUsernameNotFoundException(exception, request);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());
@@ -91,7 +95,7 @@ class SignInExceptionHandlerTest {
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserAccountLockedException(exception);
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserAccountLockedException(exception, request);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());
@@ -113,7 +117,7 @@ class SignInExceptionHandlerTest {
 
         when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleBadCredentialsException(exception);
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleBadCredentialsException(exception, request);
 
         assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
         assertEquals(expectedResponse.message(), actualResponse.message());

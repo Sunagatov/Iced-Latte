@@ -6,6 +6,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,7 @@ class ProductReviewsProviderTest {
     @Mock private ProductReviewRepository reviewRepository;
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private ProductReviewValidator productReviewValidator;
+    @Mock private GetReviewsRequestValidator getReviewsRequestValidator;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @InjectMocks private ProductReviewsProvider provider;
 
@@ -56,7 +58,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviews uses defaults when params are null")
-    void getProductReviews_nullParams_usesDefaults() {
+    void getProductReviewsNullParamsUsesDefaults() {
         var page = new PageImpl<>(List.of(ProductReview.builder().id(UUID.randomUUID()).build()));
         when(reviewRepository.findAllProductReviews(eq(productId), eq(null), any(Pageable.class)))
                 .thenReturn(page);
@@ -73,7 +75,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviews throws on negative page number")
-    void getProductReviews_negativePageNumber_throws() {
+    void getProductReviewsNegativePageNumberThrows() {
         assertThatThrownBy(() -> provider.getProductReviews(productId, -1, 10, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("non-negative");
@@ -81,7 +83,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviews throws on page size less than 1")
-    void getProductReviews_zeroPageSize_throws() {
+    void getProductReviewsZeroPageSizeThrows() {
         assertThatThrownBy(() -> provider.getProductReviews(productId, 0, 0, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("at least 1");
@@ -89,7 +91,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviews throws on invalid rating value")
-    void getProductReviews_invalidRating_throws() {
+    void getProductReviewsInvalidRatingThrows() {
         assertThatThrownBy(() -> provider.getProductReviews(productId, 0, 10, null, null, List.of(6)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("1 and 5");
@@ -97,7 +99,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviewForUser returns empty response when no review found")
-    void getProductReviewForUser_noReview_returnsEmpty() {
+    void getProductReviewForUserNoReviewReturnsEmpty() {
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
@@ -109,7 +111,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getProductReviewForUser returns mapped dto when review exists")
-    void getProductReviewForUser_reviewExists_returnsMappedDto() {
+    void getProductReviewForUserReviewExistsReturnsMappedDto() {
         var review = ProductReview.builder().id(UUID.randomUUID()).build();
         var dto = new ProductReviewDto();
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
@@ -121,7 +123,7 @@ class ProductReviewsProviderTest {
 
     @Test
     @DisplayName("getUserReviews uses current user id and returns paginated result")
-    void getUserReviews_returnsResult() {
+    void getUserReviewsReturnsResult() {
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         var page = new PageImpl<>(List.<ProductReview>of());
         when(reviewRepository.findAllByUserId(eq(userId), any(Pageable.class))).thenReturn(page);

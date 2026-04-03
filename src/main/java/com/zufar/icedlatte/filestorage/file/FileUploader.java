@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.filestorage.file;
 
 import com.zufar.icedlatte.filestorage.aws.AwsObjectUploader;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,15 +20,19 @@ public class FileUploader {
     
     public FileUploader(@Autowired(required = false) AwsObjectUploader awsObjectUploader) {
         this.awsObjectUploader = awsObjectUploader;
+        if (awsObjectUploader == null) {
+            log.info("storage.aws.disabled: file upload will be skipped");
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void upload(final MultipartFile file, String bucketName, String fileName) {
+    public boolean upload(final MultipartFile file, String bucketName, String fileName) {
         if (awsObjectUploader != null) {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
-        } else {
-            log.warn("file.upload.skipped: reason=aws_not_configured");
+            return true;
         }
+        log.debug("file.upload.skipped: reason=aws_not_configured");
+        return false;
     }
 
 
@@ -38,10 +43,10 @@ public class FileUploader {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
                 log.error("file.upload.io_error: message={}", e.getMessage(), e);
-                throw new RuntimeException("Failed to upload directory due to I/O error", e);
+                throw new FileUploadException(directoryPath, e);
             }
         } else {
-            log.warn("file.dir_upload.skipped: reason=aws_not_configured");
+            log.debug("file.dir_upload.skipped: reason=aws_not_configured");
         }
     }
 }

@@ -5,15 +5,11 @@ import com.github.fge.jackson.JsonLoader;
 import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
 
 import static io.restassured.RestAssured.given;
 
-@ActiveProfiles("test")
-@SpringBootTest
 public class RestUtils {
 
     private static final String AUTHENTICATE_TEMPLATE = "/security/model/authenticate-template.json";
@@ -33,7 +29,7 @@ public class RestUtils {
                 .body(body)
                 .post("/authenticate");
 
-        String jwtToken = response.getBody().path("token");
+        String jwtToken = response.getBody().jsonPath().getString("token");
 
         if (isJwtTokenNotValid(jwtToken)) {
             throw new IllegalArgumentException("JWT Token is empty or null. Test failed.");

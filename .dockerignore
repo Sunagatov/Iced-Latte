@@ -46,3 +46,9 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Observability stack (optional, not needed in image)
+ops/observability/
+
+# Seed data (uploaded to S3/MinIO at startup, not needed in image)
+seed/

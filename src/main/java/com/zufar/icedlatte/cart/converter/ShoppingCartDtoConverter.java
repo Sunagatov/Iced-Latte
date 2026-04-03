@@ -10,7 +10,9 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {ShoppingCartItemDtoConverter.class, ItemsTotalPriceCalculator.class})
 public interface ShoppingCartDtoConverter {
 
-    @Mapping(target = "items", source = "entity.items", qualifiedByName = {"toShoppingCartItemDto"})
-    @Mapping(target = "itemsTotalPrice", source = "entity.items", qualifiedByName = {"toItemsTotalPrice"})
-    ShoppingCartDto toDto(final ShoppingCart entity);
+    @Mapping(target = "items", source = "items", qualifiedByName = {"toShoppingCartItemDto"})
+    @Mapping(target = "itemsTotalPrice", source = "items", qualifiedByName = {"toItemsTotalPrice"})
+    @Mapping(target = "itemsQuantity", expression = "java(cart.getItems() != null ? cart.getItems().size() : 0)")
+    @Mapping(target = "productsQuantity", expression = "java(cart.getItems() != null ? cart.getItems().stream().mapToInt(com.zufar.icedlatte.cart.entity.ShoppingCartItem::getProductQuantity).sum() : 0)")
+    ShoppingCartDto toDto(final ShoppingCart cart);
 }

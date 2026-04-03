@@ -146,10 +146,16 @@ security:
     auth:
       max-requests: 100000
       window-duration: PT1M
-    ai:
+    search:
       max-requests: 100000
       window-duration: PT1M
-    search:
+    telemetry:
+      max-requests: 100000
+      window-duration: PT1M
+    pre-auth:
+      max-requests: 100000
+      window-duration: PT1M
+    payment:
       max-requests: 100000
       window-duration: PT1M
 

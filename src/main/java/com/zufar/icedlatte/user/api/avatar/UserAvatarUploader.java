@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserAvatarUploader {
 
-    @Value("${spring.aws.buckets.user-avatar}")
+    @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
@@ -33,9 +33,12 @@ public class UserAvatarUploader {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
-        fileMetadataDeleter.deleteByRelatedObjectId(userId);
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
-        fileUploader.upload(file, bucketName, fileName);
+        boolean uploaded = fileUploader.upload(file, bucketName, fileName);
+        if (!uploaded) {
+            return;
+        }
+        fileMetadataDeleter.deleteByRelatedObjectId(userId);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
         fileMetadataSaver.save(fileMetadataDto);
         if (cloudfrontInvalidator != null) {

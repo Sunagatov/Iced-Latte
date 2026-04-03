@@ -143,6 +143,13 @@ paths:
       operationId: "logout"
       security:
         - bearerAuth: []
+      parameters:
+        - name: X-Refresh-Token
+          in: header
+          required: false
+          description: "Raw refresh token value to invalidate (no 'Bearer' prefix). Obtain from the refreshToken field of the authentication response."
+          schema:
+            type: string
       responses:
         "200":
           description: "Logout successful"
@@ -174,8 +181,105 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
+        "201":
+          description: "New session created (legacy token migrated)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAuthenticationResponse"
         "401":
           description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/logout-all:
+    post:
+      tags:
+        - "Security"
+      summary: "Revoke all active sessions for the current user"
+      operationId: "logoutAll"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "All sessions revoked"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/sessions:
+    get:
+      tags:
+        - "Security"
+      summary: "List active sessions for the current user"
+      operationId: "getSessions"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "Active sessions"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionInfo"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/sessions/{sessionId}:
+    delete:
+      tags:
+        - "Security"
+      summary: "Revoke a specific session by ID"
+      operationId: "revokeSession"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: "Session revoked"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Session not found"
           content:
             application/json:
               schema:
@@ -344,16 +448,11 @@ components:
       type: "object"
       required:
         - code
-        - email
         - password
       properties:
         code:
           type: "string"
           description: "Verification code sent to the user's email."
-        email:
-          type: "string"
-          format: "email"
-          description: "User's email address."
         password:
           $ref: "#/components/schemas/PasswordField"
 
@@ -366,3 +465,23 @@ components:
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+
+    SessionInfo:
+      type: "object"
+      properties:
+        sessionId:
+          type: "string"
+          format: "uuid"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+        lastUsedAt:
+          type: "string"
+          format: "date-time"
+        userAgent:
+          type: "string"
+        ipAddress:
+          type: "string"

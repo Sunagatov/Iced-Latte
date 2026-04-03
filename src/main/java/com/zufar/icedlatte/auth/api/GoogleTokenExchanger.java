@@ -28,14 +28,14 @@ public class GoogleTokenExchanger {
             @Value("${google.client-id}") String clientId,
             @Value("${google.client-secret}") String clientSecret,
             @Value("${google.redirect-uri}") String redirectUri,
-            @Value("${google.scope}") String scope) throws IOException {
+            @Value("${google.scope}") String scope) {
         this.redirectUri = redirectUri;
-        var transport = new NetHttpTransport();
+        var transport = new NetHttpTransport.Builder().build();
         var json = GsonFactory.getDefaultInstance();
         this.verifier = new GoogleIdTokenVerifier.Builder(transport, json)
                 .setAudience(Collections.singletonList(clientId))
                 .build();
-        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, clientSecret, List.of(scope))
+        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, clientSecret, List.of(scope.split("\\s+")))
                 .setAccessType("offline")
                 .build();
     }

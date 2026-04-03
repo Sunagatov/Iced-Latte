@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.time.Duration;
 
@@ -38,19 +36,15 @@ public class AwsTemporaryLinkReceiver {
             return publicUrlBase.stripTrailing() + "/" + fileMetadata.fileName();
         }
         try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(fileMetadata.bucketName())
-                    .key(fileMetadata.fileName())
-                    .build();
-
-            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+            return s3Presigner.presignGetObject(r -> r
                     .signatureDuration(Duration.parse(linkExpirationTime))
-                    .getObjectRequest(getObjectRequest)
-                    .build();
-
-            return s3Presigner.presignGetObject(presignRequest).url().toString();
+                    .getObjectRequest(g -> g
+                            .bucket(fileMetadata.bucketName())
+                            .key(fileMetadata.fileName())))
+                    .url().toString();
         } catch (SdkClientException e) {
-            log.error("aws.s3.presign.error: message={}", e.getMessage(), e);
+            log.error("aws.s3.presign.error: bucket={}, key={}, cause={}",
+                    fileMetadata.bucketName(), fileMetadata.fileName(), e.getMessage(), e);
             return null;
         }
     }

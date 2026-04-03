@@ -88,9 +88,7 @@ services:
   # ── Backend (profile: backend) ─────────────────────────────────────────────
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: zufarexplainedit/iced-latte-backend:latest
     container_name: iced-latte-backend
     profiles: [backend]
     env_file: .env
@@ -99,6 +97,7 @@ services:
       REDIS_HOST: redis
       AWS_ENDPOINT_URL: http://minio:9000
       AWS_ENABLED: "true"
+      MIGRATION_UPLOAD_ENABLED: "false"
     ports:
       - '8083:8083'
     depends_on:

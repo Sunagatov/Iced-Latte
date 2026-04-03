@@ -46,6 +46,8 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
 
     List<ProductReview> findAllByProductId(UUID productId);
 
+    boolean existsByIdAndProductId(UUID id, UUID productId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(nativeQuery = true,
             value = "UPDATE product_reviews " +

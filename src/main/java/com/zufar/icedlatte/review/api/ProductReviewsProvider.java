@@ -5,6 +5,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class ProductReviewsProvider {
     private final ProductReviewValidator productReviewValidator;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final PaginationConfig paginationConfig;
+    private final GetReviewsRequestValidator getReviewsRequestValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId,
@@ -75,11 +77,12 @@ public class ProductReviewsProvider {
                                                                  final Integer pageSize,
                                                                  final String sortAttribute,
                                                                  final String sortDirection) {
-        var userId = securityPrincipalProvider.getUserId();
         int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
+        getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, null);
+        var userId = securityPrincipalProvider.getUserId();
         var responsePage = reviewRepository
                 .findAllByUserId(userId, createPageableObject(page, size, sortAttr, sortDir))
                 .map(productReviewDtoConverter::toProductReviewDto);

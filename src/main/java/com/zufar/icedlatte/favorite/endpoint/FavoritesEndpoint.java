@@ -40,12 +40,11 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @Override
     @PostMapping
     public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Validated @Valid @RequestBody final ListOfFavoriteProducts request) {
-        log.info("favourites.adding: count={}", request.getProductIds().size());
         var userId = securityPrincipalProvider.getUserId();
         var favoriteList = favoriteProductAdderHelper.add(request, userId);
         var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
         productPictureLinkUpdater.updateBatch(response.getProducts());
-        log.info("favourites.added: count={}, userId={}", request.getProductIds().size(), userId);
+        log.info("favourites.added: count={}", request.getProductIds().size());
         return ResponseEntity.ok(response);
     }
 
@@ -53,27 +52,23 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("favourites.fetching: userId={}", userId);
         var favoriteList = favoriteListProvider.getFavoriteListDto(userId);
         var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
         productPictureLinkUpdater.updateBatch(response.getProducts());
-        log.info("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
+        log.debug("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
         return ResponseEntity.ok(response);
     }
 
     @Override
     @DeleteMapping(value = "/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
-        // Validate UUID input to prevent code injection
         if (productId == null) {
             log.warn("favourites.remove.invalid: reason=null_productId");
             return ResponseEntity.badRequest().build();
         }
-        
-        log.info("favourites.removing: productId={}", productId);
         var userId = securityPrincipalProvider.getUserId();
         favoriteProductDeleter.delete(productId, userId);
-        log.info("favourites.removed: productId={}, userId={}", productId, userId);
+        log.info("favourites.removed: productId={}", productId);
         return ResponseEntity.ok().build();
     }
 }

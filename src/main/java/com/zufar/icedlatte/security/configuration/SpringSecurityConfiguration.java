@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
+import com.zufar.icedlatte.security.filter.PreAuthRateLimitingFilter;
 import com.zufar.icedlatte.security.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,15 +34,15 @@ import java.time.Duration;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
+                                                   final PreAuthRateLimitingFilter preAuthRateLimitingFilter,
                                                    final RateLimitingFilter rateLimitingFilter,
-                                                   final CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                                   final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
                 // amazonq-ignore-next-line
                 .csrf(AbstractHttpConfigurer::disable)
@@ -56,9 +57,13 @@ public class SpringSecurityConfiguration {
                         .contentTypeOptions(withDefaults())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SecurityConstants.AUTH_SESSION_URL).authenticated()
+                        .requestMatchers(SecurityConstants.AUTH_LOGOUT_ALL_URL).authenticated()
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
                         .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset/confirm").permitAll()
                         .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
@@ -69,7 +74,7 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews/*/likes").authenticated()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
@@ -77,12 +82,20 @@ public class SpringSecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
+                        .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
-                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(preAuthRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(JwtAuthenticationFilter filter) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     // amazonq-ignore-next-line

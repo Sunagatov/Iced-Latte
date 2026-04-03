@@ -51,7 +51,7 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Generated access token contains correct subject")
-    void generateToken_containsCorrectSubject() {
+    void generateTokenContainsCorrectSubject() {
         String token = tokenProvider.generateToken(user("alice@example.com"));
 
         Claims claims = Jwts.parser().verifyWith(signingKey).build()
@@ -61,14 +61,14 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Generated access token is non-blank")
-    void generateToken_returnsNonBlankToken() {
+    void generateTokenReturnsNonBlankToken() {
         String token = tokenProvider.generateToken(user("bob@example.com"));
         assertThat(token).isNotBlank();
     }
 
     @Test
     @DisplayName("Generated refresh token is different from access token")
-    void generateRefreshToken_isDifferentFromAccessToken() {
+    void generateRefreshTokenIsDifferentFromAccessToken() {
         UserDetails userDetails = user("carol@example.com");
         String accessToken = tokenProvider.generateToken(userDetails);
         String refreshToken = tokenProvider.generateRefreshToken(userDetails);
@@ -78,10 +78,11 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Access token with extra claims includes those claims")
-    void generateToken_withExtraClaims_includesThem() {
+    void generateTokenWithExtraClaimsIncludesThem() {
         String token = tokenProvider.generateToken(
                 java.util.Map.of("role", "ADMIN"),
-                user("dave@example.com")
+                user("dave@example.com"),
+                null
         );
 
         Claims claims = Jwts.parser().verifyWith(signingKey).build()

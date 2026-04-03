@@ -55,7 +55,7 @@ public class AwsProvider {
             }
             try {
                 fileMetadataDtos.add(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
                 log.warn("aws.s3.key.invalid_uuid: key={}", fileName);
             }
         });

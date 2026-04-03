@@ -36,7 +36,7 @@ class FileServicesTest {
 
         @Test
         @DisplayName("Deletes file and metadata when AWS is configured and metadata exists")
-        void delete_awsConfigured_metadataExists_deletesAll() {
+        void deleteAwsConfiguredMetadataExistsdeletesAll() {
             UUID id = UUID.randomUUID();
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
@@ -48,20 +48,21 @@ class FileServicesTest {
         }
 
         @Test
-        @DisplayName("Skips AWS delete when AWS is not configured")
-        void delete_awsNull_skipsDelete() {
+        @DisplayName("Deletes metadata even when AWS is not configured")
+        void deleteAwsNullStillDeletesMetadata() {
             UUID id = UUID.randomUUID();
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
 
             new FileDeleter(null, fileMetadataProvider, fileMetadataDeleter).delete(id);
 
-            verifyNoInteractions(fileMetadataDeleter);
+            verify(fileMetadataDeleter).deleteByRelatedObjectId(id);
+            verifyNoInteractions(awsObjectDeleter);
         }
 
         @Test
         @DisplayName("Does nothing when metadata is absent")
-        void delete_noMetadata_doesNothing() {
+        void deleteNoMetadataDoesNothing() {
             UUID id = UUID.randomUUID();
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.empty());
 
@@ -80,7 +81,7 @@ class FileServicesTest {
 
         @Test
         @DisplayName("Returns URL when AWS configured and metadata exists")
-        void getRelatedObjectUrl_awsConfigured_returnsUrl() {
+        void getRelatedObjectUrlAwsConfiguredReturnsUrl() {
             UUID id = UUID.randomUUID();
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
@@ -93,7 +94,7 @@ class FileServicesTest {
 
         @Test
         @DisplayName("Returns empty when AWS is not configured")
-        void getRelatedObjectUrl_awsNull_returnsEmpty() {
+        void getRelatedObjectUrlAwsNullReturnsEmpty() {
             UUID id = UUID.randomUUID();
             Optional<String> result = new FileProvider(null, fileMetadataProvider).getRelatedObjectUrl(id);
             assertThat(result).isEmpty();
@@ -102,7 +103,7 @@ class FileServicesTest {
 
         @Test
         @DisplayName("Returns empty when metadata not found")
-        void getRelatedObjectUrl_noMetadata_returnsEmpty() {
+        void getRelatedObjectUrlNoMetadataReturnsEmpty() {
             UUID id = UUID.randomUUID();
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.empty());
 
@@ -113,7 +114,7 @@ class FileServicesTest {
 
         @Test
         @DisplayName("Returns empty map when AWS is not configured for bulk lookup")
-        void getRelatedObjectUrls_awsNull_returnsEmptyMap() {
+        void getRelatedObjectUrlsAwsNullReturnsEmptyMap() {
             Map<UUID, String> result = new FileProvider(null, fileMetadataProvider)
                     .getRelatedObjectUrls(List.of(UUID.randomUUID()));
             assertThat(result).isEmpty();
@@ -128,17 +129,19 @@ class FileServicesTest {
         @Mock MultipartFile multipartFile;
 
         @Test
-        @DisplayName("Uploads file when AWS is configured")
-        void upload_awsConfigured_callsUploader() {
-            new FileUploader(awsObjectUploader).upload(multipartFile, "bucket", "file.jpg");
+        @DisplayName("Uploads file when AWS is configured and returns true")
+        void uploadAwsConfiguredCallsUploader() {
+            boolean result = new FileUploader(awsObjectUploader).upload(multipartFile, "bucket", "file.jpg");
             verify(awsObjectUploader).uploadFile(multipartFile, "bucket", "file.jpg");
+            assertThat(result).isTrue();
         }
 
         @Test
-        @DisplayName("Skips upload when AWS is not configured")
-        void upload_awsNull_skips() {
-            new FileUploader(null).upload(multipartFile, "bucket", "file.jpg");
+        @DisplayName("Skips upload when AWS is not configured and returns false")
+        void uploadAwsNullSkips() {
+            boolean result = new FileUploader(null).upload(multipartFile, "bucket", "file.jpg");
             verifyNoInteractions(multipartFile);
+            assertThat(result).isFalse();
         }
     }
 }

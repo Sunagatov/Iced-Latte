@@ -52,7 +52,7 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
         verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }
@@ -75,7 +75,7 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
         verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }
@@ -96,7 +96,7 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
 
         assertEquals(expectedResult, actualResult);
-        verify(shoppingCartItemRepository).deleteAllByIdInBatch(itemIdsForDelete);
+        verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
         verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }

@@ -9,8 +9,8 @@ server:
     threads:
       max: 50
       min-spare: 5
-    max-http-form-post-size: 2MB
-    max-swallow-size: 2MB
+    max-http-form-post-size: 10MB
+    max-swallow-size: 10MB
   error:
     include-stacktrace: never
     include-message: never
@@ -26,6 +26,7 @@ server:
 spring:
   application:
     name: Iced Latte Application
+    version: ${APP_VERSION:1}
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: false
@@ -51,6 +52,7 @@ spring:
       minimum-idle: 1
       maximum-pool-size: 5
       connection-timeout: 20000
+      idle-timeout: 300000
       max-lifetime: 600000
       keepalive-time: 30000
   jpa:
@@ -155,6 +157,8 @@ cache:
   product-ttl: PT10M
   brands-ttl: PT24H
   sellers-ttl: PT24H
+  image-url-ttl: PT50M
+  image-urls-ttl: PT24H
 
 #
 # Temporary Cache
@@ -212,6 +216,50 @@ springdoc:
   default-produces-media-type: application/json
 
 #
+# Observability Properties
+#
+sentry:
+  enabled: ${SENTRY_ENABLED:false}
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  
+  # Error Sampling - capture all errors in production
+  sample-rate: 1.0
+  
+  # Performance Monitoring - trace 10% of transactions
+  traces-sample-rate: 0.1
+  
+  # Profiling - profile 10% of traced transactions
+  profiles-sample-rate: 0.1
+  
+  # Privacy & Security
+  send-default-pii: false
+  attach-stacktrace: true
+  attach-threads: true
+  
+  # Performance Monitoring
+  enable-tracing: true
+  enable-profiling: true
+  
+  # Logging Integration
+  logging:
+    minimum-event-level: error
+    minimum-breadcrumb-level: info
+  
+  # Performance Thresholds (in milliseconds)
+  tracing:
+    origins:
+      - ".*"
+  
+  # Ignore specific exceptions (optional)
+  ignored-exceptions-for-type:
+    - java.lang.IllegalArgumentException
+  
+  # In-App Packages (auto-configured by Spring Boot)
+  in-app-packages:
+    - com.zufar.icedlatte
+
+#
 # Management Properties
 #
 management:
@@ -244,6 +292,9 @@ management:
   tracing:
     sampling:
       probability: 0.1
+  observations:
+    key-values:
+      application: ${spring.application.name}
 
 #
 # JWT Security Properties
@@ -251,7 +302,7 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: PT24H # 1 day
+  expiration: PT15M # 15 minutes
   refresh-secret: ${APP_JWT_REFRESH_SECRET}
   refresh-expiration: PT24H # 1 day
   issuer: ${APP_JWT_ISSUER:iced-latte}
@@ -279,12 +330,31 @@ security:
     auth:
       max-requests: 10
       window-duration: PT1M
-    ai:
-      max-requests: 5
-      window-duration: PT1M
     search:
       max-requests: 30
       window-duration: PT1M
+    telemetry:
+      max-requests: 120
+      window-duration: PT1M
+    pre-auth:
+      max-requests: 200
+      window-duration: PT1M
+    payment:
+      # Stripe session creation + webhook: tighter than global to limit abuse surface.
+      # Webhook endpoint is permitAll (Stripe calls it server-side) so pre-auth limiter
+      # is the only guard when stripe.enabled=false or the JWT is absent.
+      max-requests: 20
+      window-duration: PT1M
+  # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
+  # Leave empty when the app is directly reachable (safe default).
+  trusted-proxies:
+  # NOTE: /actuator/health, /actuator/info, /actuator/prometheus are permitAll and skipped
+  # by both rate-limiting filters. They MUST be protected at the network/reverse-proxy layer
+  # (e.g. restrict /actuator/prometheus to the Prometheus scraper IP). Do not expose them
+  # to the public internet without that protection.
+
+oauth:
+  state-ttl-minutes: 10
 
 #
 # Login Attempts Properties
@@ -310,4 +380,23 @@ logging:
   config: classpath:logback-spring.xml
   level:
     io.opentelemetry.exporter: WARN
+  
+  # Grafana Loki Configuration
+  loki:
+    enabled: ${LOKI_ENABLED:false}
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+  
+  # Elasticsearch/Logstash Configuration
+  logstash:
+    enabled: ${LOGSTASH_ENABLED:false}
+    host: ${LOGSTASH_HOST:localhost}
+    port: ${LOGSTASH_PORT:5000}
+  
+  # Datadog Configuration
+  datadog:
+    enabled: ${DATADOG_ENABLED:false}
+
+  # Access log slow-request threshold (ms). Requests at or above this value are logged at WARN.
+  # Override per environment: logging.slow-request-threshold-ms=500
+  slow-request-threshold-ms: ${LOGGING_SLOW_REQUEST_THRESHOLD_MS:1000}
 

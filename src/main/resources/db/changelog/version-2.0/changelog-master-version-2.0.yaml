@@ -7,3 +7,9 @@ databaseChangeLog:
       file: db/changelog/version-2.0/add-ai-summary-to-product.sql
   - include:
       file: db/changelog/version-2.0/add-product-image-table.sql
+  - include:
+      file: db/changelog/version-2.0/drop-shopping-cart-denormalized-counters.sql
+  - include:
+      file: db/changelog/version-2.0/add-auth-sessions-table.sql
+  - include:
+      file: db/changelog/version-2.0/add-auth-sessions-previous-token-hash.sql

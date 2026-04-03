@@ -36,11 +36,6 @@ public class StripeWebhookService {
         Event event = parseEvent(payload, stripeSignature);
         Session session = extractSession(event);
 
-        if (session == null) {
-            log.warn("payment.webhook.no_session: eventType={}", event.getType());
-            return;
-        }
-
         switch (event.getType()) {
             case "checkout.session.completed" -> handleCompleted(session);
             case "checkout.session.expired" -> log.info("payment.session.expired: sessionId={}", session.getId());

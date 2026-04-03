@@ -69,6 +69,8 @@ nb-configuration.xml
 ##############################
 ## Amazon Q
 ##############################
+# Amazon Q agent workspace - contains local notes, deployment details, and AI-generated artifacts
+# These files are for local development workflow only and should not be committed
 .amazonq/
 
 ##############################
@@ -76,18 +78,29 @@ nb-configuration.xml
 ##############################
 .DS_Store
 /.env.local
-.env.prod
+.env
+.env.*
+!.env.example
+.amazonq/.env.prod
 local.env
 /README.local.md
 /docker-compose.override.yaml
 
 ##############################
+## Deployment
+##############################
+ssh-key-*.key
+/docker-compose.prod.yml
+/.env.prod
+/Taskfile.yml
+/ops/README.md
+/ops/scripts/.env.prod
+
+##############################
 ## Logs
 ##############################
 **/*.log
+logs/
 /src/main/resources/stripe.yaml
 /docker-compose.override.yml
-/docs/RATE_LIMITER.md
-/docs/RATE_LIMITER_QUICK_REF.md
-/docs/RATE_LIMITER_SUMMARY.md
 META-INF/

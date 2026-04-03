@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -25,16 +27,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
-        String message = exception
-                .getBindingResult()
-                .getAllErrors().stream()
-                .map(error -> String.format("{ ErrorMessage: %s }", error))
-                .toList()
-                .toString();
-
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.warn("exception.method_argument_invalid: message={}", message);
-
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                exception.getMessage(), HttpStatus.BAD_REQUEST);
+        String fieldNames = exception.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getField)
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+        log.warn("exception.validation: errorCount={}, fields={}, status=400",
+                exception.getBindingResult().getErrorCount(), fieldNames);
         return apiErrorResponse;
     }
 
@@ -42,9 +42,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-
-        log.warn("exception.resource_not_found: message={}", apiErrorResponse.message());
-
+        log.warn("exception.resource_not_found: exceptionClass={}, status=404",
+                exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -52,7 +51,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.constraint_violation: message={}", apiErrorResponse.message());
+        String fieldNames = exception.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath().toString())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+        log.warn("exception.constraint_violation: errorCount={}, fields={}, status=400",
+                exception.getConstraintViolations().size(), fieldNames);
         return apiErrorResponse;
     }
 
@@ -72,6 +76,30 @@ public class GlobalExceptionHandler {
         return apiErrorResponse;
     }
 
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
+    public ApiErrorResponse handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Uploaded file is too large",
+                HttpStatus.CONTENT_TOO_LARGE
+        );
+        log.warn("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
+                exception.getClass().getSimpleName());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleMultipartException(final MultipartException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Malformed multipart request",
+                HttpStatus.BAD_REQUEST
+        );
+        log.warn("exception.multipart.invalid_request: exceptionClass={}, status=400",
+                exception.getClass().getSimpleName());
+        return apiErrorResponse;
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleUnhandledException(final Exception exception) throws Exception {
@@ -79,7 +107,7 @@ public class GlobalExceptionHandler {
             throw exception;
         }
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.unhandled: message={}", exception.getMessage(), exception);
+        log.error("exception.unhandled: exceptionClass={}, status=500", exception.getClass().getName(), exception);
         return apiErrorResponse;
     }
 }

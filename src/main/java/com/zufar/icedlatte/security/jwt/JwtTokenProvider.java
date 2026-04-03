@@ -10,7 +10,9 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
@@ -25,16 +27,35 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
 
     public String generateToken(final UserDetails userDetails) {
-        return generateToken(Map.of(), userDetails);
+        return generateToken(Map.of(), userDetails, null);
+    }
+
+    public String generateToken(final UserDetails userDetails, UUID sessionId) {
+        return generateToken(Map.of(), userDetails, sessionId);
     }
 
     public String generateToken(final Map<String, Object> extraClaims,
-                               final UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
+                                final UserDetails userDetails, UUID sessionId) {
+        Map<String, Object> claims = new HashMap<>(extraClaims);
+        claims.put("jti", UUID.randomUUID().toString());
+        if (sessionId != null) {
+            claims.put("sid", sessionId.toString());
+        }
+        return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
     }
 
     public String generateRefreshToken(final UserDetails userDetails) {
-        return buildToken(Map.of(), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+        return buildToken(Map.of("jti", UUID.randomUUID().toString()), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+    }
+
+    public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("jti", UUID.randomUUID().toString());
+        claims.put("ver", 2);
+        if (sessionId != null) {
+            claims.put("sid", sessionId.toString());
+        }
+        return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails,

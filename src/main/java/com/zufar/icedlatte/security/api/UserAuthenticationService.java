@@ -18,6 +18,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,10 +34,9 @@ public class UserAuthenticationService {
     private final LoginFailureHandler loginFailureHandler;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
 
-    public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
+    public UserDetails verifyCredentials(final UserAuthenticationRequest request) {
         String userEmail = request.getEmail();
         String userPassword = request.getPassword();
-
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userEmail, userPassword)
@@ -43,13 +45,11 @@ public class UserAuthenticationService {
                 // amazonq-ignore-next-line
                 throw new InvalidCredentialsException();
             }
-            return buildResponse(userDetails, userEmail);
-
+            return userDetails;
         } catch (UsernameNotFoundException exception) {
             log.warn("auth.failed: reason=user_not_found");
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            log.warn("auth.failed: reason=invalid_credentials");
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
@@ -60,26 +60,15 @@ public class UserAuthenticationService {
             throw exception;
         }
     }
-// amazonq-ignore-next-line
 
-    public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
-        return buildResponse(userDetails, userEmail);
-    }
-
-    private static String maskEmail(String email) {
-        if (email == null || !email.contains("@")) return "***";
-        int at = email.indexOf('@');
-        return (at > 1 ? email.charAt(0) + "***" : "***") + email.substring(at);
-    }
-
-    private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
-        String jwtToken = jwtTokenProvider.generateToken(userDetails);
-        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        log.info("auth.token.generated: email={}", maskEmail(userEmail));
+    public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails, String userEmail,
+                                                     UUID sessionId, String refreshToken) {
+        String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
+        log.info("auth.sign_in.succeeded: sessionId={}", sessionId);
         resetLoginAttemptsService.reset(userEmail);
         UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(jwtToken);
-        response.setRefreshToken(jwtRefreshToken);
+        response.setToken(accessToken);
+        response.setRefreshToken(refreshToken);
         return response;
     }
 }

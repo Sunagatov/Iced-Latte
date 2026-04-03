@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="application_name" source="spring.application.name"/>
+    <springProperty scope="context" name="application_version" source="spring.application.version" defaultValue="unknown"/>
+    <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
+    <springProperty scope="context" name="loki_url" source="LOKI_URL" defaultValue="https://logs-prod-012.grafana.net/loki/api/v1/push"/>
+    <springProperty scope="context" name="loki_username" source="LOKI_USERNAME" defaultValue=""/>
+    <springProperty scope="context" name="loki_password" source="LOKI_PASSWORD" defaultValue=""/>
+
+    <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} requestId=%X{requestId:--} clientTraceId=%X{clientTraceId:--} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/iced-latte.log</file>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp><timeZone>UTC</timeZone></timestamp>
+                <version/>
+                <logLevel/>
+                <message/>
+                <loggerName/>
+                <threadName/>
+                <context/>
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}","trace":{"traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}}</pattern>
+                </pattern>
+                <mdc>
+                    <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                    <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                </mdc>
+                <stackTrace/>
+            </providers>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/iced-latte-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="LokiAppender" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${loki_url}</url>
+            <auth>
+                <username>${loki_username}</username>
+                <password>${loki_password}</password>
+            </auth>
+            <requestTimeoutMs>15000</requestTimeoutMs>
+        </http>
+        <format>
+            <label>
+                <pattern>application=${application_name},environment=${environment},level=%level</pattern>
+            </label>
+            <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp><timeZone>UTC</timeZone></timestamp>
+                    <logLevel/>
+                    <message/>
+                    <loggerName/>
+                    <threadName/>
+                    <pattern>
+                        <omitEmptyFields>true</omitEmptyFields>
+                        <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
+                    </pattern>
+                    <mdc>
+                        <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                        <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                        <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                    </mdc>
+                    <stackTrace/>
+                </providers>
+            </message>
+            <sortByTime>true</sortByTime>
+        </format>
+    </appender>
+
+    <appender name="AsyncConsole" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="ConsoleAppender"/>
+    </appender>
+
+    <appender name="AsyncFile" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FileAppender"/>
+    </appender>
+
+    <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <!-- neverBlock=true: remote sink slowness cannot back-pressure the app -->
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="LokiAppender"/>
+    </appender>
+
+    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
+    <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
+    <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
+    <logger name="com.github.loki4j" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="AsyncConsole"/>
+        <appender-ref ref="AsyncFile"/>
+        <appender-ref ref="AsyncLoki"/>
+    </root>
+</configuration>

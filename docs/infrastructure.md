@@ -1,4 +1,4 @@
-# Extended Features
+# Infrastructure & Integrations
 
 This document covers the infrastructure and optional integrations that power Iced Latte. Each section explains what the component does, how it is configured, and which free-tier providers work out of the box — so you can run the full stack without spending anything.
 
@@ -7,7 +7,6 @@ This document covers the infrastructure and optional integrations that power Ice
 - [PostgreSQL](#postgresql)
 - [Object Storage (AWS S3 / Supabase)](#object-storage-aws-s3--supabase)
 - [Redis Cache](#redis-cache)
-- [MongoDB (Idea)](#mongodb-idea)
 
 ---
 
@@ -37,7 +36,7 @@ All tables are created and seeded automatically on startup via Liquibase (`drop-
 
 ### Connection
 
-Configured via environment variables (see `local.env`):
+Configured via environment variables (see `.env`):
 
 ```
 DATASOURCE_HOST=localhost
@@ -110,11 +109,12 @@ Redis is an optional dependency. The app runs fully without it — all caches fa
 | Email verification token | `email:token:{email}` | per token TTL | Guava |
 | Email send rate | `email:expiry:{email}` | per token TTL | Guava |
 | JWT blacklist | `jwt:blacklist:{token}` | remaining token TTL | ConcurrentHashMap |
-| Rate limiter | `rate:{ip}` | sliding window | Caffeine token bucket |
+| Rate limiter (pre-auth) | `rate:pre-auth:ip:{ip}` | fixed window | Caffeine fixed window |
+| Rate limiter (post-auth) | `rate:{category}:user:{userId}` or `rate:{category}:ip:{ip}` | fixed window | Caffeine fixed window |
 
 ### How to enable
 
-Set these environment variables (see `local.env` for defaults):
+Set these environment variables (see `.env` for local defaults):
 
 ```
 REDIS_HOST=your-redis-host
@@ -135,26 +135,3 @@ REDIS_PORT=6380
 REDIS_PASSWORD=<your-upstash-password>
 REDIS_SSL_ENABLED=true
 ```
-
----
-
-## MongoDB (Idea)
-
-> 💡 This is a future idea, not yet implemented.
-
-All current data in Iced Latte is relational and tightly joined — orders, users, cart, reviews all rely on foreign keys and transactions, which makes PostgreSQL the right fit for them.
-
-The one place MongoDB genuinely fits is the **audit log**. The existing `audit_log` PostgreSQL table is append-only, never joined, and has no fixed schema requirement — exactly what a document store is good at. Moving it to MongoDB would mean:
-
-- No schema migrations when new auditable fields are added
-- Append-only writes with no locking contention on the main DB
-- Free tier on [MongoDB Atlas](https://www.mongodb.com/atlas) is well-suited for this volume
-
-### What would change
-
-- Add `spring-boot-starter-data-mongodb` dependency
-- Replace the `audit_log` PostgreSQL table with a MongoDB collection
-- Use `@Document` instead of `@Entity` for the audit entity
-- Configure `MONGODB_URI` env var pointing to Atlas
-
-Everything else (products, orders, users, cart, reviews) stays in PostgreSQL.

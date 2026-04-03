@@ -11,18 +11,27 @@ spring:
   liquibase:
     drop-first: false
 
+# Production Sentry Configuration
+sentry:
+  # Capture all errors in production
+  sample-rate: 1.0
+  # For low-traffic open-source project, trace all transactions
+  traces-sample-rate: 1.0
+  # Profile a subset of traced transactions
+  profiles-sample-rate: 0.25
+
 management:
   endpoint:
     health:
       show-details: when-authorized
   tracing:
     sampling:
-      probability: 0.05
+      probability: 1.0
   otlp:
     tracing:
-      endpoint: http://localhost:4318/v1/traces
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
       headers:
-        dd-api-key: ${DD_API_KEY}
+        Authorization: ${OTEL_EXPORTER_OTLP_AUTHORIZATION:${GRAFANA_CLOUD_OTLP_AUTHORIZATION:}}
 
 springdoc:
   api-docs:

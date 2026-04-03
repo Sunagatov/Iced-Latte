@@ -26,6 +26,9 @@ public class FileDeleter {
         this.awsObjectDeleter = awsObjectDeleter;
         this.fileMetadataProvider = fileMetadataProvider;
         this.fileMetadataDeleter = fileMetadataDeleter;
+        if (awsObjectDeleter == null) {
+            log.info("storage.aws.disabled: file deletion from S3 will be skipped");
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -34,11 +37,11 @@ public class FileDeleter {
                 .ifPresent(fileMetadata -> {
                     if (awsObjectDeleter != null) {
                         awsObjectDeleter.deleteFile(fileMetadata);
-                        fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
-                        log.info("file.deleted: objectId={}", relatedObjectId);
                     } else {
-                        log.warn("file.delete.skipped: reason=aws_not_configured");
+                        log.debug("file.delete.skipped: reason=aws_not_configured");
                     }
+                    fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
+                    log.info("file.deleted: objectId={}", relatedObjectId);
                 });
     }
 }

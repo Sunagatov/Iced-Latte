@@ -7,6 +7,7 @@ import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,29 +40,55 @@ public class AddItemsToShoppingCartHelper {
         UUID userId = securityPrincipalProvider.getUserId();
 
         ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
+        Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
 
-        List<ShoppingCartItem> items = createItems(itemsToAdd, shoppingCart);
+        increaseExistingItemQuantities(shoppingCart, productsWithQuantity);
+        shoppingCart.getItems().addAll(createNewItems(productsWithQuantity, shoppingCart));
 
-        ShoppingCart updatedShoppingCart = updateExistingShoppingCart(shoppingCart, items);
-
-        ShoppingCart persistedShoppingCart = shoppingCartRepository.save(updatedShoppingCart);
+        ShoppingCart persistedShoppingCart = shoppingCartRepository.save(shoppingCart);
         return shoppingCartDtoConverter.toDto(persistedShoppingCart);
     }
 
-    private List<ShoppingCartItem> createItems(Set<NewShoppingCartItemDto> itemsToAdd, ShoppingCart shoppingCart) {
-        Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
-                .collect(Collectors.toMap(NewShoppingCartItemDto::getProductId, NewShoppingCartItemDto::getProductQuantity));
+    private static Map<UUID, Integer> extractProductsWithQuantity(Set<NewShoppingCartItemDto> itemsToAdd) {
+        return itemsToAdd.stream()
+                .collect(Collectors.toMap(
+                        NewShoppingCartItemDto::getProductId,
+                        NewShoppingCartItemDto::getProductQuantity,
+                        Integer::sum
+                ));
+    }
 
-        Set<UUID> existingProductIds = shoppingCart.getItems().stream()
-                .map(ShoppingCartItem::getProductInfo)
-                .map(ProductInfo::getId)
-                .collect(Collectors.toSet());
+    private static void increaseExistingItemQuantities(ShoppingCart shoppingCart, Map<UUID, Integer> productsWithQuantity) {
+        shoppingCart.getItems().forEach(item -> {
+            UUID productId = item.getProductInfo().getId();
+            Integer quantityToAdd = productsWithQuantity.get(productId);
+
+            if (quantityToAdd != null) {
+                item.setProductQuantity(item.getProductQuantity() + quantityToAdd);
+            }
+        });
+    }
+
+    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity, ShoppingCart shoppingCart) {
+        Map<UUID, ShoppingCartItem> existingItemsByProductId = shoppingCart.getItems().stream()
+                .collect(Collectors.toMap(item -> item.getProductInfo().getId(), Function.identity()));
 
         Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
-                .filter(productId -> !existingProductIds.contains(productId))
+                .filter(productId -> !existingItemsByProductId.containsKey(productId))
                 .collect(Collectors.toSet());
 
-        return productInfoRepository.findAllById(newProductIds).stream()
+        List<ProductInfo> foundProducts = productInfoRepository.findAllById(newProductIds);
+        Set<UUID> foundIds = foundProducts.stream()
+                .map(ProductInfo::getId)
+                .collect(Collectors.toSet());
+        List<UUID> missingIds = newProductIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+        if (!missingIds.isEmpty()) {
+            throw new ProductNotFoundException(missingIds);
+        }
+
+        return foundProducts.stream()
                 .map(productInfo ->
                         ShoppingCartItem.builder()
                                 .shoppingCart(shoppingCart)
@@ -71,15 +99,4 @@ public class AddItemsToShoppingCartHelper {
                 .toList();
     }
 
-    private static ShoppingCart updateExistingShoppingCart(ShoppingCart existingShoppingCart,
-                                                           List<ShoppingCartItem> shoppingCartItems) {
-        int productsQuantity = shoppingCartItems.stream()
-                .mapToInt(ShoppingCartItem::getProductQuantity)
-                .sum();
-
-        existingShoppingCart.setItemsQuantity(existingShoppingCart.getItemsQuantity() + shoppingCartItems.size());
-        existingShoppingCart.setProductsQuantity(existingShoppingCart.getProductsQuantity() + productsQuantity);
-        existingShoppingCart.getItems().addAll(shoppingCartItems);
-        return existingShoppingCart;
-    }
 }

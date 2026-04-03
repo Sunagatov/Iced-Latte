@@ -29,7 +29,14 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
      */
     // amazonq-ignore-next-line
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE LoginAttemptEntity la SET la.attempts = 0, la.isUserLocked = false, la.expirationDatetime = NULL, la.lastModified = CURRENT_TIMESTAMP " +
-            "WHERE la.isUserLocked = true AND la.expirationDatetime <= CURRENT_TIMESTAMP")
+    @Query(value = """
+            UPDATE login_attempts
+            SET attempts = 0,
+                is_user_locked = false,
+                expiration_datetime = NULL,
+                last_modified = CURRENT_TIMESTAMP
+            WHERE is_user_locked = true
+              AND expiration_datetime <= CURRENT_TIMESTAMP
+            """, nativeQuery = true)
     int resetLockedAccounts();
 }

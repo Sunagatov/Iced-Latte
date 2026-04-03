@@ -1,0 +1,120 @@
+# =============================================================================
+# CDS Training Profile — Minimal config for Docker image build
+# =============================================================================
+# This profile is used ONLY during the CDS archive creation stage in Dockerfile.
+# It provides safe defaults that don't require external services or secrets.
+# The application starts just long enough to generate the class-data sharing
+# archive, then exits immediately via spring.context.exit=onRefresh.
+
+server:
+  port: 8083
+
+spring:
+  application:
+    name: Iced Latte Application
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: false
+    lazy-initialization: true
+  threads:
+    virtual:
+      enabled: true
+  output:
+    ansi:
+      enabled: never
+
+  # Embedded H2 for CDS training only — not used at runtime
+  datasource:
+    url: jdbc:h2:mem:cds-training
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  liquibase:
+    enabled: false
+
+  # Disable Redis for CDS training
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+  # Disable mail for CDS training
+  mail:
+    host: localhost
+    port: 587
+    username: cds-training
+    password: cds-training
+
+# Disable all external integrations
+google:
+  enabled: false
+  client-id: cds-training
+  client-secret: cds-training
+  redirect-uri: http://localhost:8083/callback
+
+ai:
+  enabled: false
+  api-key: cds-training
+
+email:
+  enabled: false
+
+stripe:
+  enabled: false
+  secret-key: cds-training
+  webhook-secret: cds-training
+
+# Disable AWS for CDS training
+spring.aws:
+  enabled: false
+  access-key: cds-training
+  secret-key: cds-training
+  region: us-east-1
+  buckets:
+    products: cds-training
+    user-avatar: cds-training
+  default-image-directory:
+    products: ./seed/products
+
+# Minimal JWT config for CDS training
+jwt:
+  header: Authorization
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: PT24H
+  refresh-secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  issuer: iced-latte
+  audience: iced-latte-client
+
+# Disable observability for CDS training
+sentry:
+  enabled: false
+
+management:
+  endpoints:
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true
+  health:
+    redis:
+      enabled: false
+
+# Disable all logging appenders except console
+logging:
+  loki:
+    enabled: false
+  logstash:
+    enabled: false
+  datadog:
+    enabled: false
+  level:
+    root: WARN
+    com.zufar.icedlatte: WARN

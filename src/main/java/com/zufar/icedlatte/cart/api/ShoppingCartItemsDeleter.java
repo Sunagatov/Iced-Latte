@@ -25,10 +25,10 @@ public class ShoppingCartItemsDeleter {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto delete(final DeleteItemsFromShoppingCartRequest request) {
-        List<UUID> itemIds = request.getShoppingCartItemIds();
-        shoppingCartItemRepository.deleteAllByIdInBatch(itemIds);
-
         UUID userId = securityPrincipalProvider.getUserId();
+        List<UUID> itemIds = request.getShoppingCartItemIds();
+        shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
+
         log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
 
         return shoppingCartProvider.getByUserId(userId);

@@ -13,6 +13,17 @@ spring:
   jpa:
     show-sql: true
 
+# Development Sentry Configuration
+sentry:
+  # Capture all errors in development
+  sample-rate: 1.0
+  # Trace 100% of transactions for debugging
+  traces-sample-rate: 1.0
+  # Profile 100% of traced transactions for debugging
+  profiles-sample-rate: 1.0
+  # Enable debug mode
+  debug: true
+
 management:
   endpoint:
     health:

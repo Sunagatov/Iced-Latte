@@ -29,7 +29,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleUnsupportedReviewFormatException(final EmptyProductReviewException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.review.empty: message={}", apiErrorResponse.message());
+        log.warn("exception.review.empty: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }
@@ -39,7 +39,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleInvalidProductReviewTextException(final InvalidProductReviewTextException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.review.invalid_text: message={}", apiErrorResponse.message());
+        log.warn("exception.review.invalid_text: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }
@@ -49,7 +49,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleDeniedProductReviewDeletionException(final DeniedProductReviewDeletionException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.review.deletion_denied: message={}", apiErrorResponse.message());
+        log.warn("exception.review.deletion_denied: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }
@@ -59,7 +59,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleDeniedProductReviewCreationException(final DeniedProductReviewCreationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.review.creation_denied: message={}", apiErrorResponse.message());
+        log.warn("exception.review.creation_denied: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }
@@ -69,7 +69,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleProductNotFoundForReviewException(final ProductNotFoundForReviewException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
 
-        log.warn("exception.review.product_not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.review.product_not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }
@@ -79,7 +79,7 @@ public class ProductReviewExceptionHandler {
     public ApiErrorResponse handleGetReviewsBadRequestException(final GetReviewsBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.review.invalid_params: message={}", apiErrorResponse.message());
+        log.warn("exception.review.invalid_params: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }

@@ -26,13 +26,16 @@ public class FileProvider {
                         FileMetadataProvider fileMetadataProvider) {
         this.awsTemporaryLinkReceiver = awsTemporaryLinkReceiver;
         this.fileMetadataProvider = fileMetadataProvider;
+        if (awsTemporaryLinkReceiver == null) {
+            log.info("storage.aws.disabled: file URL generation will be skipped");
+        }
     }
 
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("file.url.skipped: reason=aws_not_configured");
+            log.debug("file.url.skipped: reason=aws_not_configured");
             return Optional.empty();
         }
         return fileMetadataProvider.getFileMetadataDto(relatedObjectId)
@@ -42,7 +45,7 @@ public class FileProvider {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, String> getRelatedObjectUrls(final List<UUID> relatedObjectIds) {
         if (awsTemporaryLinkReceiver == null) {
-            log.warn("file.urls.skipped: reason=aws_not_configured");
+            log.debug("file.urls.skipped: reason=aws_not_configured");
             return Map.of();
         }
         Map<UUID, String> urls = fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)

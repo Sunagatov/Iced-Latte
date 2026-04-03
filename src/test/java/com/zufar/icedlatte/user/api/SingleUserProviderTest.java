@@ -15,9 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
@@ -41,7 +38,7 @@ class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
-    void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
+    void getUserByIdShouldReturnCorrectUserDtoWhenUserExists() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
@@ -61,23 +58,12 @@ class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
-    void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+    void getUserByIdShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> singleUserProvider.getUserById(nonExistentUserId));
         verify(userCrudRepository).findById(nonExistentUserId);
-    }
-
-    @Test
-    @DisplayName("getUserByEmail should throw UserNotFoundException with email in message when not found")
-    void getUserByEmail_notFound_messageContainsEmail() {
-        String email = "missing@example.com";
-        when(userCrudRepository.findByEmail(email)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> singleUserProvider.getUserByEmail(email))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining(email);
     }
 }
