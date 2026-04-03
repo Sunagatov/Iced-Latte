@@ -33,6 +33,34 @@ public class UserAuthenticationService {
     private final LoginFailureHandler loginFailureHandler;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
 
+    public UserDetails verifyCredentials(final UserAuthenticationRequest request) {
+        String userEmail = request.getEmail();
+        String userPassword = request.getPassword();
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(userEmail, userPassword)
+            );
+            if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+                // amazonq-ignore-next-line
+                throw new InvalidCredentialsException();
+            }
+            return userDetails;
+        } catch (UsernameNotFoundException exception) {
+            log.warn("auth.failed: reason=user_not_found");
+            throw new InvalidCredentialsException(exception);
+        } catch (BadCredentialsException exception) {
+            log.warn("auth.failed: reason=invalid_credentials");
+            loginFailureHandler.handle(userEmail);
+            throw new InvalidCredentialsException(exception);
+        } catch (LockedException exception) {
+            log.warn("auth.failed: reason=account_locked");
+            throw new UserAccountLockedException(userAccountLockoutDurationMinutes);
+        } catch (AuthenticationException exception) {
+            log.error("auth.error: message={}", exception.getMessage(), exception);
+            throw exception;
+        }
+    }
+
     public UserAuthenticationResponse authenticate(final UserAuthenticationRequest request) {
         String userEmail = request.getEmail();
         String userPassword = request.getPassword();
@@ -70,6 +98,17 @@ public class UserAuthenticationService {
 
     public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail, UUID sessionId) {
         return buildResponse(userDetails, userEmail, sessionId);
+    }
+
+    public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails, String userEmail,
+                                                     UUID sessionId, String refreshToken) {
+        String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
+        log.info("auth.token.generated: email={}", maskEmail(userEmail));
+        resetLoginAttemptsService.reset(userEmail);
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken(accessToken);
+        response.setRefreshToken(refreshToken);
+        return response;
     }
 
     private static String maskEmail(String email) {

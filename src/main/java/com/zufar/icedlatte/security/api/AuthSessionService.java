@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
@@ -7,7 +8,9 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -21,8 +24,9 @@ public class AuthSessionService {
 
     private final AuthSessionRepository sessionRepository;
     private final JwtProperties jwtProperties;
+    private final ClientIpExtractor clientIpExtractor;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuthSessionEntity createSession(UUID userId, String refreshTokenHash, HttpServletRequest request) {
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(UUID.randomUUID())
@@ -31,10 +35,17 @@ public class AuthSessionService {
                 .createdAt(OffsetDateTime.now())
                 .expiresAt(OffsetDateTime.now().plus(jwtProperties.refreshExpiration()))
                 .userAgent(request.getHeader("User-Agent"))
-                .ipAddress(request.getRemoteAddr())
+                .ipAddress(clientIpExtractor.extract(request))
                 .compromised(false)
                 .build();
-        sessionRepository.save(session);
+        try {
+            sessionRepository.save(session);
+        } catch (DataIntegrityViolationException ex) {
+            // Duplicate refresh token hash — return the existing active session
+            log.warn("auth.session.duplicate_hash: userId={}", userId);
+            return sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+                    .orElseThrow(() -> ex);
+        }
         log.info("auth.session.created: userId={}, sessionId={}", userId, session.getId());
         return session;
     }

@@ -32,11 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String MDC_USER_ID_KEY = "userId";
     private static final String MDC_REQUEST_ID_KEY = "requestId";
-    
+    private static final String MDC_SESSION_ID_KEY = "sessionId";
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final JwtClaimExtractor jwtClaimExtractor;
+    private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -58,6 +61,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             MDC.put(MDC_USER_ID_KEY, securityPrincipalProvider.getUserId().toString());
+            try {
+                String rawToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
+                jwtClaimExtractor.extractSessionId(rawToken)
+                        .ifPresent(sid -> MDC.put(MDC_SESSION_ID_KEY, sid.toString()));
+            } catch (Exception ignored) {
+                // sid is best-effort; never block the request
+            }
         } catch (AbsentBearerHeaderException ex) {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
@@ -70,6 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(httpRequest, httpResponse);
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
+            MDC.remove(MDC_SESSION_ID_KEY);
             MDC.remove(MDC_REQUEST_ID_KEY);
         }
     }

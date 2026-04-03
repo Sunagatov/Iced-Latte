@@ -24,7 +24,7 @@ public class CorrelationFilter extends OncePerRequestFilter {
     private static final String SESSION_ID_HEADER = "X-Session-ID";
     private static final String SESSION_ID_MDC_KEY = "sessionId";
     private static final String TRACE_ID_HEADER = "X-Trace-ID";
-    private static final String TRACE_ID_MDC_KEY = "traceId";
+    private static final String TRACE_ID_MDC_KEY = "clientTraceId";
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)

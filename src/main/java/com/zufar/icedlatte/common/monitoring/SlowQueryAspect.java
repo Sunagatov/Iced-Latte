@@ -24,8 +24,10 @@ public class SlowQueryAspect {
         } finally {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed >= thresholdMs) {
-                log.warn("db.slow_query: method={}, durationMs={}",
-                        pjp.getSignature().toShortString(), elapsed);
+                log.warn("db.slow_query: repository={}.{}, durationMs={}",
+                        pjp.getSignature().getDeclaringTypeName(),
+                        pjp.getSignature().getName(),
+                        elapsed);
             }
         }
     }

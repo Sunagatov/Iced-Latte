@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -20,10 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -33,6 +32,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final RateLimiter rateLimiter;
     private final MeterRegistry meterRegistry;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Value("${security.rate-limit.global.max-requests:60}")
     private int globalMaxRequests;
@@ -70,12 +70,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.telemetry.window-duration:PT1M}")
     private Duration telemetryWindowDuration;
 
-    @Value("${security.trusted-proxies:}")
-    private List<String> trustedProxies;
-
-    public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry) {
+    public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry, ClientIpExtractor clientIpExtractor) {
         this.rateLimiter = rateLimiter;
         this.meterRegistry = meterRegistry;
+        this.clientIpExtractor = clientIpExtractor;
     }
 
     @Override
@@ -112,7 +110,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
     
     private String buildRateLimitKey(HttpServletRequest request, String category) {
-        String clientIp = extractClientIp(request);
+        String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             return category + ":user:" + auth.getName() + ":" + clientIp;
@@ -128,30 +126,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (requestPath.contains("/search")) return "search";
         if (requestPath.startsWith("/api/v1/telemetry/")) return "telemetry";
         return "global";
-    }
-    
-    private String extractClientIp(HttpServletRequest request) {
-        String remoteAddr = request.getRemoteAddr();
-        if (trustedProxies != null && trustedProxies.contains(remoteAddr)) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                String firstIp = xForwardedFor.split(",")[0].trim();
-                if (isValidIp(firstIp)) {
-                    return firstIp;
-                }
-            }
-        }
-        return remoteAddr;
-    }
-    
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private boolean isValidIp(String ip) {
-        try {
-            InetAddress.getByName(ip);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
     
     private RateLimitConfig getRateLimitConfig(String category) {

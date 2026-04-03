@@ -10,7 +10,7 @@
     <!-- ========================================== -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} requestId=%X{requestId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -43,7 +43,8 @@
                         "spanId": "%X{spanId}",
                         "userId": "%X{userId}",
                         "correlationId": "%X{correlationId}",
-                        "sessionId": "%X{sessionId}"
+                        "sessionId": "%X{sessionId}",
+                        "requestId": "%X{requestId}"
                         }
                         }
                     </pattern>
@@ -93,7 +94,8 @@
                             "spanId": "%X{spanId}",
                             "userId": "%X{userId}",
                             "correlationId": "%X{correlationId}",
-                            "sessionId": "%X{sessionId}"
+                            "sessionId": "%X{sessionId}",
+                            "requestId": "%X{requestId}"
                             }
                         </pattern>
                     </message>
@@ -135,7 +137,8 @@
                                 "spanId": "%X{spanId}",
                                 "userId": "%X{userId}",
                                 "correlationId": "%X{correlationId}",
-                                "sessionId": "%X{sessionId}"
+                                "sessionId": "%X{sessionId}",
+                                "requestId": "%X{requestId}"
                                 }
                             </pattern>
                         </pattern>
@@ -188,7 +191,8 @@
                                 "dd.span_id": "%X{spanId}",
                                 "usr.id": "%X{userId}",
                                 "correlation_id": "%X{correlationId}",
-                                "session_id": "%X{sessionId}"
+                                "session_id": "%X{sessionId}",
+                                "request_id": "%X{requestId}"
                                 }
                             </pattern>
                         </pattern>

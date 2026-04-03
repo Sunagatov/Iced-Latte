@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.configuration;
 
+import com.zufar.icedlatte.common.correlation.RequestCompletionLoggingFilter;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class SpringSecurityConfiguration {
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
                                                    final RateLimitingFilter rateLimitingFilter,
+                                                   final RequestCompletionLoggingFilter requestCompletionLoggingFilter,
                                                    final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
                 // amazonq-ignore-next-line
@@ -86,6 +88,7 @@ public class SpringSecurityConfiguration {
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(requestCompletionLoggingFilter, RateLimitingFilter.class)
                 .build();
     }
 
