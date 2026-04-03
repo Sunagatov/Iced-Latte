@@ -146,9 +146,6 @@ security:
     auth:
       max-requests: 100000
       window-duration: PT1M
-    ai:
-      max-requests: 100000
-      window-duration: PT1M
     search:
       max-requests: 100000
       window-duration: PT1M

@@ -330,9 +330,6 @@ security:
     auth:
       max-requests: 10
       window-duration: PT1M
-    ai:
-      max-requests: 5
-      window-duration: PT1M
     search:
       max-requests: 30
       window-duration: PT1M
