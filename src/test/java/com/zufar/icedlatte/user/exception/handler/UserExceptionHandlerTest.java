@@ -2,7 +2,9 @@ package com.zufar.icedlatte.user.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
+import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -95,5 +97,32 @@ class UserExceptionHandlerTest {
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("Should return ApiErrorResponse with NOT_FOUND when DeliveryAddressNotFoundException is thrown")
+    void shouldHandleDeliveryAddressNotFoundException() {
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressNotFoundException exception = new DeliveryAddressNotFoundException(addressId);
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(exception.getMessage(), 404, LocalDateTime.now());
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
+
+        ApiErrorResponse result = userExceptionHandler.handleDeliveryAddressNotFoundException(exception);
+
+        assertEquals(expectedResponse.message(), result.message());
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Should return ApiErrorResponse with BAD_REQUEST when PutUsersBadRequestException is thrown")
+    void shouldHandlePutUsersBadRequestException() {
+        PutUsersBadRequestException exception = new PutUsersBadRequestException("invalid field");
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(exception.getMessage(), 400, LocalDateTime.now());
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(expectedResponse);
+
+        ApiErrorResponse result = userExceptionHandler.handlePutUsersBadRequestException(exception);
+
+        assertEquals(expectedResponse.message(), result.message());
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
     }
 }
