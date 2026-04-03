@@ -29,10 +29,41 @@ public class RateLimitingConfiguration {
             return {current, pttl}
             """, List.class);
 
-    @Bean
+    public enum FailPolicy { OPEN, CLOSED }
+
+    // --- pre-auth bean: fail-CLOSED — deny on backend error to keep the flood guard effective ---
+
+    @Bean("preAuthRateLimiter")
     @ConditionalOnProperty(name = "spring.data.redis.host")
-    public RateLimiter redisRateLimiter(RedisTemplate<String, String> redisTemplate) {
-        log.info("rate_limit.mode: Redis");
+    public RateLimiter preAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.pre-auth.mode: Redis (fail-closed)");
+        return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.CLOSED);
+    }
+
+    @Bean("preAuthRateLimiter")
+    @ConditionalOnMissingBean(name = "preAuthRateLimiter")
+    public RateLimiter preAuthCaffeineRateLimiter() {
+        log.info("rate_limit.pre-auth.mode: in-memory Caffeine (fail-closed)");
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
+    }
+
+    // --- post-auth bean: fail-OPEN — allow on backend error to avoid blocking legitimate traffic ---
+
+    @Bean("postAuthRateLimiter")
+    @ConditionalOnProperty(name = "spring.data.redis.host")
+    public RateLimiter postAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.post-auth.mode: Redis (fail-open)");
+        return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.OPEN);
+    }
+
+    @Bean("postAuthRateLimiter")
+    @ConditionalOnMissingBean(name = "postAuthRateLimiter")
+    public RateLimiter postAuthCaffeineRateLimiter() {
+        log.info("rate_limit.post-auth.mode: in-memory Caffeine (fail-open)");
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+    }
+
+    private RateLimiter redisRateLimiterWithPolicy(RedisTemplate<String, String> redisTemplate, FailPolicy policy) {
         return (key, maxTokens, windowDuration) -> {
             try {
                 @SuppressWarnings("rawtypes")
@@ -47,36 +78,35 @@ public class RateLimitingConfiguration {
                 int remaining = (int) Math.max(0, maxTokens - count);
                 return new RateLimitResult(count <= maxTokens, maxTokens, remaining, resetTimeMillis);
             } catch (Exception e) {
-                log.error("rate_limit.redis_error: key={}, message={}", key, e.getMessage(), e);
-                return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + windowDuration.toMillis());
+                log.error("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage(), e);
+                boolean allowed = policy == FailPolicy.OPEN;
+                return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
+                        System.currentTimeMillis() + windowDuration.toMillis());
             }
         };
     }
 
-    @Bean
-    @ConditionalOnMissingBean(RateLimiter.class)
-    public RateLimiter caffeineRateLimiter() {
-        log.info("rate_limit.mode: in-memory Caffeine (Redis not configured)");
-        return new CaffeineFixedWindowRateLimiter();
-    }
-
     // Fixed-window counter — same algorithm as the Redis Lua script so local and prod behave identically.
-    // On any backend error the limiter returns allowed=true (fail-open) to avoid blocking legitimate
-    // traffic during Redis/cache incidents. NOTE: both PreAuthRateLimitingFilter and RateLimitingFilter
-    // share this same backend bean, so a Redis outage disables both layers simultaneously.
     static class CaffeineFixedWindowRateLimiter implements RateLimiter {
+        private final FailPolicy failPolicy;
         private final Cache<String, FixedWindow> windows = Caffeine.newBuilder()
                 .maximumSize(10_000)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build();
+
+        CaffeineFixedWindowRateLimiter(FailPolicy failPolicy) {
+            this.failPolicy = failPolicy;
+        }
 
         public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {
             try {
                 FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));
                 return window.tryConsume(maxTokens, windowDuration.toMillis());
             } catch (Exception e) {
-                log.error("rate_limit.cache_error: key={}, message={}", key, e.getMessage(), e);
-                return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + windowDuration.toMillis());
+                log.error("rate_limit.cache_error: key={}, policy={}, message={}", key, failPolicy, e.getMessage(), e);
+                boolean allowed = failPolicy == FailPolicy.OPEN;
+                return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
+                        System.currentTimeMillis() + windowDuration.toMillis());
             }
         }
 

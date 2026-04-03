@@ -339,9 +339,19 @@ security:
     pre-auth:
       max-requests: 200
       window-duration: PT1M
+    payment:
+      # Stripe session creation + webhook: tighter than global to limit abuse surface.
+      # Webhook endpoint is permitAll (Stripe calls it server-side) so pre-auth limiter
+      # is the only guard when stripe.enabled=false or the JWT is absent.
+      max-requests: 20
+      window-duration: PT1M
   # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
   # Leave empty when the app is directly reachable (safe default).
   trusted-proxies:
+  # NOTE: /actuator/health, /actuator/info, /actuator/prometheus are permitAll and skipped
+  # by both rate-limiting filters. They MUST be protected at the network/reverse-proxy layer
+  # (e.g. restrict /actuator/prometheus to the Prometheus scraper IP). Do not expose them
+  # to the public internet without that protection.
 
 oauth:
   state-ttl-minutes: 10

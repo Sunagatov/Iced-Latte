@@ -9,7 +9,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -39,6 +38,14 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter rateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
+
+    public PreAuthRateLimitingFilter(@Qualifier("preAuthRateLimiter") RateLimiter rateLimiter,
+                                     MeterRegistry meterRegistry,
+                                     ClientIpExtractor clientIpExtractor) {
+        this.rateLimiter = rateLimiter;
+        this.meterRegistry = meterRegistry;
+        this.clientIpExtractor = clientIpExtractor;
+    }
 
     @Value("${security.rate-limit.pre-auth.max-requests:200}")
     private int maxRequests;

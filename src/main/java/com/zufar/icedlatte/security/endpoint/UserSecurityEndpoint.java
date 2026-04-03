@@ -173,7 +173,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             try {
                 jwtBlacklistValidator.addToBlacklist(jwtTokenFromAuthHeaderExtractor.extract(authHeader));
             } catch (AbsentBearerHeaderException ex) {
-                log.warn("auth.logout.token_error: header=Authorization reason={}", ex.getMessage());
+                log.debug("auth.logout.token_error: header=Authorization reason={}", ex.getMessage());
             }
         }
 

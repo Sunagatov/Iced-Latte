@@ -280,15 +280,9 @@
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
-        <if condition='property("loki_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLoki"/></then>
-        </if>
-        <if condition='property("logstash_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLogstash"/></then>
-        </if>
-        <if condition='property("datadog_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncDatadog"/></then>
-        </if>
+        <appender-ref ref="AsyncLoki"/>
+        <appender-ref ref="AsyncLogstash"/>
+        <appender-ref ref="AsyncDatadog"/>
     </root>
 
 </configuration>

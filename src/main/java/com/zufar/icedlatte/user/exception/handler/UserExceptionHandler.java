@@ -26,7 +26,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleDeliveryAddressNotFoundException(final DeliveryAddressNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.delivery_address.not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.delivery_address.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -34,7 +34,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.user.not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.user.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -42,7 +42,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("exception.user.username_not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.user.username_not_found: exceptionClass={}, status=401", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -50,7 +50,7 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleInvalidOldPasswordException(final InvalidOldPasswordException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.warn("exception.user.invalid_password: message={}", apiErrorResponse.message());
+        log.warn("exception.user.invalid_password: exceptionClass={}, status=401", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -58,13 +58,17 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handlePutUsersBadRequestException(final PutUsersBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.user.invalid_property: message={}", apiErrorResponse.message());
+        log.warn("exception.user.invalid_property: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleValidationExceptions(MethodArgumentNotValidException ex) {
+        String fieldNames = ex.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getField)
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
         StringBuilder errorMessage = new StringBuilder();
         ex.getBindingResult().getFieldErrors().forEach(error -> {
             if (!errorMessage.isEmpty()) {
@@ -72,6 +76,7 @@ public class UserExceptionHandler {
             }
             errorMessage.append(error.getDefaultMessage());
         });
+        log.warn("exception.user.validation: fields={}, errorCount={}, status=400", fieldNames, ex.getBindingResult().getErrorCount());
         return apiErrorResponseCreator.buildResponse(errorMessage.toString(), HttpStatus.BAD_REQUEST);
     }
 }

@@ -155,4 +155,7 @@ security:
     pre-auth:
       max-requests: 100000
       window-duration: PT1M
+    payment:
+      max-requests: 100000
+      window-duration: PT1M
 

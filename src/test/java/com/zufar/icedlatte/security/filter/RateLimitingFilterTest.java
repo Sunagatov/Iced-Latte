@@ -55,6 +55,8 @@ class RateLimitingFilterTest {
         ReflectionTestUtils.setField(filter, "searchWindowDuration", Duration.ofMinutes(1));
         ReflectionTestUtils.setField(filter, "telemetryMaxRequests", 120);
         ReflectionTestUtils.setField(filter, "telemetryWindowDuration", Duration.ofMinutes(1));
+        ReflectionTestUtils.setField(filter, "paymentMaxRequests", 20);
+        ReflectionTestUtils.setField(filter, "paymentWindowDuration", Duration.ofMinutes(1));
         SecurityContextHolder.clearContext();
     }
 
@@ -70,6 +72,8 @@ class RateLimitingFilterTest {
         "/api/v1/auth/google/callback, global",
         "/api/v1/auth/google,          global",
         "/api/v1/telemetry/report,     telemetry",
+        "/api/v1/payment,              payment",
+        "/api/v1/payment/stripe/webhook, payment",
         "/api/v1/cart,                 global",
         "/api/v1/users/me,             global",
     })

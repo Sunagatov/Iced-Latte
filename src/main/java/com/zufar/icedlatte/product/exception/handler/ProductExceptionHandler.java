@@ -24,7 +24,7 @@ public class ProductExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleProductNotFoundException(final ProductNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.product.not_found: message={}", apiErrorResponse.message());
+        log.warn("exception.product.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -33,7 +33,7 @@ public class ProductExceptionHandler {
     public ApiErrorResponse handleGetProductsBadRequestException(final GetProductsBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
 
-        log.warn("exception.product.invalid_property: message={}", apiErrorResponse.message());
+        log.warn("exception.product.invalid_property: exceptionClass={}, status=400", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }

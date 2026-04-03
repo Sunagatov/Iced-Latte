@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -58,7 +59,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.telemetry.window-duration:PT1M}")
     private Duration telemetryWindowDuration;
 
-    public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry, ClientIpExtractor clientIpExtractor) {
+    @Value("${security.rate-limit.payment.max-requests:20}")
+    private int paymentMaxRequests;
+
+    @Value("${security.rate-limit.payment.window-duration:PT1M}")
+    private Duration paymentWindowDuration;
+
+    public RateLimitingFilter(@Qualifier("postAuthRateLimiter") RateLimiter rateLimiter,
+                              MeterRegistry meterRegistry,
+                              ClientIpExtractor clientIpExtractor) {
         this.rateLimiter = rateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
@@ -112,6 +121,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // keep them under the looser global bucket to avoid 429s during normal OAuth flows.
         if (path.startsWith("/api/v1/auth/google")) return "global";
         if (path.startsWith("/api/v1/auth/")) return "auth";
+        if (path.equals("/api/v1/payment") || path.startsWith("/api/v1/payment/")) return "payment";
         if (path.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";
         if (path.startsWith("/api/v1/telemetry/")) return "telemetry";
         return "global";
@@ -122,6 +132,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             case "auth" -> new RateLimitConfig(authMaxRequests, authWindowDuration);
             case "search" -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
             case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
+            case "payment" -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
             default -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
         };
     }

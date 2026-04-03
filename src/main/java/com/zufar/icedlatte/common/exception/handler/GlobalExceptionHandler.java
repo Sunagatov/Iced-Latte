@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleNoResourceFoundException(final NoResourceFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.info("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
+        log.warn("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
         return apiErrorResponse;
     }
 
