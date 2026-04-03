@@ -6,6 +6,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,7 @@ class ProductReviewsProviderTest {
     @Mock private ProductReviewRepository reviewRepository;
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private ProductReviewValidator productReviewValidator;
+    @Mock private GetReviewsRequestValidator getReviewsRequestValidator;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @InjectMocks private ProductReviewsProvider provider;
 
