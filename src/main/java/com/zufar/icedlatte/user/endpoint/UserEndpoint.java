@@ -84,7 +84,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         var userId = securityPrincipalProvider.getUserId();
         log.debug("user.avatar.get: userId={}", userId);
         String link = userAvatarLinkProvider.getLink(userId);
-        return link != null ? ResponseEntity.ok(link) : ResponseEntity.noContent().build();
+        return link != null ? ResponseEntity.ok(link) : ResponseEntity.notFound().build();
     }
 
     @Override
