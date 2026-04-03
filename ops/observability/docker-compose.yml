@@ -131,8 +131,9 @@ services:
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/pipeline/main.pipeline:/usr/share/logstash/pipeline/main.pipeline:ro
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
     environment:
       - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
     networks:
