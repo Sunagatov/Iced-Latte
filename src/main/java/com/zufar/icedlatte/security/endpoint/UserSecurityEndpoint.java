@@ -70,6 +70,10 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     private final HttpServletRequest httpRequest;
 
+    private static final String MDC_USER_ID = "userId";
+    private static final String MDC_SESSION_ID = "sessionId";
+
+    @Override
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
         log.debug("auth.register.processing");
@@ -94,8 +98,8 @@ public class UserSecurityEndpoint implements SecurityApi {
         UUID sessionId = UUID.randomUUID();
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
-        MDC.put("userId", session.getUserId().toString());
-        MDC.put("sessionId", session.getId().toString());
+        MDC.put(MDC_USER_ID, session.getUserId().toString());
+        MDC.put(MDC_SESSION_ID, session.getId().toString());
         var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
         return ResponseEntity.ok(response);
     }
@@ -132,15 +136,15 @@ public class UserSecurityEndpoint implements SecurityApi {
                     httpRequest);
             // Blacklist the old legacy token so it cannot be replayed again
             jwtBlacklistValidator.addToBlacklist(rawToken);
-            MDC.put("sessionId", newSession.getId().toString());
-            MDC.put("userId", newSession.getUserId().toString());
+            MDC.put(MDC_SESSION_ID, newSession.getId().toString());
+            MDC.put(MDC_USER_ID, newSession.getUserId().toString());
             var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
             log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.ok(response);
         }
 
-        MDC.put("sessionId", session.getId().toString());
-        MDC.put("userId", session.getUserId().toString());
+        MDC.put(MDC_SESSION_ID, session.getId().toString());
+        MDC.put(MDC_USER_ID, session.getUserId().toString());
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
@@ -162,7 +166,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         if (!StringUtils.hasText(refreshToken)) {
             try {
                 refreshToken = jwtRefreshTokenValidator.extractRawToken(httpRequest);
-            } catch (AbsentBearerHeaderException ignored) {
+            } catch (AbsentBearerHeaderException _) {
                 // no refresh token provided — access token blacklist only
             }
         }
@@ -185,6 +189,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok().build();
     }
 
+    @Override
     @PostMapping("/logout-all")
     public ResponseEntity<Void> logoutAll() {
         log.debug("auth.logout_all.processing");
@@ -194,6 +199,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok().build();
     }
 
+    @Override
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionInfo>> getSessions() {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -210,6 +216,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok(sessions);
     }
 
+    @Override
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> revokeSession(@PathVariable UUID sessionId) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -225,7 +232,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         try {
             singleUserProvider.getUserEntityByEmail(request.getEmail());
             emailTokenSender.sendPasswordResetCode(request.getEmail());
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundException _) {
             log.warn("auth.password.forgot.unknown_email");
         }
         return ResponseEntity.ok().build();
