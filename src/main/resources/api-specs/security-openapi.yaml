@@ -143,6 +143,13 @@ paths:
       operationId: "logout"
       security:
         - bearerAuth: []
+      parameters:
+        - name: X-Refresh-Token
+          in: header
+          required: false
+          description: "Refresh token to invalidate alongside the access token."
+          schema:
+            type: string
       responses:
         "200":
           description: "Logout successful"

@@ -87,24 +87,25 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @Override
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
+            String xRefreshToken) {
         log.info("auth.logout.processing");
-        String authHeader = httpRequest.getHeader("Authorization");
-        if (!StringUtils.hasText(authHeader)) {
-            log.debug("auth.logout.no_token");
-            return ResponseEntity.ok().build();
+        blacklistIfPresent(httpRequest.getHeader("Authorization"), "Authorization");
+        if (StringUtils.hasText(xRefreshToken)) {
+            blacklistIfPresent("Bearer " + xRefreshToken, "X-Refresh-Token");
         }
-
-        try {
-            String token = jwtTokenFromAuthHeaderExtractor.extract(authHeader);
-            jwtBlacklistValidator.addToBlacklist(token);
-            log.info("auth.logout.completed");
-        } catch (AbsentBearerHeaderException ex) {
-            log.warn("auth.logout.token_error: reason={}", ex.getMessage(), ex);
-            // Still return success to prevent information leakage
-        }
-
+        log.info("auth.logout.completed");
         return ResponseEntity.ok().build();
+    }
+
+    private void blacklistIfPresent(String header, String headerName) {
+        if (!StringUtils.hasText(header)) return;
+        try {
+            jwtBlacklistValidator.addToBlacklist(jwtTokenFromAuthHeaderExtractor.extract(header));
+        } catch (AbsentBearerHeaderException ex) {
+            log.warn("auth.logout.token_error: header={} reason={}", headerName, ex.getMessage());
+        }
     }
 
     @Override

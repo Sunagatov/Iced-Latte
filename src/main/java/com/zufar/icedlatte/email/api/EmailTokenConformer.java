@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.email.api;
 
 import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
@@ -20,12 +21,14 @@ public class EmailTokenConformer {
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
 
     public UserAuthenticationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest) {
-        UserRegistrationRequest userRegistrationRequest = tokenManager.validateToken(confirmEmailRequest);
+        UserRegistrationRequest userRegistrationRequest =
+                tokenManager.validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
         return userRegistrationService.register(userRegistrationRequest);
     }
 
     public void confirmResetPasswordEmailByCode(final ConfirmEmailRequest confirmEmailRequest, final String newPassword) {
-        UserRegistrationRequest request = tokenManager.validateToken(confirmEmailRequest);
+        UserRegistrationRequest request =
+                tokenManager.validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
         var userEntity = singleUserProvider.getUserEntityByEmail(request.getEmail());
         changeUserPasswordOperationPerformer.changeUserPassword(userEntity.getId(), newPassword);
     }

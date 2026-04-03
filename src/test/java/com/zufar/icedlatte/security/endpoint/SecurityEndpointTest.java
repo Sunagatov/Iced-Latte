@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.http.ContentType;
@@ -188,7 +189,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     @DisplayName("Should authenticate user")
     void shouldAuthenticateUser() {
         UserRegistrationRequest pending = new UserRegistrationRequest("Auth", "Registr", "AuthReg@gmail.com", "!h2h3kKl22");
-        String token = tokenManager.generateToken(pending);
+        String token = tokenManager.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         given(specification).body("{\"token\":\"" + token + "\"}").post("/confirm")
                 .then().statusCode(HttpStatus.CREATED.value());

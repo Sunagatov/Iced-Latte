@@ -450,6 +450,8 @@ paths:
             application/json:
               schema:
                 type: "string"
+        "204":
+          description: "User has no avatar."
         "401":
           description: "Unauthorized access. Authentication required."
           content:

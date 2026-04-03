@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.email.api.token;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.email.exception.IncorrectTokenException;
@@ -22,6 +24,15 @@ public class RedisTokenCache implements TokenCache {
 
     private static final String KEY_PREFIX = "email:token:";
 
+    private record CacheEntry(UserRegistrationRequest request, TokenPurpose purpose) {
+        @JsonCreator
+        CacheEntry(@JsonProperty("request") UserRegistrationRequest request,
+                   @JsonProperty("purpose") TokenPurpose purpose) {
+            this.request = request;
+            this.purpose = purpose;
+        }
+    }
+
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -32,24 +43,27 @@ public class RedisTokenCache implements TokenCache {
     void init() { log.info("token_cache.mode: Redis"); }
 
     @Override
-    public void addToken(String tokenKey, UserRegistrationRequest request) {
+    public void addToken(String tokenKey, UserRegistrationRequest request, TokenPurpose purpose) {
         try {
-            redisTemplate.opsForValue().set(KEY_PREFIX + tokenKey,
-                    objectMapper.writeValueAsString(request),
+            redisTemplate.opsForValue().set(
+                    KEY_PREFIX + tokenKey,
+                    objectMapper.writeValueAsString(new CacheEntry(request, purpose)),
                     Duration.ofMinutes(expireTimeMinutes));
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize registration request", e);
+            throw new IllegalStateException("Failed to serialize token cache entry", e);
         }
     }
 
     @Override
-    public UserRegistrationRequest getToken(String tokenKey) {
+    public UserRegistrationRequest getToken(String tokenKey, TokenPurpose expectedPurpose) {
         String json = redisTemplate.opsForValue().get(KEY_PREFIX + tokenKey);
         if (json == null) throw new IncorrectTokenException();
         try {
-            return objectMapper.readValue(json, UserRegistrationRequest.class);
+            CacheEntry entry = objectMapper.readValue(json, CacheEntry.class);
+            if (entry.purpose() != expectedPurpose) throw new IncorrectTokenException();
+            return entry.request();
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to deserialize registration request", e);
+            throw new IllegalStateException("Failed to deserialize token cache entry", e);
         }
     }
 

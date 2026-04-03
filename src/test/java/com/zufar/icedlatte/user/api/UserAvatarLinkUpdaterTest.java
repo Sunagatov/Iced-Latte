@@ -36,15 +36,15 @@ class UserAvatarLinkUpdaterTest {
     }
 
     @Test
-    @DisplayName("update sets default avatarLink when provider returns default")
-    void update_setsDefaultLink() {
+    @DisplayName("update sets null avatarLink when provider returns null (no avatar)")
+    void update_setsNullLink() {
         UUID userId = UUID.randomUUID();
         UserDto dto = new UserDto();
         dto.setId(userId);
-        when(userAvatarLinkProvider.getLink(userId)).thenReturn("default file");
+        when(userAvatarLinkProvider.getLink(userId)).thenReturn(null);
 
         updater.update(dto);
 
-        assertThat(dto.getAvatarLink()).isEqualTo("default file");
+        assertThat(dto.getAvatarLink()).isNull();
     }
 }

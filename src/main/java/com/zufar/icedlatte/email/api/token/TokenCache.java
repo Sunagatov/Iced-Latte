@@ -4,10 +4,9 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 
 public interface TokenCache {
 
-    void addToken(String tokenKey,
-                  UserRegistrationRequest request);
+    void addToken(String tokenKey, UserRegistrationRequest request, TokenPurpose purpose);
 
-    UserRegistrationRequest getToken(String tokenKey);
+    UserRegistrationRequest getToken(String tokenKey, TokenPurpose expectedPurpose);
 
     void removeToken(String tokenKey);
 }
