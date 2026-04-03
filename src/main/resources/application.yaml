@@ -336,6 +336,12 @@ security:
     search:
       max-requests: 30
       window-duration: PT1M
+  # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
+  # Leave empty when the app is directly reachable (safe default).
+  trusted-proxies:
+
+oauth:
+  state-ttl-minutes: 10
 
 #
 # Login Attempts Properties

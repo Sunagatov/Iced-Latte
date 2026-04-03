@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
+import com.zufar.icedlatte.auth.api.OAuthStateCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +15,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.SecureRandom;
 import java.util.Base64;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RestController
@@ -40,6 +41,11 @@ public class AuthEndpoint {
     @Autowired(required = false)
     private GoogleAuthCallbackHandler googleAuthCallbackHandler;
 
+    @Autowired
+    private OAuthStateCache oAuthStateCache;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     @GetMapping("/google")
     public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
         if (googleAuthCallbackHandler == null) {
@@ -48,14 +54,17 @@ public class AuthEndpoint {
         }
         log.info("auth.google.initiate");
         String callbackBase = resolveCallbackBase(redirectUrl);
-        String state = Base64.getUrlEncoder().encodeToString(callbackBase.getBytes(StandardCharsets.UTF_8));
+        byte[] nonceBytes = new byte[16];
+        SECURE_RANDOM.nextBytes(nonceBytes);
+        String nonce = Base64.getUrlEncoder().withoutPadding().encodeToString(nonceBytes);
+        oAuthStateCache.store(nonce, callbackBase);
         URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
                 .queryParam("scope", scope)
                 .queryParam("access_type", "offline")
                 .queryParam("response_type", "code")
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("client_id", clientId)
-                .queryParam("state", state)
+                .queryParam("state", nonce)
                 .build().toUri();
         return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
     }
@@ -89,12 +98,14 @@ public class AuthEndpoint {
         }
         String callbackBase = frontendUrl;
         if (state != null && !state.isBlank()) {
-            try {
-                String decoded = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
-                callbackBase = resolveCallbackBase(decoded);
-            } catch (Exception e) {
+            String stored = oAuthStateCache.consume(state);
+            if (stored == null) {
                 log.warn("auth.google.callback.invalid-state");
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
+                        .build();
             }
+            callbackBase = stored;
         }
         try {
             var tokens = googleAuthCallbackHandler.handle(code);

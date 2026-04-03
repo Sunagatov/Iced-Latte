@@ -23,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -64,6 +65,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.payment-window-duration:PT1M}")
     private Duration paymentWindowDuration;
 
+    @Value("${security.trusted-proxies:}")
+    private List<String> trustedProxies;
+
     public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry) {
         this.rateLimiter = rateLimiter;
         this.allowedCounter = Counter.builder("rate_limit.requests.allowed")
@@ -100,22 +104,36 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     
     private String buildRateLimitKey(HttpServletRequest request) {
         String clientIp = extractClientIp(request);
+        String category = getRateLimitCategory(request.getRequestURI());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            return "user:" + auth.getName() + ":" + clientIp;
+            return category + ":user:" + auth.getName() + ":" + clientIp;
         }
-        return "ip:" + clientIp;
+        return category + ":ip:" + clientIp;
+    }
+
+    private String getRateLimitCategory(String requestPath) {
+        if (requestPath.startsWith("/api/v1/auth/google")) return "global";
+        if (requestPath.startsWith("/api/v1/auth/")) return "auth";
+        if (requestPath.startsWith("/api/v1/payment/")) return "payment";
+        if (requestPath.contains("/ai/") || requestPath.contains("/openai/")) return "ai";
+        if (requestPath.contains("/search")) return "search";
+        if (requestPath.startsWith("/api/v1/telemetry/")) return "telemetry";
+        return "global";
     }
     
     private String extractClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            String firstIp = xForwardedFor.split(",")[0].trim();
-            if (isValidIp(firstIp)) {
-                return firstIp;
+        String remoteAddr = request.getRemoteAddr();
+        if (trustedProxies != null && trustedProxies.contains(remoteAddr)) {
+            String xForwardedFor = request.getHeader("X-Forwarded-For");
+            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+                String firstIp = xForwardedFor.split(",")[0].trim();
+                if (isValidIp(firstIp)) {
+                    return firstIp;
+                }
             }
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
     }
     
     private boolean isValidIp(String ip) {
