@@ -91,21 +91,19 @@ public class UserSecurityEndpoint implements SecurityApi {
             @org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
             String xRefreshToken) {
         log.info("auth.logout.processing");
-        blacklistIfPresent(httpRequest.getHeader("Authorization"), "Authorization");
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (StringUtils.hasText(authHeader)) {
+            try {
+                jwtBlacklistValidator.addToBlacklist(jwtTokenFromAuthHeaderExtractor.extract(authHeader));
+            } catch (AbsentBearerHeaderException ex) {
+                log.warn("auth.logout.token_error: header=Authorization reason={}", ex.getMessage());
+            }
+        }
         if (StringUtils.hasText(xRefreshToken)) {
-            blacklistIfPresent("Bearer " + xRefreshToken, "X-Refresh-Token");
+            jwtBlacklistValidator.addToBlacklist(xRefreshToken);
         }
         log.info("auth.logout.completed");
         return ResponseEntity.ok().build();
-    }
-
-    private void blacklistIfPresent(String header, String headerName) {
-        if (!StringUtils.hasText(header)) return;
-        try {
-            jwtBlacklistValidator.addToBlacklist(jwtTokenFromAuthHeaderExtractor.extract(header));
-        } catch (AbsentBearerHeaderException ex) {
-            log.warn("auth.logout.token_error: header={} reason={}", headerName, ex.getMessage());
-        }
     }
 
     @Override
