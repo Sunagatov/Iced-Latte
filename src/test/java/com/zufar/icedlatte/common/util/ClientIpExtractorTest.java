@@ -28,7 +28,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("returns remoteAddr when no trusted proxies configured")
-    void noTrustedProxies_returnsRemoteAddr() {
+    void noTrustedProxiesReturnsRemoteAddr() {
         setTrustedProxies(List.of());
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("1.2.3.4");
@@ -39,7 +39,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("returns first XFF IP when remoteAddr is a trusted proxy")
-    void trustedProxy_returnsFirstXffIp() {
+    void trustedProxyReturnsFirstXffIp() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -50,7 +50,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("falls back to remoteAddr when XFF header is absent")
-    void trustedProxy_noXffHeader_returnsRemoteAddr() {
+    void trustedProxyNoXffHeaderReturnsRemoteAddr() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -61,7 +61,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("falls back to remoteAddr when XFF contains an invalid IP")
-    void trustedProxy_invalidXffIp_returnsRemoteAddr() {
+    void trustedProxyInvalidXffIpReturnsRemoteAddr() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -72,7 +72,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("falls back to remoteAddr when XFF contains a hostname (no DNS resolution)")
-    void trustedProxy_hostnameInXff_returnsRemoteAddr() {
+    void trustedProxyHostnameInXffReturnsRemoteAddr() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -83,7 +83,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("accepts valid IPv6 address in XFF")
-    void trustedProxy_validIpv6InXff_returnsIpv6() {
+    void trustedProxyValidIpv6InXffReturnsIpv6() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -94,7 +94,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("falls back to remoteAddr when XFF contains malformed IPv6 (bare colon)")
-    void trustedProxy_malformedIpv6InXff_returnsRemoteAddr() {
+    void trustedProxyMalformedIpv6InXffReturnsRemoteAddr() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -105,7 +105,7 @@ class ClientIpExtractorTest {
 
     @Test
     @DisplayName("ignores XFF when remoteAddr is not in trusted proxies list")
-    void untrustedRemoteAddr_ignoresXff() {
+    void untrustedRemoteAddrIgnoresXff() {
         setTrustedProxies(List.of("10.0.0.1"));
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("1.2.3.4");

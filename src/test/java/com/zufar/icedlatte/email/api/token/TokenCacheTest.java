@@ -37,7 +37,7 @@ class TokenCacheTest {
 
     @Test
     @DisplayName("getToken with wrong purpose throws IncorrectTokenException")
-    void getToken_wrongPurpose_throwsIncorrectTokenException() {
+    void getTokenWrongPurposeThrowsIncorrectTokenException() {
         tokenCache.addToken("123456789", request, TokenPurpose.EMAIL_VERIFICATION);
         assertThatThrownBy(() -> tokenCache.getToken("123456789", TokenPurpose.PASSWORD_RESET))
                 .isInstanceOf(IncorrectTokenException.class);

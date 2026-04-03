@@ -42,7 +42,7 @@ class UserAvatarUploaderTest {
 
     @Test
     @DisplayName("uploadUserAvatar deletes old metadata, uploads file, and saves new metadata")
-    void uploadUserAvatar_fullFlow() {
+    void uploadUserAvatarFullFlow() {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
         when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(true);
@@ -62,7 +62,7 @@ class UserAvatarUploaderTest {
 
     @Test
     @DisplayName("uploadUserAvatar skips metadata delete and save when upload is skipped")
-    void uploadUserAvatar_skipsMetadataWhenUploadSkipped() {
+    void uploadUserAvatarSkipsMetadataWhenUploadSkipped() {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
         when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(false);

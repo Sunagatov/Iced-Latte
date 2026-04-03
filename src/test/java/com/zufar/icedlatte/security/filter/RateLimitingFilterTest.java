@@ -98,7 +98,7 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("search category resolved when keyword parameter present")
-    void searchCategory_whenKeywordPresent() throws Exception {
+    void searchCategoryWhenKeywordPresent() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(contains("search"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 30, 29, RESET_MILLIS));
@@ -114,7 +114,7 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("allowed request passes through with rate-limit headers set")
-    void allowedRequest_passesThrough_withHeaders() throws Exception {
+    void allowedRequestPassesThroughWithHeaders() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 42, RESET_MILLIS));
@@ -134,7 +134,7 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("blocked request returns 429 with Retry-After and JSON body")
-    void blockedRequest_returns429() throws Exception {
+    void blockedRequestReturns429() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
@@ -153,7 +153,7 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("authenticated user key uses username only, not username+ip")
-    void authenticatedUser_keyContainsUsernameOnly() throws Exception {
+    void authenticatedUserKeyContainsUsernameOnly() throws Exception {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("alice@example.com", null, List.of()));
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
@@ -171,7 +171,7 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("anonymous request key uses IP")
-    void anonymousRequest_keyContainsIp() throws Exception {
+    void anonymousRequestKeyContainsIp() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
@@ -186,13 +186,13 @@ class RateLimitingFilterTest {
 
     @Test
     @DisplayName("OPTIONS requests are skipped")
-    void optionsRequest_isSkipped() {
+    void optionsRequestIsSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("OPTIONS", "/api/v1/auth/login"))).isTrue();
     }
 
     @Test
     @DisplayName("actuator and docs paths are skipped")
-    void actuatorAndDocs_areSkipped() {
+    void actuatorAndDocsAreSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health"))).isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui"))).isTrue();
     }

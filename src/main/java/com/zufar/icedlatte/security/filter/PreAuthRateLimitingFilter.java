@@ -30,18 +30,6 @@ import java.time.Duration;
 @Component
 public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
-    private final RateLimiter rateLimiter;
-    private final MeterRegistry meterRegistry;
-    private final ClientIpExtractor clientIpExtractor;
-
-    public PreAuthRateLimitingFilter(@Qualifier("preAuthRateLimiter") RateLimiter rateLimiter,
-                                     MeterRegistry meterRegistry,
-                                     ClientIpExtractor clientIpExtractor) {
-        this.rateLimiter = rateLimiter;
-        this.meterRegistry = meterRegistry;
-        this.clientIpExtractor = clientIpExtractor;
-    }
-
     @Value("${security.rate-limit.pre-auth.max-requests:200}")
     private int maxRequests;
 
@@ -53,6 +41,18 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
     @Value("${security.rate-limit.auth.window-duration:PT1M}")
     private Duration authWindowDuration;
+
+    private final RateLimiter rateLimiter;
+    private final MeterRegistry meterRegistry;
+    private final ClientIpExtractor clientIpExtractor;
+
+    public PreAuthRateLimitingFilter(@Qualifier("preAuthRateLimiter") RateLimiter rateLimiter,
+                                     MeterRegistry meterRegistry,
+                                     ClientIpExtractor clientIpExtractor) {
+        this.rateLimiter = rateLimiter;
+        this.meterRegistry = meterRegistry;
+        this.clientIpExtractor = clientIpExtractor;
+    }
 
     @PostConstruct
     void validate() {

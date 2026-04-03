@@ -54,7 +54,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("allowed non-auth request passes through the filter chain")
-    void allowedRequest_passesThrough() throws Exception {
+    void allowedRequestPassesThrough() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
@@ -71,7 +71,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("flood guard blocks non-auth request and returns 429")
-    void floodGuard_blockedRequest_returns429() throws Exception {
+    void floodGuardBlockedRequestReturns429() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(contains("pre-auth"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 200, 0, RESET_MILLIS));
@@ -93,7 +93,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("auth bucket blocks login at 10/min fail-closed, before flood guard runs")
-    void authBucket_blocksLogin_failClosed() throws Exception {
+    void authBucketBlocksLoginFailClosed() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(contains("auth:ip:"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
@@ -113,7 +113,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("auth bucket blocks register at 10/min fail-closed")
-    void authBucket_blocksRegister_failClosed() throws Exception {
+    void authBucketBlocksRegisterFailClosed() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(contains("auth:ip:"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
@@ -131,7 +131,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("auth bucket allowed login still passes through flood guard and chain")
-    void authBucket_allowedLogin_continuesChain() throws Exception {
+    void authBucketAllowedLoginContinuesChain() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(rateLimiter.tryConsume(contains("auth:ip:"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
@@ -152,7 +152,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("auth bucket uses per-IP key")
-    void authBucket_keyIsIpBased() throws Exception {
+    void authBucketKeyIsIpBased() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("9.8.7.6");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
@@ -169,7 +169,7 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("flood guard key is IP-based for non-auth path")
-    void floodGuardKey_isIpBased() throws Exception {
+    void floodGuardKeyIsIpBased() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("9.8.7.6");
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
@@ -184,20 +184,20 @@ class PreAuthRateLimitingFilterTest {
 
     @Test
     @DisplayName("OPTIONS requests are skipped")
-    void optionsRequest_isSkipped() {
+    void optionsRequestIsSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("OPTIONS", "/api/v1/auth/login"))).isTrue();
     }
 
     @Test
     @DisplayName("actuator and docs paths are skipped")
-    void actuatorAndDocs_areSkipped() {
+    void actuatorAndDocsAreSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health"))).isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui"))).isTrue();
     }
 
     @Test
     @DisplayName("regular API paths are not skipped")
-    void regularApiPath_isNotSkipped() {
+    void regularApiPathIsNotSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/login"))).isFalse();
     }
 }

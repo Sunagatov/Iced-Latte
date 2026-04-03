@@ -17,7 +17,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("requests within limit are allowed")
-    void withinLimit_allowed() {
+    void withinLimitAllowed() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         for (int i = 0; i < 3; i++) {
             assertThat(limiter.tryConsume("key1", 3, window).allowed()).isTrue();
@@ -26,7 +26,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("request exceeding limit is blocked")
-    void exceedingLimit_blocked() {
+    void exceedingLimitBlocked() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         for (int i = 0; i < 3; i++) limiter.tryConsume("key2", 3, window);
         assertThat(limiter.tryConsume("key2", 3, window).allowed()).isFalse();
@@ -34,7 +34,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("remaining decrements correctly")
-    void remaining_decrementsCorrectly() {
+    void remainingDecrementsCorrectly() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         RateLimitResult first = limiter.tryConsume("key3", 5, window);
         assertThat(first.remaining()).isEqualTo(4);
@@ -44,7 +44,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("remaining is 0 when blocked, never negative")
-    void remaining_neverNegative_whenBlocked() {
+    void remainingNeverNegativeWhenBlocked() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         for (int i = 0; i < 5; i++) limiter.tryConsume("key4", 2, window);
         RateLimitResult result = limiter.tryConsume("key4", 2, window);
@@ -54,7 +54,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("different keys have independent counters")
-    void differentKeys_independentCounters() {
+    void differentKeysIndependentCounters() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         for (int i = 0; i < 2; i++) limiter.tryConsume("keyA", 2, window);
         assertThat(limiter.tryConsume("keyA", 2, window).allowed()).isFalse();
@@ -63,7 +63,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("window resets after expiry — counter restarts")
-    void windowReset_afterExpiry() throws InterruptedException {
+    void windowResetAfterExpiry() throws InterruptedException {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         Duration shortWindow = Duration.ofMillis(50);
         for (int i = 0; i < 2; i++) limiter.tryConsume("key5", 2, shortWindow);
@@ -76,14 +76,14 @@ class CaffeineFixedWindowRateLimiterTest {
 
     @Test
     @DisplayName("fail-closed policy: normal operation still works")
-    void failClosed_normalOperationWorks() {
+    void failClosedNormalOperationWorks() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
         assertThat(limiter.tryConsume("key6", 10, window).allowed()).isTrue();
     }
 
     @Test
     @DisplayName("resetTimeMillis is in the future")
-    void resetTimeMillis_isInFuture() {
+    void resetTimeMillisIsInFuture() {
         var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
         long before = System.currentTimeMillis();
         RateLimitResult result = limiter.tryConsume("key7", 5, window);

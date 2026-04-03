@@ -35,7 +35,7 @@ class JwtRefreshTokenValidatorTest {
 
     @Test
     @DisplayName("extractEmail throws JwtTokenBlacklistedException when refresh token is blacklisted")
-    void extractEmail_blacklistedToken_throws() {
+    void extractEmailBlacklistedTokenThrows() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         String token = "some.refresh.token";
         when(tokenExtractor.extract(request)).thenReturn(token);
@@ -47,7 +47,7 @@ class JwtRefreshTokenValidatorTest {
 
     @Test
     @DisplayName("extractEmail throws JwtTokenHasNoUserEmailException when token is not blacklisted but invalid")
-    void extractEmail_invalidToken_throws() {
+    void extractEmailInvalidTokenThrows() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         String token = "invalid.token.value";
         when(tokenExtractor.extract(request)).thenReturn(token);

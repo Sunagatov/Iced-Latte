@@ -230,12 +230,14 @@ docker compose --profile backend --profile frontend up -d --build
 Observability is optional and disabled by default — normal local development does not require it.
 
 The repo contains optional observability and logging playground pieces:
+
 - Sentry
 - Datadog-related setup
 - Loki / Prometheus / Grafana
 - ELK (Elasticsearch, Logstash, Kibana)
 
 To explore them, check the existing config files:
+
 - `docker-compose.yml`
 - `ops/observability/docker-compose.yml`
 - `src/main/resources/application.yaml`

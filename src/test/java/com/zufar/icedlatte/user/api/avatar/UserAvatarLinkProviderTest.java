@@ -24,7 +24,7 @@ class UserAvatarLinkProviderTest {
 
     @Test
     @DisplayName("getLink returns URL when FileProvider has one")
-    void getLink_found_returnsUrl() {
+    void getLinkFoundReturnsUrl() {
         UUID userId = UUID.randomUUID();
         when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
 
@@ -33,7 +33,7 @@ class UserAvatarLinkProviderTest {
 
     @Test
     @DisplayName("getLink returns null when FileProvider returns empty")
-    void getLink_notFound_returnsNull() {
+    void getLinkNotFoundReturnsNull() {
         UUID userId = UUID.randomUUID();
         when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.empty());
 
@@ -42,7 +42,7 @@ class UserAvatarLinkProviderTest {
 
     @Test
     @DisplayName("getLink propagates RuntimeException from FileProvider")
-    void getLink_exception_propagates() {
+    void getLinkExceptionPropagates() {
         UUID userId = UUID.randomUUID();
         when(fileProvider.getRelatedObjectUrl(userId)).thenThrow(new RuntimeException("S3 down"));
 

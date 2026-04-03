@@ -38,7 +38,7 @@ class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should return the correct UserDto when the user exists")
-    void getUserById_ShouldReturnCorrectUserDtoWhenUserExists() {
+    void getUserByIdShouldReturnCorrectUserDtoWhenUserExists() {
         UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
         UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
@@ -58,7 +58,7 @@ class SingleUserProviderTest {
 
     @Test
     @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
-    void getUserById_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+    void getUserByIdShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         UUID nonExistentUserId = UUID.randomUUID();
 
         when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());

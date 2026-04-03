@@ -23,7 +23,7 @@ class UserAvatarLinkUpdaterTest {
 
     @Test
     @DisplayName("update sets avatarLink from provider and returns same dto")
-    void update_setsAvatarLink() {
+    void updateSetsAvatarLink() {
         UUID userId = UUID.randomUUID();
         UserDto dto = new UserDto();
         dto.setId(userId);
@@ -37,7 +37,7 @@ class UserAvatarLinkUpdaterTest {
 
     @Test
     @DisplayName("update sets null avatarLink when provider returns null (no avatar)")
-    void update_setsNullLink() {
+    void updateSetsNullLink() {
         UUID userId = UUID.randomUUID();
         UserDto dto = new UserDto();
         dto.setId(userId);

@@ -49,7 +49,7 @@ class OrderCreatorTest {
 
     @Test
     @DisplayName("Throws EmptyShoppingCartException when cart has no items")
-    void create_emptyCart_throwsEmptyShoppingCartException() {
+    void createEmptyCartThrowsEmptyShoppingCartException() {
         UUID userId = UUID.randomUUID();
 
         ShoppingCartDto emptyCart = new ShoppingCartDto();
@@ -76,7 +76,7 @@ class OrderCreatorTest {
 
     @Test
     @DisplayName("Creates order from cart and returns DTO")
-    void create_validRequest_savesOrderAndReturnsDto() {
+    void createValidRequestSavesOrderAndReturnsDto() {
         UUID userId = UUID.randomUUID();
 
         ShoppingCartItemDto cartItem = new ShoppingCartItemDto();
@@ -128,7 +128,7 @@ class OrderCreatorTest {
 
     @Test
     @DisplayName("Delivery address fields are mapped correctly from request")
-    void create_mapsDeliveryAddressFromRequest() {
+    void createMapsDeliveryAddressFromRequest() {
         UUID userId = UUID.randomUUID();
 
         ShoppingCartItemDto cartItem = new ShoppingCartItemDto();
