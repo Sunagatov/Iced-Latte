@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src=".github/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="716">
+  <img src="docs/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="716">
   <h1>Iced Latte</h1>
   <p><strong>A production-grade Java coffee marketplace — built in the open, for engineers who want real experience.</strong></p>
   <p>
@@ -80,7 +80,7 @@ mvn test
 ## 📸 Preview
 
 <div align="center">
-  <img src=".github/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="1880">
+  <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="1880">
   <p><em>Live application interface</em></p>
 </div>
 
@@ -141,7 +141,7 @@ Iced Latte has earned recognition from the broader tech community.
 | 📄 Document | 📝 Description |
 | --- | --- |
 | [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
-| [Features](docs/features.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
+| [Infrastructure](docs/infrastructure.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
 | [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
 | [Security Policy](.github/SECURITY.md) | Security policy and vulnerability reporting |
 | [Code of Conduct](.github/CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
@@ -166,7 +166,7 @@ src/main/java/com/zufar/icedlatte/
 ├── 📁 filestorage/    # AWS S3 file upload/download
 ├── 📊 observability/  # Telemetry, Sentry integration
 ├── 🔧 common/         # Shared utilities, validation, monitoring
-└── 🚀 astartup/       # Startup data migration
+└── 🚀 startup/        # Startup data migration
 ```
 
 ---

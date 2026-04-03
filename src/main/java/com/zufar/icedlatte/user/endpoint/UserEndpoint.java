@@ -94,7 +94,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> deleteUserAvatar() {
         var userId = securityPrincipalProvider.getUserId();
         fileDeleter.delete(userId);
-        log.info("user.avatar.deleted");
+        log.info("user.avatar.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 

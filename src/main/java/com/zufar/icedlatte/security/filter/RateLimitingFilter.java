@@ -133,6 +133,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Google OAuth paths involve browser redirects that can fire several times per login;
         // keep them under the looser global bucket to avoid 429s during normal OAuth flows.
         if (path.startsWith("/api/v1/auth/google")) return "global";
+        // login and register are throttled fail-closed in PreAuthRateLimitingFilter (auth bucket);
+        // route them to global here so the post-auth fail-open path doesn't double-count or weaken them.
+        if (path.equals("/api/v1/auth/login") || path.equals("/api/v1/auth/register")) return "global";
         if (path.startsWith("/api/v1/auth/")) return "auth";
         if (path.equals("/api/v1/payment") || path.startsWith("/api/v1/payment/")) return "payment";
         if (path.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";

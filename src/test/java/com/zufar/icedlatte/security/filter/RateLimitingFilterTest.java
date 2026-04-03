@@ -70,10 +70,11 @@ class RateLimitingFilterTest {
 
     @ParameterizedTest(name = "{0} -> {1}")
     @CsvSource({
-        "/api/v1/auth/login,           auth",
-        "/api/v1/auth/register,        auth",
+        "/api/v1/auth/login,           global",
+        "/api/v1/auth/register,        global",
         "/api/v1/auth/google/callback, global",
         "/api/v1/auth/google,          global",
+        "/api/v1/auth/refresh,         auth",
         "/api/v1/telemetry/report,     telemetry",
         "/api/v1/payment,              payment",
         "/api/v1/payment/stripe/webhook, payment",
