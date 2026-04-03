@@ -117,8 +117,10 @@ public class UserSecurityEndpoint implements SecurityApi {
             log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
             String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+            UUID newSessionId = UUID.randomUUID();
+            String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, newSessionId);
             AuthSessionEntity newSession = authSessionService.createSession(
+                    newSessionId,
                     ((com.zufar.icedlatte.user.entity.UserEntity) userDetails).getId(),
                     jwtBlacklistService.sha256(newRefreshToken),
                     httpRequest);

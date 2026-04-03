@@ -2,16 +2,21 @@ package com.zufar.icedlatte.auth.api;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.api.AuthSessionService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -28,6 +33,8 @@ public class GoogleAuthCallbackHandler {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final AuthSessionService authSessionService;
+    private final JwtBlacklistService jwtBlacklistService;
 
     public UserAuthenticationResponse handle(String authorizationCode) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleTokenExchanger.exchange(authorizationCode);
@@ -40,9 +47,13 @@ public class GoogleAuthCallbackHandler {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseGet(() -> createUser((String) payload.get("given_name"), (String) payload.get("family_name"), email));
 
+        HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        UUID sessionId = UUID.randomUUID();
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user, sessionId);
+        authSessionService.createSession(sessionId, user.getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
         UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(jwtTokenProvider.generateToken(user));
-        response.setRefreshToken(jwtTokenProvider.generateRefreshToken(user));
+        response.setToken(jwtTokenProvider.generateToken(user, sessionId));
+        response.setRefreshToken(refreshToken);
         return response;
     }
 

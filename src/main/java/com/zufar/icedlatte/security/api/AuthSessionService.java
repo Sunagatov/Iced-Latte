@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -25,12 +24,7 @@ public class AuthSessionService {
     private final JwtProperties jwtProperties;
     private final ClientIpExtractor clientIpExtractor;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public AuthSessionEntity createSession(UUID userId, String refreshTokenHash, HttpServletRequest request) {
-        return createSession(UUID.randomUUID(), userId, refreshTokenHash, request);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public AuthSessionEntity createSession(UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)
