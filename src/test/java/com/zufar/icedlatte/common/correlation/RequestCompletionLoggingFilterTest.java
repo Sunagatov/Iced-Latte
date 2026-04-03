@@ -14,6 +14,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -96,5 +97,23 @@ class RequestCompletionLoggingFilterTest {
         filter.doFilterInternal(request, response, chain);
 
         verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("polling endpoints (brands, sellers) complete filter chain without error")
+    void pollingEndpointsCompleteFilterChain() throws ServletException, IOException {
+        ReflectionTestUtils.setField(filter, "slowRequestThresholdMs", 1000L);
+        FilterChain chain = mock(FilterChain.class);
+
+        for (String path : List.of("/api/v1/products/brands", "/api/v1/products/sellers")) {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            response.setStatus(200);
+            when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
+
+            filter.doFilterInternal(request, response, chain);
+        }
+
+        verify(chain, org.mockito.Mockito.times(2)).doFilter(any(), any());
     }
 }

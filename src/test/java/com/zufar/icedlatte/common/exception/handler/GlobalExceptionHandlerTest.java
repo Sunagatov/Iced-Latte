@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -89,6 +91,18 @@ class GlobalExceptionHandlerTest {
                 .thenReturn(stub(400));
 
         ApiErrorResponse result = handler.handleMethodArgumentTypeMismatchException(ex);
+
+        assertThat(result.httpStatusCode()).isEqualTo(400);
+    }
+
+    @Test
+    @DisplayName("handleHttpMessageNotReadableException returns 400")
+    void handleMessageNotReadable_returns400() {
+        HttpMessageNotReadableException ex = new HttpMessageNotReadableException("bad body", new MockHttpInputMessage(new byte[0]));
+        when(apiErrorResponseCreator.buildResponse("Malformed or unreadable request body", HttpStatus.BAD_REQUEST))
+                .thenReturn(stub(400));
+
+        ApiErrorResponse result = handler.handleHttpMessageNotReadableException(ex);
 
         assertThat(result.httpStatusCode()).isEqualTo(400);
     }

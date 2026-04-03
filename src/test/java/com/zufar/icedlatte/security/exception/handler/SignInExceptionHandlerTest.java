@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -123,6 +124,25 @@ class SignInExceptionHandlerTest {
         assertEquals(expectedResponse.message(), actualResponse.message());
         assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
 
+        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("Should return 401 when AbsentBearerHeaderException is thrown")
+    void shouldReturnUnauthorizedWhenAbsentBearerHeaderExceptionThrown() {
+        AbsentBearerHeaderException exception = new AbsentBearerHeaderException();
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "Bearer authentication header is absent",
+                HttpStatus.UNAUTHORIZED.value(),
+                currentDateTime
+        );
+
+        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+
+        ApiErrorResponse actualResponse = signInExceptionHandler.handleAbsentBearerHeaderException(exception, request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), actualResponse.httpStatusCode());
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
     }
 }
