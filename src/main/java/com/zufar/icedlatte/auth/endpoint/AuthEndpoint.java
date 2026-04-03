@@ -2,6 +2,7 @@ package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
 import com.zufar.icedlatte.auth.api.OAuthStateCache;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,7 +93,8 @@ public class AuthEndpoint {
 
     @GetMapping("/google/callback")
     public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
-                                               @RequestParam(required = false) String state) {
+                                               @RequestParam(required = false) String state,
+                                               HttpServletRequest request) {
         if (googleAuthCallbackHandler == null) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
@@ -110,7 +112,7 @@ public class AuthEndpoint {
                     .build();
         }
         try {
-            var tokens = googleAuthCallbackHandler.handle(code);
+            var tokens = googleAuthCallbackHandler.handle(code, request);
             URI destination = UriComponentsBuilder.fromUriString(stored + "/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())

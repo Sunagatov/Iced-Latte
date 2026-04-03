@@ -15,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -36,7 +34,7 @@ public class GoogleAuthCallbackHandler {
     private final AuthSessionService authSessionService;
     private final JwtBlacklistService jwtBlacklistService;
 
-    public UserAuthenticationResponse handle(String authorizationCode) throws GeneralSecurityException, IOException {
+    public UserAuthenticationResponse handle(String authorizationCode, HttpServletRequest httpRequest) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleTokenExchanger.exchange(authorizationCode);
 
         String email = payload.getEmail();
@@ -47,7 +45,6 @@ public class GoogleAuthCallbackHandler {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseGet(() -> createUser((String) payload.get("given_name"), (String) payload.get("family_name"), email));
 
-        HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         UUID sessionId = UUID.randomUUID();
         String refreshToken = jwtTokenProvider.generateRefreshToken(user, sessionId);
         authSessionService.createSession(sessionId, user.getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);

@@ -17,8 +17,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Slf4j
 @Service
@@ -33,7 +31,7 @@ public class UserRegistrationService {
     private final JwtBlacklistService jwtBlacklistService;
 
     @Transactional
-    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest) {
+    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
         String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();
@@ -49,7 +47,6 @@ public class UserRegistrationService {
 
         try {
             UserEntity userEntity = userRepository.saveAndFlush(newUserEntity);
-            HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
             java.util.UUID sessionId = java.util.UUID.randomUUID();
             final String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userEntity, sessionId);
             authSessionService.createSession(sessionId, userEntity.getId(), jwtBlacklistService.sha256(jwtRefreshToken), httpRequest);

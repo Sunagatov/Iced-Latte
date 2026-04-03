@@ -8,6 +8,7 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
 import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,10 @@ public class EmailTokenConformer {
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
 
-    public UserAuthenticationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest) {
+    public UserAuthenticationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest, final HttpServletRequest httpRequest) {
         UserRegistrationRequest userRegistrationRequest =
                 tokenManager.validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
-        return userRegistrationService.register(userRegistrationRequest);
+        return userRegistrationService.register(userRegistrationRequest, httpRequest);
     }
 
     public void confirmResetPasswordEmailByCode(final ConfirmEmailRequest confirmEmailRequest, final String newPassword) {

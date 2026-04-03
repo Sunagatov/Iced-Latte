@@ -82,7 +82,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping(value = "/confirm")
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
         log.debug("auth.email.confirming");
-        var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest);
+        var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest, httpRequest);
         log.info("auth.email.confirmed");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
