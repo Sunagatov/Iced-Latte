@@ -76,7 +76,7 @@ public class ApplicationMigration implements ApplicationRunner {
             log.info("migration.upload.start: path={}", directoryPath);
             long t0 = System.currentTimeMillis();
             fileUploader.uploadDirectory(productPictureBucket, directoryPath);
-            log.info("migration.upload.finish: durationMs={}", System.currentTimeMillis() - t0);
+            log.info("migration.upload.finish: bucket={}, path={}, durationMs={}", productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: reason={}", e.getMessage(), e);
         } catch (FileReadException e) {
@@ -87,7 +87,7 @@ public class ApplicationMigration implements ApplicationRunner {
     private List<FileMetadataDto> fetchMetadata() {
         try {
             var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
-            log.info("migration.metadata.fetched");
+            log.info("migration.metadata.fetched: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
             return fileMetadataDtos;
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
             log.warn("migration.metadata.fetch_error: reason={}", e.getMessage(), e);
@@ -105,7 +105,7 @@ public class ApplicationMigration implements ApplicationRunner {
                 fileMetadataDeleter.deleteByBucketName(productPictureBucket);
             }
             fileMetadataSaver.saveAll(fileMetadataDtos);
-            log.info("migration.metadata.saved");
+            log.info("migration.metadata.saved: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
         } catch (DataAccessException e) {
             log.warn("migration.metadata.save_error: reason={}", e.getMessage(), e);
         }

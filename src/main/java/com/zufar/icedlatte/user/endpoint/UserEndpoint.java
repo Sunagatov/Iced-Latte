@@ -47,16 +47,18 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
+        var userId = securityPrincipalProvider.getUserId();
         UserDto updated = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
-        log.info("user.profile.updated");
+        log.info("user.profile.updated: userId={}", userId);
         return ResponseEntity.ok(updated);
     }
 
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
+        var userId = securityPrincipalProvider.getUserId();
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
-        log.info("user.password.changed");
+        log.info("user.password.changed: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 
@@ -65,7 +67,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
         deleteUserOperationPerformer.deleteUser(userId);
-        log.info("user.account.deleted");
+        log.info("user.account.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 
@@ -74,7 +76,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
         var userId = securityPrincipalProvider.getUserId();
         userAvatarUploader.uploadUserAvatar(userId, file);
-        log.info("user.avatar.uploaded");
+        log.info("user.avatar.uploaded: userId={}", userId);
         return ResponseEntity.ok().build();
     }
 

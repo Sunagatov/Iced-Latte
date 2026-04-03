@@ -83,7 +83,7 @@
         <appender-ref ref="LokiAppender"/>
     </appender>
 
-    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="WARN"/>
+    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
     <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
     <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
     <logger name="com.github.loki4j" level="WARN"/>

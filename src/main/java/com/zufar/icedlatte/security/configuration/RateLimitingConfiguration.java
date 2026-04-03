@@ -13,7 +13,6 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Configuration
@@ -111,8 +110,8 @@ public class RateLimitingConfiguration {
         }
 
         private static class FixedWindow {
-            private final AtomicLong count = new AtomicLong(0);
-            private volatile long windowStartMillis;
+            private long count = 0;
+            private long windowStartMillis;
             private final long windowMillis;
 
             FixedWindow(long windowMillis) {
@@ -123,11 +122,11 @@ public class RateLimitingConfiguration {
             synchronized RateLimitResult tryConsume(int maxTokens) {
                 long now = System.currentTimeMillis();
                 if (now - windowStartMillis >= windowMillis) {
-                    count.set(0);
+                    count = 0;
                     windowStartMillis = now;
                 }
                 long resetTimeMillis = windowStartMillis + windowMillis;
-                long current = count.incrementAndGet();
+                long current = ++count;
                 int remaining = (int) Math.max(0, maxTokens - current);
                 return new RateLimitResult(current <= maxTokens, maxTokens, remaining, resetTimeMillis);
             }

@@ -50,7 +50,6 @@ public class UserAuthenticationService {
             log.warn("auth.failed: reason=user_not_found");
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            log.warn("auth.failed: reason=invalid_credentials");
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {

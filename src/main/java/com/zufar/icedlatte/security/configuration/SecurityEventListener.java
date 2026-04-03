@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -15,8 +14,8 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        log.debug("auth.success: authorities={}",
-                event.getAuthentication().getAuthorities());
+        log.debug("auth.success: authType={}",
+                event.getAuthentication().getClass().getSimpleName());
     }
 
     @EventListener
@@ -26,18 +25,14 @@ public class SecurityEventListener {
     }
 
     @EventListener
-    public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
-        String path = requestPath();
-        var authSupplier = event.getAuthentication();
-        log.warn("auth.denied: authorities={}, path={}",
-                authSupplier.get().getAuthorities(), path);
-    }
-
-    private static String requestPath() {
+    public void onAuthorizationDenied() {
         var attrs = RequestContextHolder.getRequestAttributes();
+        String method = "-";
+        String path = "-";
         if (attrs instanceof ServletRequestAttributes sra) {
-            return sra.getRequest().getRequestURI();
+            method = sra.getRequest().getMethod();
+            path = sra.getRequest().getRequestURI();
         }
-        return "-";
+        log.warn("auth.denied: method={}, path={}", method, path);
     }
 }

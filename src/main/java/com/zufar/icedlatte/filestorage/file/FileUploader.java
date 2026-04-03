@@ -19,6 +19,9 @@ public class FileUploader {
     
     public FileUploader(@Autowired(required = false) AwsObjectUploader awsObjectUploader) {
         this.awsObjectUploader = awsObjectUploader;
+        if (awsObjectUploader == null) {
+            log.info("storage.aws.disabled: file upload will be skipped");
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -27,7 +30,7 @@ public class FileUploader {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
             return true;
         }
-        log.warn("file.upload.skipped: reason=aws_not_configured");
+        log.debug("file.upload.skipped: reason=aws_not_configured");
         return false;
     }
 
@@ -42,7 +45,7 @@ public class FileUploader {
                 throw new RuntimeException("Failed to upload directory due to I/O error", e);
             }
         } else {
-            log.warn("file.dir_upload.skipped: reason=aws_not_configured");
+            log.debug("file.dir_upload.skipped: reason=aws_not_configured");
         }
     }
 }

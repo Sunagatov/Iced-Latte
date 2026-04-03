@@ -1,12 +1,15 @@
 package com.zufar.icedlatte.common.util;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Component
 public class ClientIpExtractor {
 
@@ -20,6 +23,15 @@ public class ClientIpExtractor {
 
     @Value("${security.trusted-proxies:}")
     private List<String> trustedProxies;
+
+    @PostConstruct
+    void logConfig() {
+        if (trustedProxies == null || trustedProxies.isEmpty()) {
+            log.info("rate_limit.trusted_proxies: none configured — X-Forwarded-For will be ignored");
+        } else {
+            log.info("rate_limit.trusted_proxies: count={}, values={}", trustedProxies.size(), trustedProxies);
+        }
+    }
 
     public String extract(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
