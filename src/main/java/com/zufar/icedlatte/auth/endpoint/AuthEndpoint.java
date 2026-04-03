@@ -87,7 +87,7 @@ public class AuthEndpoint {
                 log.warn("auth.google.redirect.rejected: reasonCode=ORIGIN_MISMATCH");
                 return frontendUrl;
             }
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException _) {
             log.warn("auth.google.redirect.invalid: reasonCode=INVALID_URI");
             return frontendUrl;
         }

@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 @Component
 public class ClientIpExtractor {
 
-    // Matches only literal IPv4 and IPv6 addresses — no hostnames, no DNS resolution.
+    // Matches only literal IPv4 addresses — no hostnames, no DNS resolution.
     private static final Pattern IPV4 = Pattern.compile(
-            "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+            "^(\\d{1,3}\\.){3}\\d{1,3}$");
     // Requires at least two colon-separated groups of 1–4 hex digits, covering full, compressed,
     // and mixed IPv4-in-IPv6 forms while rejecting bare strings like ":" or "abc".
     private static final Pattern IPV6 = Pattern.compile(

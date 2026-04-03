@@ -80,8 +80,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @Override
     @DeleteMapping(value = "/items")
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
-        // Validate input to prevent code injection
-        if (request.getShoppingCartItemIds() == null || request.getShoppingCartItemIds().isEmpty()) {
+        if (request.getShoppingCartItemIds().isEmpty()) {
             log.warn("cart.items.delete.invalid: reason=empty_ids");
             return ResponseEntity.badRequest().build();
         }

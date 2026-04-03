@@ -44,7 +44,14 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         } finally {
             long durationMs = System.currentTimeMillis() - start;
             int status = response.getStatus();
-            String outcome = status < 400 ? "SUCCESS" : status < 500 ? "CLIENT_ERROR" : "SERVER_ERROR";
+            String outcome;
+            if (status < 400) {
+                outcome = "SUCCESS";
+            } else if (status < 500) {
+                outcome = "CLIENT_ERROR";
+            } else {
+                outcome = "SERVER_ERROR";
+            }
             String clientIp = clientIpExtractor.extract(request);
             String method = request.getMethod();
             String path = resolvePathTemplate(request);
