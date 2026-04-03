@@ -28,6 +28,7 @@ public class SecurityEventListener {
             method = sra.getRequest().getMethod();
             path = sra.getRequest().getRequestURI();
         }
-        log.warn("auth.denied: method={}, path={}", method, path);
+        String principal = event.getAuthentication().get().getName();
+        log.warn("auth.denied: method={}, path={}, principal={}", method, path, principal);
     }
 }
