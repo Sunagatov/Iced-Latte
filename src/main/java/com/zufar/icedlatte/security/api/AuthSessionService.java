@@ -97,6 +97,7 @@ public class AuthSessionService {
         sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(session -> {
             if (!session.isCompromised()) {
                 session.setCompromised(true);
+                session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
                 log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
                 revokeAllForUser(session.getUserId());
@@ -109,6 +110,7 @@ public class AuthSessionService {
         if (session.getRevokedAt() != null || session.isCompromised()) {
             if (!session.isCompromised()) {
                 session.setCompromised(true);
+                session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
                 log.warn("auth.session.reuse_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
                 revokeAllForUser(session.getUserId());
