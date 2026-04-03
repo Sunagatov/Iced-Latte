@@ -333,9 +333,6 @@ security:
     search:
       max-requests: 30
       window-duration: PT1M
-    payment:
-      max-requests: 10
-      window-duration: PT1M
     telemetry:
       max-requests: 120
       window-duration: PT1M

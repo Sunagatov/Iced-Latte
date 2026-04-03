@@ -149,9 +149,6 @@ security:
     search:
       max-requests: 100000
       window-duration: PT1M
-    payment:
-      max-requests: 100000
-      window-duration: PT1M
     telemetry:
       max-requests: 100000
       window-duration: PT1M

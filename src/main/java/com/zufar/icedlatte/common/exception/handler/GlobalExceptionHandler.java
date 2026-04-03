@@ -27,16 +27,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
-        String message = exception
-                .getBindingResult()
-                .getAllErrors().stream()
-                .map(error -> String.format("{ ErrorMessage: %s }", error))
-                .toList()
-                .toString();
-
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.warn("exception.method_argument_invalid: message={}", message);
-
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                exception.getMessage(), HttpStatus.BAD_REQUEST);
+        log.warn("exception.method_argument_invalid: errorCount={}, status=400",
+                exception.getBindingResult().getErrorCount());
         return apiErrorResponse;
     }
 
@@ -54,7 +48,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.constraint_violation: message={}", apiErrorResponse.message());
+        log.warn("exception.constraint_violation: errorCount={}, status=400",
+                exception.getConstraintViolations().size());
         return apiErrorResponse;
     }
 
@@ -81,7 +76,8 @@ public class GlobalExceptionHandler {
                 "Uploaded file is too large",
                 HttpStatus.CONTENT_TOO_LARGE
         );
-        log.warn("exception.multipart.max_size_exceeded: message={}", exception.getMessage());
+        log.warn("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
+                exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -92,7 +88,8 @@ public class GlobalExceptionHandler {
                 "Malformed multipart request",
                 HttpStatus.BAD_REQUEST
         );
-        log.warn("exception.multipart.invalid_request: message={}", exception.getMessage());
+        log.warn("exception.multipart.invalid_request: exceptionClass={}, status=400",
+                exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 

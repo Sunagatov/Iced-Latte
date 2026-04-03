@@ -119,7 +119,8 @@ public class AuthEndpoint {
                     .build().toUri();
             return ResponseEntity.status(HttpStatus.FOUND).location(destination).build();
         } catch (Exception e) {
-            log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
+            log.error("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE",
+                    e.getClass().getSimpleName(), e);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(stored + "/signin?error=auth_failed"))
                     .build();

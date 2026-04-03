@@ -60,7 +60,10 @@ public class RateLimitingConfiguration {
         return new CaffeineFixedWindowRateLimiter();
     }
 
-    // Fixed-window counter — same algorithm as the Redis implementation so local and prod behave identically.
+    // Fixed-window counter — same algorithm as the Redis Lua script so local and prod behave identically.
+    // On any backend error the limiter returns allowed=true (fail-open) to avoid blocking legitimate
+    // traffic during Redis/cache incidents. This is intentional: the pre-auth IP flood guard still runs
+    // before this limiter, so a complete outage does not leave the app fully unprotected.
     static class CaffeineFixedWindowRateLimiter implements RateLimiter {
         private final Cache<String, FixedWindow> windows = Caffeine.newBuilder()
                 .maximumSize(10_000)

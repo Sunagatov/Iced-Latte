@@ -111,10 +111,10 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping(path = "/password/reset/confirm")
     public ResponseEntity<Void> confirmResetUserPassword(@Valid @RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
-        log.info("user.password.reset.confirm");
         emailTokenConformer.confirmResetPasswordEmailByCode(
                 new ConfirmEmailRequest(confirmEmailRequest.getToken()),
                 confirmEmailRequest.getNewPassword());
+        log.info("user.password.reset.confirmed");
         return ResponseEntity.ok().build();
     }
 

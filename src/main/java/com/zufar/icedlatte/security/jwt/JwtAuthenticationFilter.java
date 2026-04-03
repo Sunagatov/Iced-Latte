@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
@@ -38,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final JwtClaimExtractor jwtClaimExtractor;
     private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -83,7 +85,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestId = MDC.get("requestId");
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
-        String clientIp = httpRequest.getRemoteAddr();
+        String clientIp = clientIpExtractor.extract(httpRequest);
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {

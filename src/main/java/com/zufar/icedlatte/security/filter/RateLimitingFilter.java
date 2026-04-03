@@ -52,12 +52,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.search.window-duration:PT1M}")
     private Duration searchWindowDuration;
 
-    @Value("${security.rate-limit.payment.max-requests:10}")
-    private int paymentMaxRequests;
-
-    @Value("${security.rate-limit.payment.window-duration:PT1M}")
-    private Duration paymentWindowDuration;
-
     @Value("${security.rate-limit.telemetry.max-requests:120}")
     private int telemetryMaxRequests;
 
@@ -103,28 +97,26 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private String buildRateLimitKey(HttpServletRequest request, String category) {
-        String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            return category + ":user:" + auth.getName() + ":" + clientIp;
+            // auth category: per-user key so one account can't exhaust another's budget
+            // other categories: per-user key so IP changes don't create extra budgets
+            return category + ":user:" + auth.getName();
         }
-        return category + ":ip:" + clientIp;
+        return category + ":ip:" + clientIpExtractor.extract(request);
     }
 
     private String getRateLimitCategory(HttpServletRequest request) {
-        String requestPath = request.getRequestURI();
-        if (requestPath.startsWith("/api/v1/auth/google")) return "global";
-        if (requestPath.startsWith("/api/v1/auth/")) return "auth";
-        if (requestPath.startsWith("/api/v1/payment/")) return "payment";
-        if (requestPath.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";
-        if (requestPath.startsWith("/api/v1/telemetry/")) return "telemetry";
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/v1/auth/")) return "auth";
+        if (path.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";
+        if (path.startsWith("/api/v1/telemetry/")) return "telemetry";
         return "global";
     }
 
     private RateLimitConfig getRateLimitConfig(String category) {
         return switch (category) {
             case "auth" -> new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case "payment" -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
             case "search" -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
             case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
             default -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
