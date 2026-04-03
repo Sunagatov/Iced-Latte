@@ -34,11 +34,11 @@ public class FileDeleter {
                 .ifPresent(fileMetadata -> {
                     if (awsObjectDeleter != null) {
                         awsObjectDeleter.deleteFile(fileMetadata);
-                        fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
-                        log.info("file.deleted: objectId={}", relatedObjectId);
                     } else {
                         log.warn("file.delete.skipped: reason=aws_not_configured");
                     }
+                    fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
+                    log.info("file.deleted: objectId={}", relatedObjectId);
                 });
     }
 }

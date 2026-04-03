@@ -61,7 +61,7 @@ class UserAvatarUploaderTest {
     }
 
     @Test
-    @DisplayName("uploadUserAvatar skips metadata save when upload is skipped")
+    @DisplayName("uploadUserAvatar skips metadata delete and save when upload is skipped")
     void uploadUserAvatar_skipsMetadataWhenUploadSkipped() {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
@@ -69,8 +69,8 @@ class UserAvatarUploaderTest {
 
         uploader.uploadUserAvatar(userId, file);
 
-        verify(fileMetadataDeleter).deleteByRelatedObjectId(userId);
         verify(fileUploader).upload(file, BUCKET, expectedFileName);
+        verify(fileMetadataDeleter, never()).deleteByRelatedObjectId(org.mockito.ArgumentMatchers.any());
         verify(fileMetadataSaver, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }

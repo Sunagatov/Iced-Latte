@@ -48,15 +48,16 @@ class FileServicesTest {
         }
 
         @Test
-        @DisplayName("Skips AWS delete when AWS is not configured")
-        void delete_awsNull_skipsDelete() {
+        @DisplayName("Deletes metadata even when AWS is not configured")
+        void delete_awsNull_stillDeletesMetadata() {
             UUID id = UUID.randomUUID();
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
 
             new FileDeleter(null, fileMetadataProvider, fileMetadataDeleter).delete(id);
 
-            verifyNoInteractions(fileMetadataDeleter);
+            verify(fileMetadataDeleter).deleteByRelatedObjectId(id);
+            verifyNoInteractions(awsObjectDeleter);
         }
 
         @Test

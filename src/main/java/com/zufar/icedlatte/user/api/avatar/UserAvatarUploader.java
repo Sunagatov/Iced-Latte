@@ -33,12 +33,12 @@ public class UserAvatarUploader {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
-        fileMetadataDeleter.deleteByRelatedObjectId(userId);
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
         boolean uploaded = fileUploader.upload(file, bucketName, fileName);
         if (!uploaded) {
             return;
         }
+        fileMetadataDeleter.deleteByRelatedObjectId(userId);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
         fileMetadataSaver.save(fileMetadataDto);
         if (cloudfrontInvalidator != null) {

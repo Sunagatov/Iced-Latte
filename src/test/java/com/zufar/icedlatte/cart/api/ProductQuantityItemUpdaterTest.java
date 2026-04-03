@@ -116,7 +116,6 @@ class ProductQuantityItemUpdaterTest {
         shoppingCart.setUserId(userDto.getId());
 
         when(shoppingCartItemRepository.findById(itemId)).thenReturn(Optional.of(item));
-        when(shoppingCartItemRepository.save(item)).thenReturn(item);
         when(securityPrincipalProvider.getUserId()).thenReturn(userDto.getId());
         when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(shoppingCart);
 
@@ -125,7 +124,7 @@ class ProductQuantityItemUpdaterTest {
         verify(shoppingCartItemRepository).findById(itemId);
         verify(shoppingCartProvider).getByUserId(userDto.getId());
         verify(securityPrincipalProvider).getUserId();
-        verify(shoppingCartItemRepository).save(item);
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 
     @Test

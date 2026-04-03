@@ -34,25 +34,21 @@ public class ProductQuantityItemUpdater {
     public ShoppingCartDto update(final UUID shoppingCartItemId,
                                   final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
         ShoppingCartItem item = getShoppingCartItem(shoppingCartItemId);
-        ShoppingCartItem updatedItem = updateItemProductQuantity(shoppingCartItemId, productQuantityChange, item);
+        validateQuantityChange(shoppingCartItemId, productQuantityChange, item);
         ShoppingCartDto shoppingCart = getShoppingCart();
 
-        if (!shoppingCart.getId().equals(updatedItem.getShoppingCart().getId())) {
-        log.warn("cart.item.quantity.invalid: itemId={}, change={}, cartId={}",
+        if (!shoppingCart.getId().equals(item.getShoppingCart().getId())) {
+            log.warn("cart.item.quantity.invalid: itemId={}, change={}, cartId={}",
                     productQuantityChange, shoppingCartItemId, shoppingCart.getId());
             throw new InvalidShoppingCartIdException(shoppingCart.getId());
         }
+
+        item.setProductQuantity(item.getProductQuantity() + productQuantityChange);
+        shoppingCartItemRepository.save(item);
         return shoppingCart;
     }
 
-    private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
-        return shoppingCartItemRepository.findById(shoppingCartItemId)
-                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
-    }
-
-    private ShoppingCartItem updateItemProductQuantity(final UUID shoppingCartItemId,
-                                                       int productQuantityChange,
-                                                       ShoppingCartItem item) {
+    private void validateQuantityChange(final UUID shoppingCartItemId, int productQuantityChange, ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 0) {
             log.warn("cart.item.quantity.negative: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
@@ -62,9 +58,11 @@ public class ProductQuantityItemUpdater {
             log.warn("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
-        item.setProductQuantity(newQuantity);
+    }
 
-        return shoppingCartItemRepository.save(item);
+    private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
+        return shoppingCartItemRepository.findById(shoppingCartItemId)
+                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
     }
 
     private ShoppingCartDto getShoppingCart() throws ShoppingCartNotFoundException {

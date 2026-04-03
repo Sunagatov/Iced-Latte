@@ -408,12 +408,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              title: "uploadUserAvatar_request"
-              type: "object"
-              properties:
-                file:
-                  type: "string"
-                  format: "binary"
+              $ref: "#/components/schemas/UploadUserAvatarRequest"
       responses:
         "200":
           description: "User avatar uploaded successfully."
@@ -499,6 +494,15 @@ components:
       description: "JWT token for authenticated requests"
 
   schemas:
+    UploadUserAvatarRequest:
+      type: "object"
+      required:
+        - file
+      properties:
+        file:
+          type: "string"
+          format: "binary"
+
     UpdateUserAccountRequest:
       type: "object"
       description: "Payload containing the user's updated details."
