@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src="iced-latte-avatar.jpg" alt="Iced Latte" width="500">
+  <img src=".github/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="500">
   <h1>Iced Latte</h1>
   <p><strong>A production-grade Java coffee marketplace — built in the open, for engineers who want real experience.</strong></p>
   <p>
@@ -51,15 +51,15 @@ docker compose up -d postgres redis minio minio-init
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
 
-> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [START.md](START.md).
+> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [Getting Started](docs/getting-started.md).
 
 🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
 
 **🔐 Test login:** `olivia@example.com` / `p@ss1logic11` (15 seed users, all share this password)
 
-> 💡 Using IntelliJ? See [START.md](START.md) for IDE run configuration, Docker-only setup, and troubleshooting.
+> 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for IDE run configuration, Docker-only setup, and troubleshooting.
 
-> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [START.md](START.md):
+> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [Getting Started](docs/getting-started.md):
 > ```bash
 > git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git  # sibling of Iced-Latte/
 > docker compose --profile backend --profile frontend up -d --build
@@ -77,7 +77,7 @@ mvn test
 ## 📸 Preview
 
 <div align="center">
-  <img src="Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="800">
+  <img src=".github/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="800">
   <p><em>Live application interface</em></p>
 </div>
 
@@ -137,11 +137,11 @@ Iced Latte has earned recognition from the broader tech community.
 
 | 📄 Document | 📝 Description |
 |---|---|
-| [START.md](START.md) | IDE setup, Docker-only mode, troubleshooting |
-| [FEATURES.md](FEATURES.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
-| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
+| [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
+| [Features](docs/features.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
+| [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
+| [Security Policy](.github/SECURITY.md) | Security policy and vulnerability reporting |
+| [Code of Conduct](.github/CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
 | [LICENSE](LICENSE) | CC BY-NC 4.0 — free for educational use, commercial use requires permission |
 
 ---
@@ -181,7 +181,7 @@ Deployment is managed via Taskfile. The typical flow:
 - `task smoke` — run smoke test against production endpoint
 - `task full-deploy` — complete flow (build → push → sync-compose → deploy → smoke)
 
-See `Taskfile.yml` for all available tasks.
+See `ops/Taskfile.yml` for all available tasks.
 
 ---
 
