@@ -78,7 +78,9 @@ nb-configuration.xml
 ##############################
 .DS_Store
 /.env.local
-.env.prod
+.env
+.env.*
+!.env.example
 .amazonq/.env.prod
 local.env
 /README.local.md

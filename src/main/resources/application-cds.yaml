@@ -82,7 +82,7 @@ spring.aws:
     products: cds-training
     user-avatar: cds-training
   default-image-directory:
-    products: ./products
+    products: ./seed/products
 
 # Minimal JWT config for CDS training
 jwt:

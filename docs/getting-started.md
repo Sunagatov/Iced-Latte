@@ -60,9 +60,13 @@ docker ps
 
 ### Step 3 — Configure environment
 
-The `.env` file in the project root is committed with local development values and placeholders — it works out of the box for local development. You don't need to change anything to get started.
+The repo includes `.env.example` with all local development values and safe placeholders. Copy it to `.env` before running the app:
 
-> 🔒 Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI). Never commit real secrets to git.
+```bash
+cp .env.example .env
+```
+
+> 🔒 `.env` is gitignored — your local copy stays private. Never commit real secrets to git. Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI).
 
 > 🪟 **Windows users:** use the IntelliJ EnvFile plugin (Step 4) to load `.env` — the `export` command only works on Linux/macOS/Git Bash.
 

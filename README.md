@@ -43,10 +43,13 @@
 # 1. 📥 Clone
 git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 
-# 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
+# 2. 🔑 Copy env file
+cp .env.example .env
+
+# 3. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
 docker compose up -d postgres redis minio minio-init
 
-# 3. ▶️ Run (uses committed .env — local development values and placeholders)
+# 4. ▶️ Run
 # Linux / macOS / Git Bash on Windows:
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
