@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
 public class JwtRefreshTokenValidator {
 
@@ -63,6 +66,21 @@ public class JwtRefreshTokenValidator {
             return ver != null;
         } catch (Exception ex) {
             return false;
+        }
+    }
+
+    /**
+     * Extracts the sid (session ID) claim from a refresh token.
+     * Returns empty if the token is invalid or has no sid.
+     */
+    public Optional<UUID> extractSessionId(String rawToken) {
+        try {
+            String sid = (String) refreshParser.parseSignedClaims(rawToken).getPayload().get("sid");
+            return StringUtils.hasText(sid)
+                    ? Optional.of(UUID.fromString(sid))
+                    : Optional.empty();
+        } catch (Exception ex) {
+            return Optional.empty();
         }
     }
 }

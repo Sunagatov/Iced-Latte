@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -80,6 +81,7 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     private boolean enabled;
 
     @Override
+    @NonNull
     public String getUsername() {
         return email;
     }

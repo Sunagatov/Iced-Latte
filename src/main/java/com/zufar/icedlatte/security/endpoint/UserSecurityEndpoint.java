@@ -112,6 +112,10 @@ public class UserSecurityEndpoint implements SecurityApi {
             // Only allow migration for provably legacy tokens (no ver claim).
             // Modern session-managed tokens that are "not found" are rotated/revoked — reject them.
             if (jwtRefreshTokenValidator.isSessionManaged(rawToken)) {
+                // Token is session-managed but not found by current or previous hash.
+                // This means it is an older rotated token — treat as replay: revoke all user sessions.
+                jwtRefreshTokenValidator.extractSessionId(rawToken)
+                        .ifPresent(authSessionService::revokeAllForUserBySessionId);
                 throw ex;
             }
             log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());

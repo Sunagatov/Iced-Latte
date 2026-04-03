@@ -21,6 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
+    @NonNull
     public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
         if (!StringUtils.hasText(email)) {
             log.warn("auth.user_details.empty_email");

@@ -79,6 +79,14 @@ public class AuthSessionService {
         log.info("auth.session.revoked_by_id: sessionId={}, userId={}", sessionId, requestingUserId);
     }
 
+    @Transactional
+    public void revokeAllForUserBySessionId(UUID sessionId) {
+        sessionRepository.findById(sessionId).ifPresent(s -> {
+            revokeAllForUser(s.getUserId());
+            log.warn("auth.session.replay_detected_old_token: sessionId={}, userId={}", sessionId, s.getUserId());
+        });
+    }
+
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {
         return sessionRepository.findActiveSessions(userId, OffsetDateTime.now());
     }

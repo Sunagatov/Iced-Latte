@@ -29,12 +29,8 @@ public class SecurityEventListener {
     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
         String path = requestPath();
         var authSupplier = event.getAuthentication();
-        if (authSupplier != null && authSupplier.get() != null) {
-            log.warn("auth.denied: authorities={}, path={}",
-                    authSupplier.get().getAuthorities(), path);
-        } else {
-            log.warn("auth.denied: reason=anonymous, path={}", path);
-        }
+        log.warn("auth.denied: authorities={}, path={}",
+                authSupplier.get().getAuthorities(), path);
     }
 
     private static String requestPath() {

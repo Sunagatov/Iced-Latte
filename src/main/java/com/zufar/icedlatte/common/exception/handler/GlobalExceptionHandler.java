@@ -75,11 +75,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
     public ApiErrorResponse handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 "Uploaded file is too large",
-                HttpStatus.PAYLOAD_TOO_LARGE
+                HttpStatus.CONTENT_TOO_LARGE
         );
         log.warn("exception.multipart.max_size_exceeded: message={}", exception.getMessage());
         return apiErrorResponse;

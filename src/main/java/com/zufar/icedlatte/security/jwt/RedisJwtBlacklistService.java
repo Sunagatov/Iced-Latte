@@ -43,7 +43,6 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
         String key = buildBlacklistKey(token);
         try {
             Boolean hasKey = redisTemplate.hasKey(key);
-            //noinspection ConstantConditions - hasKey is @Nullable per Spring's RedisOperations contract
             return hasKey != null && hasKey;
         } catch (RuntimeException ex) {
             log.error("jwt.blacklist.redis_error: message={}", ex.getMessage(), ex);

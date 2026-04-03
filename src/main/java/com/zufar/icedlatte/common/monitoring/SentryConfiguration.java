@@ -89,9 +89,9 @@ public class SentryConfiguration {
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
-        breadcrumb.getData().remove("email");
-        breadcrumb.getData().remove("password");
-        breadcrumb.getData().remove("phone");
+        breadcrumb.removeData("email");
+        breadcrumb.removeData("password");
+        breadcrumb.removeData("phone");
     }
 
     private void addCustomTags(SentryEvent event) {
