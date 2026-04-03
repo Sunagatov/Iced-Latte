@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import io.jsonwebtoken.JwtParser;
@@ -16,16 +14,13 @@ public class JwtRefreshTokenValidator {
     private final JwtParser refreshParser;
     private final JwtTokenFromAuthHeaderExtractor tokenExtractor;
     private final JwtBlacklistService blacklistService;
-    private final AuthSessionService authSessionService;
 
     public JwtRefreshTokenValidator(JwtSignKeyProvider keyProvider,
                                     JwtTokenFromAuthHeaderExtractor tokenExtractor,
-                                    JwtBlacklistService blacklistService,
-                                    AuthSessionService authSessionService) {
+                                    JwtBlacklistService blacklistService) {
         this.refreshParser = Jwts.parser().verifyWith(keyProvider.getRefresh()).build();
         this.tokenExtractor = tokenExtractor;
         this.blacklistService = blacklistService;
-        this.authSessionService = authSessionService;
     }
 
     /**
@@ -53,17 +48,21 @@ public class JwtRefreshTokenValidator {
         }
     }
 
-    /**
-     * Validates the refresh token and returns the active session.
-     * Triggers reuse detection if the token was already rotated.
-     */
-    public AuthSessionEntity validateAndGetSession(HttpServletRequest request) {
-        String token = tokenExtractor.extract(request);
-        String hash = blacklistService.sha256(token);
-        return authSessionService.findActiveByHash(hash);
-    }
-
     public String extractRawToken(HttpServletRequest request) {
         return tokenExtractor.extract(request);
+    }
+
+    /**
+     * Returns true if the token carries ver=2, meaning it was issued after session management
+     * was introduced. Legacy tokens (no ver claim) may be migrated once; modern tokens must
+     * have a matching active session or be rejected.
+     */
+    public boolean isSessionManaged(String rawToken) {
+        try {
+            Object ver = refreshParser.parseSignedClaims(rawToken).getPayload().get("ver");
+            return ver != null;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }

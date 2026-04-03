@@ -32,6 +32,9 @@ public class AuthSessionEntity {
     @Column(name = "refresh_token_hash", nullable = false, unique = true, length = 128)
     private String refreshTokenHash;
 
+    @Column(name = "previous_token_hash", length = 128)
+    private String previousTokenHash;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

@@ -91,18 +91,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        String hash = jwtBlacklistService.sha256(refreshToken);
-        AuthSessionEntity session;
-        try {
-            session = authSessionService.createSession(
-                    ((UserEntity) userDetails).getId(), hash, httpRequest);
-        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
-            // Duplicate hash at commit time (same-second login race) — reuse existing session
-            log.warn("auth.session.duplicate_hash: reusing existing session");
-            session = authSessionService.findByHash(hash);
-        }
-        var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), session.getId(), refreshToken);
+        UUID sessionId = UUID.randomUUID();
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
+        authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
+        var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
         return ResponseEntity.ok(response);
     }
 
@@ -117,7 +109,9 @@ public class UserSecurityEndpoint implements SecurityApi {
         try {
             session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
-            if (!ex.getMessage().equals("Refresh token not found")) {
+            // Only allow migration for provably legacy tokens (no ver claim).
+            // Modern session-managed tokens that are "not found" are rotated/revoked — reject them.
+            if (jwtRefreshTokenValidator.isSessionManaged(rawToken)) {
                 throw ex;
             }
             log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
@@ -128,6 +122,8 @@ public class UserSecurityEndpoint implements SecurityApi {
                     ((com.zufar.icedlatte.user.entity.UserEntity) userDetails).getId(),
                     jwtBlacklistService.sha256(newRefreshToken),
                     httpRequest);
+            // Blacklist the old legacy token so it cannot be replayed again
+            jwtBlacklistValidator.addToBlacklist(rawToken);
             MDC.put("sessionId", newSession.getId().toString());
             var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
             log.info("auth.token.refresh_legacy_migrated");
@@ -137,7 +133,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         MDC.put("sessionId", session.getId().toString());
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
         authSessionService.rotateSession(hash, jwtBlacklistService.sha256(newRefreshToken));
         var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
         log.debug("auth.token.refreshed");
@@ -151,9 +147,19 @@ public class UserSecurityEndpoint implements SecurityApi {
             String xRefreshToken) {
         log.debug("auth.logout.processing");
 
-        if (StringUtils.hasText(xRefreshToken)) {
-            authSessionService.revokeByRefreshTokenHash(jwtBlacklistService.sha256(xRefreshToken));
-            jwtBlacklistValidator.addToBlacklist(xRefreshToken);
+        // Accept refresh token from X-Refresh-Token header (legacy) or Authorization: Bearer
+        String refreshToken = xRefreshToken;
+        if (!StringUtils.hasText(refreshToken)) {
+            try {
+                refreshToken = jwtRefreshTokenValidator.extractRawToken(httpRequest);
+            } catch (AbsentBearerHeaderException ignored) {
+                // no refresh token provided — access token blacklist only
+            }
+        }
+
+        if (StringUtils.hasText(refreshToken)) {
+            authSessionService.revokeByRefreshTokenHash(jwtBlacklistService.sha256(refreshToken));
+            jwtBlacklistValidator.addToBlacklist(refreshToken);
         }
 
         String authHeader = httpRequest.getHeader("Authorization");

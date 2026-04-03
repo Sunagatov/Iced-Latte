@@ -27,8 +27,13 @@ public class AuthSessionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuthSessionEntity createSession(UUID userId, String refreshTokenHash, HttpServletRequest request) {
+        return createSession(UUID.randomUUID(), userId, refreshTokenHash, request);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public AuthSessionEntity createSession(UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
         AuthSessionEntity session = AuthSessionEntity.builder()
-                .id(UUID.randomUUID())
+                .id(sessionId)
                 .userId(userId)
                 .refreshTokenHash(refreshTokenHash)
                 .createdAt(OffsetDateTime.now())
@@ -45,6 +50,7 @@ public class AuthSessionService {
     @Transactional
     public void rotateSession(String oldRefreshTokenHash, String newRefreshTokenHash) {
         AuthSessionEntity session = findActiveByHash(oldRefreshTokenHash);
+        session.setPreviousTokenHash(oldRefreshTokenHash);
         session.setRefreshTokenHash(newRefreshTokenHash);
         session.setLastUsedAt(OffsetDateTime.now());
         session.setExpiresAt(OffsetDateTime.now().plus(jwtProperties.refreshExpiration()));
@@ -83,13 +89,19 @@ public class AuthSessionService {
         return sessionRepository.findActiveSessions(userId, OffsetDateTime.now());
     }
 
-    public AuthSessionEntity findByHash(String refreshTokenHash) {
-        return sessionRepository.findByRefreshTokenHash(refreshTokenHash)
-                .orElseThrow(() -> new IllegalStateException("Session not found by hash after duplicate key"));
-    }
-
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
+        // Check if this is a previously-rotated token (replay attack)
+        sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(session -> {
+            if (!session.isCompromised()) {
+                session.setCompromised(true);
+                sessionRepository.save(session);
+                log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
+                revokeAllForUser(session.getUserId());
+            }
+            throw new JwtTokenBlacklistedException("Refresh token has been rotated");
+        });
+
         AuthSessionEntity session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
         if (session.getRevokedAt() != null || session.isCompromised()) {

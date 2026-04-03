@@ -35,7 +35,7 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(final Map<String, Object> extraClaims,
-                               final UserDetails userDetails, UUID sessionId) {
+                                final UserDetails userDetails, UUID sessionId) {
         Map<String, Object> claims = new HashMap<>(extraClaims);
         claims.put("jti", UUID.randomUUID().toString());
         if (sessionId != null) {
@@ -45,7 +45,17 @@ public class JwtTokenProvider {
     }
 
     public String generateRefreshToken(final UserDetails userDetails) {
-        return buildToken(Map.of(), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+        return buildToken(Map.of("jti", UUID.randomUUID().toString()), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+    }
+
+    public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("jti", UUID.randomUUID().toString());
+        claims.put("ver", 2);
+        if (sessionId != null) {
+            claims.put("sid", sessionId.toString());
+        }
+        return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails,
