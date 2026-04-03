@@ -39,13 +39,16 @@ public class AuthEndpoint {
     @Value("${frontend.url}")
     private String frontendUrl;
 
-    @Autowired(required = false)
-    private GoogleAuthCallbackHandler googleAuthCallbackHandler;
-
-    @Autowired
-    private OAuthStateCache oAuthStateCache;
+    private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
+    private final OAuthStateCache oAuthStateCache;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    public AuthEndpoint(@Autowired(required = false) GoogleAuthCallbackHandler googleAuthCallbackHandler,
+                        OAuthStateCache oAuthStateCache) {
+        this.googleAuthCallbackHandler = googleAuthCallbackHandler;
+        this.oAuthStateCache = oAuthStateCache;
+    }
 
     @GetMapping("/google")
     public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
@@ -77,9 +80,9 @@ public class AuthEndpoint {
         try {
             URI incoming = new URI(redirectUrl);
             URI allowed = new URI(frontendUrl);
-            boolean sameOrigin = incoming.getScheme().equals(allowed.getScheme())
-                    && incoming.getHost().equals(allowed.getHost())
-                    && incoming.getPort() == allowed.getPort();
+            boolean sameOrigin = allowed.getScheme().equals(incoming.getScheme())
+                    && allowed.getHost().equals(incoming.getHost())
+                    && allowed.getPort() == incoming.getPort();
             if (!sameOrigin) {
                 log.warn("auth.google.redirect.rejected: reasonCode=ORIGIN_MISMATCH");
                 return frontendUrl;
