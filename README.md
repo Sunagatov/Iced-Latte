@@ -26,7 +26,7 @@
 **📊 Key stats across all three repositories:**
 
 | Repository | ⭐ Stars | 🍴 Forks |
-|---|---|---|
+| --- | --- | --- |
 | [🔧 Backend](https://github.com/Sunagatov/Iced-Latte) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat) |
 | [🎨 Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat) |
 | [🧪 QA](https://github.com/Sunagatov/Iced-Latte-QA) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat) |
@@ -116,7 +116,7 @@ Iced Latte has earned recognition from the broader tech community.
 ## 🛠️ Tech Stack
 
 | 📂 Category | 🔧 Technology |
-|---|---|
+| --- | --- |
 | 💻 Language | Java 25 |
 | 🏗️ Framework | Spring Boot 4.0, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
 | 🗄️ Database | PostgreSQL, Liquibase |
@@ -136,7 +136,7 @@ Iced Latte has earned recognition from the broader tech community.
 ## 📚 Guides & Features
 
 | 📄 Document | 📝 Description |
-|---|---|
+| --- | --- |
 | [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
 | [Features](docs/features.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
 | [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
@@ -190,7 +190,7 @@ See `ops/Taskfile.yml` for all available tasks.
 🎉 Contributions are welcome. Here's how to get involved:
 
 | 🎯 Situation | 🚀 Action |
-|---|---|
+| --- | --- |
 | 🐛 Found a bug | [Open an issue](https://github.com/Sunagatov/Iced-Latte/issues/new) with the `bug` label |
 | 💡 Want a feature | Start a [Discussion](https://github.com/Sunagatov/Iced-Latte/discussions) first |
 | 👨💻 Ready to code | Pick a [`good first issue`](https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22), comment "I'm on it" |
@@ -201,7 +201,7 @@ See `ops/Taskfile.yml` for all available tasks.
 ### 🏷️ Issue labels
 
 | 🏷️ Label | 📝 Meaning |
-|---|---|
+| --- | --- |
 | 🟢 `good first issue` | Simple, well-scoped — great for first-timers |
 | 🔴 `bug` | Something is broken |
 | 🔵 `high priority` | Do this first |
