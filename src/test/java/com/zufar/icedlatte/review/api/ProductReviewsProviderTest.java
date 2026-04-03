@@ -6,6 +6,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,7 @@ class ProductReviewsProviderTest {
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
+    @Mock private GetReviewsRequestValidator getReviewsRequestValidator;
     @InjectMocks private ProductReviewsProvider provider;
 
     private UUID productId;
@@ -52,6 +54,10 @@ class ProductReviewsProviderTest {
         var field = ProductReviewsProvider.class.getDeclaredField("paginationConfig");
         field.setAccessible(true);
         field.set(provider, paginationConfig);
+
+        var validatorField = ProductReviewsProvider.class.getDeclaredField("getReviewsRequestValidator");
+        validatorField.setAccessible(true);
+        validatorField.set(provider, getReviewsRequestValidator);
     }
 
     @Test

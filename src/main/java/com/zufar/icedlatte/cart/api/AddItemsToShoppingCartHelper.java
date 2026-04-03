@@ -6,6 +6,8 @@ import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -75,7 +77,18 @@ public class AddItemsToShoppingCartHelper {
                 .filter(productId -> !existingItemsByProductId.containsKey(productId))
                 .collect(Collectors.toSet());
 
-        return productInfoRepository.findAllById(newProductIds).stream()
+        List<ProductInfo> foundProducts = productInfoRepository.findAllById(newProductIds);
+        Set<UUID> foundIds = foundProducts.stream()
+                .map(ProductInfo::getId)
+                .collect(Collectors.toSet());
+        List<UUID> missingIds = newProductIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+        if (!missingIds.isEmpty()) {
+            throw new ProductNotFoundException(missingIds);
+        }
+
+        return foundProducts.stream()
                 .map(productInfo ->
                         ShoppingCartItem.builder()
                                 .shoppingCart(shoppingCart)
