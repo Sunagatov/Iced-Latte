@@ -13,8 +13,10 @@ public class ClientIpExtractor {
     // Matches only literal IPv4 and IPv6 addresses — no hostnames, no DNS resolution.
     private static final Pattern IPV4 = Pattern.compile(
             "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+    // Requires at least two colon-separated groups of 1–4 hex digits, covering full, compressed,
+    // and mixed IPv4-in-IPv6 forms while rejecting bare strings like ":" or "abc".
     private static final Pattern IPV6 = Pattern.compile(
-            "^[0-9a-fA-F:]+$");
+            "^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}(%[\\w.]+)?$");
 
     @Value("${security.trusted-proxies:}")
     private List<String> trustedProxies;
