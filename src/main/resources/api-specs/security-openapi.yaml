@@ -181,6 +181,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserAuthenticationResponse"
+        "201":
+          description: "New session created (legacy token migrated)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAuthenticationResponse"
         "401":
           description: "Unauthorized"
           content:

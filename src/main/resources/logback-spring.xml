@@ -83,22 +83,24 @@
                     <label>
                         <pattern>application=${application_name},environment=${environment},level=%level</pattern>
                     </label>
-                    <message>
-                        <pattern>
-                            {
-                            "level": "%level",
-                            "logger": "%logger",
-                            "thread": "%thread",
-                            "message": "%message",
-                            "traceId": "%X{traceId}",
-                            "spanId": "%X{spanId}",
-                            "userId": "%X{userId}",
-                            "correlationId": "%X{correlationId}",
-                            "sessionId": "%X{sessionId}",
-                            "requestId": "%X{requestId}",
-                            "clientTraceId": "%X{clientTraceId}"
-                            }
-                        </pattern>
+                    <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                        <providers>
+                            <timestamp><timeZone>UTC</timeZone></timestamp>
+                            <logLevel/>
+                            <message/>
+                            <loggerName/>
+                            <threadName/>
+                            <pattern>
+                                <omitEmptyFields>true</omitEmptyFields>
+                                <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
+                            </pattern>
+                            <mdc>
+                                <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                                <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                                <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                            </mdc>
+                            <stackTrace/>
+                        </providers>
                     </message>
                     <sortByTime>true</sortByTime>
                 </format>
@@ -155,10 +157,14 @@
 
     <!-- ========================================== -->
     <!-- DATADOG APPENDER                          -->
+    <!-- Datadog log ingestion is handled by the   -->
+    <!-- Datadog Agent running as a sidecar/host   -->
+    <!-- process. This appender writes Datadog-    -->
+    <!-- shaped JSON to stdout; the Agent tails    -->
+    <!-- the container log and forwards it.        -->
+    <!-- No direct HTTP transport is used here.    -->
     <!-- ========================================== -->
     <springProperty scope="context" name="datadog_enabled" source="logging.datadog.enabled" defaultValue="false"/>
-    <springProperty scope="context" name="datadog_api_key" source="logging.datadog.api-key" defaultValue=""/>
-    <springProperty scope="context" name="datadog_host" source="logging.datadog.host" defaultValue="http-intake.logs.datadoghq.com"/>
 
     <if condition='property("datadog_enabled").equals("true")'>
         <then>
@@ -224,9 +230,13 @@
 
     <if condition='property("loki_enabled").equals("true")'>
         <then>
+            <!-- neverBlock=true: if the Loki queue is full, drop the log entry rather
+                 than blocking the application thread. Remote sink slowness cannot
+                 propagate back-pressure into the app. -->
             <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
                 <queueSize>1000</queueSize>
                 <discardingThreshold>0</discardingThreshold>
+                <neverBlock>true</neverBlock>
                 <appender-ref ref="LokiAppender"/>
             </appender>
         </then>
@@ -234,9 +244,11 @@
 
     <if condition='property("logstash_enabled").equals("true")'>
         <then>
+            <!-- neverBlock=true: same rationale as AsyncLoki above. -->
             <appender name="AsyncLogstash" class="ch.qos.logback.classic.AsyncAppender">
                 <queueSize>1000</queueSize>
                 <discardingThreshold>0</discardingThreshold>
+                <neverBlock>true</neverBlock>
                 <appender-ref ref="LogstashAppender"/>
             </appender>
         </then>
@@ -247,6 +259,7 @@
             <appender name="AsyncDatadog" class="ch.qos.logback.classic.AsyncAppender">
                 <queueSize>1000</queueSize>
                 <discardingThreshold>0</discardingThreshold>
+                <neverBlock>true</neverBlock>
                 <appender-ref ref="DatadogAppender"/>
             </appender>
         </then>

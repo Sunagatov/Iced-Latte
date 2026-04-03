@@ -58,8 +58,24 @@
             <label>
                 <pattern>application=${application_name},environment=${environment},level=%level</pattern>
             </label>
-            <message>
-                <pattern>{"level":"%level","logger":"%logger","thread":"%thread","message":"%message","traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}</pattern>
+            <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp><timeZone>UTC</timeZone></timestamp>
+                    <logLevel/>
+                    <message/>
+                    <loggerName/>
+                    <threadName/>
+                    <pattern>
+                        <omitEmptyFields>true</omitEmptyFields>
+                        <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
+                    </pattern>
+                    <mdc>
+                        <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                        <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                        <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                    </mdc>
+                    <stackTrace/>
+                </providers>
             </message>
             <sortByTime>true</sortByTime>
         </format>
@@ -80,6 +96,8 @@
     <appender name="AsyncLoki" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>1000</queueSize>
         <discardingThreshold>0</discardingThreshold>
+        <!-- neverBlock=true: remote sink slowness cannot back-pressure the app -->
+        <neverBlock>true</neverBlock>
         <appender-ref ref="LokiAppender"/>
     </appender>
 

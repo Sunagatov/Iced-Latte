@@ -1,3 +1,7 @@
+# MAINTAINER-ONLY — not needed by contributors.
+# Requires two untracked local files: .env.prod and docker-compose.prod.yml
+# Do not run these tasks unless you have production access.
+
 version: '3'
 
 vars:

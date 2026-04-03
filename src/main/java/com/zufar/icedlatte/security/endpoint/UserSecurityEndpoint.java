@@ -140,7 +140,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             MDC.put(MDC_USER_ID, newSession.getUserId().toString());
             var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
             log.info("auth.token.refresh_legacy_migrated");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 
         MDC.put(MDC_SESSION_ID, session.getId().toString());

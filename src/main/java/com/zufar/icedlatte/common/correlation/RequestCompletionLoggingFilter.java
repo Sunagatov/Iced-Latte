@@ -6,8 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,13 +19,19 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.IOException;
 
-@Slf4j
 @Component
 @Order(2)
 @RequiredArgsConstructor
 public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
+    // Dedicated category so operators can tune access-log verbosity independently
+    // e.g. logging.level.http.access=WARN suppresses all 2xx lines in prod
+    private static final Logger ACCESS_LOG = LoggerFactory.getLogger("http.access");
+
     private final ClientIpExtractor clientIpExtractor;
+
+    @Value("${logging.slow-request-threshold-ms:1000}")
+    private long slowRequestThresholdMs;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -31,8 +39,6 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         return "OPTIONS".equalsIgnoreCase(method) || path.startsWith("/actuator/") || path.startsWith("/api/docs/");
     }
-
-    private static final long SLOW_REQUEST_THRESHOLD_MS = 1000L;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -55,18 +61,18 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             String clientIp = clientIpExtractor.extract(request);
             String method = request.getMethod();
             String path = resolvePathTemplate(request);
-            boolean slow = durationMs >= SLOW_REQUEST_THRESHOLD_MS;
+            boolean slow = durationMs >= slowRequestThresholdMs;
             boolean authenticated = isAuthenticated();
 
             String msg = "http.request.completed: method={}, path={}, status={}, durationMs={}, clientIp={}, authenticated={}, slow={}, outcome={}";
             Object[] args = {method, path, status, durationMs, clientIp, authenticated, slow, outcome};
 
             if (status >= 500) {
-                log.error(msg, args);
+                ACCESS_LOG.error(msg, args);
             } else if (status >= 400 || slow) {
-                log.warn(msg, args);
+                ACCESS_LOG.warn(msg, args);
             } else {
-                log.info(msg, args);
+                ACCESS_LOG.info(msg, args);
             }
         }
     }

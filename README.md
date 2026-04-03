@@ -132,7 +132,6 @@ Iced Latte has earned recognition from the broader tech community.
 | 🧪 Testing | JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco |
 | 📋 API | OpenAPI 3, SpringDoc 3.0, OpenAPI Generator 7 |
 | 🔄 Mapping | MapStruct 1.6, Lombok |
-| 🚢 Deployment | Docker, Taskfile-based deployment, VPS hosting |
 
 ---
 
@@ -168,25 +167,6 @@ src/main/java/com/zufar/icedlatte/
 ├── 🔧 common/         # Shared utilities, validation, monitoring
 └── 🚀 startup/        # Startup data migration
 ```
-
----
-
-## 🚢 Deployment
-
-> ⚠️ **Maintainer-only** — contributors don't need this. These commands deploy to the production VPS and require two local untracked files: `.env.prod` and `docker-compose.prod.yml`.
-
-🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to a VPS.
-
-Deployment is managed via [Taskfile](https://taskfile.dev). The typical flow:
-
-- `task build` — build Docker image for ARM64 (server architecture)
-- `task push` — push to Docker Hub
-- `task sync-compose` — copy compose file to remote server
-- `task deploy` — pull and recreate container on the server
-- `task smoke` — run smoke test against production endpoint
-- `task full-deploy` — complete flow (build → push → sync-compose → deploy → smoke)
-
-See `ops/Taskfile.yml` for all available tasks.
 
 ---
 
