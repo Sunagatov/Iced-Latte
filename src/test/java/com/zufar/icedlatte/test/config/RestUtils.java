@@ -33,7 +33,7 @@ public class RestUtils {
                 .body(body)
                 .post("/authenticate");
 
-        String jwtToken = response.getBody().path("token");
+        String jwtToken = response.getBody().jsonPath().getString("token");
 
         if (isJwtTokenNotValid(jwtToken)) {
             throw new IllegalArgumentException("JWT Token is empty or null. Test failed.");
