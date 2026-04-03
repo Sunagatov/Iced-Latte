@@ -3,6 +3,8 @@ package com.zufar.icedlatte.security.filter;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -20,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -28,6 +31,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter rateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
+    // Tracks keys that have already had their first-block WARN emitted in the current window.
+    // TTL matches the longest possible window (auth = 1 min by default) so entries expire naturally.
+    private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
+            .maximumSize(5_000)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
 
     @Value("${security.rate-limit.global.max-requests:60}")
     private int globalMaxRequests;
@@ -109,7 +118,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
-            logExceeded(request, category, result);
+            logExceeded(request, category, result, rateLimitKey);
             RateLimitResponseWriter.writeTooManyRequests(response, result);
             return;
         }
@@ -166,14 +175,23 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         };
     }
 
-    private void logExceeded(HttpServletRequest request, String category, RateLimitingConfiguration.RateLimitResult result) {
+    private void logExceeded(HttpServletRequest request, String category, RateLimitingConfiguration.RateLimitResult result, String rateLimitKey) {
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String identityType = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
         long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
-        log.warn("rate_limit.exceeded: category={}, identityType={}, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
-                category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
-                retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
+
+        boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
+        if (firstBlock) {
+            warnedKeys.put(rateLimitKey, Boolean.TRUE);
+            log.warn("rate_limit.exceeded: category={}, identityType={}, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
+                    category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
+        } else {
+            log.debug("rate_limit.exceeded: category={}, identityType={}, clientIp={}, method={}, path={}, retryAfterSeconds={}",
+                    category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    retryAfterSeconds);
+        }
     }
 
     private record RateLimitConfig(int maxRequests, Duration windowDuration) {

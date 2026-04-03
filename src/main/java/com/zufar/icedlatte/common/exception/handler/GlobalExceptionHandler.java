@@ -100,12 +100,28 @@ public class GlobalExceptionHandler {
         return apiErrorResponse;
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Invalid value for parameter '" + exception.getName() + "'", HttpStatus.BAD_REQUEST);
+        log.warn("exception.type_mismatch: param={}, value={}, status=400",
+                exception.getName(), exception.getValue());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleHttpMessageNotReadableException(final HttpMessageNotReadableException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Malformed or unreadable request body", HttpStatus.BAD_REQUEST);
+        log.warn("exception.message_not_readable: status=400");
+        return apiErrorResponse;
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiErrorResponse handleUnhandledException(final Exception exception) throws Exception {
-        if (exception instanceof MethodArgumentTypeMismatchException || exception instanceof HttpMessageNotReadableException) {
-            throw exception;
-        }
+    public ApiErrorResponse handleUnhandledException(final Exception exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
         log.error("exception.unhandled: exceptionClass={}, status=500", exception.getClass().getName(), exception);
         return apiErrorResponse;

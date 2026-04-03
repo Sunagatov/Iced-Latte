@@ -272,14 +272,16 @@
          These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
     <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
 
-    <!-- Suppress Spring Data Redis bootstrap noise: 13 INFO lines per startup explaining
+    <!-- Suppress Spring Data Redis bootstrap noise: INFO lines per startup explaining
          that JPA repositories are not Redis repositories. Zero operational value. -->
     <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
+    <logger name="org.springframework.data.repository.config.RepositoryConfigurationDelegate" level="WARN"/>
 
     <!-- Suppress Spring Security advisory WARN fired on first authenticated request when a
          custom AuthenticationProvider is registered. The configuration is intentional;
          the warning is not actionable. -->
     <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
+    <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer" level="ERROR"/>
 
     <!-- Suppress Loki connection errors in development -->
     <logger name="com.github.loki4j" level="WARN"/>
@@ -293,15 +295,31 @@
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
-        <if condition='property("loki_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLoki"/></then>
-        </if>
-        <if condition='property("logstash_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLogstash"/></then>
-        </if>
-        <if condition='property("datadog_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncDatadog"/></then>
-        </if>
     </root>
+
+    <!-- Optional remote sinks — wired into root only when enabled to avoid nested-if warnings -->
+    <if condition='property("loki_enabled").equals("true")'>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncLoki"/>
+            </root>
+        </then>
+    </if>
+
+    <if condition='property("logstash_enabled").equals("true")'>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncLogstash"/>
+            </root>
+        </then>
+    </if>
+
+    <if condition='property("datadog_enabled").equals("true")'>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncDatadog"/>
+            </root>
+        </then>
+    </if>
 
 </configuration>

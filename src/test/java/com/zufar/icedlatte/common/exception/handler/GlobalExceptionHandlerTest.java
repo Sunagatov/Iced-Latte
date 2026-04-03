@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,7 +69,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @DisplayName("handleUnhandledException returns 500 for generic exception")
-    void handleUnhandled_returns500() throws Exception {
+    void handleUnhandled_returns500() {
         Exception ex = new RuntimeException("boom");
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR)).thenReturn(stub(500));
 
@@ -80,14 +79,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleUnhandledException rethrows MethodArgumentTypeMismatchException")
-    void handleUnhandled_rethrowsTypeMismatch() throws Exception {
+    @DisplayName("handleMethodArgumentTypeMismatchException returns 400")
+    void handleTypeMismatch_returns400() throws Exception {
         Method method = Object.class.getDeclaredMethod("toString");
         MethodParameter mp = new MethodParameter(method, -1);
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
-                "val", String.class, "param", mp, new RuntimeException());
+                "p1", String.class, "id", mp, new RuntimeException());
+        when(apiErrorResponseCreator.buildResponse("Invalid value for parameter 'id'", HttpStatus.BAD_REQUEST))
+                .thenReturn(stub(400));
 
-        assertThatThrownBy(() -> handler.handleUnhandledException(ex))
-                .isInstanceOf(MethodArgumentTypeMismatchException.class);
+        ApiErrorResponse result = handler.handleMethodArgumentTypeMismatchException(ex);
+
+        assertThat(result.httpStatusCode()).isEqualTo(400);
     }
 }
