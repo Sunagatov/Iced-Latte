@@ -91,6 +91,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             @org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
             String xRefreshToken) {
         log.info("auth.logout.processing");
+        // Authorization header: standard Bearer <token> — extracted via JwtTokenFromAuthHeaderExtractor
         String authHeader = httpRequest.getHeader("Authorization");
         if (StringUtils.hasText(authHeader)) {
             try {
@@ -99,6 +100,7 @@ public class UserSecurityEndpoint implements SecurityApi {
                 log.warn("auth.logout.token_error: header=Authorization reason={}", ex.getMessage());
             }
         }
+        // X-Refresh-Token header: raw token value, no Bearer prefix — blacklisted directly
         if (StringUtils.hasText(xRefreshToken)) {
             jwtBlacklistValidator.addToBlacklist(xRefreshToken);
         }

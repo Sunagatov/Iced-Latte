@@ -147,7 +147,7 @@ paths:
         - name: X-Refresh-Token
           in: header
           required: false
-          description: "Refresh token to invalidate alongside the access token."
+          description: "Raw refresh token value to invalidate (no 'Bearer' prefix). Obtain from the refreshToken field of the authentication response."
           schema:
             type: string
       responses:
