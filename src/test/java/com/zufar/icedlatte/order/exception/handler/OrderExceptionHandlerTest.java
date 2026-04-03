@@ -53,7 +53,7 @@ class OrderExceptionHandlerTest {
 
     @Test
     @DisplayName("Returns BAD_REQUEST for EmptyShoppingCartException")
-    void handleEmptyShoppingCartException_returnsBadRequest() {
+    void handleEmptyShoppingCartExceptionReturnsBadRequest() {
         UUID userId = UUID.randomUUID();
         EmptyShoppingCartException ex = new EmptyShoppingCartException(userId);
         ApiErrorResponse expected = new ApiErrorResponse(ex.getMessage(), 400, LocalDateTime.now());
