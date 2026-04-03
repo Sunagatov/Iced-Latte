@@ -96,20 +96,22 @@ public class AuthEndpoint {
         if (googleAuthCallbackHandler == null) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
-        String callbackBase = frontendUrl;
-        if (state != null && !state.isBlank()) {
-            String stored = oAuthStateCache.consume(state);
-            if (stored == null) {
-                log.warn("auth.google.callback.invalid-state");
-                return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
-                        .build();
-            }
-            callbackBase = stored;
+        if (state == null || state.isBlank()) {
+            log.warn("auth.google.callback.missing-state");
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
+                    .build();
+        }
+        String stored = oAuthStateCache.consume(state);
+        if (stored == null) {
+            log.warn("auth.google.callback.invalid-state");
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
+                    .build();
         }
         try {
             var tokens = googleAuthCallbackHandler.handle(code);
-            URI destination = UriComponentsBuilder.fromUriString(callbackBase + "/auth/google/callback")
+            URI destination = UriComponentsBuilder.fromUriString(stored + "/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())
                     .build().toUri();
@@ -117,7 +119,7 @@ public class AuthEndpoint {
         } catch (Exception e) {
             log.error("auth.google.callback.failed: message={}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(callbackBase + "/signin?error=auth_failed"))
+                    .location(URI.create(stored + "/signin?error=auth_failed"))
                     .build();
         }
     }
