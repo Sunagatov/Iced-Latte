@@ -46,12 +46,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.auth.window-duration:PT1M}")
     private Duration authWindowDuration;
 
-    @Value("${security.rate-limit.ai.max-requests:5}")
-    private int aiMaxRequests;
-
-    @Value("${security.rate-limit.ai.window-duration:PT1M}")
-    private Duration aiWindowDuration;
-
     @Value("${security.rate-limit.search.max-requests:30}")
     private int searchMaxRequests;
 
@@ -89,8 +83,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String requestPath = request.getRequestURI();
-        String category = getRateLimitCategory(requestPath);
+        String category = getRateLimitCategory(request);
         String rateLimitKey = buildRateLimitKey(request, category);
         RateLimitConfig config = getRateLimitConfig(category);
 
@@ -101,7 +94,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
-            handleRateLimitExceeded(response, rateLimitKey, requestPath, result);
+            handleRateLimitExceeded(response, rateLimitKey, request.getRequestURI(), result);
             return;
         }
 
@@ -118,12 +111,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return category + ":ip:" + clientIp;
     }
 
-    private String getRateLimitCategory(String requestPath) {
+    private String getRateLimitCategory(HttpServletRequest request) {
+        String requestPath = request.getRequestURI();
         if (requestPath.startsWith("/api/v1/auth/google")) return "global";
         if (requestPath.startsWith("/api/v1/auth/")) return "auth";
         if (requestPath.startsWith("/api/v1/payment/")) return "payment";
-        if (requestPath.contains("/ai/") || requestPath.contains("/openai/")) return "ai";
-        if (requestPath.contains("/search")) return "search";
+        if (requestPath.equals("/api/v1/products") && request.getParameter("keyword") != null) return "search";
         if (requestPath.startsWith("/api/v1/telemetry/")) return "telemetry";
         return "global";
     }
@@ -132,7 +125,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return switch (category) {
             case "auth"      -> new RateLimitConfig(authMaxRequests, authWindowDuration);
             case "payment"   -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
-            case "ai"        -> new RateLimitConfig(aiMaxRequests, aiWindowDuration);
             case "search"    -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
             case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
             default          -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
@@ -152,8 +144,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         
-        long retryAfterSeconds = TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis());
-        response.setHeader("Retry-After", String.valueOf(Math.max(1, retryAfterSeconds)));
+        long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+        response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
 
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
                 .put("error", "Rate limit exceeded")

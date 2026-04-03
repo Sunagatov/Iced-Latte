@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
+import com.zufar.icedlatte.security.filter.PreAuthRateLimitingFilter;
 import com.zufar.icedlatte.security.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -40,6 +41,7 @@ public class SpringSecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
+                                                   final PreAuthRateLimitingFilter preAuthRateLimitingFilter,
                                                    final RateLimitingFilter rateLimitingFilter,
                                                    final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
@@ -84,6 +86,7 @@ public class SpringSecurityConfiguration {
                         .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
+                .addFilterBefore(preAuthRateLimitingFilter, JwtAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
                 .build();

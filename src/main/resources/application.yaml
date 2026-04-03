@@ -342,6 +342,9 @@ security:
     telemetry:
       max-requests: 120
       window-duration: PT1M
+    pre-auth:
+      max-requests: 200
+      window-duration: PT1M
   # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
   # Leave empty when the app is directly reachable (safe default).
   trusted-proxies:
