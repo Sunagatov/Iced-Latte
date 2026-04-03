@@ -1,0 +1,123 @@
+name: Release Backend
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Build image and create release
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute release variables
+        id: vars
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER_LC}/iced-latte-backend"
+
+          {
+            echo "tag=${TAG}"
+            echo "image_name=${IMAGE_NAME}"
+            echo "tags<<EOF"
+            echo "${IMAGE_NAME}:${TAG}"
+            if [[ "${TAG}" != *-* ]]; then
+              echo "${IMAGE_NAME}:latest"
+            fi
+            echo "EOF"
+            echo "labels<<EOF"
+            echo "org.opencontainers.image.title=Iced-Latte Backend"
+            echo "org.opencontainers.image.description=Production-grade Java coffee marketplace backend"
+            echo "org.opencontainers.image.url=https://github.com/${GITHUB_REPOSITORY}"
+            echo "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}"
+            echo "org.opencontainers.image.version=${TAG}"
+            echo "org.opencontainers.image.revision=${GITHUB_SHA}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          provenance: false
+          build-args: |
+            IMAGE_VERSION=${{ steps.vars.outputs.tag }}
+          tags: ${{ steps.vars.outputs.tags }}
+          labels: ${{ steps.vars.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Prepare release assets
+        shell: bash
+        env:
+          IMAGE_NAME: ${{ steps.vars.outputs.image_name }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p release-assets
+
+          cat > release-assets/container-image.txt <<EOF
+          Image: ${IMAGE_NAME}:${TAG}
+          Digest: ${DIGEST}
+          Pull (tag): docker pull ${IMAGE_NAME}:${TAG}
+          Pull (digest): docker pull ${IMAGE_NAME}@${DIGEST}
+          EOF
+
+          cat > release-assets/release-notes.md <<EOF
+          ## Docker image
+
+          Pull the image from GitHub Container Registry:
+
+          \`\`\`bash
+          docker pull ${IMAGE_NAME}:${TAG}
+          docker run -p 8083:8083 ${IMAGE_NAME}:${TAG}
+          \`\`\`
+
+          Immutable image reference:
+
+          \`\`\`text
+          ${IMAGE_NAME}@${DIGEST}
+          \`\`\`
+
+          Commit: \`${GITHUB_SHA}\`
+          EOF
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: release-assets
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-assets/release-notes.md
+          files: |
+            release-assets/container-image.txt
+          prerelease: ${{ contains(steps.vars.outputs.tag, '-') }}
