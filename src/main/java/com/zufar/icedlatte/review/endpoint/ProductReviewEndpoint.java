@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +47,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
-                                                                @RequestBody final ProductReviewRequest productReviewRequest) {
+                                                                @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
         log.info("review.adding: productId={}", productId);
         var review = productReviewCreator.create(productId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
@@ -93,10 +94,10 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @PostMapping(value = "/{productId}/reviews/{productReviewId}/likes")
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
-                                                                 @RequestBody final ProductReviewLikeDto request) {
-        log.info("review.rating: reviewId={}, productId={}, vote={}", productReviewId, productId, request.getIsLike() ? "like" : "dislike");
+                                                                 @Valid @RequestBody final ProductReviewLikeDto request) {
+        log.info("review.rating: reviewId={}, productId={}, vote={}", productReviewId, productId, Boolean.TRUE.equals(request.getIsLike()) ? "like" : "dislike");
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
-        log.info("review.rated: reviewId={}, vote={}", productReviewId, request.getIsLike() ? "liked" : "disliked");
+        log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }
 }

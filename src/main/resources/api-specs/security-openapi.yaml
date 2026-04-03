@@ -344,16 +344,11 @@ components:
       type: "object"
       required:
         - code
-        - email
         - password
       properties:
         code:
           type: "string"
           description: "Verification code sent to the user's email."
-        email:
-          type: "string"
-          format: "email"
-          description: "User's email address."
         password:
           $ref: "#/components/schemas/PasswordField"
 

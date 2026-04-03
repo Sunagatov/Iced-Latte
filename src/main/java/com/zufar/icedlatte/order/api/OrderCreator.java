@@ -8,6 +8,7 @@ import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
+import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
@@ -41,6 +42,10 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request) {
         ShoppingCartDto cart = shoppingCartProvider.getByUserIdOrThrow(userId);
+
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new EmptyShoppingCartException(userId);
+        }
 
         List<OrderItem> items = cart.getItems().stream()
                 .map(orderDtoConverter::toOrderItem)
@@ -100,6 +105,10 @@ public class OrderCreator {
     }
 
     private Order createOrderEntityFromSession(final UserEntity user, final ShoppingCartDto shoppingCartDto, final String sessionId) {
+        if (shoppingCartDto.getItems() == null || shoppingCartDto.getItems().isEmpty()) {
+            throw new EmptyShoppingCartException(user.getId());
+        }
+
         List<OrderItem> shoppingOrderItems = shoppingCartDto.getItems().stream()
                 .map(orderDtoConverter::toOrderItem)
                 .toList();

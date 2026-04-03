@@ -78,7 +78,7 @@ class UserExceptionHandlerTest {
     @Test
     @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when InvalidOldPasswordException is thrown")
     void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenInvalidOldPasswordExceptionThrown() {
-        InvalidOldPasswordException exception = new InvalidOldPasswordException("Invalid old password");
+        InvalidOldPasswordException exception = new InvalidOldPasswordException();
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
                 "Invalid old password",

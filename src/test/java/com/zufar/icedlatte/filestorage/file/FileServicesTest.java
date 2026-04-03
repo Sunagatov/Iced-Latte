@@ -128,17 +128,19 @@ class FileServicesTest {
         @Mock MultipartFile multipartFile;
 
         @Test
-        @DisplayName("Uploads file when AWS is configured")
+        @DisplayName("Uploads file when AWS is configured and returns true")
         void upload_awsConfigured_callsUploader() {
-            new FileUploader(awsObjectUploader).upload(multipartFile, "bucket", "file.jpg");
+            boolean result = new FileUploader(awsObjectUploader).upload(multipartFile, "bucket", "file.jpg");
             verify(awsObjectUploader).uploadFile(multipartFile, "bucket", "file.jpg");
+            assertThat(result).isTrue();
         }
 
         @Test
-        @DisplayName("Skips upload when AWS is not configured")
+        @DisplayName("Skips upload when AWS is not configured and returns false")
         void upload_awsNull_skips() {
-            new FileUploader(null).upload(multipartFile, "bucket", "file.jpg");
+            boolean result = new FileUploader(null).upload(multipartFile, "bucket", "file.jpg");
             verifyNoInteractions(multipartFile);
+            assertThat(result).isFalse();
         }
     }
 }

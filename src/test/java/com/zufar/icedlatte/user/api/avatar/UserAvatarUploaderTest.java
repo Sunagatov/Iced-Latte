@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAvatarUploader unit tests")
@@ -43,6 +45,7 @@ class UserAvatarUploaderTest {
     void uploadUserAvatar_fullFlow() {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
+        when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(true);
 
         uploader.uploadUserAvatar(userId, file);
 
@@ -55,5 +58,19 @@ class UserAvatarUploaderTest {
         assertThat(saved.relatedObjectId()).isEqualTo(userId);
         assertThat(saved.bucketName()).isEqualTo(BUCKET);
         assertThat(saved.fileName()).isEqualTo(expectedFileName);
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar skips metadata save when upload is skipped")
+    void uploadUserAvatar_skipsMetadataWhenUploadSkipped() {
+        UUID userId = UUID.randomUUID();
+        String expectedFileName = "user-avatar-" + userId;
+        when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(false);
+
+        uploader.uploadUserAvatar(userId, file);
+
+        verify(fileMetadataDeleter).deleteByRelatedObjectId(userId);
+        verify(fileUploader).upload(file, BUCKET, expectedFileName);
+        verify(fileMetadataSaver, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }

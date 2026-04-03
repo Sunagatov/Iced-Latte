@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -37,21 +37,17 @@ public class AuthEndpoint {
     @Value("${frontend.url}")
     private String frontendUrl;
 
-    private final Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler;
-
-    @Autowired
-    public AuthEndpoint(Optional<GoogleAuthCallbackHandler> googleAuthCallbackHandler) {
-        this.googleAuthCallbackHandler = googleAuthCallbackHandler;
-    }
+    @Autowired(required = false)
+    private GoogleAuthCallbackHandler googleAuthCallbackHandler;
 
     @GetMapping("/google")
     public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
-        if (googleAuthCallbackHandler.isEmpty()) {
+        if (googleAuthCallbackHandler == null) {
             log.warn("auth.google.disabled");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         log.info("auth.google.initiate");
-        String callbackBase = redirectUrl != null && !redirectUrl.isBlank() ? redirectUrl : frontendUrl;
+        String callbackBase = resolveCallbackBase(redirectUrl);
         String state = Base64.getUrlEncoder().encodeToString(callbackBase.getBytes(StandardCharsets.UTF_8));
         URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
                 .queryParam("scope", scope)
@@ -64,22 +60,44 @@ public class AuthEndpoint {
         return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
     }
 
+    private String resolveCallbackBase(String redirectUrl) {
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            return frontendUrl;
+        }
+        try {
+            URI incoming = new URI(redirectUrl);
+            URI allowed = new URI(frontendUrl);
+            boolean sameOrigin = incoming.getScheme().equals(allowed.getScheme())
+                    && incoming.getHost().equals(allowed.getHost())
+                    && incoming.getPort() == allowed.getPort();
+            if (!sameOrigin) {
+                log.warn("auth.google.redirect.rejected: redirectUrl={}", redirectUrl);
+                return frontendUrl;
+            }
+        } catch (URISyntaxException e) {
+            log.warn("auth.google.redirect.invalid: redirectUrl={}", redirectUrl);
+            return frontendUrl;
+        }
+        return redirectUrl;
+    }
+
     @GetMapping("/google/callback")
     public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
                                                @RequestParam(required = false) String state) {
-        if (googleAuthCallbackHandler.isEmpty()) {
+        if (googleAuthCallbackHandler == null) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         String callbackBase = frontendUrl;
         if (state != null && !state.isBlank()) {
             try {
-                callbackBase = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
+                String decoded = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
+                callbackBase = resolveCallbackBase(decoded);
             } catch (Exception e) {
                 log.warn("auth.google.callback.invalid-state");
             }
         }
         try {
-            var tokens = googleAuthCallbackHandler.get().handle(code);
+            var tokens = googleAuthCallbackHandler.handle(code);
             URI destination = UriComponentsBuilder.fromUriString(callbackBase + "/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())

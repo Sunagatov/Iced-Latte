@@ -22,12 +22,13 @@ public class FileUploader {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void upload(final MultipartFile file, String bucketName, String fileName) {
+    public boolean upload(final MultipartFile file, String bucketName, String fileName) {
         if (awsObjectUploader != null) {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
-        } else {
-            log.warn("file.upload.skipped: reason=aws_not_configured");
+            return true;
         }
+        log.warn("file.upload.skipped: reason=aws_not_configured");
+        return false;
     }
 
 

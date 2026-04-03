@@ -75,13 +75,13 @@ public class ProductReviewValidator {
     }
 
     /**
-     * Check if the product and review both exist
+     * Check if the product and review both exist and the review belongs to the product
      */
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
         if (!productInfoRepository.existsById(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
-        if (!productReviewRepository.existsById(productReviewId)) {
+        if (!productReviewRepository.existsByIdAndProductId(productReviewId, productId)) {
             throw new ProductReviewNotFoundException(productReviewId);
         }
     }

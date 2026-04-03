@@ -14,7 +14,6 @@ import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
-import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,7 +47,6 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final JwtRefreshTokenValidator jwtRefreshTokenValidator;
     private final UserDetailsService userDetailsService;
     private final SingleUserProvider singleUserProvider;
-    private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
 
     private final HttpServletRequest httpRequest;
 
@@ -114,9 +112,8 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
         log.info("auth.password.forgot.processing");
         try {
-            var user = singleUserProvider.getUserByEmail(request.getEmail());
-            var verificationRequest = new UserRegistrationRequest(user.getFirstName(), user.getLastName(), user.getEmail(), "");
-            emailTokenSender.sendEmailVerificationCode(verificationRequest);
+            singleUserProvider.getUserEntityByEmail(request.getEmail());
+            emailTokenSender.sendPasswordResetCode(request.getEmail());
         } catch (UserNotFoundException e) {
             log.warn("auth.password.forgot.unknown_email");
         }
@@ -127,9 +124,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        var user = singleUserProvider.getUserByEmail(request.getEmail());
-        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()));
-        changeUserPasswordOperationPerformer.changeUserPassword(user.getId(), request.getPassword());
+        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(request.getCode()), request.getPassword());
         log.info("auth.password.changed");
         return ResponseEntity.ok().build();
     }

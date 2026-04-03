@@ -59,6 +59,8 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
                         .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset/confirm").permitAll()
                         .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()

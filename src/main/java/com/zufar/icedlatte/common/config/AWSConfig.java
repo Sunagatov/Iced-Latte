@@ -36,7 +36,7 @@ public class AWSConfig {
     private String endpointUrl;
 
     @Bean
-    @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Client s3Client() {
         try {
             AwsBasicCredentials awsCreds;
@@ -63,7 +63,7 @@ public class AWSConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "aws.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Presigner s3Presigner() {
         String sessionToken = System.getenv("AWS_SESSION_TOKEN");
         S3Presigner.Builder builder;

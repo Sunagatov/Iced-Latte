@@ -150,12 +150,12 @@ class ProductReviewValidatorTest {
     // ── validateProductIdIsValid ────────────────────────────────────────────
 
     @Test
-    @DisplayName("validateProductIdIsValid: both exist passes")
-    void validateProductIdIsValid_bothExist_noException() {
+    @DisplayName("validateProductIdIsValid: review belongs to product passes")
+    void validateProductIdIsValid_reviewBelongsToProduct_noException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         when(productInfoRepository.existsById(productId)).thenReturn(true);
-        when(productReviewRepository.existsById(reviewId)).thenReturn(true);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(true);
 
         assertThatCode(() -> validator.validateProductIdIsValid(productId, reviewId)).doesNotThrowAnyException();
     }
@@ -177,7 +177,19 @@ class ProductReviewValidatorTest {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         when(productInfoRepository.existsById(productId)).thenReturn(true);
-        when(productReviewRepository.existsById(reviewId)).thenReturn(false);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
+
+        assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
+                .isInstanceOf(ProductReviewNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("validateProductIdIsValid: review exists but belongs to different product throws ProductReviewNotFoundException")
+    void validateProductIdIsValid_reviewBelongsToDifferentProduct_throwsProductReviewNotFoundException() {
+        UUID productId = UUID.randomUUID();
+        UUID reviewId = UUID.randomUUID();
+        when(productInfoRepository.existsById(productId)).thenReturn(true);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
                 .isInstanceOf(ProductReviewNotFoundException.class);

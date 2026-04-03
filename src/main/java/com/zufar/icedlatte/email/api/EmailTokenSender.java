@@ -17,4 +17,11 @@ public class EmailTokenSender {
         String token = tokenManager.generateToken(request);
         emailConfirmation.sendTemporaryCode(request.getEmail(), token);
     }
+
+    public void sendPasswordResetCode(final String email) {
+        UserRegistrationRequest request = new UserRegistrationRequest();
+        request.setEmail(email);
+        String token = tokenManager.generateToken(request);
+        emailConfirmation.sendTemporaryCode(email, token);
+    }
 }

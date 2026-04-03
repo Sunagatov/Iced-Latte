@@ -12,6 +12,7 @@ import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
+import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,10 +22,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -43,6 +46,33 @@ class OrderCreatorTest {
     private SingleUserProvider singleUserProvider;
     @InjectMocks
     private OrderCreator orderCreator;
+
+    @Test
+    @DisplayName("Throws EmptyShoppingCartException when cart has no items")
+    void create_emptyCart_throwsEmptyShoppingCartException() {
+        UUID userId = UUID.randomUUID();
+
+        ShoppingCartDto emptyCart = new ShoppingCartDto();
+        emptyCart.setItems(Collections.emptyList());
+
+        AddressDto addressDto = new AddressDto();
+        addressDto.setCountry("US");
+        addressDto.setCity("NYC");
+        addressDto.setLine("123 Main St");
+        addressDto.setPostcode("10001");
+
+        CreateNewOrderRequestDto request = new CreateNewOrderRequestDto();
+        request.setAddress(addressDto);
+        request.setRecipientName("John");
+        request.setRecipientSurname("Doe");
+
+        when(shoppingCartProvider.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
+
+        assertThatThrownBy(() -> orderCreator.create(userId, request))
+                .isInstanceOf(EmptyShoppingCartException.class);
+
+        verify(orderRepository, never()).save(any());
+    }
 
     @Test
     @DisplayName("Creates order from cart and returns DTO")

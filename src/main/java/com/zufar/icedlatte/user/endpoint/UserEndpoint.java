@@ -34,6 +34,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final FileDeleter fileDeleter;
     private final UserAvatarLinkProvider userAvatarLinkProvider;
     private final EmailTokenConformer emailTokenConformer;
+    private final EmailTokenSender emailTokenSender;
 
     @Override
     @GetMapping
@@ -97,16 +98,22 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping(path = "/password/reset")
     public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest initiatePasswordResetRequest) {
-        var user = singleUserProvider.getUserByEmail(initiatePasswordResetRequest.getEmail());
-        log.info("user.password.reset: userId={}", user.getId());
+        try {
+            singleUserProvider.getUserEntityByEmail(initiatePasswordResetRequest.getEmail());
+            emailTokenSender.sendPasswordResetCode(initiatePasswordResetRequest.getEmail());
+        } catch (com.zufar.icedlatte.user.exception.UserNotFoundException e) {
+            log.warn("user.password.reset.unknown_email");
+        }
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping(path = "/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
+    public ResponseEntity<Void> confirmResetUserPassword(@Valid @RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
         log.info("user.password.reset.confirm");
-        emailTokenConformer.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(confirmEmailRequest.getToken()));
+        emailTokenConformer.confirmResetPasswordEmailByCode(
+                new ConfirmEmailRequest(confirmEmailRequest.getToken()),
+                confirmEmailRequest.getNewPassword());
         return ResponseEntity.ok().build();
     }
 
