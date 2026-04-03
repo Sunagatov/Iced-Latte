@@ -90,6 +90,8 @@ local.env
 ## Deployment
 ##############################
 ssh-key-*.key
+/docker-compose.prod.yml
+/.env.prod
 
 ##############################
 ## Logs

@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.IOException;
 
@@ -46,7 +47,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             String outcome = status < 400 ? "SUCCESS" : status < 500 ? "CLIENT_ERROR" : "SERVER_ERROR";
             String clientIp = clientIpExtractor.extract(request);
             String method = request.getMethod();
-            String path = sanitize(request.getRequestURI());
+            String path = resolvePathTemplate(request);
             boolean slow = durationMs >= SLOW_REQUEST_THRESHOLD_MS;
             boolean authenticated = isAuthenticated();
 
@@ -61,6 +62,11 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 log.info(msg, args);
             }
         }
+    }
+
+    private static String resolvePathTemplate(HttpServletRequest request) {
+        Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        return sanitize(pattern != null ? pattern.toString() : request.getRequestURI());
     }
 
     private static boolean isAuthenticated() {

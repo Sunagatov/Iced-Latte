@@ -93,7 +93,9 @@ public class UserSecurityEndpoint implements SecurityApi {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
         UUID sessionId = UUID.randomUUID();
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
-        authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
+        AuthSessionEntity session = authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
+        MDC.put("userId", session.getUserId().toString());
+        MDC.put("sessionId", session.getId().toString());
         var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
         return ResponseEntity.ok(response);
     }
@@ -131,12 +133,14 @@ public class UserSecurityEndpoint implements SecurityApi {
             // Blacklist the old legacy token so it cannot be replayed again
             jwtBlacklistValidator.addToBlacklist(rawToken);
             MDC.put("sessionId", newSession.getId().toString());
+            MDC.put("userId", newSession.getUserId().toString());
             var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
             log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.ok(response);
         }
 
         MDC.put("sessionId", session.getId().toString());
+        MDC.put("userId", session.getUserId().toString());
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());

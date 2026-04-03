@@ -87,9 +87,9 @@ public class SpringSecurityConfiguration {
                         .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
-                .addFilterBefore(preAuthRateLimitingFilter, JwtAuthenticationFilter.class)
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
+                .addFilterBefore(preAuthRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src=".github/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="500">
+  <img src=".github/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="716">
   <h1>Iced Latte</h1>
   <p><strong>A production-grade Java coffee marketplace — built in the open, for engineers who want real experience.</strong></p>
   <p>
@@ -80,7 +80,7 @@ mvn test
 ## 📸 Preview
 
 <div align="center">
-  <img src=".github/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="800">
+  <img src=".github/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="1880">
   <p><em>Live application interface</em></p>
 </div>
 
@@ -173,9 +173,11 @@ src/main/java/com/zufar/icedlatte/
 
 ## 🚢 Deployment
 
+> ⚠️ **Maintainer-only** — contributors don't need this. These commands deploy to the production VPS and require two local untracked files: `.env.prod` and `docker-compose.prod.yml`.
+
 🚫 No Kubernetes, no cloud-managed services — the app ships as a Docker image to a VPS.
 
-Deployment is managed via Taskfile. The typical flow:
+Deployment is managed via [Taskfile](https://taskfile.dev). The typical flow:
 
 - `task build` — build Docker image for ARM64 (server architecture)
 - `task push` — push to Docker Hub

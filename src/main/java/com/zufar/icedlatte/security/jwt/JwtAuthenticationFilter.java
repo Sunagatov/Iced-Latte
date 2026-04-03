@@ -89,11 +89,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
-            case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
-            case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
-            case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
-            case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
+            case InvalidCredentialsException _ -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
+            case JwtTokenBlacklistedException _ -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
+            case ExpiredJwtException _ -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
+            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
+            case UsernameNotFoundException _ -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
             default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
         };
 
