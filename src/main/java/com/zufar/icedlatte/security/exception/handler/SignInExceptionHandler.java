@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
@@ -25,6 +26,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class SignInExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
+
+    @ExceptionHandler(AbsentBearerHeaderException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiErrorResponse handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception, HttpServletRequest request) {
+        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    }
 
     @ExceptionHandler(UserRegistrationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

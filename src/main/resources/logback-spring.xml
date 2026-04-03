@@ -73,7 +73,11 @@
     <springProperty scope="context" name="loki_enabled" source="logging.loki.enabled" defaultValue="false"/>
     <springProperty scope="context" name="loki_url" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
 
-    <if condition='property("loki_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>loki_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <appender name="LokiAppender" class="com.github.loki4j.logback.Loki4jAppender">
                 <http>
@@ -115,7 +119,11 @@
     <springProperty scope="context" name="logstash_host" source="logging.logstash.host" defaultValue="localhost"/>
     <springProperty scope="context" name="logstash_port" source="logging.logstash.port" defaultValue="5000"/>
 
-    <if condition='property("logstash_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>logstash_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <appender name="LogstashAppender" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
                 <destination>${logstash_host}:${logstash_port}</destination>
@@ -166,7 +174,11 @@
     <!-- ========================================== -->
     <springProperty scope="context" name="datadog_enabled" source="logging.datadog.enabled" defaultValue="false"/>
 
-    <if condition='property("datadog_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>datadog_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <appender name="DatadogAppender" class="ch.qos.logback.core.ConsoleAppender">
                 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
@@ -228,7 +240,11 @@
         <appender-ref ref="FileAppender"/>
     </appender>
 
-    <if condition='property("loki_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>loki_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <!-- neverBlock=true: if the Loki queue is full, drop the log entry rather
                  than blocking the application thread. Remote sink slowness cannot
@@ -242,7 +258,11 @@
         </then>
     </if>
 
-    <if condition='property("logstash_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>logstash_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <!-- neverBlock=true: same rationale as AsyncLoki above. -->
             <appender name="AsyncLogstash" class="ch.qos.logback.classic.AsyncAppender">
@@ -254,7 +274,11 @@
         </then>
     </if>
 
-    <if condition='property("datadog_enabled").equals("true")'>
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>datadog_enabled</key>
+            <value>true</value>
+        </condition>
         <then>
             <appender name="AsyncDatadog" class="ch.qos.logback.classic.AsyncAppender">
                 <queueSize>1000</queueSize>
@@ -272,14 +296,16 @@
          These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
     <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
 
-    <!-- Suppress Spring Data Redis bootstrap noise: 13 INFO lines per startup explaining
+    <!-- Suppress Spring Data Redis bootstrap noise: INFO lines per startup explaining
          that JPA repositories are not Redis repositories. Zero operational value. -->
     <logger name="org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport" level="WARN"/>
+    <logger name="org.springframework.data.repository.config.RepositoryConfigurationDelegate" level="WARN"/>
 
     <!-- Suppress Spring Security advisory WARN fired on first authenticated request when a
          custom AuthenticationProvider is registered. The configuration is intentional;
          the warning is not actionable. -->
     <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer" level="ERROR"/>
+    <logger name="org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer" level="ERROR"/>
 
     <!-- Suppress Loki connection errors in development -->
     <logger name="com.github.loki4j" level="WARN"/>
@@ -293,15 +319,43 @@
     <root level="INFO">
         <appender-ref ref="AsyncConsole"/>
         <appender-ref ref="AsyncFile"/>
-        <if condition='property("loki_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLoki"/></then>
-        </if>
-        <if condition='property("logstash_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncLogstash"/></then>
-        </if>
-        <if condition='property("datadog_enabled").equals("true")'>
-            <then><appender-ref ref="AsyncDatadog"/></then>
-        </if>
     </root>
+
+    <!-- Optional remote sinks — wired into root only when enabled to avoid nested-if warnings -->
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>loki_enabled</key>
+            <value>true</value>
+        </condition>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncLoki"/>
+            </root>
+        </then>
+    </if>
+
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>logstash_enabled</key>
+            <value>true</value>
+        </condition>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncLogstash"/>
+            </root>
+        </then>
+    </if>
+
+    <if>
+        <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+            <key>datadog_enabled</key>
+            <value>true</value>
+        </condition>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="AsyncDatadog"/>
+            </root>
+        </then>
+    </if>
 
 </configuration>

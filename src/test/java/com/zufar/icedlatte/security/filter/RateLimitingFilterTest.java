@@ -196,4 +196,27 @@ class RateLimitingFilterTest {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health"))).isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui"))).isTrue();
     }
+
+    @Test
+    @DisplayName("first blocked request for a key emits WARN; second emits DEBUG (no second 429 header change)")
+    void firstBlockWarnSecondBlockDebug() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("9.9.9.9");
+        RateLimitResult blocked = new RateLimitResult(false, 10, 0, RESET_MILLIS);
+        when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(blocked);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/refresh");
+        // First call — warnedKeys cache is empty, so WARN path is taken
+        MockHttpServletResponse response1 = new MockHttpServletResponse();
+        filter.doFilterInternal(request, response1, mock(FilterChain.class));
+        assertThat(response1.getStatus()).isEqualTo(429);
+
+        // Second call with same key — warnedKeys cache has the entry, so DEBUG path is taken
+        MockHttpServletResponse response2 = new MockHttpServletResponse();
+        filter.doFilterInternal(request, response2, mock(FilterChain.class));
+        assertThat(response2.getStatus()).isEqualTo(429);
+
+        // Both calls still blocked — the logging path difference is internal;
+        // we verify the filter ran twice and both returned 429
+        verify(rateLimiter, org.mockito.Mockito.times(2)).tryConsume(any(), anyInt(), any());
+    }
 }

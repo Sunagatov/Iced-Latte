@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -19,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,7 +71,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @DisplayName("handleUnhandledException returns 500 for generic exception")
-    void handleUnhandled_returns500() throws Exception {
+    void handleUnhandled_returns500() {
         Exception ex = new RuntimeException("boom");
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR)).thenReturn(stub(500));
 
@@ -80,14 +81,29 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleUnhandledException rethrows MethodArgumentTypeMismatchException")
-    void handleUnhandled_rethrowsTypeMismatch() throws Exception {
+    @DisplayName("handleMethodArgumentTypeMismatchException returns 400")
+    void handleTypeMismatch_returns400() throws Exception {
         Method method = Object.class.getDeclaredMethod("toString");
         MethodParameter mp = new MethodParameter(method, -1);
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
-                "val", String.class, "param", mp, new RuntimeException());
+                "p1", String.class, "id", mp, new RuntimeException());
+        when(apiErrorResponseCreator.buildResponse("Invalid value for parameter 'id'", HttpStatus.BAD_REQUEST))
+                .thenReturn(stub(400));
 
-        assertThatThrownBy(() -> handler.handleUnhandledException(ex))
-                .isInstanceOf(MethodArgumentTypeMismatchException.class);
+        ApiErrorResponse result = handler.handleMethodArgumentTypeMismatchException(ex);
+
+        assertThat(result.httpStatusCode()).isEqualTo(400);
+    }
+
+    @Test
+    @DisplayName("handleHttpMessageNotReadableException returns 400")
+    void handleMessageNotReadable_returns400() {
+        HttpMessageNotReadableException ex = new HttpMessageNotReadableException("bad body", new MockHttpInputMessage(new byte[0]));
+        when(apiErrorResponseCreator.buildResponse("Malformed or unreadable request body", HttpStatus.BAD_REQUEST))
+                .thenReturn(stub(400));
+
+        ApiErrorResponse result = handler.handleHttpMessageNotReadableException(ex);
+
+        assertThat(result.httpStatusCode()).isEqualTo(400);
     }
 }

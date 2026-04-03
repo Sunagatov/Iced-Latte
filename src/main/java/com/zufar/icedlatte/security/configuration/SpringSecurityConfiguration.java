@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.configuration;
 
+import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.filter.PreAuthRateLimitingFilter;
 import com.zufar.icedlatte.security.filter.RateLimitingFilter;
@@ -26,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -39,6 +41,7 @@ public class SpringSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
+                                                   final CorrelationFilter correlationFilter,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
                                                    final PreAuthRateLimitingFilter preAuthRateLimitingFilter,
                                                    final RateLimitingFilter rateLimitingFilter,
@@ -85,10 +88,18 @@ public class SpringSecurityConfiguration {
                         .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
+                .addFilterBefore(correlationFilter, DisableEncodeUrlFilter.class)
                 .addFilterBefore(preAuthRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<CorrelationFilter> correlationFilterRegistration(CorrelationFilter filter) {
+        FilterRegistrationBean<CorrelationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

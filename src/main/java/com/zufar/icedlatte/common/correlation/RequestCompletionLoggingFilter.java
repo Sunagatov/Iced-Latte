@@ -71,10 +71,19 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 ACCESS_LOG.error(msg, args);
             } else if (status >= 400 || slow) {
                 ACCESS_LOG.warn(msg, args);
+            } else if (isPollingEndpoint(path)) {
+                ACCESS_LOG.debug(msg, args);
             } else {
                 ACCESS_LOG.info(msg, args);
             }
         }
+    }
+
+    // Endpoints that are polled frequently by the frontend and produce repetitive 2xx lines.
+    // Logged at DEBUG to reduce noise; operators can promote to INFO via logging.level.http.access=INFO.
+    private static boolean isPollingEndpoint(String path) {
+        return "/api/v1/products/brands".equals(path)
+                || "/api/v1/products/sellers".equals(path);
     }
 
     private static String resolvePathTemplate(HttpServletRequest request) {
