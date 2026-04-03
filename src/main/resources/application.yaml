@@ -395,6 +395,8 @@ logging:
   # Datadog Configuration
   datadog:
     enabled: ${DATADOG_ENABLED:false}
-    api-key: ${DATADOG_API_KEY:}
-    host: ${DATADOG_HOST:http-intake.logs.datadoghq.com}
+
+  # Access log slow-request threshold (ms). Requests at or above this value are logged at WARN.
+  # Override per environment: logging.slow-request-threshold-ms=500
+  slow-request-threshold-ms: ${LOGGING_SLOW_REQUEST_THRESHOLD_MS:1000}
 
