@@ -101,7 +101,7 @@ public class RateLimitingConfiguration {
         public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {
             try {
                 FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));
-                return window.tryConsume(maxTokens, windowDuration.toMillis());
+                return window.tryConsume(maxTokens);
             } catch (Exception e) {
                 log.error("rate_limit.cache_error: key={}, policy={}, message={}", key, failPolicy, e.getMessage(), e);
                 boolean allowed = failPolicy == FailPolicy.OPEN;
@@ -120,13 +120,13 @@ public class RateLimitingConfiguration {
                 this.windowStartMillis = System.currentTimeMillis();
             }
 
-            synchronized RateLimitResult tryConsume(int maxTokens, long windowDurationMillis) {
+            synchronized RateLimitResult tryConsume(int maxTokens) {
                 long now = System.currentTimeMillis();
                 if (now - windowStartMillis >= windowMillis) {
                     count.set(0);
                     windowStartMillis = now;
                 }
-                long resetTimeMillis = windowStartMillis + windowDurationMillis;
+                long resetTimeMillis = windowStartMillis + windowMillis;
                 long current = count.incrementAndGet();
                 int remaining = (int) Math.max(0, maxTokens - current);
                 return new RateLimitResult(current <= maxTokens, maxTokens, remaining, resetTimeMillis);

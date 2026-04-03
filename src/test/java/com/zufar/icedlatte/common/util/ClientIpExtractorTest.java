@@ -82,6 +82,28 @@ class ClientIpExtractorTest {
     }
 
     @Test
+    @DisplayName("accepts valid IPv6 address in XFF")
+    void trustedProxy_validIpv6InXff_returnsIpv6() {
+        setTrustedProxies(List.of("10.0.0.1"));
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("10.0.0.1");
+        when(request.getHeader("X-Forwarded-For")).thenReturn("2001:db8::1");
+
+        assertThat(extractor.extract(request)).isEqualTo("2001:db8::1");
+    }
+
+    @Test
+    @DisplayName("falls back to remoteAddr when XFF contains malformed IPv6 (bare colon)")
+    void trustedProxy_malformedIpv6InXff_returnsRemoteAddr() {
+        setTrustedProxies(List.of("10.0.0.1"));
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("10.0.0.1");
+        when(request.getHeader("X-Forwarded-For")).thenReturn(":");
+
+        assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
+    }
+
+    @Test
     @DisplayName("ignores XFF when remoteAddr is not in trusted proxies list")
     void untrustedRemoteAddr_ignoresXff() {
         setTrustedProxies(List.of("10.0.0.1"));
