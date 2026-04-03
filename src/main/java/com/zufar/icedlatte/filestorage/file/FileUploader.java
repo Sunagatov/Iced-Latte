@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.filestorage.file;
 
 import com.zufar.icedlatte.filestorage.aws.AwsObjectUploader;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class FileUploader {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
                 log.error("file.upload.io_error: message={}", e.getMessage(), e);
-                throw new RuntimeException("Failed to upload directory due to I/O error", e);
+                throw new FileUploadException(directoryPath, e);
             }
         } else {
             log.debug("file.dir_upload.skipped: reason=aws_not_configured");

@@ -8,6 +8,8 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,10 @@ public class AuthSessionService {
     private final AuthSessionRepository sessionRepository;
     private final JwtProperties jwtProperties;
     private final ClientIpExtractor clientIpExtractor;
+
+    @Autowired
+    @Lazy
+    private AuthSessionService self;
 
     @Transactional
     public AuthSessionEntity createSession(UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
@@ -82,7 +88,7 @@ public class AuthSessionService {
     @Transactional
     public void revokeAllForUserBySessionId(UUID sessionId) {
         sessionRepository.findById(sessionId).ifPresent(s -> {
-            revokeAllForUser(s.getUserId());
+            self.revokeAllForUser(s.getUserId());
             log.warn("auth.session.replay_detected_old_token: sessionId={}, userId={}", sessionId, s.getUserId());
         });
     }
@@ -100,7 +106,7 @@ public class AuthSessionService {
                 session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
                 log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
-                revokeAllForUser(session.getUserId());
+                self.revokeAllForUser(session.getUserId());
             }
             throw new JwtTokenBlacklistedException("Refresh token has been rotated");
         });
@@ -113,7 +119,7 @@ public class AuthSessionService {
                 session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
                 log.warn("auth.session.reuse_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
-                revokeAllForUser(session.getUserId());
+                self.revokeAllForUser(session.getUserId());
             }
             throw new JwtTokenBlacklistedException("Refresh token has been revoked");
         }
