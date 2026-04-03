@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Configuration
@@ -56,47 +57,46 @@ public class RateLimitingConfiguration {
     @ConditionalOnMissingBean(RateLimiter.class)
     public RateLimiter caffeineRateLimiter() {
         log.info("rate_limit.mode: in-memory Caffeine (Redis not configured)");
-        return new CaffeineRateLimiter();
+        return new CaffeineFixedWindowRateLimiter();
     }
 
-    static class CaffeineRateLimiter implements RateLimiter {
-        private final Cache<String, TokenBucket> buckets = Caffeine.newBuilder()
+    // Fixed-window counter — same algorithm as the Redis implementation so local and prod behave identically.
+    static class CaffeineFixedWindowRateLimiter implements RateLimiter {
+        private final Cache<String, FixedWindow> windows = Caffeine.newBuilder()
                 .maximumSize(10_000)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build();
 
-        public RateLimitResult tryConsume(String key, int maxTokens, Duration refillPeriod) {
+        public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {
             try {
-                return buckets.get(key, k -> new TokenBucket(maxTokens, refillPeriod)).tryConsume();
+                FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));
+                return window.tryConsume(maxTokens, windowDuration.toMillis());
             } catch (Exception e) {
                 log.error("rate_limit.cache_error: key={}, message={}", key, e.getMessage(), e);
-                return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + refillPeriod.toMillis());
+                return new RateLimitResult(true, maxTokens, maxTokens, System.currentTimeMillis() + windowDuration.toMillis());
             }
         }
 
-        private static class TokenBucket {
-            private final int capacity;
-            private final long nanosPerToken;
-            private double tokens;
-            private long lastRefillNanos;
+        private static class FixedWindow {
+            private final AtomicLong count = new AtomicLong(0);
+            private volatile long windowStartMillis;
+            private final long windowMillis;
 
-            TokenBucket(int capacity, Duration refillPeriod) {
-                this.capacity = capacity;
-                this.nanosPerToken = refillPeriod.toNanos() / capacity;
-                this.tokens = capacity;
-                this.lastRefillNanos = System.nanoTime();
+            FixedWindow(long windowMillis) {
+                this.windowMillis = windowMillis;
+                this.windowStartMillis = System.currentTimeMillis();
             }
 
-            synchronized RateLimitResult tryConsume() {
-                long now = System.nanoTime();
-                tokens = Math.min(capacity, tokens + (double)(now - lastRefillNanos) / nanosPerToken);
-                lastRefillNanos = now;
-                long resetTime = System.currentTimeMillis() + TimeUnit.NANOSECONDS.toMillis(nanosPerToken * (long)(capacity - tokens));
-                if (tokens >= 1.0) {
-                    tokens -= 1.0;
-                    return new RateLimitResult(true, capacity, (int) tokens, resetTime);
+            synchronized RateLimitResult tryConsume(int maxTokens, long windowDurationMillis) {
+                long now = System.currentTimeMillis();
+                if (now - windowStartMillis >= windowMillis) {
+                    count.set(0);
+                    windowStartMillis = now;
                 }
-                return new RateLimitResult(false, capacity, 0, resetTime);
+                long resetTimeMillis = windowStartMillis + windowDurationMillis;
+                long current = count.incrementAndGet();
+                int remaining = (int) Math.max(0, maxTokens - current);
+                return new RateLimitResult(current <= maxTokens, maxTokens, remaining, resetTimeMillis);
             }
         }
     }

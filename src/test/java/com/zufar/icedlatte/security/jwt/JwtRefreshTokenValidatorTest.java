@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.api.AuthSessionService;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ class JwtRefreshTokenValidatorTest {
 
     @Mock private JwtTokenFromAuthHeaderExtractor tokenExtractor;
     @Mock private JwtBlacklistService blacklistService;
+    @Mock private AuthSessionService authSessionService;
 
     private JwtRefreshTokenValidator validator;
 
@@ -30,7 +32,7 @@ class JwtRefreshTokenValidatorTest {
         JwtSignKeyProvider keyProvider = mock(JwtSignKeyProvider.class);
         SecretKey key = io.jsonwebtoken.security.Keys.hmacShaKeyFor(new byte[64]);
         when(keyProvider.getRefresh()).thenReturn(key);
-        validator = new JwtRefreshTokenValidator(keyProvider, tokenExtractor, blacklistService);
+        validator = new JwtRefreshTokenValidator(keyProvider, tokenExtractor, blacklistService, authSessionService);
     }
 
     @Test

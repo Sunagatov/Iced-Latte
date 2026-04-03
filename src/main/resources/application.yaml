@@ -302,7 +302,7 @@ management:
 jwt:
   header: Authorization
   secret: ${APP_JWT_SECRET}
-  expiration: PT24H # 1 day
+  expiration: PT15M # 15 minutes
   refresh-secret: ${APP_JWT_REFRESH_SECRET}
   refresh-expiration: PT24H # 1 day
   issuer: ${APP_JWT_ISSUER:iced-latte}
@@ -335,6 +335,12 @@ security:
       window-duration: PT1M
     search:
       max-requests: 30
+      window-duration: PT1M
+    payment:
+      max-requests: 10
+      window-duration: PT1M
+    telemetry:
+      max-requests: 120
       window-duration: PT1M
   # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
   # Leave empty when the app is directly reachable (safe default).

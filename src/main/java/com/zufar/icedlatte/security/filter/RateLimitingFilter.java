@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -32,79 +32,87 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final RateLimiter rateLimiter;
-    private final Counter allowedCounter;
-    private final Counter blockedCounter;
-    
+    private final MeterRegistry meterRegistry;
+
     @Value("${security.rate-limit.global.max-requests:60}")
     private int globalMaxRequests;
-    
+
     @Value("${security.rate-limit.global.window-duration:PT1M}")
     private Duration globalWindowDuration;
-    
+
     @Value("${security.rate-limit.auth.max-requests:10}")
     private int authMaxRequests;
-    
+
     @Value("${security.rate-limit.auth.window-duration:PT1M}")
     private Duration authWindowDuration;
-    
+
     @Value("${security.rate-limit.ai.max-requests:5}")
     private int aiMaxRequests;
-    
+
     @Value("${security.rate-limit.ai.window-duration:PT1M}")
     private Duration aiWindowDuration;
-    
+
     @Value("${security.rate-limit.search.max-requests:30}")
     private int searchMaxRequests;
-    
+
     @Value("${security.rate-limit.search.window-duration:PT1M}")
     private Duration searchWindowDuration;
 
-    @Value("${security.rate-limit.payment-max-requests:10}")
+    @Value("${security.rate-limit.payment.max-requests:10}")
     private int paymentMaxRequests;
 
-    @Value("${security.rate-limit.payment-window-duration:PT1M}")
+    @Value("${security.rate-limit.payment.window-duration:PT1M}")
     private Duration paymentWindowDuration;
+
+    @Value("${security.rate-limit.telemetry.max-requests:120}")
+    private int telemetryMaxRequests;
+
+    @Value("${security.rate-limit.telemetry.window-duration:PT1M}")
+    private Duration telemetryWindowDuration;
 
     @Value("${security.trusted-proxies:}")
     private List<String> trustedProxies;
 
     public RateLimitingFilter(RateLimiter rateLimiter, MeterRegistry meterRegistry) {
         this.rateLimiter = rateLimiter;
-        this.allowedCounter = Counter.builder("rate_limit.requests.allowed")
-                .description("Number of requests allowed by rate limiter")
-                .register(meterRegistry);
-        this.blockedCounter = Counter.builder("rate_limit.requests.blocked")
-                .description("Number of requests blocked by rate limiter")
-                .register(meterRegistry);
+        this.meterRegistry = meterRegistry;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        return "OPTIONS".equalsIgnoreCase(method)
+                || path.startsWith("/actuator/")
+                || path.startsWith("/api/docs/");
     }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                  @NonNull HttpServletResponse response,
-                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
-        
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         String requestPath = request.getRequestURI();
-        String rateLimitKey = buildRateLimitKey(request);
-        RateLimitConfig config = getRateLimitConfig(requestPath);
-        
+        String category = getRateLimitCategory(requestPath);
+        String rateLimitKey = buildRateLimitKey(request, category);
+        RateLimitConfig config = getRateLimitConfig(category);
+
         RateLimitingConfiguration.RateLimitResult result = rateLimiter.tryConsume(
                 rateLimitKey, config.maxRequests(), config.windowDuration());
-        
+
         addRateLimitHeaders(response, result);
-        
+
         if (!result.allowed()) {
-            blockedCounter.increment();
+            meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
             handleRateLimitExceeded(response, rateLimitKey, requestPath, result);
             return;
         }
-        
-        allowedCounter.increment();
+
+        meterRegistry.counter("rate_limit.requests.allowed", "category", category).increment();
         filterChain.doFilter(request, response);
     }
     
-    private String buildRateLimitKey(HttpServletRequest request) {
+    private String buildRateLimitKey(HttpServletRequest request, String category) {
         String clientIp = extractClientIp(request);
-        String category = getRateLimitCategory(request.getRequestURI());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             return category + ":user:" + auth.getName() + ":" + clientIp;
@@ -136,31 +144,25 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return remoteAddr;
     }
     
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private boolean isValidIp(String ip) {
-        return ip.matches("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$") || 
-               ip.matches("^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$");
+        try {
+            InetAddress.getByName(ip);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     
-    private RateLimitConfig getRateLimitConfig(String requestPath) {
-        if (requestPath.startsWith("/api/v1/auth/google")) {
-            return new RateLimitConfig(globalMaxRequests, globalWindowDuration);
-        }
-        if (requestPath.startsWith("/api/v1/auth/")) {
-            return new RateLimitConfig(authMaxRequests, authWindowDuration);
-        }
-        if (requestPath.startsWith("/api/v1/payment/")) {
-            return new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
-        }
-        if (requestPath.contains("/ai/") || requestPath.contains("/openai/")) {
-            return new RateLimitConfig(aiMaxRequests, aiWindowDuration);
-        }
-        if (requestPath.contains("/search")) {
-            return new RateLimitConfig(searchMaxRequests, searchWindowDuration);
-        }
-        if (requestPath.startsWith("/api/v1/telemetry/")) {
-            return new RateLimitConfig(globalMaxRequests * 2, globalWindowDuration);
-        }
-        return new RateLimitConfig(globalMaxRequests, globalWindowDuration);
+    private RateLimitConfig getRateLimitConfig(String category) {
+        return switch (category) {
+            case "auth"      -> new RateLimitConfig(authMaxRequests, authWindowDuration);
+            case "payment"   -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
+            case "ai"        -> new RateLimitConfig(aiMaxRequests, aiWindowDuration);
+            case "search"    -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
+            case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
+            default          -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
+        };
     }
     
     private void addRateLimitHeaders(HttpServletResponse response, RateLimitingConfiguration.RateLimitResult result) {

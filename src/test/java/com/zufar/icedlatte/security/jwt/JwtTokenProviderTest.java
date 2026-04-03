@@ -81,7 +81,8 @@ class JwtTokenProviderTest {
     void generateToken_withExtraClaims_includesThem() {
         String token = tokenProvider.generateToken(
                 java.util.Map.of("role", "ADMIN"),
-                user("dave@example.com")
+                user("dave@example.com"),
+                null
         );
 
         Claims claims = Jwts.parser().verifyWith(signingKey).build()

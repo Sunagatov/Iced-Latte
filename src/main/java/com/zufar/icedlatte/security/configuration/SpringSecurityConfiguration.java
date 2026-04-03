@@ -56,6 +56,8 @@ public class SpringSecurityConfiguration {
                         .contentTypeOptions(withDefaults())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SecurityConstants.AUTH_SESSION_URL).authenticated()
+                        .requestMatchers(SecurityConstants.AUTH_LOGOUT_ALL_URL).authenticated()
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
                         .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
@@ -82,8 +84,8 @@ public class SpringSecurityConfiguration {
                         .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
-                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
                 .build();
     }
 
