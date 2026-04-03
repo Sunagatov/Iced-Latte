@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.configuration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -18,7 +19,8 @@ public class SecurityEventListener {
     }
 
     @EventListener
-    public void onAuthorizationDenied() {
+    @SuppressWarnings("unused")
+    public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
         var attrs = RequestContextHolder.getRequestAttributes();
         String method = "-";
         String path = "-";
