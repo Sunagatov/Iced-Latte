@@ -73,7 +73,7 @@ public class UserAuthenticationService {
                 // amazonq-ignore-next-line
                 throw new InvalidCredentialsException();
             }
-            return buildResponse(userDetails, userEmail, null);
+            return buildResponse(userDetails, userEmail);
 
         } catch (UsernameNotFoundException exception) {
             log.warn("auth.failed: reason=user_not_found");
@@ -92,14 +92,6 @@ public class UserAuthenticationService {
     }
 // amazonq-ignore-next-line
 
-    public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail) {
-        return buildResponse(userDetails, userEmail, null);
-    }
-
-    public UserAuthenticationResponse authenticate(final UserDetails userDetails, String userEmail, UUID sessionId) {
-        return buildResponse(userDetails, userEmail, sessionId);
-    }
-
     public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails, String userEmail,
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
@@ -117,10 +109,8 @@ public class UserAuthenticationService {
         return (at > 1 ? email.charAt(0) + "***" : "***") + email.substring(at);
     }
 
-    private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail, UUID sessionId) {
-        String jwtToken = sessionId != null
-                ? jwtTokenProvider.generateToken(userDetails, sessionId)
-                : jwtTokenProvider.generateToken(userDetails);
+    private UserAuthenticationResponse buildResponse(UserDetails userDetails, String userEmail) {
+        String jwtToken = jwtTokenProvider.generateToken(userDetails);
         String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
         log.info("auth.token.generated: email={}", maskEmail(userEmail));
         resetLoginAttemptsService.reset(userEmail);

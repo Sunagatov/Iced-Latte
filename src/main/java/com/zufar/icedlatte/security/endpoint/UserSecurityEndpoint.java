@@ -91,18 +91,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        AuthSessionEntity session;
-        try {
-            session = authSessionService.createSession(
-                    ((UserEntity) userDetails).getId(),
-                    jwtBlacklistService.sha256(refreshToken),
-                    httpRequest);
-        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
-            // Duplicate refresh token hash (same-second login in tests / race) — session already exists
-            log.warn("auth.session.duplicate_hash: falling back to token-only response");
-            var fallback = userAuthenticationService.authenticate(userDetails, request.getEmail());
-            return ResponseEntity.ok(fallback);
-        }
+        AuthSessionEntity session = authSessionService.createSession(
+                ((UserEntity) userDetails).getId(),
+                jwtBlacklistService.sha256(refreshToken),
+                httpRequest);
         var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), session.getId(), refreshToken);
         return ResponseEntity.ok(response);
     }
@@ -111,29 +103,38 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
         log.debug("auth.token.refreshing");
+        String rawToken = jwtRefreshTokenValidator.extractRawToken(httpRequest);
+        String hash = jwtBlacklistService.sha256(rawToken);
+
+        AuthSessionEntity session;
         try {
-            AuthSessionEntity session = jwtRefreshTokenValidator.validateAndGetSession(httpRequest);
-            String oldRawToken = jwtRefreshTokenValidator.extractRawToken(httpRequest);
-            String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-
-            String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-            authSessionService.rotateSession(
-                    jwtBlacklistService.sha256(oldRawToken),
-                    jwtBlacklistService.sha256(newRefreshToken));
-
-            var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
-            log.debug("auth.token.refreshed");
-            return ResponseEntity.ok(response);
+            session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
-            // Pre-migration token: no session row exists — legacy path only
-            log.warn("auth.token.refresh_legacy_fallback: reason={}", ex.getMessage());
+            if (!ex.getMessage().equals("Refresh token not found")) {
+                // Revoked or expired — hard fail, do not issue new tokens
+                throw ex;
+            }
+            // Pre-migration token: no session row — migrate into session model
+            log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
             String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            var response = userAuthenticationService.authenticate(userDetails, userEmail);
-            log.debug("auth.token.refreshed");
+            String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+            AuthSessionEntity newSession = authSessionService.createSession(
+                    ((com.zufar.icedlatte.user.entity.UserEntity) userDetails).getId(),
+                    jwtBlacklistService.sha256(newRefreshToken),
+                    httpRequest);
+            var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
+            log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.ok(response);
         }
+
+        String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+        authSessionService.rotateSession(hash, jwtBlacklistService.sha256(newRefreshToken));
+        var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
+        log.debug("auth.token.refreshed");
+        return ResponseEntity.ok(response);
     }
 
     @Override

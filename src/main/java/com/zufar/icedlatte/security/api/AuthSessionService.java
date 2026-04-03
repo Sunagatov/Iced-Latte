@@ -88,21 +88,24 @@ public class AuthSessionService {
     }
 
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {
-        return sessionRepository.findByUserIdAndRevokedAtIsNullAndCompromisedFalse(userId);
+        return sessionRepository.findActiveSessions(userId, OffsetDateTime.now());
     }
 
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
         AuthSessionEntity session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
-        if (!session.isActive()) {
+        if (session.getRevokedAt() != null || session.isCompromised()) {
             if (!session.isCompromised()) {
                 session.setCompromised(true);
                 sessionRepository.save(session);
                 log.warn("auth.session.reuse_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
                 revokeAllForUser(session.getUserId());
             }
-            throw new JwtTokenBlacklistedException("Refresh token has been revoked or expired");
+            throw new JwtTokenBlacklistedException("Refresh token has been revoked");
+        }
+        if (OffsetDateTime.now().isAfter(session.getExpiresAt())) {
+            throw new JwtTokenBlacklistedException("Refresh token has expired");
         }
         return session;
     }
