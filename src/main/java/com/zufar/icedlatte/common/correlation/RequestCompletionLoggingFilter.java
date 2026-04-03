@@ -25,7 +25,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/actuator/") || path.startsWith("/api/docs/");
+        String method = request.getMethod();
+        return "OPTIONS".equalsIgnoreCase(method) || path.startsWith("/actuator/") || path.startsWith("/api/docs/");
     }
 
     @Override

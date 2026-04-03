@@ -8,7 +8,6 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,14 +37,7 @@ public class AuthSessionService {
                 .ipAddress(clientIpExtractor.extract(request))
                 .compromised(false)
                 .build();
-        try {
-            sessionRepository.save(session);
-        } catch (DataIntegrityViolationException ex) {
-            // Duplicate refresh token hash — return the existing active session
-            log.warn("auth.session.duplicate_hash: userId={}", userId);
-            return sessionRepository.findByRefreshTokenHash(refreshTokenHash)
-                    .orElseThrow(() -> ex);
-        }
+        sessionRepository.save(session);
         log.info("auth.session.created: userId={}, sessionId={}", userId, session.getId());
         return session;
     }
@@ -89,6 +81,11 @@ public class AuthSessionService {
 
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {
         return sessionRepository.findActiveSessions(userId, OffsetDateTime.now());
+    }
+
+    public AuthSessionEntity findByHash(String refreshTokenHash) {
+        return sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+                .orElseThrow(() -> new IllegalStateException("Session not found by hash after duplicate key"));
     }
 
     @Transactional

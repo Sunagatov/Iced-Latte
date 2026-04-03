@@ -19,8 +19,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")
 class UserAuthenticationServiceTest {
@@ -44,27 +47,16 @@ class UserAuthenticationServiceTest {
     private final UserDetails userDetails = mock(UserDetails.class);
 
     @Test
-    @DisplayName("Should return JWT token when valid credentials are provided")
-    void shouldReturnJwtTokenWhenValidCredentialsProvided() {
+    @DisplayName("Should return UserDetails when valid credentials are provided")
+    void shouldReturnUserDetailsWhenValidCredentialsProvided() {
         Authentication authentication = mock(Authentication.class);
-        String expectedToken = "TestJwtToken";
-        String expectedRefreshToken = "TestRefreshToken";
-        
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(jwtTokenProvider.generateToken(userDetails)).thenReturn(expectedToken);
-        when(jwtTokenProvider.generateRefreshToken(userDetails)).thenReturn(expectedRefreshToken);
 
-        UserAuthenticationResponse response = userAuthenticationService.authenticate(request);
+        UserDetails result = userAuthenticationService.verifyCredentials(request);
 
-        assertNotNull(response);
-        assertEquals(expectedToken, response.getToken());
-        assertEquals(expectedRefreshToken, response.getRefreshToken());
-        
+        assertSame(userDetails, result);
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtTokenProvider).generateToken(userDetails);
-        verify(jwtTokenProvider).generateRefreshToken(userDetails);
-        verify(resetLoginAttemptsService).reset(request.getEmail());
     }
 
     @Test
@@ -73,12 +65,8 @@ class UserAuthenticationServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        InvalidCredentialsException exception = assertThrows(
-            InvalidCredentialsException.class,
-            () -> userAuthenticationService.authenticate(request)
-        );
+        assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        assertEquals("Invalid credentials", exception.getMessage());
         verify(loginFailureHandler).handle(request.getEmail());
         verifyNoInteractions(resetLoginAttemptsService);
     }
@@ -86,37 +74,29 @@ class UserAuthenticationServiceTest {
     @Test
     @DisplayName("Should throw UserAccountLockedException when user account is locked")
     void shouldThrowUserAccountLockedExceptionWhenUserAccountIsLocked() {
-        String errorMessage = "User account is locked";
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new LockedException(errorMessage));
+                .thenThrow(new LockedException("User account is locked"));
 
-        UserAccountLockedException exception = assertThrows(
-            UserAccountLockedException.class, 
-            () -> userAuthenticationService.authenticate(request)
-        );
-        
-        assertNotNull(exception);
+        assertThrows(UserAccountLockedException.class, () -> userAuthenticationService.verifyCredentials(request));
+
         verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
     }
-    
-    @Test
-    @DisplayName("Should authenticate with UserDetails and email")
-    void shouldAuthenticateWithUserDetailsAndEmail() {
-        String email = "test@example.com";
-        String expectedToken = "TestJwtToken";
-        String expectedRefreshToken = "TestRefreshToken";
-        
-        when(jwtTokenProvider.generateToken(userDetails)).thenReturn(expectedToken);
-        when(jwtTokenProvider.generateRefreshToken(userDetails)).thenReturn(expectedRefreshToken);
 
-        UserAuthenticationResponse response = userAuthenticationService.authenticate(userDetails, email);
+    @Test
+    @DisplayName("Should build session-bound token pair")
+    void shouldBuildSessionBoundTokenPair() {
+        String email = "test@example.com";
+        UUID sessionId = UUID.randomUUID();
+        String refreshToken = "raw-refresh-token";
+        String expectedAccessToken = "access-token";
+
+        when(jwtTokenProvider.generateToken(userDetails, sessionId)).thenReturn(expectedAccessToken);
+
+        UserAuthenticationResponse response = userAuthenticationService.buildTokenPair(userDetails, email, sessionId, refreshToken);
 
         assertNotNull(response);
-        assertEquals(expectedToken, response.getToken());
-        assertEquals(expectedRefreshToken, response.getRefreshToken());
-        
-        verify(jwtTokenProvider).generateToken(userDetails);
-        verify(jwtTokenProvider).generateRefreshToken(userDetails);
+        assertEquals(expectedAccessToken, response.getToken());
+        assertEquals(refreshToken, response.getRefreshToken());
         verify(resetLoginAttemptsService).reset(email);
     }
 }

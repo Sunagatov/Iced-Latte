@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -31,7 +30,6 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String MDC_USER_ID_KEY = "userId";
-    private static final String MDC_REQUEST_ID_KEY = "requestId";
     private static final String MDC_SESSION_ID_KEY = "sessionId";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -54,9 +52,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull final HttpServletResponse httpResponse,
                                     @NonNull final FilterChain filterChain) throws IOException, ServletException {
 
-        String requestId = UUID.randomUUID().toString();
-        MDC.put(MDC_REQUEST_ID_KEY, requestId);
-
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
@@ -72,7 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
             handleAuthenticationException(httpResponse, ex);
-            MDC.remove(MDC_REQUEST_ID_KEY);
             return;
         }
 
@@ -81,15 +75,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } finally {
             MDC.remove(MDC_USER_ID_KEY);
             MDC.remove(MDC_SESSION_ID_KEY);
-            MDC.remove(MDC_REQUEST_ID_KEY);
         }
     }
 // amazonq-ignore-next-line
 
     private void handleAuthenticationException(HttpServletResponse httpResponse, Exception exception) throws IOException {
-        String requestId = MDC.get(MDC_REQUEST_ID_KEY);
-        
-        // Using Java 21 pattern matching for switch expressions
+        String requestId = MDC.get("requestId");
+
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
             case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED);
@@ -114,8 +106,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
-        httpResponse.setHeader("X-Request-ID", requestId);
-        
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
                 .put("error", "Unauthorized")
                 .put("message", errorInfo.message())

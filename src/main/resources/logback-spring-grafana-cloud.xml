@@ -9,7 +9,7 @@
 
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} traceId=%X{traceId:--} spanId=%X{spanId:--} userId=%X{userId:--} correlationId=%X{correlationId:--} sessionId=%X{sessionId:--} requestId=%X{requestId:--} clientTraceId=%X{clientTraceId:--} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -26,7 +26,7 @@
                 <context/>
                 <pattern>
                     <omitEmptyFields>true</omitEmptyFields>
-                    <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}","trace":{"traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}"}}</pattern>
+                    <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}","trace":{"traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}}</pattern>
                 </pattern>
                 <mdc>
                     <excludeMdcKeyName>traceId</excludeMdcKeyName>
@@ -59,7 +59,7 @@
                 <pattern>application=${application_name},environment=${environment},level=%level</pattern>
             </label>
             <message>
-                <pattern>{"level":"%level","logger":"%logger","thread":"%thread","message":"%message","traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}"}</pattern>
+                <pattern>{"level":"%level","logger":"%logger","thread":"%thread","message":"%message","traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}</pattern>
             </message>
             <sortByTime>true</sortByTime>
         </format>

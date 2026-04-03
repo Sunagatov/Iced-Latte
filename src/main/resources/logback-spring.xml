@@ -95,7 +95,8 @@
                             "userId": "%X{userId}",
                             "correlationId": "%X{correlationId}",
                             "sessionId": "%X{sessionId}",
-                            "requestId": "%X{requestId}"
+                            "requestId": "%X{requestId}",
+                            "clientTraceId": "%X{clientTraceId}"
                             }
                         </pattern>
                     </message>
@@ -138,7 +139,8 @@
                                 "userId": "%X{userId}",
                                 "correlationId": "%X{correlationId}",
                                 "sessionId": "%X{sessionId}",
-                                "requestId": "%X{requestId}"
+                                "requestId": "%X{requestId}",
+                                "clientTraceId": "%X{clientTraceId}"
                                 }
                             </pattern>
                         </pattern>
@@ -192,7 +194,8 @@
                                 "usr.id": "%X{userId}",
                                 "correlation_id": "%X{correlationId}",
                                 "session_id": "%X{sessionId}",
-                                "request_id": "%X{requestId}"
+                                "request_id": "%X{requestId}",
+                                "client_trace_id": "%X{clientTraceId}"
                                 }
                             </pattern>
                         </pattern>

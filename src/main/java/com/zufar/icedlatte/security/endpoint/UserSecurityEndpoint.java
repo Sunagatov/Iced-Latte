@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -91,10 +92,16 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
-        AuthSessionEntity session = authSessionService.createSession(
-                ((UserEntity) userDetails).getId(),
-                jwtBlacklistService.sha256(refreshToken),
-                httpRequest);
+        String hash = jwtBlacklistService.sha256(refreshToken);
+        AuthSessionEntity session;
+        try {
+            session = authSessionService.createSession(
+                    ((UserEntity) userDetails).getId(), hash, httpRequest);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Duplicate hash at commit time (same-second login race) — reuse existing session
+            log.warn("auth.session.duplicate_hash: reusing existing session");
+            session = authSessionService.findByHash(hash);
+        }
         var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), session.getId(), refreshToken);
         return ResponseEntity.ok(response);
     }
@@ -111,10 +118,8 @@ public class UserSecurityEndpoint implements SecurityApi {
             session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
             if (!ex.getMessage().equals("Refresh token not found")) {
-                // Revoked or expired — hard fail, do not issue new tokens
                 throw ex;
             }
-            // Pre-migration token: no session row — migrate into session model
             log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
             String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
@@ -123,11 +128,13 @@ public class UserSecurityEndpoint implements SecurityApi {
                     ((com.zufar.icedlatte.user.entity.UserEntity) userDetails).getId(),
                     jwtBlacklistService.sha256(newRefreshToken),
                     httpRequest);
+            MDC.put("sessionId", newSession.getId().toString());
             var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
             log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.ok(response);
         }
 
+        MDC.put("sessionId", session.getId().toString());
         String userEmail = jwtRefreshTokenValidator.extractEmail(httpRequest);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
