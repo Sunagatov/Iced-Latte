@@ -66,8 +66,10 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", "pre-auth").increment();
-            log.warn("rate_limit.exceeded: key={}, path={}", sanitize(key), sanitize(request.getRequestURI()));
             long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+            log.warn("rate_limit.exceeded: category=pre-auth, identityType=ip, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
+                    ip, request.getMethod(), sanitize(request.getRequestURI()),
+                    retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");

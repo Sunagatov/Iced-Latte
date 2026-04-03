@@ -24,10 +24,15 @@ public class SlowQueryAspect {
         } finally {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed >= thresholdMs) {
-                log.warn("db.slow_query: repository={}.{}, durationMs={}",
-                        pjp.getSignature().getDeclaringTypeName(),
-                        pjp.getSignature().getName(),
-                        elapsed);
+                String methodName = pjp.getSignature().getName();
+                String operationType = methodName.startsWith("save") || methodName.startsWith("delete")
+                        || methodName.startsWith("update") ? "write" : "read";
+                log.warn("db.slow_query: repository={}, method={}, operationType={}, durationMs={}, thresholdMs={}",
+                        pjp.getSignature().getDeclaringType().getSimpleName(),
+                        methodName,
+                        operationType,
+                        elapsed,
+                        thresholdMs);
             }
         }
     }

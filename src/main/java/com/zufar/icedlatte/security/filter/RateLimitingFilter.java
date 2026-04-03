@@ -94,14 +94,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
-            handleRateLimitExceeded(response, rateLimitKey, request.getRequestURI(), result);
+            handleRateLimitExceeded(response, request, result);
             return;
         }
 
         meterRegistry.counter("rate_limit.requests.allowed", "category", category).increment();
         filterChain.doFilter(request, response);
     }
-    
+
     private String buildRateLimitKey(HttpServletRequest request, String category) {
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -120,33 +120,37 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (requestPath.startsWith("/api/v1/telemetry/")) return "telemetry";
         return "global";
     }
-    
+
     private RateLimitConfig getRateLimitConfig(String category) {
         return switch (category) {
-            case "auth"      -> new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case "payment"   -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
-            case "search"    -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
+            case "auth" -> new RateLimitConfig(authMaxRequests, authWindowDuration);
+            case "payment" -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
+            case "search" -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
             case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
-            default          -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
+            default -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
         };
     }
-    
+
     private void addRateLimitHeaders(HttpServletResponse response, RateLimitingConfiguration.RateLimitResult result) {
         response.setHeader("X-RateLimit-Limit", String.valueOf(result.limit()));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, result.remaining())));
         response.setHeader("X-RateLimit-Reset", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis())));
     }
-    
-    private void handleRateLimitExceeded(HttpServletResponse response, String key, String path,
-                                          RateLimitingConfiguration.RateLimitResult result) throws IOException {
-        log.warn("rate_limit.exceeded: key={}, path={}", sanitize(key), sanitize(path));
+
+    private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request,
+                                         RateLimitingConfiguration.RateLimitResult result) throws IOException {
+        String category = getRateLimitCategory(request);
+        String clientIp = clientIpExtractor.extract(request);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String identityType = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
+        long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+        log.warn("rate_limit.exceeded: category={}, identityType={}, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
+                category, identityType, clientIp, request.getMethod(), sanitize(request.getRequestURI()),
+                retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        
-        long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
-
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
                 .put("error", "Rate limit exceeded")
                 .put("message", "Too many requests. Please try again later.")
@@ -157,10 +161,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         response.setContentLength(responseBytes.length);
         response.getOutputStream().write(responseBytes);
     }
-    
+
     private static String sanitize(String value) {
         return value == null ? "" : value.replaceAll("[\r\n]", "_");
     }
 
-    private record RateLimitConfig(int maxRequests, Duration windowDuration) {}
+    private record RateLimitConfig(int maxRequests, Duration windowDuration) {
+    }
 }

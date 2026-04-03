@@ -66,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (AbsentBearerHeaderException ex) {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
-            handleAuthenticationException(httpResponse, ex);
+            handleAuthenticationException(httpRequest, httpResponse, ex);
             return;
         }
 
@@ -79,23 +79,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 // amazonq-ignore-next-line
 
-    private void handleAuthenticationException(HttpServletResponse httpResponse, Exception exception) throws IOException {
+    private void handleAuthenticationException(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Exception exception) throws IOException {
         String requestId = MDC.get("requestId");
+        String method = httpRequest.getMethod();
+        String path = httpRequest.getRequestURI();
+        String clientIp = httpRequest.getRemoteAddr();
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
-            case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED);
-            case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED);
-            case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED);
-            case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
-            case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED);
-            default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            case InvalidCredentialsException ignored -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
+            case JwtTokenBlacklistedException ignored -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
+            case ExpiredJwtException ignored -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
+            case JwtTokenHasNoUserEmailException ignored -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
+            case UsernameNotFoundException ignored -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
+            default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
         };
-        
+
         if (errorInfo.statusCode() >= 500) {
-            log.error("auth.error: message={}, requestId={}", errorInfo.message(), requestId, exception);
+            log.error("auth.error: reasonCode={}, method={}, path={}, clientIp={}, status={}, requestId={}",
+                    errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId, exception);
         } else {
-            log.warn("auth.failed: message={}, requestId={}", errorInfo.message(), requestId);
+            log.warn("auth.failed: reasonCode={}, method={}, path={}, clientIp={}, status={}, requestId={}",
+                    errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId);
             log.debug("auth.failed.details", exception);
         }
         
@@ -118,6 +123,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
     
     // Record for error information - Java 21 feature
-    private record ErrorInfo(String message, int statusCode) {}
+    private record ErrorInfo(String message, int statusCode, String reasonCode) {}
 
 }

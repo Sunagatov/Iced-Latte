@@ -40,23 +40,23 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("user.profile.get: userId={}", userId);
+        log.debug("user.profile.get: userId={}", userId);
         return ResponseEntity.ok(singleUserProvider.getUserById(userId));
     }
 
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
-        var userId = securityPrincipalProvider.getUserId();
-        log.info("user.profile.update: userId={}", userId);
-        return ResponseEntity.ok(updateUserOperationPerformer.updateUser(updateUserAccountRequest));
+        UserDto updated = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
+        log.info("user.profile.updated");
+        return ResponseEntity.ok(updated);
     }
 
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
-        log.info("user.password.change: userId={}", securityPrincipalProvider.getUserId());
         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
+        log.info("user.password.changed");
         return ResponseEntity.ok().build();
     }
 
@@ -64,8 +64,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("user.account.delete: userId={}", userId);
         deleteUserOperationPerformer.deleteUser(userId);
+        log.info("user.account.deleted");
         return ResponseEntity.ok().build();
     }
 
@@ -73,8 +73,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("user.avatar.upload: userId={}", userId);
         userAvatarUploader.uploadUserAvatar(userId, file);
+        log.info("user.avatar.uploaded");
         return ResponseEntity.ok().build();
     }
 
@@ -82,7 +82,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("user.avatar.get: userId={}", userId);
+        log.debug("user.avatar.get: userId={}", userId);
         String link = userAvatarLinkProvider.getLink(userId);
         return link != null ? ResponseEntity.ok(link) : ResponseEntity.noContent().build();
     }
@@ -91,8 +91,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("user.avatar.delete: userId={}", userId);
         fileDeleter.delete(userId);
+        log.info("user.avatar.deleted");
         return ResponseEntity.ok().build();
     }
 

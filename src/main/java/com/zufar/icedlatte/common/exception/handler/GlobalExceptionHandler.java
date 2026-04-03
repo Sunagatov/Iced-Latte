@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleNoResourceFoundException(final NoResourceFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
+        log.info("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
         return apiErrorResponse;
     }
 
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
             throw exception;
         }
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.unhandled: message={}", exception.getMessage(), exception);
+        log.error("exception.unhandled: exceptionClass={}, status=500", exception.getClass().getName(), exception);
         return apiErrorResponse;
     }
 }

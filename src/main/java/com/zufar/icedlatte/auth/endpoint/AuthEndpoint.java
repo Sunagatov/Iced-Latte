@@ -81,11 +81,11 @@ public class AuthEndpoint {
                     && incoming.getHost().equals(allowed.getHost())
                     && incoming.getPort() == allowed.getPort();
             if (!sameOrigin) {
-                log.warn("auth.google.redirect.rejected: redirectUrl={}", redirectUrl);
+                log.warn("auth.google.redirect.rejected: reasonCode=ORIGIN_MISMATCH");
                 return frontendUrl;
             }
         } catch (URISyntaxException e) {
-            log.warn("auth.google.redirect.invalid: redirectUrl={}", redirectUrl);
+            log.warn("auth.google.redirect.invalid: reasonCode=INVALID_URI");
             return frontendUrl;
         }
         return redirectUrl;
