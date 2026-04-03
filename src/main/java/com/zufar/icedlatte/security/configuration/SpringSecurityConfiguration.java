@@ -27,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -87,7 +88,7 @@ public class SpringSecurityConfiguration {
                         .authenticationEntryPoint((_, response, _) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
-                .addFilterBefore(correlationFilter, PreAuthRateLimitingFilter.class)
+                .addFilterBefore(correlationFilter, DisableEncodeUrlFilter.class)
                 .addFilterBefore(preAuthRateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
