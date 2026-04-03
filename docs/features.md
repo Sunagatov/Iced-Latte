@@ -110,7 +110,8 @@ Redis is an optional dependency. The app runs fully without it — all caches fa
 | Email verification token | `email:token:{email}` | per token TTL | Guava |
 | Email send rate | `email:expiry:{email}` | per token TTL | Guava |
 | JWT blacklist | `jwt:blacklist:{token}` | remaining token TTL | ConcurrentHashMap |
-| Rate limiter | `rate:{ip}` | sliding window | Caffeine token bucket |
+| Rate limiter (pre-auth) | `rate:pre-auth:ip:{ip}` | fixed window | Caffeine fixed window |
+| Rate limiter (post-auth) | `rate:{category}:user:{userId}` or `rate:{category}:ip:{ip}` | fixed window | Caffeine fixed window |
 
 ### How to enable
 
