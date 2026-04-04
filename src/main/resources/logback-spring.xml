@@ -83,31 +83,29 @@
                 <http>
                     <url>${loki_url}</url>
                 </http>
-                <format>
-                    <label>
-                        <pattern>application=${application_name},environment=${environment},level=%level</pattern>
-                    </label>
-                    <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-                        <providers>
-                            <timestamp><timeZone>UTC</timeZone></timestamp>
-                            <logLevel/>
-                            <message/>
-                            <loggerName/>
-                            <threadName/>
-                            <pattern>
-                                <omitEmptyFields>true</omitEmptyFields>
-                                <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
-                            </pattern>
-                            <mdc>
-                                <excludeMdcKeyName>traceId</excludeMdcKeyName>
-                                <excludeMdcKeyName>spanId</excludeMdcKeyName>
-                                <excludeMdcKeyName>parentId</excludeMdcKeyName>
-                            </mdc>
-                            <stackTrace/>
-                        </providers>
-                    </message>
-                    <sortByTime>true</sortByTime>
-                </format>
+                <label>
+                    <pattern>application=${application_name},environment=${environment},level=%level</pattern>
+                </label>
+                <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                    <providers>
+                        <timestamp><timeZone>UTC</timeZone></timestamp>
+                        <logLevel/>
+                        <message/>
+                        <loggerName/>
+                        <threadName/>
+                        <pattern>
+                            <omitEmptyFields>true</omitEmptyFields>
+                            <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
+                        </pattern>
+                        <mdc>
+                            <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                            <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                            <excludeMdcKeyName>parentId</excludeMdcKeyName>
+                        </mdc>
+                        <stackTrace/>
+                    </providers>
+                </message>
+                <sortByTime>true</sortByTime>
             </appender>
         </then>
     </if>

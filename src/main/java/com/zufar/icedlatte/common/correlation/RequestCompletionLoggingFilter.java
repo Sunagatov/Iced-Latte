@@ -88,7 +88,11 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
     private static String resolvePathTemplate(HttpServletRequest request) {
         Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        return sanitize(pattern != null ? pattern.toString() : request.getRequestURI());
+        String resolved = pattern != null ? pattern.toString() : null;
+        if (resolved == null || "/**".equals(resolved)) {
+            resolved = request.getRequestURI();
+        }
+        return sanitize(resolved);
     }
 
     private static boolean isAuthenticated() {
