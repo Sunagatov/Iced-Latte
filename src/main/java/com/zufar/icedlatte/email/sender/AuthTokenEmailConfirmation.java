@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.email.sender;
 
 import com.zufar.icedlatte.email.dto.EmailTokenDto;
-import com.zufar.icedlatte.email.message.MessageBuilder;
+import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,8 +21,8 @@ public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDt
     @Autowired
     public AuthTokenEmailConfirmation(JavaMailSender javaMailSender,
                                       SimpleMailMessage mailMessage,
-                                      List<MessageBuilder<EmailTokenDto>> messageBuilders) {
-        super(javaMailSender, mailMessage, messageBuilders);
+                                      EmailConfirmMessage emailConfirmMessage) {
+        super(javaMailSender, mailMessage, List.of(emailConfirmMessage));
     }
 
     public void sendTemporaryCode(String email, String message) {

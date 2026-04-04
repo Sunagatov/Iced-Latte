@@ -6,6 +6,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.interceptor.CacheErrorHandler;
+import org.springframework.cache.interceptor.SimpleCacheErrorHandler;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -24,7 +29,7 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.data.redis.host")
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     private final CacheProperties cacheProperties;
 
@@ -81,5 +86,27 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
         return template;
+    }
+
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new SimpleCacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
+                log.warn("cache.get.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCachePutError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key, Object value) {
+                log.warn("cache.put.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheEvictError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
+                log.warn("cache.evict.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheClearError(@NonNull RuntimeException e, @NonNull Cache cache) {
+                log.warn("cache.clear.error: cache={}, cause={}", cache.getName(), e.getMessage());
+            }
+        };
     }
 }

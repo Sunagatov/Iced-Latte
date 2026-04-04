@@ -2,7 +2,9 @@ package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
 import com.zufar.icedlatte.auth.api.OAuthStateCache;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +16,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
 
 @Slf4j
@@ -38,6 +42,9 @@ public class AuthEndpoint {
 
     @Value("${frontend.url}")
     private String frontendUrl;
+
+    @Value("${server.ssl.enabled:false}")
+    private boolean sslEnabled;
 
     private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
     private final OAuthStateCache oAuthStateCache;
@@ -95,38 +102,41 @@ public class AuthEndpoint {
     }
 
     @GetMapping("/google/callback")
-    public ResponseEntity<Void> googleCallback(@RequestParam("code") String code,
-                                               @RequestParam(required = false) String state,
-                                               HttpServletRequest request) {
+    public void googleCallback(@RequestParam("code") String code,
+                               @RequestParam(required = false) String state,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws IOException {
         if (googleAuthCallbackHandler == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            response.sendRedirect(frontendUrl + "/signin?error=google_disabled");
+            return;
         }
         if (state == null || state.isBlank()) {
             log.warn("auth.google.callback.missing-state");
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
-                    .build();
+            response.sendRedirect(frontendUrl + "/signin?error=invalid_state");
+            return;
         }
         String stored = oAuthStateCache.consume(state);
         if (stored == null) {
             log.warn("auth.google.callback.invalid-state");
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signin?error=invalid_state"))
-                    .build();
+            response.sendRedirect(frontendUrl + "/signin?error=invalid_state");
+            return;
         }
         try {
             var tokens = googleAuthCallbackHandler.handle(code, request);
-            URI destination = UriComponentsBuilder.fromUriString(stored + "/auth/google/callback")
-                    .queryParam("token", tokens.getToken())
-                    .queryParam("refreshToken", tokens.getRefreshToken())
-                    .build().toUri();
-            return ResponseEntity.status(HttpStatus.FOUND).location(destination).build();
+
+            Cookie tokenCookie = new Cookie("token", tokens.getToken());
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(sslEnabled || request.isSecure());
+            tokenCookie.setPath("/");
+            tokenCookie.setMaxAge((int) Duration.ofDays(1).toSeconds());
+            tokenCookie.setAttribute("SameSite", "Lax");
+            response.addCookie(tokenCookie);
+
+            response.sendRedirect(stored + "/?auth=success");
         } catch (Exception e) {
-            log.error("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE",
-                    e.getClass().getSimpleName(), e);
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(stored + "/signin?error=auth_failed"))
-                    .build();
+            log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",
+                    e.getClass().getSimpleName(), e.getMessage());
+            response.sendRedirect(stored + "/signin?error=auth_failed");
         }
     }
 }

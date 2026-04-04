@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-import org.springframework.security.core.AuthenticationException;
-
-public class AbsentBearerHeaderException extends AuthenticationException {
+public class AbsentBearerHeaderException extends RuntimeException {
 
     private static final String DEFAULT_MESSAGE = "Bearer authentication header is absent";
 

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.email.config;
 
+import com.zufar.icedlatte.email.message.EmailConfirmMessage;
 import com.zufar.icedlatte.email.sender.AuthTokenEmailConfirmation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,8 +27,8 @@ public class EmailDisabledConfig {
 
     @Bean
     public AuthTokenEmailConfirmation noOpAuthTokenEmailConfirmation(
-            JavaMailSender mailSender, SimpleMailMessage mailMessage) {
-        return new AuthTokenEmailConfirmation(mailSender, mailMessage, java.util.List.of()) {
+            JavaMailSender mailSender, SimpleMailMessage mailMessage, EmailConfirmMessage emailConfirmMessage) {
+        return new AuthTokenEmailConfirmation(mailSender, mailMessage, emailConfirmMessage) {
             @Override
             public void sendTemporaryCode(String email, String message) {
                 log.debug("email.send.skipped: email.enabled=false");

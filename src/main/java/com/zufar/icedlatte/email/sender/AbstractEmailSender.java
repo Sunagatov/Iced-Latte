@@ -2,6 +2,7 @@ package com.zufar.icedlatte.email.sender;
 
 import com.zufar.icedlatte.email.exception.MessageBuilderNotFoundException;
 import com.zufar.icedlatte.email.message.MessageBuilder;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
@@ -19,6 +20,12 @@ public abstract class AbstractEmailSender<T> {
     private final JavaMailSender javaMailSender;
     private final SimpleMailMessage mailMessage;
     private final List<MessageBuilder<T>> messageBuilders;
+
+    @PostConstruct
+    void validateBuilders() {
+        log.debug("email.builders.registered: senderClass={}, count={}",
+                getClass().getSimpleName(), messageBuilders.size());
+    }
 
     public void sendNotification(String email, String message, String subject) {
         try {
