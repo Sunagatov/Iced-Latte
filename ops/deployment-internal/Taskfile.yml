@@ -52,3 +52,8 @@ tasks:
       - task: sync-compose
       - task: deploy
       - task: smoke
+
+  prune-remote:
+    desc: Remove all unused Docker images, containers, networks and volumes on Hetzner
+    cmds:
+      - PROJECT_CONFIG={{.PROJECT_CONFIG}} bash ops/scripts/prune.sh
