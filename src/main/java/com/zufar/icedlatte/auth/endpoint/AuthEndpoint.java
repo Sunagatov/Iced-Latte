@@ -122,6 +122,7 @@ public class AuthEndpoint {
             String callbackUrl = UriComponentsBuilder.fromUriString(stored)
                     .path("/api/auth/google/callback")
                     .queryParam("token", tokens.getToken())
+                    .queryParam("refreshToken", tokens.getRefreshToken())
                     .build().toUriString();
             response.sendRedirect(callbackUrl);
         } catch (Exception e) {
