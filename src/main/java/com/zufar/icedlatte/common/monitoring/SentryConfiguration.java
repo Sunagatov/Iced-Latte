@@ -23,6 +23,11 @@ public class SentryConfiguration {
     @Bean
     public SentryOptions.BeforeSendCallback beforeSendCallback() {
         return (event, _) -> {
+            // Only send server errors (5xx) to Sentry. 4xx are client errors — expected, not bugs.
+            if (event.getLevel() != null && event.getLevel() != io.sentry.SentryLevel.ERROR
+                    && event.getLevel() != io.sentry.SentryLevel.FATAL) {
+                return null;
+            }
             sanitizePii(event);
             addCustomTags(event);
             return event;

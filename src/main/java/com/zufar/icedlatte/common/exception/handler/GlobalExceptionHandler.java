@@ -6,12 +6,16 @@ import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
@@ -20,6 +24,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
@@ -117,6 +122,22 @@ public class GlobalExceptionHandler {
                 "Malformed or unreadable request body", HttpStatus.BAD_REQUEST);
         log.warn("exception.message_not_readable: status=400");
         return apiErrorResponse;
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleMissingServletRequestParameterException(final MissingServletRequestParameterException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Required parameter '" + exception.getParameterName() + "' is missing", HttpStatus.BAD_REQUEST);
+        log.warn("exception.missing_param: param={}, status=400", exception.getParameterName());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public void handleAsyncRequestNotUsableException(final AsyncRequestNotUsableException exception) {
+        // Client disconnected before response was flushed (broken pipe). Not a server error — suppress Sentry noise.
+        log.debug("exception.client_disconnect: cause={}", exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

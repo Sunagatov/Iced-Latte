@@ -97,12 +97,17 @@ public class AuthEndpoint {
     }
 
     @GetMapping("/google/callback")
-    public void googleCallback(@RequestParam("code") String code,
+    public void googleCallback(@RequestParam(required = false) String code,
                                @RequestParam(required = false) String state,
                                HttpServletRequest request,
                                HttpServletResponse response) throws IOException {
         if (googleAuthCallbackHandler == null) {
             response.sendRedirect(frontendUrl + "/signin?error=google_disabled");
+            return;
+        }
+        if (code == null || code.isBlank()) {
+            log.warn("auth.google.callback.missing-code");
+            response.sendRedirect(frontendUrl + "/signin?error=missing_code");
             return;
         }
         if (state == null || state.isBlank()) {

@@ -78,17 +78,23 @@ public class PutUsersRequestValidator {
     private StringBuilder validateAddressParameter(AddressDto addressDto) {
         StringBuilder errorMessages = new StringBuilder();
         if (addressDto != null) {
-            validateAddressField(errorMessages, addressDto.getCountry(), "country");
-            validateAddressField(errorMessages, addressDto.getCity(), "city");
-            validateAddressField(errorMessages, addressDto.getLine(), "line");
-            validateAddressField(errorMessages, addressDto.getPostcode(), "postcode");
+            boolean anyFieldPresent = addressDto.getCountry() != null
+                    || addressDto.getCity() != null
+                    || addressDto.getLine() != null
+                    || addressDto.getPostcode() != null;
+            if (anyFieldPresent) {
+                validateAddressField(errorMessages, addressDto.getCountry(), "country");
+                validateAddressField(errorMessages, addressDto.getCity(), "city");
+                validateAddressField(errorMessages, addressDto.getLine(), "line");
+                validateAddressField(errorMessages, addressDto.getPostcode(), "postcode");
+            }
         }
         return errorMessages;
     }
 
     private void validateAddressField(StringBuilder errors, String value, String fieldName) {
-        if (value != null && value.isBlank()) {
-            errors.append(createErrorMessage(String.format("Address field `%s` must not be blank.", fieldName)));
+        if (value == null || value.isBlank()) {
+            errors.append(createErrorMessage(String.format("Address field `%s` is required and must not be blank.", fieldName)));
         }
     }
 
