@@ -600,6 +600,9 @@ components:
         avatarLink:
           type: "string"
           description: "The avatar URL of the user."
+        oauthUser:
+          type: "boolean"
+          description: "True if the user signed up via OAuth and has no password set."
 
     AddressDto:
       type: "object"

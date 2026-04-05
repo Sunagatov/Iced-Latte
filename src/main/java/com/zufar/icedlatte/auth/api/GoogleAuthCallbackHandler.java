@@ -60,6 +60,7 @@ public class GoogleAuthCallbackHandler {
                 .lastName(lastName)
                 .email(email)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                .oauthUser(true)
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)

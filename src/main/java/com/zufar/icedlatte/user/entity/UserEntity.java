@@ -80,6 +80,9 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Column(name = "oauth_user", nullable = false)
+    private boolean oauthUser;
+
     @Override
     @NonNull
     public String getUsername() {

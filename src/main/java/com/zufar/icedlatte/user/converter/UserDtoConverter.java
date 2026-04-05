@@ -13,6 +13,7 @@ public interface UserDtoConverter {
 
     @Mapping(target = "address", source = "address", qualifiedByName = "toAddressDto")
     @Mapping(target = "avatarLink", ignore = true)
+    @Mapping(target = "oauthUser", source = "oauthUser")
     UserDto toDto(final UserEntity entity);
 
     @Mapping(target = "address", source = "address", qualifiedByName = "toAddress")
