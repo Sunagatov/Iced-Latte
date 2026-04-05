@@ -64,10 +64,10 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
-docker compose -f ${REMOTE_COMPOSE_FILE} pull
+docker compose -f ${REMOTE_COMPOSE_FILE} pull --policy always
 
 echo "🚀 Recreating containers..."
-docker compose -f ${REMOTE_COMPOSE_FILE} up -d --remove-orphans
+docker compose -f ${REMOTE_COMPOSE_FILE} up -d --remove-orphans --pull always
 
 echo "⏳ Waiting for containers to stabilize..."
 sleep 5

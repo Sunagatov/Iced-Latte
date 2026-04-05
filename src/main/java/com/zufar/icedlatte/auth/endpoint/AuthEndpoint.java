@@ -2,7 +2,6 @@ package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
 import com.zufar.icedlatte.auth.api.OAuthStateCache;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.Base64;
 
 @Slf4j
@@ -42,9 +40,6 @@ public class AuthEndpoint {
 
     @Value("${frontend.url}")
     private String frontendUrl;
-
-    @Value("${server.ssl.enabled:false}")
-    private boolean sslEnabled;
 
     private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
     private final OAuthStateCache oAuthStateCache;
@@ -124,15 +119,11 @@ public class AuthEndpoint {
         try {
             var tokens = googleAuthCallbackHandler.handle(code, request);
 
-            Cookie tokenCookie = new Cookie("token", tokens.getToken());
-            tokenCookie.setHttpOnly(true);
-            tokenCookie.setSecure(sslEnabled || request.isSecure());
-            tokenCookie.setPath("/");
-            tokenCookie.setMaxAge((int) Duration.ofDays(1).toSeconds());
-            tokenCookie.setAttribute("SameSite", "Lax");
-            response.addCookie(tokenCookie);
-
-            response.sendRedirect(stored + "/?auth=success");
+            String callbackUrl = UriComponentsBuilder.fromUriString(stored)
+                    .path("/api/auth/google/callback")
+                    .queryParam("token", tokens.getToken())
+                    .build().toUriString();
+            response.sendRedirect(callbackUrl);
         } catch (Exception e) {
             log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",
                     e.getClass().getSimpleName(), e.getMessage());

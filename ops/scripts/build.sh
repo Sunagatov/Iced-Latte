@@ -41,6 +41,7 @@ cd "$PROJECT_ROOT"
 
 docker buildx build \
   --platform linux/arm64 \
+  --no-cache \
   -t "${DOCKER_IMAGE}:${DOCKER_TAG}" \
   --load \
   .
