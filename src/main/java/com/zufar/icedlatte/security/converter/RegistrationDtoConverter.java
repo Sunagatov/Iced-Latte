@@ -19,5 +19,6 @@ public interface RegistrationDtoConverter {
     @Mapping(target = "accountNonLocked", ignore = true)
     @Mapping(target = "credentialsNonExpired", ignore = true)
     @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "oauthUser", constant = "false")
     UserEntity toEntity(final UserRegistrationRequest userRegistrationRequest);
 }
