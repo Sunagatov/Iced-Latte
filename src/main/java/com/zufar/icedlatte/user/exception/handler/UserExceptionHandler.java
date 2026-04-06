@@ -76,7 +76,8 @@ public class UserExceptionHandler {
             }
             errorMessage.append(error.getDefaultMessage());
         });
-        log.warn("exception.user.validation: fields={}, errorCount={}, status=400", fieldNames, ex.getBindingResult().getErrorCount());
+        log.warn("exception.user.validation: fields={}, errorCount={}, status=400",
+                fieldNames, ex.getBindingResult().getErrorCount());
         return apiErrorResponseCreator.buildResponse(errorMessage.toString(), HttpStatus.BAD_REQUEST);
     }
 }

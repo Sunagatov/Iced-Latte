@@ -26,7 +26,9 @@ public class SingleProductProvider {
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            readOnly = true,
+            isolation = Isolation.READ_COMMITTED)
     @Cacheable(key = "#productId")
     public ProductInfoDto getProductById(final UUID productId) {
         var product = productInfoRepository.findById(productId)

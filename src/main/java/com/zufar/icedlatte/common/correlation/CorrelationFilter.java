@@ -24,13 +24,13 @@ public class CorrelationFilter extends OncePerRequestFilter {
     private static final String CLIENT_TRACE_ID_MDC_KEY = "clientTraceId";
     private static final String REQUEST_ID_MDC_KEY = "requestId";
     private static final String REQUEST_ID_HEADER = "X-Request-ID";
-
     private static final int MAX_HEADER_LENGTH = 64;
     private static final Pattern UNSAFE_HEADER_CHARS = Pattern.compile("[^A-Za-z0-9._\\-]");
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String correlationId = request.getHeader(CORRELATION_ID_HEADER) != null
                 ? sanitizeHeader(request.getHeader(CORRELATION_ID_HEADER))
@@ -57,8 +57,11 @@ public class CorrelationFilter extends OncePerRequestFilter {
     }
 
     private static String sanitizeHeader(String value) {
-        if (value == null) return null;
-        String cleaned = UNSAFE_HEADER_CHARS.matcher(value).replaceAll("_");
-        return cleaned.length() > MAX_HEADER_LENGTH ? cleaned.substring(0, MAX_HEADER_LENGTH) : cleaned;
+        if (value == null)
+            return null;
+        String cleaned = UNSAFE_HEADER_CHARS.matcher(value)
+                .replaceAll("_");
+        return cleaned.length() > MAX_HEADER_LENGTH ?
+                cleaned.substring(0, MAX_HEADER_LENGTH) : cleaned;
     }
 }

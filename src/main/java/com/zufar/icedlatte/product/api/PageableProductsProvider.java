@@ -73,7 +73,8 @@ public class PageableProductsProvider {
         Page<ProductInfoDto> result = new PageImpl<>(
                 updatedDtos, rawPage.getPageable(), rawPage.getTotalElements());
 
-        log.info("product.list.fetched: count={}, durationMs={}", result.getNumberOfElements(), System.currentTimeMillis() - t0);
+        log.info("product.list.fetched: count={}, durationMs={}",
+                result.getNumberOfElements(), System.currentTimeMillis() - t0);
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 }

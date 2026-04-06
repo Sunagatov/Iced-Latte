@@ -26,8 +26,9 @@ public class EmailDisabledConfig {
     }
 
     @Bean
-    public AuthTokenEmailConfirmation noOpAuthTokenEmailConfirmation(
-            JavaMailSender mailSender, SimpleMailMessage mailMessage, EmailConfirmMessage emailConfirmMessage) {
+    public AuthTokenEmailConfirmation noOpAuthTokenEmailConfirmation(JavaMailSender mailSender,
+                                                                     SimpleMailMessage mailMessage,
+                                                                     EmailConfirmMessage emailConfirmMessage) {
         return new AuthTokenEmailConfirmation(mailSender, mailMessage, emailConfirmMessage) {
             @Override
             public void sendTemporaryCode(String email, String message) {

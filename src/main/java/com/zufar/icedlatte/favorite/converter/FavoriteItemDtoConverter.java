@@ -9,11 +9,15 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = ProductInfoDtoConverter.class,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,  injectionStrategy = InjectionStrategy.FIELD)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        uses = ProductInfoDtoConverter.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        injectionStrategy = InjectionStrategy.FIELD)
 public interface FavoriteItemDtoConverter {
 
-    @Mapping(target = "productInfo.dateAdded", source = "productInfo.dateAdded", qualifiedByName = "localToOffsetDate")
+    @Mapping(target = "productInfo.dateAdded",
+            source = "productInfo.dateAdded",
+            qualifiedByName = "localToOffsetDate")
     FavoriteItemDto toDto(final FavoriteItemEntity favoriteItemEntity);
 
 }

@@ -27,7 +27,8 @@ class RateLimitResponseWriter {
         response.setHeader("X-RateLimit-Reset", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis())));
     }
 
-    static void writeTooManyRequests(HttpServletResponse response, RateLimitResult result) throws IOException {
+    static void writeTooManyRequests(HttpServletResponse response,
+                                     RateLimitResult result) throws IOException {
         long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         writeRateLimitHeaders(response, result);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

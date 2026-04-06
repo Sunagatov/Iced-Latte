@@ -12,10 +12,9 @@ import org.springframework.context.annotation.Configuration;
 class AiEnabledConfig {
 
     @Bean
-    OpenAiChatModel openAiChatModel(
-            @Value("${ai.api-key}") String apiKey,
-            @Value("${ai.base-url:https://api.openai.com/v1}") String baseUrl,
-            @Value("${ai.model-name:gpt-4o-mini}") String modelName) {
+    OpenAiChatModel openAiChatModel(@Value("${ai.api-key}") String apiKey,
+                                    @Value("${ai.base-url:https://api.openai.com/v1}") String baseUrl,
+                                    @Value("${ai.model-name:gpt-4o-mini}") String modelName) {
         return OpenAiChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)

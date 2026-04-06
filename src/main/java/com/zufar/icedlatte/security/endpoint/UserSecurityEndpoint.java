@@ -55,6 +55,9 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
 
+    private static final String MDC_USER_ID = "userId";
+    private static final String MDC_SESSION_ID = "sessionId";
+
     private final UserAuthenticationService userAuthenticationService;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
@@ -67,11 +70,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final SingleUserProvider singleUserProvider;
     private final AuthSessionService authSessionService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
-
     private final HttpServletRequest httpRequest;
-
-    private static final String MDC_USER_ID = "userId";
-    private static final String MDC_SESSION_ID = "sessionId";
 
     @Override
     @PostMapping("/register")
@@ -97,7 +96,9 @@ public class UserSecurityEndpoint implements SecurityApi {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
         UUID sessionId = UUID.randomUUID();
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
-        AuthSessionEntity session = authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
+        AuthSessionEntity session =
+                authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(),
+                        jwtBlacklistService.sha256(refreshToken), httpRequest);
         MDC.put(MDC_USER_ID, session.getUserId().toString());
         MDC.put(MDC_SESSION_ID, session.getId().toString());
         var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
@@ -156,9 +157,8 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @Override
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
-            String xRefreshToken) {
+    public ResponseEntity<Void> logout(@org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
+                                       String xRefreshToken) {
         log.debug("auth.logout.processing");
 
         // Accept refresh token from X-Refresh-Token header (legacy) or Authorization: Bearer

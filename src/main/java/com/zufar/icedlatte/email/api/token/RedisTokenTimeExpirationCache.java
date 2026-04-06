@@ -30,8 +30,13 @@ public class RedisTokenTimeExpirationCache implements TokenTimeExpirationCache {
 
     @Override
     public void manageEmailSendingRate(String email) {
-        OffsetDateTime expiry = OffsetDateTime.now().plusMinutes(expireTimeMinutes);
-        redisTemplate.opsForValue().set(KEY_PREFIX + email, expiry.toString(), Duration.ofMinutes(expireTimeMinutes));
+        OffsetDateTime expiry = OffsetDateTime.now()
+                .plusMinutes(expireTimeMinutes);
+        String key = KEY_PREFIX + email;
+        String value = expiry.toString();
+        Duration timeout = Duration.ofMinutes(expireTimeMinutes);
+        redisTemplate.opsForValue()
+                .set(key, value, timeout);
     }
 
     @Override

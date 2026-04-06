@@ -21,13 +21,15 @@ public class EmailTokenConformer {
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
 
-    public UserAuthenticationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest, final HttpServletRequest httpRequest) {
+    public UserAuthenticationResponse confirmEmailByCode(final ConfirmEmailRequest confirmEmailRequest,
+                                                         final HttpServletRequest httpRequest) {
         UserRegistrationRequest userRegistrationRequest =
                 tokenManager.validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
         return userRegistrationService.register(userRegistrationRequest, httpRequest);
     }
 
-    public void confirmResetPasswordEmailByCode(final ConfirmEmailRequest confirmEmailRequest, final String newPassword) {
+    public void confirmResetPasswordEmailByCode(final ConfirmEmailRequest confirmEmailRequest,
+                                                final String newPassword) {
         UserRegistrationRequest request =
                 tokenManager.validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
         var userEntity = singleUserProvider.getUserEntityByEmail(request.getEmail());

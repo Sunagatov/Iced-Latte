@@ -34,7 +34,8 @@ public class GoogleAuthCallbackHandler {
     private final AuthSessionService authSessionService;
     private final JwtBlacklistService jwtBlacklistService;
 
-    public UserAuthenticationResponse handle(String authorizationCode, HttpServletRequest httpRequest) throws GeneralSecurityException, IOException {
+    public UserAuthenticationResponse handle(String authorizationCode,
+                                             HttpServletRequest httpRequest) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleTokenExchanger.exchange(authorizationCode);
 
         String email = payload.getEmail();

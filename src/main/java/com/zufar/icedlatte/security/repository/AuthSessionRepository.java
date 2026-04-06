@@ -17,10 +17,18 @@ public interface AuthSessionRepository extends JpaRepository<AuthSessionEntity, 
 
     Optional<AuthSessionEntity> findByPreviousTokenHash(String previousTokenHash);
 
-    @Query("SELECT s FROM AuthSessionEntity s WHERE s.userId = :userId AND s.revokedAt IS NULL AND s.compromised = false AND s.expiresAt > :now")
-    List<AuthSessionEntity> findActiveSessions(@Param("userId") UUID userId, @Param("now") OffsetDateTime now);
+    @Query("SELECT s FROM AuthSessionEntity s " +
+            "WHERE s.userId = :userId " +
+            "AND s.revokedAt IS NULL " +
+            "AND s.compromised = false " +
+            "AND s.expiresAt > :now")
+    List<AuthSessionEntity> findActiveSessions(@Param("userId") UUID userId,
+                                               @Param("now") OffsetDateTime now);
 
     @Modifying
-    @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :now WHERE s.userId = :userId AND s.revokedAt IS NULL AND s.compromised = false")
+    @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :now " +
+            "WHERE s.userId = :userId " +
+            "AND s.revokedAt IS NULL " +
+            "AND s.compromised = false")
     void revokeAllByUserId(@Param("userId") UUID userId, @Param("now") OffsetDateTime now);
 }

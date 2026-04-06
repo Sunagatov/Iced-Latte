@@ -36,13 +36,15 @@ public class JwtTokenFromAuthHeaderExtractor {
                 .orElseThrow(() -> {
                     log.debug("jwt.header.invalid");
                     return new AbsentBearerHeaderException(
-                        "Missing or invalid Authorization header. Expected format: " + BEARER_PREFIX + "<token>"
+                        "Missing or invalid Authorization header. Expected format: " +
+                                BEARER_PREFIX + "<token>"
                     );
                 });
     }
 
     private boolean isValidBearerHeader(String authHeader) {
-        return authHeader.startsWith(BEARER_PREFIX) && authHeader.length() > BEARER_PREFIX.length();
+        return authHeader.startsWith(BEARER_PREFIX) &&
+                authHeader.length() > BEARER_PREFIX.length();
     }
 
     private String extractTokenFromHeader(String authHeader) {

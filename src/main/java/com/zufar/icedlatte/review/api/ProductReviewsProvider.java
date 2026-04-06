@@ -33,7 +33,9 @@ public class ProductReviewsProvider {
     private final PaginationConfig paginationConfig;
     private final GetReviewsRequestValidator getReviewsRequestValidator;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId,
                                                                     final Integer pageNumber,
                                                                     final Integer pageSize,
@@ -72,7 +74,9 @@ public class ProductReviewsProvider {
                 .orElse(EMPTY_PRODUCT_REVIEW_RESPONSE);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public ProductReviewsAndRatingsWithPagination getUserReviews(final Integer pageNumber,
                                                                  final Integer pageSize,
                                                                  final String sortAttribute,

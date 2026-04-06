@@ -62,6 +62,7 @@ public class JwtTokenProvider {
                               Duration expiration, SecretKey key) {
         try {
             Instant now = Instant.now();
+
             return Jwts.builder()
                     .claims(extraClaims)
                     .subject(userDetails.getUsername())
@@ -71,6 +72,7 @@ public class JwtTokenProvider {
                     .expiration(Date.from(now.plus(expiration)))
                     .signWith(key)
                     .compact();
+
         } catch (JwtException exception) {
             log.error("jwt.create.error: message={}", exception.getMessage(), exception);
             throw new JwtTokenException(exception);

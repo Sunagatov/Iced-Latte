@@ -52,7 +52,8 @@ public class GetProductsRequestValidator {
         return errorMessages;
     }
 
-    private static StringBuilder validateMinMaxPriceParameter(BigDecimal minPrice, BigDecimal maxPrice) {
+    private static StringBuilder validateMinMaxPriceParameter(BigDecimal minPrice,
+                                                              BigDecimal maxPrice) {
         final StringBuilder errors = new StringBuilder();
         if (minPrice != null && minPrice.signum() < 0) {
             errors.append(createErrorMessage("'%s' is incorrect 'minPrice'. It must be a non-negative number."

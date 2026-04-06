@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface ShoppingCartItemRepository extends JpaRepository<ShoppingCartItem, UUID> {
 
     @Modifying
-    @Query("DELETE FROM ShoppingCartItem i WHERE i.id IN :itemIds AND i.shoppingCart.userId = :userId")
-    void deleteByIdInAndUserId(@Param("itemIds") List<UUID> itemIds, @Param("userId") UUID userId);
+    @Query("DELETE FROM ShoppingCartItem i " +
+            "WHERE i.id IN :itemIds AND i.shoppingCart.userId = :userId")
+    void deleteByIdInAndUserId(@Param("itemIds") List<UUID> itemIds,
+                               @Param("userId") UUID userId);
 }

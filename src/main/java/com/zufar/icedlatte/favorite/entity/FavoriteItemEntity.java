@@ -37,7 +37,9 @@ public class FavoriteItemEntity {
     private Integer version;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "favorite_id", nullable = false, referencedColumnName = "id")
+    @JoinColumn(name = "favorite_id",
+            nullable = false,
+            referencedColumnName = "id")
     private FavoriteListEntity favoriteListEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,7 +51,8 @@ public class FavoriteItemEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FavoriteItemEntity that = (FavoriteItemEntity) o;
-        return Objects.equals(favoriteListEntity, that.favoriteListEntity) && Objects.equals(productInfo, that.productInfo);
+        return Objects.equals(favoriteListEntity, that.favoriteListEntity) &&
+                Objects.equals(productInfo, that.productInfo);
     }
 
     @Override

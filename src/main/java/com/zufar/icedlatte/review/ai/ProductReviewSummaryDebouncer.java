@@ -49,7 +49,8 @@ public class ProductReviewSummaryDebouncer {
             try {
                 applicationContext.getBean(ProductReviewSummaryDebouncer.class).runSummary(productId);
             } catch (Exception e) {
-                log.warn("product.ai_summary.schedule.failed: productId={} cause={}", productId, e.getMessage(), e);
+                log.warn("product.ai_summary.schedule.failed: productId={} cause={}",
+                        productId, e.getMessage(), e);
             }
         }, delay, TimeUnit.SECONDS);
         pendingDebounce.put(productId, future);

@@ -24,7 +24,9 @@ public class ProductImageReceiver {
     private final FileProvider fileProvider;
     private final ProductImageRepository productImageRepository;
 
-    @Cacheable(cacheNames = "productImageUrl", key = "#productId", unless = "#result.startsWith('/assets/')")
+    @Cacheable(cacheNames = "productImageUrl",
+            key = "#productId",
+            unless = "#result.startsWith('/assets/')")
     public String getProductFileUrl(final UUID productId) {
         try {
             return fileProvider.getRelatedObjectUrl(productId)
@@ -33,7 +35,8 @@ public class ProductImageReceiver {
                         return DEFAULT_FILE_URL;
                     });
         } catch (RuntimeException ex) {
-            log.error("product.image.error: productId={}, message={}", productId, ex.getMessage(), ex);
+            log.error("product.image.error: productId={}, message={}",
+                    productId, ex.getMessage(), ex);
             return DEFAULT_FILE_URL;
         }
     }

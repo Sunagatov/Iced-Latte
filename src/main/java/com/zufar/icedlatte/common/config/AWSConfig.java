@@ -41,19 +41,19 @@ public class AWSConfig {
     @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true", matchIfMissing = true)
     public S3Client s3Client() {
         try {
-            AwsBasicCredentials awsCreds;
+            AwsBasicCredentials awsCredentials;
             String sessionToken = System.getenv(AWS_SESSION_TOKEN);
             if (StringUtils.hasText(sessionToken)) {
-                AwsSessionCredentials sessionCreds = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
+                AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
                 var builder = S3Client.builder()
-                        .credentialsProvider(StaticCredentialsProvider.create(sessionCreds))
+                        .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
                         .region(Region.of(region));
                 applyEndpointOverride(builder);
                 return builder.build();
             } else {
-                awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+                awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
                 var builder = S3Client.builder()
-                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                        .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
                         .region(Region.of(region));
                 applyEndpointOverride(builder);
                 return builder.build();
@@ -65,7 +65,9 @@ public class AWSConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(name = "spring.aws.enabled",
+            havingValue = "true",
+            matchIfMissing = true)
     public S3Presigner s3Presigner() {
         String sessionToken = System.getenv(AWS_SESSION_TOKEN);
         S3Presigner.Builder builder;
@@ -90,11 +92,11 @@ public class AWSConfig {
     @ConditionalOnProperty(name = "spring.aws.public-url-base")
     public CloudFrontClient cloudFrontClient() {
         String sessionToken = System.getenv(AWS_SESSION_TOKEN);
-        StaticCredentialsProvider creds = StringUtils.hasText(sessionToken)
+        StaticCredentialsProvider credentials = StringUtils.hasText(sessionToken)
                 ? StaticCredentialsProvider.create(AwsSessionCredentials.create(accessKey, secretKey, sessionToken))
                 : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
         return CloudFrontClient.builder()
-                .credentialsProvider(creds)
+                .credentialsProvider(credentials)
                 .region(Region.AWS_GLOBAL)
                 .build();
     }

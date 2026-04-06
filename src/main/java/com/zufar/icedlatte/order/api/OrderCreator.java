@@ -80,13 +80,15 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
     public boolean createOrderAndDeleteCart(Session stripeSession) {
         String sessionId = stripeSession.getId();
-        log.info("order.session.handling: sessionId={}", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
+        log.info("order.session.handling: sessionId={}",
+                StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
 
         UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
 
         Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
-            log.info("order.session.already_handled: sessionId={}", StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
+            log.info("order.session.already_handled: sessionId={}",
+                    StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
             return false;
         }
 
@@ -104,7 +106,9 @@ public class OrderCreator {
         return true;
     }
 
-    private Order createOrderEntityFromSession(final UserEntity user, final ShoppingCartDto shoppingCartDto, final String sessionId) {
+    private Order createOrderEntityFromSession(final UserEntity user,
+                                               final ShoppingCartDto shoppingCartDto,
+                                               final String sessionId) {
         if (shoppingCartDto.getItems() == null || shoppingCartDto.getItems().isEmpty()) {
             throw new EmptyShoppingCartException(user.getId());
         }

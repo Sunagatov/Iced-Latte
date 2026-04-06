@@ -15,12 +15,14 @@ public class FileMetadataDeleter {
 
     private final FileMetadataRepository fileMetadataRepository;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void deleteByRelatedObjectId(final UUID relatedObjectId) {
         fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void deleteByBucketName(final String bucketName) {
         fileMetadataRepository.deleteByBucketName(bucketName);
     }

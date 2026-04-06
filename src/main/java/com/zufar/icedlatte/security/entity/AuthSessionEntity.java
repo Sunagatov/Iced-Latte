@@ -55,8 +55,4 @@ public class AuthSessionEntity {
 
     @Column(name = "compromised", nullable = false)
     private boolean compromised;
-
-    public boolean isActive() {
-        return revokedAt == null && !compromised && OffsetDateTime.now().isBefore(expiresAt);
-    }
 }

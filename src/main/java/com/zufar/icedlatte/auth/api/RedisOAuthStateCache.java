@@ -23,8 +23,10 @@ public class RedisOAuthStateCache implements OAuthStateCache {
     private int ttlMinutes;
 
     @Override
-    public void store(String nonce, String callbackBase) {
-        redisTemplate.opsForValue().set(KEY_PREFIX + nonce, callbackBase, Duration.ofMinutes(ttlMinutes));
+    public void store(String nonce,
+                      String callbackBase) {
+        redisTemplate.opsForValue()
+                .set(KEY_PREFIX + nonce, callbackBase, Duration.ofMinutes(ttlMinutes));
     }
 
     @Override

@@ -9,10 +9,13 @@ import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = ProductInfoDtoConverter.class)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        uses = ProductInfoDtoConverter.class)
 public interface ShoppingCartItemDtoConverter {
 
     @Named("toShoppingCartItemDto")
-    @Mapping(target = "productInfo", source = "productInfo", qualifiedByName = {"toProductInfoDto"})
+    @Mapping(target = "productInfo",
+            source = "productInfo",
+            qualifiedByName = {"toProductInfoDto"})
     ShoppingCartItemDto toDto(final ShoppingCartItem entity);
 }

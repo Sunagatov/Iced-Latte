@@ -6,8 +6,7 @@ import org.springframework.data.domain.Sort;
 
 public final class Utils {
 
-    private Utils() {
-    }
+    private Utils() {}
 
     public static Pageable createPageableObject(final Integer page,
                                                 final Integer size,

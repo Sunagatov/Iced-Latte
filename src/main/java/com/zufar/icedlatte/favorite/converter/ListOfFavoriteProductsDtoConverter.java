@@ -16,10 +16,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        injectionStrategy = InjectionStrategy.FIELD)
 public interface ListOfFavoriteProductsDtoConverter {
 
-    @Mapping(target = "products", source = "favoriteItems", qualifiedByName = "toListProductInfoDto")
+    @Mapping(target = "products",
+            source = "favoriteItems",
+            qualifiedByName = "toListProductInfoDto")
     ListOfFavoriteProductsDto toListProductDto(FavoriteListDto favoriteList);
 
     @Named("toListProductInfoDto")
@@ -30,7 +33,7 @@ public interface ListOfFavoriteProductsDtoConverter {
                 .collect(Collectors.toMap(
                         ProductInfoDto::getId,
                         p -> p,
-                        (a, b) -> a
+                        (a, _) -> a
                 ))
                 .values()
                 .stream()

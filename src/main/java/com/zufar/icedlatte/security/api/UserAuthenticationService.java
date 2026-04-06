@@ -61,7 +61,8 @@ public class UserAuthenticationService {
         }
     }
 
-    public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails, String userEmail,
+    public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails,
+                                                     String userEmail,
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
         log.info("auth.sign_in.succeeded: sessionId={}", sessionId);

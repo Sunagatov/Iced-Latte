@@ -22,7 +22,8 @@ public class ChangeUserPasswordOperationPerformer {
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void changeUserPassword(final ChangeUserPasswordRequest changeUserPasswordRequest) throws InvalidOldPasswordException {
         UUID userId = securityPrincipalProvider.getUserId();
         var userEntity = singleUserProvider.getUserEntityById(userId);
@@ -31,11 +32,13 @@ public class ChangeUserPasswordOperationPerformer {
             throw new InvalidOldPasswordException();
         }
 
-        userRepository.changeUserPassword(passwordEncoder.encode(changeUserPasswordRequest.getNewPassword()), userId);
+        String encodedPassword = passwordEncoder.encode(changeUserPasswordRequest.getNewPassword());
+        userRepository.changeUserPassword(encodedPassword, userId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void changeUserPassword(final UUID userId, final String newPassword) {
+    public void changeUserPassword(final UUID userId,
+                                   final String newPassword) {
         String newEncryptedPassword = passwordEncoder.encode(newPassword);
         userRepository.changeUserPassword(newEncryptedPassword, userId);
     }

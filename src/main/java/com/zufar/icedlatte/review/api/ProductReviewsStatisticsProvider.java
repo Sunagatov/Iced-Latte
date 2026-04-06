@@ -25,7 +25,9 @@ public class ProductReviewsStatisticsProvider {
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final ProductReviewValidator productReviewValidator;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public ProductReviewRatingStats get(final UUID productId) {
         productReviewValidator.validateProductExists(productId);
 

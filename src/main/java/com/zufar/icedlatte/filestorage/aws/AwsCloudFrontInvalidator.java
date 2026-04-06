@@ -13,7 +13,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnBean(CloudFrontClient.class)
-public class AwsCloudfrontInvalidator {
+public class AwsCloudFrontInvalidator {
 
     @Value("${spring.aws.cloudfront-distribution-id:}")
     private String distributionId;

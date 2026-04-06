@@ -31,7 +31,8 @@ public class FileDeleter {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void delete(final UUID relatedObjectId) {
         fileMetadataProvider.getFileMetadataDto(relatedObjectId)
                 .ifPresent(fileMetadata -> {

@@ -14,7 +14,8 @@ public class EmailConfirmMessage implements MessageBuilder<EmailTokenDto> {
     private final MessageSource messageSource;
 
     @Override
-    public String buildMessage(EmailTokenDto event, Locale locale) {
+    public String buildMessage(EmailTokenDto event,
+                               Locale locale) {
         return messageSource.getMessage("email-template", new Object[]{event.token()}, locale);
     }
 

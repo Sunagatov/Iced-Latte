@@ -24,11 +24,10 @@ public class GoogleTokenExchanger {
     private final GoogleIdTokenVerifier verifier;
     private final GoogleAuthorizationCodeFlow flow;
 
-    public GoogleTokenExchanger(
-            @Value("${google.client-id}") String clientId,
-            @Value("${google.client-secret}") String clientSecret,
-            @Value("${google.redirect-uri}") String redirectUri,
-            @Value("${google.scope}") String scope) {
+    public GoogleTokenExchanger(@Value("${google.client-id}") String clientId,
+                                @Value("${google.client-secret}") String clientSecret,
+                                @Value("${google.redirect-uri}") String redirectUri,
+                                @Value("${google.scope}") String scope) {
         this.redirectUri = redirectUri;
         var transport = new NetHttpTransport.Builder().build();
         var json = GsonFactory.getDefaultInstance();

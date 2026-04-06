@@ -19,7 +19,9 @@ public class DeliveryAddressUpdater {
     private final DeliveryAddressDtoConverter converter;
 
     @Transactional
-    public DeliveryAddressDto update(UUID userId, UUID addressId, DeliveryAddressRequest request) {
+    public DeliveryAddressDto update(UUID userId,
+                                     UUID addressId,
+                                     DeliveryAddressRequest request) {
         var entity = repository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
         entity.setLabel(request.getLabel());

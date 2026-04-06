@@ -58,7 +58,8 @@ public class AddItemsToShoppingCartHelper {
                 ));
     }
 
-    private static void increaseExistingItemQuantities(ShoppingCart shoppingCart, Map<UUID, Integer> productsWithQuantity) {
+    private static void increaseExistingItemQuantities(ShoppingCart shoppingCart,
+                                                       Map<UUID, Integer> productsWithQuantity) {
         shoppingCart.getItems().forEach(item -> {
             UUID productId = item.getProductInfo().getId();
             Integer quantityToAdd = productsWithQuantity.get(productId);
@@ -69,7 +70,8 @@ public class AddItemsToShoppingCartHelper {
         });
     }
 
-    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity, ShoppingCart shoppingCart) {
+    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity,
+                                                  ShoppingCart shoppingCart) {
         Map<UUID, ShoppingCartItem> existingItemsByProductId = shoppingCart.getItems().stream()
                 .collect(Collectors.toMap(item -> item.getProductInfo().getId(), Function.identity()));
 

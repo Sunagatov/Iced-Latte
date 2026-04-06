@@ -31,7 +31,10 @@ public class AuthSessionService {
     private AuthSessionService self;
 
     @Transactional
-    public AuthSessionEntity createSession(UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
+    public AuthSessionEntity createSession(UUID sessionId,
+                                           UUID userId,
+                                           String refreshTokenHash,
+                                           HttpServletRequest request) {
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)
                 .userId(userId)
@@ -48,7 +51,8 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void rotateSession(String oldRefreshTokenHash, String newRefreshTokenHash) {
+    public void rotateSession(String oldRefreshTokenHash,
+                              String newRefreshTokenHash) {
         AuthSessionEntity session = findActiveByHash(oldRefreshTokenHash);
         session.setPreviousTokenHash(oldRefreshTokenHash);
         session.setRefreshTokenHash(newRefreshTokenHash);
@@ -60,11 +64,12 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeByRefreshTokenHash(String refreshTokenHash) {
-        sessionRepository.findByRefreshTokenHash(refreshTokenHash).ifPresent(session -> {
-            session.setRevokedAt(OffsetDateTime.now());
-            sessionRepository.save(session);
-            log.info("auth.session.revoked: sessionId={}", session.getId());
-        });
+        sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+                .ifPresent(session -> {
+                    session.setRevokedAt(OffsetDateTime.now());
+                    sessionRepository.save(session);
+                    log.info("auth.session.revoked: sessionId={}", session.getId());
+                });
     }
 
     @Transactional
@@ -74,7 +79,8 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void revokeById(UUID sessionId, UUID requestingUserId) {
+    public void revokeById(UUID sessionId,
+                           UUID requestingUserId) {
         AuthSessionEntity session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
         if (!session.getUserId().equals(requestingUserId)) {
@@ -118,7 +124,8 @@ public class AuthSessionService {
                 session.setCompromised(true);
                 session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
-                log.warn("auth.session.reuse_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
+                log.warn("auth.session.reuse_detected: sessionId={}, userId={}",
+                        session.getId(), session.getUserId());
                 self.revokeAllForUser(session.getUserId());
             }
             throw new JwtTokenBlacklistedException("Refresh token has been revoked");

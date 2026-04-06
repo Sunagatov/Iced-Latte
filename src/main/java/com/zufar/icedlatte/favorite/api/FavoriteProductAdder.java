@@ -30,7 +30,8 @@ public class FavoriteProductAdder {
     private final FavoriteListProvider favoriteListProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FavoriteListDto add(final ListOfFavoriteProducts listOfFavoriteProducts, final UUID userId) {
+    public FavoriteListDto add(final ListOfFavoriteProducts listOfFavoriteProducts,
+                               final UUID userId) {
         FavoriteListEntity favoriteListEntity = favoriteListProvider.getFavoriteListEntity(userId);
 
         Set<UUID> existingFavoriteProductIds = extractFavoriteProductIds(favoriteListEntity);
@@ -49,13 +50,15 @@ public class FavoriteProductAdder {
                 .collect(Collectors.toSet());
     }
 
-    private Set<UUID> filterNewFavoriteProductIds(ListOfFavoriteProducts listOfFavoriteProducts, Set<UUID> existingIds) {
+    private Set<UUID> filterNewFavoriteProductIds(ListOfFavoriteProducts listOfFavoriteProducts,
+                                                  Set<UUID> existingIds) {
         return listOfFavoriteProducts.getProductIds().stream()
                 .filter(productId -> !existingIds.contains(productId))
                 .collect(Collectors.toSet());
     }
 
-    private Set<FavoriteItemEntity> createFavoriteItems(Set<UUID> productIds, FavoriteListEntity favoriteListEntity) {
+    private Set<FavoriteItemEntity> createFavoriteItems(Set<UUID> productIds,
+                                                        FavoriteListEntity favoriteListEntity) {
         List<ProductInfo> foundProducts = productInfoRepository.findAllById(productIds);
         Set<UUID> foundIds = foundProducts.stream()
                 .map(ProductInfo::getId)

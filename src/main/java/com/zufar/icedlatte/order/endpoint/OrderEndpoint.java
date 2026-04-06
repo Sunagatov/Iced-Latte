@@ -35,8 +35,7 @@ public class OrderEndpoint {
     private final OrderCreator orderCreator;
 
     @GetMapping
-    public ResponseEntity<List<OrderDto>> getOrders(
-            @RequestParam(required = false) final List<OrderStatus> status) {
+    public ResponseEntity<List<OrderDto>> getOrders(@RequestParam(required = false) final List<OrderStatus> status) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("orders.get: userId={}", userId);
         var orders = ordersProvider.getOrders(userId, status);

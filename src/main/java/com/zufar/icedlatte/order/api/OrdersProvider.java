@@ -20,11 +20,16 @@ public class OrdersProvider {
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public List<OrderDto> getOrders(final UUID userId, final List<OrderStatus> statuses) {
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
+    public List<OrderDto> getOrders(final UUID userId,
+                                    final List<OrderStatus> statuses) {
         List<com.zufar.icedlatte.order.entity.Order> orders = (statuses == null || statuses.isEmpty())
                 ? orderRepository.findAllByUserId(userId)
                 : orderRepository.findAllByUserIdAndStatusIn(userId, statuses);
-        return orders.stream().map(orderDtoConverter::toResponseDto).toList();
+        return orders.stream()
+                .map(orderDtoConverter::toResponseDto)
+                .toList();
     }
 }

@@ -10,7 +10,9 @@ public class InvalidShoppingCartIdException extends RuntimeException {
     private final UUID shoppingCartId;
 
     public InvalidShoppingCartIdException(final UUID shoppingCartId) {
-        super(String.format("The shopping cart id = %s is invalid in UpdateProductsQuantityInShoppingCartItemRequest.", shoppingCartId));
+        String format = "The shopping cart id = %s is invalid in UpdateProductsQuantityInShoppingCartItemRequest.";
+
+        super(String.format(format, shoppingCartId));
         this.shoppingCartId = shoppingCartId;
     }
 }

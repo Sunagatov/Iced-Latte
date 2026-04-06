@@ -25,7 +25,8 @@ public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDt
         super(javaMailSender, mailMessage, List.of(emailConfirmMessage));
     }
 
-    public void sendTemporaryCode(String email, String message) {
+    public void sendTemporaryCode(String email,
+                                  String message) {
         String buildMessage = getMessage(new EmailTokenDto(message));
         sendNotification(email, buildMessage, subject);
     }

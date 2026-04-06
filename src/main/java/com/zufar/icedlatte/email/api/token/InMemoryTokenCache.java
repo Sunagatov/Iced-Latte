@@ -16,25 +16,32 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnMissingBean(TokenCache.class)
 public class InMemoryTokenCache implements TokenCache {
 
-    private record CacheEntry(UserRegistrationRequest request, TokenPurpose purpose) {}
+    private record CacheEntry(UserRegistrationRequest request,
+                              TokenPurpose purpose) {}
 
     private final Cache<String, CacheEntry> cache;
 
     public InMemoryTokenCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
         log.info("token_cache.mode: in-memory (Redis not configured)");
-        this.cache = CacheBuilder.newBuilder().expireAfterWrite(expireTime, TimeUnit.MINUTES).build();
+        this.cache = CacheBuilder.newBuilder()
+                .expireAfterWrite(expireTime, TimeUnit.MINUTES).build();
     }
 
     @Override
-    public void addToken(String tokenKey, UserRegistrationRequest request, TokenPurpose purpose) {
+    public void addToken(String tokenKey,
+                         UserRegistrationRequest request,
+                         TokenPurpose purpose) {
         cache.put(tokenKey, new CacheEntry(request, purpose));
     }
 
     @Override
-    public UserRegistrationRequest getToken(String tokenKey, TokenPurpose expectedPurpose) {
+    public UserRegistrationRequest getToken(String tokenKey,
+                                            TokenPurpose expectedPurpose) {
         CacheEntry entry = cache.getIfPresent(tokenKey);
-        if (entry == null) throw new IncorrectTokenException();
-        if (entry.purpose() != expectedPurpose) throw new IncorrectTokenException();
+        if (entry == null)
+            throw new IncorrectTokenException();
+        if (entry.purpose() != expectedPurpose)
+            throw new IncorrectTokenException();
         return entry.request();
     }
 

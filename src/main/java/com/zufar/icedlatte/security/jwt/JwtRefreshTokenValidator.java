@@ -75,7 +75,9 @@ public class JwtRefreshTokenValidator {
      */
     public Optional<UUID> extractSessionId(String rawToken) {
         try {
-            String sid = (String) refreshParser.parseSignedClaims(rawToken).getPayload().get("sid");
+            String sid = (String) refreshParser.parseSignedClaims(rawToken)
+                    .getPayload()
+                    .get("sid");
             return StringUtils.hasText(sid)
                     ? Optional.of(UUID.fromString(sid))
                     : Optional.empty();

@@ -17,7 +17,9 @@ public class ProductReviewProvider {
 
     private final ProductReviewRepository reviewRepository;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public ProductReview getReviewEntityById(final UUID productReviewId) {
         return reviewRepository.findById(productReviewId)
                 .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));

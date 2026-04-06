@@ -26,7 +26,9 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param userId      The id of the user.
      */
     @Modifying
-    @Query(value = "UPDATE UserEntity u SET u.password = :newPassword WHERE u.id = :userId")
+    @Query(value = "UPDATE UserEntity u " +
+            "SET u.password = :newPassword " +
+            "WHERE u.id = :userId")
     void changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
 
     /**
@@ -36,7 +38,9 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param accountNonLocked The new accountNonLocked value (true = unlocked, false = locked).
      */
     @Modifying
-    @Query("UPDATE UserEntity u SET u.accountNonLocked = :accountNonLocked WHERE u.email = :email")
+    @Query("UPDATE UserEntity u " +
+            "SET u.accountNonLocked = :accountNonLocked " +
+            "WHERE u.email = :email")
     int setAccountLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 
     /**
@@ -44,6 +48,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * with is_user_locked set to false.
      */
     @Modifying
-    @Query(value = "UPDATE UserEntity u SET u.accountNonLocked = true WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")
+    @Query(value = "UPDATE UserEntity u " +
+            "SET u.accountNonLocked = true " +
+            "WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")
     void unlockUsers();
 }

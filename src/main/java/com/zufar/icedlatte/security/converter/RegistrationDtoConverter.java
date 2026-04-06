@@ -8,7 +8,8 @@ import org.mapstruct.ReportingPolicy;
 
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface RegistrationDtoConverter {
 
     @Mapping(target = "id", ignore = true)

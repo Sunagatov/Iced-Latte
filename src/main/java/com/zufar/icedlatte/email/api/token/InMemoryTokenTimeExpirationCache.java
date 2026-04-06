@@ -33,7 +33,8 @@ public class InMemoryTokenTimeExpirationCache implements TokenTimeExpirationCach
     @Override
     public void validateTimeToken(String email) {
         OffsetDateTime expiry = cache.getIfPresent(email);
-        if (expiry != null) throw new TimeTokenException(email, expiry);
+        if (expiry != null)
+            throw new TimeTokenException(email, expiry);
     }
 
     @Override

@@ -7,5 +7,4 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface FavoriteItemRepository extends JpaRepository<FavoriteItemEntity, UUID> {
-}
+public interface FavoriteItemRepository extends JpaRepository<FavoriteItemEntity, UUID> {}

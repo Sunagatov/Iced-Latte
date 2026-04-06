@@ -23,13 +23,15 @@ public class FileMetadataProvider {
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<FileMetadataDto> getFileMetadataDto(final UUID relatedObjectId) {
         return fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)
                 .map(fileMetadataDtoConverter::toDto);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, FileMetadataDto> getFileMetadataDtos(final List<UUID> relatedObjectIds) {
         return fileMetadataRepository.findAvatarInfoByRelatedObjectIds(relatedObjectIds)
                 .stream()

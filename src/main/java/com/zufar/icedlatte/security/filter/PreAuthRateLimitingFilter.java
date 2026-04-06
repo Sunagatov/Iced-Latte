@@ -100,7 +100,8 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
                 RateLimitResponseWriter.writeTooManyRequests(response, authResult);
                 return;
             }
-            meterRegistry.counter("rate_limit.requests.allowed", "category", "auth-pre").increment();
+            meterRegistry.counter("rate_limit.requests.allowed", "category", "auth-pre")
+                    .increment();
         }
 
         String key = "pre-auth:ip:" + ip;
@@ -109,7 +110,8 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
-            meterRegistry.counter("rate_limit.requests.blocked", "category", "pre-auth").increment();
+            meterRegistry.counter("rate_limit.requests.blocked", "category", "pre-auth")
+                    .increment();
             long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
             log.warn("rate_limit.exceeded: category=pre-auth, identityType=ip, clientIp={}, method={}, path={}, retryAfterSeconds={}, limit={}, remaining={}",
                     ip, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
@@ -118,7 +120,8 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
             return;
         }
 
-        meterRegistry.counter("rate_limit.requests.allowed", "category", "pre-auth").increment();
+        meterRegistry.counter("rate_limit.requests.allowed", "category", "pre-auth")
+                .increment();
         filterChain.doFilter(request, response);
     }
 }

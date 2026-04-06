@@ -15,7 +15,8 @@ public class DeliveryAddressDeleter {
     private final DeliveryAddressRepository repository;
 
     @Transactional
-    public void delete(UUID userId, UUID addressId) {
+    public void delete(UUID userId,
+                       UUID addressId) {
         var entity = repository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
         repository.delete(entity);

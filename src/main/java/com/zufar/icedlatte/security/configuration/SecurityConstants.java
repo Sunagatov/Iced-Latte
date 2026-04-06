@@ -16,7 +16,8 @@ public final class SecurityConstants {
     public static final String FAVOURITES_URL = "/api/v1/favorites/**";
     public static final String ORDERS_URL = "/api/v1/orders/**";
     public static final String PRODUCT_REVIEW_URL = "/api/v1/products/*/review";
-    public static final Set<String> ALLOWED_PRODUCT_REVIEWS_URLS = Set.of("/api/v1/products/*/reviews", "/api/v1/products/*/reviews/statistics");
+    public static final Set<String> ALLOWED_PRODUCT_REVIEWS_URLS =
+            Set.of("/api/v1/products/*/reviews", "/api/v1/products/*/reviews/statistics");
     public static final String SHIPPING_URL = "/api/v1/shipping/**";
     public static final String AUTH_3PART_URL = "/api/v1/auth/**";
 }

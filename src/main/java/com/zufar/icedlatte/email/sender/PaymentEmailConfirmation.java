@@ -24,9 +24,11 @@ public class PaymentEmailConfirmation extends AbstractEmailSender<EmailConfirmMe
     }
 
     public void send(Session stripeSession) {
-        sendNotification(
-                stripeSession.getCustomerEmail(),
-                DEFAULT_SUCCESSFUL_EMAIL_MESSAGE.formatted(stripeSession.getAmountTotal() / 100.0, stripeSession.getCurrency()),
+        double value = stripeSession.getAmountTotal() / 100.0;
+        String currency = stripeSession.getCurrency();
+
+        sendNotification(stripeSession.getCustomerEmail(),
+                DEFAULT_SUCCESSFUL_EMAIL_MESSAGE.formatted(value, currency),
                 DEFAULT_EMAIL_SUBJECT
         );
     }

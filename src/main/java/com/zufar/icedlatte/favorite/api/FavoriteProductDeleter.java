@@ -16,7 +16,8 @@ public class FavoriteProductDeleter {
     private final FavoriteListProvider favoriteListProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void delete(final UUID productId, final UUID userId) {
+    public void delete(final UUID productId,
+                       final UUID userId) {
         FavoriteListEntity favoriteList = favoriteListProvider.getFavoriteListEntity(userId);
         favoriteList.getFavoriteItems()
                 .removeIf(item -> item.getProductInfo().getId().equals(productId));

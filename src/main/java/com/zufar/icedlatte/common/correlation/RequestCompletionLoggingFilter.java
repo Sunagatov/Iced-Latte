@@ -27,6 +27,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // Dedicated category so operators can tune access-log verbosity independently
     // e.g. logging.level.http.access=WARN suppresses all 2xx lines in prod
     private static final Logger ACCESS_LOG = LoggerFactory.getLogger("http.access");
+    public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
+            "durationMs={}, clientIp={}, authenticated={}, slow={}, outcome={}";
 
     private final ClientIpExtractor clientIpExtractor;
 
@@ -64,17 +66,16 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             boolean slow = durationMs >= slowRequestThresholdMs;
             boolean authenticated = isAuthenticated();
 
-            String msg = "http.request.completed: method={}, path={}, status={}, durationMs={}, clientIp={}, authenticated={}, slow={}, outcome={}";
             Object[] args = {method, path, status, durationMs, clientIp, authenticated, slow, outcome};
 
             if (status >= 500) {
-                ACCESS_LOG.error(msg, args);
+                ACCESS_LOG.error(OUTCOME, args);
             } else if (status >= 400 || slow) {
-                ACCESS_LOG.warn(msg, args);
+                ACCESS_LOG.warn(OUTCOME, args);
             } else if (isPollingEndpoint(path)) {
-                ACCESS_LOG.debug(msg, args);
+                ACCESS_LOG.debug(OUTCOME, args);
             } else {
-                ACCESS_LOG.info(msg, args);
+                ACCESS_LOG.info(OUTCOME, args);
             }
         }
     }
@@ -96,11 +97,15 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     }
 
     private static boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext()
+                .getAuthentication();
+        return auth != null &&
+                auth.isAuthenticated() &&
+                !"anonymousUser".equals(auth.getPrincipal());
     }
 
     private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\r\n]", "_");
+        return value == null ?
+                "" : value.replaceAll("[\r\n]", "_");
     }
 }

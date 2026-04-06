@@ -16,7 +16,9 @@ public class JwtClaimExtractor {
     private final JwtParser jwtParser;
 
     public JwtClaimExtractor(JwtSignKeyProvider jwtSignKeyProvider) {
-        this.jwtParser = Jwts.parser().verifyWith(jwtSignKeyProvider.get()).build();
+        this.jwtParser = Jwts.parser()
+                .verifyWith(jwtSignKeyProvider.get())
+                .build();
     }
 
     public String extractEmail(final String jwtToken) {

@@ -19,13 +19,15 @@ public class FileMetadataSaver {
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void save(final FileMetadataDto fileMetadataDto) {
         FileMetadata fileMetadata = fileMetadataDtoConverter.toEntity(fileMetadataDto);
         fileMetadataRepository.save(fileMetadata);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void saveAll(final List<FileMetadataDto> fileMetadataDtos) {
         List<FileMetadata> fileMetadataList = fileMetadataDtoConverter.toEntityList(fileMetadataDtos);
         fileMetadataRepository.saveAll(fileMetadataList);

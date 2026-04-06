@@ -18,7 +18,8 @@ public class FailedLoginAttemptIncrementor {
 
     private final LoginAttemptRepository loginAttemptRepository;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public LoginAttemptEntity increment(String userEmail) {
         LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
                 .orElseGet(() -> {

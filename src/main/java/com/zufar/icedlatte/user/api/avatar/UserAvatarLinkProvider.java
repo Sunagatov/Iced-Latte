@@ -13,6 +13,7 @@ public class UserAvatarLinkProvider {
     private final FileProvider fileProvider;
 
     public String getLink(final UUID userId) {
-        return fileProvider.getRelatedObjectUrl(userId).orElse(null);
+        return fileProvider.getRelatedObjectUrl(userId)
+                .orElse(null);
     }
 }

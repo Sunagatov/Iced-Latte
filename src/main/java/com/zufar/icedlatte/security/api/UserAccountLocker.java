@@ -24,19 +24,23 @@ public class UserAccountLocker {
     private final UserRepository userRepository;
     private final LoginAttemptRepository loginAttemptRepository;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void lockUserAccount(String userEmail) {
         Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, ChronoUnit.MINUTES);
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userRepository.setAccountLockedStatus(userEmail, false);
         if (attemptRows == 0 || userRows == 0) {
-            log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated", attemptRows, userRows);
+            log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated",
+                    attemptRows, userRows);
         } else {
-            log.warn("auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}", userAccountLockoutDurationMinutes);
+            log.warn("auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}",
+                    userAccountLockoutDurationMinutes);
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void unlockUserAccount(String userEmail) {
         int userRows = userRepository.setAccountLockedStatus(userEmail, true);
         if (userRows == 0) {

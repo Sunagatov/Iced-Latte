@@ -36,7 +36,8 @@ public class PutUsersRequestValidator {
         }
     }
 
-    private StringBuilder validateNameParameter(String name, String parameterTypeForErrorMessage) {
+    private StringBuilder validateNameParameter(String name,
+                                                String parameterTypeForErrorMessage) {
         StringBuilder errorMessages = new StringBuilder();
         if (name == null) {
             errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " is required."));
@@ -92,7 +93,9 @@ public class PutUsersRequestValidator {
         return errorMessages;
     }
 
-    private void validateAddressField(StringBuilder errors, String value, String fieldName) {
+    private void validateAddressField(StringBuilder errors,
+                                      String value,
+                                      String fieldName) {
         if (value == null || value.isBlank()) {
             errors.append(createErrorMessage(String.format("Address field `%s` is required and must not be blank.", fieldName)));
         }

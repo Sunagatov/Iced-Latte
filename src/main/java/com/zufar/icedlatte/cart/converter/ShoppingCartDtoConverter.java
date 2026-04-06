@@ -7,7 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {ShoppingCartItemDtoConverter.class, ItemsTotalPriceCalculator.class})
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        uses = {ShoppingCartItemDtoConverter.class, ItemsTotalPriceCalculator.class})
 public interface ShoppingCartDtoConverter {
 
     @Mapping(target = "items", source = "items", qualifiedByName = {"toShoppingCartItemDto"})

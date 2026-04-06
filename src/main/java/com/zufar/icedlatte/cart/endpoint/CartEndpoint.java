@@ -95,7 +95,9 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     private void enrichProductImages(ShoppingCartDto cart) {
         if (cart.getItems() == null) return;
         productPictureLinkUpdater.updateBatch(
-                cart.getItems().stream().map(ShoppingCartItemDto::getProductInfo).toList()
+                cart.getItems().stream()
+                        .map(ShoppingCartItemDto::getProductInfo)
+                        .toList()
         );
     }
 }

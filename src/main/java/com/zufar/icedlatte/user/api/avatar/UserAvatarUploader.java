@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.user.api.avatar;
 
-import com.zufar.icedlatte.filestorage.aws.AwsCloudfrontInvalidator;
+import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
@@ -29,9 +29,10 @@ public class UserAvatarUploader {
     private final FileMetadataDeleter fileMetadataDeleter;
 
     @Autowired(required = false)
-    private AwsCloudfrontInvalidator cloudfrontInvalidator;
+    private AwsCloudFrontInvalidator cloudfrontInvalidator;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
         boolean uploaded = fileUploader.upload(file, bucketName, fileName);

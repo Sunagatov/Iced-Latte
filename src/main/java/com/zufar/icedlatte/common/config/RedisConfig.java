@@ -92,20 +92,32 @@ public class RedisConfig implements CachingConfigurer {
     public CacheErrorHandler errorHandler() {
         return new SimpleCacheErrorHandler() {
             @Override
-            public void handleCacheGetError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
-                log.warn("cache.get.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            public void handleCacheGetError(@NonNull RuntimeException e,
+                                            @NonNull Cache cache,
+                                            @NonNull Object key) {
+                log.warn("cache.get.error: cache={}, key={}, cause={}",
+                        cache.getName(), key, e.getMessage());
             }
             @Override
-            public void handleCachePutError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key, Object value) {
-                log.warn("cache.put.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            public void handleCachePutError(@NonNull RuntimeException e,
+                                            @NonNull Cache cache,
+                                            @NonNull Object key,
+                                            Object value) {
+                log.warn("cache.put.error: cache={}, key={}, cause={}",
+                        cache.getName(), key, e.getMessage());
             }
             @Override
-            public void handleCacheEvictError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
-                log.warn("cache.evict.error: cache={}, key={}, cause={}", cache.getName(), key, e.getMessage());
+            public void handleCacheEvictError(@NonNull RuntimeException e,
+                                              @NonNull Cache cache,
+                                              @NonNull Object key) {
+                log.warn("cache.evict.error: cache={}, key={}, cause={}",
+                        cache.getName(), key, e.getMessage());
             }
             @Override
-            public void handleCacheClearError(@NonNull RuntimeException e, @NonNull Cache cache) {
-                log.warn("cache.clear.error: cache={}, cause={}", cache.getName(), e.getMessage());
+            public void handleCacheClearError(@NonNull RuntimeException e,
+                                              @NonNull Cache cache) {
+                log.warn("cache.clear.error: cache={}, cause={}",
+                        cache.getName(), e.getMessage());
             }
         };
     }

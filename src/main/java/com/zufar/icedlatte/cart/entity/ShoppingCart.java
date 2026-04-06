@@ -52,7 +52,9 @@ public class ShoppingCart {
     private Integer productsQuantity;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at",
+            nullable = false,
+            updatable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "closed_at")

@@ -24,7 +24,8 @@ public class InMemoryOAuthStateCache implements OAuthStateCache {
     }
 
     @Override
-    public void store(String nonce, String callbackBase) {
+    public void store(String nonce,
+                      String callbackBase) {
         cache.put(nonce, callbackBase);
     }
 

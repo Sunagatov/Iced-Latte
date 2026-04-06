@@ -18,7 +18,8 @@ public class DeliveryAddressDefaultSetter {
     private final DeliveryAddressDtoConverter converter;
 
     @Transactional
-    public DeliveryAddressDto setDefault(UUID userId, UUID addressId) {
+    public DeliveryAddressDto setDefault(UUID userId,
+                                         UUID addressId) {
         var entity = repository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
         repository.clearDefaultForUser(userId);

@@ -10,7 +10,9 @@ public class ShoppingCartItemNotFoundException extends RuntimeException {
     private final UUID shoppingCartItemId;
 
     public ShoppingCartItemNotFoundException(final UUID shoppingCartItemId) {
-        super(String.format("The shopping cart item with shoppingCartItemId = %s is not found.", shoppingCartItemId));
+        String format = "The shopping cart item with shoppingCartItemId = %s is not found.";
+
+        super(String.format(format, shoppingCartItemId));
         this.shoppingCartItemId = shoppingCartItemId;
     }
 }

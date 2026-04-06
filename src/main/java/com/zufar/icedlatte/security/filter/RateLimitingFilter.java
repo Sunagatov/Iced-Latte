@@ -31,6 +31,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter rateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
+
     // Tracks keys that have already had their first-block WARN emitted in the current window.
     // TTL matches the longest possible window (auth = 1 min by default) so entries expire naturally.
     private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
@@ -79,7 +80,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         assertPositive("payment", paymentMaxRequests, paymentWindowDuration);
     }
 
-    private static void assertPositive(String category, int maxRequests, Duration window) {
+    private static void assertPositive(String category,
+                                       int maxRequests,
+                                       Duration window) {
         if (maxRequests <= 0) throw new IllegalStateException(
                 "security.rate-limit." + category + ".max-requests must be > 0, got: " + maxRequests);
         if (window == null || window.isZero() || window.isNegative()) throw new IllegalStateException(
@@ -127,8 +130,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String buildRateLimitKey(HttpServletRequest request, String category) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    private String buildRateLimitKey(HttpServletRequest request,
+                                     String category) {
+        Authentication auth = SecurityContextHolder.getContext()
+                .getAuthentication();
+
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             // auth category: per-user key so one account can't exhaust another's budget
             // other categories: per-user key so IP changes don't create extra budgets
@@ -161,7 +167,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return path.equals("/api/v1/payment") || path.startsWith("/api/v1/payment/");
     }
 
-    private static boolean isSearchPath(String path, HttpServletRequest request) {
+    private static boolean isSearchPath(String path,
+                                        HttpServletRequest request) {
         return path.equals("/api/v1/products") && request.getParameter("keyword") != null;
     }
 
@@ -175,10 +182,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         };
     }
 
-    private void logExceeded(HttpServletRequest request, String category, RateLimitingConfiguration.RateLimitResult result, String rateLimitKey) {
+    private void logExceeded(HttpServletRequest request,
+                             String category,
+                             RateLimitingConfiguration.RateLimitResult result,
+                             String rateLimitKey) {
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String identityType = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
+        String identityType = (auth != null && auth.isAuthenticated() &&
+                !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
         long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
 
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
@@ -194,6 +205,5 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
     }
 
-    private record RateLimitConfig(int maxRequests, Duration windowDuration) {
-    }
+    private record RateLimitConfig(int maxRequests, Duration windowDuration) {}
 }

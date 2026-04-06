@@ -40,7 +40,8 @@ public class FavoriteListEntity {
     @OneToMany(mappedBy = "favoriteListEntity",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE,
                     CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
-            orphanRemoval = true, fetch = FetchType.LAZY)
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private Set<FavoriteItemEntity> favoriteItems;
 
     @UpdateTimestamp

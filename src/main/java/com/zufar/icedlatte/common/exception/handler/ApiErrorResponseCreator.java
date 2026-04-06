@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 @Service
 public class ApiErrorResponseCreator {
 
-    public ApiErrorResponse buildResponse(String errorMessage, HttpStatus httpStatus) {
+    public ApiErrorResponse buildResponse(String errorMessage,
+                                          HttpStatus httpStatus) {
         return ApiErrorResponse.builder()
                 .message(errorMessage)
                 .timestamp(LocalDateTime.now())
@@ -17,7 +18,8 @@ public class ApiErrorResponseCreator {
                 .build();
     }
 
-    public ApiErrorResponse buildResponse(Exception exception, HttpStatus httpStatus) {
+    public ApiErrorResponse buildResponse(Exception exception,
+                                          HttpStatus httpStatus) {
         return buildResponse(exception.getMessage(), httpStatus);
     }
 }

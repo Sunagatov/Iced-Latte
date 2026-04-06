@@ -17,7 +17,8 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE, injectionStrategy = InjectionStrategy.FIELD)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
 
    ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE = new ProductReviewDto();

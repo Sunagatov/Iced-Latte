@@ -27,7 +27,9 @@ public class AwsObjectUploader {
 
     private final S3Client s3Client;
 
-    public void uploadFile(MultipartFile file, String bucketName, String fileName) {
+    public void uploadFile(MultipartFile file,
+                           String bucketName,
+                           String fileName) {
         try (InputStream inputStream = file.getInputStream()) {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
@@ -36,7 +38,8 @@ public class AwsObjectUploader {
                     .contentLength(file.getSize())
                     .build();
             
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+            s3Client.putObject(putObjectRequest,
+                    RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (S3Exception ase) {
             log.error("aws.s3.upload.error: message={}", ase.getMessage(), ase);
             throw new FileUploadException(fileName, ase);
@@ -50,9 +53,11 @@ public class AwsObjectUploader {
         }
     }
 
-    public void uploadFileDirectory(String bucketName, String directoryPath) throws IOException {
+    public void uploadFileDirectory(String bucketName,
+                                    String directoryPath) throws IOException {
         Path normalizedPath = Paths.get(directoryPath).normalize();
-        if (!normalizedPath.toFile().getCanonicalPath().startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
+        if (!normalizedPath.toFile().getCanonicalPath()
+                .startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
             throw new SecurityException("Invalid directory path");
         }
         
@@ -61,17 +66,20 @@ public class AwsObjectUploader {
                     .filter(Files::isRegularFile)
                     .forEach(filePath -> {
                         try {
-                            String key = normalizedPath.relativize(filePath).toString().replace("\\", "/");
+                            String key = normalizedPath.relativize(filePath)
+                                    .toString().replace("\\", "/");
                             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                                     .bucket(bucketName)
                                     .key(key)
                                     .build();
                             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
                         } catch (S3Exception e) {
-                            log.error("aws.s3.upload.file_error: key={}, message={}", filePath, e.getMessage(), e);
+                            log.error("aws.s3.upload.file_error: key={}, message={}",
+                                    filePath, e.getMessage(), e);
                             throw new FileUploadException(filePath.toString(), e);
                         } catch (SdkClientException e) {
-                            log.error("aws.s3.upload.file_unreachable: key={}, message={}", filePath, e.getMessage(), e);
+                            log.error("aws.s3.upload.file_unreachable: key={}, message={}",
+                                    filePath, e.getMessage(), e);
                             throw new FileUploadException(filePath.toString(), e);
                         }
                     });

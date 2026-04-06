@@ -62,7 +62,9 @@ public class AuthEndpoint {
         String callbackBase = resolveCallbackBase(redirectUrl);
         byte[] nonceBytes = new byte[16];
         SECURE_RANDOM.nextBytes(nonceBytes);
-        String nonce = Base64.getUrlEncoder().withoutPadding().encodeToString(nonceBytes);
+        String nonce = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(nonceBytes);
         oAuthStateCache.store(nonce, callbackBase);
         URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
                 .queryParam("scope", scope)
@@ -71,8 +73,11 @@ public class AuthEndpoint {
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("client_id", clientId)
                 .queryParam("state", nonce)
-                .build().toUri();
-        return ResponseEntity.status(HttpStatus.FOUND).location(authUri).build();
+                .build()
+                .toUri();
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(authUri)
+                .build();
     }
 
     private String resolveCallbackBase(String redirectUrl) {
@@ -128,7 +133,8 @@ public class AuthEndpoint {
                     .path("/api/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())
-                    .build().toUriString();
+                    .build()
+                    .toUriString();
             response.sendRedirect(callbackUrl);
         } catch (Exception e) {
             log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",

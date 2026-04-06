@@ -18,7 +18,8 @@ public class ResetLoginAttemptsService {
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserAccountLocker userAccountLocker;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void reset(final String userEmail) {
         loginAttemptRepository.findByUserEmail(userEmail)
                 .ifPresent(existingLoginAttempt -> {

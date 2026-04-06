@@ -31,7 +31,8 @@ public class UserRegistrationService {
     private final JwtBlacklistService jwtBlacklistService;
 
     @Transactional
-    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
+    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest,
+                                               final HttpServletRequest httpRequest) {
         String email = userRegistrationRequest.getEmail().toLowerCase(java.util.Locale.ROOT).trim();
         String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
         UserGrantedAuthority defaultUserGrantedAuthority = UserGrantedAuthority.builder().authority(Authority.USER).build();

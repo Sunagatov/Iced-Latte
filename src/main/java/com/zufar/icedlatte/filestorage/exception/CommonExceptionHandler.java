@@ -19,16 +19,20 @@ public class CommonExceptionHandler {
     @ExceptionHandler(FileReadException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleFileReadException(final FileReadException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.file.read_failed: exceptionClass={}, status=400", exception.getClass().getSimpleName());
+        ApiErrorResponse apiErrorResponse =
+                apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.warn("exception.file.read_failed: exceptionClass={}, status=400",
+                exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
     @ExceptionHandler(FileUploadException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleFileUploadException(final FileUploadException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.file.upload_failed: exceptionClass={}, status=500", exception.getClass().getSimpleName(), exception);
+        ApiErrorResponse apiErrorResponse =
+                apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("exception.file.upload_failed: exceptionClass={}, status=500",
+                exception.getClass().getSimpleName(), exception);
         return apiErrorResponse;
     }
 }

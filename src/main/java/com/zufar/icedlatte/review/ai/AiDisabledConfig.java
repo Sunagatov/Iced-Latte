@@ -12,11 +12,11 @@ class AiDisabledConfig {
 
     @Bean
     ReviewModerationService noOpModerationService() {
-        return text -> log.debug("ai.moderation.skipped: ai.enabled=false");
+        return _ -> log.debug("ai.moderation.skipped: ai.enabled=false");
     }
 
     @Bean
     ProductSummaryService noOpProductSummaryService() {
-        return productId -> null;
+        return _ -> null;
     }
 }

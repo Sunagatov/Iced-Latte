@@ -24,7 +24,8 @@ public class RedisTokenCache implements TokenCache {
 
     private static final String KEY_PREFIX = "email:token:";
 
-    private record CacheEntry(UserRegistrationRequest request, TokenPurpose purpose) {
+    private record CacheEntry(UserRegistrationRequest request,
+                              TokenPurpose purpose) {
         @JsonCreator
         CacheEntry(@JsonProperty("request") UserRegistrationRequest request,
                    @JsonProperty("purpose") TokenPurpose purpose) {
@@ -43,24 +44,31 @@ public class RedisTokenCache implements TokenCache {
     void init() { log.info("token_cache.mode: Redis"); }
 
     @Override
-    public void addToken(String tokenKey, UserRegistrationRequest request, TokenPurpose purpose) {
+    public void addToken(String tokenKey, UserRegistrationRequest request,
+                         TokenPurpose purpose) {
         try {
-            redisTemplate.opsForValue().set(
-                    KEY_PREFIX + tokenKey,
-                    objectMapper.writeValueAsString(new CacheEntry(request, purpose)),
-                    Duration.ofMinutes(expireTimeMinutes));
+            String key = KEY_PREFIX + tokenKey;
+            String value = objectMapper.writeValueAsString(new CacheEntry(request, purpose));
+            Duration timeout = Duration.ofMinutes(expireTimeMinutes);
+
+            redisTemplate.opsForValue()
+                    .set(key, value, timeout);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize token cache entry", e);
         }
     }
 
     @Override
-    public UserRegistrationRequest getToken(String tokenKey, TokenPurpose expectedPurpose) {
-        String json = redisTemplate.opsForValue().get(KEY_PREFIX + tokenKey);
-        if (json == null) throw new IncorrectTokenException();
+    public UserRegistrationRequest getToken(String tokenKey,
+                                            TokenPurpose expectedPurpose) {
+        String json = redisTemplate.opsForValue()
+                .get(KEY_PREFIX + tokenKey);
+        if (json == null)
+            throw new IncorrectTokenException();
         try {
             CacheEntry entry = objectMapper.readValue(json, CacheEntry.class);
-            if (entry.purpose() != expectedPurpose) throw new IncorrectTokenException();
+            if (entry.purpose() != expectedPurpose)
+                throw new IncorrectTokenException();
             return entry.request();
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to deserialize token cache entry", e);

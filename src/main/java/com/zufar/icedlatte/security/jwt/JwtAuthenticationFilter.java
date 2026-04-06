@@ -81,7 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 // amazonq-ignore-next-line
 
-    private void handleAuthenticationException(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Exception exception) throws IOException {
+    private void handleAuthenticationException(HttpServletRequest httpRequest,
+                                               HttpServletResponse httpResponse,
+                                               Exception exception) throws IOException {
         String requestId = MDC.get("requestId");
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();

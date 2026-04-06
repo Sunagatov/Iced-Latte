@@ -29,48 +29,57 @@ public class SignInExceptionHandler {
 
     @ExceptionHandler(AbsentBearerHeaderException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
+                                                              HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler(UserRegistrationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleUserRegistrationException(final UserRegistrationException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleUserRegistrationException(final UserRegistrationException exception,
+                                                            HttpServletRequest request) {
         return handle(exception, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleInvalidCredentialsException(final InvalidCredentialsException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleInvalidCredentialsException(final InvalidCredentialsException exception,
+                                                              HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler({UserNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception,
+                                                        HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler({UsernameNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     // amazonq-ignore-next-line
-    public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception,
+                                                            HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler(UserAccountLockedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleUserAccountLockedException(final UserAccountLockedException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleUserAccountLockedException(final UserAccountLockedException exception,
+                                                             HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception, HttpServletRequest request) {
+    public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception,
+                                                          HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
     }
 
-    private ApiErrorResponse handle(Exception exception, HttpStatus status, HttpServletRequest request) {
+    private ApiErrorResponse handle(Exception exception,
+                                    HttpStatus status,
+                                    HttpServletRequest request) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
         log.warn("auth.sign_in.failed: reasonCode={}, status={}, method={}, path={}",
                 exception.getClass().getSimpleName(), status.value(),

@@ -26,7 +26,8 @@ public class LoginFailureHandler {
      *
      * @param userEmail the email of the user for whom the login attempt failed
      */
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
     public void handle(final String userEmail) {
         LoginAttemptEntity loginAttempt = failedLoginAttemptIncrementor.increment(userEmail);
         int remaining = Math.max(0, maxLoginAttempts - loginAttempt.getAttempts());

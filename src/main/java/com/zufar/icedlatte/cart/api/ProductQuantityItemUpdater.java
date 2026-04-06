@@ -48,7 +48,9 @@ public class ProductQuantityItemUpdater {
         return shoppingCart;
     }
 
-    private void validateQuantityChange(final UUID shoppingCartItemId, int productQuantityChange, ShoppingCartItem item) {
+    private void validateQuantityChange(final UUID shoppingCartItemId,
+                                        int productQuantityChange,
+                                        ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 0) {
             log.warn("cart.item.quantity.negative: itemId={}, quantity={}", shoppingCartItemId, newQuantity);

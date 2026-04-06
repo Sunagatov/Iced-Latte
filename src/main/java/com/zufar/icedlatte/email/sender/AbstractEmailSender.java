@@ -27,7 +27,9 @@ public abstract class AbstractEmailSender<T> {
                 getClass().getSimpleName(), messageBuilders.size());
     }
 
-    public void sendNotification(String email, String message, String subject) {
+    public void sendNotification(String email,
+                                 String message,
+                                 String subject) {
         try {
             mailMessage.setTo(email);
             mailMessage.setText(message);
@@ -35,7 +37,8 @@ public abstract class AbstractEmailSender<T> {
             javaMailSender.send(mailMessage);
             log.info("email.sent: subject={}", subject);
         } catch (Exception e) {
-            log.error("email.send.failed: subject={}, cause={}", subject, e.getMessage(), e);
+            log.error("email.send.failed: subject={}, cause={}",
+                    subject, e.getMessage(), e);
             throw e;
         }
     }

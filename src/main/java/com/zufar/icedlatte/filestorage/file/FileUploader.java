@@ -25,8 +25,11 @@ public class FileUploader {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public boolean upload(final MultipartFile file, String bucketName, String fileName) {
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
+    public boolean upload(final MultipartFile file,
+                          String bucketName,
+                          String fileName) {
         if (awsObjectUploader != null) {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
             return true;
@@ -36,8 +39,10 @@ public class FileUploader {
     }
 
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void uploadDirectory(String bucketName, String directoryPath) {
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
+    public void uploadDirectory(String bucketName,
+                                String directoryPath) {
         if (awsObjectUploader != null) {
             try {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);

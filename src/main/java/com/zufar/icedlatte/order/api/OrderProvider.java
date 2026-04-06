@@ -17,8 +17,11 @@ public class OrderProvider {
 
     private final OrderRepository orderRepository;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE, readOnly = true)
-    public Optional<Order> getOrderEntityByUserAndSession(final UUID userId, final String sessionId) {
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.SERIALIZABLE,
+            readOnly = true)
+    public Optional<Order> getOrderEntityByUserAndSession(final UUID userId,
+                                                          final String sessionId) {
         return orderRepository.findByUserIdAndSessionId(userId, sessionId);
     }
 }

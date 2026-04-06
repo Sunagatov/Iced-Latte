@@ -48,7 +48,10 @@ public class ShoppingCartItem {
     @Column(name = "products_quantity", nullable = false)
     private Integer productQuantity;
 
-    public ShoppingCartItem(UUID id, ShoppingCart shoppingCart, ProductInfo productInfo, Integer productQuantity) {
+    public ShoppingCartItem(UUID id,
+                            ShoppingCart shoppingCart,
+                            ProductInfo productInfo,
+                            Integer productQuantity) {
         this.id = id;
         this.shoppingCart = shoppingCart;
         this.productInfo = productInfo;

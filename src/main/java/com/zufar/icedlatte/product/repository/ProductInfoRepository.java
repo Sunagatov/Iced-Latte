@@ -19,44 +19,48 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
     List<String> findDistinctBrandNames();
 
     @Modifying
-    @Query(nativeQuery = true, value = """
-            UPDATE product p
-               SET average_rating = COALESCE((SELECT AVG(pr.rating)
-                                               FROM product_reviews pr
-                                              WHERE pr.product_id = p.id), 0)
-             WHERE p.id = :productId
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    UPDATE product p
+                       SET average_rating = COALESCE((SELECT AVG(pr.rating)
+                                                       FROM product_reviews pr
+                                                      WHERE pr.product_id = p.id), 0)
+                     WHERE p.id = :productId
+                    """)
     void updateAverageRating(@Param("productId") UUID productId);
 
     @Modifying
-    @Query(nativeQuery = true, value = """
-            UPDATE product p
-               SET reviews_count = (SELECT COUNT(pr.id)
-                                      FROM product_reviews pr
-                                     WHERE pr.product_id = p.id)
-             WHERE p.id = :productId
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    UPDATE product p
+                       SET reviews_count = (SELECT COUNT(pr.id)
+                                              FROM product_reviews pr
+                                             WHERE pr.product_id = p.id)
+                     WHERE p.id = :productId
+                    """)
     void updateReviewsCount(@Param("productId") UUID productId);
 
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
-    @Query(nativeQuery = true, value = """
-            -- noinspection SqlWithoutWhere
-UPDATE product p
-               SET average_rating = COALESCE((SELECT AVG(pr.rating)
-                                               FROM product_reviews pr
-                                              WHERE pr.product_id = p.id), 0)
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    -- noinspection SqlWithoutWhere
+                    UPDATE product p
+                                   SET average_rating = COALESCE((SELECT AVG(pr.rating)
+                                                                   FROM product_reviews pr
+                                                                  WHERE pr.product_id = p.id), 0)
+                    """)
     void updateAllAverageRatings();
 
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
-    @Query(nativeQuery = true, value = """
-            -- noinspection SqlWithoutWhere
-UPDATE product p
-               SET reviews_count = (SELECT COUNT(pr.id)
-                                      FROM product_reviews pr
-                                     WHERE pr.product_id = p.id)
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    -- noinspection SqlWithoutWhere
+                    UPDATE product p
+                                   SET reviews_count = (SELECT COUNT(pr.id)
+                                                          FROM product_reviews pr
+                                                         WHERE pr.product_id = p.id)
+                    """)
     void updateAllReviewsCounts();
 }

@@ -32,7 +32,9 @@ public class FileProvider {
     }
 
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public Optional<String> getRelatedObjectUrl(final UUID relatedObjectId) {
         if (awsTemporaryLinkReceiver == null) {
             log.debug("file.url.skipped: reason=aws_not_configured");
@@ -42,7 +44,9 @@ public class FileProvider {
                 .map(awsTemporaryLinkReceiver::generatePresignedUrlAsString);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            readOnly = true)
     public Map<UUID, String> getRelatedObjectUrls(final List<UUID> relatedObjectIds) {
         if (awsTemporaryLinkReceiver == null) {
             log.debug("file.urls.skipped: reason=aws_not_configured");
