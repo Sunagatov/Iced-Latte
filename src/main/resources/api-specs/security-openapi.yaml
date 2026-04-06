@@ -42,8 +42,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "Email verification token sent"
+                $ref: "#/components/schemas/RegistrationMessageResponse"
         "400":
           description: "Bad request"
           content:
@@ -465,6 +464,10 @@ components:
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+
+    RegistrationMessageResponse:
+      type: "string"
+      example: "Email verification token sent"
 
     SessionInfo:
       type: "object"

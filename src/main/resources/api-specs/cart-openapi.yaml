@@ -39,10 +39,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/AddNewItemsToShoppingCartRequest"
-            example:
-              items:
-                - productId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-                  productQuantity: 2
       responses:
         "200":
           description: "Items added successfully."
@@ -80,9 +76,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateProductQuantityInShoppingCartItemRequest"
-            example:
-              shoppingCartItemId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-              productQuantityChange: 1
       responses:
         "200":
           description: "Shopping cart item quantity was updated successfully."
