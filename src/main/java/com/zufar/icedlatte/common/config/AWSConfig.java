@@ -104,7 +104,7 @@ public class AWSConfig {
     private void applyEndpointOverride(S3ClientBuilder builder) {
         if (StringUtils.hasText(endpointUrl)) {
             builder.endpointOverride(URI.create(endpointUrl))
-                   .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
+                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
         }
     }
 

@@ -67,13 +67,6 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
                 .accept(ContentType.JSON);
     }
 
-    void removeReview(final Response response) {
-        var currentReviewId = response.getBody().path("productReviewId");
-        if (currentReviewId != null) {
-            given(specification).delete("/{productId}/reviews/{reviewId}", AFFOGATO_ID, currentReviewId);
-        }
-    }
-
     @Test
     @DisplayName("Should add review successfully and return object containing review")
     void shouldAddReviewSuccessfully() {

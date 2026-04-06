@@ -7,11 +7,11 @@ public class AbsentBearerHeaderException extends RuntimeException {
     public AbsentBearerHeaderException() {
         super(DEFAULT_MESSAGE);
     }
-    
+
     public AbsentBearerHeaderException(String message) {
         super(message);
     }
-    
+
     public AbsentBearerHeaderException(String message, Throwable cause) {
         super(message, cause);
     }
