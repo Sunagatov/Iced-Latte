@@ -58,8 +58,6 @@ export $(cat .env | xargs) && mvn spring-boot:run
 
 🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
 
-**🔐 Test login:** `olivia@example.com` / `p@ss1logic11` (15 seed users, all share this password)
-
 > 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for IDE run configuration, Docker-only setup, and troubleshooting.
 
 > 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [Getting Started](docs/getting-started.md):
