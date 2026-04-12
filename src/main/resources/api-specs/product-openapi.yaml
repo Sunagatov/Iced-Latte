@@ -122,7 +122,7 @@ paths:
             format: "int32"
             default: 50
             minimum: 1
-        - name: "sortAttribute"
+        - name: "sort_attribute"
           description: "Field to sort results by."
           in: "query"
           required: false
@@ -130,7 +130,7 @@ paths:
             type: "string"
             enum: ["name", "price", "quantity", "averageRating", "reviewsCount"]
             default: "name"
-        - name: "sortDirection"
+        - name: "sort_direction"
           description: "Sort direction."
           in: "query"
           required: false
@@ -138,21 +138,21 @@ paths:
             type: "string"
             enum: ["asc", "desc"]
             default: "asc"
-        - name: "minPrice"
+        - name: "min_price"
           description: "Minimum product price filter."
           in: "query"
           required: false
           schema:
             type: "number"
             minimum: 0
-        - name: "maxPrice"
+        - name: "max_price"
           description: "Maximum product price filter."
           in: "query"
           required: false
           schema:
             type: "number"
             minimum: 0
-        - name: "minimumAverageRating"
+        - name: "minimum_average_rating"
           description: "Minimum average rating filter (1–4)."
           in: "query"
           required: false
@@ -161,7 +161,7 @@ paths:
             format: "int32"
             minimum: 1
             maximum: 4
-        - name: "brandNames"
+        - name: "brand_names"
           description: "Filter by brand names."
           in: "query"
           required: false
@@ -169,7 +169,7 @@ paths:
             type: "array"
             items:
               type: "string"
-        - name: "sellerNames"
+        - name: "seller_names"
           description: "Filter by seller names."
           in: "query"
           required: false

@@ -114,6 +114,14 @@ class GetProductsRequestValidatorTest {
     }
 
     @Test
+    @DisplayName("Null pageSize passes — provider applies default")
+    void validate_nullPageSize_noException() {
+        assertThatCode(() -> validator.validate(0, null, "name", "asc",
+                null, null, null, null, null))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("Null optional params all pass")
     void validate_allNullOptionals_noException() {
         assertThatCode(() -> validator.validate(0, 10, "price", "desc",
