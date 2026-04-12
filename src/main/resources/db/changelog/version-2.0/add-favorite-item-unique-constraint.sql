@@ -1,9 +1,10 @@
--- Remove duplicate (favorite_id, product_id) rows, keeping the one with the smallest id.
+-- Remove duplicate (favorite_id, product_id) rows, keeping one row per pair.
+-- MIN(uuid) does not exist in PostgreSQL; use DISTINCT ON to pick one row per pair instead.
 DELETE FROM public.favorite_item
 WHERE id NOT IN (
-    SELECT MIN(id)
+    SELECT DISTINCT ON (favorite_id, product_id) id
     FROM public.favorite_item
-    GROUP BY favorite_id, product_id
+    ORDER BY favorite_id, product_id, id
 );
 
 ALTER TABLE public.favorite_item
