@@ -25,8 +25,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -188,9 +190,9 @@ class AddItemsToShoppingCartHelperTest {
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(firstCart).thenReturn(freshCart);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
-        // First save throws (concurrent insert conflict), second save succeeds
+        // First save throws (concurrent insert conflict on the known constraint), second save succeeds
         when(shoppingCartRepository.save(any(ShoppingCart.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate key"))
+                .thenThrow(new DataIntegrityViolationException("uq_shopping_cart_item_cart_product"))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(shoppingCartDtoConverter.toDto(freshCart)).thenReturn(expectedDto);
 
@@ -200,5 +202,100 @@ class AddItemsToShoppingCartHelperTest {
         // quantity on the concurrent item should have been incremented by 2
         assertEquals(3, concurrentItem.getProductQuantity());
         verify(shoppingCartRepository, org.mockito.Mockito.times(2)).save(any());
+    }
+
+    @Test
+    @DisplayName("Add should recover and still add non-conflicting new products when one product conflicts")
+    void shouldRecoverAndAddNonConflictingProductsOnConflict() {
+        UUID userId = UUID.randomUUID();
+        UUID conflictingProductId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
+        UUID newProductId = UUID.fromString("b58ac6f1-7ee1-4888-9055-3bebb6aa3632");
+
+        ShoppingCart firstCart = new ShoppingCart();
+        firstCart.setId(UUID.randomUUID());
+        firstCart.setItems(new HashSet<>());
+
+        ProductInfo conflictingProduct = new ProductInfo(
+                conflictingProductId, 1L, "Coffee A", "Desc", BigDecimal.valueOf(2.5), 10, true,
+                BigDecimal.ZERO, 0, "brand", "seller", "country", 100, 10, 4, 25, 200, 20,
+                LocalDateTime.now(), 60, null
+        );
+        ProductInfo newProduct = new ProductInfo(
+                newProductId, 1L, "Coffee B", "Desc", BigDecimal.valueOf(3.0), 5, true,
+                BigDecimal.ZERO, 0, "brand", "seller", "country", 100, 10, 4, 25, 200, 20,
+                LocalDateTime.now(), 60, null
+        );
+
+        // Fresh cart is independent — only has the conflicting product (inserted by concurrent request)
+        ShoppingCart freshCart = new ShoppingCart();
+        freshCart.setId(firstCart.getId());
+        ShoppingCartItem concurrentItem = new ShoppingCartItem(UUID.randomUUID(), freshCart, conflictingProduct, 1);
+        freshCart.setItems(new HashSet<>(Set.of(concurrentItem)));
+
+        NewShoppingCartItemDto conflictingItemDto = new NewShoppingCartItemDto();
+        conflictingItemDto.setProductId(conflictingProductId);
+        conflictingItemDto.setProductQuantity(2);
+
+        NewShoppingCartItemDto newItemDto = new NewShoppingCartItemDto();
+        newItemDto.setProductId(newProductId);
+        newItemDto.setProductQuantity(3);
+
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
+
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(firstCart).thenReturn(freshCart);
+        when(productInfoRepository.findAllById(any()))
+                .thenAnswer(inv -> {
+                    Set<UUID> requested = new HashSet<>(inv.getArgument(0));
+                    return Stream.of(conflictingProduct, newProduct)
+                            .filter(p -> requested.contains(p.getId()))
+                            .toList();
+                });
+        when(shoppingCartRepository.save(any(ShoppingCart.class)))
+                .thenThrow(new DataIntegrityViolationException("uq_shopping_cart_item_cart_product"))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(shoppingCartDtoConverter.toDto(freshCart)).thenReturn(expectedDto);
+
+        addItemsToShoppingCartHelper.add(Set.of(conflictingItemDto, newItemDto));
+
+        // conflicting product quantity incremented from 1 to 3
+        assertEquals(3, concurrentItem.getProductQuantity());
+        // new product B must also be present in the fresh cart after recovery
+        assertEquals(2, freshCart.getItems().size());
+        boolean newProductAdded = freshCart.getItems().stream()
+                .anyMatch(item -> item.getProductInfo().getId().equals(newProductId));
+        assertTrue(newProductAdded, "Product B should have been added during conflict recovery");
+    }
+
+    @Test
+    @DisplayName("Add should rethrow DataIntegrityViolationException when it is not a cart-item uniqueness conflict")
+    void shouldRethrowUnrelatedDataIntegrityViolation() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
+
+        ShoppingCart cart = new ShoppingCart();
+        cart.setId(UUID.randomUUID());
+        cart.setItems(new HashSet<>());
+
+        ProductInfo product = new ProductInfo(
+                productId, 1L, "Coffee", "Desc", BigDecimal.valueOf(2.5), 10, true,
+                BigDecimal.ZERO, 0, "brand", "seller", "country", 100, 10, 4, 25, 200, 20,
+                LocalDateTime.now(), 60, null
+        );
+
+        NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
+        itemToAdd.setProductId(productId);
+        itemToAdd.setProductQuantity(1);
+
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(cart);
+        when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
+        when(shoppingCartRepository.save(any(ShoppingCart.class)))
+                .thenThrow(new DataIntegrityViolationException("some_other_constraint_violation"));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                DataIntegrityViolationException.class,
+                () -> addItemsToShoppingCartHelper.add(Set.of(itemToAdd))
+        );
     }
 }

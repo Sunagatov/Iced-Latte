@@ -42,22 +42,33 @@ public class AddItemsToShoppingCartHelper {
 
         ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
-
-        increaseExistingItemQuantities(shoppingCart, productsWithQuantity);
-        shoppingCart.getItems().addAll(createNewItems(productsWithQuantity, shoppingCart));
+        mergeIntoCart(shoppingCart, productsWithQuantity);
 
         try {
             ShoppingCart persistedShoppingCart = shoppingCartRepository.save(shoppingCart);
             return shoppingCartDtoConverter.toDto(persistedShoppingCart);
         } catch (DataIntegrityViolationException ex) {
+            if (!isCartItemUniqueConstraintViolation(ex)) {
+                throw ex;
+            }
             // A concurrent request inserted the same product between our read and save.
-            // Re-read the cart (which now contains the concurrent item) and merge quantities.
+            // Re-read the cart (which now contains the concurrent item) and do a full merge.
             log.warn("cart.items.add.concurrent_conflict: userId={}", userId);
             ShoppingCart freshCart = shoppingCartCreator.getOrCreate(userId);
-            increaseExistingItemQuantities(freshCart, productsWithQuantity);
+            mergeIntoCart(freshCart, productsWithQuantity);
             ShoppingCart persistedShoppingCart = shoppingCartRepository.save(freshCart);
             return shoppingCartDtoConverter.toDto(persistedShoppingCart);
         }
+    }
+
+    private void mergeIntoCart(ShoppingCart cart, Map<UUID, Integer> productsWithQuantity) {
+        increaseExistingItemQuantities(cart, productsWithQuantity);
+        cart.getItems().addAll(createNewItems(productsWithQuantity, cart));
+    }
+
+    private static boolean isCartItemUniqueConstraintViolation(DataIntegrityViolationException ex) {
+        String msg = ex.getMessage();
+        return msg != null && msg.contains("uq_shopping_cart_item_cart_product");
     }
 
     private static Map<UUID, Integer> extractProductsWithQuantity(Set<NewShoppingCartItemDto> itemsToAdd) {

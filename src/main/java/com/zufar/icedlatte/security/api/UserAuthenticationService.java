@@ -46,7 +46,12 @@ public class UserAuthenticationService {
                 throw new InvalidCredentialsException();
             }
             return userDetails;
-        } catch (UsernameNotFoundException | BadCredentialsException exception) {
+        } catch (UsernameNotFoundException exception) {
+            // Unknown email — do not persist a DB row for a non-existent account.
+            // Rate limiting via PreAuthRateLimitingFilter still applies.
+            log.warn("auth.failed: reason=user_not_found");
+            throw new InvalidCredentialsException(exception);
+        } catch (BadCredentialsException exception) {
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
