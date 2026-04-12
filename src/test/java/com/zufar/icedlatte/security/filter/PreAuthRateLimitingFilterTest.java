@@ -98,7 +98,7 @@ class PreAuthRateLimitingFilterTest {
         when(rateLimiter.tryConsume(contains("auth:ip:"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
 
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
 
@@ -138,7 +138,7 @@ class PreAuthRateLimitingFilterTest {
         when(rateLimiter.tryConsume(contains("pre-auth"), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
 
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
 
@@ -157,7 +157,7 @@ class PreAuthRateLimitingFilterTest {
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
 
-        filter.doFilterInternal(new MockHttpServletRequest("POST", "/api/v1/auth/login"),
+        filter.doFilterInternal(new MockHttpServletRequest("POST", "/api/v1/auth/authenticate"),
                 new MockHttpServletResponse(), mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -198,6 +198,6 @@ class PreAuthRateLimitingFilterTest {
     @Test
     @DisplayName("regular API paths are not skipped")
     void regularApiPathIsNotSkipped() {
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/login"))).isFalse();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/authenticate"))).isFalse();
     }
 }

@@ -23,6 +23,7 @@ import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.email.exception.TimeTokenException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -234,6 +235,9 @@ public class UserSecurityEndpoint implements SecurityApi {
             emailTokenSender.sendPasswordResetCode(request.getEmail());
         } catch (UserNotFoundException _) {
             log.warn("auth.password.forgot.unknown_email");
+        } catch (TimeTokenException _) {
+            // Swallow cooldown error — returning a distinct response would confirm the email exists.
+            log.warn("auth.password.forgot.cooldown");
         }
         return ResponseEntity.ok().build();
     }

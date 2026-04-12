@@ -7,6 +7,7 @@ import java.util.Set;
 @UtilityClass
 public final class SecurityConstants {
 
+    public static final String AUTH_AUTHENTICATE_URL = "/api/v1/auth/authenticate";
     public static final String AUTH_SESSION_URL = "/api/v1/auth/sessions/**";
     public static final String AUTH_LOGOUT_ALL_URL = "/api/v1/auth/logout-all";
     public static final String SHOPPING_CART_URL = "/api/v1/cart/**";

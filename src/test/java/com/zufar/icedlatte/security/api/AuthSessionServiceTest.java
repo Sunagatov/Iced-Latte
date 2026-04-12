@@ -4,6 +4,8 @@ import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.SessionNotFoundException;
+import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,8 +110,7 @@ class AuthSessionServiceTest {
         UUID sessionId = UUID.randomUUID();
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.revokeById(sessionId, UUID.randomUUID()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Session not found");
+                .isInstanceOf(SessionNotFoundException.class);
     }
 
     @Test
@@ -122,8 +123,7 @@ class AuthSessionServiceTest {
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
         assertThatThrownBy(() -> service.revokeById(sessionId, requesterId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("does not belong");
+                .isInstanceOf(SessionOwnershipException.class);
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
+import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -68,7 +69,7 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
     private boolean isAuthEndpoint(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.equals("/api/v1/auth/login") || path.equals("/api/v1/auth/register");
+        return path.equals(SecurityConstants.AUTH_AUTHENTICATE_URL) || path.equals("/api/v1/auth/register");
     }
 
     @Override

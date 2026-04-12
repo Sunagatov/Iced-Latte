@@ -5,6 +5,8 @@ import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.SessionNotFoundException;
+import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -75,6 +77,22 @@ public class SignInExceptionHandler {
     public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception,
                                                           HttpServletRequest request) {
         return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    }
+
+    @ExceptionHandler(SessionNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleSessionNotFoundException(final SessionNotFoundException exception,
+                                                           HttpServletRequest request) {
+        log.warn("auth.session.not_found: method={}, path={}", request.getMethod(), request.getRequestURI());
+        return apiErrorResponseCreator.buildResponse("Session not found", HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(SessionOwnershipException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiErrorResponse handleSessionOwnershipException(final SessionOwnershipException exception,
+                                                             HttpServletRequest request) {
+        log.warn("auth.session.forbidden: method={}, path={}", request.getMethod(), request.getRequestURI());
+        return apiErrorResponseCreator.buildResponse("Access denied", HttpStatus.FORBIDDEN);
     }
 
     private ApiErrorResponse handle(Exception exception,

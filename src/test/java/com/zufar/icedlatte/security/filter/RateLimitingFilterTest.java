@@ -70,7 +70,7 @@ class RateLimitingFilterTest {
 
     @ParameterizedTest(name = "{0} -> {1}")
     @CsvSource({
-        "/api/v1/auth/login,           global",
+        "/api/v1/auth/authenticate,    global",
         "/api/v1/auth/register,        global",
         "/api/v1/auth/google/callback, global",
         "/api/v1/auth/google,          global",
@@ -139,7 +139,7 @@ class RateLimitingFilterTest {
         when(rateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
 
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
 

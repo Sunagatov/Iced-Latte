@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.filter;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.RateLimiter;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
+import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -159,7 +160,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     // route them to global here so the post-auth fail-open path doesn't double-count or weaken them.
     private static boolean isGlobalAuthPath(String path) {
         return path.startsWith("/api/v1/auth/google")
-                || path.equals("/api/v1/auth/login")
+                || path.equals(SecurityConstants.AUTH_AUTHENTICATE_URL)
                 || path.equals("/api/v1/auth/register");
     }
 

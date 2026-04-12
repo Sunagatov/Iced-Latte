@@ -4,6 +4,8 @@ import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.SessionNotFoundException;
+import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -82,9 +84,9 @@ public class AuthSessionService {
     public void revokeById(UUID sessionId,
                            UUID requestingUserId) {
         AuthSessionEntity session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Session not found"));
+                .orElseThrow(() -> new SessionNotFoundException(sessionId));
         if (!session.getUserId().equals(requestingUserId)) {
-            throw new IllegalArgumentException("Session does not belong to user");
+            throw new SessionOwnershipException(sessionId);
         }
         session.setRevokedAt(OffsetDateTime.now());
         sessionRepository.save(session);
