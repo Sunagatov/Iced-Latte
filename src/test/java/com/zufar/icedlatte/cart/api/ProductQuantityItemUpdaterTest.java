@@ -23,12 +23,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,83 +46,97 @@ class ProductQuantityItemUpdaterTest {
     private ProductQuantityItemUpdater productQuantityItemUpdater;
 
     @Test
-    @DisplayName("Update should return the ShoppingCartDto with new productQuantity when the productQuantityChange is valid")
+    @DisplayName("Update should return fresh ShoppingCartDto after save when productQuantityChange is valid")
     void shouldReturnUpdateShoppingCartDtoWithValidProductQuantityChange() throws ShoppingCartNotFoundException, InvalidShoppingCartIdException {
         int productQuantityChange = 5;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
         UUID cartId = UUID.randomUUID();
         shoppingCartItem.getShoppingCart().setId(cartId);
         UserDto userDto = UserDtoTestStub.createUserDto();
-        ShoppingCartDto actualResult = CartDtoTestStub.createShoppingCartDto();
-        actualResult.setId(cartId);
-        ShoppingCartItem updatedShoppingCartItem = CartDtoTestStub.createShoppingCartItem();
-        updatedShoppingCartItem.getShoppingCart().setId(cartId);
-        updatedShoppingCartItem.setProductQuantity(shoppingCartItem.getProductQuantity() + productQuantityChange);
+        ShoppingCartDto cartDto = CartDtoTestStub.createShoppingCartDto();
+        cartDto.setId(cartId);
 
-        when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));
-        when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(updatedShoppingCartItem);
         when(securityPrincipalProvider.getUserId()).thenReturn(userDto.getId());
-        when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(actualResult);
+        when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));
+        when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(cartDto);
+        when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(shoppingCartItem);
 
-        ShoppingCartDto expectedResult = productQuantityItemUpdater.update(shoppingCartItem.getId(), productQuantityChange);
+        ShoppingCartDto result = productQuantityItemUpdater.update(shoppingCartItem.getId(), productQuantityChange);
 
-        assertEquals(expectedResult, actualResult);
-
-        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
-        verify(shoppingCartProvider).getByUserId(userDto.getId());
+        assertEquals(cartDto, result);
         verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
+        verify(shoppingCartProvider, times(2)).getByUserId(userDto.getId());
         verify(shoppingCartItemRepository).save(shoppingCartItem);
     }
 
     @Test
-    @DisplayName("Update should return the ShoppingCartDto with new productQuantity when the productQuantityChange is less than zero")
+    @DisplayName("Update should return fresh ShoppingCartDto after save when productQuantityChange is negative but result >= 1")
     void shouldReturnUpdateShoppingCartDtoWithProductQuantityChangeLessThanZero() throws ShoppingCartNotFoundException, InvalidShoppingCartIdException {
-        int productQuantityChange = -2;
+        int productQuantityChange = -2; // item has quantity 5, result = 3
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
         UUID cartId = UUID.randomUUID();
         shoppingCartItem.getShoppingCart().setId(cartId);
         UserDto userDto = UserDtoTestStub.createUserDto();
-        ShoppingCartDto actualResult = CartDtoTestStub.createShoppingCartDto();
-        actualResult.setId(cartId);
-        ShoppingCartItem updatedShoppingCartItem = CartDtoTestStub.createShoppingCartItem();
-        updatedShoppingCartItem.getShoppingCart().setId(cartId);
-        updatedShoppingCartItem.setProductQuantity(shoppingCartItem.getProductQuantity() + productQuantityChange);
+        ShoppingCartDto cartDto = CartDtoTestStub.createShoppingCartDto();
+        cartDto.setId(cartId);
 
-        when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));
-        when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(updatedShoppingCartItem);
         when(securityPrincipalProvider.getUserId()).thenReturn(userDto.getId());
-        when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(actualResult);
+        when(shoppingCartItemRepository.findById(shoppingCartItem.getId())).thenReturn(Optional.of(shoppingCartItem));
+        when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(cartDto);
+        when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(shoppingCartItem);
 
-        ShoppingCartDto expectedResult = productQuantityItemUpdater.update(shoppingCartItem.getId(), productQuantityChange);
+        ShoppingCartDto result = productQuantityItemUpdater.update(shoppingCartItem.getId(), productQuantityChange);
 
-        assertEquals(expectedResult, actualResult);
-
-        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
-        verify(shoppingCartProvider).getByUserId(userDto.getId());
+        assertEquals(cartDto, result);
         verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).findById(shoppingCartItem.getId());
+        verify(shoppingCartProvider, times(2)).getByUserId(userDto.getId());
         verify(shoppingCartItemRepository).save(shoppingCartItem);
     }
 
     @Test
-    @DisplayName("Update should throw InvalidShoppingCartIdException when shopping cart id is invalid")
-    void shouldThrowInvalidShoppingCartIdExceptionWhenShoppingCartIdIsInvalid() throws ShoppingCartNotFoundException, InvalidShoppingCartIdException {
+    @DisplayName("Update should throw InvalidShoppingCartIdException when item belongs to a different cart")
+    void shouldThrowInvalidShoppingCartIdExceptionWhenShoppingCartIdIsInvalid() {
         int productQuantityChange = 5;
         ShoppingCartItem item = CartDtoTestStub.createShoppingCartItem();
         UUID itemId = item.getId();
         UserDto userDto = UserDtoTestStub.createUserDto();
         ShoppingCartDto shoppingCart = new ShoppingCartDto();
-        shoppingCart.setId(UUID.randomUUID());
+        shoppingCart.setId(UUID.randomUUID()); // different from item's cart id
         shoppingCart.setUserId(userDto.getId());
 
-        when(shoppingCartItemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(securityPrincipalProvider.getUserId()).thenReturn(userDto.getId());
+        when(shoppingCartItemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(shoppingCartProvider.getByUserId(userDto.getId())).thenReturn(shoppingCart);
 
         Assertions.assertThrows(InvalidShoppingCartIdException.class, () -> productQuantityItemUpdater.update(itemId, productQuantityChange));
 
+        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartItemRepository).findById(itemId);
         verify(shoppingCartProvider).getByUserId(userDto.getId());
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidItemProductQuantityException when quantity becomes zero")
+    void shouldThrowInvalidItemProductQuantityExceptionWhenQuantityBecomesZero() {
+        ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem(); // productQuantity = 5
+        int productQuantityChange = -5; // 5 + (-5) = 0
+        UUID shoppingCartItemId = shoppingCartItem.getId();
+        UUID userId = UUID.randomUUID();
+
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+        when(shoppingCartItemRepository.findById(shoppingCartItemId)).thenReturn(Optional.of(shoppingCartItem));
+
+        assertThrows(
+                InvalidItemProductQuantityException.class,
+                () -> productQuantityItemUpdater.update(shoppingCartItemId, productQuantityChange)
+        );
+
         verify(securityPrincipalProvider).getUserId();
+        verify(shoppingCartItemRepository).findById(shoppingCartItemId);
+        verify(shoppingCartProvider, never()).getByUserId(any(UUID.class));
         verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 
@@ -133,17 +146,20 @@ class ProductQuantityItemUpdaterTest {
         int productQuantityChange = -10;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
         UUID shoppingCartItemId = shoppingCartItem.getId();
+        UUID userId = UUID.randomUUID();
 
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartItemRepository.findById(shoppingCartItemId)).thenReturn(Optional.of(shoppingCartItem));
 
-        InvalidItemProductQuantityException exception = assertThrows(
+        assertThrows(
                 InvalidItemProductQuantityException.class,
                 () -> productQuantityItemUpdater.update(shoppingCartItemId, productQuantityChange)
         );
 
-        assertNotNull(exception);
+        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartItemRepository).findById(shoppingCartItemId);
-        verifyNoMoreInteractions(shoppingCartProvider, securityPrincipalProvider);
+        verify(shoppingCartProvider, never()).getByUserId(any(UUID.class));
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 
     @Test
@@ -152,33 +168,38 @@ class ProductQuantityItemUpdaterTest {
         int productQuantityChange = 0;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
         UUID shoppingCartItemId = shoppingCartItem.getId();
+        UUID userId = UUID.randomUUID();
 
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartItemRepository.findById(shoppingCartItemId)).thenReturn(Optional.of(shoppingCartItem));
 
-        InvalidItemProductQuantityException exception = assertThrows(
+        assertThrows(
                 InvalidItemProductQuantityException.class,
                 () -> productQuantityItemUpdater.update(shoppingCartItemId, productQuantityChange)
         );
 
-        assertNotNull(exception);
+        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartItemRepository).findById(shoppingCartItemId);
-        verifyNoMoreInteractions(shoppingCartProvider, securityPrincipalProvider);
+        verify(shoppingCartProvider, never()).getByUserId(any(UUID.class));
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 
     @Test
-    @DisplayName("FindById should throw ShoppingCartItemNotFoundException when shopping cart item does not found")
+    @DisplayName("Should throw ShoppingCartItemNotFoundException when shopping cart item does not exist")
     void shouldThrowShoppingCartItemNotFoundExceptionWhenShoppingCartItemNotFound() {
         UUID nonExistedShoppingCartItemId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
 
-        when(shoppingCartItemRepository.findById(nonExistedShoppingCartItemId)).thenThrow(new ShoppingCartItemNotFoundException(nonExistedShoppingCartItemId));
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+        when(shoppingCartItemRepository.findById(nonExistedShoppingCartItemId))
+                .thenThrow(new ShoppingCartItemNotFoundException(nonExistedShoppingCartItemId));
 
-        assertThrows(ShoppingCartItemNotFoundException.class, () -> productQuantityItemUpdater.update(nonExistedShoppingCartItemId, 0));
+        assertThrows(ShoppingCartItemNotFoundException.class,
+                () -> productQuantityItemUpdater.update(nonExistedShoppingCartItemId, 1));
 
-        verify(shoppingCartItemRepository).findById(nonExistedShoppingCartItemId);
-
+        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartItemRepository).findById(nonExistedShoppingCartItemId);
         verify(shoppingCartProvider, never()).getByUserId(any(UUID.class));
-        verify(securityPrincipalProvider, never()).getUserId();
         verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
     }
 }

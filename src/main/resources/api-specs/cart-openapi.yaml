@@ -138,12 +138,6 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "404":
-          description: "One or more shopping cart items not found."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
@@ -278,6 +272,8 @@ components:
           format: "int32"
           minimum: -100
           maximum: 100
+          not:
+            enum: [0]
       required:
         - shoppingCartItemId
         - productQuantityChange
