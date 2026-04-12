@@ -272,6 +272,7 @@ paths:
           content:
             application/json:
               schema:
+                title: "DeliveryAddressList"
                 type: array
                 items:
                   $ref: "#/components/schemas/DeliveryAddressDto"

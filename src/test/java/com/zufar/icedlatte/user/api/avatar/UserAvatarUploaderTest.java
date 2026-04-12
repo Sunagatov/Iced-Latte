@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +34,11 @@ class UserAvatarUploaderTest {
 
     private static final String BUCKET = "test-bucket";
 
+    // Minimal valid JPEG header: FF D8 FF followed by padding
+    private static final byte[] JPEG_HEADER = new byte[]{
+            (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
     @BeforeEach
     void injectBucket() throws Exception {
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
@@ -42,9 +48,11 @@ class UserAvatarUploaderTest {
 
     @Test
     @DisplayName("uploadUserAvatar deletes old metadata, uploads file, and saves new metadata")
-    void uploadUserAvatarFullFlow() {
+    void uploadUserAvatarFullFlow() throws Exception {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(true);
 
         uploader.uploadUserAvatar(userId, file);
@@ -62,9 +70,11 @@ class UserAvatarUploaderTest {
 
     @Test
     @DisplayName("uploadUserAvatar skips metadata delete and save when upload is skipped")
-    void uploadUserAvatarSkipsMetadataWhenUploadSkipped() {
+    void uploadUserAvatarSkipsMetadataWhenUploadSkipped() throws Exception {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(false);
 
         uploader.uploadUserAvatar(userId, file);
