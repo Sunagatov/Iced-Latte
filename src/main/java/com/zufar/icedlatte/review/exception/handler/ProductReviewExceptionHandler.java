@@ -11,6 +11,7 @@ import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -78,9 +79,18 @@ public class ProductReviewExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleGetReviewsBadRequestException(final GetReviewsBadRequestException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-
         log.warn("exception.review.invalid_params: exceptionClass={}, status=400", exception.getClass().getSimpleName());
+        return apiErrorResponse;
+    }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
+        // Concurrent duplicate review or duplicate like/dislike from the same user.
+        // The DB unique constraints prevent data corruption; map to a clean 400 instead of 500.
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Request conflicts with an existing record.", HttpStatus.BAD_REQUEST);
+        log.warn("exception.review.duplicate: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 }

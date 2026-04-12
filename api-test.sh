@@ -133,10 +133,10 @@ else
     skip "Get product by ID"
 fi
 
-req GET "$API/products?page=0&size=3&sortAttribute=price&sortDirection=desc&minPrice=1"
+req GET "$API/products?page=0&size=3&sort_attribute=price&sort_direction=desc&min_price=1"
 assert "Products with price/sort filters" "200"
 
-req GET "$API/products?page=0&size=3&sortAttribute=averageRating&sortDirection=desc&minimumAverageRating=1"
+req GET "$API/products?page=0&size=3&sort_attribute=averageRating&sort_direction=desc&minimum_average_rating=1"
 assert "Products filtered by min rating" "200"
 
 req GET "$API/products/00000000-0000-0000-0000-000000000000"

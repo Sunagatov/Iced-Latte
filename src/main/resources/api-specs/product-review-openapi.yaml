@@ -259,14 +259,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewDto"
-        "400":
-          description: "Product not found."
+        "401":
+          description: "Unauthorized access occurred."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized access occurred."
+        "404":
+          description: "Product not found."
           content:
             application/json:
               schema:
@@ -354,6 +354,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductReviewRatingStats"
+        "404":
+          description: "Product not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error occurred."
           content:

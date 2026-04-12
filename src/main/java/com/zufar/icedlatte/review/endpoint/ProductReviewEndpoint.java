@@ -67,9 +67,9 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getProductReviewsAndRatings(
             @PathVariable final UUID productId,
             @RequestParam(name = "page", required = false, defaultValue = "0") final Integer pageNumber,
-            @RequestParam(name = "size", required = false, defaultValue = "50") final Integer pageSize,
-            @RequestParam(name = "sortAttribute", required = false, defaultValue = "createdAt") final String sortAttribute,
-            @RequestParam(name = "sortDirection", required = false, defaultValue = "asc") final String sortDirection,
+            @RequestParam(name = "size", required = false) final Integer pageSize,
+            @RequestParam(name = "sortAttribute", required = false) final String sortAttribute,
+            @RequestParam(name = "sortDirection", required = false) final String sortDirection,
             @RequestParam(name = "productRatings", required = false) List<Integer> productRatings) {
         getReviewsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
         return ResponseEntity.ok(productReviewsProvider.getProductReviews(

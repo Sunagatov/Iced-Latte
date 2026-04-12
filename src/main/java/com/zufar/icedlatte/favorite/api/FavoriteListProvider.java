@@ -27,9 +27,16 @@ public class FavoriteListProvider {
                 .orElseGet(() -> favoriteRepository.save(createNewFavoriteList(userId)));
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public java.util.Optional<FavoriteListEntity> findFavoriteListEntity(final UUID userId) {
+        return favoriteRepository.findByUserId(userId);
+    }
+
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FavoriteListDto getFavoriteListDto(final UUID userId) {
-        return favoriteListDtoConverter.toDto(getFavoriteListEntity(userId));
+        return favoriteRepository.findByUserId(userId)
+                .map(favoriteListDtoConverter::toDto)
+                .orElseGet(() -> favoriteListDtoConverter.toDto(createNewFavoriteList(userId)));
     }
 
     private FavoriteListEntity createNewFavoriteList(UUID userId) {

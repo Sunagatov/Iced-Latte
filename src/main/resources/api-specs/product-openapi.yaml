@@ -128,7 +128,7 @@ paths:
           required: false
           schema:
             type: "string"
-            enum: ["name", "price", "quantity", "averageRating", "reviewsCount"]
+            enum: ["name", "price", "quantity", "averageRating", "reviewsCount", "brandName", "sellerName"]
             default: "name"
         - name: "sort_direction"
           description: "Sort direction."
