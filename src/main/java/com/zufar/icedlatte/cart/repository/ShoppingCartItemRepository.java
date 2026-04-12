@@ -7,9 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ShoppingCartItemRepository extends JpaRepository<ShoppingCartItem, UUID> {
+
+    @Query("SELECT i FROM ShoppingCartItem i WHERE i.id = :itemId AND i.shoppingCart.userId = :userId")
+    Optional<ShoppingCartItem> findByIdAndShoppingCartUserId(@Param("itemId") UUID itemId,
+                                                             @Param("userId") UUID userId);
 
     @Modifying
     @Query("DELETE FROM ShoppingCartItem i " +

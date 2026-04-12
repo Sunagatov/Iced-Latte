@@ -3,7 +3,6 @@ package com.zufar.icedlatte.cart.api;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
-import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
@@ -34,15 +33,11 @@ public class ProductQuantityItemUpdater {
     public ShoppingCartDto update(final UUID shoppingCartItemId,
                                   final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
         UUID userId = securityPrincipalProvider.getUserId();
-        ShoppingCartItem item = getShoppingCartItem(shoppingCartItemId);
-        validateQuantityChange(shoppingCartItemId, productQuantityChange, item);
+        // Scoped lookup: returns 404 for both nonexistent and foreign items — no ownership info leaked
+        ShoppingCartItem item = shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
+                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
 
-        ShoppingCartDto currentCart = shoppingCartProvider.getByUserId(userId);
-        if (!currentCart.getId().equals(item.getShoppingCart().getId())) {
-            log.warn("cart.item.quantity.invalid: itemId={}, change={}, cartId={}",
-                    productQuantityChange, shoppingCartItemId, currentCart.getId());
-            throw new InvalidShoppingCartIdException(currentCart.getId());
-        }
+        validateQuantityChange(shoppingCartItemId, productQuantityChange, item);
 
         item.setProductQuantity(item.getProductQuantity() + productQuantityChange);
         shoppingCartItemRepository.save(item);
@@ -62,11 +57,4 @@ public class ProductQuantityItemUpdater {
             throw new InvalidItemProductQuantityException(newQuantity);
         }
     }
-
-    private ShoppingCartItem getShoppingCartItem(final UUID shoppingCartItemId) throws ShoppingCartItemNotFoundException {
-        return shoppingCartItemRepository.findById(shoppingCartItemId)
-                .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
-    }
-
 }
-

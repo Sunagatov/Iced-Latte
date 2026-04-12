@@ -164,12 +164,6 @@ paths:
             application/json:
               schema:
                 $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-        "404":
-          description: "Shopping cart not found."
-          content:
-            application/json:
-              schema:
-                $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
         "500":
           description: "Internal server error."
           content:
