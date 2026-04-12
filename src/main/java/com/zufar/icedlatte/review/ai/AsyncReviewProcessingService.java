@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ public class AsyncReviewProcessingService {
 
     private final ReviewModerationService moderationService;
     private final ProductReviewRepository reviewRepository;
+    private final ProductInfoRepository productInfoRepository;
+    private final ProductReviewSummaryDebouncer summaryDebouncer;
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -25,7 +28,14 @@ public class AsyncReviewProcessingService {
             moderationService.moderate(text);
         } catch (ReviewModerationException e) {
             log.warn("review.moderation.failed: reviewId={} reason={}", reviewId, e.getMessage());
-            reviewRepository.deleteById(reviewId);
+            reviewRepository.findById(reviewId).ifPresent(review -> {
+                UUID productId = review.getProductId();
+                reviewRepository.deleteById(reviewId);
+                productInfoRepository.updateAverageRating(productId);
+                productInfoRepository.updateReviewsCount(productId);
+                summaryDebouncer.schedule(productId);
+                log.info("review.moderation.rejected: reviewId={}, productId={}", reviewId, productId);
+            });
         }
     }
 }

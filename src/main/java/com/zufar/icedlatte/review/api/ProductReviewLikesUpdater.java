@@ -43,7 +43,7 @@ public class ProductReviewLikesUpdater {
         productReviewLike.ifPresentOrElse(
                 productReviewLikeEntity -> {
                     if (productReviewLikeEntity.getIsLike().equals(newProductReviewLike)) {
-                        productReviewLikeRepository.deleteByProductIdAndProductReviewId(productId, productReviewId);
+                        productReviewLikeRepository.deleteByUserIdAndProductReviewId(userId, productReviewId);
                     } else {
                         productReviewLikeEntity.setIsLike(newProductReviewLike);
                         productReviewLikeRepository.saveAndFlush(productReviewLikeEntity);

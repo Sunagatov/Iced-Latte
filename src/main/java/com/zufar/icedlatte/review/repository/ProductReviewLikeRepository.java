@@ -10,6 +10,6 @@ public interface ProductReviewLikeRepository extends JpaRepository<ProductReview
 
     Optional<ProductReviewLike> findByUserIdAndProductReviewId(UUID userId, UUID reviewId);
 
-    void deleteByProductIdAndProductReviewId(final UUID productId,
-                                             final UUID productReviewId);
+    void deleteByUserIdAndProductReviewId(UUID userId, UUID productReviewId);
+
 }
