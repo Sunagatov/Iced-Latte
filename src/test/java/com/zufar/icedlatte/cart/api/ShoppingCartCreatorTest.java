@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -72,5 +74,20 @@ class ShoppingCartCreatorTest {
         ShoppingCart built = captor.getValue();
         assertThat(built.getUserId()).isEqualTo(userId);
         assertThat(built.getItems()).isNotNull().isEmpty();
+    }
+
+    @Test
+    @DisplayName("createNewShoppingCart returns existing cart when concurrent insert causes uniqueness conflict")
+    void createNewShoppingCartReturnsExistingOnConflict() {
+        UUID userId = UUID.randomUUID();
+        ShoppingCart existing = ShoppingCart.builder().userId(userId).items(new java.util.HashSet<>()).build();
+        when(shoppingCartRepository.save(any(ShoppingCart.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key"));
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(existing));
+
+        ShoppingCart result = creator.createNewShoppingCart(userId);
+
+        assertThat(result).isEqualTo(existing);
+        verify(shoppingCartRepository).findShoppingCartByUserId(userId);
     }
 }
