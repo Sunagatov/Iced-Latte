@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
@@ -111,5 +112,19 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleInvalidProductReviewTextException(ex);
 
         assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("handleDataIntegrityViolationException returns BAD_REQUEST with sanitized message")
+    void handleDuplicateConstraint_returnsBadRequest() {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException("duplicate key");
+        ApiErrorResponse expected = stubResponse("Request conflicts with an existing record.");
+        when(apiErrorResponseCreator.buildResponse(
+                "Request conflicts with an existing record.", HttpStatus.BAD_REQUEST)).thenReturn(expected);
+
+        ApiErrorResponse result = handler.handleDataIntegrityViolationException(ex);
+
+        assertThat(result).isEqualTo(expected);
+        assertThat(result.message()).isEqualTo("Request conflicts with an existing record.");
     }
 }
