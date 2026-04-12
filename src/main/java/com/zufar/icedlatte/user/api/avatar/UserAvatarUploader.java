@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
 
@@ -47,6 +49,10 @@ public class UserAvatarUploader {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
             throw new InvalidAvatarFileTypeException(contentType);
         }
+        if (!hasValidImageSignature(file)) {
+            log.warn("avatar.upload.rejected: reason=magic_bytes_mismatch, userId={}", userId);
+            throw new InvalidAvatarFileTypeException(contentType);
+        }
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
         boolean uploaded = fileUploader.upload(file, bucketName, fileName);
         if (!uploaded) {
@@ -58,5 +64,48 @@ public class UserAvatarUploader {
         if (cloudfrontInvalidator != null) {
             cloudfrontInvalidator.invalidate(fileName);
         }
+    }
+
+    private static boolean hasValidImageSignature(MultipartFile file) {
+        try (InputStream in = file.getInputStream()) {
+            byte[] h = in.readNBytes(12);
+            return isJpeg(h) || isPng(h) || isWebp(h);
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    // FF D8 FF
+    private static boolean isJpeg(byte[] h) {
+        return h.length >= 3
+                && (h[0] & 0xFF) == 0xFF
+                && (h[1] & 0xFF) == 0xD8
+                && (h[2] & 0xFF) == 0xFF;
+    }
+
+    // 89 50 4E 47 0D 0A 1A 0A
+    private static boolean isPng(byte[] h) {
+        return h.length >= 8
+                && (h[0] & 0xFF) == 0x89
+                && (h[1] & 0xFF) == 0x50
+                && (h[2] & 0xFF) == 0x4E
+                && (h[3] & 0xFF) == 0x47
+                && (h[4] & 0xFF) == 0x0D
+                && (h[5] & 0xFF) == 0x0A
+                && (h[6] & 0xFF) == 0x1A
+                && (h[7] & 0xFF) == 0x0A;
+    }
+
+    // 52 49 46 46 ?? ?? ?? ?? 57 45 42 50  (RIFF....WEBP)
+    private static boolean isWebp(byte[] h) {
+        return h.length >= 12
+                && (h[0] & 0xFF) == 0x52  // R
+                && (h[1] & 0xFF) == 0x49  // I
+                && (h[2] & 0xFF) == 0x46  // F
+                && (h[3] & 0xFF) == 0x46  // F
+                && (h[8] & 0xFF) == 0x57  // W
+                && (h[9] & 0xFF) == 0x45  // E
+                && (h[10] & 0xFF) == 0x42 // B
+                && (h[11] & 0xFF) == 0x50; // P
     }
 }

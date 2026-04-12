@@ -17,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -153,5 +155,50 @@ class AddItemsToShoppingCartHelperTest {
 
         verify(productInfoRepository).findAllById(Set.of(newProductId));
         verify(shoppingCartRepository).save(shoppingCart);
+    }
+
+    @Test
+    @DisplayName("Add should recover gracefully when concurrent insert causes a uniqueness conflict")
+    void shouldRecoverOnConcurrentItemInsertConflict() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.fromString("a834c24e-886d-470f-bf19-7454a60f0639");
+
+        ShoppingCart firstCart = new ShoppingCart();
+        firstCart.setId(UUID.randomUUID());
+        firstCart.setItems(new HashSet<>());
+
+        ProductInfo product = new ProductInfo(
+                productId, 1L, "Coffee", "Desc", BigDecimal.valueOf(2.5), 10, true,
+                BigDecimal.ZERO, 0, "brand", "seller", "country", 100, 10, 4, 25, 200, 20,
+                LocalDateTime.now(), 60, null
+        );
+
+        // After conflict, fresh cart already has the item inserted by the concurrent request
+        ShoppingCartItem concurrentItem = new ShoppingCartItem(UUID.randomUUID(), firstCart, product, 1);
+        ShoppingCart freshCart = new ShoppingCart();
+        freshCart.setId(firstCart.getId());
+        freshCart.setItems(new HashSet<>(Set.of(concurrentItem)));
+
+        NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
+        itemToAdd.setProductId(productId);
+        itemToAdd.setProductQuantity(2);
+
+        ShoppingCartDto expectedDto = new ShoppingCartDto();
+
+        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(firstCart).thenReturn(freshCart);
+        when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
+        // First save throws (concurrent insert conflict), second save succeeds
+        when(shoppingCartRepository.save(any(ShoppingCart.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key"))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(shoppingCartDtoConverter.toDto(freshCart)).thenReturn(expectedDto);
+
+        ShoppingCartDto result = addItemsToShoppingCartHelper.add(Set.of(itemToAdd));
+
+        assertEquals(expectedDto, result);
+        // quantity on the concurrent item should have been incremented by 2
+        assertEquals(3, concurrentItem.getProductQuantity());
+        verify(shoppingCartRepository, org.mockito.Mockito.times(2)).save(any());
     }
 }

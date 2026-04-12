@@ -12,6 +12,7 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -45,8 +46,18 @@ public class AddItemsToShoppingCartHelper {
         increaseExistingItemQuantities(shoppingCart, productsWithQuantity);
         shoppingCart.getItems().addAll(createNewItems(productsWithQuantity, shoppingCart));
 
-        ShoppingCart persistedShoppingCart = shoppingCartRepository.save(shoppingCart);
-        return shoppingCartDtoConverter.toDto(persistedShoppingCart);
+        try {
+            ShoppingCart persistedShoppingCart = shoppingCartRepository.save(shoppingCart);
+            return shoppingCartDtoConverter.toDto(persistedShoppingCart);
+        } catch (DataIntegrityViolationException ex) {
+            // A concurrent request inserted the same product between our read and save.
+            // Re-read the cart (which now contains the concurrent item) and merge quantities.
+            log.warn("cart.items.add.concurrent_conflict: userId={}", userId);
+            ShoppingCart freshCart = shoppingCartCreator.getOrCreate(userId);
+            increaseExistingItemQuantities(freshCart, productsWithQuantity);
+            ShoppingCart persistedShoppingCart = shoppingCartRepository.save(freshCart);
+            return shoppingCartDtoConverter.toDto(persistedShoppingCart);
+        }
     }
 
     private static Map<UUID, Integer> extractProductsWithQuantity(Set<NewShoppingCartItemDto> itemsToAdd) {
