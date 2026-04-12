@@ -552,13 +552,9 @@ components:
         - oldPassword
       properties:
         newPassword:
-          allOf:
-            - $ref: "#/components/schemas/PasswordField"
-          example: "NewPassword123!"
+          $ref: "#/components/schemas/PasswordField"
         oldPassword:
-          allOf:
-            - $ref: "#/components/schemas/PasswordField"
-          example: "OldPassword123!"
+          $ref: "#/components/schemas/PasswordField"
 
     UserDto:
       type: "object"
@@ -656,9 +652,7 @@ components:
           type: "string"
           description: "The password reset token."
         newPassword:
-          allOf:
-            - $ref: "#/components/schemas/PasswordField"
-          example: "NewSecurePassword123!"
+          $ref: "#/components/schemas/PasswordField"
 
     DeliveryAddressDto:
       type: "object"
