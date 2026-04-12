@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.exception.handler;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
+import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -27,6 +28,15 @@ public class UserExceptionHandler {
     public ApiErrorResponse handleDeliveryAddressNotFoundException(final DeliveryAddressNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
         log.warn("exception.delivery_address.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(InvalidAvatarFileTypeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleInvalidAvatarFileTypeException(final InvalidAvatarFileTypeException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                "Invalid file type. Allowed types: JPEG, PNG, WebP", HttpStatus.BAD_REQUEST);
+        log.warn("exception.avatar.invalid_type: status=400");
         return apiErrorResponse;
     }
 

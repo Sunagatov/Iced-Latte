@@ -46,10 +46,7 @@ public class UserAuthenticationService {
                 throw new InvalidCredentialsException();
             }
             return userDetails;
-        } catch (UsernameNotFoundException exception) {
-            log.warn("auth.failed: reason=user_not_found");
-            throw new InvalidCredentialsException(exception);
-        } catch (BadCredentialsException exception) {
+        } catch (UsernameNotFoundException | BadCredentialsException exception) {
             loginFailureHandler.handle(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
