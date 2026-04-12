@@ -106,6 +106,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
             emailTokenSender.sendPasswordResetCode(initiatePasswordResetRequest.getEmail());
         } catch (com.zufar.icedlatte.user.exception.UserNotFoundException e) {
             log.warn("user.password.reset.unknown_email");
+        } catch (com.zufar.icedlatte.email.exception.TimeTokenException e) {
+            // Swallow cooldown error — returning a distinct response would confirm the email exists.
+            log.warn("user.password.reset.cooldown");
         }
         return ResponseEntity.ok().build();
     }

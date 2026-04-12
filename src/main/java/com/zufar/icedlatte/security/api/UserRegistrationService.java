@@ -60,7 +60,7 @@ public class UserRegistrationService {
             return response;
         } catch (DataIntegrityViolationException e) {
             log.warn("auth.registration.failed: reason=email_already_registered");
-            throw new UserRegistrationException("Email already registered.", e);
+            throw new UserRegistrationException("Registration failed.", e);
         }
     }
 }
