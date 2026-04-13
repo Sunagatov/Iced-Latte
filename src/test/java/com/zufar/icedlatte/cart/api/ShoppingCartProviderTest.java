@@ -5,6 +5,7 @@ import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,8 @@ class ShoppingCartProviderTest {
 
     @Mock
     ShoppingCartCreator shoppingCartCreator;
+    @Mock
+    com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Mock
     ShoppingCartDtoConverter shoppingCartDtoConverter;
