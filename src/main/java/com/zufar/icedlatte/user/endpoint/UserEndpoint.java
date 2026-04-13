@@ -55,7 +55,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
         var userId = securityPrincipalProvider.getUserId();
-        changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
+        changeUserPasswordOperationPerformer.changeUserPassword(userId, changeUserPasswordRequest);
         log.info("user.password.changed: userId={}", userId);
         return ResponseEntity.ok().build();
     }

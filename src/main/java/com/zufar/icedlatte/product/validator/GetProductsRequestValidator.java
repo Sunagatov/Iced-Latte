@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -30,69 +31,46 @@ public class GetProductsRequestValidator {
                          final List<String> brandNames,
                          final List<String> sellerNames) {
 
-        StringBuilder errorMessages = new StringBuilder();
-        errorMessages.append(paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
-        errorMessages.append(validateMinMaxPriceParameter(minPrice, maxPrice));
-        errorMessages.append(validateBrandNameList(brandNames));
-        errorMessages.append(validateSellerNameList(sellerNames));
-        errorMessages.append(validateMinimumAverageRatingParameter(minimumAverageRating));
-
-        if (!errorMessages.isEmpty()) {
-            throw new GetProductsBadRequestException(errorMessages.toString());
-        }
-    }
-
-    private StringBuilder validateMinimumAverageRatingParameter(final Integer minimumAverageRating) {
-        StringBuilder errorMessages = new StringBuilder();
+        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
+        errors.addAll(validateMinMaxPrice(minPrice, maxPrice));
+        errors.addAll(validateNameList(brandNames, "brandNames"));
+        errors.addAll(validateNameList(sellerNames, "sellerNames"));
         if (minimumAverageRating != null && !ALLOWED_MINIMUM_AVERAGE_RATING_VALUES.contains(minimumAverageRating)) {
-            String msg = "'%s' is incorrect 'minimumAverageRating' value. Allowed values are '%s'."
-                    .formatted(minimumAverageRating, ALLOWED_MINIMUM_AVERAGE_RATING_VALUES);
-            errorMessages.append(createErrorMessage(msg));
+            errors.add(error("'%s' is incorrect 'minimumAverageRating' value. Allowed values are '%s'."
+                    .formatted(minimumAverageRating, ALLOWED_MINIMUM_AVERAGE_RATING_VALUES)));
         }
-        return errorMessages;
+
+        if (!errors.isEmpty()) {
+            throw new GetProductsBadRequestException(String.join(" ", errors));
+        }
     }
 
-    private static StringBuilder validateMinMaxPriceParameter(BigDecimal minPrice,
-                                                              BigDecimal maxPrice) {
-        final StringBuilder errors = new StringBuilder();
+    private static List<String> validateMinMaxPrice(BigDecimal minPrice, BigDecimal maxPrice) {
+        List<String> errors = new ArrayList<>();
         if (minPrice != null && minPrice.signum() < 0) {
-            errors.append(createErrorMessage("'%s' is incorrect 'minPrice'. It must be a non-negative number."
-                    .formatted(minPrice)));
+            errors.add(error("'%s' is incorrect 'minPrice'. It must be a non-negative number.".formatted(minPrice)));
         }
         if (maxPrice != null && maxPrice.signum() < 0) {
-            errors.append(createErrorMessage("'%s' is incorrect 'maxPrice'. It must be a non-negative number."
-                    .formatted(maxPrice)));
+            errors.add(error("'%s' is incorrect 'maxPrice'. It must be a non-negative number.".formatted(maxPrice)));
         }
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            errors.append(createErrorMessage("'%s' and '%s' are incorrect. 'maxPrice' must be >= 'minPrice'."
-                    .formatted(minPrice, maxPrice)));
+            errors.add(error("'%s' and '%s' are incorrect. 'maxPrice' must be >= 'minPrice'.".formatted(minPrice, maxPrice)));
         }
         return errors;
     }
 
-    private static StringBuilder validateBrandNameList(List<String> brandNames) {
-        final StringBuilder errors = new StringBuilder();
-        if (brandNames != null && brandNames.stream().anyMatch(StringUtils::isBlank)) {
-            errors.append(createErrorMessage("Some values of 'brandNames' are blank. Values must be non-blank."));
+    private static List<String> validateNameList(List<String> names, String fieldName) {
+        List<String> errors = new ArrayList<>();
+        if (names != null && names.stream().anyMatch(StringUtils::isBlank)) {
+            errors.add(error("Some values of '%s' are blank. Values must be non-blank.".formatted(fieldName)));
         }
-        if (brandNames != null && brandNames.stream().distinct().count() < brandNames.size()) {
-            errors.append(createErrorMessage("'brandNames' has duplicates. Values must be unique."));
-        }
-        return errors;
-    }
-
-    private static StringBuilder validateSellerNameList(List<String> sellerNames) {
-        final StringBuilder errors = new StringBuilder();
-        if (sellerNames != null && sellerNames.stream().anyMatch(StringUtils::isBlank)) {
-            errors.append(createErrorMessage("Some values of 'sellerNames' are blank. Values must be non-blank."));
-        }
-        if (sellerNames != null && sellerNames.stream().distinct().count() < sellerNames.size()) {
-            errors.append(createErrorMessage("'sellerNames' has duplicates. Values must be unique."));
+        if (names != null && names.stream().distinct().count() < names.size()) {
+            errors.add(error("'%s' has duplicates. Values must be unique.".formatted(fieldName)));
         }
         return errors;
     }
 
-    private static String createErrorMessage(String errorMessage) {
-        return " Error: { %s }. ".formatted(errorMessage);
+    private static String error(String message) {
+        return " Error: { %s }. ".formatted(message);
     }
 }

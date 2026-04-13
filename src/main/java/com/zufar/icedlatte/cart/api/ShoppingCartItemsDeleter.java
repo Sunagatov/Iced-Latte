@@ -3,7 +3,6 @@ package com.zufar.icedlatte.cart.api;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,16 +20,12 @@ public class ShoppingCartItemsDeleter {
 
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ShoppingCartProvider shoppingCartProvider;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto delete(final DeleteItemsFromShoppingCartRequest request) {
-        UUID userId = securityPrincipalProvider.getUserId();
+    public ShoppingCartDto delete(final DeleteItemsFromShoppingCartRequest request, final UUID userId) {
         List<UUID> itemIds = request.getShoppingCartItemIds();
         shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
-
         log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
-
         return shoppingCartProvider.getByUserId(userId);
     }
 }

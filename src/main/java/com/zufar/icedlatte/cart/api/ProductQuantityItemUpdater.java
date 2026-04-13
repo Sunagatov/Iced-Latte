@@ -6,7 +6,6 @@ import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +25,12 @@ public class ProductQuantityItemUpdater {
 
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ShoppingCartProvider shoppingCartProvider;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto update(final UUID shoppingCartItemId,
+                                  final UUID userId,
                                   final int productQuantityChange) throws ShoppingCartNotFoundException, ShoppingCartItemNotFoundException {
-        UUID userId = securityPrincipalProvider.getUserId();
         // Scoped lookup: returns 404 for both nonexistent and foreign items — no ownership info leaked
         ShoppingCartItem item = shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
                 .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
