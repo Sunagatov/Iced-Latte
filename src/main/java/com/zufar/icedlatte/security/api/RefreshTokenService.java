@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -35,6 +36,7 @@ public class RefreshTokenService {
     private final AuthSessionService authSessionService;
     private final UserAuthenticationService userAuthenticationService;
 
+    @Transactional
     public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(HttpServletRequest request) {
         log.debug("auth.token.refreshing");
         String rawToken = jwtRefreshTokenValidator.extractRawToken(request);

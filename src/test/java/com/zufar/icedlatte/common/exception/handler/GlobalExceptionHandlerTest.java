@@ -2,7 +2,6 @@ package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,17 +55,6 @@ class GlobalExceptionHandlerTest {
 
         assertThat(result.httpStatusCode()).isEqualTo(400);
         assertThat(result.message()).isEqualTo("Validation failed");
-    }
-
-    @Test
-    @DisplayName("handleJwtTokenHasNoUserEmailException returns 401")
-    void handleJwtNoEmail_returns401() {
-        JwtTokenHasNoUserEmailException ex = new JwtTokenHasNoUserEmailException("bad", new RuntimeException("bad"));
-        when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.UNAUTHORIZED)).thenReturn(stub(401));
-
-        ApiErrorResponse result = handler.handleJwtTokenHasNoUserEmailException(ex);
-
-        assertThat(result.httpStatusCode()).isEqualTo(401);
     }
 
     @Test

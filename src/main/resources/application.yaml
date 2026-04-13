@@ -51,6 +51,7 @@ spring:
       minimum-idle: 1
       maximum-pool-size: 5
       connection-timeout: 20000
+      idle-timeout: 0            # pool never shrinks (minimum-idle=1), disable idle eviction
       max-lifetime: 240000   # 4 min — must be < DB/proxy idle timeout (typically 5 min)
       keepalive-time: 30000
   jpa:
