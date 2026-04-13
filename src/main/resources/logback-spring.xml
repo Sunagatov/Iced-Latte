@@ -39,8 +39,6 @@
                         "version": "${application_version}",
                         "environment": "${environment}",
                         "trace": {
-                        "traceId": "%X{traceId}",
-                        "spanId": "%X{spanId}",
                         "userId": "%X{userId}",
                         "correlationId": "%X{correlationId}",
                         "sessionId": "%X{sessionId}",

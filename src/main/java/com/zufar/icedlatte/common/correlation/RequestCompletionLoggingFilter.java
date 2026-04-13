@@ -28,7 +28,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // e.g. logging.level.http.access=WARN suppresses all 2xx lines in prod
     private static final Logger ACCESS_LOG = LoggerFactory.getLogger("http.access");
     public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
-            "durationMs={}, clientIp={}, authenticated={}, slow={}, outcome={}";
+            "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
 
     private final ClientIpExtractor clientIpExtractor;
 
@@ -66,7 +66,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             boolean slow = durationMs >= slowRequestThresholdMs;
             boolean authenticated = isAuthenticated();
 
-            Object[] args = {method, path, status, durationMs, clientIp, authenticated, slow, outcome};
+            Object[] args = {method, path, status, durationMs, clientIp, authenticated, outcome};
 
             if (status >= 500) {
                 ACCESS_LOG.error(OUTCOME, args);

@@ -8,7 +8,6 @@ import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,7 +21,6 @@ import java.util.List;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PageableProductsProvider {
@@ -48,9 +46,6 @@ public class PageableProductsProvider {
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
 
-        log.info("product.list.fetching: page={}, size={}, sort_attribute={}, sort_direction={}", page, size, sortAttr, sortDir);
-        long t0 = System.currentTimeMillis();
-
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 
         Specification<ProductInfo> spec = Specification.allOf(
@@ -73,8 +68,6 @@ public class PageableProductsProvider {
         Page<ProductInfoDto> result = new PageImpl<>(
                 updatedDtos, rawPage.getPageable(), rawPage.getTotalElements());
 
-        log.info("product.list.fetched: count={}, durationMs={}",
-                result.getNumberOfElements(), System.currentTimeMillis() - t0);
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 }
