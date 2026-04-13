@@ -25,3 +25,5 @@ databaseChangeLog:
       file: db/changelog/version-2.0/add-favorite-list-user-id-unique-constraint.sql
   - include:
       file: db/changelog/version-2.0/add-favorite-item-unique-constraint.sql
+  - include:
+      file: db/changelog/version-2.0/add-file-metadata-related-object-id-index.sql
