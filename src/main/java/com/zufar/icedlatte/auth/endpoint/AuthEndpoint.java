@@ -130,7 +130,6 @@ public class AuthEndpoint {
             var tokens = googleAuthCallbackHandler.handle(code, request);
 
             String callbackUrl = UriComponentsBuilder.fromUriString(stored)
-                    .path("/api/auth/google/callback")
                     .queryParam("token", tokens.getToken())
                     .queryParam("refreshToken", tokens.getRefreshToken())
                     .build()
