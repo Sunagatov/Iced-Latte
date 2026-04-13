@@ -10,7 +10,10 @@
     <!-- ========================================== -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId}%X{sessionId:+ sessionId=%X{sessionId}}%X{clientTraceId:+ clientTraceId=%X{clientTraceId}} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} userId=%X{userId} correlationId=%X{correlationId}
+                requestId=%X{requestId}%X{sessionId:+ sessionId=%X{sessionId}}%X{clientTraceId:+
+                clientTraceId=%X{clientTraceId}} - %msg%n
+            </pattern>
         </encoder>
     </appender>
 
@@ -82,9 +85,15 @@
                 <http>
                     <url>${loki_url}</url>
                 </http>
-                <labels>application=${application_label},environment=${environment},level=%level</labels>
+                <labels>application=${application_label}
+                    environment=${environment}
+                    level=%level
+                </labels>
                 <message class="ch.qos.logback.classic.PatternLayout">
-                    <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex</pattern>
+                    <pattern>level=%level application=${application_name} version=${application_version}
+                        environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId}
+                        userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex
+                    </pattern>
                 </message>
             </appender>
         </then>

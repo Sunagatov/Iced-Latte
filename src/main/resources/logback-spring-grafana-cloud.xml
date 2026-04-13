@@ -10,7 +10,7 @@
 
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d [%thread] %-5level %-30logger{30}%X{traceId:+ traceId=%X{traceId}}%X{spanId:+ spanId=%X{spanId}} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId}%X{sessionId:+ sessionId=%X{sessionId}}%X{clientTraceId:+ clientTraceId=%X{clientTraceId}} - %msg%n</pattern>
+            <pattern>%d [%thread] %-5level %-30logger{30} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId}%X{sessionId:+ sessionId=%X{sessionId}}%X{clientTraceId:+ clientTraceId=%X{clientTraceId}} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -18,7 +18,9 @@
         <file>logs/iced-latte.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
-                <timestamp><timeZone>UTC</timeZone></timestamp>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
                 <version/>
                 <logLevel/>
                 <message/>
@@ -27,7 +29,9 @@
                 <context/>
                 <pattern>
                     <omitEmptyFields>true</omitEmptyFields>
-                    <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}","trace":{"traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}}</pattern>
+                    <pattern>
+                        {"application":"${application_name}","version":"${application_version}","environment":"${environment}","trace":{"traceId":"%X{traceId}","spanId":"%X{spanId}","userId":"%X{userId}","correlationId":"%X{correlationId}","sessionId":"%X{sessionId}","requestId":"%X{requestId}","clientTraceId":"%X{clientTraceId}"}}
+                    </pattern>
                 </pattern>
                 <mdc>
                     <excludeMdcKeyName>traceId</excludeMdcKeyName>
@@ -55,7 +59,9 @@
             </auth>
             <requestTimeoutMs>15000</requestTimeoutMs>
         </http>
-        <labels>application=${application_label},environment=${environment},level=%level</labels>
+        <labels>application=${application_label}
+environment=${environment}
+level=%level</labels>
         <message class="ch.qos.logback.classic.PatternLayout">
             <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex</pattern>
         </message>
