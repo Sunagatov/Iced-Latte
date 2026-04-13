@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -27,8 +26,6 @@ class ChangeUserPasswordOperationPerformerTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
-    @Mock
     private PasswordEncoder passwordEncoder;
     @InjectMocks
     private ChangeUserPasswordOperationPerformer performer;
@@ -45,12 +42,11 @@ class ChangeUserPasswordOperationPerformerTest {
         request.setOldPassword("old_plain");
         request.setNewPassword("new_plain");
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
         when(passwordEncoder.matches("old_plain", "encoded_old")).thenReturn(true);
         when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
 
-        performer.changeUserPassword(request);
+        performer.changeUserPassword(userId, request);
 
         verify(userRepository).changeUserPassword("encoded_new", userId);
     }
@@ -67,11 +63,10 @@ class ChangeUserPasswordOperationPerformerTest {
         request.setOldPassword("wrong_plain");
         request.setNewPassword("new_plain");
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
         when(passwordEncoder.matches("wrong_plain", "encoded_old")).thenReturn(false);
 
-        assertThatThrownBy(() -> performer.changeUserPassword(request))
+        assertThatThrownBy(() -> performer.changeUserPassword(userId, request))
                 .isInstanceOf(InvalidOldPasswordException.class);
 
         verify(userRepository, never()).changeUserPassword(any(), any());
@@ -86,6 +81,6 @@ class ChangeUserPasswordOperationPerformerTest {
         performer.changeUserPassword(userId, "new_plain");
 
         verify(userRepository).changeUserPassword("encoded_new", userId);
-        verifyNoInteractions(securityPrincipalProvider, singleUserProvider);
+        verifyNoInteractions(singleUserProvider);
     }
 }

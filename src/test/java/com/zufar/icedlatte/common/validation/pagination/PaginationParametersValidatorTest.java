@@ -14,73 +14,74 @@ class PaginationParametersValidatorTest {
     private final Set<String> allowed = Set.of("name", "price", "rating");
 
     @Test
-    @DisplayName("Returns empty builder when all params are valid")
+    @DisplayName("Returns empty list when all params are valid")
     void validate_allValid_noErrors() {
-        var result = validator.validate(0, 10, "name", "asc", allowed);
-        assertThat(result.toString()).isEmpty();
+        assertThat(validator.validate(0, 10, "name", "asc", allowed)).isEmpty();
     }
 
     @Test
     @DisplayName("Returns error when pageNumber is negative")
     void validate_negativePageNumber_hasError() {
-        var result = validator.validate(-1, 10, "name", "asc", allowed);
-        assertThat(result.toString()).contains("PageNumber");
+        assertThat(validator.validate(-1, 10, "name", "asc", allowed))
+                .anyMatch(e -> e.contains("PageNumber"));
     }
 
     @Test
     @DisplayName("Returns error when pageSize is zero")
     void validate_zeroPageSize_hasError() {
-        var result = validator.validate(0, 0, "name", "asc", allowed);
-        assertThat(result.toString()).contains("PageSize");
+        assertThat(validator.validate(0, 0, "name", "asc", allowed))
+                .anyMatch(e -> e.contains("PageSize"));
     }
 
     @Test
     @DisplayName("Returns error when pageSize is negative")
     void validate_negativePageSize_hasError() {
-        var result = validator.validate(0, -5, "name", "asc", allowed);
-        assertThat(result.toString()).contains("PageSize");
+        assertThat(validator.validate(0, -5, "name", "asc", allowed))
+                .anyMatch(e -> e.contains("PageSize"));
     }
 
     @Test
     @DisplayName("Returns error when sortAttribute is not in allowed set")
     void validate_invalidSortAttribute_hasError() {
-        var result = validator.validate(0, 10, "unknown", "asc", allowed);
-        assertThat(result.toString()).contains("sortAttribute");
+        assertThat(validator.validate(0, 10, "unknown", "asc", allowed))
+                .anyMatch(e -> e.contains("sortAttribute"));
     }
 
     @Test
     @DisplayName("Returns error when sortDirection is invalid")
     void validate_invalidSortDirection_hasError() {
-        var result = validator.validate(0, 10, "name", "sideways", allowed);
-        assertThat(result.toString()).contains("sortDirection");
+        assertThat(validator.validate(0, 10, "name", "sideways", allowed))
+                .anyMatch(e -> e.contains("sortDirection"));
     }
 
     @Test
     @DisplayName("sortDirection is case-insensitive")
     void validate_sortDirectionUpperCase_noError() {
-        var result = validator.validate(0, 10, "name", "DESC", allowed);
-        assertThat(result.toString()).isEmpty();
+        assertThat(validator.validate(0, 10, "name", "DESC", allowed)).isEmpty();
     }
 
     @Test
     @DisplayName("Null pageSize is valid (caller omitted it; provider applies default)")
     void validate_nullPageSize_noError() {
-        var result = validator.validate(null, null, null, null, allowed);
-        assertThat(result.toString()).doesNotContain("PageSize");
+        assertThat(validator.validate(null, null, null, null, allowed))
+                .noneMatch(e -> e.contains("PageSize"));
     }
 
     @Test
     @DisplayName("Non-null params with valid values produce no error")
     void validate_validParams_noErrors() {
-        var result = validator.validate(null, 10, null, null, allowed);
-        assertThat(result.toString()).isEmpty();
+        assertThat(validator.validate(null, 10, null, null, allowed)).isEmpty();
     }
 
     @Test
     @DisplayName("Accumulates multiple errors")
     void validate_multipleErrors_allReported() {
-        var result = validator.validate(-1, 0, "bad", "sideways", allowed);
-        String msg = result.toString();
-        assertThat(msg).contains("PageNumber").contains("PageSize").contains("sortAttribute").contains("sortDirection");
+        var errors = validator.validate(-1, 0, "bad", "sideways", allowed);
+        String joined = String.join(" ", errors);
+        assertThat(joined)
+                .contains("PageNumber")
+                .contains("PageSize")
+                .contains("sortAttribute")
+                .contains("sortDirection");
     }
 }

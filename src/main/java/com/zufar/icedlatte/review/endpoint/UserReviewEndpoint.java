@@ -2,6 +2,7 @@ package com.zufar.icedlatte.review.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.api.ProductReviewsProvider;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserReviewEndpoint {
 
     private final ProductReviewsProvider productReviewsProvider;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @GetMapping(value = "/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getUserReviews(
@@ -22,6 +24,7 @@ public class UserReviewEndpoint {
             @RequestParam(name = "size", required = false) final Integer pageSize,
             @RequestParam(name = "sort_attribute", required = false) final String sortAttribute,
             @RequestParam(name = "sort_direction", required = false) final String sortDirection) {
-        return ResponseEntity.ok(productReviewsProvider.getUserReviews(pageNumber, pageSize, sortAttribute, sortDirection));
+        return ResponseEntity.ok(productReviewsProvider.getUserReviews(
+                securityPrincipalProvider.getUserId(), pageNumber, pageSize, sortAttribute, sortDirection));
     }
 }

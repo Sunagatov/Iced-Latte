@@ -83,7 +83,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @GetMapping(value = "/{productId}/review")
     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {
-        return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId));
+        return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId, securityPrincipalProvider.getUserId()));
     }
 
     @Override

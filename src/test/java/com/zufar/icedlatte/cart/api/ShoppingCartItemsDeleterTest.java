@@ -4,7 +4,6 @@ import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +32,6 @@ class ShoppingCartItemsDeleterTest {
     @Mock
     private ShoppingCartProvider shoppingCartProvider;
 
-    @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
-
     @Test
     @DisplayName("Delete should return the ShoppingCartDto with correct list of items when the itemIdsForDelete list is valid")
     void shouldItemsDeleteFromShoppingCartDtoWithValidItemsList() {
@@ -46,14 +42,12 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto expectedResult = CartDtoTestStub.createShoppingCartDto();
         expectedResult.setItems(CartDtoTestStub.createShoppingCartDtoList());
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartProvider.getByUserId(userId)).thenReturn(expectedResult);
 
-        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
+        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request, userId);
 
         assertEquals(expectedResult, actualResult);
         verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
-        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }
 
@@ -69,14 +63,12 @@ class ShoppingCartItemsDeleterTest {
         request.shoppingCartItemIds(itemIdsForDelete);
         ShoppingCartDto expectedResult = CartDtoTestStub.createEmptyShoppingCartDto();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartProvider.getByUserId(userId)).thenReturn(expectedResult);
 
-        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
+        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request, userId);
 
         assertEquals(expectedResult, actualResult);
         verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
-        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }
 
@@ -90,14 +82,12 @@ class ShoppingCartItemsDeleterTest {
         ShoppingCartDto expectedResult = CartDtoTestStub.createFullShoppingCartDto();
         expectedResult.setItems(CartDtoTestStub.createFullShoppingCartDtoList());
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartProvider.getByUserId(userId)).thenReturn(expectedResult);
 
-        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request);
+        ShoppingCartDto actualResult = shoppingCartItemsDeleter.delete(request, userId);
 
         assertEquals(expectedResult, actualResult);
         verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
-        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartProvider).getByUserId(userId);
     }
 }

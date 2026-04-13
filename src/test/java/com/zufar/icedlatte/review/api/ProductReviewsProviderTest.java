@@ -8,7 +8,6 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,6 @@ class ProductReviewsProviderTest {
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private GetReviewsRequestValidator getReviewsRequestValidator;
-    @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @InjectMocks private ProductReviewsProvider provider;
 
     private UUID productId;
@@ -75,10 +73,9 @@ class ProductReviewsProviderTest {
     @Test
     @DisplayName("getProductReviewForUser returns empty response when no review found")
     void getProductReviewForUserNoReviewReturnsEmpty() {
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
-        var result = provider.getProductReviewForUser(productId);
+        var result = provider.getProductReviewForUser(productId, userId);
 
         assertThat(result).isEqualTo(EMPTY_PRODUCT_REVIEW_RESPONSE);
         verify(productReviewValidator).validateProductExists(productId);
@@ -89,22 +86,20 @@ class ProductReviewsProviderTest {
     void getProductReviewForUserReviewExistsReturnsMappedDto() {
         var review = ProductReview.builder().id(UUID.randomUUID()).build();
         var dto = new ProductReviewDto();
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(review));
         when(productReviewDtoConverter.toProductReviewDto(review)).thenReturn(dto);
 
-        assertThat(provider.getProductReviewForUser(productId)).isEqualTo(dto);
+        assertThat(provider.getProductReviewForUser(productId, userId)).isEqualTo(dto);
     }
 
     @Test
     @DisplayName("getUserReviews uses current user id and returns paginated result")
     void getUserReviewsReturnsResult() {
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         var page = new PageImpl<>(List.<ProductReview>of());
         when(reviewRepository.findAllByUserId(eq(userId), any(Pageable.class))).thenReturn(page);
         var expected = new ProductReviewsAndRatingsWithPagination();
         when(productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(any())).thenReturn(expected);
 
-        assertThat(provider.getUserReviews(0, 10, "createdAt", "desc")).isEqualTo(expected);
+        assertThat(provider.getUserReviews(userId, 0, 10, "createdAt", "desc")).isEqualTo(expected);
     }
 }
