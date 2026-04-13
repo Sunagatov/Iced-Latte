@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api.avatar;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
@@ -18,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,7 +71,7 @@ class UserAvatarUploaderTest {
     }
 
     @Test
-    @DisplayName("uploadUserAvatar skips metadata delete and save when upload is skipped")
+    @DisplayName("uploadUserAvatar throws FileUploadException when upload is skipped (storage unavailable)")
     void uploadUserAvatarSkipsMetadataWhenUploadSkipped() throws Exception {
         UUID userId = UUID.randomUUID();
         String expectedFileName = "user-avatar-" + userId;
@@ -77,7 +79,8 @@ class UserAvatarUploaderTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileUploader.upload(file, BUCKET, expectedFileName)).thenReturn(false);
 
-        uploader.uploadUserAvatar(userId, file);
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+                .isInstanceOf(FileUploadException.class);
 
         verify(fileUploader).upload(file, BUCKET, expectedFileName);
         verify(fileMetadataRepository, never()).deleteByRelatedObjectId(org.mockito.ArgumentMatchers.any());

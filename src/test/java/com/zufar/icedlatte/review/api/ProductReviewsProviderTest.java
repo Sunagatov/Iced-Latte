@@ -5,6 +5,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -22,8 +23,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.review.converter.ProductReviewDtoConverter.EMPTY_PRODUCT_REVIEW_RESPONSE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -71,13 +72,12 @@ class ProductReviewsProviderTest {
     }
 
     @Test
-    @DisplayName("getProductReviewForUser returns empty response when no review found")
+    @DisplayName("getProductReviewForUser throws ProductReviewNotFoundException when no review found")
     void getProductReviewForUserNoReviewReturnsEmpty() {
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
-        var result = provider.getProductReviewForUser(productId, userId);
-
-        assertThat(result).isEqualTo(EMPTY_PRODUCT_REVIEW_RESPONSE);
+        assertThatThrownBy(() -> provider.getProductReviewForUser(productId, userId))
+                .isInstanceOf(ProductReviewNotFoundException.class);
         verify(productReviewValidator).validateProductExists(productId);
     }
 

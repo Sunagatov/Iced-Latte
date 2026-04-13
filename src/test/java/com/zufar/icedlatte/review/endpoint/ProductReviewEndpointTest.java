@@ -34,7 +34,6 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
     private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
-    private static final String AFFOGATO_ID = "ba5f15c4-1f72-4b97-b9cf-4437e5c6c2fa";
     private static final String COCONUT_COLD_BREW_ID = "d1a2b3c4-0001-4000-8000-000000000007";
     private static final String START_OF_REVIEW_FOR_AMERICANO = "Review for Americano";
     private static final String RATING_RESPONSE_SCHEMA = "review/model/schema/stats-response-schema.json";
@@ -103,15 +102,19 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Should fetch review successfully for an authorized user")
+    @DisplayName("Should fetch review successfully for an authorized user who has a review")
     void shouldFetchReviewSuccessfully() {
-        assertRestApiBodySchemaResponse(given(specification).get("/{productId}/review", COCONUT_COLD_BREW_ID), HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
-                .body("text", nullValue())
-                .body("productRating", nullValue());
-
         assertRestApiBodySchemaResponse(given(specification).get("/{productId}/review", AMERICANO_ID), HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
                 .body("text", startsWith(START_OF_REVIEW_FOR_AMERICANO))
                 .body("productRating", equalTo(EXPECTED_PRODUCT_RATING));
+    }
+
+    @Test
+    @DisplayName("Should return 404 when authorized user has no review for the product")
+    void shouldReturn404WhenUserHasNoReview() {
+        assertRestApiNotFoundResponse(
+                given(specification).get("/{productId}/review", COCONUT_COLD_BREW_ID),
+                FAILED_REVIEW_SCHEMA);
     }
 
     @Test
