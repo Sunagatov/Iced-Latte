@@ -40,7 +40,7 @@ public class UpdateUserOperationPerformer {
         );
 
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
-        Address addressEntity = addressDtoConverter.toEntity(addressDto);
+        Address addressEntity = isAddressEmpty(addressDto) ? null : addressDtoConverter.toEntity(addressDto);
 
         userEntity.setFirstName(updateUserAccountRequest.getFirstName());
         userEntity.setLastName(updateUserAccountRequest.getLastName());
@@ -50,5 +50,17 @@ public class UpdateUserOperationPerformer {
 
         UserEntity userEntityWithId = userCrudRepository.save(userEntity);
         return userDtoConverter.toDto(userEntityWithId);
+    }
+
+    private boolean isAddressEmpty(AddressDto addressDto) {
+        if (addressDto == null) return true;
+        return isBlank(addressDto.getCountry())
+                && isBlank(addressDto.getCity())
+                && isBlank(addressDto.getLine())
+                && isBlank(addressDto.getPostcode());
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

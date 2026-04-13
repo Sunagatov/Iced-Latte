@@ -2,6 +2,7 @@ package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -93,6 +94,14 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleJwtTokenHasNoUserEmailException(final JwtTokenHasNoUserEmailException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
         log.warn("exception.auth.invalid_token: message={}", exception.getMessage());
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(JwtTokenBlacklistedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiErrorResponse handleJwtTokenBlacklistedException(final JwtTokenBlacklistedException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        log.warn("auth.refresh.rejected: reason={}, status=401", exception.getMessage());
         return apiErrorResponse;
     }
 

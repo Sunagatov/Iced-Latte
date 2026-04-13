@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,14 +53,20 @@ class UserOperationPerformerTest {
             UserDto expectedDto = new UserDto();
             Address address = new Address();
 
+            AddressDto addressDto = new AddressDto();
+            addressDto.setCountry("UK");
+            addressDto.setCity("London");
+            addressDto.setLine("1 Main St");
+            addressDto.setPostcode("SW1A 1AA");
+
             UpdateUserAccountRequest request = new UpdateUserAccountRequest();
             request.setFirstName("Alice");
             request.setLastName("Smith");
             request.setPhoneNumber("+1234567890");
-            request.setAddress(new AddressDto());
+            request.setAddress(addressDto);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(addressDtoConverter.toEntity(any(AddressDto.class))).thenReturn(address);
+            when(addressDtoConverter.toEntity(addressDto)).thenReturn(address);
             when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(expectedDto);
 
@@ -86,7 +91,6 @@ class UserOperationPerformerTest {
             request.setAddress(null);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(addressDtoConverter.toEntity(null)).thenReturn(null);
             when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
 
