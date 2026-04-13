@@ -93,7 +93,7 @@ ssh-key-*.key
 /docker-compose.prod.yml
 /.env.prod
 /ops/README.md
-/ops/scripts/.env.prod
+/ops/scripts/
 maintaner/
 
 ##############################
