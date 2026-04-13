@@ -9,7 +9,6 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,15 +30,12 @@ import java.util.stream.Collectors;
 public class AddItemsToShoppingCartHelper {
 
     private final ShoppingCartRepository shoppingCartRepository;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductInfoRepository productInfoRepository;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
     private final ShoppingCartCreator shoppingCartCreator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto add(final Set<NewShoppingCartItemDto> itemsToAdd) {
-        UUID userId = securityPrincipalProvider.getUserId();
-
+    public ShoppingCartDto add(final UUID userId, final Set<NewShoppingCartItemDto> itemsToAdd) {
         ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
         mergeIntoCart(shoppingCart, productsWithQuantity);

@@ -45,7 +45,8 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
             return ResponseEntity.badRequest().build();
         }
         log.debug("cart.items.adding: count={}", request.getItems().size());
-        var shoppingCart = addItemsToShoppingCartHelper.add(request.getItems());
+        var userId = securityPrincipalProvider.getUserId();
+        var shoppingCart = addItemsToShoppingCartHelper.add(userId, request.getItems());
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }

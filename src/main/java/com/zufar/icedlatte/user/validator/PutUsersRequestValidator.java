@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,87 +21,69 @@ public class PutUsersRequestValidator {
     public void validate(String firstName,
                          String lastName,
                          String phoneNumber,
-                         String birthDate,
+                         LocalDate birthDate,
                          AddressDto addressDto) {
-        StringBuilder errorMessages = new StringBuilder();
+        List<String> errors = new ArrayList<>();
 
-        errorMessages.append(validateNameParameter(firstName, "First name"));
-        errorMessages.append(validateNameParameter(lastName, "Last name"));
-        errorMessages.append(validatePhoneParameter(phoneNumber));
-        errorMessages.append(validateBirthDateParameter(birthDate));
-        errorMessages.append(validateAddressParameter(addressDto));
+        validateName(firstName, "First name", errors);
+        validateName(lastName, "Last name", errors);
+        validatePhone(phoneNumber, errors);
+        validateBirthDate(birthDate, errors);
+        validateAddress(addressDto, errors);
 
-        if (!errorMessages.isEmpty()) {
-            throw new PutUsersBadRequestException(errorMessages.toString());
+        if (!errors.isEmpty()) {
+            throw new PutUsersBadRequestException(String.join(" ", errors));
         }
     }
 
-    private StringBuilder validateNameParameter(String name,
-                                                String parameterTypeForErrorMessage) {
-        StringBuilder errorMessages = new StringBuilder();
+    private void validateName(String name, String label, List<String> errors) {
         if (name == null) {
-            errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " is required."));
+            errors.add(error(label + " is required."));
         } else if (name.isBlank()) {
-            errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " must not be blank."));
+            errors.add(error(label + " must not be blank."));
         } else if (name.length() < MIN_NAME_LENGTH || name.length() > MAX_NAME_LENGTH) {
-            errorMessages.append(createErrorMessage(String.format("%s must be between %d and %d characters.", parameterTypeForErrorMessage, MIN_NAME_LENGTH, MAX_NAME_LENGTH)));
+            errors.add(error(String.format("%s must be between %d and %d characters.", label, MIN_NAME_LENGTH, MAX_NAME_LENGTH)));
         } else if (!name.matches("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s'\\u2019\\-]+$")) {
-            errorMessages.append(createErrorMessage(parameterTypeForErrorMessage + " can only contain letters, spaces, hyphens, and apostrophes."));
+            errors.add(error(label + " can only contain letters, spaces, hyphens, and apostrophes."));
         }
-        return errorMessages;
     }
 
-    private StringBuilder validatePhoneParameter(String phoneNumber) {
-        StringBuilder errorMessages = new StringBuilder();
+    private void validatePhone(String phoneNumber, List<String> errors) {
         if (phoneNumber != null && !phoneNumber.isBlank() && !phoneNumber.matches(PHONE_REGEXP)) {
-            errorMessages.append(createErrorMessage(PHONE_ERROR));
+            errors.add(error(PHONE_ERROR));
         }
-        return errorMessages;
     }
 
-    private StringBuilder validateBirthDateParameter(String birthDate) {
-        StringBuilder errorMessages = new StringBuilder();
-        if (birthDate != null && !birthDate.isBlank()) {
-            try {
-                LocalDate localDate = LocalDate.parse(birthDate, DateTimeFormatter.ISO_LOCAL_DATE);
-                if (!localDate.isBefore(LocalDate.now())) {
-                    errorMessages.append(createErrorMessage("Date of birth must be in the past."));
-                } else if (localDate.isAfter(LocalDate.now().minusYears(13))) {
-                    errorMessages.append(createErrorMessage("You must be at least 13 years old."));
-                }
-            } catch (DateTimeParseException e) {
-                errorMessages.append(createErrorMessage("Date of birth must be in format YYYY-MM-DD."));
-            }
+    private void validateBirthDate(LocalDate birthDate, List<String> errors) {
+        if (birthDate == null) return;
+        if (!birthDate.isBefore(LocalDate.now())) {
+            errors.add(error("Date of birth must be in the past."));
+        } else if (birthDate.isAfter(LocalDate.now().minusYears(13))) {
+            errors.add(error("You must be at least 13 years old."));
         }
-        return errorMessages;
     }
 
-    private StringBuilder validateAddressParameter(AddressDto addressDto) {
-        StringBuilder errorMessages = new StringBuilder();
-        if (addressDto != null) {
-            boolean anyFieldPresent = addressDto.getCountry() != null
-                    || addressDto.getCity() != null
-                    || addressDto.getLine() != null
-                    || addressDto.getPostcode() != null;
-            if (anyFieldPresent) {
-                validateAddressField(errorMessages, addressDto.getCountry(), "country");
-                validateAddressField(errorMessages, addressDto.getCity(), "city");
-                validateAddressField(errorMessages, addressDto.getLine(), "line");
-                validateAddressField(errorMessages, addressDto.getPostcode(), "postcode");
-            }
+    private void validateAddress(AddressDto addressDto, List<String> errors) {
+        if (addressDto == null) return;
+        boolean anyFieldPresent = addressDto.getCountry() != null
+                || addressDto.getCity() != null
+                || addressDto.getLine() != null
+                || addressDto.getPostcode() != null;
+        if (anyFieldPresent) {
+            validateAddressField(addressDto.getCountry(), "country", errors);
+            validateAddressField(addressDto.getCity(), "city", errors);
+            validateAddressField(addressDto.getLine(), "line", errors);
+            validateAddressField(addressDto.getPostcode(), "postcode", errors);
         }
-        return errorMessages;
     }
 
-    private void validateAddressField(StringBuilder errors,
-                                      String value,
-                                      String fieldName) {
+    private void validateAddressField(String value, String fieldName, List<String> errors) {
         if (value == null || value.isBlank()) {
-            errors.append(createErrorMessage(String.format("Address field `%s` is required and must not be blank.", fieldName)));
+            errors.add(error(String.format("Address field `%s` is required and must not be blank.", fieldName)));
         }
     }
 
-    private String createErrorMessage(String errorMessage) {
-        return String.format(" Error: { %s }. ", errorMessage);
+    private static String error(String message) {
+        return String.format(" Error: { %s }. ", message);
     }
 }

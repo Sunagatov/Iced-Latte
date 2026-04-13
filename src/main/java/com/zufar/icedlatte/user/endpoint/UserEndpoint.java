@@ -5,16 +5,12 @@ import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.*;
 import com.zufar.icedlatte.user.api.*;
 import com.zufar.icedlatte.user.api.avatar.*;
-import com.zufar.icedlatte.user.repository.UserRepository;
 import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,13 +28,11 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UpdateUserOperationPerformer updateUserOperationPerformer;
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
-    private final UserRepository userRepository;
+    private final UserAccountService userAccountService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
     private final UserAvatarLinkProvider userAvatarLinkProvider;
-    private final EmailTokenConformer emailTokenConformer;
-    private final EmailTokenSender emailTokenSender;
 
     @Override
     @GetMapping
@@ -52,7 +46,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
         var userId = securityPrincipalProvider.getUserId();
-        UserDto updated = updateUserOperationPerformer.updateUser(updateUserAccountRequest);
+        UserDto updated = updateUserOperationPerformer.updateUser(userId, updateUserAccountRequest);
         log.info("user.profile.updated: userId={}", userId);
         return ResponseEntity.ok(updated);
     }
@@ -68,10 +62,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @DeleteMapping
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        userRepository.deleteById(userId);
+        userAccountService.deleteUser(userId);
         log.info("user.account.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }
@@ -102,30 +95,4 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         log.info("user.avatar.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }
-
-    @Override
-    @PostMapping(path = "/password/reset")
-    public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest initiatePasswordResetRequest) {
-        try {
-            singleUserProvider.getUserEntityByEmail(initiatePasswordResetRequest.getEmail());
-            emailTokenSender.sendPasswordResetCode(initiatePasswordResetRequest.getEmail());
-        } catch (com.zufar.icedlatte.user.exception.UserNotFoundException e) {
-            log.warn("user.password.reset.unknown_email");
-        } catch (com.zufar.icedlatte.email.exception.TimeTokenException e) {
-            // Swallow cooldown error — returning a distinct response would confirm the email exists.
-            log.warn("user.password.reset.cooldown");
-        }
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
-    @PostMapping(path = "/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@Valid @RequestBody final ConfirmPasswordResetRequest confirmEmailRequest) {
-        emailTokenConformer.confirmResetPasswordEmailByCode(
-                new ConfirmEmailRequest(confirmEmailRequest.getToken()),
-                confirmEmailRequest.getNewPassword());
-        log.info("user.password.reset.confirmed");
-        return ResponseEntity.ok().build();
-    }
-
 }

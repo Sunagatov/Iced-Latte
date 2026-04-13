@@ -9,7 +9,6 @@ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,6 @@ public class ProductReviewCreator {
 
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final SingleUserProvider singleUserProvider;
     private final ProductReviewValidator productReviewValidator;
     private final ProductInfoRepository productInfoRepository;
@@ -34,8 +32,8 @@ public class ProductReviewCreator {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(final UUID productId,
+                                   final UUID userId,
                                    final ProductReviewRequest productReviewRequest) {
-        var userId = securityPrincipalProvider.getUserId();
         var productReviewText = productReviewRequest.getText();
 
         productReviewValidator.validateProductExists(productId);

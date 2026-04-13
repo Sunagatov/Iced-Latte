@@ -11,6 +11,7 @@ import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
 import com.zufar.icedlatte.review.api.ProductReviewsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewsStatisticsProvider;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -43,12 +44,14 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewsStatisticsProvider productReviewsStatisticsProvider;
     private final ProductReviewLikesUpdater productReviewLikesUpdater;
     private final GetReviewsRequestValidator getReviewsRequestValidator;
+    private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
     @PostMapping(value = "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
-        var review = productReviewCreator.create(productId, productReviewRequest);
+        UUID userId = securityPrincipalProvider.getUserId();
+        var review = productReviewCreator.create(productId, userId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
     }
@@ -57,7 +60,8 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
-        productReviewDeleter.delete(productId, productReviewId);
+        UUID userId = securityPrincipalProvider.getUserId();
+        productReviewDeleter.delete(productId, productReviewId, userId);
         log.info("review.deleted: reviewId={}", productReviewId);
         return ResponseEntity.ok().build();
     }
@@ -93,7 +97,8 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {
-        var productReview = productReviewLikesUpdater.update(productId, productReviewId, request.getIsLike());
+        UUID userId = securityPrincipalProvider.getUserId();
+        var productReview = productReviewLikesUpdater.update(productId, productReviewId, userId, request.getIsLike());
         log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }

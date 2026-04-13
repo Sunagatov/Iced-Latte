@@ -1,0 +1,22 @@
+package com.zufar.icedlatte.user.api;
+
+import com.zufar.icedlatte.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class UserAccountService {
+
+    private final UserRepository userRepository;
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void deleteUser(UUID userId) {
+        userRepository.deleteById(userId);
+    }
+}

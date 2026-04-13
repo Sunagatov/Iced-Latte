@@ -8,7 +8,6 @@ import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,15 +20,11 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ProductReviewValidator {
 
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductReviewRepository productReviewRepository;
     private final ProductInfoRepository productInfoRepository;
 
     private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
 
-    /**
-     * Check if the product review's text is not empty and contains no forbidden characters
-     */
     public void validateReviewText(final String productReviewText) {
         if (productReviewText.trim().isEmpty()) {
             throw new EmptyProductReviewException();
@@ -39,32 +34,20 @@ public class ProductReviewValidator {
         }
     }
 
-    /**
-     * Check if the product exists
-     */
     public void validateProductExists(final UUID productId) {
-        var productInfo = productInfoRepository.findById(productId);
-        if (productInfo.isEmpty()) {
+        if (productInfoRepository.findById(productId).isEmpty()) {
             throw new ProductNotFoundForReviewException(productId);
         }
     }
 
-    /**
-     * Check if the user has already created a review for this product
-     */
-    public void validateReviewExistsForUser(final UUID userId,
-                                            final UUID productId) {
+    public void validateReviewExistsForUser(final UUID userId, final UUID productId) {
         var productReview = productReviewRepository.findByUserIdAndProductId(userId, productId);
         if (productReview.isPresent()) {
             throw new DeniedProductReviewCreationException(userId, productId, productReview.get().getId());
         }
     }
 
-    /**
-     * Check if the product's review deletion is allowed
-     */
-    public void validateProductReviewDeletionAllowed(final UUID productReviewId) {
-        var currentUserId = securityPrincipalProvider.getUserId();
+    public void validateProductReviewDeletionAllowed(final UUID productReviewId, final UUID currentUserId) {
         var review = productReviewRepository.findById(productReviewId)
                 .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));
         if (!currentUserId.equals(review.getUser().getId())) {
@@ -72,9 +55,6 @@ public class ProductReviewValidator {
         }
     }
 
-    /**
-     * Check if the product and review both exist and the review belongs to the product
-     */
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
         if (!productInfoRepository.existsById(productId)) {
             throw new ProductNotFoundForReviewException(productId);

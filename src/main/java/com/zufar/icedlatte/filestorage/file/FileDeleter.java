@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.filestorage.file;
 
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
 import com.zufar.icedlatte.filestorage.aws.AwsObjectDeleter;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,14 +18,14 @@ public class FileDeleter {
 
     private final AwsObjectDeleter awsObjectDeleter;
     private final FileMetadataProvider fileMetadataProvider;
-    private final FileMetadataDeleter fileMetadataDeleter;
+    private final FileMetadataRepository fileMetadataRepository;
 
     public FileDeleter(@Autowired(required = false) AwsObjectDeleter awsObjectDeleter,
                        FileMetadataProvider fileMetadataProvider,
-                       FileMetadataDeleter fileMetadataDeleter) {
+                       FileMetadataRepository fileMetadataRepository) {
         this.awsObjectDeleter = awsObjectDeleter;
         this.fileMetadataProvider = fileMetadataProvider;
-        this.fileMetadataDeleter = fileMetadataDeleter;
+        this.fileMetadataRepository = fileMetadataRepository;
         if (awsObjectDeleter == null) {
             log.info("storage.aws.disabled: file deletion from S3 will be skipped");
         }
@@ -41,7 +41,7 @@ public class FileDeleter {
                     } else {
                         log.debug("file.delete.skipped: reason=aws_not_configured");
                     }
-                    fileMetadataDeleter.deleteByRelatedObjectId(relatedObjectId);
+                    fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
                     log.info("file.deleted: objectId={}", relatedObjectId);
                 });
     }

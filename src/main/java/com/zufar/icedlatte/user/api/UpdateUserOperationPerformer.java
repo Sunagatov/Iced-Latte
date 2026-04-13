@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.api;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.converter.AddressDtoConverter;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.Address;
@@ -26,22 +25,17 @@ public class UpdateUserOperationPerformer {
     private final UserRepository userCrudRepository;
     private final UserDtoConverter userDtoConverter;
     private final AddressDtoConverter addressDtoConverter;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final PutUsersRequestValidator putUsersRequestValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public UserDto updateUser(final UpdateUserAccountRequest updateUserAccountRequest) {
-        UUID userId = securityPrincipalProvider.getUserId();
-
+    public UserDto updateUser(final UUID userId, final UpdateUserAccountRequest updateUserAccountRequest) {
         AddressDto addressDto = updateUserAccountRequest.getAddress();
-        String birthDateStr = updateUserAccountRequest.getBirthDate() != null
-                ? updateUserAccountRequest.getBirthDate().toString() : null;
 
         putUsersRequestValidator.validate(
                 updateUserAccountRequest.getFirstName(),
                 updateUserAccountRequest.getLastName(),
                 updateUserAccountRequest.getPhoneNumber(),
-                birthDateStr,
+                updateUserAccountRequest.getBirthDate(),
                 addressDto
         );
 

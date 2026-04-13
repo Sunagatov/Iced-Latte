@@ -23,8 +23,9 @@ public class ProductReviewDeleter {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void delete(final UUID productId,
-                       final UUID productReviewId) {
-        productReviewValidator.validateProductReviewDeletionAllowed(productReviewId);
+                       final UUID productReviewId,
+                       final UUID userId) {
+        productReviewValidator.validateProductReviewDeletionAllowed(productReviewId, userId);
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
         reviewRepository.deleteById(productReviewId);
