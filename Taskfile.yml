@@ -1,0 +1,204 @@
+version: '3'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Iced Latte — Local Development Tasks
+# Run from project root: task <task>
+#
+# QUICK START (recommended — db in Docker, backend on host)
+#   task infra-up        # [terminal 1] start PostgreSQL, Redis, MinIO
+#   task run             # [terminal 2] run backend with hot reload
+#   task health          # check backend is up
+#   task urls            # print all useful local URLs
+#
+# FULL DOCKER (everything in containers)
+#   task backend-up      # backend + infra using published image
+#   task fullstack-up    # backend + frontend + infra
+#   task stack-down      # stop everything
+#   task stack-reset     # stop + delete volumes (full wipe)
+#
+# TESTS
+#   task test            # run all tests
+#
+# MAINTAINER (prod deploy) → see maintaner/Taskfile.yml
+#   task -t maintaner/Taskfile.yml prod:ship
+# ─────────────────────────────────────────────────────────────────────────────
+
+vars:
+  COMPOSE_FILE: docker-compose.yml
+  BACKEND_IMAGE: zufarexplainedit/iced-latte-backend:latest
+  BACKEND_HEALTH_URL: http://localhost:8083/actuator/health
+  SWAGGER_URL: http://localhost:8083/api/docs/swagger-ui/index.html
+  MINIO_CONSOLE_URL: http://localhost:9001
+
+tasks:
+
+  # ── Internal ─────────────────────────────────────────────────
+  docker-ready:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "❌ Docker is not installed."
+          echo "💡 Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
+          exit 1
+        fi
+        if ! docker compose version >/dev/null 2>&1; then
+          echo "❌ Docker Compose is not available."
+          exit 1
+        fi
+        if ! docker info >/dev/null 2>&1; then
+          echo "❌ Docker is not running. Start Docker Desktop first."
+          exit 1
+        fi
+
+  # ── Native dev (db in Docker, backend on host) ────────────────
+  infra-up:
+    silent: true
+    desc: "[terminal 1] Start PostgreSQL, Redis, MinIO in Docker"
+    deps: [docker-ready]
+    cmds:
+      - echo "🚀 Starting infrastructure (PostgreSQL, Redis, MinIO)..."
+      - docker compose -f {{.COMPOSE_FILE}} up -d postgres redis minio minio-init
+      - echo "✅ Infrastructure is up."
+
+  infra-down:
+    silent: true
+    desc: "Stop infrastructure containers (keep volumes)"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} stop postgres redis minio minio-init
+      - echo "✅ Infrastructure stopped."
+
+  run:
+    silent: true
+    desc: "[terminal 2] Run backend natively with hot reload (requires infra-up)"
+    cmds:
+      - |
+        if [[ ! -f ".env" ]]; then
+          echo "❌ .env not found. Copy .env.example to .env first."
+          exit 1
+        fi
+        echo "▶️  Starting backend on host..."
+        echo "💡 Make sure infra-up is running in another terminal."
+        set -a; source .env; set +a
+        mvn spring-boot:run
+
+  # ── Tests ─────────────────────────────────────────────────────
+  test:
+    silent: true
+    desc: "Run all tests (Docker must be running for Testcontainers)"
+    deps: [docker-ready]
+    cmds:
+      - echo "🧪 Running tests..."
+      - mvn test 2>&1 | tee /tmp/test-output.txt
+      - echo "✅ Tests complete. Full output saved to /tmp/test-output.txt"
+
+  # ── Full Docker stack ─────────────────────────────────────────
+  backend-up:
+    silent: true
+    desc: "Start backend + infra in Docker using published image"
+    deps: [docker-ready]
+    cmds:
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend up -d --no-build backend
+      - echo "✅ Backend Docker stack is starting."
+
+  backend-down:
+    silent: true
+    desc: "Stop backend + infra Docker stack"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend down --remove-orphans
+      - echo "✅ Backend Docker stack stopped."
+
+  fullstack-up:
+    silent: true
+    desc: "Start backend + frontend + infra in Docker"
+    deps: [docker-ready]
+    cmds:
+      - echo "📥 Pulling backend image {{.BACKEND_IMAGE}}..."
+      - docker pull {{.BACKEND_IMAGE}}
+      - echo "🏗️  Building frontend from source..."
+      - docker compose -f {{.COMPOSE_FILE}} build frontend
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend up -d --no-build backend frontend
+      - echo "✅ Full stack is starting."
+
+  fullstack-down:
+    silent: true
+    desc: "Stop backend + frontend + infra Docker stack"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
+      - echo "✅ Full stack stopped."
+
+  stack-down:
+    silent: true
+    desc: "Stop all containers (keep volumes)"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down --remove-orphans
+      - echo "✅ Stack stopped."
+
+  stack-reset:
+    silent: true
+    desc: "Stop all containers and delete volumes (full wipe)"
+    deps: [docker-ready]
+    cmds:
+      - echo "♻️  Resetting local Docker environment..."
+      - docker compose -f {{.COMPOSE_FILE}} --profile backend --profile frontend down -v --remove-orphans
+      - echo "✅ Local environment reset complete."
+
+  # ── Logs & Status ─────────────────────────────────────────────
+  backend-logs:
+    silent: true
+    desc: "Follow backend container logs"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} logs -f backend
+
+  infra-logs:
+    silent: true
+    desc: "Follow infrastructure logs (PostgreSQL, Redis, MinIO)"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} logs -f postgres redis minio
+
+  status:
+    silent: true
+    desc: "Show local container status"
+    deps: [docker-ready]
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} ps
+
+  health:
+    silent: true
+    desc: "Wait for backend and check health endpoint"
+    cmds:
+      - |
+        echo "🏥 Waiting for backend health endpoint..."
+        for i in $(seq 1 30); do
+          if curl -fsS {{.BACKEND_HEALTH_URL}} >/dev/null 2>&1; then
+            echo "✅ Backend is healthy."
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "❌ Backend did not become healthy within 60 seconds."
+        exit 1
+
+  urls:
+    silent: true
+    desc: "Print useful local URLs"
+    cmds:
+      - echo "🔗 Local URLs:"
+      - 'echo "  Backend health: {{.BACKEND_HEALTH_URL}}"'
+      - 'echo "  Swagger UI:     {{.SWAGGER_URL}}"'
+      - 'echo "  MinIO console:  {{.MINIO_CONSOLE_URL}}"'
+
+  # ── Cleanup ───────────────────────────────────────────────────
+  prune:
+    desc: "Remove unused Docker resources on this machine"
+    cmds:
+      - docker system prune -af --volumes
