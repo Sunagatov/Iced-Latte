@@ -32,4 +32,12 @@ public class FileMetadataSaver {
         List<FileMetadata> fileMetadataList = fileMetadataDtoConverter.toEntityList(fileMetadataDtos);
         fileMetadataRepository.saveAll(fileMetadataList);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED)
+    public void replaceAllByBucket(final String bucketName, final List<FileMetadataDto> fileMetadataDtos) {
+        fileMetadataRepository.deleteByBucketName(bucketName);
+        List<FileMetadata> fileMetadataList = fileMetadataDtoConverter.toEntityList(fileMetadataDtos);
+        fileMetadataRepository.saveAll(fileMetadataList);
+    }
 }

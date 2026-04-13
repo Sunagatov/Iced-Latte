@@ -6,7 +6,6 @@ import com.zufar.icedlatte.filestorage.aws.AwsProvider;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
-import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,16 +35,13 @@ public class ApplicationMigration implements ApplicationRunner {
     private final FileUploader fileUploader;
     private final AwsProvider awsProvider;
     private final FileMetadataSaver fileMetadataSaver;
-    private final FileMetadataRepository fileMetadataRepository;
 
     public ApplicationMigration(@Autowired(required = false) FileUploader fileUploader,
                                 @Autowired(required = false) AwsProvider awsProvider,
-                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver,
-                                @Autowired(required = false) FileMetadataRepository fileMetadataRepository) {
+                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver) {
         this.fileUploader = fileUploader;
         this.awsProvider = awsProvider;
         this.fileMetadataSaver = fileMetadataSaver;
-        this.fileMetadataRepository = fileMetadataRepository;
     }
 
     @Override
@@ -66,7 +62,7 @@ public class ApplicationMigration implements ApplicationRunner {
     }
 
     private boolean isAwsConfigured() {
-        return fileUploader != null && awsProvider != null
+        return fileUploader != null && awsProvider != null && fileMetadataSaver != null
                 && productPictureBucket != null && !productPictureBucket.isEmpty()
                 && directoryPath != null && !directoryPath.isEmpty();
     }
@@ -101,10 +97,7 @@ public class ApplicationMigration implements ApplicationRunner {
             return;
         }
         try {
-            if (fileMetadataRepository != null) {
-                fileMetadataRepository.deleteByBucketName(productPictureBucket);
-            }
-            fileMetadataSaver.saveAll(fileMetadataDtos);
+            fileMetadataSaver.replaceAllByBucket(productPictureBucket, fileMetadataDtos);
             log.info("migration.metadata.saved: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
         } catch (DataAccessException e) {
             log.warn("migration.metadata.save_error: reason={}", e.getMessage(), e);
