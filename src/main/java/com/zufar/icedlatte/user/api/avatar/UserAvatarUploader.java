@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.user.api.avatar;
 
 import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class UserAvatarUploader {
 
     private final FileUploader fileUploader;
     private final FileMetadataSaver fileMetadataSaver;
-    private final FileMetadataDeleter fileMetadataDeleter;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @Autowired(required = false)
     private AwsCloudFrontInvalidator cloudfrontInvalidator;
@@ -58,7 +58,7 @@ public class UserAvatarUploader {
         if (!uploaded) {
             return;
         }
-        fileMetadataDeleter.deleteByRelatedObjectId(userId);
+        fileMetadataRepository.deleteByRelatedObjectId(userId);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
         fileMetadataSaver.save(fileMetadataDto);
         if (cloudfrontInvalidator != null) {
