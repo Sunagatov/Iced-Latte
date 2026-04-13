@@ -26,6 +26,7 @@ spring:
   application:
     name: Iced Latte Application
     version: ${APP_VERSION:1}
+    label: iced-latte-application
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: false

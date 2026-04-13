@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <springProperty scope="context" name="application_name" source="spring.application.name"/>
+    <springProperty scope="context" name="application_label" source="spring.application.label" defaultValue="iced-latte-application"/>
     <springProperty scope="context" name="application_version" source="spring.application.version" defaultValue="unknown"/>
     <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
     <springProperty scope="context" name="loki_url" source="LOKI_URL" defaultValue="https://logs-prod-012.grafana.net/loki/api/v1/push"/>
@@ -54,7 +55,7 @@
             </auth>
             <requestTimeoutMs>15000</requestTimeoutMs>
         </http>
-        <labels>application=%replace(${application_name}){' ', '_'},environment=${environment},level=%level</labels>
+        <labels>application=${application_label},environment=${environment},level=%level</labels>
         <message class="ch.qos.logback.classic.PatternLayout">
             <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex</pattern>
         </message>

@@ -70,6 +70,7 @@
     <!-- ========================================== -->
     <springProperty scope="context" name="loki_enabled" source="logging.loki.enabled" defaultValue="false"/>
     <springProperty scope="context" name="loki_url" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+    <springProperty scope="context" name="application_label" source="spring.application.label" defaultValue="iced-latte-application"/>
 
     <if>
         <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
@@ -81,7 +82,7 @@
                 <http>
                     <url>${loki_url}</url>
                 </http>
-                <labels>application=%replace(${application_name}){' ', '_'},environment=${environment},level=%level</labels>
+                <labels>application=${application_label},environment=${environment},level=%level</labels>
                 <message class="ch.qos.logback.classic.PatternLayout">
                     <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex</pattern>
                 </message>
