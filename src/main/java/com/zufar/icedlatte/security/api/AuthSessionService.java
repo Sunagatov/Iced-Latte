@@ -89,10 +89,11 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeAllForUserBySessionId(UUID sessionId) {
-        sessionRepository.findById(sessionId).ifPresent(s -> {
-            revokeAllForUser(s.getUserId());
-            log.warn("auth.session.replay_detected_old_token: sessionId={}, userId={}", sessionId, s.getUserId());
-        });
+        // findActiveByHash already revoked all sessions and logged replay_detected.
+        // This path handles legacy (non-session-managed) tokens that bypass that flow.
+        sessionRepository.findById(sessionId)
+                .filter(s -> s.getRevokedAt() == null)
+                .ifPresent(s -> revokeAllForUser(s.getUserId()));
     }
 
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.zufar.icedlatte.review")
 @RequiredArgsConstructor
 @Order(0)
 public class ProductReviewExceptionHandler {

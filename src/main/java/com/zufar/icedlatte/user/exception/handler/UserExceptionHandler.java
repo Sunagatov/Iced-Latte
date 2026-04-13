@@ -9,6 +9,7 @@ import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -70,6 +71,13 @@ public class UserExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
         log.warn("exception.user.invalid_property: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
+        log.warn("exception.user.data_integrity: status=400");
+        return apiErrorResponseCreator.buildResponse("Request contains invalid or conflicting data.", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
