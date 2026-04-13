@@ -26,7 +26,7 @@ public interface AuthSessionRepository extends JpaRepository<AuthSessionEntity, 
                                                @Param("now") OffsetDateTime now);
 
     @Modifying
-    @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :now " +
+    @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :now, s.compromised = true " +
             "WHERE s.userId = :userId " +
             "AND s.revokedAt IS NULL " +
             "AND s.compromised = false")

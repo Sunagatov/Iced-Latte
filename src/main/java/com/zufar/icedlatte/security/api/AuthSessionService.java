@@ -106,12 +106,14 @@ public class AuthSessionService {
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
         // Check if this is a previously-rotated token (replay attack)
         sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(session -> {
-            if (!session.isCompromised()) {
+            if (!session.isCompromised() && session.getRevokedAt() == null) {
                 session.setCompromised(true);
                 session.setRevokedAt(OffsetDateTime.now());
                 sessionRepository.save(session);
                 log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
                 revokeAllForUser(session.getUserId());
+            } else {
+                log.warn("auth.session.replay_repeated: sessionId={}, userId={}", session.getId(), session.getUserId());
             }
             throw new JwtTokenBlacklistedException("Refresh token has been rotated");
         });
