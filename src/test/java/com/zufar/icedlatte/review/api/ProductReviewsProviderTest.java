@@ -25,7 +25,6 @@ import java.util.UUID;
 
 import static com.zufar.icedlatte.review.converter.ProductReviewDtoConverter.EMPTY_PRODUCT_REVIEW_RESPONSE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -71,30 +70,6 @@ class ProductReviewsProviderTest {
 
         assertThat(result).isEqualTo(expected);
         verify(productReviewValidator).validateProductExists(productId);
-    }
-
-    @Test
-    @DisplayName("getProductReviews throws on negative page number")
-    void getProductReviewsNegativePageNumberThrows() {
-        assertThatThrownBy(() -> provider.getProductReviews(productId, -1, 10, null, null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("non-negative");
-    }
-
-    @Test
-    @DisplayName("getProductReviews throws on page size less than 1")
-    void getProductReviewsZeroPageSizeThrows() {
-        assertThatThrownBy(() -> provider.getProductReviews(productId, 0, 0, null, null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("at least 1");
-    }
-
-    @Test
-    @DisplayName("getProductReviews throws on invalid rating value")
-    void getProductReviewsInvalidRatingThrows() {
-        assertThatThrownBy(() -> provider.getProductReviews(productId, 0, 10, null, null, List.of(6)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("1 and 5");
     }
 
     @Test

@@ -8,14 +8,12 @@ import com.zufar.icedlatte.security.exception.SessionNotFoundException;
 import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -38,12 +36,6 @@ class AuthSessionServiceTest {
     @Mock private ClientIpExtractor clientIpExtractor;
     @Mock private HttpServletRequest request;
     @InjectMocks private AuthSessionService service;
-
-    @BeforeEach
-    void setUp() {
-        // inject self-reference with the same instance (no proxy needed for unit tests)
-        ReflectionTestUtils.setField(service, "self", service);
-    }
 
     @Test
     @DisplayName("createSession saves and returns entity")

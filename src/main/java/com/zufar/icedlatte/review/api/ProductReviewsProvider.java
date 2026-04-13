@@ -46,18 +46,8 @@ public class ProductReviewsProvider {
 
         int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
-        if (page < 0) {
-            throw new IllegalArgumentException("Page number must be non-negative, got: " + page);
-        }
-        if (size < 1) {
-            throw new IllegalArgumentException("Page size must be at least 1, got: " + size);
-        }
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
-
-        if (productRatings != null && productRatings.stream().anyMatch(r -> r == null || r < 1 || r > 5)) {
-            throw new IllegalArgumentException("Product ratings must be integers between 1 and 5");
-        }
 
         var responsePage = reviewRepository
                 .findAllProductReviews(productId, productRatings, PageRequestFactory.of(page, size, sortAttr, sortDir))
