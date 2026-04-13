@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
+import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
 
 @Slf4j
@@ -63,7 +63,7 @@ public class PageableProductsProvider {
         );
 
         Page<ProductInfo> rawPage = productInfoRepository
-                .findAll(spec, createPageableObject(page, size, sortAttr, sortDir));
+                .findAll(spec, PageRequestFactory.of(page, size, sortAttr, sortDir));
 
         List<ProductInfoDto> dtos = rawPage.getContent().stream()
                 .map(productInfoDtoConverter::toDto)

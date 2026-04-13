@@ -1,17 +1,17 @@
-package com.zufar.icedlatte.common.util;
+package com.zufar.icedlatte.common.pagination;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-public final class Utils {
+public final class PageRequestFactory {
 
-    private Utils() {}
+    private PageRequestFactory() {}
 
-    public static Pageable createPageableObject(final Integer page,
-                                                final Integer size,
-                                                final String sortAttribute,
-                                                final String sortDirection) {
+    public static Pageable of(final int page,
+                              final int size,
+                              final String sortAttribute,
+                              final String sortDirection) {
         Sort sort = Sort.by(sortAttribute);
         sort = Sort.Direction.fromString(sortDirection) == Sort.Direction.ASC
                 ? sort.ascending()

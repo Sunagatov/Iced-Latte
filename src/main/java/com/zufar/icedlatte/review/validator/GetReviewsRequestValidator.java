@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
+import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class GetReviewsRequestValidator {
         errorMessages.append(productRatingsParameterErrorMessages);
 
         if (!errorMessages.isEmpty()) {
-            throw new GetProductsBadRequestException(errorMessages.toString());
+            throw new GetReviewsBadRequestException(errorMessages.toString());
         }
     }
 

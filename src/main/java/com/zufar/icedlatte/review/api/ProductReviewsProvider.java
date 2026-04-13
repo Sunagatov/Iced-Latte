@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.common.util.Utils.createPageableObject;
+import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import static com.zufar.icedlatte.review.converter.ProductReviewDtoConverter.EMPTY_PRODUCT_REVIEW_RESPONSE;
 
 @Slf4j
@@ -60,7 +60,7 @@ public class ProductReviewsProvider {
         }
 
         var responsePage = reviewRepository
-                .findAllProductReviews(productId, productRatings, createPageableObject(page, size, sortAttr, sortDir))
+                .findAllProductReviews(productId, productRatings, PageRequestFactory.of(page, size, sortAttr, sortDir))
                 .map(productReviewDtoConverter::toProductReviewDto);
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }
@@ -88,7 +88,7 @@ public class ProductReviewsProvider {
         getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, null);
         var userId = securityPrincipalProvider.getUserId();
         var responsePage = reviewRepository
-                .findAllByUserId(userId, createPageableObject(page, size, sortAttr, sortDir))
+                .findAllByUserId(userId, PageRequestFactory.of(page, size, sortAttr, sortDir))
                 .map(productReviewDtoConverter::toProductReviewDto);
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }

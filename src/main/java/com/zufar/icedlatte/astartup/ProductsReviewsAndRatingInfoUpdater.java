@@ -5,6 +5,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -18,12 +19,19 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
 
+    @Value("${migration.ratings.enabled:false}")
+    private boolean enabled;
+
     private final ProductInfoRepository productInfoRepository;
     private final ProductReviewRepository productReviewRepository;
     private final TransactionTemplate transactionTemplate;
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
+        if (!enabled) {
+            log.info("migration.ratings.skipped: reason=disabled");
+            return;
+        }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         CompletableFuture.runAsync(() ->
                 transactionTemplate.executeWithoutResult(_ -> {

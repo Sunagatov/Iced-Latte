@@ -30,7 +30,7 @@ public class ApplicationMigration implements ApplicationRunner {
     @Value("${spring.aws.default-image-directory.products:}")
     private String directoryPath;
 
-    @Value("${migration.upload.enabled:true}")
+    @Value("${migration.upload.enabled:false}")
     private boolean uploadEnabled;
 
     private final FileUploader fileUploader;
