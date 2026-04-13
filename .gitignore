@@ -92,9 +92,9 @@ local.env
 ssh-key-*.key
 /docker-compose.prod.yml
 /.env.prod
-/Taskfile.yml
 /ops/README.md
 /ops/scripts/.env.prod
+maintaner/
 
 ##############################
 ## Logs
