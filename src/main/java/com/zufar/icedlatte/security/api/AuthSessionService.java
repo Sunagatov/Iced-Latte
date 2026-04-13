@@ -91,8 +91,10 @@ public class AuthSessionService {
     public void revokeAllForUserBySessionId(UUID sessionId) {
         // findActiveByHash already revoked all sessions and logged replay_detected.
         // This path handles legacy (non-session-managed) tokens that bypass that flow.
+        // Guard on both revokedAt and compromised: replay path sets both before throwing,
+        // so checking only revokedAt would still fire a duplicate revoke_all.
         sessionRepository.findById(sessionId)
-                .filter(s -> s.getRevokedAt() == null)
+                .filter(s -> s.getRevokedAt() == null && !s.isCompromised())
                 .ifPresent(s -> revokeAllForUser(s.getUserId()));
     }
 
