@@ -4,8 +4,8 @@ import com.zufar.icedlatte.filestorage.aws.AwsObjectDeleter;
 import com.zufar.icedlatte.filestorage.aws.AwsObjectUploader;
 import com.zufar.icedlatte.filestorage.aws.AwsTemporaryLinkReceiver;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataProvider;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class FileServicesTest {
 
         @Mock AwsObjectDeleter awsObjectDeleter;
         @Mock FileMetadataProvider fileMetadataProvider;
-        @Mock FileMetadataDeleter fileMetadataDeleter;
+        @Mock FileMetadataRepository fileMetadataRepository;
 
         @Test
         @DisplayName("Deletes file and metadata when AWS is configured and metadata exists")
@@ -41,10 +41,10 @@ class FileServicesTest {
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
 
-            new FileDeleter(awsObjectDeleter, fileMetadataProvider, fileMetadataDeleter).delete(id);
+            new FileDeleter(awsObjectDeleter, fileMetadataProvider, fileMetadataRepository).delete(id);
 
             verify(awsObjectDeleter).deleteFile(dto);
-            verify(fileMetadataDeleter).deleteByRelatedObjectId(id);
+            verify(fileMetadataRepository).deleteByRelatedObjectId(id);
         }
 
         @Test
@@ -54,9 +54,9 @@ class FileServicesTest {
             FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
 
-            new FileDeleter(null, fileMetadataProvider, fileMetadataDeleter).delete(id);
+            new FileDeleter(null, fileMetadataProvider, fileMetadataRepository).delete(id);
 
-            verify(fileMetadataDeleter).deleteByRelatedObjectId(id);
+            verify(fileMetadataRepository).deleteByRelatedObjectId(id);
             verifyNoInteractions(awsObjectDeleter);
         }
 
@@ -66,9 +66,9 @@ class FileServicesTest {
             UUID id = UUID.randomUUID();
             when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.empty());
 
-            new FileDeleter(awsObjectDeleter, fileMetadataProvider, fileMetadataDeleter).delete(id);
+            new FileDeleter(awsObjectDeleter, fileMetadataProvider, fileMetadataRepository).delete(id);
 
-            verifyNoInteractions(awsObjectDeleter, fileMetadataDeleter);
+            verifyNoInteractions(awsObjectDeleter, fileMetadataRepository);
         }
     }
 

@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.api;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.converter.AddressDtoConverter;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.Address;
@@ -42,8 +41,6 @@ class UserOperationPerformerTest {
         @Mock
         private AddressDtoConverter addressDtoConverter;
         @Mock
-        private SecurityPrincipalProvider securityPrincipalProvider;
-        @Mock
         @SuppressWarnings("unused") // required by @InjectMocks, validate() is void — no stubbing needed
         private PutUsersRequestValidator putUsersRequestValidator;
         @InjectMocks
@@ -63,13 +60,12 @@ class UserOperationPerformerTest {
             request.setPhoneNumber("+1234567890");
             request.setAddress(new AddressDto());
 
-            when(securityPrincipalProvider.getUserId()).thenReturn(userId);
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(addressDtoConverter.toEntity(any(AddressDto.class))).thenReturn(address);
             when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(expectedDto);
 
-            UserDto result = updater.updateUser(request);
+            UserDto result = updater.updateUser(userId, request);
 
             assertThat(result).isEqualTo(expectedDto);
             assertThat(userEntity.getFirstName()).isEqualTo("Alice");
@@ -89,13 +85,12 @@ class UserOperationPerformerTest {
             request.setLastName("Jones");
             request.setAddress(null);
 
-            when(securityPrincipalProvider.getUserId()).thenReturn(userId);
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(addressDtoConverter.toEntity(null)).thenReturn(null);
             when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
 
-            updater.updateUser(request);
+            updater.updateUser(userId, request);
 
             assertThat(userEntity.getAddress()).isNull();
         }

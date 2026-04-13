@@ -70,29 +70,6 @@ class FileMetadataServicesTest {
     }
 
     @Nested
-    @DisplayName("FileMetadataDeleter")
-    class DeleterTests {
-
-        @Mock FileMetadataRepository repo;
-        @InjectMocks FileMetadataDeleter deleter;
-
-        @Test
-        @DisplayName("deleteByRelatedObjectId delegates to repository")
-        void deleteByRelatedObjectId_callsRepo() {
-            UUID id = UUID.randomUUID();
-            deleter.deleteByRelatedObjectId(id);
-            verify(repo).deleteByRelatedObjectId(id);
-        }
-
-        @Test
-        @DisplayName("deleteByBucketName delegates to repository")
-        void deleteByBucketName_callsRepo() {
-            deleter.deleteByBucketName("my-bucket");
-            verify(repo).deleteByBucketName("my-bucket");
-        }
-    }
-
-    @Nested
     @DisplayName("FileMetadataSaver")
     class SaverTests {
 

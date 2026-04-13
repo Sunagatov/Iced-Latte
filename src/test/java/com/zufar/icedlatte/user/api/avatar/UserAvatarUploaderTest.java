@@ -2,8 +2,8 @@ package com.zufar.icedlatte.user.api.avatar;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataDeleter;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class UserAvatarUploaderTest {
 
     @Mock private FileUploader fileUploader;
     @Mock private FileMetadataSaver fileMetadataSaver;
-    @Mock private FileMetadataDeleter fileMetadataDeleter;
+    @Mock private FileMetadataRepository fileMetadataRepository;
     @Mock private MultipartFile file;
     @InjectMocks private UserAvatarUploader uploader;
 
@@ -57,7 +57,7 @@ class UserAvatarUploaderTest {
 
         uploader.uploadUserAvatar(userId, file);
 
-        verify(fileMetadataDeleter).deleteByRelatedObjectId(userId);
+        verify(fileMetadataRepository).deleteByRelatedObjectId(userId);
         verify(fileUploader).upload(file, BUCKET, expectedFileName);
 
         ArgumentCaptor<FileMetadataDto> captor = ArgumentCaptor.forClass(FileMetadataDto.class);
@@ -80,7 +80,7 @@ class UserAvatarUploaderTest {
         uploader.uploadUserAvatar(userId, file);
 
         verify(fileUploader).upload(file, BUCKET, expectedFileName);
-        verify(fileMetadataDeleter, never()).deleteByRelatedObjectId(org.mockito.ArgumentMatchers.any());
+        verify(fileMetadataRepository, never()).deleteByRelatedObjectId(org.mockito.ArgumentMatchers.any());
         verify(fileMetadataSaver, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }

@@ -23,7 +23,7 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Future birth date throws PutUsersBadRequestException")
     void validate_futureBirthDate_throws() {
-        String futureDate = LocalDate.now().plusDays(1).toString();
+        LocalDate futureDate = LocalDate.now().plusDays(1);
         assertThatThrownBy(() -> validator.validate("John", "Doe", null, futureDate, null))
                 .isInstanceOf(PutUsersBadRequestException.class)
                 .hasMessageContaining("must be in the past");
@@ -32,7 +32,7 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Birth date less than 13 years ago throws PutUsersBadRequestException")
     void validate_under13BirthDate_throws() {
-        String recentDate = LocalDate.now().minusYears(10).toString();
+        LocalDate recentDate = LocalDate.now().minusYears(10);
         assertThatThrownBy(() -> validator.validate("John", "Doe", null, recentDate, null))
                 .isInstanceOf(PutUsersBadRequestException.class)
                 .hasMessageContaining("at least 13 years old");
@@ -57,7 +57,7 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Valid birth date exactly 13 years ago passes validation")
     void validate_exactly13YearsAgo_passes() {
-        String date = LocalDate.now().minusYears(13).minusDays(1).toString();
+        LocalDate date = LocalDate.now().minusYears(13).minusDays(1);
         assertThatCode(() -> validator.validate("John", "Doe", null, date, null))
                 .doesNotThrowAnyException();
     }
