@@ -37,10 +37,11 @@ class ProductReviewDeleterTest {
     void delete_validRequest_deletesAndUpdatesStats() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
 
-        deleter.delete(productId, reviewId);
+        deleter.delete(productId, reviewId, userId);
 
-        verify(productReviewValidator).validateProductReviewDeletionAllowed(reviewId);
+        verify(productReviewValidator).validateProductReviewDeletionAllowed(reviewId, userId);
         verify(productReviewValidator).validateProductIdIsValid(productId, reviewId);
         verify(reviewRepository).deleteById(reviewId);
         verify(productInfoRepository).updateAverageRating(productId);
@@ -55,9 +56,9 @@ class ProductReviewDeleterTest {
         UUID userId = UUID.randomUUID();
 
         doThrow(new DeniedProductReviewDeletionException(userId, reviewId))
-                .when(productReviewValidator).validateProductReviewDeletionAllowed(reviewId);
+                .when(productReviewValidator).validateProductReviewDeletionAllowed(reviewId, userId);
 
-        assertThatThrownBy(() -> deleter.delete(productId, reviewId))
+        assertThatThrownBy(() -> deleter.delete(productId, reviewId, userId))
                 .isInstanceOf(DeniedProductReviewDeletionException.class);
     }
 }

@@ -8,7 +8,6 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +36,6 @@ class ProductReviewCreatorTest {
     @Mock
     private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
-    @Mock
     private SingleUserProvider singleUserProvider;
     @Mock
     private ProductReviewValidator productReviewValidator;
@@ -63,12 +60,11 @@ class ProductReviewCreatorTest {
         ProductReview saved = ProductReview.builder().id(UUID.randomUUID()).build();
         ProductReviewDto expectedDto = new ProductReviewDto();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
         when(reviewRepository.saveAndFlush(any(ProductReview.class))).thenReturn(saved);
         when(productReviewDtoConverter.toProductReviewDto(any())).thenReturn(expectedDto);
 
-        ProductReviewDto result = creator.create(productId, request);
+        ProductReviewDto result = creator.create(productId, userId, request);
 
         assertThat(result).isEqualTo(expectedDto);
 
@@ -92,10 +88,9 @@ class ProductReviewCreatorTest {
         request.setText("   ");
         request.setRating(3);
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         doThrow(new EmptyProductReviewException()).when(productReviewValidator).validateReviewText("   ");
 
-        assertThatThrownBy(() -> creator.create(productId, request))
+        assertThatThrownBy(() -> creator.create(productId, userId, request))
                 .isInstanceOf(EmptyProductReviewException.class);
     }
 }

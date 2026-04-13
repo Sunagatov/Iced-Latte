@@ -9,7 +9,6 @@ import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,8 +28,6 @@ import static org.mockito.Mockito.when;
 @DisplayName("ProductReviewValidator unit tests")
 class ProductReviewValidatorTest {
 
-    @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
     @Mock
     private ProductReviewRepository productReviewRepository;
     @Mock
@@ -122,10 +119,9 @@ class ProductReviewValidatorTest {
         UserEntity owner = UserEntity.builder().id(userId).build();
         ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        assertThatCode(() -> validator.validateProductReviewDeletionAllowed(reviewId)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateProductReviewDeletionAllowed(reviewId, userId)).doesNotThrowAnyException();
     }
 
     @Test
@@ -137,10 +133,9 @@ class ProductReviewValidatorTest {
         UserEntity owner = UserEntity.builder().id(reviewOwnerId).build();
         ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(currentUserId);
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        assertThatThrownBy(() -> validator.validateProductReviewDeletionAllowed(reviewId))
+        assertThatThrownBy(() -> validator.validateProductReviewDeletionAllowed(reviewId, currentUserId))
                 .isInstanceOf(DeniedProductReviewDeletionException.class);
     }
 

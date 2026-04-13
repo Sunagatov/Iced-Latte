@@ -9,7 +9,6 @@ import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,8 +33,6 @@ class ProductReviewLikesUpdaterTest {
     ProductReviewLikesUpdater productReviewLikesUpdater;
 
     @Mock
-    SecurityPrincipalProvider securityPrincipalProvider;
-    @Mock
     ProductReviewValidator productReviewValidator;
     @Mock
     ProductReviewRepository productReviewRepository;
@@ -56,12 +53,11 @@ class ProductReviewLikesUpdaterTest {
                 .userId(userId).productId(productId).productReviewId(reviewId).isLike(true).build();
         var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(), "", "", 0, 0);
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(existingLike));
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
 
-        productReviewLikesUpdater.update(productId, reviewId, true);
+        productReviewLikesUpdater.update(productId, reviewId, userId, true);
 
         verify(productReviewLikeRepository).deleteByUserIdAndProductReviewId(userId, reviewId);
     }
@@ -78,14 +74,12 @@ class ProductReviewLikesUpdaterTest {
                 .userId(userId).productId(productId).productReviewId(reviewId).isLike(true).build();
         var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(), "", "", 0, 0);
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(productReviewLike));
         when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
 
-        assertEquals(expected, productReviewLikesUpdater.update(productId, reviewId, true));
+        assertEquals(expected, productReviewLikesUpdater.update(productId, reviewId, userId, true));
 
-        verify(securityPrincipalProvider).getUserId();
         verify(productReviewRepository).findById(reviewId);
         verify(productReviewDtoConverter).toProductReviewDto(productReview);
         verify(productReviewRepository).updateLikesCount(reviewId);
@@ -99,14 +93,12 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         doThrow(new ProductNotFoundForReviewException(productId))
                 .when(productReviewValidator)
                 .validateProductIdIsValid(productId, reviewId);
 
-        assertThrows(ProductNotFoundForReviewException.class, () -> productReviewLikesUpdater.update(productId, reviewId, true));
-
-        verify(securityPrincipalProvider).getUserId();
+        assertThrows(ProductNotFoundForReviewException.class,
+                () -> productReviewLikesUpdater.update(productId, reviewId, userId, true));
     }
 
     @Test
@@ -116,12 +108,10 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         doThrow(new ProductReviewNotFoundException(productId))
                 .when(productReviewValidator).validateProductIdIsValid(productId, reviewId);
 
-        assertThrows(ProductReviewNotFoundException.class, () -> productReviewLikesUpdater.update(productId, reviewId, true));
-
-        verify(securityPrincipalProvider).getUserId();
+        assertThrows(ProductReviewNotFoundException.class,
+                () -> productReviewLikesUpdater.update(productId, reviewId, userId, true));
     }
 }
