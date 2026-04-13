@@ -29,6 +29,11 @@ public record ApiErrorResponse(
 ) {
     public static final String TIMESTAMP_JSON_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
+    /** Backward-compatible 3-arg constructor used by existing tests and handlers. */
+    public ApiErrorResponse(String message, Integer httpStatusCode, LocalDateTime timestamp) {
+        this(message, httpStatusCode, timestamp, List.of());
+    }
+
     public record FieldError(
             @JsonProperty("field") String field,
             @JsonProperty("message") String message

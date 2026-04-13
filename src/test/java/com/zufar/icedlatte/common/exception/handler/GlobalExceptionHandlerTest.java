@@ -51,11 +51,11 @@ class GlobalExceptionHandlerTest {
     @DisplayName("handleConstraintViolationException returns 400")
     void handleConstraintViolation_returns400() {
         ConstraintViolationException ex = new ConstraintViolationException("violation", Set.of());
-        when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.BAD_REQUEST)).thenReturn(stub(400));
 
         ApiErrorResponse result = handler.handleConstraintViolationException(ex);
 
         assertThat(result.httpStatusCode()).isEqualTo(400);
+        assertThat(result.message()).isEqualTo("Validation failed");
     }
 
     @Test
