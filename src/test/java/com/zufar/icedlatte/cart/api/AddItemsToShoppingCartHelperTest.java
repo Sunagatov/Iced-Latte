@@ -9,7 +9,6 @@ import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,9 +42,6 @@ class AddItemsToShoppingCartHelperTest {
     private ShoppingCartRepository shoppingCartRepository;
 
     @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
-
-    @Mock
     private ProductInfoRepository productInfoRepository;
 
     @Mock
@@ -74,17 +70,15 @@ class AddItemsToShoppingCartHelperTest {
         ShoppingCartDto expectedShoppingCartDto = new ShoppingCartDto();
         expectedShoppingCartDto.setItems(List.of(CartDtoTestStub.createShoppingCartItemDto()));
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(shoppingCart);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(itemToAdd.getProductInfo()));
         when(shoppingCartRepository.save(shoppingCart)).thenReturn(updatedShoppingCart);
         when(shoppingCartDtoConverter.toDto(updatedShoppingCart)).thenReturn(expectedShoppingCartDto);
 
-        ShoppingCartDto result = addItemsToShoppingCartHelper.add(newShoppingCartItemDtoToAdd);
+        ShoppingCartDto result = addItemsToShoppingCartHelper.add(userId, newShoppingCartItemDtoToAdd);
 
         assertEquals(expectedShoppingCartDto, result);
 
-        verify(securityPrincipalProvider).getUserId();
         verify(shoppingCartCreator).getOrCreate(userId);
         verify(shoppingCartRepository).save(shoppingCart);
         verify(shoppingCartDtoConverter).toDto(updatedShoppingCart);
@@ -128,13 +122,12 @@ class AddItemsToShoppingCartHelperTest {
 
         ShoppingCartDto expectedShoppingCartDto = new ShoppingCartDto();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(shoppingCart);
         when(productInfoRepository.findAllById(Set.of(newProductId))).thenReturn(List.of(newProduct));
         when(shoppingCartRepository.save(shoppingCart)).thenAnswer(invocation -> invocation.getArgument(0));
         when(shoppingCartDtoConverter.toDto(shoppingCart)).thenReturn(expectedShoppingCartDto);
 
-        addItemsToShoppingCartHelper.add(Set.of(existingProductToAdd, newProductToAdd));
+        addItemsToShoppingCartHelper.add(userId, Set.of(existingProductToAdd, newProductToAdd));
 
         assertEquals(2, shoppingCart.getItems().size());
 
@@ -175,7 +168,6 @@ class AddItemsToShoppingCartHelperTest {
                 LocalDateTime.now(), 60, null
         );
 
-        // After conflict, fresh cart already has the item inserted by the concurrent request
         ShoppingCartItem concurrentItem = new ShoppingCartItem(UUID.randomUUID(), firstCart, product, 1);
         ShoppingCart freshCart = new ShoppingCart();
         freshCart.setId(firstCart.getId());
@@ -187,19 +179,16 @@ class AddItemsToShoppingCartHelperTest {
 
         ShoppingCartDto expectedDto = new ShoppingCartDto();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(firstCart).thenReturn(freshCart);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
-        // First save throws (concurrent insert conflict on the known constraint), second save succeeds
         when(shoppingCartRepository.save(any(ShoppingCart.class)))
                 .thenThrow(new DataIntegrityViolationException("uq_shopping_cart_item_cart_product"))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(shoppingCartDtoConverter.toDto(freshCart)).thenReturn(expectedDto);
 
-        ShoppingCartDto result = addItemsToShoppingCartHelper.add(Set.of(itemToAdd));
+        ShoppingCartDto result = addItemsToShoppingCartHelper.add(userId, Set.of(itemToAdd));
 
         assertEquals(expectedDto, result);
-        // quantity on the concurrent item should have been incremented by 2
         assertEquals(3, concurrentItem.getProductQuantity());
         verify(shoppingCartRepository, org.mockito.Mockito.times(2)).save(any());
     }
@@ -226,7 +215,6 @@ class AddItemsToShoppingCartHelperTest {
                 LocalDateTime.now(), 60, null
         );
 
-        // Fresh cart is independent — only has the conflicting product (inserted by concurrent request)
         ShoppingCart freshCart = new ShoppingCart();
         freshCart.setId(firstCart.getId());
         ShoppingCartItem concurrentItem = new ShoppingCartItem(UUID.randomUUID(), freshCart, conflictingProduct, 1);
@@ -242,7 +230,6 @@ class AddItemsToShoppingCartHelperTest {
 
         ShoppingCartDto expectedDto = new ShoppingCartDto();
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(firstCart).thenReturn(freshCart);
         when(productInfoRepository.findAllById(any()))
                 .thenAnswer(inv -> {
@@ -256,11 +243,9 @@ class AddItemsToShoppingCartHelperTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(shoppingCartDtoConverter.toDto(freshCart)).thenReturn(expectedDto);
 
-        addItemsToShoppingCartHelper.add(Set.of(conflictingItemDto, newItemDto));
+        addItemsToShoppingCartHelper.add(userId, Set.of(conflictingItemDto, newItemDto));
 
-        // conflicting product quantity incremented from 1 to 3
         assertEquals(3, concurrentItem.getProductQuantity());
-        // new product B must also be present in the fresh cart after recovery
         assertEquals(2, freshCart.getItems().size());
         boolean newProductAdded = freshCart.getItems().stream()
                 .anyMatch(item -> item.getProductInfo().getId().equals(newProductId));
@@ -287,7 +272,6 @@ class AddItemsToShoppingCartHelperTest {
         itemToAdd.setProductId(productId);
         itemToAdd.setProductQuantity(1);
 
-        when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(shoppingCartCreator.getOrCreate(userId)).thenReturn(cart);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
         when(shoppingCartRepository.save(any(ShoppingCart.class)))
@@ -295,7 +279,7 @@ class AddItemsToShoppingCartHelperTest {
 
         org.junit.jupiter.api.Assertions.assertThrows(
                 DataIntegrityViolationException.class,
-                () -> addItemsToShoppingCartHelper.add(Set.of(itemToAdd))
+                () -> addItemsToShoppingCartHelper.add(userId, Set.of(itemToAdd))
         );
     }
 }
