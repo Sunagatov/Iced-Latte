@@ -29,7 +29,7 @@ echo ""
 ssh -i "$SSH_KEY_EXPANDED" "${SSH_USER}@${SSH_HOST}" bash <<EOF
 set -euo pipefail
 cd ${REMOTE_APP_DIR}
-docker compose -f ${REMOTE_COMPOSE_FILE} restart
+docker compose -f ${REMOTE_COMPOSE_FILE} up -d --force-recreate
 echo ""
 echo "📊 Container status:"
 docker compose -f ${REMOTE_COMPOSE_FILE} ps
