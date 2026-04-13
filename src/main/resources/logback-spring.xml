@@ -81,7 +81,7 @@
                 <http>
                     <url>${loki_url}</url>
                 </http>
-                <labels>application=${application_name},environment=${environment},level=%level</labels>
+                <labels>application=%replace(${application_name}){' ', '_'},environment=${environment},level=%level</labels>
                 <message class="ch.qos.logback.classic.PatternLayout">
                     <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex</pattern>
                 </message>
