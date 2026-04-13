@@ -100,10 +100,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         };
 
         if (errorInfo.statusCode() >= 500) {
-            log.error("auth.error: reasonCode={}, method={}, path={}, clientIp={}, status={}, requestId={}",
+            log.error("auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
                     errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId, exception);
         } else {
-            log.warn("auth.failed: reasonCode={}, method={}, path={}, clientIp={}, status={}, requestId={}",
+            log.warn("auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
                     errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId);
             log.debug("auth.failed.details", exception);
         }

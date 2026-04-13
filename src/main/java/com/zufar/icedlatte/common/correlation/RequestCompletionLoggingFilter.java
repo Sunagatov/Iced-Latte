@@ -84,7 +84,10 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // Logged at DEBUG to reduce noise; operators can promote to INFO via logging.level.http.access=INFO.
     private static boolean isPollingEndpoint(String path) {
         return "/api/v1/products/brands".equals(path)
-                || "/api/v1/products/sellers".equals(path);
+                || "/api/v1/products/sellers".equals(path)
+                || "/api/v1/users".equals(path)
+                || "/api/v1/cart".equals(path)
+                || "/api/v1/favorites".equals(path);
     }
 
     private static String resolvePathTemplate(HttpServletRequest request) {

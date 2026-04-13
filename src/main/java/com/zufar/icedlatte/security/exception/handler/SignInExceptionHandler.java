@@ -99,7 +99,7 @@ public class SignInExceptionHandler {
                                     HttpStatus status,
                                     HttpServletRequest request) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
-        log.warn("auth.sign_in.failed: reasonCode={}, status={}, method={}, path={}",
+        log.warn("auth.sign_in.failed: reason_code={}, status={}, method={}, path={}",
                 exception.getClass().getSimpleName(), status.value(),
                 request.getMethod(), request.getRequestURI());
         return response;
