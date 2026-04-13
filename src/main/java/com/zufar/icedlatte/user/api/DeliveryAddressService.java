@@ -33,9 +33,13 @@ public class DeliveryAddressService {
     public DeliveryAddressDto create(UUID userId, DeliveryAddressRequest request) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+        boolean isFirst = addressRepository.findAllByUserId(userId).isEmpty();
         var entity = converter.toEntity(request);
         entity.setUser(user);
-        entity.setDefault(addressRepository.findAllByUserId(userId).isEmpty());
+        if (isFirst) {
+            addressRepository.clearDefaultForUser(userId);
+            entity.setDefault(true);
+        }
         return converter.toDto(addressRepository.save(entity));
     }
 

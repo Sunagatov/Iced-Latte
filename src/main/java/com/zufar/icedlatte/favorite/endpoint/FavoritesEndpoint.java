@@ -57,10 +57,6 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @Override
     @DeleteMapping(value = "/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
-        if (productId == null) {
-            log.warn("favourites.remove.invalid: reason=null_productId");
-            return ResponseEntity.badRequest().build();
-        }
         var userId = securityPrincipalProvider.getUserId();
         favoriteProductDeleter.delete(productId, userId);
         log.info("favourites.removed: productId={}", productId);

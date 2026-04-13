@@ -62,19 +62,29 @@ public class RefreshTokenService {
             jwtBlacklistValidator.addToBlacklist(rawToken);
             MDC.put(MDC_SESSION_ID, newSession.getId().toString());
             MDC.put(MDC_USER_ID, newSession.getUserId().toString());
-            var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
-            log.info("auth.token.refresh_legacy_migrated");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            try {
+                var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, newSession.getId(), newRefreshToken);
+                log.info("auth.token.refresh_legacy_migrated");
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            } finally {
+                MDC.remove(MDC_SESSION_ID);
+                MDC.remove(MDC_USER_ID);
+            }
         }
 
         MDC.put(MDC_SESSION_ID, session.getId().toString());
         MDC.put(MDC_USER_ID, session.getUserId().toString());
-        String userEmail = jwtRefreshTokenValidator.extractEmail(request);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
-        authSessionService.rotateSession(hash, jwtBlacklistService.sha256(newRefreshToken));
-        var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
-        log.debug("auth.token.refreshed");
-        return ResponseEntity.ok(response);
+        try {
+            String userEmail = jwtRefreshTokenValidator.extractEmail(request);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
+            authSessionService.rotateSession(hash, jwtBlacklistService.sha256(newRefreshToken));
+            var response = userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
+            log.debug("auth.token.refreshed");
+            return ResponseEntity.ok(response);
+        } finally {
+            MDC.remove(MDC_SESSION_ID);
+            MDC.remove(MDC_USER_ID);
+        }
     }
 }

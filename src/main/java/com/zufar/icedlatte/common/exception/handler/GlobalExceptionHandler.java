@@ -5,6 +5,7 @@ import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -32,15 +33,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                exception.getMessage(), HttpStatus.BAD_REQUEST);
-        String fieldNames = exception.getBindingResult().getFieldErrors().stream()
-                .map(org.springframework.validation.FieldError::getField)
+        List<ApiErrorResponse.FieldError> fieldErrors = exception.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ApiErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+        String fieldNames = fieldErrors.stream()
+                .map(ApiErrorResponse.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
         log.warn("exception.validation: errorCount={}, fields={}, status=400",
                 exception.getBindingResult().getErrorCount(), fieldNames);
-        return apiErrorResponse;
+        return ApiErrorResponse.builder()
+                .message("Validation failed")
+                .httpStatusCode(HttpStatus.BAD_REQUEST.value())
+                .timestamp(java.time.LocalDateTime.now())
+                .errors(fieldErrors)
+                .build();
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -55,14 +62,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        String fieldNames = exception.getConstraintViolations().stream()
-                .map(v -> v.getPropertyPath().toString())
+        List<ApiErrorResponse.FieldError> fieldErrors = exception.getConstraintViolations().stream()
+                .map(v -> new ApiErrorResponse.FieldError(
+                        v.getPropertyPath().toString(), v.getMessage()))
+                .toList();
+        String fieldNames = fieldErrors.stream()
+                .map(ApiErrorResponse.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
         log.warn("exception.constraint_violation: errorCount={}, fields={}, status=400",
                 exception.getConstraintViolations().size(), fieldNames);
-        return apiErrorResponse;
+        return ApiErrorResponse.builder()
+                .message("Validation failed")
+                .httpStatusCode(HttpStatus.BAD_REQUEST.value())
+                .timestamp(java.time.LocalDateTime.now())
+                .errors(fieldErrors)
+                .build();
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

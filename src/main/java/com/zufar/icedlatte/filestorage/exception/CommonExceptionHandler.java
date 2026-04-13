@@ -29,6 +29,12 @@ public class CommonExceptionHandler {
     @ExceptionHandler(FileUploadException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiErrorResponse handleFileUploadException(final FileUploadException exception) {
+        if (exception.getCause() instanceof IllegalStateException) {
+            ApiErrorResponse apiErrorResponse =
+                    apiErrorResponseCreator.buildResponse("File storage is not available", HttpStatus.SERVICE_UNAVAILABLE);
+            log.warn("exception.file.storage_unavailable: status=503");
+            return apiErrorResponse;
+        }
         ApiErrorResponse apiErrorResponse =
                 apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
         log.error("exception.file.upload_failed: exceptionClass={}, status=500",

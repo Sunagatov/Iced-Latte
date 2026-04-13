@@ -142,6 +142,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/01.07.2026.part1.create-delivery-address-table.sql
       errorIfMissing: true
+  # Enforce at most one default address per user
+  - include:
+      file: db/changelog/version-1.0/01.07.2026.part1c.add-delivery-address-default-unique-index.sql
+      errorIfMissing: true
 
   # ========== NEW PRODUCTS 2026 ==========
   # Allow zero-discount products (relax discount > 0 to discount >= 0)

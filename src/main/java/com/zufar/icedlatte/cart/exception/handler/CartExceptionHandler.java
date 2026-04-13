@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.cart.exception.handler;
 
+import com.zufar.icedlatte.cart.exception.EmptyCartItemsException;
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
 import com.zufar.icedlatte.cart.exception.InvalidShoppingCartIdException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
@@ -19,6 +20,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class CartExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
+
+    @ExceptionHandler(EmptyCartItemsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleEmptyCartItemsException(final EmptyCartItemsException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
+        log.warn("exception.cart.empty_items: status=400");
+        return apiErrorResponse;
+    }
 
     @ExceptionHandler(InvalidItemProductQuantityException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

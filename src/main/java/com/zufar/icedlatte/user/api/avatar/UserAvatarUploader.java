@@ -56,7 +56,8 @@ public class UserAvatarUploader {
         String fileName = AVATAR_NAME_PREFIX + userId.toString();
         boolean uploaded = fileUploader.upload(file, bucketName, fileName);
         if (!uploaded) {
-            return;
+            throw new com.zufar.icedlatte.filestorage.exception.FileUploadException(fileName,
+                    new IllegalStateException("File storage is not configured"));
         }
         fileMetadataRepository.deleteByRelatedObjectId(userId);
         FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);

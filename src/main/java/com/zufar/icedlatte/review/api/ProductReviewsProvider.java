@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
-import static com.zufar.icedlatte.review.converter.ProductReviewDtoConverter.EMPTY_PRODUCT_REVIEW_RESPONSE;
 
 @Slf4j
 @Service
@@ -56,7 +55,7 @@ public class ProductReviewsProvider {
         productReviewValidator.validateProductExists(productId);
         return reviewRepository.findByUserIdAndProductId(userId, productId)
                 .map(productReviewDtoConverter::toProductReviewDto)
-                .orElse(EMPTY_PRODUCT_REVIEW_RESPONSE);
+                .orElseThrow(() -> new com.zufar.icedlatte.review.exception.ProductReviewNotFoundException(productId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
