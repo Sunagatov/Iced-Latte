@@ -4,7 +4,9 @@ import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -20,17 +22,27 @@ public class ShoppingCartProvider {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
     private final ShoppingCartCreator shoppingCartCreator;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto getByUserId(final UUID userId) {
         ShoppingCart shoppingCart = shoppingCartCreator.getOrCreate(userId);
-        return shoppingCartDtoConverter.toDto(shoppingCart);
+        return enrich(shoppingCartDtoConverter.toDto(shoppingCart));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ShoppingCartDto getByUserIdOrThrow(final UUID userId) {
         return shoppingCartRepository.findShoppingCartByUserId(userId)
                 .map(shoppingCartDtoConverter::toDto)
+                .map(this::enrich)
                 .orElseThrow(() -> new ShoppingCartNotFoundException(userId));
+    }
+
+    private ShoppingCartDto enrich(ShoppingCartDto cart) {
+        if (cart.getItems() != null) {
+            productPictureLinkUpdater.updateBatch(
+                    cart.getItems().stream().map(ShoppingCartItemDto::getProductInfo).toList());
+        }
+        return cart;
     }
 }

@@ -1,13 +1,16 @@
 package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
+import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
 import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +48,10 @@ class FavoriteProductAdderTest {
 
     @Mock
     private FavoriteListDtoConverter favoriteListDtoConverter;
+    @Mock
+    private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    @Mock
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     private final ListOfFavoriteProducts listOfFavoriteProducts = new ListOfFavoriteProducts();
 
@@ -86,10 +93,12 @@ class FavoriteProductAdderTest {
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(productInfo));
         when(favoriteRepository.save(favoriteList)).thenReturn(addedFavoriteList);
         when(favoriteListDtoConverter.toDto(favoriteList)).thenReturn(expectedFavoriteListDto);
+        ListOfFavoriteProductsDto expectedResponse = new ListOfFavoriteProductsDto();
+        when(listOfFavoriteProductsDtoConverter.toListProductDto(expectedFavoriteListDto)).thenReturn(expectedResponse);
 
-        FavoriteListDto result = favoriteProductAdder.add(listOfFavoriteProducts, userId);
+        ListOfFavoriteProductsDto result = favoriteProductAdder.add(listOfFavoriteProducts, userId);
 
-        assertEquals(expectedFavoriteListDto, result);
+        assertEquals(expectedResponse, result);
 
         verify(favoriteListProvider).getFavoriteListEntity(userId);
         verify(productInfoRepository).findAllById(any());

@@ -5,12 +5,16 @@ import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.*;
 import com.zufar.icedlatte.user.api.*;
 import com.zufar.icedlatte.user.api.avatar.*;
+import com.zufar.icedlatte.user.repository.UserRepository;
 import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +32,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UpdateUserOperationPerformer updateUserOperationPerformer;
     private final SingleUserProvider singleUserProvider;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
-    private final DeleteUserOperationPerformer deleteUserOperationPerformer;
+    private final UserRepository userRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
@@ -64,9 +68,10 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @DeleteMapping
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        deleteUserOperationPerformer.deleteUser(userId);
+        userRepository.deleteById(userId);
         log.info("user.account.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }

@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
@@ -32,8 +31,6 @@ class ProductReviewValidatorTest {
 
     @Mock
     private SecurityPrincipalProvider securityPrincipalProvider;
-    @Mock
-    private ProductReviewProvider productReviewProvider;
     @Mock
     private ProductReviewRepository productReviewRepository;
     @Mock
@@ -126,7 +123,7 @@ class ProductReviewValidatorTest {
         ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
-        when(productReviewProvider.getReviewEntityById(reviewId)).thenReturn(review);
+        when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         assertThatCode(() -> validator.validateProductReviewDeletionAllowed(reviewId)).doesNotThrowAnyException();
     }
@@ -141,7 +138,7 @@ class ProductReviewValidatorTest {
         ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
 
         when(securityPrincipalProvider.getUserId()).thenReturn(currentUserId);
-        when(productReviewProvider.getReviewEntityById(reviewId)).thenReturn(review);
+        when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         assertThatThrownBy(() -> validator.validateProductReviewDeletionAllowed(reviewId))
                 .isInstanceOf(DeniedProductReviewDeletionException.class);

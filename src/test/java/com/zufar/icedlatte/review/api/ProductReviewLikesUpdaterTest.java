@@ -42,8 +42,6 @@ class ProductReviewLikesUpdaterTest {
     @Mock
     ProductReviewLikeRepository productReviewLikeRepository;
     @Mock
-    ProductReviewProvider productReviewProvider;
-    @Mock
     ProductReviewDtoConverter productReviewDtoConverter;
 
     @Test
@@ -60,13 +58,11 @@ class ProductReviewLikesUpdaterTest {
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(existingLike));
-        when(productReviewProvider.getReviewEntityById(reviewId)).thenReturn(productReview);
+        when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
 
-        // Sending the same vote (true) again should remove it
         productReviewLikesUpdater.update(productId, reviewId, true);
 
-        // Must delete by userId + reviewId, NOT by productId + reviewId
         verify(productReviewLikeRepository).deleteByUserIdAndProductReviewId(userId, reviewId);
     }
 
@@ -77,30 +73,20 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
         var productReview = ProductReview.builder()
-                .id(reviewId)
-                .productId(productId)
-                .productRating(1)
-                .text("")
-                .createdAt(OffsetDateTime.now())
-                .build();
+                .id(reviewId).productId(productId).productRating(1).text("").createdAt(OffsetDateTime.now()).build();
         var productReviewLike = ProductReviewLike.builder()
-                .userId(userId)
-                .productId(productId)
-                .productReviewId(reviewId)
-                .isLike(true)
-                .build();
-        var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(),
-                "", "", 0, 0);
+                .userId(userId).productId(productId).productReviewId(reviewId).isLike(true).build();
+        var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(), "", "", 0, 0);
 
         when(securityPrincipalProvider.getUserId()).thenReturn(userId);
-        when(productReviewProvider.getReviewEntityById(reviewId)).thenReturn(productReview);
+        when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(productReviewLike));
         when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
 
         assertEquals(expected, productReviewLikesUpdater.update(productId, reviewId, true));
 
         verify(securityPrincipalProvider).getUserId();
-        verify(productReviewProvider).getReviewEntityById(reviewId);
+        verify(productReviewRepository).findById(reviewId);
         verify(productReviewDtoConverter).toProductReviewDto(productReview);
         verify(productReviewRepository).updateLikesCount(reviewId);
         verify(productReviewRepository).updateDislikesCount(reviewId);

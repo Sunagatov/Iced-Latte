@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
-import com.zufar.icedlatte.favorite.api.*;
-import com.zufar.icedlatte.favorite.converter.*;
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.favorite.api.FavoriteListProvider;
+import com.zufar.icedlatte.favorite.api.FavoriteProductAdder;
+import com.zufar.icedlatte.favorite.api.FavoriteProductDeleter;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,12 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
@@ -31,19 +32,15 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     public static final String FAVORITES_URL = "/api/v1/favorites";
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
     private final FavoriteProductAdder favoriteProductAdderHelper;
     private final FavoriteListProvider favoriteListProvider;
     private final FavoriteProductDeleter favoriteProductDeleter;
-    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Override
     @PostMapping
     public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Validated @Valid @RequestBody final ListOfFavoriteProducts request) {
         var userId = securityPrincipalProvider.getUserId();
-        var favoriteList = favoriteProductAdderHelper.add(request, userId);
-        var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
-        productPictureLinkUpdater.updateBatch(response.getProducts());
+        var response = favoriteProductAdderHelper.add(request, userId);
         log.info("favourites.added: count={}", request.getProductIds().size());
         return ResponseEntity.ok(response);
     }
@@ -52,9 +49,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = securityPrincipalProvider.getUserId();
-        var favoriteList = favoriteListProvider.getFavoriteListDto(userId);
-        var response = listOfFavoriteProductsDtoConverter.toListProductDto(favoriteList);
-        productPictureLinkUpdater.updateBatch(response.getProducts());
+        var response = favoriteListProvider.getEnrichedFavoriteList(userId);
         log.debug("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
         return ResponseEntity.ok(response);
     }

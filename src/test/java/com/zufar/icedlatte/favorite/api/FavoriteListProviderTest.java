@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
+import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,9 +33,12 @@ class FavoriteListProviderTest {
 
     @Mock
     private FavoriteRepository favoriteRepository;
-
     @Mock
     private FavoriteListDtoConverter favoriteListDtoConverter;
+    @Mock
+    private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    @Mock
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     private final OffsetDateTime beforeLaunchTime = OffsetDateTime.now().minusSeconds(1);
 
@@ -68,25 +74,23 @@ class FavoriteListProviderTest {
     }
 
     @Test
-    @DisplayName("Should get favorite list dto")
-    void shouldGetFavoriteListDto() {
-        UUID id = UUID.randomUUID();
+    @DisplayName("Should get enriched favorite list when list exists")
+    void shouldGetEnrichedFavoriteListWhenExists() {
         UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
         FavoriteListEntity favoriteList = new FavoriteListEntity();
-        FavoriteListDto expectedFavoriteList = new FavoriteListDto(
-                id,
-                userId,
-                new HashSet<>(),
-                OffsetDateTime.now()
-        );
+        FavoriteListDto dto = new FavoriteListDto(id, userId, new HashSet<>(), OffsetDateTime.now());
+        com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto response =
+                new com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto();
+        response.setProducts(List.of());
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(favoriteList));
-        when(favoriteListDtoConverter.toDto(favoriteList)).thenReturn(expectedFavoriteList);
+        when(favoriteListDtoConverter.toDto(favoriteList)).thenReturn(dto);
+        when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
 
-        FavoriteListDto result = favoriteListProvider.getFavoriteListDto(userId);
+        var result = favoriteListProvider.getEnrichedFavoriteList(userId);
 
-        assertEquals(expectedFavoriteList, result);
-
+        assertEquals(response, result);
         verify(favoriteRepository).findByUserId(userId);
         verify(favoriteListDtoConverter).toDto(favoriteList);
     }

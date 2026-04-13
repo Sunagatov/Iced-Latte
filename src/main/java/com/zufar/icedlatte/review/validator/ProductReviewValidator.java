@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.review.api.ProductReviewProvider;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
@@ -23,7 +22,6 @@ import java.util.regex.Pattern;
 public class ProductReviewValidator {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final ProductReviewProvider productReviewProvider;
     private final ProductReviewRepository productReviewRepository;
     private final ProductInfoRepository productInfoRepository;
 
@@ -67,9 +65,9 @@ public class ProductReviewValidator {
      */
     public void validateProductReviewDeletionAllowed(final UUID productReviewId) {
         var currentUserId = securityPrincipalProvider.getUserId();
-        var creatorId = productReviewProvider.getReviewEntityById(productReviewId).getUser().getId();
-
-        if (!currentUserId.equals(creatorId)) {
+        var review = productReviewRepository.findById(productReviewId)
+                .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));
+        if (!currentUserId.equals(review.getUser().getId())) {
             throw new DeniedProductReviewDeletionException(productReviewId, currentUserId);
         }
     }

@@ -10,7 +10,6 @@ import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,230 +25,167 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("DeliveryAddress service unit tests")
+@DisplayName("DeliveryAddressService unit tests")
 class DeliveryAddressServiceTest {
 
-    @Nested
-    @DisplayName("DeliveryAddressCreator")
-    class CreatorTests {
+    @Mock private DeliveryAddressRepository addressRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private DeliveryAddressDtoConverter converter;
+    @InjectMocks private DeliveryAddressService service;
 
-        @Mock
-        private DeliveryAddressRepository addressRepository;
-        @Mock
-        private UserRepository userRepository;
-        @Mock
-        private DeliveryAddressDtoConverter converter;
-        @InjectMocks
-        private DeliveryAddressCreator creator;
+    @Test
+    @DisplayName("getAll returns mapped DTOs for all user addresses")
+    void getAll_returnsAllAddresses() {
+        UUID userId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        DeliveryAddressDto dto = new DeliveryAddressDto();
+        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of(entity));
+        when(converter.toDto(entity)).thenReturn(dto);
 
-        @Test
-        @DisplayName("Creates address and marks it default when it is the first one")
-        void create_firstAddress_isSetAsDefault() {
-            UUID userId = UUID.randomUUID();
-            UserEntity user = new UserEntity();
-            DeliveryAddressRequest request = new DeliveryAddressRequest();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-            DeliveryAddressDto dto = new DeliveryAddressDto();
-
-            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-            when(converter.toEntity(request)).thenReturn(entity);
-            when(addressRepository.findAllByUserId(userId)).thenReturn(List.of());
-            when(addressRepository.save(entity)).thenReturn(entity);
-            when(converter.toDto(entity)).thenReturn(dto);
-
-            DeliveryAddressDto result = creator.create(userId, request);
-
-            assertThat(result).isEqualTo(dto);
-            assertThat(entity.isDefault()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Creates address and does NOT mark it default when others exist")
-        void create_subsequentAddress_isNotDefault() {
-            UUID userId = UUID.randomUUID();
-            UserEntity user = new UserEntity();
-            DeliveryAddressRequest request = new DeliveryAddressRequest();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-
-            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-            when(converter.toEntity(request)).thenReturn(entity);
-            when(addressRepository.findAllByUserId(userId)).thenReturn(List.of(new DeliveryAddressEntity()));
-            when(addressRepository.save(entity)).thenReturn(entity);
-            when(converter.toDto(entity)).thenReturn(new DeliveryAddressDto());
-
-            creator.create(userId, request);
-
-            assertThat(entity.isDefault()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Throws UserNotFoundException when user does not exist")
-        void create_userNotFound_throwsUserNotFoundException() {
-            UUID userId = UUID.randomUUID();
-            when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> creator.create(userId, new DeliveryAddressRequest()))
-                    .isInstanceOf(UserNotFoundException.class);
-        }
+        assertThat(service.getAll(userId)).containsExactly(dto);
     }
 
-    @Nested
-    @DisplayName("DeliveryAddressProvider")
-    class ProviderTests {
+    @Test
+    @DisplayName("getAll returns empty list when user has no addresses")
+    void getAll_noAddresses_returnsEmpty() {
+        UUID userId = UUID.randomUUID();
+        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of());
 
-        @Mock
-        private DeliveryAddressRepository repository;
-        @Mock
-        private DeliveryAddressDtoConverter converter;
-        @InjectMocks
-        private DeliveryAddressProvider provider;
-
-        @Test
-        @DisplayName("Returns mapped DTOs for all user addresses")
-        void getAll_returnsAllAddresses() {
-            UUID userId = UUID.randomUUID();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-            DeliveryAddressDto dto = new DeliveryAddressDto();
-            when(repository.findAllByUserId(userId)).thenReturn(List.of(entity));
-            when(converter.toDto(entity)).thenReturn(dto);
-
-            List<DeliveryAddressDto> result = provider.getAll(userId);
-
-            assertThat(result).containsExactly(dto);
-        }
-
-        @Test
-        @DisplayName("Returns empty list when user has no addresses")
-        void getAll_noAddresses_returnsEmpty() {
-            UUID userId = UUID.randomUUID();
-            when(repository.findAllByUserId(userId)).thenReturn(List.of());
-
-            assertThat(provider.getAll(userId)).isEmpty();
-        }
+        assertThat(service.getAll(userId)).isEmpty();
     }
 
-    @Nested
-    @DisplayName("DeliveryAddressUpdater")
-    class UpdaterTests {
+    @Test
+    @DisplayName("create marks first address as default")
+    void create_firstAddress_isSetAsDefault() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        DeliveryAddressRequest request = new DeliveryAddressRequest();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        DeliveryAddressDto dto = new DeliveryAddressDto();
 
-        @Mock
-        private DeliveryAddressRepository repository;
-        @Mock
-        private DeliveryAddressDtoConverter converter;
-        @InjectMocks
-        private DeliveryAddressUpdater updater;
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(converter.toEntity(request)).thenReturn(entity);
+        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(addressRepository.save(entity)).thenReturn(entity);
+        when(converter.toDto(entity)).thenReturn(dto);
 
-        @Test
-        @DisplayName("Updates all fields and returns DTO")
-        void update_existingAddress_updatesFields() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-            DeliveryAddressRequest request = new DeliveryAddressRequest();
-            request.setLabel("Home");
-            request.setLine("1 Main St");
-            request.setCity("London");
-            request.setCountry("GB");
-            request.setPostcode("SW1A 1AA");
-            DeliveryAddressDto dto = new DeliveryAddressDto();
-
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
-            when(repository.save(entity)).thenReturn(entity);
-            when(converter.toDto(entity)).thenReturn(dto);
-
-            DeliveryAddressDto result = updater.update(userId, addressId, request);
-
-            assertThat(result).isEqualTo(dto);
-            assertThat(entity.getLabel()).isEqualTo("Home");
-            assertThat(entity.getCity()).isEqualTo("London");
-        }
-
-        @Test
-        @DisplayName("Throws DeliveryAddressNotFoundException when address not found")
-        void update_notFound_throwsDeliveryAddressNotFoundException() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> updater.update(userId, addressId, new DeliveryAddressRequest()))
-                    .isInstanceOf(DeliveryAddressNotFoundException.class);
-        }
+        assertThat(service.create(userId, request)).isEqualTo(dto);
+        assertThat(entity.isDefault()).isTrue();
     }
 
-    @Nested
-    @DisplayName("DeliveryAddressDeleter")
-    class DeleterTests {
+    @Test
+    @DisplayName("create does NOT mark subsequent address as default")
+    void create_subsequentAddress_isNotDefault() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        DeliveryAddressRequest request = new DeliveryAddressRequest();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
 
-        @Mock
-        private DeliveryAddressRepository repository;
-        @InjectMocks
-        private DeliveryAddressDeleter deleter;
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(converter.toEntity(request)).thenReturn(entity);
+        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of(new DeliveryAddressEntity()));
+        when(addressRepository.save(entity)).thenReturn(entity);
+        when(converter.toDto(entity)).thenReturn(new DeliveryAddressDto());
 
-        @Test
-        @DisplayName("Deletes address when found")
-        void delete_existingAddress_deletesIt() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+        service.create(userId, request);
 
-            deleter.delete(userId, addressId);
-
-            verify(repository).delete(entity);
-        }
-
-        @Test
-        @DisplayName("Throws DeliveryAddressNotFoundException when address not found")
-        void delete_notFound_throwsDeliveryAddressNotFoundException() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> deleter.delete(userId, addressId))
-                    .isInstanceOf(DeliveryAddressNotFoundException.class);
-        }
+        assertThat(entity.isDefault()).isFalse();
     }
 
-    @Nested
-    @DisplayName("DeliveryAddressDefaultSetter")
-    class DefaultSetterTests {
+    @Test
+    @DisplayName("create throws UserNotFoundException when user does not exist")
+    void create_userNotFound_throws() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        @Mock
-        private DeliveryAddressRepository repository;
-        @Mock
-        private DeliveryAddressDtoConverter converter;
-        @InjectMocks
-        private DeliveryAddressDefaultSetter defaultSetter;
+        assertThatThrownBy(() -> service.create(userId, new DeliveryAddressRequest()))
+                .isInstanceOf(UserNotFoundException.class);
+    }
 
-        @Test
-        @DisplayName("Clears previous default and sets new one")
-        void setDefault_existingAddress_clearsAndSetsDefault() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            DeliveryAddressEntity entity = new DeliveryAddressEntity();
-            entity.setDefault(false);
-            DeliveryAddressDto dto = new DeliveryAddressDto();
+    @Test
+    @DisplayName("update updates all fields and returns DTO")
+    void update_existingAddress_updatesFields() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        DeliveryAddressRequest request = new DeliveryAddressRequest();
+        request.setLabel("Home");
+        request.setLine("1 Main St");
+        request.setCity("London");
+        request.setCountry("GB");
+        request.setPostcode("SW1A 1AA");
+        DeliveryAddressDto dto = new DeliveryAddressDto();
 
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
-            when(repository.save(entity)).thenReturn(entity);
-            when(converter.toDto(entity)).thenReturn(dto);
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+        when(addressRepository.save(entity)).thenReturn(entity);
+        when(converter.toDto(entity)).thenReturn(dto);
 
-            DeliveryAddressDto result = defaultSetter.setDefault(userId, addressId);
+        assertThat(service.update(userId, addressId, request)).isEqualTo(dto);
+        assertThat(entity.getLabel()).isEqualTo("Home");
+        assertThat(entity.getCity()).isEqualTo("London");
+    }
 
-            assertThat(result).isEqualTo(dto);
-            assertThat(entity.isDefault()).isTrue();
-            verify(repository).clearDefaultForUser(userId);
-        }
+    @Test
+    @DisplayName("update throws DeliveryAddressNotFoundException when not found")
+    void update_notFound_throws() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
-        @Test
-        @DisplayName("Throws DeliveryAddressNotFoundException when address not found")
-        void setDefault_notFound_throwsDeliveryAddressNotFoundException() {
-            UUID userId = UUID.randomUUID();
-            UUID addressId = UUID.randomUUID();
-            when(repository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.update(userId, addressId, new DeliveryAddressRequest()))
+                .isInstanceOf(DeliveryAddressNotFoundException.class);
+    }
 
-            assertThatThrownBy(() -> defaultSetter.setDefault(userId, addressId))
-                    .isInstanceOf(DeliveryAddressNotFoundException.class);
-        }
+    @Test
+    @DisplayName("delete removes address when found")
+    void delete_existingAddress_deletesIt() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+
+        service.delete(userId, addressId);
+
+        verify(addressRepository).delete(entity);
+    }
+
+    @Test
+    @DisplayName("delete throws DeliveryAddressNotFoundException when not found")
+    void delete_notFound_throws() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.delete(userId, addressId))
+                .isInstanceOf(DeliveryAddressNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("setDefault clears previous default and sets new one")
+    void setDefault_existingAddress_clearsAndSetsDefault() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        entity.setDefault(false);
+        DeliveryAddressDto dto = new DeliveryAddressDto();
+
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+        when(addressRepository.save(entity)).thenReturn(entity);
+        when(converter.toDto(entity)).thenReturn(dto);
+
+        assertThat(service.setDefault(userId, addressId)).isEqualTo(dto);
+        assertThat(entity.isDefault()).isTrue();
+        verify(addressRepository).clearDefaultForUser(userId);
+    }
+
+    @Test
+    @DisplayName("setDefault throws DeliveryAddressNotFoundException when not found")
+    void setDefault_notFound_throws() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.setDefault(userId, addressId))
+                .isInstanceOf(DeliveryAddressNotFoundException.class);
     }
 }

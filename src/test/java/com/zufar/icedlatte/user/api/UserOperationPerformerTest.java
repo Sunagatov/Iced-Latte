@@ -22,32 +22,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User operation performer unit tests")
 class UserOperationPerformerTest {
 
-    @Nested
-    @DisplayName("DeleteUserOperationPerformer")
-    class DeleteTests {
-
-        @Mock
-        private UserRepository userRepository;
-        @InjectMocks
-        private DeleteUserOperationPerformer deleter;
-
-        @Test
-        @DisplayName("Delegates deleteById to repository")
-        void deleteUser_callsRepositoryDeleteById() {
-            UUID userId = UUID.randomUUID();
-
-            deleter.deleteUser(userId);
-
-            verify(userRepository).deleteById(userId);
-        }
-    }
 
     @Nested
     @DisplayName("UpdateUserOperationPerformer")

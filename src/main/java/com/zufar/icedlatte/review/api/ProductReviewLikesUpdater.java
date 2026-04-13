@@ -4,6 +4,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -28,7 +29,6 @@ public class ProductReviewLikesUpdater {
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final ProductReviewValidator productReviewValidator;
-    private final ProductReviewProvider productReviewProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto update(final UUID productId,
@@ -63,7 +63,8 @@ public class ProductReviewLikesUpdater {
         productReviewRepository.updateLikesCount(productReviewId);
         productReviewRepository.updateDislikesCount(productReviewId);
 
-        ProductReview productReview = productReviewProvider.getReviewEntityById(productReviewId);
+        ProductReview productReview = productReviewRepository.findById(productReviewId)
+                .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));
         return productReviewDtoConverter.toProductReviewDto(productReview);
     }
 }

@@ -1,9 +1,12 @@
 package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
+import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -20,6 +23,8 @@ public class FavoriteListProvider {
 
     private final FavoriteRepository favoriteRepository;
     private final FavoriteListDtoConverter favoriteListDtoConverter;
+    private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public FavoriteListEntity getFavoriteListEntity(final UUID userId) {
@@ -33,10 +38,13 @@ public class FavoriteListProvider {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FavoriteListDto getFavoriteListDto(final UUID userId) {
-        return favoriteRepository.findByUserId(userId)
+    public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
+        FavoriteListDto dto = favoriteRepository.findByUserId(userId)
                 .map(favoriteListDtoConverter::toDto)
                 .orElseGet(() -> favoriteListDtoConverter.toDto(createNewFavoriteList(userId)));
+        ListOfFavoriteProductsDto response = listOfFavoriteProductsDtoConverter.toListProductDto(dto);
+        productPictureLinkUpdater.updateBatch(response.getProducts());
+        return response;
     }
 
     private FavoriteListEntity createNewFavoriteList(UUID userId) {

@@ -1,11 +1,14 @@
 package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
+import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -27,11 +30,13 @@ public class FavoriteProductAdder {
     private final FavoriteRepository favoriteRepository;
     private final ProductInfoRepository productInfoRepository;
     private final FavoriteListDtoConverter favoriteListDtoConverter;
+    private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    private final ProductPictureLinkUpdater productPictureLinkUpdater;
     private final FavoriteListProvider favoriteListProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public FavoriteListDto add(final ListOfFavoriteProducts listOfFavoriteProducts,
-                               final UUID userId) {
+    public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts listOfFavoriteProducts,
+                                         final UUID userId) {
         FavoriteListEntity favoriteListEntity = favoriteListProvider.getFavoriteListEntity(userId);
 
         Set<UUID> existingFavoriteProductIds = extractFavoriteProductIds(favoriteListEntity);
@@ -41,7 +46,10 @@ public class FavoriteProductAdder {
         favoriteListEntity.getFavoriteItems().addAll(newFavoriteItems);
 
         FavoriteListEntity updatedFavoriteListEntity = favoriteRepository.save(favoriteListEntity);
-        return favoriteListDtoConverter.toDto(updatedFavoriteListEntity);
+        FavoriteListDto dto = favoriteListDtoConverter.toDto(updatedFavoriteListEntity);
+        ListOfFavoriteProductsDto response = listOfFavoriteProductsDtoConverter.toListProductDto(dto);
+        productPictureLinkUpdater.updateBatch(response.getProducts());
+        return response;
     }
 
     private Set<UUID> extractFavoriteProductIds(FavoriteListEntity favoriteListEntity) {

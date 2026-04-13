@@ -3,7 +3,7 @@ package com.zufar.icedlatte.user.endpoint;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.user.api.*;
+import com.zufar.icedlatte.user.api.DeliveryAddressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,24 +21,20 @@ import java.util.UUID;
 public class DeliveryAddressEndpoint {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final DeliveryAddressProvider provider;
-    private final DeliveryAddressCreator creator;
-    private final DeliveryAddressUpdater updater;
-    private final DeliveryAddressDeleter deleter;
-    private final DeliveryAddressDefaultSetter defaultSetter;
+    private final DeliveryAddressService deliveryAddressService;
 
     @GetMapping
     public ResponseEntity<List<DeliveryAddressDto>> getAll() {
         var userId = securityPrincipalProvider.getUserId();
         log.info("delivery_address.get_all: userId={}", userId);
-        return ResponseEntity.ok(provider.getAll(userId));
+        return ResponseEntity.ok(deliveryAddressService.getAll(userId));
     }
 
     @PostMapping
     public ResponseEntity<DeliveryAddressDto> create(@Valid @RequestBody DeliveryAddressRequest request) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("delivery_address.create: userId={}", userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creator.create(userId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(deliveryAddressService.create(userId, request));
     }
 
     @PutMapping("/{addressId}")
@@ -46,14 +42,14 @@ public class DeliveryAddressEndpoint {
                                                      @Valid @RequestBody DeliveryAddressRequest request) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("delivery_address.update: userId={}, addressId={}", userId, addressId);
-        return ResponseEntity.ok(updater.update(userId, addressId, request));
+        return ResponseEntity.ok(deliveryAddressService.update(userId, addressId, request));
     }
 
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> delete(@PathVariable UUID addressId) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("delivery_address.delete: userId={}, addressId={}", userId, addressId);
-        deleter.delete(userId, addressId);
+        deliveryAddressService.delete(userId, addressId);
         return ResponseEntity.noContent().build();
     }
 
@@ -61,6 +57,6 @@ public class DeliveryAddressEndpoint {
     public ResponseEntity<DeliveryAddressDto> setDefault(@PathVariable UUID addressId) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("delivery_address.set_default: userId={}, addressId={}", userId, addressId);
-        return ResponseEntity.ok(defaultSetter.setDefault(userId, addressId));
+        return ResponseEntity.ok(deliveryAddressService.setDefault(userId, addressId));
     }
 }

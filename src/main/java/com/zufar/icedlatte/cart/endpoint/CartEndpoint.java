@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.cart.api.AddItemsToShoppingCartHelper;
 import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
 import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
@@ -8,7 +7,6 @@ import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.Valid;
@@ -38,7 +36,6 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     private final ProductQuantityItemUpdater productQuantityItemUpdater;
     private final ShoppingCartProvider shoppingCartProvider;
     private final ShoppingCartItemsDeleter shoppingCartItemsDeleter;
-    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Override
     @PostMapping(value = "/items")
@@ -49,7 +46,6 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
         }
         log.debug("cart.items.adding: count={}", request.getItems().size());
         var shoppingCart = addItemsToShoppingCartHelper.add(request.getItems());
-        enrichProductImages(shoppingCart);
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }
@@ -59,10 +55,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public ResponseEntity<ShoppingCartDto> getShoppingCart() {
         var userId = securityPrincipalProvider.getUserId();
         log.debug("cart.get: userId={}", userId);
-        var shoppingCart = shoppingCartProvider.getByUserId(userId);
-        enrichProductImages(shoppingCart);
-        log.debug("cart.retrieved: userId={}", userId);
-        return ResponseEntity.ok(shoppingCart);
+        return ResponseEntity.ok(shoppingCartProvider.getByUserId(userId));
     }
 
     @Override
@@ -72,7 +65,6 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
         var quantityChange = request.getProductQuantityChange();
         log.debug("cart.items.quantity.updating: itemId={}, change={}", itemId, quantityChange);
         var shoppingCart = productQuantityItemUpdater.update(itemId, quantityChange);
-        enrichProductImages(shoppingCart);
         log.debug("cart.items.quantity.updated: itemId={}", itemId);
         return ResponseEntity.ok(shoppingCart);
     }
@@ -84,20 +76,9 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
             log.warn("cart.items.delete.invalid: reason=empty_ids");
             return ResponseEntity.badRequest().build();
         }
-        
         log.debug("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());
         var shoppingCart = shoppingCartItemsDeleter.delete(request);
-        enrichProductImages(shoppingCart);
         log.debug("cart.items.deleted");
         return ResponseEntity.ok(shoppingCart);
-    }
-
-    private void enrichProductImages(ShoppingCartDto cart) {
-        if (cart.getItems() == null) return;
-        productPictureLinkUpdater.updateBatch(
-                cart.getItems().stream()
-                        .map(ShoppingCartItemDto::getProductInfo)
-                        .toList()
-        );
     }
 }
