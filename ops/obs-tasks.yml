@@ -1,7 +1,8 @@
 version: '3'
 
 vars:
-  COMPOSE_FILE: docker-compose.logging.yml
+  OBS_DIR: ops/observability
+  COMPOSE_FILE: ops/observability/docker-compose.yml
   LOGGING_NETWORK: iced-latte-network
   GRAFANA_URL: http://localhost:3001
   PROMETHEUS_URL: http://localhost:9090

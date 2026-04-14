@@ -24,6 +24,11 @@ version: '3'
 #   task -t maintaner/Taskfile.yml prod:ship
 # ─────────────────────────────────────────────────────────────────────────────
 
+includes:
+  obs:
+    taskfile: ops/obs-tasks.yml
+    dir: .
+
 vars:
   COMPOSE_FILE: docker-compose.yml
   BACKEND_IMAGE: zufarexplainedit/iced-latte-backend:latest

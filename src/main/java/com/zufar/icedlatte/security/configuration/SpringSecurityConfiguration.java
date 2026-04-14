@@ -77,7 +77,7 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews/*/likes").authenticated()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
