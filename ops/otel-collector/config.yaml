@@ -39,8 +39,8 @@ exporters:
   # Traces → Grafana Cloud Tempo (OTLP HTTP)
   otlphttp/tempo:
     endpoint: ${env:GRAFANA_CLOUD_TEMPO_OTLP_ENDPOINT}
-    headers:
-      Authorization: ${env:GRAFANA_CLOUD_OTLP_AUTHORIZATION}
+    auth:
+      authenticator: basicauth/tempo
     tls:
       insecure: false
 
@@ -60,6 +60,11 @@ exporters:
       job: true
 
 extensions:
+  basicauth/tempo:
+    client_auth:
+      username: ${env:GRAFANA_CLOUD_TEMPO_USERNAME}
+      password: ${env:GRAFANA_CLOUD_TEMPO_PASSWORD}
+
   basicauth/prometheus:
     client_auth:
       username: ${env:GRAFANA_CLOUD_PROMETHEUS_USERNAME}
@@ -77,7 +82,7 @@ extensions:
     endpoint: 0.0.0.0:1777
 
 service:
-  extensions: [health_check, pprof, basicauth/prometheus, basicauth/loki]
+  extensions: [health_check, pprof, basicauth/tempo, basicauth/prometheus, basicauth/loki]
   pipelines:
     traces:
       receivers: [otlp]
