@@ -27,11 +27,28 @@ management:
   tracing:
     sampling:
       probability: 1.0
-  otlp:
+  # Spring Boot 4.x OTel properties — routes all signals through local OTel Collector
+  opentelemetry:
+    resource-attributes:
+      service.name: ${OTEL_SERVICE_NAME:iced-latte-backend}
+      service.namespace: ${OTEL_SERVICE_NAMESPACE:iced-latte}
+      service.version: ${OTEL_SERVICE_VERSION:latest}
+      deployment.environment: ${OTEL_DEPLOYMENT_ENVIRONMENT:production}
     tracing:
-      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
-      headers:
-        Authorization: ${OTEL_EXPORTER_OTLP_AUTHORIZATION:${GRAFANA_CLOUD_OTLP_AUTHORIZATION:}}
+      export:
+        otlp:
+          endpoint: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/traces
+          transport: http
+    logging:
+      export:
+        otlp:
+          endpoint: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/logs
+          transport: http
+  otlp:
+    metrics:
+      export:
+        url: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/metrics
+        step: 1m
 
 springdoc:
   api-docs:

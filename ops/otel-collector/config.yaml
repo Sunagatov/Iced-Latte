@@ -1,0 +1,96 @@
+# OpenTelemetry Collector — Iced Latte
+#
+# Pipeline:
+#   App (OTLP gRPC :4317 / HTTP :4318)
+#     → receivers: otlp
+#     → processors: batch, resource, memory_limiter
+#     → exporters: traces → Grafana Cloud Tempo
+#                  metrics → Grafana Cloud Prometheus (remote write)
+#                  logs   → Grafana Cloud Loki
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: production
+        action: upsert
+      - key: service.namespace
+        value: iced-latte
+        action: upsert
+
+exporters:
+  # Traces → Grafana Cloud Tempo (OTLP HTTP)
+  otlphttp/tempo:
+    endpoint: ${env:GRAFANA_CLOUD_TEMPO_OTLP_ENDPOINT}
+    headers:
+      Authorization: ${env:GRAFANA_CLOUD_OTLP_AUTHORIZATION}
+    tls:
+      insecure: false
+
+  # Metrics → Grafana Cloud Prometheus (remote write)
+  prometheusremotewrite:
+    endpoint: ${env:GRAFANA_CLOUD_PROMETHEUS_REMOTE_WRITE_URL}
+    auth:
+      authenticator: basicauth/prometheus
+
+  # Logs → Grafana Cloud Loki
+  loki:
+    endpoint: ${env:GRAFANA_CLOUD_LOKI_ENDPOINT}
+    auth:
+      authenticator: basicauth/loki
+    default_labels_enabled:
+      exporter: false
+      job: true
+
+extensions:
+  basicauth/prometheus:
+    client_auth:
+      username: ${env:GRAFANA_CLOUD_PROMETHEUS_USERNAME}
+      password: ${env:GRAFANA_CLOUD_PROMETHEUS_PASSWORD}
+
+  basicauth/loki:
+    client_auth:
+      username: ${env:LOKI_USERNAME}
+      password: ${env:LOKI_PASSWORD}
+
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof, basicauth/prometheus, basicauth/loki]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [loki]
+  telemetry:
+    logs:
+      level: warn

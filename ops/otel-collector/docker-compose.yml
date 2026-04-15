@@ -1,0 +1,19 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0
+    container_name: otel-collector
+    restart: unless-stopped
+    env_file: /opt/apps/iced-latte/.env.prod
+    volumes:
+      - ./config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC — app sends traces here
+      - "4318:4318"   # OTLP HTTP — app sends traces here
+      - "13133:13133" # health_check
+    networks:
+      - reverse-network
+
+networks:
+  reverse-network:
+    external: true
