@@ -286,6 +286,16 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        spring.data.repository.invocations: true
+        hikaricp.connections.acquire: true
+        lettuce.command.completion: true
+      slo:
+        http.server.requests: 50ms,100ms,250ms,500ms,1s,2s,5s
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
   health:
     redis:
       enabled: true

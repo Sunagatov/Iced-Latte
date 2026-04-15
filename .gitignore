@@ -81,7 +81,6 @@ nb-configuration.xml
 .env
 .env.*
 !.env.example
-.amazonq/.env.prod
 local.env
 /README.local.md
 /docker-compose.override.yaml
@@ -90,8 +89,8 @@ local.env
 ## Deployment
 ##############################
 ssh-key-*.key
-/docker-compose.prod.yml
-/.env.prod
+maintaner/deployment/docker-compose.prod.yml
+maintaner/deployment/.env.prod
 /ops/README.md
 /ops/scripts/
 maintaner/
