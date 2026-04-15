@@ -94,6 +94,7 @@ maintaner/deployment/.env.prod
 /ops/README.md
 /ops/scripts/
 maintaner/
+/docs/observability/
 
 ##############################
 ## Logs
