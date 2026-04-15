@@ -280,8 +280,15 @@
     <!-- LOGGER SUPPRESSIONS                       -->
     <!-- ========================================== -->
     <!-- Suppress OTEL exporter connection errors when no collector is running locally.
-         These fire every ~8 min with a 40-line stack trace and are expected in dev. -->
-    <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
+         These fire every ~8 min with a 40-line stack trace and are expected in dev.
+         In prod (collector is a required dependency) we keep WARN so export failures
+         are visible without flooding logs with stack traces. -->
+    <springProfile name="prod">
+        <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="WARN"/>
+    </springProfile>
+    <springProfile name="!prod">
+        <logger name="io.opentelemetry.exporter.internal.http.HttpExporter" level="OFF"/>
+    </springProfile>
 
     <!-- Suppress Spring Data Redis bootstrap noise: INFO lines per startup explaining
          that JPA repositories are not Redis repositories. Zero operational value. -->

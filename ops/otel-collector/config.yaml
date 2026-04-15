@@ -1,18 +1,12 @@
-# OpenTelemetry Collector — Iced Latte
+# OpenTelemetry Collector — Iced Latte Production
 #
-# Pipeline:
-#   App (OTLP gRPC :4317 / HTTP :4318)
-#     → receivers: otlp
-#     → processors: batch, resource, memory_limiter
-#     → exporters: traces → Grafana Cloud Tempo
-#                  metrics → Grafana Cloud Prometheus (remote write)
-#                  logs   → Grafana Cloud Loki
+# Pipeline: App (OTLP HTTP :4318) → batch → Grafana Cloud (single OTLP endpoint)
+# Auth: basicauth extension with GRAFANA_CLOUD_OTLP_USERNAME / PASSWORD env vars
+# Credentials: from Grafana Cloud → Connections → OpenTelemetry tile
 
 receivers:
   otlp:
     protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
 
@@ -24,73 +18,39 @@ processors:
 
   batch:
     timeout: 5s
-    send_batch_size: 512
-
-  resource:
-    attributes:
-      - key: deployment.environment
-        value: production
-        action: upsert
-      - key: service.namespace
-        value: iced-latte
-        action: upsert
-
-exporters:
-  # Traces → Grafana Cloud Tempo via OTLP gateway
-  otlphttp/tempo:
-    endpoint: ${env:GRAFANA_CLOUD_TEMPO_OTLP_ENDPOINT}
-    headers:
-      Authorization: ${env:GRAFANA_CLOUD_OTLP_AUTHORIZATION}
-    tls:
-      insecure: false
-
-  # Metrics → Grafana Cloud Prometheus (remote write)
-  prometheusremotewrite:
-    endpoint: ${env:GRAFANA_CLOUD_PROMETHEUS_REMOTE_WRITE_URL}
-    auth:
-      authenticator: basicauth/prometheus
-
-  # Logs → Grafana Cloud Loki
-  loki:
-    endpoint: ${env:GRAFANA_CLOUD_LOKI_ENDPOINT}
-    auth:
-      authenticator: basicauth/loki
-    default_labels_enabled:
-      exporter: false
-      job: true
+    send_batch_size: 1024
 
 extensions:
-  basicauth/prometheus:
-    client_auth:
-      username: ${env:GRAFANA_CLOUD_PROMETHEUS_USERNAME}
-      password: ${env:GRAFANA_CLOUD_PROMETHEUS_PASSWORD}
-
-  basicauth/loki:
-    client_auth:
-      username: ${env:LOKI_USERNAME}
-      password: ${env:LOKI_PASSWORD}
-
   health_check:
     endpoint: 0.0.0.0:13133
 
-  pprof:
-    endpoint: 0.0.0.0:1777
+  basicauth/grafana_cloud:
+    client_auth:
+      username: ${env:GRAFANA_CLOUD_OTLP_USERNAME}
+      password: ${env:GRAFANA_CLOUD_OTLP_PASSWORD}
+
+exporters:
+  otlphttp/grafana_cloud:
+    endpoint: ${env:GRAFANA_CLOUD_OTLP_ENDPOINT}
+    auth:
+      authenticator: basicauth/grafana_cloud
+    compression: gzip
 
 service:
-  extensions: [health_check, pprof, basicauth/prometheus, basicauth/loki]
+  extensions: [health_check, basicauth/grafana_cloud]
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, resource, batch]
-      exporters: [otlphttp/tempo]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/grafana_cloud]
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, resource, batch]
-      exporters: [prometheusremotewrite]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/grafana_cloud]
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, resource, batch]
-      exporters: [loki]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/grafana_cloud]
   telemetry:
     logs:
       level: warn
