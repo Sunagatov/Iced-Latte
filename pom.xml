@@ -82,6 +82,7 @@
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
         <sentry.version>8.37.1</sentry.version>
+        <pyroscope.version>2.1.2</pyroscope.version>
 
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <guava.version>33.5.0-jre</guava.version>
@@ -280,6 +281,12 @@
             <artifactId>sentry-logback</artifactId>
             <version>${sentry.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Pyroscope continuous profiling -->
+        <dependency>
+            <groupId>io.pyroscope</groupId>
+            <artifactId>agent</artifactId>
+            <version>${pyroscope.version}</version>
         </dependency>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->
