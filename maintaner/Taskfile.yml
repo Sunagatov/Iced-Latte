@@ -1,0 +1,185 @@
+version: '3'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Iced Latte — Maintainer / Production Tasks
+# Run from project root: task -t maintaner/Taskfile.yml <task>
+#
+# Requires maintaner/deployment/.env.prod (gitignored, never committed).
+#
+# FULL DEPLOY
+#   task -t maintaner/Taskfile.yml prod:ship        # build → push → sync → deploy → smoke
+#
+# INDIVIDUAL STEPS
+#   task -t maintaner/Taskfile.yml prod:build       # build ARM64 image
+#   task -t maintaner/Taskfile.yml prod:push        # push to Docker Hub
+#   task -t maintaner/Taskfile.yml prod:sync        # sync compose + .env.prod to server
+#   task -t maintaner/Taskfile.yml prod:deploy      # pull + restart on server
+#   task -t maintaner/Taskfile.yml prod:restart     # restart without pulling (after env change)
+#
+# OBSERVE
+#   task -t maintaner/Taskfile.yml prod:smoke       # smoke test
+#   task -t maintaner/Taskfile.yml prod:logs        # last 100 lines
+#   task -t maintaner/Taskfile.yml prod:logs-follow # live tail
+#   task -t maintaner/Taskfile.yml prod:status      # container status on server
+#   task -t maintaner/Taskfile.yml prod:ssh         # open SSH session
+#   task -t maintaner/Taskfile.yml prod:prune       # clean up Docker on server
+# ─────────────────────────────────────────────────────────────────────────────
+
+vars:
+  SCRIPTS_DIR: ../ops/scripts
+  ENV_FILE: deployment/.env.prod
+
+tasks:
+
+  # ── Internal guards ───────────────────────────────────────────
+  env-check:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        if [[ ! -f "{{.ENV_FILE}}" ]]; then
+          echo "❌ {{.ENV_FILE}} not found."
+          echo "💡 Create maintaner/deployment/.env.prod with your production config."
+          exit 1
+        fi
+        for key in DOCKER_IMAGE SSH_KEY SSH_USER SSH_HOST REMOTE_APP_DIR REMOTE_COMPOSE_FILE; do
+          if ! grep -q "^${key}=" "{{.ENV_FILE}}"; then
+            echo "❌ Missing required key in {{.ENV_FILE}}: ${key}"
+            exit 1
+          fi
+        done
+
+  # ── Build / Push ──────────────────────────────────────────────
+  prod:build:
+    desc: "Prod - Build backend Docker image (ARM64)"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/build.sh
+
+  prod:push:
+    desc: "Prod - Push backend image to Docker Hub"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/push.sh
+
+  # ── Sync & Deploy ─────────────────────────────────────────────
+  prod:sync:
+    desc: "Prod - Sync docker-compose.prod.yml and .env.prod to server (reads .env.prod from Vault)"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/sync-compose.sh
+
+  prod:deploy:
+    desc: "Prod - Pull latest image and restart backend on server"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/deploy.sh
+
+  prod:restart:
+    desc: "Prod - Restart containers without pulling new image (use after env change)"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/restart.sh
+
+  # ── Observe ───────────────────────────────────────────────────
+  prod:smoke:
+    desc: "Prod - Run smoke test against production"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/smoke.sh
+
+  prod:logs:
+    desc: "Prod - Show last 100 lines of production logs"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/logs.sh
+
+  prod:logs-follow:
+    desc: "Prod - Tail production logs live"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/logs.sh -f
+
+  prod:status:
+    desc: "Prod - Show running containers on server"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/status.sh
+
+  prod:ssh:
+    desc: "Prod - Open SSH session to server"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/ssh.sh
+
+  prod:prune:
+    desc: "Prod - Remove unused Docker resources on server"
+    deps: [env-check]
+    cmds:
+      - PROJECT_CONFIG=maintaner/{{.ENV_FILE}} bash {{.SCRIPTS_DIR}}/prune.sh
+
+  # ── Full deploy ───────────────────────────────────────────────
+  # ── OTel Collector ──────────────────────────────────────────
+  # Source of truth for otel-collector files: /Users/zufar/IdeaProjects/Vault/hetzner/apps/otel-collector/
+  otel:deploy:
+    desc: "OTel - Deploy OTel Collector on server (reads config from Vault)"
+    deps: [env-check]
+    cmds:
+      - |
+        source maintaner/{{.ENV_FILE}}
+        ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} "mkdir -p /opt/apps/otel-collector"
+        scp -i ${SSH_KEY} /Users/zufar/IdeaProjects/Vault/hetzner/apps/otel-collector/config.yaml ${SSH_USER}@${SSH_HOST}:/opt/apps/otel-collector/config.yaml
+        scp -i ${SSH_KEY} /Users/zufar/IdeaProjects/Vault/hetzner/apps/otel-collector/docker-compose.yml ${SSH_USER}@${SSH_HOST}:/opt/apps/otel-collector/docker-compose.yml
+        scp -i ${SSH_KEY} /Users/zufar/IdeaProjects/Vault/hetzner/apps/otel-collector/.env ${SSH_USER}@${SSH_HOST}:/opt/apps/otel-collector/.env
+        ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} "cd /opt/apps/otel-collector && docker compose up -d --pull always --force-recreate"
+
+  otel:restart:
+    desc: "OTel - Restart OTel Collector after config change (reads config from Vault)"
+    deps: [env-check]
+    cmds:
+      - |
+        source maintaner/{{.ENV_FILE}}
+        scp -i ${SSH_KEY} /Users/zufar/IdeaProjects/Vault/hetzner/apps/otel-collector/config.yaml ${SSH_USER}@${SSH_HOST}:/opt/apps/otel-collector/config.yaml
+        ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} "cd /opt/apps/otel-collector && docker compose restart otel-collector"
+
+  otel:logs:
+    desc: "OTel - Show last 100 lines of OTel Collector logs"
+    deps: [env-check]
+    cmds:
+      - |
+        source maintaner/{{.ENV_FILE}}
+        ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} "
+          docker logs otel-collector --tail 100
+        "
+
+  otel:status:
+    desc: "OTel - Show OTel Collector container status"
+    deps: [env-check]
+    cmds:
+      - |
+        source maintaner/{{.ENV_FILE}}
+        ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} "
+          docker ps --filter name=otel-collector --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+        "
+
+  # ── Full deploy ───────────────────────────────────────────────
+  prod:ship:
+    desc: "Prod - Full deploy: build → push → sync → deploy → smoke  ⚠️  deploys to production"
+    deps: [env-check]
+    cmds:
+      - |
+        echo "⚠️  You are about to deploy to PRODUCTION."
+        source {{.ENV_FILE}}
+        echo "   Image : ${DOCKER_IMAGE}:${DOCKER_TAG:-latest}"
+        echo "   Server: ${SSH_USER}@${SSH_HOST}"
+        printf "   Continue? [y/N] "
+        read -r answer
+        if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
+          echo "Aborted."
+          exit 1
+        fi
+      - task: prod:build
+      - task: prod:push
+      - task: prod:sync
+      - task: prod:deploy
+      - task: prod:smoke
