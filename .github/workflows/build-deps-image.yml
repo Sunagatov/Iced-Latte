@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ops/docker/Dockerfile.deps
+          file: .github/docker/Dockerfile.deps
           push: true
           tags: zufarexplainedit/iced-latte-deps:latest
 
