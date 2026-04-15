@@ -81,7 +81,7 @@
         <langchain4j.version>1.12.2</langchain4j.version>
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
-        <sentry.version>8.37.1</sentry.version>
+        <sentry.version>8.38.0</sentry.version>
         <pyroscope.version>2.1.2</pyroscope.version>
 
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
