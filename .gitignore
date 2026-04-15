@@ -91,9 +91,9 @@ local.env
 ssh-key-*.key
 maintaner/deployment/docker-compose.prod.yml
 maintaner/deployment/.env.prod
-/ops/README.md
-/ops/scripts/
+/ops/
 maintaner/
+/Taskfile.yml
 /docs/observability/
 
 ##############################
