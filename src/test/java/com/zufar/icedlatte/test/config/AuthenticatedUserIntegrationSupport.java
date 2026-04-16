@@ -39,14 +39,16 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
         String email = "integration." + suffix + "@example.com";
         String password = "Password123!";
 
-        return registerAndAuthenticateUser(email, password);
+        return registerAndAuthenticateUser("Integration", "User", email, password);
     }
 
     protected AuthenticatedUser registerAndAuthenticateUser(
+            String firstName,
+            String lastName,
             String email,
             String password
     ) {
-        UserRegistrationRequest pending = new UserRegistrationRequest("Integration", "User", email, password);
+        UserRegistrationRequest pending = new UserRegistrationRequest(firstName, lastName, email, password);
         String confirmationToken = tokenManager.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         var response = given(jsonSpec(AUTH_BASE_PATH))
