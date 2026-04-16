@@ -1,5 +1,7 @@
 # Infrastructure & Integrations
 
+> **Production deployment** — environment files, server configuration, and production operations are managed in a separate private Vault repository. This repository owns source code and local development workflows only. Do not add production deployment logic here.
+
 This document covers the infrastructure and optional integrations that power Iced Latte. Each section explains what the component does, how it is configured, and which free-tier providers work out of the box — so you can run the full stack without spending anything.
 
 ## Table of Contents
