@@ -67,7 +67,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
         );
     }
 
-    protected record AuthenticatedUser(
+    public record AuthenticatedUser(
             String accessToken,
             String refreshToken,
             String email,
