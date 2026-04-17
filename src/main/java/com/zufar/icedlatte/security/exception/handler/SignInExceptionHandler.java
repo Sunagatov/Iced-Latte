@@ -36,9 +36,7 @@ public class SignInExceptionHandler {
         String method = request.getMethod();
         String path = sanitize(request.getRequestURI());
 
-        if ("/api/v1/auth/refresh".equals(path)) {
-            log.info("auth.refresh.skipped: reason=missing_refresh_token, status=401, method={}, path={}", method, path);
-        } else {
+        if (!"/api/v1/auth/refresh".equals(path)) {
             log.warn("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
                     exception.getClass().getSimpleName(), method, path);
         }
