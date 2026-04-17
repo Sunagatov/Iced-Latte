@@ -20,32 +20,41 @@ public class ClientIpExtractor {
     // and mixed IPv4-in-IPv6 forms while rejecting bare strings like ":" or "abc".
     private static final Pattern IPV6 = Pattern.compile("^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}(%[\\w.]+)?$");
 
-    @Value("${security.trusted-proxies:}")
+    @Value("${security.rate-limit.trusted-proxies:${security.trusted-proxies:}}")
     private List<String> trustedProxies;
 
     @PostConstruct
     void logConfig() {
-        if (trustedProxies == null || trustedProxies.isEmpty()) {
+        trustedProxies = trustedProxies == null
+                ? List.of()
+                : trustedProxies.stream()
+                  .map(String::trim)
+                  .filter(value -> !value.isBlank())
+                  .toList();
+
+        if (trustedProxies.isEmpty()) {
             log.info("rate_limit.trusted_proxies: none configured — X-Forwarded-For will be ignored");
         } else {
-            log.info("rate_limit.trusted_proxies: count={}, values={}",
-                    trustedProxies.size(), trustedProxies);
+            log.info("rate_limit.trusted_proxies: count={}, values={}", trustedProxies.size(), trustedProxies);
         }
     }
 
     public String extract(HttpServletRequest request) {
         String remoteAddress = request.getRemoteAddr();
-        if (trustedProxies == null || !trustedProxies.contains(remoteAddress)) {
+        if (!trustedProxies.contains(remoteAddress)) {
             return remoteAddress;
         }
+
         String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor == null || xForwardedFor.isEmpty()) {
+        if (xForwardedFor == null || xForwardedFor.isBlank()) {
             return remoteAddress;
         }
+
         String firstIp = xForwardedFor.split(",")[0].trim();
         if (isLiteralIp(firstIp)) {
             return firstIp;
         }
+
         return remoteAddress;
     }
 
@@ -54,12 +63,10 @@ public class ClientIpExtractor {
      * Used by rate-limiting filters so the logic lives in one place.
      */
     public static String sanitize(String value) {
-        return value == null ?
-                "" : value.replaceAll("[\r\n]", "_");
+        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
     }
 
     private static boolean isLiteralIp(String ip) {
-        return IPV4.matcher(ip).matches() ||
-                IPV6.matcher(ip).matches();
+        return IPV4.matcher(ip).matches() || IPV6.matcher(ip).matches();
     }
 }

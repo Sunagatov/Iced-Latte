@@ -83,7 +83,15 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleNoResourceFoundException(final NoResourceFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
+        String path = normalizePath(sanitize(exception.getResourcePath()));
+        String method = exception.getHttpMethod().name();
+
+        if (isPublicInternetNoise(path)) {
+            log.debug("exception.resource_not_found.scan: method={}, path={}", method, path);
+        } else {
+            log.warn("exception.resource_not_found: method={}, path={}", method, path);
+        }
+
         return apiErrorResponse;
     }
 
@@ -152,5 +160,22 @@ public class GlobalExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
         log.error("exception.unhandled: exceptionClass={}, status=500", exception.getClass().getName(), exception);
         return apiErrorResponse;
+    }
+
+    private static boolean isPublicInternetNoise(String path) {
+        return !path.startsWith("/api/")
+                && !path.startsWith("/actuator/")
+                && !path.startsWith("/api/docs/");
+    }
+
+    private static String normalizePath(String value) {
+        if (value == null || value.isBlank()) {
+            return "/";
+        }
+        return value.startsWith("/") ? value : "/" + value;
+    }
+
+    private static String sanitize(String value) {
+        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
     }
 }

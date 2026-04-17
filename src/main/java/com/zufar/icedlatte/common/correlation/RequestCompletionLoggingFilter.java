@@ -27,6 +27,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // Dedicated category so operators can tune access-log verbosity independently
     // e.g. logging.level.http.access=WARN suppresses all 2xx lines in prod
     private static final Logger ACCESS_LOG = LoggerFactory.getLogger("http.access");
+
     public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
             "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
 
@@ -39,7 +40,9 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
-        return "OPTIONS".equalsIgnoreCase(method) || path.startsWith("/actuator/") || path.startsWith("/api/docs/");
+        return "OPTIONS".equalsIgnoreCase(method)
+                || path.startsWith("/actuator/")
+                || path.startsWith("/api/docs/");
     }
 
     @Override
@@ -52,6 +55,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         } finally {
             long durationMs = System.currentTimeMillis() - start;
             int status = response.getStatus();
+
             String outcome;
             if (status < 400) {
                 outcome = "SUCCESS";
@@ -60,6 +64,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             } else {
                 outcome = "SERVER_ERROR";
             }
+
             String clientIp = clientIpExtractor.extract(request);
             String method = request.getMethod();
             String path = resolvePathTemplate(request);
@@ -70,6 +75,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
             if (status >= 500) {
                 ACCESS_LOG.error(OUTCOME, args);
+            } else if (status == 404 && isPublicInternetNoise(path)) {
+                ACCESS_LOG.debug(OUTCOME, args);
             } else if (status >= 400 || slow) {
                 ACCESS_LOG.warn(OUTCOME, args);
             } else if (isPollingEndpoint(path)) {
@@ -90,25 +97,37 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 || "/api/v1/favorites".equals(path);
     }
 
+    private static boolean isPublicInternetNoise(String path) {
+        String normalized = normalizePath(path);
+        return !normalized.startsWith("/api/")
+                && !normalized.startsWith("/actuator/")
+                && !normalized.startsWith("/api/docs/");
+    }
+
     private static String resolvePathTemplate(HttpServletRequest request) {
         Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String resolved = pattern != null ? pattern.toString() : null;
         if (resolved == null || "/**".equals(resolved)) {
             resolved = request.getRequestURI();
         }
-        return sanitize(resolved);
+        return sanitize(normalizePath(resolved));
     }
 
     private static boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext()
-                .getAuthentication();
-        return auth != null &&
-                auth.isAuthenticated() &&
-                !"anonymousUser".equals(auth.getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null
+                && auth.isAuthenticated()
+                && !"anonymousUser".equals(auth.getPrincipal());
+    }
+
+    private static String normalizePath(String value) {
+        if (value == null || value.isBlank()) {
+            return "/";
+        }
+        return value.startsWith("/") ? value : "/" + value;
     }
 
     private static String sanitize(String value) {
-        return value == null ?
-                "" : value.replaceAll("[\r\n]", "_");
+        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
     }
 }

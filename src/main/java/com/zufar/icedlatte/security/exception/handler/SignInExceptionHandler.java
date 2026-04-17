@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -33,7 +32,18 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
                                                               HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        String method = request.getMethod();
+        String path = sanitize(request.getRequestURI());
+
+        if ("/api/v1/auth/refresh".equals(path)) {
+            log.info("auth.refresh.skipped: reason=missing_refresh_token, status=401, method={}, path={}", method, path);
+        } else {
+            log.warn("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
+                    exception.getClass().getSimpleName(), method, path);
+        }
+
+        return response;
     }
 
     @ExceptionHandler(UserRegistrationException.class)
@@ -83,15 +93,15 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleSessionNotFoundException(final SessionNotFoundException exception,
                                                            HttpServletRequest request) {
-        log.warn("auth.session.not_found: method={}, path={}", request.getMethod(), request.getRequestURI());
+        log.warn("auth.session.not_found: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
         return apiErrorResponseCreator.buildResponse("Session not found", HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(SessionOwnershipException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ApiErrorResponse handleSessionOwnershipException(final SessionOwnershipException exception,
-                                                             HttpServletRequest request) {
-        log.warn("auth.session.forbidden: method={}, path={}", request.getMethod(), request.getRequestURI());
+                                                            HttpServletRequest request) {
+        log.warn("auth.session.forbidden: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
         return apiErrorResponseCreator.buildResponse("Access denied", HttpStatus.FORBIDDEN);
     }
 
@@ -100,9 +110,14 @@ public class SignInExceptionHandler {
                                     HttpServletRequest request) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
         log.warn("auth.sign_in.failed: reason_code={}, status={}, method={}, path={}",
-                exception.getClass().getSimpleName(), status.value(),
-                request.getMethod(), request.getRequestURI());
+                exception.getClass().getSimpleName(),
+                status.value(),
+                request.getMethod(),
+                sanitize(request.getRequestURI()));
         return response;
     }
-}
 
+    private static String sanitize(String value) {
+        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
+    }
+}
