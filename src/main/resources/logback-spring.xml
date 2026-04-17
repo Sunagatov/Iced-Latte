@@ -7,10 +7,14 @@
 
     <!-- ========================================== -->
     <!-- CONSOLE APPENDER (Human-Readable)         -->
+    <!-- Console is optimized for humans reading    -->
+    <!-- docker logs. Rich correlation stays in     -->
+    <!-- structured JSON appenders and event body.  -->
     <!-- ========================================== -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-40logger{40} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} sessionId=%X{sessionId} clientTraceId=%X{clientTraceId} - %msg%n</pattern>        </encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,UTC} [%thread] %-5level %-40logger{40} - %msg%n</pattern>
+        </encoder>
     </appender>
 
     <!-- ========================================== -->
@@ -37,11 +41,14 @@
                         "application": "${application_name}",
                         "version": "${application_version}",
                         "environment": "${environment}",
+                        "traceId": "%X{traceId}",
+                        "spanId": "%X{spanId}",
                         "trace": {
                         "userId": "%X{userId}",
                         "correlationId": "%X{correlationId}",
                         "sessionId": "%X{sessionId}",
-                        "requestId": "%X{requestId}"
+                        "requestId": "%X{requestId}",
+                        "clientTraceId": "%X{clientTraceId}"
                         }
                         }
                     </pattern>
@@ -86,10 +93,7 @@
                     level=%level
                 </labels>
                 <message class="ch.qos.logback.classic.PatternLayout">
-                    <pattern>level=%level application=${application_name} version=${application_version}
-                        environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId}
-                        userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} message=%msg%n%ex
-                    </pattern>
+                    <pattern>level=%level application=${application_name} version=${application_version} environment=${environment} logger=%logger thread=%thread traceId=%X{traceId} spanId=%X{spanId} userId=%X{userId} correlationId=%X{correlationId} requestId=%X{requestId} sessionId=%X{sessionId} clientTraceId=%X{clientTraceId} message=%msg%n%ex</pattern>
                 </message>
             </appender>
         </then>
@@ -148,6 +152,12 @@
 
     <!-- ========================================== -->
     <!-- DATADOG APPENDER                          -->
+    <!-- Datadog log ingestion is handled by the   -->
+    <!-- Datadog Agent running as a sidecar/host   -->
+    <!-- process. This appender writes Datadog-    -->
+    <!-- shaped JSON to stdout; the Agent tails    -->
+    <!-- the container log and forwards it.        -->
+    <!-- No direct HTTP transport is used here.    -->
     <!-- ========================================== -->
     <springProperty scope="context" name="datadog_enabled" source="logging.datadog.enabled" defaultValue="false"/>
 

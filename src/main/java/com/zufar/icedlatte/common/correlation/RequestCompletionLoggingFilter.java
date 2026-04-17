@@ -77,6 +77,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 ACCESS_LOG.error(OUTCOME, args);
             } else if (status == 404 && isPublicInternetNoise(path)) {
                 ACCESS_LOG.debug(OUTCOME, args);
+            } else if (!authenticated && status == HttpServletResponse.SC_UNAUTHORIZED && isExpectedAnonymousAuthProbe(path)) {
+                ACCESS_LOG.debug(OUTCOME, args);
             } else if (status >= 400 || slow) {
                 ACCESS_LOG.warn(OUTCOME, args);
             } else if (isPollingEndpoint(path)) {
@@ -92,6 +94,15 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     private static boolean isPollingEndpoint(String path) {
         return "/api/v1/products/brands".equals(path)
                 || "/api/v1/products/sellers".equals(path)
+                || "/api/v1/users".equals(path)
+                || "/api/v1/cart".equals(path)
+                || "/api/v1/favorites".equals(path);
+    }
+
+    // Expected anonymous bootstrap / probe flow from the frontend.
+    // These are not operationally interesting at WARN when the user is simply unauthenticated.
+    private static boolean isExpectedAnonymousAuthProbe(String path) {
+        return "/api/v1/auth/refresh".equals(path)
                 || "/api/v1/users".equals(path)
                 || "/api/v1/cart".equals(path)
                 || "/api/v1/favorites".equals(path);

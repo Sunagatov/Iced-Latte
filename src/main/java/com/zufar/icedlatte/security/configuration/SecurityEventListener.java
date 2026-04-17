@@ -26,9 +26,33 @@ public class SecurityEventListener {
         String path = "-";
         if (attrs instanceof ServletRequestAttributes sra) {
             method = sra.getRequest().getMethod();
-            path = sra.getRequest().getRequestURI();
+            path = sanitize(normalizePath(sra.getRequest().getRequestURI()));
         }
+
         String principal = event.getAuthentication().get().getName();
-        log.warn("auth.denied: method={}, path={}, principal={}", method, path, principal);
+
+        if (isExpectedAnonymousDeny(principal, path)) {
+            log.debug("auth.denied: method={}, path={}, principal={}", method, path, principal);
+        } else {
+            log.warn("auth.denied: method={}, path={}, principal={}", method, path, principal);
+        }
+    }
+
+    private static boolean isExpectedAnonymousDeny(String principal, String path) {
+        return "anonymousUser".equals(principal)
+                && ("/api/v1/users".equals(path)
+                || "/api/v1/cart".equals(path)
+                || "/api/v1/favorites".equals(path));
+    }
+
+    private static String normalizePath(String value) {
+        if (value == null || value.isBlank()) {
+            return "/";
+        }
+        return value.startsWith("/") ? value : "/" + value;
+    }
+
+    private static String sanitize(String value) {
+        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
     }
 }

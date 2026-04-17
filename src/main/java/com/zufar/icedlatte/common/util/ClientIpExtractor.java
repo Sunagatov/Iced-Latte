@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.net.InetAddress;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -41,7 +42,7 @@ public class ClientIpExtractor {
 
     public String extract(HttpServletRequest request) {
         String remoteAddress = request.getRemoteAddr();
-        if (!trustedProxies.contains(remoteAddress)) {
+        if (!isTrustedProxy(remoteAddress)) {
             return remoteAddress;
         }
 
@@ -64,6 +65,71 @@ public class ClientIpExtractor {
      */
     public static String sanitize(String value) {
         return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
+    }
+
+    private boolean isTrustedProxy(String remoteAddress) {
+        if (remoteAddress == null || remoteAddress.isBlank()) {
+            return false;
+        }
+
+        return trustedProxies.stream()
+                .anyMatch(rule -> matchesTrustedProxyRule(remoteAddress, rule));
+    }
+
+    private static boolean matchesTrustedProxyRule(String remoteAddress, String rule) {
+        if (rule == null || rule.isBlank()) {
+            return false;
+        }
+
+        String normalizedRule = rule.trim();
+        if (!normalizedRule.contains("/")) {
+            return normalizedRule.equals(remoteAddress);
+        }
+
+        return isInCidr(remoteAddress, normalizedRule);
+    }
+
+    private static boolean isInCidr(String ip, String cidr) {
+        try {
+            String[] parts = cidr.split("/", 2);
+            if (parts.length != 2) {
+                return false;
+            }
+
+            InetAddress ipAddress = InetAddress.getByName(ip);
+            InetAddress networkAddress = InetAddress.getByName(parts[0]);
+            int prefixLength = Integer.parseInt(parts[1]);
+
+            byte[] ipBytes = ipAddress.getAddress();
+            byte[] networkBytes = networkAddress.getAddress();
+
+            if (ipBytes.length != networkBytes.length) {
+                return false;
+            }
+
+            int maxPrefixLength = ipBytes.length * 8;
+            if (prefixLength < 0 || prefixLength > maxPrefixLength) {
+                return false;
+            }
+
+            int fullBytes = prefixLength / 8;
+            int remainingBits = prefixLength % 8;
+
+            for (int i = 0; i < fullBytes; i++) {
+                if (ipBytes[i] != networkBytes[i]) {
+                    return false;
+                }
+            }
+
+            if (remainingBits == 0) {
+                return true;
+            }
+
+            int mask = (-1) << (8 - remainingBits);
+            return (ipBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static boolean isLiteralIp(String ip) {
