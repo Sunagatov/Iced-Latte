@@ -51,7 +51,7 @@
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
         <spring-retry.version>2.0.12</spring-retry.version>
-        <bcprov.version>1.83</bcprov.version>
+        <bcprov.version>1.84</bcprov.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
         <jackson-databind-nullable.version>0.2.10</jackson-databind-nullable.version>
