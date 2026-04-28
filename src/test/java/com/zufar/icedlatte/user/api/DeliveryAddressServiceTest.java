@@ -71,6 +71,8 @@ class DeliveryAddressServiceTest {
 
         assertThat(service.create(userId, request)).isEqualTo(dto);
         assertThat(entity.isDefault()).isTrue();
+        assertThat(entity.getUser()).isSameAs(user);
+        verify(addressRepository).clearDefaultForUser(userId);
     }
 
     @Test
@@ -90,6 +92,8 @@ class DeliveryAddressServiceTest {
         service.create(userId, request);
 
         assertThat(entity.isDefault()).isFalse();
+        assertThat(entity.getUser()).isSameAs(user);
+        verify(addressRepository, never()).clearDefaultForUser(userId);
     }
 
     @Test
