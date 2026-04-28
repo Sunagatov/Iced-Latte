@@ -113,11 +113,42 @@ class FileServicesTest {
         }
 
         @Test
+        @DisplayName("Returns empty when generated URL is null")
+        void getRelatedObjectUrlNullGeneratedUrlReturnsEmpty() {
+            UUID id = UUID.randomUUID();
+            FileMetadataDto dto = new FileMetadataDto(id, "bucket", "file.jpg");
+            when(fileMetadataProvider.getFileMetadataDto(id)).thenReturn(Optional.of(dto));
+            when(awsTemporaryLinkReceiver.generatePresignedUrlAsString(dto)).thenReturn(null);
+
+            Optional<String> result = new FileProvider(awsTemporaryLinkReceiver, fileMetadataProvider).getRelatedObjectUrl(id);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
         @DisplayName("Returns empty map when AWS is not configured for bulk lookup")
         void getRelatedObjectUrlsAwsNullReturnsEmptyMap() {
             Map<UUID, String> result = new FileProvider(null, fileMetadataProvider)
                     .getRelatedObjectUrls(List.of(UUID.randomUUID()));
             assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Returns only non-null generated URLs for bulk lookup")
+        void getRelatedObjectUrlsFiltersNullUrls() {
+            UUID firstId = UUID.randomUUID();
+            UUID secondId = UUID.randomUUID();
+            FileMetadataDto firstDto = new FileMetadataDto(firstId, "bucket", "first.jpg");
+            FileMetadataDto secondDto = new FileMetadataDto(secondId, "bucket", "second.jpg");
+            when(fileMetadataProvider.getFileMetadataDtos(List.of(firstId, secondId)))
+                    .thenReturn(Map.of(firstId, firstDto, secondId, secondDto));
+            when(awsTemporaryLinkReceiver.generatePresignedUrlAsString(firstDto)).thenReturn("https://cdn.example.com/first.jpg");
+            when(awsTemporaryLinkReceiver.generatePresignedUrlAsString(secondDto)).thenReturn(null);
+
+            Map<UUID, String> result = new FileProvider(awsTemporaryLinkReceiver, fileMetadataProvider)
+                    .getRelatedObjectUrls(List.of(firstId, secondId));
+
+            assertThat(result).containsExactly(Map.entry(firstId, "https://cdn.example.com/first.jpg"));
         }
     }
 

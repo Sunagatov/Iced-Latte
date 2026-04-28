@@ -17,12 +17,16 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,6 +58,20 @@ class FavoriteListProviderTest {
 
         assertEquals(expectedFavoriteList, result);
         verify(favoriteRepository).findByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("Should find favorite list entity when it exists without creating one")
+    void shouldFindFavoriteListEntityWithoutCreatingIt() {
+        UUID userId = UUID.randomUUID();
+        FavoriteListEntity expectedFavoriteList = new FavoriteListEntity();
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(expectedFavoriteList));
+
+        Optional<FavoriteListEntity> result = favoriteListProvider.findFavoriteListEntity(userId);
+
+        assertThat(result).contains(expectedFavoriteList);
+        verify(favoriteRepository).findByUserId(userId);
+        verify(favoriteRepository, never()).save(any());
     }
 
     @Test
@@ -93,5 +111,31 @@ class FavoriteListProviderTest {
         assertEquals(response, result);
         verify(favoriteRepository).findByUserId(userId);
         verify(favoriteListDtoConverter).toDto(favoriteList);
+        verify(listOfFavoriteProductsDtoConverter).toListProductDto(dto);
+        verify(productPictureLinkUpdater).updateBatch(response.getProducts());
+    }
+
+    @Test
+    @DisplayName("Should build and enrich transient favorite list when repository has none")
+    void shouldGetEnrichedFavoriteListWhenMissingWithoutSaving() {
+        UUID userId = UUID.randomUUID();
+        FavoriteListDto dto = new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now());
+        com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto response =
+                new com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto();
+        response.setProducts(List.of());
+
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class))).thenReturn(dto);
+        when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
+
+        var result = favoriteListProvider.getEnrichedFavoriteList(userId);
+
+        assertThat(result).isSameAs(response);
+        verify(favoriteRepository).findByUserId(userId);
+        verify(favoriteRepository, never()).save(any());
+        verify(favoriteListDtoConverter).toDto(any(FavoriteListEntity.class));
+        verify(listOfFavoriteProductsDtoConverter).toListProductDto(dto);
+        verify(productPictureLinkUpdater).updateBatch(response.getProducts());
+        verifyNoMoreInteractions(productPictureLinkUpdater);
     }
 }
