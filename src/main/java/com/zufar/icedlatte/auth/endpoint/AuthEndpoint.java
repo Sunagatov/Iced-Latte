@@ -135,7 +135,7 @@ public class AuthEndpoint {
         } catch (Exception e) {
             log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",
                     e.getClass().getSimpleName(), e.getMessage());
-            response.sendRedirect(stored + "/signin?error=auth_failed");
+            response.sendRedirect(buildFrontendErrorRedirect(stored, frontendUrl));
         }
     }
 
@@ -148,5 +148,27 @@ public class AuthEndpoint {
 
     private static String urlEncode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private static String buildFrontendErrorRedirect(String callbackBase,
+                                                     String frontendBaseUrl) {
+        try {
+            URI callbackUri = new URI(callbackBase);
+            URI frontendUri = new URI(frontendBaseUrl);
+            UriComponentsBuilder redirectBuilder = UriComponentsBuilder
+                    .fromUri(frontendUri)
+                    .path("/signin")
+                    .queryParam("error", "auth_failed");
+            String next = UriComponentsBuilder.fromUri(callbackUri)
+                    .build()
+                    .getQueryParams()
+                    .getFirst("next");
+            if (next != null && !next.isBlank()) {
+                redirectBuilder.queryParam("next", next);
+            }
+            return redirectBuilder.build(true).toUriString();
+        } catch (URISyntaxException e) {
+            return frontendBaseUrl + "/signin?error=" + urlEncode("auth_failed");
+        }
     }
 }

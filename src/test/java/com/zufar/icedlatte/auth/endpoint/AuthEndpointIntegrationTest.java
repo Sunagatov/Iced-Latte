@@ -186,7 +186,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should redirect back to stored callback with auth_failed when handler throws")
     void shouldRedirectBackToStoredCallbackWhenHandlerThrows() throws Exception {
-        String callbackBase = frontendUrl + "/oauth/callback";
+        String callbackBase = frontendUrl + "/auth/google/callback?next=/checkout";
 
         when(googleAuthCallbackHandler.handle(eq("broken-code"), any(HttpServletRequest.class)))
                 .thenThrow(new IllegalStateException("exchange failed"));
@@ -206,7 +206,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", equalTo(callbackBase + "/signin?error=auth_failed"));
+                .header("Location", equalTo(frontendUrl + "/signin?error=auth_failed&next=%2Fcheckout"));
     }
 
     @Test
