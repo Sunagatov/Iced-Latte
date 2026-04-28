@@ -92,7 +92,8 @@ ssh-key-*.key
 maintaner/deployment/docker-compose.prod.yml
 maintaner/deployment/.env.prod
 /ops/
-maintaner/
+maintaner/*
+!maintaner/README.md
 /Taskfile.yml
 /docs/observability/
 
