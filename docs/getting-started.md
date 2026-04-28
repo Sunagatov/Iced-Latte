@@ -219,13 +219,13 @@ window.location.hash
 instead of:
 
 ```text
-window.location.search
+window.location.hash
 ```
 
 Example callback URL:
 
 ```text
-http://localhost:3000/oauth/callback#token=...&refreshToken=...
+http://localhost:3000/auth/google/callback#token=...&refreshToken=...
 ```
 
 ### 🛠️ Useful Docker commands
