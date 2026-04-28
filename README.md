@@ -1,4 +1,4 @@
-<div align="center">
+<div style="text-align: center;">
   <br>
   <img src="docs/assets/iced-latte-avatar.jpg" alt="Iced Latte" width="716">
   <h1>Iced Latte</h1>
@@ -77,7 +77,7 @@ mvn test
 
 ## 📸 Preview
 
-<div align="center">
+<div style="text-align: center;">
   <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="1880">
   <p><em>Live application interface</em></p>
 </div>
@@ -163,7 +163,7 @@ src/main/java/com/zufar/icedlatte/
 ├── 📁 filestorage/    # AWS S3 file upload/download
 ├── 📊 observability/  # Telemetry, Sentry integration
 ├── 🔧 common/         # Shared utilities, validation, monitoring
-└── 🚀 startup/        # Startup data migration
+└── 🚀 astartup/       # Startup data migration and bootstrap tasks
 ```
 
 ---
