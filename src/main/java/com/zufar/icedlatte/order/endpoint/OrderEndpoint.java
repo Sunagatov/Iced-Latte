@@ -25,7 +25,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = OrderEndpoint.ORDERS_URL)
+@RequestMapping(OrderEndpoint.ORDERS_URL)
 public class OrderEndpoint {
 
     public static final String ORDERS_URL = "/api/v1/orders";

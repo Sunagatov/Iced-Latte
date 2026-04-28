@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = CartEndpoint.CART_URL)
+@RequestMapping(CartEndpoint.CART_URL)
 public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.ShoppingCartApi {
 
     public static final String CART_URL = "/api/v1/cart";
@@ -39,7 +39,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     private final ShoppingCartItemsDeleter shoppingCartItemsDeleter;
 
     @Override
-    @PostMapping(value = "/items")
+    @PostMapping("/items")
     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new EmptyCartItemsException();
@@ -60,7 +60,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     }
 
     @Override
-    @PatchMapping(value = "/items")
+    @PatchMapping("/items")
     public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Validated @Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
         var itemId = request.getShoppingCartItemId();
         var quantityChange = request.getProductQuantityChange();
@@ -72,7 +72,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     }
 
     @Override
-    @DeleteMapping(value = "/items")
+    @DeleteMapping("/items")
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
         if (request.getShoppingCartItemIds().isEmpty()) {
             throw new EmptyCartItemsException();

@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.email.api.*;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.*;
 import com.zufar.icedlatte.user.api.*;
@@ -20,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = UserEndpoint.API_CUSTOMERS)
+@RequestMapping(UserEndpoint.API_CUSTOMERS)
 public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserApi {
 
     public static final String API_CUSTOMERS = "/api/v1/users";

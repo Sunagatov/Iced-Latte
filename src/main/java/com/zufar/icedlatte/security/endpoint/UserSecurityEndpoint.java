@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,7 +44,7 @@ import java.util.UUID;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping(value = UserSecurityEndpoint.USER_SECURITY_API_URL)
+@RequestMapping(UserSecurityEndpoint.USER_SECURITY_API_URL)
 @RequiredArgsConstructor
 public class UserSecurityEndpoint implements SecurityApi {
 
@@ -74,7 +75,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     @Override
-    @PostMapping(value = "/confirm")
+    @PostMapping("/confirm")
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
         log.debug("auth.email.confirming");
         var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest, httpRequest);
@@ -105,7 +106,7 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     @Override
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@org.springframework.web.bind.annotation.RequestHeader(value = "X-Refresh-Token", required = false)
+    public ResponseEntity<Void> logout(@RequestHeader(name = "X-Refresh-Token", required = false)
                                        String xRefreshToken) {
         logoutService.logout(xRefreshToken, httpRequest);
         return ResponseEntity.ok().build();

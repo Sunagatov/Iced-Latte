@@ -37,14 +37,14 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
     @Modifying(clearAutomatically = true,
             flushAutomatically = true)
     @Transactional
-    @Query(value = """
-            UPDATE public.login_attempts
-            SET attempts = 0,
-                is_user_locked = false,
-                expiration_datetime = NULL,
-                last_modified = CURRENT_TIMESTAMP
-            WHERE is_user_locked = true
-            AND expiration_datetime <= CURRENT_TIMESTAMP
-            """, nativeQuery = true)
+    @Query("""
+            UPDATE LoginAttemptEntity la
+            SET la.attempts = 0,
+                la.isUserLocked = false,
+                la.expirationDatetime = NULL,
+                la.lastModified = CURRENT_TIMESTAMP
+            WHERE la.isUserLocked = true
+            AND la.expirationDatetime <= CURRENT_TIMESTAMP
+            """)
     int resetLockedAccounts();
 }

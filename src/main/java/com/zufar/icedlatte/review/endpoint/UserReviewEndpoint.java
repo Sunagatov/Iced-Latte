@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "/api/v1/users")
+@RequestMapping("/api/v1/users")
 public class UserReviewEndpoint {
 
     private final ProductReviewsProvider productReviewsProvider;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
-    @GetMapping(value = "/reviews")
+    @GetMapping("/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getUserReviews(
             @RequestParam(name = "page", required = false) final Integer pageNumber,
             @RequestParam(name = "size", required = false) final Integer pageSize,

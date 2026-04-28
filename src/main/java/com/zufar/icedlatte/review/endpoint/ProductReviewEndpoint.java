@@ -33,7 +33,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+@RequestMapping(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
 public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.product.review.api.ProductReviewApi {
 
     public static final String PRODUCT_REVIEW_URL = "/api/v1/products/";
@@ -47,7 +47,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
-    @PostMapping(value = "/{productId}/reviews")
+    @PostMapping("/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -57,7 +57,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @DeleteMapping(value = "/{productId}/reviews/{productReviewId}")
+    @DeleteMapping("/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -67,7 +67,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @GetMapping(value = "/{productId}/reviews")
+    @GetMapping("/{productId}/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getProductReviewsAndRatings(
             @PathVariable final UUID productId,
             @RequestParam(name = "page", required = false, defaultValue = "0") final Integer pageNumber,
@@ -81,7 +81,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @GetMapping(value = "/{productId}/review")
+    @GetMapping("/{productId}/review")
     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {
         return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId, securityPrincipalProvider.getUserId()));
     }
@@ -93,7 +93,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @PostMapping(value = "/{productId}/reviews/{productReviewId}/likes")
+    @PostMapping("/{productId}/reviews/{productReviewId}/likes")
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {

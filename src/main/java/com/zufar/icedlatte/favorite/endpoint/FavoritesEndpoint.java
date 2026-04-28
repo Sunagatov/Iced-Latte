@@ -26,7 +26,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(value = FavoritesEndpoint.FAVORITES_URL)
+@RequestMapping(FavoritesEndpoint.FAVORITES_URL)
 public class FavoritesEndpoint implements FavoriteProductsApi {
 
     public static final String FAVORITES_URL = "/api/v1/favorites";
@@ -55,7 +55,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     }
 
     @Override
-    @DeleteMapping(value = "/{productId}")
+    @DeleteMapping("/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
         var userId = securityPrincipalProvider.getUserId();
         favoriteProductDeleter.delete(productId, userId);
