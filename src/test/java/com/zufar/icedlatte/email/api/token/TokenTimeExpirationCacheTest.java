@@ -3,6 +3,7 @@ package com.zufar.icedlatte.email.api.token;
 import com.zufar.icedlatte.email.exception.TimeTokenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -18,29 +19,49 @@ class TokenTimeExpirationCacheTest {
         cache = new InMemoryTokenTimeExpirationCache(5);
     }
 
-    @Test
-    @DisplayName("validateTimeToken passes when no entry exists for email")
-    void validateTimeToken_noEntry_doesNotThrow() {
-        assertThatCode(() -> cache.validateTimeToken("new@example.com"))
-                .doesNotThrowAnyException();
+    @Nested
+    @DisplayName("validateTimeToken")
+    class ValidateTimeToken {
+
+        @Test
+        @DisplayName("passes when email has no active cooldown")
+        void passesWhenEmailHasNoActiveCooldown() {
+            assertThatCode(() -> cache.validateTimeToken("new@example.com"))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("throws when email was recently used")
+        void throwsWhenEmailWasRecentlyUsed() {
+            String email = "user@example.com";
+            cache.manageEmailSendingRate(email);
+
+            assertThatThrownBy(() -> cache.validateTimeToken(email))
+                    .isInstanceOf(TimeTokenException.class);
+        }
     }
 
-    @Test
-    @DisplayName("validateTimeToken throws TimeTokenException when email was recently used")
-    void validateTimeToken_afterManage_throwsTimeTokenException() {
-        String email = "user@example.com";
-        cache.manageEmailSendingRate(email);
-        assertThatThrownBy(() -> cache.validateTimeToken(email))
-                .isInstanceOf(TimeTokenException.class);
-    }
+    @Nested
+    @DisplayName("removeToken")
+    class RemoveToken {
 
-    @Test
-    @DisplayName("removeToken clears rate limit so validation passes again")
-    void removeToken_afterRemoval_validationPasses() {
-        String email = "user2@example.com";
-        cache.manageEmailSendingRate(email);
-        cache.removeToken(email);
-        assertThatCode(() -> cache.validateTimeToken(email))
-                .doesNotThrowAnyException();
+        @Test
+        @DisplayName("clears cooldown so validation passes again")
+        void clearsCooldownSoValidationPassesAgain() {
+            String email = "user2@example.com";
+            cache.manageEmailSendingRate(email);
+
+            cache.removeToken(email);
+
+            assertThatCode(() -> cache.validateTimeToken(email))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("is a no-op for email without cooldown")
+        void isANoOpForEmailWithoutCooldown() {
+            assertThatCode(() -> cache.removeToken("missing@example.com"))
+                    .doesNotThrowAnyException();
+        }
     }
 }

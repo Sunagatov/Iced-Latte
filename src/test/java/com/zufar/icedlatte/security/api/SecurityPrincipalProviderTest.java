@@ -5,6 +5,7 @@ import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +28,7 @@ class SecurityPrincipalProviderTest {
 
     @Mock
     private UserDtoConverter userDtoConverter;
+
     @InjectMocks
     private SecurityPrincipalProvider provider;
 
@@ -33,54 +37,66 @@ class SecurityPrincipalProviderTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void setAuthenticatedUser(UserEntity user) {
-        var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(auth);
+    @Nested
+    @DisplayName("get")
+    class Get {
+
+        @Test
+        @DisplayName("returns converted dto for authenticated user")
+        void returnsConvertedDtoForAuthenticatedUser() {
+            UserEntity user = authenticatedUser();
+            UserDto dto = new UserDto().id(user.getId());
+            when(userDtoConverter.toDto(user)).thenReturn(dto);
+
+            UserDto result = provider.get();
+
+            assertThat(result).isSameAs(dto);
+            verify(userDtoConverter).toDto(user);
+            verifyNoMoreInteractions(userDtoConverter);
+        }
+
+        @Test
+        @DisplayName("throws when authentication is missing")
+        void throwsWhenAuthenticationIsMissing() {
+            SecurityContextHolder.clearContext();
+
+            assertThatThrownBy(() -> provider.get())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("No authenticated UserEntity in security context");
+        }
     }
 
-    @Test
-    @DisplayName("get() returns UserDto for authenticated user")
-    void get_authenticatedUser_returnsDto() {
-        UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder().id(userId).build();
-        UserDto dto = new UserDto();
-        setAuthenticatedUser(user);
-        when(userDtoConverter.toDto(user)).thenReturn(dto);
+    @Nested
+    @DisplayName("getUserId")
+    class GetUserId {
 
-        UserDto result = provider.get();
+        @Test
+        @DisplayName("returns id for authenticated user")
+        void returnsIdForAuthenticatedUser() {
+            UserEntity user = authenticatedUser();
 
-        assertThat(result).isEqualTo(dto);
+            UUID result = provider.getUserId();
+
+            assertThat(result).isEqualTo(user.getId());
+            verifyNoMoreInteractions(userDtoConverter);
+        }
+
+        @Test
+        @DisplayName("throws when principal is not a UserEntity")
+        void throwsWhenPrincipalIsNotUserEntity() {
+            SecurityContextHolder.getContext()
+                    .setAuthentication(new UsernamePasswordAuthenticationToken("not-a-user", null));
+
+            assertThatThrownBy(() -> provider.getUserId())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("No authenticated UserEntity in security context");
+        }
     }
 
-    @Test
-    @DisplayName("getUserId() returns UUID for authenticated user")
-    void getUserId_authenticatedUser_returnsId() {
-        UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder().id(userId).build();
-        setAuthenticatedUser(user);
-
-        UUID result = provider.getUserId();
-
-        assertThat(result).isEqualTo(userId);
-    }
-
-    @Test
-    @DisplayName("getUserId() throws IllegalStateException when no authentication")
-    void getUserId_noAuthentication_throwsIllegalStateException() {
-        SecurityContextHolder.clearContext();
-
-        assertThatThrownBy(() -> provider.getUserId())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No authenticated UserEntity");
-    }
-
-    @Test
-    @DisplayName("getUserId() throws IllegalStateException when principal is not UserEntity")
-    void getUserId_wrongPrincipalType_throwsIllegalStateException() {
-        var auth = new UsernamePasswordAuthenticationToken("not-a-user-entity", null);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
-        assertThatThrownBy(() -> provider.getUserId())
-                .isInstanceOf(IllegalStateException.class);
+    private static UserEntity authenticatedUser() {
+        UserEntity user = UserEntity.builder().id(UUID.randomUUID()).build();
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+        return user;
     }
 }

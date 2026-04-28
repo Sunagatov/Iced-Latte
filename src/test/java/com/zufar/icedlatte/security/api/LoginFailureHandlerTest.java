@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -10,16 +11,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Instant;
-import java.util.UUID;
-
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("LoginFailureHandler Tests")
+@DisplayName("LoginFailureHandler unit tests")
 class LoginFailureHandlerTest {
 
     @Mock
@@ -29,52 +27,62 @@ class LoginFailureHandlerTest {
     private UserAccountLocker userAccountLocker;
 
     @InjectMocks
-    private LoginFailureHandler loginFailureHandler;
+    private LoginFailureHandler handler;
 
     private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private final String userEmail = "user@example.com";
+    private static final String USER_EMAIL = "user@example.com";
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(loginFailureHandler, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
+        ReflectionTestUtils.setField(handler, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
     }
 
-    @Test
-    @DisplayName("Should handle failed login attempt without locking account if attempts are below threshold")
-    void shouldHandleFailedLoginWithoutLocking() {
-        LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
-                .id(UUID.randomUUID())
-                .userEmail(userEmail)
-                .attempts(MAX_LOGIN_ATTEMPTS - 2)
-                .isUserLocked(false)
-                .lastModified(Instant.now())
-                .build();
+    @Nested
+    @DisplayName("handle")
+    class Handle {
 
-        when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
+        @Test
+        @DisplayName("does not lock when attempts stay below threshold")
+        void doesNotLockWhenAttemptsStayBelowThreshold() {
+            when(failedLoginAttemptIncrementor.increment(USER_EMAIL)).thenReturn(loginAttempt(4));
 
-        loginFailureHandler.handle(userEmail);
+            handler.handle(USER_EMAIL);
 
-        verify(failedLoginAttemptIncrementor).increment(userEmail);
-        verify(userAccountLocker, never()).lockUserAccount(userEmail);
+            verify(failedLoginAttemptIncrementor).increment(USER_EMAIL);
+            verify(userAccountLocker, never()).lockUserAccount(USER_EMAIL);
+            verifyNoMoreInteractions(failedLoginAttemptIncrementor, userAccountLocker);
+        }
+
+        @Test
+        @DisplayName("locks account when attempts reach threshold")
+        void locksWhenAttemptsReachThreshold() {
+            when(failedLoginAttemptIncrementor.increment(USER_EMAIL)).thenReturn(loginAttempt(5));
+
+            handler.handle(USER_EMAIL);
+
+            verify(failedLoginAttemptIncrementor).increment(USER_EMAIL);
+            verify(userAccountLocker).lockUserAccount(USER_EMAIL);
+            verifyNoMoreInteractions(failedLoginAttemptIncrementor, userAccountLocker);
+        }
+
+        @Test
+        @DisplayName("locks account when attempts exceed threshold")
+        void locksWhenAttemptsExceedThreshold() {
+            when(failedLoginAttemptIncrementor.increment(USER_EMAIL)).thenReturn(loginAttempt(8));
+
+            handler.handle(USER_EMAIL);
+
+            verify(failedLoginAttemptIncrementor).increment(USER_EMAIL);
+            verify(userAccountLocker).lockUserAccount(USER_EMAIL);
+            verifyNoMoreInteractions(failedLoginAttemptIncrementor, userAccountLocker);
+        }
     }
 
-    @Test
-    @DisplayName("Should handle failed login attempt and lock account if attempts reach threshold")
-    void shouldHandleFailedLoginAndLockAccount() {
-        LoginAttemptEntity loginAttempt = LoginAttemptEntity.builder()
-                .id(UUID.randomUUID())
-                .userEmail(userEmail)
-                .attempts(MAX_LOGIN_ATTEMPTS)
+    private static LoginAttemptEntity loginAttempt(int attempts) {
+        return LoginAttemptEntity.builder()
+                .userEmail(USER_EMAIL)
+                .attempts(attempts)
                 .isUserLocked(false)
-                .lastModified(Instant.now())
                 .build();
-
-        when(failedLoginAttemptIncrementor.increment(userEmail)).thenReturn(loginAttempt);
-        doNothing().when(userAccountLocker).lockUserAccount(userEmail);
-
-        loginFailureHandler.handle(userEmail);
-
-        verify(failedLoginAttemptIncrementor).increment(userEmail);
-        verify(userAccountLocker).lockUserAccount(userEmail);
     }
 }

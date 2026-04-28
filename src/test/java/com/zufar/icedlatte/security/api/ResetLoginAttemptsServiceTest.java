@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,15 +14,15 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ResetLoginAttemptsService Tests")
+@DisplayName("ResetLoginAttemptsService unit tests")
 class ResetLoginAttemptsServiceTest {
 
     @Mock
@@ -31,39 +32,77 @@ class ResetLoginAttemptsServiceTest {
     private UserAccountLocker userAccountLocker;
 
     @InjectMocks
-    private ResetLoginAttemptsService resetLoginAttemptsService;
+    private ResetLoginAttemptsService service;
 
-    private final String userEmail = "user@example.com";
+    private static final String USER_EMAIL = "user@example.com";
 
-    @Test
-    @DisplayName("Should reset login attempts and unlock account for locked user")
-    void shouldResetLoginAttemptsForExistingUser() {
-        LoginAttemptEntity existingLoginAttempt = LoginAttemptEntity.builder()
-                .id(UUID.randomUUID())
-                .userEmail(userEmail)
-                .attempts(3)
-                .isUserLocked(true)
-                .lastModified(Instant.now())
-                .build();
+    @Nested
+    @DisplayName("reset")
+    class Reset {
 
-        when(loginAttemptRepository.findByUserEmail(userEmail)).thenReturn(Optional.of(existingLoginAttempt));
+        @Test
+        @DisplayName("clears attempts and unlocks locked user")
+        void clearsAttemptsAndUnlocksLockedUser() {
+            Instant expiration = Instant.now().plusSeconds(600);
+            Instant lastModified = Instant.now().minusSeconds(120);
+            LoginAttemptEntity attempt = LoginAttemptEntity.builder()
+                    .id(UUID.randomUUID())
+                    .userEmail(USER_EMAIL)
+                    .attempts(3)
+                    .isUserLocked(true)
+                    .expirationDatetime(expiration)
+                    .lastModified(lastModified)
+                    .build();
+            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(attempt));
 
-        resetLoginAttemptsService.reset(userEmail);
+            service.reset(USER_EMAIL);
 
-        verify(userAccountLocker).unlockUserAccount(userEmail);
-        verify(loginAttemptRepository, never()).save(any());
-        assertEquals(0, existingLoginAttempt.getAttempts());
-        assertFalse(existingLoginAttempt.getIsUserLocked());
-    }
+            assertThat(attempt.getAttempts()).isZero();
+            assertThat(attempt.getIsUserLocked()).isFalse();
+            assertThat(attempt.getExpirationDatetime()).isNull();
+            assertThat(attempt.getLastModified()).isAfter(lastModified);
+            verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
+            verify(userAccountLocker).unlockUserAccount(USER_EMAIL);
+            verify(loginAttemptRepository, never()).save(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccountLocker);
+        }
 
-    @Test
-    @DisplayName("Should not perform reset for non-existing user")
-    void shouldNotResetLoginAttemptsForNonExistingUser() {
-        when(loginAttemptRepository.findByUserEmail(userEmail)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("clears attempts without calling unlock for already unlocked user")
+        void clearsAttemptsWithoutCallingUnlockForUnlockedUser() {
+            Instant lastModified = Instant.now().minusSeconds(120);
+            LoginAttemptEntity attempt = LoginAttemptEntity.builder()
+                    .id(UUID.randomUUID())
+                    .userEmail(USER_EMAIL)
+                    .attempts(2)
+                    .isUserLocked(false)
+                    .expirationDatetime(Instant.now().plusSeconds(600))
+                    .lastModified(lastModified)
+                    .build();
+            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(attempt));
 
-        resetLoginAttemptsService.reset(userEmail);
+            service.reset(USER_EMAIL);
 
-        verify(userAccountLocker, never()).unlockUserAccount(userEmail);
-        verify(loginAttemptRepository, never()).save(any());
+            assertThat(attempt.getAttempts()).isZero();
+            assertThat(attempt.getIsUserLocked()).isFalse();
+            assertThat(attempt.getExpirationDatetime()).isNull();
+            assertThat(attempt.getLastModified()).isAfter(lastModified);
+            verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
+            verify(userAccountLocker, never()).unlockUserAccount(USER_EMAIL);
+            verify(loginAttemptRepository, never()).save(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccountLocker);
+        }
+
+        @Test
+        @DisplayName("does nothing when login attempt record is missing")
+        void doesNothingWhenLoginAttemptRecordIsMissing() {
+            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.empty());
+
+            service.reset(USER_EMAIL);
+
+            verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
+            verify(userAccountLocker, never()).unlockUserAccount(USER_EMAIL);
+            verifyNoMoreInteractions(loginAttemptRepository, userAccountLocker);
+        }
     }
 }
