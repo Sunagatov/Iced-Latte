@@ -2,8 +2,10 @@ package com.zufar.icedlatte.product.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,40 +16,63 @@ import org.springframework.http.HttpStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProductExceptionHandler Tests")
+@DisplayName("ProductExceptionHandler unit tests")
 class ProductExceptionHandlerTest {
 
-    @Mock
-    private ApiErrorResponseCreator apiErrorResponseCreator;
+    @Mock private ApiErrorResponseCreator apiErrorResponseCreator;
 
     @InjectMocks
     private ProductExceptionHandler productExceptionHandler;
 
-    @Test
-    @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when ProductNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithNotFoundStatusWhenProductNotFoundExceptionThrown() {
-        UUID productId = UUID.randomUUID();
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        ProductNotFoundException exception = new ProductNotFoundException(productId);
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "The product with productId = " + productId + " is not found.",
-                HttpStatus.NOT_FOUND.value(),
-                currentDateTime
-        );
+    @Nested
+    @DisplayName("handleProductNotFoundException")
+    class HandleProductNotFoundException {
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(expectedResponse);
+        @Test
+        @DisplayName("maps ProductNotFoundException to a 404 response")
+        void mapsProductNotFoundExceptionTo404Response() {
+            ProductNotFoundException exception = new ProductNotFoundException(UUID.randomUUID());
+            ApiErrorResponse response = new ApiErrorResponse(
+                    exception.getMessage(),
+                    HttpStatus.NOT_FOUND.value(),
+                    LocalDateTime.now()
+            );
+            when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND)).thenReturn(response);
 
-        ApiErrorResponse actualResponse = productExceptionHandler.handleProductNotFoundException(exception);
+            ApiErrorResponse result = productExceptionHandler.handleProductNotFoundException(exception);
 
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+            assertThat(result).isSameAs(response);
+            verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
+            verifyNoMoreInteractions(apiErrorResponseCreator);
+        }
+    }
 
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
+    @Nested
+    @DisplayName("handleGetProductsBadRequestException")
+    class HandleGetProductsBadRequestException {
+
+        @Test
+        @DisplayName("maps GetProductsBadRequestException to a 400 response")
+        void mapsGetProductsBadRequestExceptionTo400Response() {
+            GetProductsBadRequestException exception = new GetProductsBadRequestException("sort property is invalid");
+            ApiErrorResponse response = new ApiErrorResponse(
+                    exception.getMessage(),
+                    HttpStatus.BAD_REQUEST.value(),
+                    LocalDateTime.now()
+            );
+            when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST)).thenReturn(response);
+
+            ApiErrorResponse result = productExceptionHandler.handleGetProductsBadRequestException(exception);
+
+            assertThat(result).isSameAs(response);
+            verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
+            verifyNoMoreInteractions(apiErrorResponseCreator);
+        }
     }
 }

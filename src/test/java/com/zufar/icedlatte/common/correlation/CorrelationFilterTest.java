@@ -4,12 +4,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 @DisplayName("CorrelationFilter unit tests")
@@ -18,8 +20,8 @@ class CorrelationFilterTest {
     private final CorrelationFilter filter = new CorrelationFilter();
 
     @Test
-    @DisplayName("sets X-Correlation-ID and X-Request-ID response headers")
-    void setsResponseHeaders() throws ServletException, IOException {
+    @DisplayName("sets correlation and request headers on response")
+    void setsCorrelationAndRequestHeadersOnResponse() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
@@ -31,32 +33,20 @@ class CorrelationFilterTest {
     }
 
     @Test
-    @DisplayName("uses provided X-Correlation-ID header value")
-    void usesProvidedCorrelationId() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Correlation-ID", "abc123");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        filter.doFilterInternal(request, response, mock(FilterChain.class));
-
-        assertThat(response.getHeader("X-Correlation-ID")).isEqualTo("abc123");
-    }
-
-    @Test
-    @DisplayName("sanitizes unsafe characters in headers")
-    void sanitizesUnsafeHeaderChars() throws ServletException, IOException {
+    @DisplayName("uses provided correlation id header after sanitization")
+    void usesProvidedCorrelationIdHeaderAfterSanitization() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-Correlation-ID", "abc<script>");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, mock(FilterChain.class));
 
-        assertThat(response.getHeader("X-Correlation-ID")).doesNotContain("<").doesNotContain(">");
+        assertThat(response.getHeader("X-Correlation-ID")).isEqualTo("abc_script_");
     }
 
     @Test
-    @DisplayName("truncates header values longer than 64 characters")
-    void truncatesLongHeaders() throws ServletException, IOException {
+    @DisplayName("truncates correlation id header longer than 64 characters")
+    void truncatesCorrelationIdHeaderLongerThan64Characters() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-Correlation-ID", "a".repeat(100));
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -64,5 +54,29 @@ class CorrelationFilterTest {
         filter.doFilterInternal(request, response, mock(FilterChain.class));
 
         assertThat(response.getHeader("X-Correlation-ID")).hasSize(64);
+    }
+
+    @Test
+    @DisplayName("populates MDC during filter chain and clears it afterwards")
+    void populatesMdcDuringFilterChainAndClearsItAfterwards() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Session-ID", "session-1");
+        request.addHeader("X-Trace-ID", "trace-1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+        doAnswer(invocation -> {
+            assertThat(MDC.get("correlationId")).isNotBlank();
+            assertThat(MDC.get("requestId")).isNotBlank();
+            assertThat(MDC.get("sessionId")).isEqualTo("session-1");
+            assertThat(MDC.get("clientTraceId")).isEqualTo("trace-1");
+            return null;
+        }).when(chain).doFilter(request, response);
+
+        filter.doFilterInternal(request, response, chain);
+
+        assertThat(MDC.get("correlationId")).isNull();
+        assertThat(MDC.get("requestId")).isNull();
+        assertThat(MDC.get("sessionId")).isNull();
+        assertThat(MDC.get("clientTraceId")).isNull();
     }
 }

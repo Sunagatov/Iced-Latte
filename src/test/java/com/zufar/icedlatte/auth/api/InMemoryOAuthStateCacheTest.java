@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.auth.api;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -8,26 +9,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("InMemoryOAuthStateCache unit tests")
 class InMemoryOAuthStateCacheTest {
 
+    private static final String CALLBACK_A = "https://example.com/callback-a";
+    private static final String CALLBACK_B = "https://example.com/callback-b";
+
     private final InMemoryOAuthStateCache cache = new InMemoryOAuthStateCache(10);
 
-    @Test
-    @DisplayName("store and consume returns stored value")
-    void storeAndConsumeReturnsValue() {
-        cache.store("nonce1", "https://example.com/callback");
-        assertThat(cache.consume("nonce1")).isEqualTo("https://example.com/callback");
-    }
+    @Nested
+    @DisplayName("store and consume")
+    class StoreAndConsume {
 
-    @Test
-    @DisplayName("consume removes entry so second consume returns null")
-    void consumeRemovesEntry() {
-        cache.store("nonce2", "https://example.com/callback");
-        cache.consume("nonce2");
-        assertThat(cache.consume("nonce2")).isNull();
-    }
+        @Test
+        @DisplayName("returns the stored callback and consumes it once")
+        void returnsStoredCallbackAndConsumesItOnce() {
+            cache.store("nonce-1", CALLBACK_A);
 
-    @Test
-    @DisplayName("consume returns null for unknown nonce")
-    void consumeUnknownNonceReturnsNull() {
-        assertThat(cache.consume("unknown")).isNull();
+            assertThat(cache.consume("nonce-1")).isEqualTo(CALLBACK_A);
+            assertThat(cache.consume("nonce-1")).isNull();
+        }
+
+        @Test
+        @DisplayName("replacing an existing nonce keeps only the latest callback")
+        void replacingExistingNonceKeepsOnlyLatestCallback() {
+            cache.store("nonce-1", CALLBACK_A);
+            cache.store("nonce-1", CALLBACK_B);
+
+            assertThat(cache.consume("nonce-1")).isEqualTo(CALLBACK_B);
+            assertThat(cache.consume("nonce-1")).isNull();
+        }
+
+        @Test
+        @DisplayName("does not affect other stored nonces")
+        void doesNotAffectOtherStoredNonces() {
+            cache.store("nonce-1", CALLBACK_A);
+            cache.store("nonce-2", CALLBACK_B);
+
+            assertThat(cache.consume("nonce-2")).isEqualTo(CALLBACK_B);
+            assertThat(cache.consume("nonce-1")).isEqualTo(CALLBACK_A);
+        }
+
+        @Test
+        @DisplayName("returns null for an unknown nonce")
+        void returnsNullForUnknownNonce() {
+            assertThat(cache.consume("missing")).isNull();
+        }
     }
 }

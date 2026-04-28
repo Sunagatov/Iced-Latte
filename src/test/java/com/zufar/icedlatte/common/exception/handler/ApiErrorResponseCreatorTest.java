@@ -2,6 +2,7 @@ package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
@@ -12,31 +13,31 @@ class ApiErrorResponseCreatorTest {
 
     private final ApiErrorResponseCreator creator = new ApiErrorResponseCreator();
 
-    @Test
-    @DisplayName("Builds response from string message with correct status code")
-    void buildResponse_stringMessage_setsCorrectFields() {
-        ApiErrorResponse response = creator.buildResponse("Something went wrong", HttpStatus.BAD_REQUEST);
+    @Nested
+    @DisplayName("buildResponse")
+    class BuildResponse {
 
-        assertThat(response.message()).isEqualTo("Something went wrong");
-        assertThat(response.httpStatusCode()).isEqualTo(400);
-        assertThat(response.timestamp()).isNotNull();
-    }
+        @Test
+        @DisplayName("builds response from string message with current timestamp and status code")
+        void buildsResponseFromStringMessageWithCurrentTimestampAndStatusCode() {
+            ApiErrorResponse response = creator.buildResponse("Something went wrong", HttpStatus.BAD_REQUEST);
 
-    @Test
-    @DisplayName("Builds response from exception using exception message")
-    void buildResponse_exception_usesExceptionMessage() {
-        RuntimeException ex = new RuntimeException("Resource not found");
-        ApiErrorResponse response = creator.buildResponse(ex, HttpStatus.NOT_FOUND);
+            assertThat(response.message()).isEqualTo("Something went wrong");
+            assertThat(response.httpStatusCode()).isEqualTo(400);
+            assertThat(response.timestamp()).isNotNull();
+            assertThat(response.errors()).isEmpty();
+        }
 
-        assertThat(response.message()).isEqualTo("Resource not found");
-        assertThat(response.httpStatusCode()).isEqualTo(404);
-    }
+        @Test
+        @DisplayName("builds response from exception message")
+        void buildsResponseFromExceptionMessage() {
+            RuntimeException ex = new RuntimeException("Resource not found");
 
-    @Test
-    @DisplayName("Builds 500 response for internal server error")
-    void buildResponse_internalServerError_returns500() {
-        ApiErrorResponse response = creator.buildResponse("Unexpected error", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiErrorResponse response = creator.buildResponse(ex, HttpStatus.NOT_FOUND);
 
-        assertThat(response.httpStatusCode()).isEqualTo(500);
+            assertThat(response.message()).isEqualTo("Resource not found");
+            assertThat(response.httpStatusCode()).isEqualTo(404);
+            assertThat(response.timestamp()).isNotNull();
+        }
     }
 }

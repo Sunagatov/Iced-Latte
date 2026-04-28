@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.api.filestorage;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,47 +25,81 @@ class ProductPictureLinkUpdaterTest {
     @Mock private ProductImageReceiver productImageReceiver;
     @InjectMocks private ProductPictureLinkUpdater updater;
 
-    @Test
-    @DisplayName("update sets productFileUrl from receiver")
-    void update_setsUrl() {
-        UUID id = UUID.randomUUID();
-        ProductInfoDto dto = new ProductInfoDto();
-        dto.setId(id);
-        when(productImageReceiver.getProductFileUrl(id)).thenReturn("https://cdn.example.com/img.jpg");
+    @Nested
+    @DisplayName("update")
+    class Update {
 
-        ProductInfoDto result = updater.update(dto);
+        @Test
+        @DisplayName("enriches the dto with both primary and gallery image URLs")
+        void enrichesDtoWithBothPrimaryAndGalleryImageUrls() {
+            UUID productId = UUID.randomUUID();
+            ProductInfoDto dto = new ProductInfoDto();
+            dto.setId(productId);
+            when(productImageReceiver.getProductFileUrl(productId)).thenReturn("https://cdn.example.com/main.jpg");
+            when(productImageReceiver.getProductImageUrls(productId)).thenReturn(List.of("https://cdn.example.com/1.jpg"));
 
-        assertThat(result.getProductFileUrl()).isEqualTo("https://cdn.example.com/img.jpg");
+            ProductInfoDto result = updater.update(dto);
+
+            assertThat(result).isSameAs(dto);
+            assertThat(result.getProductFileUrl()).isEqualTo("https://cdn.example.com/main.jpg");
+            assertThat(result.getProductImageUrls()).containsExactly("https://cdn.example.com/1.jpg");
+            verify(productImageReceiver).getProductFileUrl(productId);
+            verify(productImageReceiver).getProductImageUrls(productId);
+            verifyNoMoreInteractions(productImageReceiver);
+        }
     }
 
-    @Test
-    @DisplayName("updateBatch sets urls for all products from batch receiver")
-    void updateBatch_setsAllUrls() {
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        ProductInfoDto dto1 = new ProductInfoDto();
-        dto1.setId(id1);
-        ProductInfoDto dto2 = new ProductInfoDto();
-        dto2.setId(id2);
-        when(productImageReceiver.getProductFileUrls(List.of(id1, id2)))
-                .thenReturn(Map.of(id1, "url1", id2, "url2"));
+    @Nested
+    @DisplayName("updateBatch")
+    class UpdateBatch {
 
-        List<ProductInfoDto> result = updater.updateBatch(List.of(dto1, dto2));
+        @Test
+        @DisplayName("enriches every dto from the batch lookups")
+        void enrichesEveryDtoFromBatchLookups() {
+            UUID productId1 = UUID.randomUUID();
+            UUID productId2 = UUID.randomUUID();
+            ProductInfoDto first = new ProductInfoDto();
+            first.setId(productId1);
+            ProductInfoDto second = new ProductInfoDto();
+            second.setId(productId2);
 
-        assertThat(result.getFirst().getProductFileUrl()).isEqualTo("url1");
-        assertThat(result.get(1).getProductFileUrl()).isEqualTo("url2");
-    }
+            when(productImageReceiver.getProductFileUrls(List.of(productId1, productId2)))
+                    .thenReturn(Map.of(productId1, "url-1", productId2, "url-2"));
+            when(productImageReceiver.getProductImageUrlsBatch(List.of(productId1, productId2)))
+                    .thenReturn(Map.of(productId1, List.of("gallery-1"), productId2, List.of("gallery-2")));
 
-    @Test
-    @DisplayName("updateBatch sets null url when id not in receiver result")
-    void updateBatch_missingId_setsNull() {
-        UUID id = UUID.randomUUID();
-        ProductInfoDto dto = new ProductInfoDto();
-        dto.setId(id);
-        when(productImageReceiver.getProductFileUrls(List.of(id))).thenReturn(Map.of());
+            List<ProductInfoDto> result = updater.updateBatch(List.of(first, second));
 
-        List<ProductInfoDto> result = updater.updateBatch(List.of(dto));
+            assertThat(result).containsExactly(first, second);
+            assertThat(first.getProductFileUrl()).isEqualTo("url-1");
+            assertThat(first.getProductImageUrls()).containsExactly("gallery-1");
+            assertThat(second.getProductFileUrl()).isEqualTo("url-2");
+            assertThat(second.getProductImageUrls()).containsExactly("gallery-2");
+            verify(productImageReceiver).getProductFileUrls(List.of(productId1, productId2));
+            verify(productImageReceiver).getProductImageUrlsBatch(List.of(productId1, productId2));
+            verifyNoMoreInteractions(productImageReceiver);
+        }
 
-        assertThat(result.getFirst().getProductFileUrl()).isNull();
+        @Test
+        @DisplayName("uses empty gallery URLs when a product is missing from the batch image lookup")
+        void usesEmptyGalleryUrlsWhenProductIsMissingFromBatchImageLookup() {
+            UUID productId = UUID.randomUUID();
+            ProductInfoDto dto = new ProductInfoDto();
+            dto.setId(productId);
+
+            when(productImageReceiver.getProductFileUrls(List.of(productId)))
+                    .thenReturn(Map.of(productId, "main-url"));
+            when(productImageReceiver.getProductImageUrlsBatch(List.of(productId)))
+                    .thenReturn(Map.of());
+
+            List<ProductInfoDto> result = updater.updateBatch(List.of(dto));
+
+            assertThat(result).containsExactly(dto);
+            assertThat(dto.getProductFileUrl()).isEqualTo("main-url");
+            assertThat(dto.getProductImageUrls()).isEmpty();
+            verify(productImageReceiver).getProductFileUrls(List.of(productId));
+            verify(productImageReceiver).getProductImageUrlsBatch(List.of(productId));
+            verifyNoMoreInteractions(productImageReceiver);
+        }
     }
 }
