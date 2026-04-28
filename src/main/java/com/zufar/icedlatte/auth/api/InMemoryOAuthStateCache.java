@@ -31,10 +31,6 @@ public class InMemoryOAuthStateCache implements OAuthStateCache {
 
     @Override
     public String consume(String nonce) {
-        String value = cache.getIfPresent(nonce);
-        if (value != null) {
-            cache.invalidate(nonce);
-        }
-        return value;
+        return cache.asMap().remove(nonce);
     }
 }

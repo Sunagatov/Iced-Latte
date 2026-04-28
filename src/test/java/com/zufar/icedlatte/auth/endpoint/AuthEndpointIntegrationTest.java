@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,7 +84,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
                         containsString(callbackBase),
-                        containsString("token=jwt-token"),
+                        containsString("#token=jwt-token"),
                         containsString("refreshToken=refresh-token")
                 ));
     }
@@ -148,10 +149,64 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
                         containsString(frontendUrl),
-                        containsString("token=safe-jwt"),
+                        containsString("#token=safe-jwt"),
                         containsString("refreshToken=safe-refresh"),
                         not(containsString("evil.example.com"))
                 ));
+    }
+
+    @Test
+    @DisplayName("Should redirect with missing_code error when callback code is absent")
+    void shouldRedirectWithMissingCodeErrorWhenCallbackCodeIsAbsent() throws Exception {
+        given(specification)
+                .redirects().follow(false)
+                .queryParam("state", "any-state")
+                .get("/google/callback")
+                .then()
+                .statusCode(HttpStatus.FOUND.value())
+                .header("Location", equalTo(frontendUrl + "/signin?error=missing_code"));
+
+        verify(googleAuthCallbackHandler, never()).handle(any(String.class), any(HttpServletRequest.class));
+    }
+
+    @Test
+    @DisplayName("Should redirect with invalid_state when callback state is absent")
+    void shouldRedirectWithInvalidStateWhenCallbackStateIsAbsent() throws Exception {
+        given(specification)
+                .redirects().follow(false)
+                .queryParam("code", "valid-code")
+                .get("/google/callback")
+                .then()
+                .statusCode(HttpStatus.FOUND.value())
+                .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
+
+        verify(googleAuthCallbackHandler, never()).handle(any(String.class), any(HttpServletRequest.class));
+    }
+
+    @Test
+    @DisplayName("Should redirect back to stored callback with auth_failed when handler throws")
+    void shouldRedirectBackToStoredCallbackWhenHandlerThrows() throws Exception {
+        String callbackBase = frontendUrl + "/oauth/callback";
+
+        when(googleAuthCallbackHandler.handle(eq("broken-code"), any(HttpServletRequest.class)))
+                .thenThrow(new IllegalStateException("exchange failed"));
+
+        Response initiateResponse = given(specification)
+                .redirects().follow(false)
+                .queryParam("redirectUrl", callbackBase)
+                .get("/google");
+
+        String state = extractState(initiateResponse);
+        assertNotNull(state);
+
+        given(specification)
+                .redirects().follow(false)
+                .queryParam("code", "broken-code")
+                .queryParam("state", state)
+                .get("/google/callback")
+                .then()
+                .statusCode(HttpStatus.FOUND.value())
+                .header("Location", equalTo(callbackBase + "/signin?error=auth_failed"));
     }
 
     @Test

@@ -206,6 +206,28 @@ This builds and starts everything from Option B plus:
 - 🔌 Backend API: http://localhost:8083 — Swagger UI at http://localhost:8083/api/docs/swagger-ui/index.html
 - 🪣 MinIO console: http://localhost:9001 — login with `minioadmin` / `minioadmin`
 
+### Google OAuth callback note
+
+The backend now returns OAuth tokens in the URL fragment, not the query string.
+
+If the frontend callback page reads tokens after Google sign-in, parse:
+
+```text
+window.location.hash
+```
+
+instead of:
+
+```text
+window.location.search
+```
+
+Example callback URL:
+
+```text
+http://localhost:3000/oauth/callback#token=...&refreshToken=...
+```
+
 ### 🛠️ Useful Docker commands
 
 ```bash

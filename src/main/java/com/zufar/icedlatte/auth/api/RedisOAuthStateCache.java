@@ -31,11 +31,6 @@ public class RedisOAuthStateCache implements OAuthStateCache {
 
     @Override
     public String consume(String nonce) {
-        String key = KEY_PREFIX + nonce;
-        String value = redisTemplate.opsForValue().get(key);
-        if (value != null) {
-            redisTemplate.delete(key);
-        }
-        return value;
+        return redisTemplate.opsForValue().getAndDelete(KEY_PREFIX + nonce);
     }
 }

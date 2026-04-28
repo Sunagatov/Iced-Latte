@@ -92,4 +92,53 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
                 .body("token", notNullValue())
                 .body("refreshToken", notNullValue());
     }
+
+    @Test
+    @DisplayName("Should reject password change with invalid reset token")
+    void shouldRejectPasswordChangeWithInvalidResetToken() {
+        given(jsonSpec(AUTH_BASE_PATH))
+                .body("""
+                        {
+                          "code": "123456789",
+                          "password": "ResetPass123!"
+                        }
+                        """)
+                .post("/password/change")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Should reject reused reset token after successful password change")
+    void shouldRejectReusedResetTokenAfterSuccessfulPasswordChange() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String newPassword = "ResetPass123!";
+
+        UserRegistrationRequest resetRequest = new UserRegistrationRequest();
+        resetRequest.setEmail(user.email());
+
+        String resetToken = tokenManager.generateToken(resetRequest, TokenPurpose.PASSWORD_RESET);
+
+        given(jsonSpec(AUTH_BASE_PATH))
+                .body("""
+                        {
+                          "code": "%s",
+                          "password": "%s"
+                        }
+                        """.formatted(resetToken, newPassword))
+                .post("/password/change")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        given(jsonSpec(AUTH_BASE_PATH))
+                .body("""
+                        {
+                          "code": "%s",
+                          "password": "AnotherPass123!"
+                        }
+                        """.formatted(resetToken))
+                .post("/password/change")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
 }

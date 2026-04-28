@@ -17,7 +17,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.UUID;
 
@@ -62,12 +64,13 @@ class UserAuthenticationServiceTest {
     @Test
     @DisplayName("Should throw InvalidCredentialsException when invalid credentials are provided")
     void shouldThrowInvalidCredentialsExceptionWhenInvalidCredentialsProvided() {
+        when(request.getEmail()).thenReturn("known@example.com");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verify(loginFailureHandler).handle(request.getEmail());
+        verify(loginFailureHandler).handle("known@example.com");
         verifyNoInteractions(resetLoginAttemptsService);
     }
 
@@ -79,6 +82,43 @@ class UserAuthenticationServiceTest {
 
         assertThrows(UserAccountLockedException.class, () -> userAuthenticationService.verifyCredentials(request));
 
+        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidCredentialsException when user email is not found")
+    void shouldThrowInvalidCredentialsExceptionWhenUserEmailIsNotFound() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new UsernameNotFoundException("missing"));
+
+        assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
+
+        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidCredentialsException when principal is not UserDetails")
+    void shouldThrowInvalidCredentialsExceptionWhenPrincipalIsNotUserDetails() {
+        Authentication authentication = mock(Authentication.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn("plain-string-principal");
+
+        assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
+
+        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+    }
+
+    @Test
+    @DisplayName("Should rethrow unexpected authentication exceptions")
+    void shouldRethrowUnexpectedAuthenticationExceptions() {
+        AuthenticationException failure = new AuthenticationException("boom") { };
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(failure);
+
+        AuthenticationException thrown =
+                assertThrows(AuthenticationException.class, () -> userAuthenticationService.verifyCredentials(request));
+
+        assertSame(failure, thrown);
         verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
     }
 

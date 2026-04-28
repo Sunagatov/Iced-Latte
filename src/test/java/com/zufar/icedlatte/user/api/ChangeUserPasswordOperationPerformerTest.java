@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.api;
 
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.security.api.AuthSessionService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -27,6 +28,8 @@ class ChangeUserPasswordOperationPerformerTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private AuthSessionService authSessionService;
     @InjectMocks
     private ChangeUserPasswordOperationPerformer performer;
 
@@ -49,6 +52,7 @@ class ChangeUserPasswordOperationPerformerTest {
         performer.changeUserPassword(userId, request);
 
         verify(userRepository).changeUserPassword("encoded_new", userId);
+        verify(authSessionService).revokeAllForUser(userId);
     }
 
     @Test
@@ -81,6 +85,7 @@ class ChangeUserPasswordOperationPerformerTest {
         performer.changeUserPassword(userId, "new_plain");
 
         verify(userRepository).changeUserPassword("encoded_new", userId);
+        verify(authSessionService).revokeAllForUser(userId);
         verifyNoInteractions(singleUserProvider);
     }
 }

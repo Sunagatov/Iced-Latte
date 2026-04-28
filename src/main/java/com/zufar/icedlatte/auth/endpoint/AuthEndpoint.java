@@ -2,6 +2,7 @@ package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
 import com.zufar.icedlatte.auth.api.OAuthStateCache;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -128,17 +131,22 @@ public class AuthEndpoint {
         }
         try {
             var tokens = googleAuthCallbackHandler.handle(code, request);
-
-            String callbackUrl = UriComponentsBuilder.fromUriString(stored)
-                    .queryParam("token", tokens.getToken())
-                    .queryParam("refreshToken", tokens.getRefreshToken())
-                    .build()
-                    .toUriString();
-            response.sendRedirect(callbackUrl);
+            response.sendRedirect(buildCallbackUrlWithFragmentTokens(stored, tokens));
         } catch (Exception e) {
             log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",
                     e.getClass().getSimpleName(), e.getMessage());
             response.sendRedirect(stored + "/signin?error=auth_failed");
         }
+    }
+
+    private static String buildCallbackUrlWithFragmentTokens(String callbackBase,
+                                                             UserAuthenticationResponse tokens) {
+        return callbackBase
+                + "#token=" + urlEncode(tokens.getToken())
+                + "&refreshToken=" + urlEncode(tokens.getRefreshToken());
+    }
+
+    private static String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

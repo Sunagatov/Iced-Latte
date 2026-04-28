@@ -41,18 +41,19 @@ class RedisOAuthStateCacheTest {
     @Test
     @DisplayName("consume returns value and deletes key when present")
     void consumeReturnValueAndDeletes() {
-        when(valueOps.get("oauth:state:nonce1")).thenReturn("https://example.com/cb");
+        when(valueOps.getAndDelete("oauth:state:nonce1")).thenReturn("https://example.com/cb");
         String result = cache.consume("nonce1");
         assertThat(result).isEqualTo("https://example.com/cb");
-        verify(redisTemplate).delete("oauth:state:nonce1");
+        verify(valueOps).getAndDelete("oauth:state:nonce1");
     }
 
     @Test
     @DisplayName("consume returns null and does not delete when key absent")
     void consumeReturnsNullWhenAbsent() {
-        when(valueOps.get("oauth:state:missing")).thenReturn(null);
+        when(valueOps.getAndDelete("oauth:state:missing")).thenReturn(null);
         String result = cache.consume("missing");
         assertThat(result).isNull();
+        verify(valueOps).getAndDelete("oauth:state:missing");
         verify(redisTemplate, never()).delete(anyString());
     }
 }
