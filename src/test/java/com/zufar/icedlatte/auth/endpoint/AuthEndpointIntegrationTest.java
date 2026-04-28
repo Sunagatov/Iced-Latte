@@ -54,7 +54,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should initiate Google auth and redirect back with token pair using Redis-backed state")
     void shouldInitiateGoogleAuthAndRedirectBackWithTokenPairUsingRedisBackedState() throws Exception {
-        String callbackBase = frontendUrl + "/oauth/callback";
+        String callbackBase = frontendUrl + "/auth/google/callback";
 
         when(googleAuthCallbackHandler.handle(eq("valid-code"), any(HttpServletRequest.class)))
                 .thenReturn(tokenPair("jwt-token", "refresh-token"));
@@ -92,7 +92,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should reject reused OAuth state after first successful callback")
     void shouldRejectReusedOAuthStateAfterFirstSuccessfulCallback() throws Exception {
-        String callbackBase = frontendUrl + "/oauth/callback";
+        String callbackBase = frontendUrl + "/auth/google/callback";
 
         when(googleAuthCallbackHandler.handle(any(String.class), any(HttpServletRequest.class)))
                 .thenReturn(tokenPair("jwt-once", "refresh-once"));
@@ -148,10 +148,38 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
-                        containsString(frontendUrl),
+                        containsString(frontendUrl + "/auth/google/callback"),
                         containsString("#token=safe-jwt"),
                         containsString("refreshToken=safe-refresh"),
                         not(containsString("evil.example.com"))
+                ));
+    }
+
+    @Test
+    @DisplayName("Should fallback to configured callback path when redirectUrl uses an unexpected frontend path")
+    void shouldFallbackToConfiguredCallbackPathWhenRedirectUrlUsesUnexpectedFrontendPath() throws Exception {
+        when(googleAuthCallbackHandler.handle(eq("safe-code"), any(HttpServletRequest.class)))
+                .thenReturn(tokenPair("safe-jwt", "safe-refresh"));
+
+        Response initiateResponse = given(specification)
+                .redirects().follow(false)
+                .queryParam("redirectUrl", frontendUrl + "/profile")
+                .get("/google");
+
+        String state = extractState(initiateResponse);
+        assertNotNull(state);
+
+        given(specification)
+                .redirects().follow(false)
+                .queryParam("code", "safe-code")
+                .queryParam("state", state)
+                .get("/google/callback")
+                .then()
+                .statusCode(HttpStatus.FOUND.value())
+                .header("Location", allOf(
+                        containsString(frontendUrl + "/auth/google/callback"),
+                        containsString("#token=safe-jwt"),
+                        not(containsString("/profile"))
                 ));
     }
 

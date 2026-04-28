@@ -189,7 +189,6 @@ class ApplicationMigrationTest {
         return new FileMetadataDto(UUID.randomUUID(), "products-bucket", fileName);
     }
 
-    @SuppressWarnings("unchecked")
     private <T> T invoke(String methodName, Object... args) {
         return ReflectionTestUtils.invokeMethod(migration, methodName, args);
     }

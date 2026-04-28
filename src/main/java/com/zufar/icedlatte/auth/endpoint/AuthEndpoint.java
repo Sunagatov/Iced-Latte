@@ -28,6 +28,7 @@ import java.util.Base64;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthEndpoint {
+    private static final String GOOGLE_CALLBACK_PATH = "/auth/google/callback";
 
     @Value("${google.auth.server.url:}")
     private String googleAuthServerUrl;
@@ -85,7 +86,7 @@ public class AuthEndpoint {
 
     private String resolveCallbackBase(String redirectUrl) {
         if (redirectUrl == null || redirectUrl.isBlank()) {
-            return frontendUrl;
+            return defaultCallbackBase();
         }
         try {
             URI incoming = new URI(redirectUrl);
@@ -93,15 +94,24 @@ public class AuthEndpoint {
             boolean sameOrigin = allowed.getScheme().equals(incoming.getScheme())
                     && allowed.getHost().equals(incoming.getHost())
                     && allowed.getPort() == incoming.getPort();
-            if (!sameOrigin) {
-                log.warn("auth.google.redirect.rejected: reasonCode=ORIGIN_MISMATCH");
-                return frontendUrl;
+            boolean expectedPath = GOOGLE_CALLBACK_PATH.equals(incoming.getPath());
+            if (!sameOrigin || !expectedPath) {
+                log.warn("auth.google.redirect.rejected: reasonCode={}",
+                        sameOrigin ? "PATH_MISMATCH" : "ORIGIN_MISMATCH");
+                return defaultCallbackBase();
             }
         } catch (URISyntaxException _) {
             log.warn("auth.google.redirect.invalid: reasonCode=INVALID_URI");
-            return frontendUrl;
+            return defaultCallbackBase();
         }
         return redirectUrl;
+    }
+
+    private String defaultCallbackBase() {
+        return UriComponentsBuilder.fromUriString(frontendUrl)
+                .path(GOOGLE_CALLBACK_PATH)
+                .build()
+                .toUriString();
     }
 
     @GetMapping("/google/callback")

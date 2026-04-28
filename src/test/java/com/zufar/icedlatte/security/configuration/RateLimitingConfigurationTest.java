@@ -105,7 +105,7 @@ class RateLimitingConfigurationTest {
         }
     }
 
-    private RedisScript<List> anyRedisScript() {
+    private RedisScript<List<Long>> anyRedisScript() {
         return any();
     }
 }
