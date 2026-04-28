@@ -543,6 +543,7 @@ components:
       minLength: 8
       maxLength: 128
       pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+      x-field-extra-annotation: '@jakarta.validation.constraints.Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$", message = "Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&.")'
 
     ChangeUserPasswordRequest:
       type: "object"
