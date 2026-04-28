@@ -154,6 +154,15 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 ));
     }
 
+    @Test
+    @DisplayName("Should return 405 for GET refresh requests")
+    void shouldReturn405ForGetRefreshRequests() {
+        given(specification)
+                .get("/refresh")
+                .then()
+                .statusCode(HttpStatus.METHOD_NOT_ALLOWED.value());
+    }
+
     private String extractState(Response response) {
         String location = response.getHeader("Location");
         return UriComponentsBuilder.fromUriString(location)

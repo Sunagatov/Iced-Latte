@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param userId      The id of the user.
      */
     @Modifying
+    @Transactional
     @Query(value = "UPDATE UserEntity u " +
             "SET u.password = :newPassword " +
             "WHERE u.id = :userId")
@@ -38,6 +40,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param accountNonLocked The new accountNonLocked value (true = unlocked, false = locked).
      */
     @Modifying
+    @Transactional
     @Query("UPDATE UserEntity u " +
             "SET u.accountNonLocked = :accountNonLocked " +
             "WHERE u.email = :email")
@@ -49,6 +52,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * with is_user_locked set to false.
      */
     @Modifying
+    @Transactional
     @Query(value = "UPDATE UserEntity u " +
             "SET u.accountNonLocked = true " +
             "WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")

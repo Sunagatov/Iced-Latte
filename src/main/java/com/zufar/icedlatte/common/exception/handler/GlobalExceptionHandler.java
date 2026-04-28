@@ -9,13 +9,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
@@ -152,6 +155,21 @@ public class GlobalExceptionHandler {
     public void handleAsyncRequestNotUsableException(final AsyncRequestNotUsableException exception) {
         // Client disconnected before response was flushed (broken pipe). Not a server error — suppress Sentry noise.
         log.debug("exception.client_disconnect: cause={}", exception.getMessage());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<Void> handleHttpMediaTypeNotAcceptableException(
+            final HttpMediaTypeNotAcceptableException exception) {
+        log.debug("exception.not_acceptable: status=406, message={}", sanitize(exception.getMessage()));
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Void> handleHttpRequestMethodNotSupportedException(
+            final HttpRequestMethodNotSupportedException exception) {
+        log.debug("exception.method_not_supported: method={}, status=405",
+                sanitize(exception.getMethod()));
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
     }
 
     @ExceptionHandler(Exception.class)

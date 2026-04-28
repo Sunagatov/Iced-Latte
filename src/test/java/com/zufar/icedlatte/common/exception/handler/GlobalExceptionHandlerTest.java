@@ -10,9 +10,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.core.MethodParameter;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.lang.reflect.Method;
@@ -93,5 +96,27 @@ class GlobalExceptionHandlerTest {
         ApiErrorResponse result = handler.handleHttpMessageNotReadableException(ex);
 
         assertThat(result.httpStatusCode()).isEqualTo(400);
+    }
+
+    @Test
+    @DisplayName("handleHttpMediaTypeNotAcceptableException returns 406 without a body")
+    void handleNotAcceptable_returns406WithoutBody() {
+        HttpMediaTypeNotAcceptableException ex = new HttpMediaTypeNotAcceptableException("not acceptable");
+
+        ResponseEntity<Void> result = handler.handleHttpMediaTypeNotAcceptableException(ex);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+        assertThat(result.getBody()).isNull();
+    }
+
+    @Test
+    @DisplayName("handleHttpRequestMethodNotSupportedException returns 405 without a body")
+    void handleMethodNotSupported_returns405WithoutBody() {
+        HttpRequestMethodNotSupportedException ex = new HttpRequestMethodNotSupportedException("GET");
+
+        ResponseEntity<Void> result = handler.handleHttpRequestMethodNotSupportedException(ex);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(result.getBody()).isNull();
     }
 }

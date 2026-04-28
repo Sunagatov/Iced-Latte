@@ -30,19 +30,35 @@ public class RateLimitingConfiguration {
 
     public enum FailPolicy { OPEN, CLOSED }
 
-    // --- pre-auth bean: fail-CLOSED — deny on backend error to keep the flood guard effective ---
+    // --- pre-auth flood bean: fail-OPEN — public read traffic should not 429 on transient Redis transport errors ---
 
-    @Bean("preAuthRateLimiter")
+    @Bean("preAuthFloodRateLimiter")
     @ConditionalOnProperty(name = "spring.data.redis.host")
-    public RateLimiter preAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
-        log.info("rate_limit.pre-auth.mode: Redis (fail-closed)");
+    public RateLimiter preAuthFloodRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.pre-auth.flood.mode: Redis (fail-open)");
+        return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.OPEN);
+    }
+
+    @Bean("preAuthFloodRateLimiter")
+    @ConditionalOnMissingBean(name = "preAuthFloodRateLimiter")
+    public RateLimiter preAuthFloodCaffeineRateLimiter() {
+        log.info("rate_limit.pre-auth.flood.mode: in-memory Caffeine (fail-open)");
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+    }
+
+    // --- auth pre-auth bean: fail-CLOSED — deny auth floods when the backend limiter is unavailable ---
+
+    @Bean("preAuthAuthRateLimiter")
+    @ConditionalOnProperty(name = "spring.data.redis.host")
+    public RateLimiter preAuthAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.pre-auth.auth.mode: Redis (fail-closed)");
         return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.CLOSED);
     }
 
-    @Bean("preAuthRateLimiter")
-    @ConditionalOnMissingBean(name = "preAuthRateLimiter")
-    public RateLimiter preAuthCaffeineRateLimiter() {
-        log.info("rate_limit.pre-auth.mode: in-memory Caffeine (fail-closed)");
+    @Bean("preAuthAuthRateLimiter")
+    @ConditionalOnMissingBean(name = "preAuthAuthRateLimiter")
+    public RateLimiter preAuthAuthCaffeineRateLimiter() {
+        log.info("rate_limit.pre-auth.auth.mode: in-memory Caffeine (fail-closed)");
         return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
     }
 
@@ -77,7 +93,11 @@ public class RateLimitingConfiguration {
                 int remaining = (int) Math.max(0, maxTokens - count);
                 return new RateLimitResult(count <= maxTokens, maxTokens, remaining, resetTimeMillis);
             } catch (Exception e) {
-                log.error("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage(), e);
+                if (policy == FailPolicy.OPEN) {
+                    log.warn("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage());
+                } else {
+                    log.error("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage(), e);
+                }
                 boolean allowed = policy == FailPolicy.OPEN;
                 return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
                         System.currentTimeMillis() + windowDuration.toMillis());

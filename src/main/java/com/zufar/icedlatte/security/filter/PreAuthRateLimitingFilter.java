@@ -43,14 +43,17 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
     @Value("${security.rate-limit.auth.window-duration:PT1M}")
     private Duration authWindowDuration;
 
-    private final RateLimiter rateLimiter;
+    private final RateLimiter floodRateLimiter;
+    private final RateLimiter authRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
 
-    public PreAuthRateLimitingFilter(@Qualifier("preAuthRateLimiter") RateLimiter rateLimiter,
+    public PreAuthRateLimitingFilter(@Qualifier("preAuthFloodRateLimiter") RateLimiter floodRateLimiter,
+                                     @Qualifier("preAuthAuthRateLimiter") RateLimiter authRateLimiter,
                                      MeterRegistry meterRegistry,
                                      ClientIpExtractor clientIpExtractor) {
-        this.rateLimiter = rateLimiter;
+        this.floodRateLimiter = floodRateLimiter;
+        this.authRateLimiter = authRateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
     }
@@ -90,7 +93,7 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
         // Auth endpoints get their own tight bucket here (fail-closed) so that a post-auth
         // limiter backend failure cannot degrade auth throttling from 10/min to 200/min.
         if (isAuthEndpoint(request)) {
-            var authResult = rateLimiter.tryConsume("auth:ip:" + ip, authMaxRequests, authWindowDuration);
+            var authResult = authRateLimiter.tryConsume("auth:ip:" + ip, authMaxRequests, authWindowDuration);
             RateLimitResponseWriter.writeRateLimitHeaders(response, authResult);
             if (!authResult.allowed()) {
                 meterRegistry.counter("rate_limit.requests.blocked", "category", "auth-pre").increment();
@@ -106,7 +109,7 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
         }
 
         String key = "pre-auth:ip:" + ip;
-        var result = rateLimiter.tryConsume(key, maxRequests, windowDuration);
+        var result = floodRateLimiter.tryConsume(key, maxRequests, windowDuration);
 
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 

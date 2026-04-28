@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
      */
     @Modifying(clearAutomatically = true,
             flushAutomatically = true)
+    @Transactional
     @Query("UPDATE LoginAttemptEntity la " +
             "SET la.isUserLocked = true, la.expirationDatetime = :expiration " +
             "WHERE la.userEmail = :email")
@@ -34,8 +36,9 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
     // amazonq-ignore-next-line
     @Modifying(clearAutomatically = true,
             flushAutomatically = true)
+    @Transactional
     @Query(value = """
-            UPDATE login_attempts
+            UPDATE public.login_attempts
             SET attempts = 0,
                 is_user_locked = false,
                 expiration_datetime = NULL,

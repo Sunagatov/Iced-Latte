@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -19,7 +17,6 @@ public class UnlockAccountScheduler {
     private final LoginAttemptRepository loginAttemptRepository;
 
     @Scheduled(cron = "${unlock-account-scheduler-cron}")
-    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void unlockLockoutExpiredAccounts() {
         try {
             log.debug("scheduler.unlock.start");

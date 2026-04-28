@@ -48,10 +48,17 @@
 
         <!-- ========== DATABASE VERSIONS ========== -->
         <postgresql.version>42.7.10</postgresql.version>
+
+        <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
+        <spring-framework.version>7.0.7</spring-framework.version>
+        <spring-security.version>7.0.5</spring-security.version>
+        <tomcat.version>11.0.21</tomcat.version>
+        <jackson-bom.version>3.1.2</jackson-bom.version>
+
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
         <spring-retry.version>2.0.12</spring-retry.version>
-        <bcprov.version>1.83</bcprov.version>
+        <bcprov.version>1.84</bcprov.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
         <jackson-databind-nullable.version>0.2.10</jackson-databind-nullable.version>
@@ -282,7 +289,7 @@
             <version>${sentry.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- Pyroscope continuous profiling -->
+        <!-- Continuous profiling agent -->
         <dependency>
             <groupId>io.pyroscope</groupId>
             <artifactId>agent</artifactId>
@@ -737,9 +744,9 @@
     </build>
 
     <profiles>
-        <!-- Run SBOM generation only in CI / release: mvn package -P sbom -->
+        <!-- Run software bill of materials generation only in CI or release builds: mvn package -P software-bill-of-materials -->
         <profile>
-            <id>sbom</id>
+            <id>software-bill-of-materials</id>
             <build>
                 <plugins>
                     <plugin>
