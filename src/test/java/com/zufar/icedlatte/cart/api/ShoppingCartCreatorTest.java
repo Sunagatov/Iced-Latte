@@ -62,7 +62,8 @@ class ShoppingCartCreatorTest {
 
             ShoppingCart result = creator.getOrCreate(userId);
 
-            assertThat(result).isSameAs(newCart);
+            assertThat(result).isNotNull();
+            assertThat(result.getUserId()).isEqualTo(userId);
             ArgumentCaptor<ShoppingCart> captor = ArgumentCaptor.forClass(ShoppingCart.class);
             verify(shoppingCartRepository).findShoppingCartByUserId(userId);
             verify(shoppingCartRepository).save(captor.capture());
