@@ -1,3 +1,9 @@
+name: iced-latte
+
+# =============================================================================
+# Shared networks and volumes
+# =============================================================================
+
 networks:
   iced-latte-network:
     name: iced-latte-network
@@ -9,11 +15,16 @@ volumes:
 
 services:
 
-  # ── Infrastructure (always available) ──────────────────────────────────────
+  # =============================================================================
+  # Infrastructure
+  # Always-on local dependencies for app development.
+  # =============================================================================
 
   postgres:
     image: postgres:16-alpine
     container_name: iced-latte-postgresdb
+    pull_policy: missing
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DATASOURCE_NAME:-postgres}
       POSTGRES_USER: ${DATASOURCE_USERNAME:-postgres}
@@ -25,14 +36,19 @@ services:
     networks:
       - iced-latte-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATASOURCE_USERNAME:-postgres}"]
+      # Check both server readiness and the target database name so startup ordering
+      # matches the app's actual connection target.
+      test: ["CMD-SHELL", "pg_isready -U ${DATASOURCE_USERNAME:-postgres} -d ${DATASOURCE_NAME:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
+    # Used for token/session/cache features.
     image: redis:7-alpine
     container_name: iced-latte-redis
+    pull_policy: missing
+    restart: unless-stopped
     ports:
       - '6379:6379'
     volumes:
@@ -45,10 +61,12 @@ services:
       timeout: 3s
       retries: 10
 
-  # Local S3-compatible object storage (replaces AWS S3 for local dev)
+  # Local S3-compatible object storage for development.
   minio:
     image: minio/minio:latest
     container_name: iced-latte-minio
+    pull_policy: missing
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY:-minioadmin}
@@ -61,15 +79,17 @@ services:
     networks:
       - iced-latte-network
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      # Prefer MinIO's built-in HTTP liveness endpoint over shelling out to admin commands.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # Creates the required S3 buckets on first start
+  # Creates the buckets the backend expects on first startup.
   minio-init:
     image: minio/mc:latest
     container_name: iced-latte-minio-init
+    pull_policy: missing
     depends_on:
       minio:
         condition: service_healthy
@@ -85,13 +105,29 @@ services:
       "
     restart: on-failure
 
-  # ── Backend (profile: backend) ─────────────────────────────────────────────
+  # =============================================================================
+  # Application services
+  # Opt-in via compose profiles so infra can be started independently.
+  # =============================================================================
 
   backend:
-    image: zufarexplainedit/iced-latte-backend:latest
+    # Local source build. This keeps the running container aligned with the checked-out code.
+    image: iced-latte-backend:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE_VERSION: local
     container_name: iced-latte-backend
     profiles: [backend]
-    env_file: .env
+    # `init: true` adds a tiny init process for cleaner signal handling and zombie reaping.
+    init: true
+    restart: unless-stopped
+    env_file:
+      # Optional for local iteration: `docker compose config` should still work even if
+      # the developer has not created a private `.env` yet.
+      - path: .env
+        required: false
     environment:
       DATASOURCE_HOST: postgres
       REDIS_HOST: redis
@@ -110,27 +146,38 @@ services:
     networks:
       - iced-latte-network
 
-  # ── Frontend (profile: frontend) ───────────────────────────────────────────
-
   frontend:
+    # Frontend is built from the sibling repository when both repos are cloned locally.
     build:
       context: ../Iced-Latte-Frontend
       dockerfile: Dockerfile
       args:
+        # Inside the Docker network the frontend should talk to the backend service name,
+        # not localhost.
         NEXT_PUBLIC_API_URL: http://iced-latte-backend:8083/api/v1
     container_name: iced-latte-frontend
     profiles: [frontend]
+    init: true
+    restart: unless-stopped
     ports:
       - '3000:3000'
+    depends_on:
+      # Startup order only; the frontend can still tolerate backend warmup via its own retries.
+      backend:
+        condition: service_started
     networks:
       - iced-latte-network
 
-  # ── Observability (profile: monitoring) ────────────────────────────────────
+  # =============================================================================
+  # Optional observability
+  # =============================================================================
 
   datadog-agent:
     image: gcr.io/datadoghq/agent:7
     container_name: datadog-agent
     profiles: [monitoring]
+    pull_policy: missing
+    restart: unless-stopped
     hostname: iced-latte-local
     environment:
       - DD_API_KEY=${DD_API_KEY}

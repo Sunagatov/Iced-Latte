@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.contains;
@@ -113,6 +114,23 @@ class RateLimitingFilterTest {
     }
 
     @Test
+    @DisplayName("products path without keyword stays in the global bucket")
+    void productsPathWithoutKeywordUsesGlobalBucket() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
+        when(rateLimiter.tryConsume(contains("global"), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
+
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/products"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class)
+        );
+
+        verify(rateLimiter).tryConsume(contains("global"), anyInt(), any());
+        verify(rateLimiter, never()).tryConsume(contains("search"), anyInt(), any());
+    }
+
+    @Test
     @DisplayName("allowed request passes through with rate-limit headers set")
     void allowedRequestPassesThroughWithHeaders() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
@@ -185,6 +203,24 @@ class RateLimitingFilterTest {
     }
 
     @Test
+    @DisplayName("anonymousUser principal still uses IP-based key")
+    void anonymousUserPrincipalStillUsesIpKey() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of()));
+        when(clientIpExtractor.extract(any())).thenReturn("7.7.7.7");
+        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
+
+        filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"),
+                new MockHttpServletResponse(), mock(FilterChain.class));
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(rateLimiter).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getValue()).contains("ip:7.7.7.7");
+        verify(clientIpExtractor).extract(any());
+    }
+
+    @Test
     @DisplayName("OPTIONS requests are skipped")
     void optionsRequestIsSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("OPTIONS", "/api/v1/auth/login"))).isTrue();
@@ -218,5 +254,25 @@ class RateLimitingFilterTest {
         // Both calls still blocked — the logging path difference is internal;
         // we verify the filter ran twice and both returned 429
         verify(rateLimiter, org.mockito.Mockito.times(2)).tryConsume(any(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("validation rejects non-positive auth limit")
+    void validateRejectsNonPositiveAuthLimit() {
+        ReflectionTestUtils.setField(filter, "authMaxRequests", 0);
+
+        assertThatThrownBy(filter::validate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("auth.max-requests must be > 0");
+    }
+
+    @Test
+    @DisplayName("validation rejects non-positive search window")
+    void validateRejectsNonPositiveSearchWindow() {
+        ReflectionTestUtils.setField(filter, "searchWindowDuration", Duration.ZERO);
+
+        assertThatThrownBy(filter::validate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("search.window-duration must be positive");
     }
 }

@@ -4,89 +4,97 @@ import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.Caff
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.FailPolicy;
 import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.RateLimitResult;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("CaffeineFixedWindowRateLimiter Tests")
+@DisplayName("CaffeineFixedWindowRateLimiter unit tests")
 class CaffeineFixedWindowRateLimiterTest {
 
-    private final Duration window = Duration.ofMinutes(1);
+    private static final Duration WINDOW = Duration.ofMinutes(1);
 
-    @Test
-    @DisplayName("requests within limit are allowed")
-    void withinLimitAllowed() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        for (int i = 0; i < 3; i++) {
-            assertThat(limiter.tryConsume("key1", 3, window).allowed()).isTrue();
+    @Nested
+    @DisplayName("tryConsume")
+    class TryConsume {
+
+        @Test
+        @DisplayName("allows requests up to the configured limit and then blocks")
+        void allowsUpToLimitThenBlocks() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+
+            RateLimitResult first = limiter.tryConsume("checkout", 3, WINDOW);
+            RateLimitResult second = limiter.tryConsume("checkout", 3, WINDOW);
+            RateLimitResult third = limiter.tryConsume("checkout", 3, WINDOW);
+            RateLimitResult fourth = limiter.tryConsume("checkout", 3, WINDOW);
+
+            assertThat(first.allowed()).isTrue();
+            assertThat(first.remaining()).isEqualTo(2);
+            assertThat(second.allowed()).isTrue();
+            assertThat(second.remaining()).isEqualTo(1);
+            assertThat(third.allowed()).isTrue();
+            assertThat(third.remaining()).isZero();
+            assertThat(fourth.allowed()).isFalse();
+            assertThat(fourth.remaining()).isZero();
+            assertThat(fourth.limit()).isEqualTo(3);
         }
-    }
 
-    @Test
-    @DisplayName("request exceeding limit is blocked")
-    void exceedingLimitBlocked() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        for (int i = 0; i < 3; i++) limiter.tryConsume("key2", 3, window);
-        assertThat(limiter.tryConsume("key2", 3, window).allowed()).isFalse();
-    }
+        @Test
+        @DisplayName("keeps counters isolated per key")
+        void keepsCountersPerKey() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
 
-    @Test
-    @DisplayName("remaining decrements correctly")
-    void remainingDecrementsCorrectly() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        RateLimitResult first = limiter.tryConsume("key3", 5, window);
-        assertThat(first.remaining()).isEqualTo(4);
-        RateLimitResult second = limiter.tryConsume("key3", 5, window);
-        assertThat(second.remaining()).isEqualTo(3);
-    }
+            limiter.tryConsume("cart:user:alice", 1, WINDOW);
+            RateLimitResult blockedAlice = limiter.tryConsume("cart:user:alice", 1, WINDOW);
+            RateLimitResult allowedBob = limiter.tryConsume("cart:user:bob", 1, WINDOW);
 
-    @Test
-    @DisplayName("remaining is 0 when blocked, never negative")
-    void remainingNeverNegativeWhenBlocked() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        for (int i = 0; i < 5; i++) limiter.tryConsume("key4", 2, window);
-        RateLimitResult result = limiter.tryConsume("key4", 2, window);
-        assertThat(result.allowed()).isFalse();
-        assertThat(result.remaining()).isEqualTo(0);
-    }
+            assertThat(blockedAlice.allowed()).isFalse();
+            assertThat(allowedBob.allowed()).isTrue();
+            assertThat(allowedBob.remaining()).isZero();
+        }
 
-    @Test
-    @DisplayName("different keys have independent counters")
-    void differentKeysIndependentCounters() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        for (int i = 0; i < 2; i++) limiter.tryConsume("keyA", 2, window);
-        assertThat(limiter.tryConsume("keyA", 2, window).allowed()).isFalse();
-        assertThat(limiter.tryConsume("keyB", 2, window).allowed()).isTrue();
-    }
+        @Test
+        @DisplayName("resets the window after expiry")
+        void resetsWindowAfterExpiry() throws InterruptedException {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            Duration shortWindow = Duration.ofMillis(50);
 
-    @Test
-    @DisplayName("window resets after expiry — counter restarts")
-    void windowResetAfterExpiry() throws InterruptedException {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        Duration shortWindow = Duration.ofMillis(50);
-        for (int i = 0; i < 2; i++) limiter.tryConsume("key5", 2, shortWindow);
-        assertThat(limiter.tryConsume("key5", 2, shortWindow).allowed()).isFalse();
+            limiter.tryConsume("search", 2, shortWindow);
+            limiter.tryConsume("search", 2, shortWindow);
+            RateLimitResult blocked = limiter.tryConsume("search", 2, shortWindow);
 
-        Thread.sleep(60);
+            Thread.sleep(70);
 
-        assertThat(limiter.tryConsume("key5", 2, shortWindow).allowed()).isTrue();
-    }
+            RateLimitResult afterReset = limiter.tryConsume("search", 2, shortWindow);
 
-    @Test
-    @DisplayName("fail-closed policy: normal operation still works")
-    void failClosedNormalOperationWorks() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
-        assertThat(limiter.tryConsume("key6", 10, window).allowed()).isTrue();
-    }
+            assertThat(blocked.allowed()).isFalse();
+            assertThat(afterReset.allowed()).isTrue();
+            assertThat(afterReset.remaining()).isEqualTo(1);
+        }
 
-    @Test
-    @DisplayName("resetTimeMillis is in the future")
-    void resetTimeMillisIsInFuture() {
-        var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
-        long before = System.currentTimeMillis();
-        RateLimitResult result = limiter.tryConsume("key7", 5, window);
-        assertThat(result.resetTimeMillis()).isGreaterThan(before);
+        @Test
+        @DisplayName("keeps reset time inside the active window")
+        void keepsResetTimeInsideActiveWindow() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            long before = System.currentTimeMillis();
+
+            RateLimitResult result = limiter.tryConsume("products", 5, WINDOW);
+
+            assertThat(result.resetTimeMillis()).isGreaterThan(before);
+            assertThat(result.resetTimeMillis()).isLessThanOrEqualTo(before + WINDOW.toMillis() + 50);
+        }
+
+        @Test
+        @DisplayName("closed policy behaves normally when the cache is healthy")
+        void closedPolicyStillAllowsHealthyRequests() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
+
+            RateLimitResult result = limiter.tryConsume("auth", 10, WINDOW);
+
+            assertThat(result.allowed()).isTrue();
+            assertThat(result.remaining()).isEqualTo(9);
+        }
     }
 }

@@ -1,109 +1,93 @@
 # syntax=docker/dockerfile:1.7
 
 # =============================================================================
-# BUILD STAGE — Modern 2026 approach with BuildKit cache mounts
+# Build stage
+# Compiles the application and produces the executable Spring Boot JAR.
 # =============================================================================
+
+# Build the fat JAR in a separate stage so the runtime image stays small.
 FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
-# Build arguments
-# BUILD_PROFILE: optional Maven profile for build-time optimizations.
-# Leave empty by default because the project currently has no `prod` Maven profile.
 ARG BUILD_PROFILE
 
-WORKDIR /app
+WORKDIR /workspace
 
-# --- Copy POM first for dependency caching ---
+# Copy only build metadata first for better dependency-layer caching.
+# Copy the POM first so dependency resolution can stay cached across source edits.
 COPY pom.xml ./
 
-# --- Warm Maven cache ---
-# Best-effort only: some ecosystems/plugins can break go-offline resolution even though
-# the actual package build succeeds. Do not fail the image build at this stage.
-RUN --mount=type=cache,target=/root/.m2 \
-    (mvn -U dependency:go-offline -B --no-transfer-progress || \
-     echo "⚠️ Maven go-offline failed; continuing with package step which will resolve dependencies directly.")
+# Prime Maven dependencies.
+# Warm the Maven cache via BuildKit. This is best-effort only: if go-offline misses
+# something, the real package step below still resolves what it needs.
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+    (mvn -B -ntp dependency:go-offline || \
+     echo "Maven go-offline failed; continuing with package step.")
 
-# --- Copy source code ---
+# Copy application sources after dependency warmup so source edits do not invalidate
+# the dependency cache layer.
 COPY src ./src
 
-# --- Build Application with cached dependencies ---
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -U package ${BUILD_PROFILE:+-P${BUILD_PROFILE}} -DskipTests -B --no-transfer-progress
+# Package the app.
+# Build the application JAR with the same cached Maven repository mount.
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+    mvn -B -ntp clean package -DskipTests ${BUILD_PROFILE:+-P${BUILD_PROFILE}}
 
 # =============================================================================
-# EXTRACT STAGE — split fat JAR into layers for Docker cache efficiency
+# Extract stage
+# Splits the Spring Boot JAR into layers so Docker can reuse dependency layers.
 # =============================================================================
+
+# Spring Boot can split the executable JAR into layers so Docker reuses unchanged
+# dependency layers between builds.
 FROM eclipse-temurin:25-jre-alpine AS extract
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-RUN java -Djarmode=layertools -jar app.jar extract
+
+COPY --from=build /workspace/target/*.jar app.jar
+
+RUN java -Djarmode=tools -jar app.jar extract --layers --launcher
 
 # =============================================================================
-# CDS TRAINING STAGE — generate class-data sharing archive
+# Runtime stage
+# Contains only the JRE plus the extracted application layers.
 # =============================================================================
-# CDS archive creation is REQUIRED. If it fails, the build fails.
-# Uses dedicated 'cds' profile with minimal safe defaults (no external services).
-FROM eclipse-temurin:25-jre-alpine AS cds-train
-WORKDIR /app
-COPY --from=extract /app/dependencies/ ./
-COPY --from=extract /app/spring-boot-loader/ ./
-COPY --from=extract /app/snapshot-dependencies/ ./
-COPY --from=extract /app/application/ ./
-RUN java -XX:ArchiveClassesAtExit=app-cds.jsa \
-        -Dspring.context.exit=onRefresh \
-        -Dspring.profiles.active=cds \
-        org.springframework.boot.loader.launch.JarLauncher && \
-    if [ -f app-cds.jsa ] && [ -s app-cds.jsa ]; then \
-        echo "CDS archive created successfully: $(du -h app-cds.jsa)"; \
-    else \
-        echo "ERROR: CDS archive creation failed or produced empty file"; \
-        exit 1; \
-    fi
 
-# =============================================================================
-# RUNTIME STAGE
-# =============================================================================
+# Final runtime image: only the JRE plus the extracted application layers.
 FROM eclipse-temurin:25-jre-alpine
 
-# Build arguments for runtime
-# IMAGE_VERSION: Docker image metadata version (does not change application version in JAR)
-ARG IMAGE_VERSION=0.0.1
+ARG IMAGE_VERSION=dev
 
-# OCI-compliant metadata labels
+# OCI image metadata helps registries and scanners identify the image cleanly.
 LABEL org.opencontainers.image.title="Iced-Latte Backend" \
+      org.opencontainers.image.description="Iced-Latte backend service" \
       org.opencontainers.image.version="${IMAGE_VERSION}" \
-      org.opencontainers.image.description="Production-grade Java coffee marketplace backend" \
       org.opencontainers.image.vendor="Iced-Latte Team"
 
-# --- Create non-root user for security hardening ---
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Run as non-root by default.
+RUN addgroup -S app && adduser -S -h /app -G app app
 
 WORKDIR /app
 
-# --- Layered copy: dependencies change rarely, application layer changes every build ---
-COPY --from=extract --chown=appuser:appgroup /app/dependencies/ ./
-COPY --from=extract --chown=appuser:appgroup /app/spring-boot-loader/ ./
-COPY --from=extract --chown=appuser:appgroup /app/snapshot-dependencies/ ./
-COPY --from=extract --chown=appuser:appgroup /app/application/ ./
-COPY --from=cds-train --chown=appuser:appgroup /app/app-cds.jsa ./
+# Runtime defaults
+# Keep runtime defaults here so operators can still override them with env vars.
+# `SPRING_PROFILES_ACTIVE=prod` matches the intended container profile.
+# `JAVA_TOOL_OPTIONS` is the least intrusive way to pass container-aware JVM flags.
+ENV SPRING_PROFILES_ACTIVE=prod \
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
 
-RUN mkdir -p /app/logs \
-    && chown -R appuser:appgroup /app \
-    && chmod 755 /app \
-    && chmod 775 /app/logs
+# Application layers
+# These paths come from Spring Boot 4's current layer extraction layout.
+COPY --link --from=extract --chown=app:app /app/app/dependencies/ ./
+COPY --link --from=extract --chown=app:app /app/app/spring-boot-loader/ ./
+COPY --link --from=extract --chown=app:app /app/app/snapshot-dependencies/ ./
+COPY --link --from=extract --chown=app:app /app/app/application/ ./
 
-# --- Switch to non-root user ---
-USER appuser
+# Runtime identity
+USER app
 
-# --- Runtime Configuration ---
+# Network contract
 EXPOSE 8083
 
-# --- Application Startup ---
-ENTRYPOINT ["java", \
-    "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=60.0", \
-    "-XX:+ExitOnOutOfMemoryError", \
-    "-XX:+UseG1GC", \
-    "-XX:+UseStringDeduplication", \
-    "-XX:SharedArchiveFile=app-cds.jsa", \
-    "-Dspring.profiles.active=prod", \
-    "org.springframework.boot.loader.launch.JarLauncher"]
+# Startup command
+# JarLauncher starts the extracted layered application without needing the original jar.
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

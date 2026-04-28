@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.contains;
@@ -203,5 +204,25 @@ class PreAuthRateLimitingFilterTest {
     @DisplayName("regular API paths are not skipped")
     void regularApiPathIsNotSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/authenticate"))).isFalse();
+    }
+
+    @Test
+    @DisplayName("validation rejects non-positive flood limit")
+    void validateRejectsNonPositiveFloodLimit() {
+        ReflectionTestUtils.setField(filter, "maxRequests", 0);
+
+        assertThatThrownBy(filter::validate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("pre-auth.max-requests must be > 0");
+    }
+
+    @Test
+    @DisplayName("validation rejects non-positive auth window")
+    void validateRejectsNonPositiveAuthWindow() {
+        ReflectionTestUtils.setField(filter, "authWindowDuration", Duration.ZERO);
+
+        assertThatThrownBy(filter::validate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("auth.window-duration must be positive");
     }
 }
