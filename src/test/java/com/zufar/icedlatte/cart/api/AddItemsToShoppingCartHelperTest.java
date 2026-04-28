@@ -8,6 +8,7 @@ import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -277,9 +279,30 @@ class AddItemsToShoppingCartHelperTest {
         when(shoppingCartRepository.save(any(ShoppingCart.class)))
                 .thenThrow(new DataIntegrityViolationException("some_other_constraint_violation"));
 
-        org.junit.jupiter.api.Assertions.assertThrows(
+        assertThrows(
                 DataIntegrityViolationException.class,
                 () -> addItemsToShoppingCartHelper.add(userId, Set.of(itemToAdd))
         );
+    }
+
+    @Test
+    @DisplayName("Add should throw ProductNotFoundException when requested product does not exist")
+    void shouldThrowProductNotFoundExceptionWhenRequestedProductDoesNotExist() {
+        UUID userId = UUID.randomUUID();
+        UUID missingProductId = UUID.randomUUID();
+
+        ShoppingCart cart = new ShoppingCart();
+        cart.setId(UUID.randomUUID());
+        cart.setItems(new HashSet<>());
+
+        NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
+        itemToAdd.setProductId(missingProductId);
+        itemToAdd.setProductQuantity(1);
+
+        when(shoppingCartCreator.getOrCreate(userId)).thenReturn(cart);
+        when(productInfoRepository.findAllById(Set.of(missingProductId))).thenReturn(List.of());
+
+        assertThrows(ProductNotFoundException.class,
+                () -> addItemsToShoppingCartHelper.add(userId, Set.of(itemToAdd)));
     }
 }

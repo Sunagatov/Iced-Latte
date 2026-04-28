@@ -206,7 +206,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", equalTo(frontendUrl + "/signin?error=auth_failed&next=%2Fcheckout"));
+                .header("Location", equalTo(frontendUrl + "/signin?error=auth_failed&next=/checkout"));
     }
 
     @Test
