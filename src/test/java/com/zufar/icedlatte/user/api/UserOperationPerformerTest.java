@@ -17,9 +17,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +55,7 @@ class UserOperationPerformerTest {
             UserEntity userEntity = UserEntity.builder().id(userId).build();
             UserDto expectedDto = new UserDto();
             Address address = new Address();
+            LocalDate birthDate = LocalDate.of(1990, 5, 20);
 
             AddressDto addressDto = new AddressDto();
             addressDto.setCountry("UK");
@@ -63,6 +67,7 @@ class UserOperationPerformerTest {
             request.setFirstName("Alice");
             request.setLastName("Smith");
             request.setPhoneNumber("+1234567890");
+            request.setBirthDate(birthDate);
             request.setAddress(addressDto);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
@@ -76,7 +81,9 @@ class UserOperationPerformerTest {
             assertThat(userEntity.getFirstName()).isEqualTo("Alice");
             assertThat(userEntity.getLastName()).isEqualTo("Smith");
             assertThat(userEntity.getPhoneNumber()).isEqualTo("+1234567890");
+            assertThat(userEntity.getBirthDate()).isEqualTo(birthDate);
             assertThat(userEntity.getAddress()).isEqualTo(address);
+            verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
         }
 
         @Test
@@ -97,6 +104,39 @@ class UserOperationPerformerTest {
             updater.updateUser(userId, request);
 
             assertThat(userEntity.getAddress()).isNull();
+            verify(addressDtoConverter, never()).toEntity(org.mockito.ArgumentMatchers.any());
+        }
+
+        @Test
+        @DisplayName("Treats a blank address payload as absent and skips address conversion")
+        void updateUser_blankAddressPayload_skipsAddressConversion() {
+            UUID userId = UUID.randomUUID();
+            UserEntity userEntity = UserEntity.builder()
+                    .id(userId)
+                    .address(new Address())
+                    .build();
+
+            AddressDto blankAddress = new AddressDto();
+            blankAddress.setCountry(" ");
+            blankAddress.setCity(null);
+            blankAddress.setLine("");
+            blankAddress.setPostcode("  ");
+
+            UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+            request.setFirstName("Carol");
+            request.setLastName("Jones");
+            request.setPhoneNumber("+447700900000");
+            request.setAddress(blankAddress);
+
+            when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
+            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
+
+            updater.updateUser(userId, request);
+
+            assertThat(userEntity.getAddress()).isNull();
+            verify(addressDtoConverter, never()).toEntity(blankAddress);
+            verify(putUsersRequestValidator).validate("Carol", "Jones", "+447700900000", null, blankAddress);
         }
     }
 }
