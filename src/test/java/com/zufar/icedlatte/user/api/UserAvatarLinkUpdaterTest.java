@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +34,7 @@ class UserAvatarLinkUpdaterTest {
 
         assertThat(result.getAvatarLink()).isEqualTo("https://cdn.example.com/avatar.jpg");
         assertThat(result).isSameAs(dto);
+        verify(userAvatarLinkProvider).getLink(userId);
     }
 
     @Test
@@ -46,5 +48,6 @@ class UserAvatarLinkUpdaterTest {
         updater.update(dto);
 
         assertThat(dto.getAvatarLink()).isNull();
+        verify(userAvatarLinkProvider).getLink(userId);
     }
 }

@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +47,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleUnsupportedReviewFormatException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -60,6 +62,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleDeniedProductReviewDeletionException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -75,6 +78,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleDeniedProductReviewCreationException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -88,6 +92,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleProductNotFoundForReviewException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -100,6 +105,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleGetReviewsBadRequestException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -112,6 +118,7 @@ class ProductReviewExceptionHandlerTest {
         ApiErrorResponse result = handler.handleInvalidProductReviewTextException(ex);
 
         assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -126,5 +133,7 @@ class ProductReviewExceptionHandlerTest {
 
         assertThat(result).isEqualTo(expected);
         assertThat(result.message()).isEqualTo("Request conflicts with an existing record.");
+        verify(apiErrorResponseCreator).buildResponse(
+                "Request conflicts with an existing record.", HttpStatus.BAD_REQUEST);
     }
 }

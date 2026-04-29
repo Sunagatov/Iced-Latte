@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.api.avatar;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
@@ -85,5 +86,32 @@ class UserAvatarUploaderTest {
         verify(fileUploader).upload(file, BUCKET, expectedFileName);
         verify(fileMetadataRepository, never()).deleteByRelatedObjectId(org.mockito.ArgumentMatchers.any());
         verify(fileMetadataSaver, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar rejects unsupported content types before upload")
+    void uploadUserAvatarRejectsUnsupportedContentTypes() {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/gif");
+
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+                .isInstanceOf(InvalidAvatarFileTypeException.class)
+                .hasMessageContaining("image/gif");
+
+        verify(fileUploader, never()).upload(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar rejects files whose magic bytes do not match the declared image type")
+    void uploadUserAvatarRejectsMagicByteMismatch() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
+
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+                .isInstanceOf(InvalidAvatarFileTypeException.class)
+                .hasMessageContaining("image/jpeg");
+
+        verify(fileUploader, never()).upload(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 }

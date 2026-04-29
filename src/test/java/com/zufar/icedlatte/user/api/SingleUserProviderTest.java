@@ -7,6 +7,7 @@ import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import com.zufar.icedlatte.user.stub.UserDtoTestStub;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,12 +16,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("SingleUserProvider unit tests")
 class SingleUserProviderTest {
 
     @Mock
@@ -36,34 +39,74 @@ class SingleUserProviderTest {
     @InjectMocks
     private SingleUserProvider singleUserProvider;
 
-    @Test
-    @DisplayName("getUserById should return the correct UserDto when the user exists")
-    void getUserByIdShouldReturnCorrectUserDtoWhenUserExists() {
-        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
+    @Nested
+    @DisplayName("getUserById")
+    class GetUserById {
 
-        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(testUserEntity));
+        @Test
+        @DisplayName("returns converted dto when user exists")
+        void returnsConvertedDtoWhenUserExists() {
+            UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
+            UserEntity testUserEntity = UserDtoTestStub.createUserEntity();
 
-        UserDto expectedUserDto = UserDtoTestStub.createUserDto();
-        when(userDtoConverter.toDto(testUserEntity)).thenReturn(expectedUserDto);
-        when(userAvatarLinkUpdater.update(expectedUserDto)).thenReturn(expectedUserDto);
+            when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(testUserEntity));
 
-        UserDto actualUserDto = singleUserProvider.getUserById(userId);
+            UserDto expectedUserDto = UserDtoTestStub.createUserDto();
+            when(userDtoConverter.toDto(testUserEntity)).thenReturn(expectedUserDto);
+            when(userAvatarLinkUpdater.update(expectedUserDto)).thenReturn(expectedUserDto);
 
-        assertEquals(expectedUserDto, actualUserDto);
-        verify(userCrudRepository).findById(userId);
-        verify(userDtoConverter).toDto(testUserEntity);
-        verify(userAvatarLinkUpdater).update(expectedUserDto);
+            UserDto actualUserDto = singleUserProvider.getUserById(userId);
+
+            assertThat(actualUserDto).isEqualTo(expectedUserDto);
+            verify(userCrudRepository).findById(userId);
+            verify(userDtoConverter).toDto(testUserEntity);
+            verify(userAvatarLinkUpdater).update(expectedUserDto);
+        }
+
+        @Test
+        @DisplayName("throws when the user does not exist")
+        void throwsWhenUserDoesNotExist() {
+            UUID nonExistentUserId = UUID.randomUUID();
+
+            when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> singleUserProvider.getUserById(nonExistentUserId))
+                    .isInstanceOf(UserNotFoundException.class);
+            verify(userCrudRepository).findById(nonExistentUserId);
+            verifyNoMoreInteractions(userDtoConverter, userAvatarLinkUpdater);
+        }
     }
 
     @Test
-    @DisplayName("getUserById should throw UserNotFoundException when the user does not exist")
-    void getUserByIdShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        UUID nonExistentUserId = UUID.randomUUID();
+    @DisplayName("getUserEntityById returns entity directly")
+    void getUserEntityByIdReturnsEntityDirectly() {
+        UUID userId = UUID.randomUUID();
+        UserEntity entity = UserDtoTestStub.createUserEntity();
+        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
 
-        when(userCrudRepository.findById(nonExistentUserId)).thenReturn(java.util.Optional.empty());
+        assertThat(singleUserProvider.getUserEntityById(userId)).isSameAs(entity);
+        verify(userCrudRepository).findById(userId);
+        verifyNoMoreInteractions(userDtoConverter, userAvatarLinkUpdater);
+    }
 
-        assertThrows(UserNotFoundException.class, () -> singleUserProvider.getUserById(nonExistentUserId));
-        verify(userCrudRepository).findById(nonExistentUserId);
+    @Test
+    @DisplayName("getUserEntityByEmail returns entity by email")
+    void getUserEntityByEmailReturnsEntity() {
+        UserEntity entity = UserDtoTestStub.createUserEntity();
+        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+
+        assertThat(singleUserProvider.getUserEntityByEmail("user@example.com")).isSameAs(entity);
+        verify(userCrudRepository).findByEmail("user@example.com");
+        verifyNoMoreInteractions(userDtoConverter, userAvatarLinkUpdater);
+    }
+
+    @Test
+    @DisplayName("getUserEntityByEmail throws when user is missing")
+    void getUserEntityByEmailThrowsWhenMissing() {
+        when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> singleUserProvider.getUserEntityByEmail("missing@example.com"))
+                .isInstanceOf(UserNotFoundException.class);
+        verify(userCrudRepository).findByEmail("missing@example.com");
     }
 }

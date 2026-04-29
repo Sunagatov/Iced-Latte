@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.exception.handler;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
+import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
 import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -14,11 +15,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,9 +53,7 @@ class UserExceptionHandlerTest {
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUserNotFoundException(exception);
 
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+        assertThat(actualResponse).isEqualTo(expectedResponse);
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
     }
@@ -70,9 +73,7 @@ class UserExceptionHandlerTest {
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUsernameNotFoundException(exception);
 
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+        assertThat(actualResponse).isEqualTo(expectedResponse);
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
     }
@@ -83,7 +84,7 @@ class UserExceptionHandlerTest {
         InvalidOldPasswordException exception = new InvalidOldPasswordException();
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Invalid old password",
+                exception.getMessage(),
                 HttpStatus.UNAUTHORIZED.value(),
                 currentDateTime
         );
@@ -92,9 +93,7 @@ class UserExceptionHandlerTest {
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleInvalidOldPasswordException(exception);
 
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
+        assertThat(actualResponse).isEqualTo(expectedResponse);
 
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
     }
@@ -109,7 +108,7 @@ class UserExceptionHandlerTest {
 
         ApiErrorResponse result = userExceptionHandler.handleDeliveryAddressNotFoundException(exception);
 
-        assertEquals(expectedResponse.message(), result.message());
+        assertThat(result).isEqualTo(expectedResponse);
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
     }
 
@@ -122,7 +121,84 @@ class UserExceptionHandlerTest {
 
         ApiErrorResponse result = userExceptionHandler.handlePutUsersBadRequestException(exception);
 
-        assertEquals(expectedResponse.message(), result.message());
+        assertThat(result).isEqualTo(expectedResponse);
         verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @DisplayName("Should map invalid avatar file type to a sanitized BAD_REQUEST message")
+    void shouldHandleInvalidAvatarFileTypeException() {
+        InvalidAvatarFileTypeException exception = new InvalidAvatarFileTypeException("image/gif");
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "Invalid file type. Allowed types: JPEG, PNG, WebP",
+                400,
+                LocalDateTime.now()
+        );
+        when(apiErrorResponseCreator.buildResponse(
+                "Invalid file type. Allowed types: JPEG, PNG, WebP",
+                HttpStatus.BAD_REQUEST
+        )).thenReturn(expectedResponse);
+
+        ApiErrorResponse result = userExceptionHandler.handleInvalidAvatarFileTypeException(exception);
+
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(apiErrorResponseCreator).buildResponse(
+                "Invalid file type. Allowed types: JPEG, PNG, WebP",
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @Test
+    @DisplayName("Should map data integrity violations to a sanitized BAD_REQUEST message")
+    void shouldHandleDataIntegrityViolationException() {
+        org.springframework.dao.DataIntegrityViolationException exception =
+                new org.springframework.dao.DataIntegrityViolationException("duplicate key");
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "Request contains invalid or conflicting data.",
+                400,
+                LocalDateTime.now()
+        );
+        when(apiErrorResponseCreator.buildResponse(
+                "Request contains invalid or conflicting data.",
+                HttpStatus.BAD_REQUEST
+        )).thenReturn(expectedResponse);
+
+        ApiErrorResponse result = userExceptionHandler.handleDataIntegrityViolationException(exception);
+
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(apiErrorResponseCreator).buildResponse(
+                "Request contains invalid or conflicting data.",
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @Test
+    @DisplayName("Should join validation messages with distinct field names")
+    void shouldHandleValidationExceptions() throws NoSuchMethodException {
+        var target = new Object();
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(target, "target");
+        bindingResult.addError(new FieldError("target", "firstName", "must not be blank"));
+        bindingResult.addError(new FieldError("target", "lastName", "must not be blank"));
+        bindingResult.addError(new FieldError("target", "firstName", "size must be between 2 and 50"));
+        Method method = UserExceptionHandlerTest.class.getDeclaredMethod("shouldHandleValidationExceptions");
+        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(
+                new org.springframework.core.MethodParameter(method, -1), bindingResult);
+        ApiErrorResponse expectedResponse = new ApiErrorResponse(
+                "must not be blank and must not be blank and size must be between 2 and 50",
+                400,
+                LocalDateTime.now()
+        );
+        when(apiErrorResponseCreator.buildResponse(
+                "must not be blank and must not be blank and size must be between 2 and 50",
+                HttpStatus.BAD_REQUEST
+        )).thenReturn(expectedResponse);
+
+        ApiErrorResponse result = userExceptionHandler.handleValidationExceptions(exception);
+
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(apiErrorResponseCreator).buildResponse(
+                "must not be blank and must not be blank and size must be between 2 and 50",
+                HttpStatus.BAD_REQUEST
+        );
     }
 }

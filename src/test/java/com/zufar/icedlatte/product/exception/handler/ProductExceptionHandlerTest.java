@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -50,6 +51,18 @@ class ProductExceptionHandlerTest {
             assertThat(result).isSameAs(response);
             verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.NOT_FOUND);
             verifyNoMoreInteractions(apiErrorResponseCreator);
+        }
+
+        @Test
+        @DisplayName("propagates creator failures instead of swallowing them")
+        void propagatesCreatorFailures() {
+            ProductNotFoundException exception = new ProductNotFoundException(UUID.randomUUID());
+            when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND))
+                    .thenThrow(new IllegalStateException("creator failed"));
+
+            assertThatThrownBy(() -> productExceptionHandler.handleProductNotFoundException(exception))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("creator failed");
         }
     }
 
