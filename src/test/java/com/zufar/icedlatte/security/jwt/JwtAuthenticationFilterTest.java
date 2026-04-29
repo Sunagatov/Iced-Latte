@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -89,7 +88,7 @@ class JwtAuthenticationFilterTest {
             when(securityPrincipalProvider.getUserId()).thenReturn(userId);
             when(jwtTokenFromAuthHeaderExtractor.extract(request)).thenReturn("jwt-token");
             when(jwtClaimExtractor.extractSessionId("jwt-token")).thenReturn(Optional.of(sessionId));
-            doAnswer(invocation -> {
+            doAnswer(_ -> {
                 assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(authentication);
                 assertThat(MDC.get("userId")).isEqualTo(userId.toString());
                 assertThat(MDC.get("sessionId")).isEqualTo(sessionId.toString());
