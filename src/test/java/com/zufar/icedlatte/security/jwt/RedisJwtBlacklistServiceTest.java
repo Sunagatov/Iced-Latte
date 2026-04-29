@@ -16,13 +16,14 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.HexFormat;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,7 +74,18 @@ class RedisJwtBlacklistServiceTest {
         doThrow(new RuntimeException("Redis connection failed"))
                 .when(valueOperations).set(any(String.class), any(String.class), any(Duration.class));
 
-        assertThrows(RuntimeException.class, () -> redisJwtBlacklistService.blacklistToken(TOKEN));
+        assertThatThrownBy(() -> redisJwtBlacklistService.blacklistToken(TOKEN))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Redis connection failed");
+    }
+
+    @Test
+    @DisplayName("Should ignore blank tokens during blacklist")
+    void shouldIgnoreBlankTokensDuringBlacklist() {
+        redisJwtBlacklistService.blacklistToken("   ");
+
+        verify(redisTemplate, never()).opsForValue();
+        verifyNoInteractions(valueOperations);
     }
 
     @Test
@@ -83,7 +95,7 @@ class RedisJwtBlacklistServiceTest {
 
         boolean result = redisJwtBlacklistService.isBlacklisted(TOKEN);
 
-        assertTrue(result);
+        assertThat(result).isTrue();
     }
 
     @Test
@@ -93,7 +105,17 @@ class RedisJwtBlacklistServiceTest {
 
         boolean result = redisJwtBlacklistService.isBlacklisted(TOKEN);
 
-        assertFalse(result);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should return false when Redis returns null for hasKey")
+    void shouldReturnFalseWhenRedisReturnsNullForHasKey() {
+        when(redisTemplate.hasKey(BLACKLIST_KEY)).thenReturn(null);
+
+        boolean result = redisJwtBlacklistService.isBlacklisted(TOKEN);
+
+        assertThat(result).isFalse();
     }
 
     @Test
@@ -103,6 +125,13 @@ class RedisJwtBlacklistServiceTest {
 
         boolean result = redisJwtBlacklistService.isBlacklisted(TOKEN);
 
-        assertTrue(result);
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should treat blank token as blacklisted without Redis access")
+    void shouldTreatBlankTokenAsBlacklistedWithoutRedisAccess() {
+        assertThat(redisJwtBlacklistService.isBlacklisted("")).isTrue();
+        verifyNoInteractions(redisTemplate, valueOperations);
     }
 }

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.jwt;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -23,61 +24,69 @@ class InMemoryJwtBlacklistServiceTest {
         service = new InMemoryJwtBlacklistService(props);
     }
 
-    @Test
-    @DisplayName("Token is not blacklisted before being added")
-    void isBlacklisted_newToken_returnsFalse() {
-        assertThat(service.isBlacklisted("some.jwt.token")).isFalse();
+    @Nested
+    @DisplayName("blacklist and lookup")
+    class BlacklistAndLookup {
+
+        @Test
+        @DisplayName("token is not blacklisted before being added")
+        void isBlacklisted_newToken_returnsFalse() {
+            assertThat(service.isBlacklisted("some.jwt.token")).isFalse();
+        }
+
+        @Test
+        @DisplayName("token is blacklisted after blacklistToken call")
+        void isBlacklisted_afterBlacklist_returnsTrue() {
+            service.blacklistToken("some.jwt.token");
+            assertThat(service.isBlacklisted("some.jwt.token")).isTrue();
+        }
+
+        @Test
+        @DisplayName("empty and null tokens are treated as blacklisted")
+        void emptyAndNullTokensAreTreatedAsBlacklisted() {
+            assertThat(service.isBlacklisted("")).isTrue();
+            assertThat(service.isBlacklisted("   ")).isTrue();
+            assertThat(service.isBlacklisted(null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("blacklistToken ignores blank values without affecting other tokens")
+        void blacklistToken_ignoresBlankValuesWithoutAffectingOtherTokens() {
+            service.blacklistToken("valid.token.value");
+            service.blacklistToken("");
+            service.blacklistToken("   ");
+
+            assertThat(service.isBlacklisted("valid.token.value")).isTrue();
+            assertThat(service.isBlacklisted("other.token")).isFalse();
+        }
+
+        @Test
+        @DisplayName("different tokens are independently tracked")
+        void isBlacklisted_differentTokens_trackedIndependently() {
+            service.blacklistToken("token.one");
+            assertThat(service.isBlacklisted("token.one")).isTrue();
+            assertThat(service.isBlacklisted("token.two")).isFalse();
+        }
     }
 
-    @Test
-    @DisplayName("Token is blacklisted after blacklistToken call")
-    void isBlacklisted_afterBlacklist_returnsTrue() {
-        service.blacklistToken("some.jwt.token");
-        assertThat(service.isBlacklisted("some.jwt.token")).isTrue();
-    }
+    @Nested
+    @DisplayName("lifecycle")
+    class Lifecycle {
 
-    @Test
-    @DisplayName("Empty token is treated as blacklisted")
-    void isBlacklisted_emptyToken_returnsTrue() {
-        assertThat(service.isBlacklisted("")).isTrue();
-        assertThat(service.isBlacklisted("   ")).isTrue();
-    }
+        @Test
+        @DisplayName("cleanupExpiredTokens runs without error on empty store")
+        void cleanupExpiredTokens_emptyStore_doesNotThrow() {
+            service.cleanupExpiredTokens();
+        }
 
-    @Test
-    @DisplayName("Null token is treated as blacklisted")
-    void isBlacklisted_nullToken_returnsTrue() {
-        assertThat(service.isBlacklisted(null)).isTrue();
-    }
-
-    @Test
-    @DisplayName("blacklistToken with empty token does not add to blacklist")
-    void blacklistToken_emptyToken_doesNotAdd() {
-        service.blacklistToken("");
-        // empty token is always blacklisted by isBlacklisted guard, but no entry added
-        assertThat(service.isBlacklisted("")).isTrue();
-    }
-
-    @Test
-    @DisplayName("Different tokens are independently tracked")
-    void isBlacklisted_differentTokens_trackedIndependently() {
-        service.blacklistToken("token.one");
-        assertThat(service.isBlacklisted("token.one")).isTrue();
-        assertThat(service.isBlacklisted("token.two")).isFalse();
-    }
-
-    @Test
-    @DisplayName("cleanupExpiredTokens runs without error on empty store")
-    void cleanupExpiredTokens_emptyStore_doesNotThrow() {
-        service.cleanupExpiredTokens();
-    }
-
-    @Test
-    @DisplayName("shutdown clears all tokens without error")
-    void shutdown_clearsTokens() {
-        service.blacklistToken("token.a");
-        service.blacklistToken("token.b");
-        service.shutdown();
-        // After shutdown the map is cleared; new checks on those tokens return false
-        assertThat(service.isBlacklisted("token.a")).isFalse();
+        @Test
+        @DisplayName("shutdown clears all tokens without error")
+        void shutdown_clearsTokens() {
+            service.blacklistToken("token.a");
+            service.blacklistToken("token.b");
+            service.shutdown();
+            assertThat(service.isBlacklisted("token.a")).isFalse();
+            assertThat(service.isBlacklisted("token.b")).isFalse();
+        }
     }
 }

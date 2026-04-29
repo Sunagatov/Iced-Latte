@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +44,7 @@ class DeliveryAddressServiceTest {
         when(converter.toDto(entity)).thenReturn(dto);
 
         assertThat(service.getAll(userId)).containsExactly(dto);
+        verify(converter).toDto(entity);
     }
 
     @Test
@@ -72,7 +74,13 @@ class DeliveryAddressServiceTest {
         assertThat(service.create(userId, request)).isEqualTo(dto);
         assertThat(entity.isDefault()).isTrue();
         assertThat(entity.getUser()).isSameAs(user);
-        verify(addressRepository).clearDefaultForUser(userId);
+        var inOrder = inOrder(userRepository, addressRepository, converter);
+        inOrder.verify(userRepository).findById(userId);
+        inOrder.verify(addressRepository).findAllByUserId(userId);
+        inOrder.verify(converter).toEntity(request);
+        inOrder.verify(addressRepository).clearDefaultForUser(userId);
+        inOrder.verify(addressRepository).save(entity);
+        inOrder.verify(converter).toDto(entity);
     }
 
     @Test
@@ -94,6 +102,8 @@ class DeliveryAddressServiceTest {
         assertThat(entity.isDefault()).isFalse();
         assertThat(entity.getUser()).isSameAs(user);
         verify(addressRepository, never()).clearDefaultForUser(userId);
+        verify(addressRepository).save(entity);
+        verify(converter).toDto(entity);
     }
 
     @Test
@@ -126,7 +136,10 @@ class DeliveryAddressServiceTest {
 
         assertThat(service.update(userId, addressId, request)).isEqualTo(dto);
         assertThat(entity.getLabel()).isEqualTo("Home");
+        assertThat(entity.getLine()).isEqualTo("1 Main St");
         assertThat(entity.getCity()).isEqualTo("London");
+        assertThat(entity.getCountry()).isEqualTo("GB");
+        assertThat(entity.getPostcode()).isEqualTo("SW1A 1AA");
     }
 
     @Test
@@ -179,7 +192,11 @@ class DeliveryAddressServiceTest {
 
         assertThat(service.setDefault(userId, addressId)).isEqualTo(dto);
         assertThat(entity.isDefault()).isTrue();
-        verify(addressRepository).clearDefaultForUser(userId);
+        var inOrder = inOrder(addressRepository, converter);
+        inOrder.verify(addressRepository).findByIdAndUserId(addressId, userId);
+        inOrder.verify(addressRepository).clearDefaultForUser(userId);
+        inOrder.verify(addressRepository).save(entity);
+        inOrder.verify(converter).toDto(entity);
     }
 
     @Test

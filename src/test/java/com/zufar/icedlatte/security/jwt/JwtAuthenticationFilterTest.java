@@ -103,6 +103,32 @@ class JwtAuthenticationFilterTest {
         }
 
         @Test
+        @DisplayName("continues when session-id extraction fails after successful authentication")
+        void continuesWhenSessionIdExtractionFailsAfterSuccessfulAuthentication() throws ServletException, IOException {
+            UUID userId = UUID.randomUUID();
+            UserEntity user = UserEntity.builder().id(userId).build();
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(user, "credentials", user.getAuthorities());
+            MockHttpServletRequest request = request("/api/v1/me");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
+
+            when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
+            when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+            when(jwtTokenFromAuthHeaderExtractor.extract(request)).thenReturn("jwt-token");
+            when(jwtClaimExtractor.extractSessionId("jwt-token")).thenThrow(new RuntimeException("bad sid"));
+            doAnswer(_ -> {
+                assertThat(MDC.get("userId")).isEqualTo(userId.toString());
+                assertThat(MDC.get("sessionId")).isNull();
+                return null;
+            }).when(chain).doFilter(request, response);
+
+            filter().run(request, response, chain);
+
+            verify(chain).doFilter(request, response);
+        }
+
+        @Test
         @DisplayName("continues anonymously when bearer header is absent")
         void continuesAnonymouslyWhenBearerHeaderIsAbsent() throws ServletException, IOException {
             MockHttpServletRequest request = request("/api/v1/products");

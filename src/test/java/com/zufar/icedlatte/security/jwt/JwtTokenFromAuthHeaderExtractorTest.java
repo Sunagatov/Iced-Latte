@@ -10,8 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,7 +29,7 @@ class JwtTokenFromAuthHeaderExtractorTest {
 
     @BeforeEach
     void setUp() {
-        when(jwtProperties.header()).thenReturn("Authorization");
+        lenient().when(jwtProperties.header()).thenReturn("Authorization");
         extractor = new JwtTokenFromAuthHeaderExtractor(jwtProperties);
         request = new MockHttpServletRequest();
     }
@@ -41,7 +42,7 @@ class JwtTokenFromAuthHeaderExtractorTest {
 
         String actualToken = extractor.extract(request);
 
-        assertEquals(expectedToken, actualToken);
+        assertThat(actualToken).isEqualTo(expectedToken);
     }
 
     @Test
@@ -49,29 +50,37 @@ class JwtTokenFromAuthHeaderExtractorTest {
     void shouldThrowExceptionWhenBearerTokenAbsent() {
         request.addHeader("Authorization", "NonBearerToken");
 
-        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+        assertThatThrownBy(() -> extractor.extract(request))
+                .isInstanceOf(AbsentBearerHeaderException.class)
+                .hasMessageContaining("Missing or invalid Authorization header");
     }
 
     @Test
     @DisplayName("Should throw exception when authorization header is absent")
     void shouldThrowExceptionWhenAuthorizationHeaderAbsent() {
-        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+        assertThatThrownBy(() -> extractor.extract(request))
+                .isInstanceOf(AbsentBearerHeaderException.class)
+                .hasMessageContaining("Missing or invalid Authorization header");
     }
 
     @Test
     @DisplayName("Should throw exception when token is too short")
     void shouldThrowExceptionWhenTokenTooShort() {
         request.addHeader("Authorization", "Bearer short");
-        
-        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+
+        assertThatThrownBy(() -> extractor.extract(request))
+                .isInstanceOf(AbsentBearerHeaderException.class)
+                .hasMessageContaining("Missing or invalid Authorization header");
     }
 
     @Test
     @DisplayName("Should throw exception when token format is invalid")
     void shouldThrowExceptionWhenTokenFormatInvalid() {
         request.addHeader("Authorization", "Bearer invalidtokenformat");
-        
-        assertThrows(AbsentBearerHeaderException.class, () -> extractor.extract(request));
+
+        assertThatThrownBy(() -> extractor.extract(request))
+                .isInstanceOf(AbsentBearerHeaderException.class)
+                .hasMessageContaining("Missing or invalid Authorization header");
     }
 
     @Test
@@ -81,6 +90,27 @@ class JwtTokenFromAuthHeaderExtractorTest {
 
         String actualToken = extractor.extract(request);
 
-        assertEquals(VALID_JWT_TOKEN_FIXTURE, actualToken);
+        assertThat(actualToken).isEqualTo(VALID_JWT_TOKEN_FIXTURE);
+    }
+
+    @Test
+    @DisplayName("Should trim token value after bearer prefix")
+    void shouldTrimTokenValueAfterBearerPrefix() {
+        JwtTokenFromAuthHeaderExtractor standaloneExtractor = new JwtTokenFromAuthHeaderExtractor(jwtProperties);
+
+        String actualToken = standaloneExtractor.extract("Bearer   " + VALID_JWT_TOKEN_FIXTURE + "   ");
+
+        assertThat(actualToken).isEqualTo(VALID_JWT_TOKEN_FIXTURE);
+    }
+
+    @Test
+    @DisplayName("Should use configured header name")
+    void shouldUseConfiguredHeaderName() {
+        when(jwtProperties.header()).thenReturn("X-Auth");
+        request.addHeader("X-Auth", "Bearer " + VALID_JWT_TOKEN_FIXTURE);
+
+        String actualToken = extractor.extract(request);
+
+        assertThat(actualToken).isEqualTo(VALID_JWT_TOKEN_FIXTURE);
     }
 }

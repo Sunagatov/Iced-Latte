@@ -21,8 +21,10 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,6 +86,12 @@ class UserOperationPerformerTest {
             assertThat(userEntity.getBirthDate()).isEqualTo(birthDate);
             assertThat(userEntity.getAddress()).isEqualTo(address);
             verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
+            var inOrder = inOrder(putUsersRequestValidator, singleUserProvider, addressDtoConverter, userCrudRepository, userDtoConverter);
+            inOrder.verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
+            inOrder.verify(singleUserProvider).getUserEntityById(userId);
+            inOrder.verify(addressDtoConverter).toEntity(addressDto);
+            inOrder.verify(userCrudRepository).save(userEntity);
+            inOrder.verify(userDtoConverter).toDto(userEntity);
         }
 
         @Test
@@ -105,6 +113,7 @@ class UserOperationPerformerTest {
 
             assertThat(userEntity.getAddress()).isNull();
             verify(addressDtoConverter, never()).toEntity(org.mockito.ArgumentMatchers.any());
+            verify(putUsersRequestValidator).validate("Bob", "Jones", null, null, null);
         }
 
         @Test
@@ -137,6 +146,32 @@ class UserOperationPerformerTest {
             assertThat(userEntity.getAddress()).isNull();
             verify(addressDtoConverter, never()).toEntity(blankAddress);
             verify(putUsersRequestValidator).validate("Carol", "Jones", "+447700900000", null, blankAddress);
+        }
+
+        @Test
+        @DisplayName("Converts partially filled address payloads instead of dropping them")
+        void updateUser_partialAddressPayload_convertsAddress() {
+            UUID userId = UUID.randomUUID();
+            UserEntity userEntity = UserEntity.builder().id(userId).build();
+            AddressDto partialAddress = new AddressDto();
+            partialAddress.setCity("London");
+            Address mappedAddress = new Address();
+
+            UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+            request.setFirstName("Dana");
+            request.setLastName("Smith");
+            request.setAddress(partialAddress);
+
+            when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
+            when(addressDtoConverter.toEntity(partialAddress)).thenReturn(mappedAddress);
+            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
+
+            updater.updateUser(userId, request);
+
+            assertThat(userEntity.getAddress()).isSameAs(mappedAddress);
+            verify(addressDtoConverter).toEntity(partialAddress);
+            verifyNoMoreInteractions(addressDtoConverter);
         }
     }
 }
