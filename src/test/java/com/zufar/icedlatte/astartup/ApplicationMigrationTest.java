@@ -86,8 +86,8 @@ class ApplicationMigrationTest {
 
             verify(awsProvider, timeout(1000)).getProductImagesFromAWS("products-bucket");
             verify(fileMetadataSaver, timeout(1000)).replaceAllByBucket("products-bucket", metadata);
-            verifyNoInteractions(fileUploader);
-            verifyNoMoreInteractions(awsProvider, fileMetadataSaver);
+            verify(fileUploader).isStorageConfigured();
+            verifyNoMoreInteractions(fileUploader, awsProvider, fileMetadataSaver);
         }
     }
 
@@ -98,7 +98,6 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("uploads the configured directory to the configured bucket")
         void uploadsConfiguredDirectory() {
-            when(fileUploader.isStorageConfigured()).thenReturn(true);
             invokeVoid("uploadFiles");
 
             verify(fileUploader).uploadDirectory("products-bucket", "/seed/products");
@@ -108,7 +107,6 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("swallows file upload failures")
         void swallowsFileUploadFailures() {
-            when(fileUploader.isStorageConfigured()).thenReturn(true);
             doThrow(new FileUploadException("seed.zip", new RuntimeException("boom")))
                     .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
 
@@ -121,7 +119,6 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("swallows file read failures")
         void swallowsFileReadFailures() {
-            when(fileUploader.isStorageConfigured()).thenReturn(true);
             doThrow(new FileReadException("seed.zip", new RuntimeException("boom")))
                     .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
 
