@@ -13,18 +13,15 @@ import com.zufar.icedlatte.security.api.LogoutService;
 import com.zufar.icedlatte.security.api.PasswordResetService;
 import com.zufar.icedlatte.security.api.RefreshTokenService;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.email.api.EmailTokenConformer;
 import com.zufar.icedlatte.email.api.EmailTokenSender;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
-import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -50,12 +47,8 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
 
-    private static final String MDC_USER_ID = "userId";
-    private static final String MDC_SESSION_ID = "sessionId";
-
     private final UserAuthenticationService userAuthenticationService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final JwtBlacklistService jwtBlacklistService;
+    private final SessionTokenService sessionTokenService;
     private final EmailTokenSender emailTokenSender;
     private final EmailTokenConformer emailTokenConformer;
     private final AuthSessionService authSessionService;
@@ -149,21 +142,7 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     private UserAuthenticationResponse authenticateUser(UserAuthenticationRequest request,
                                                         UserDetails userDetails) {
-        UUID sessionId = UUID.randomUUID();
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
-        AuthSessionEntity session = authSessionService.createSession(
-                sessionId,
-                ((UserEntity) userDetails).getId(),
-                jwtBlacklistService.sha256(refreshToken),
-                httpRequest
-        );
-        populateAuthenticationMdc(session);
-        return userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
-    }
-
-    private void populateAuthenticationMdc(AuthSessionEntity session) {
-        MDC.put(MDC_USER_ID, session.getUserId().toString());
-        MDC.put(MDC_SESSION_ID, session.getId().toString());
+        return sessionTokenService.issueForNewSession(userDetails, request.getEmail(), httpRequest);
     }
 
     private SessionInfo toSessionInfo(AuthSessionEntity session) {
