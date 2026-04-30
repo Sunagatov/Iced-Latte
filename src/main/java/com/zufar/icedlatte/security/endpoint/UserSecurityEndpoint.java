@@ -81,7 +81,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
-        return ResponseEntity.ok(authenticateUser(request, userDetails));
+        return ResponseEntity.ok(authenticateUser(userDetails));
     }
 
     @Override
@@ -141,9 +141,8 @@ public class UserSecurityEndpoint implements SecurityApi {
         return ResponseEntity.ok().build();
     }
 
-    private UserAuthenticationResponse authenticateUser(UserAuthenticationRequest request,
-                                                        UserDetails userDetails) {
-        return sessionTokenService.issueForNewSession(userDetails, request.getEmail(), httpRequest);
+    private UserAuthenticationResponse authenticateUser(UserDetails userDetails) {
+        return sessionTokenService.issueForNewSession(userDetails, httpRequest);
     }
 
     private SessionInfo toSessionInfo(AuthSessionEntity session) {

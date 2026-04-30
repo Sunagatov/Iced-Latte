@@ -27,35 +27,31 @@ public class SessionTokenService {
     private final UserAuthenticationService userAuthenticationService;
 
     public UserAuthenticationResponse issueForNewSession(UserDetails userDetails,
-                                                         String userEmail,
                                                          HttpServletRequest request) {
-        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, userEmail, UUID.randomUUID(), request);
+        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
         bindSessionToMdc(sessionAuthentication.session());
         return sessionAuthentication.response();
     }
 
     public UserAuthenticationResponse rotateSessionTokens(AuthSessionEntity session,
                                                           String currentRefreshTokenHash,
-                                                          UserDetails userDetails,
-                                                          String userEmail) {
+                                                          UserDetails userDetails) {
         return withSessionMdc(session, () -> {
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
             authSessionService.rotateSession(currentRefreshTokenHash, jwtBlacklistService.sha256(newRefreshToken));
-            return userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), newRefreshToken);
+            return userAuthenticationService.buildTokenPair(userDetails, session.getId(), newRefreshToken);
         });
     }
 
     public UserAuthenticationResponse migrateLegacyRefreshToken(UserDetails userDetails,
-                                                                String userEmail,
                                                                 String legacyRefreshToken,
                                                                 HttpServletRequest request) {
-        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, userEmail, UUID.randomUUID(), request);
+        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
         jwtBlacklistValidator.addToBlacklist(legacyRefreshToken);
         return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 
     private SessionAuthentication createManagedSession(UserDetails userDetails,
-                                                       String userEmail,
                                                        UUID sessionId,
                                                        HttpServletRequest request) {
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
@@ -66,7 +62,7 @@ public class SessionTokenService {
                 request
         );
         UserAuthenticationResponse response =
-                userAuthenticationService.buildTokenPair(userDetails, userEmail, session.getId(), refreshToken);
+                userAuthenticationService.buildTokenPair(userDetails, session.getId(), refreshToken);
         return new SessionAuthentication(session, response);
     }
 

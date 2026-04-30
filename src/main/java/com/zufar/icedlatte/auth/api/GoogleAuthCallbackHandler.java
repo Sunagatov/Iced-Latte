@@ -2,9 +2,7 @@ package com.zufar.icedlatte.auth.api;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
-import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
+import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -20,6 +18,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.UUID;
 
+
 @Slf4j
 @Service
 @ConditionalOnProperty(name = "google.enabled", havingValue = "true")
@@ -28,10 +27,8 @@ public class GoogleAuthCallbackHandler {
 
     private final GoogleTokenExchanger googleTokenExchanger;
     private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-    private final AuthSessionService authSessionService;
-    private final JwtBlacklistService jwtBlacklistService;
+    private final SessionTokenService sessionTokenService;
 
     public UserAuthenticationResponse handle(String authorizationCode,
                                              HttpServletRequest httpRequest) throws GeneralSecurityException, IOException {
@@ -45,13 +42,7 @@ public class GoogleAuthCallbackHandler {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseGet(() -> createUser((String) payload.get("given_name"), (String) payload.get("family_name"), email));
 
-        UUID sessionId = UUID.randomUUID();
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user, sessionId);
-        authSessionService.createSession(sessionId, user.getId(), jwtBlacklistService.sha256(refreshToken), httpRequest);
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(jwtTokenProvider.generateToken(user, sessionId));
-        response.setRefreshToken(refreshToken);
-        return response;
+        return sessionTokenService.issueForNewSession(user, httpRequest);
     }
 
     private UserEntity createUser(String firstName, String lastName, String email) {

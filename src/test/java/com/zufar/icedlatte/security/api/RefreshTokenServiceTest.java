@@ -60,13 +60,13 @@ class RefreshTokenServiceTest {
             when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
             when(jwtRefreshTokenValidator.extractEmail(request)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            when(sessionTokenService.rotateSessionTokens(session, oldHash, user, email)).thenReturn(responseBody);
+            when(sessionTokenService.rotateSessionTokens(session, oldHash, user)).thenReturn(responseBody);
 
             ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isSameAs(responseBody);
-            verify(sessionTokenService).rotateSessionTokens(session, oldHash, user, email);
+            verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
         }
 
         @Test
@@ -85,13 +85,13 @@ class RefreshTokenServiceTest {
             when(jwtRefreshTokenValidator.isSessionManaged(rawToken)).thenReturn(false);
             when(jwtRefreshTokenValidator.extractEmail(request)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            when(sessionTokenService.migrateLegacyRefreshToken(user, email, rawToken, request)).thenReturn(responseBody);
+            when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, request)).thenReturn(responseBody);
 
             ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isSameAs(responseBody);
-            verify(sessionTokenService).migrateLegacyRefreshToken(user, email, rawToken, request);
+            verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
         }
 
         @Test

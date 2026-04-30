@@ -69,6 +69,7 @@ class ProductReviewsProviderTest {
 
         assertThat(result).isEqualTo(expected);
         verify(productReviewValidator).validateProductExists(productId);
+        verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
     }
 
     @Test

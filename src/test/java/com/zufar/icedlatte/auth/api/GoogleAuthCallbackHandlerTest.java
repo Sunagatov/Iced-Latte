@@ -2,9 +2,7 @@ package com.zufar.icedlatte.auth.api;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
-import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
+import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -28,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -39,10 +36,8 @@ class GoogleAuthCallbackHandlerTest {
 
     @Mock private GoogleTokenExchanger googleTokenExchanger;
     @Mock private UserRepository userRepository;
-    @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private AuthSessionService authSessionService;
-    @Mock private JwtBlacklistService jwtBlacklistService;
+    @Mock private SessionTokenService sessionTokenService;
     @Mock private HttpServletRequest request;
 
     @InjectMocks private GoogleAuthCallbackHandler handler;
@@ -59,16 +54,15 @@ class GoogleAuthCallbackHandlerTest {
 
         when(googleTokenExchanger.exchange("auth-code")).thenReturn(payload);
         when(userRepository.findByEmail("existing@example.com")).thenReturn(Optional.of(existingUser));
-        when(jwtTokenProvider.generateRefreshToken(eq(existingUser), any(UUID.class))).thenReturn("refresh-token");
-        when(jwtBlacklistService.sha256("refresh-token")).thenReturn("refresh-hash");
-        when(jwtTokenProvider.generateToken(eq(existingUser), any(UUID.class))).thenReturn("access-token");
+        when(sessionTokenService.issueForNewSession(existingUser, request))
+                .thenReturn(tokenPair());
 
         UserAuthenticationResponse response = handler.handle("auth-code", request);
 
         assertThat(response.getToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
         verify(userRepository).findByEmail("existing@example.com");
-        verify(userRepository, times(0)).save(any(UserEntity.class));
+        verify(sessionTokenService).issueForNewSession(existingUser, request);
     }
 
     @Test
@@ -87,9 +81,8 @@ class GoogleAuthCallbackHandlerTest {
             }
             return user;
         });
-        when(jwtTokenProvider.generateRefreshToken(any(UserEntity.class), any(UUID.class))).thenReturn("refresh-token");
-        when(jwtBlacklistService.sha256("refresh-token")).thenReturn("refresh-hash");
-        when(jwtTokenProvider.generateToken(any(UserEntity.class), any(UUID.class))).thenReturn("access-token");
+        when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request)))
+                .thenReturn(tokenPair());
 
         UserAuthenticationResponse response = handler.handle("auth-code", request);
 
@@ -117,6 +110,7 @@ class GoogleAuthCallbackHandlerTest {
                 .singleElement()
                 .extracting(UserGrantedAuthority::getUser)
                 .isSameAs(savedUser);
+        verify(sessionTokenService).issueForNewSession(savedUser, request);
     }
 
     @Test
@@ -129,7 +123,7 @@ class GoogleAuthCallbackHandlerTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Google account has no email");
 
-        verifyNoInteractions(userRepository, jwtTokenProvider, authSessionService, jwtBlacklistService);
+        verifyNoInteractions(userRepository, sessionTokenService);
     }
 
     private static GoogleIdToken.Payload payload(String email, String firstName, String lastName) {
@@ -138,5 +132,12 @@ class GoogleAuthCallbackHandlerTest {
         payload.put("given_name", firstName);
         payload.put("family_name", lastName);
         return payload;
+    }
+
+    private static UserAuthenticationResponse tokenPair() {
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken("access-token");
+        response.setRefreshToken("refresh-token");
+        return response;
     }
 }

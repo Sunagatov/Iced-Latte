@@ -131,8 +131,9 @@ class UserAuthenticationServiceTest {
         String expectedAccessToken = "access-token";
 
         when(jwtTokenProvider.generateToken(userDetails, sessionId)).thenReturn(expectedAccessToken);
+        when(userDetails.getUsername()).thenReturn(email);
 
-        UserAuthenticationResponse response = userAuthenticationService.buildTokenPair(userDetails, email, sessionId, refreshToken);
+        UserAuthenticationResponse response = userAuthenticationService.buildTokenPair(userDetails, sessionId, refreshToken);
 
         assertNotNull(response);
         assertEquals(expectedAccessToken, response.getToken());

@@ -64,11 +64,10 @@ public class UserAuthenticationService {
     }
 
     public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails,
-                                                     String userEmail,
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
         log.info("auth.sign_in.succeeded: sessionId={}", sessionId);
-        resetLoginAttemptsService.reset(userEmail);
+        resetLoginAttemptsService.reset(userDetails.getUsername());
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);

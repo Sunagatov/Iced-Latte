@@ -43,14 +43,14 @@ public class RefreshTokenService {
             log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
             String userEmail = jwtRefreshTokenValidator.extractEmail(request);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, userEmail, rawToken, request);
+            var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);
             log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 
         String userEmail = jwtRefreshTokenValidator.extractEmail(request);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails, userEmail);
+        var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
         log.debug("auth.token.refreshed");
         return ResponseEntity.ok(response);
     }

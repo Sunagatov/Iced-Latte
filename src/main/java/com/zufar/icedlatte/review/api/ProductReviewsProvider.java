@@ -38,7 +38,7 @@ public class ProductReviewsProvider {
                                                                     final String sortDirection,
                                                                     final List<Integer> productRatings) {
         productReviewValidator.validateProductExists(productId);
-        var pageRequest = buildReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection);
+        var pageRequest = buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
 
         var responsePage = reviewRepository
                 .findAllProductReviews(productId, productRatings, pageRequest)
@@ -60,25 +60,22 @@ public class ProductReviewsProvider {
                                                                  final Integer pageSize,
                                                                  final String sortAttribute,
                                                                  final String sortDirection) {
-        int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
-        int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
-        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
-        String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
-        getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, null);
         var responsePage = reviewRepository
-                .findAllByUserId(userId, buildReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection))
+                .findAllByUserId(userId, buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, null))
                 .map(productReviewDtoConverter::toProductReviewDto);
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }
 
-    private org.springframework.data.domain.Pageable buildReviewsPageRequest(Integer pageNumber,
-                                                                             Integer pageSize,
-                                                                             String sortAttribute,
-                                                                             String sortDirection) {
+    private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(Integer pageNumber,
+                                                                                      Integer pageSize,
+                                                                                      String sortAttribute,
+                                                                                      String sortDirection,
+                                                                                      List<Integer> productRatings) {
         int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
+        getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, productRatings);
         return PageRequestFactory.of(page, size, sortAttr, sortDir);
     }
 }

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
@@ -46,10 +47,9 @@ class SessionTokenServiceTest {
     @DisplayName("issues a fresh managed session and keeps MDC bound to the request")
     void issueForNewSessionCreatesManagedSession() {
         UUID userId = UUID.randomUUID();
-        String email = "alice@example.com";
         String refreshToken = "refresh-token";
         String refreshHash = "refresh-hash";
-        UserEntity user = user(userId, email);
+        UserEntity user = user(userId, "alice@example.com");
         UserAuthenticationResponse response = response(refreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(refreshToken);
@@ -59,14 +59,14 @@ class SessionTokenServiceTest {
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
-        when(userAuthenticationService.buildTokenPair(eq(user), eq(email), any(UUID.class), eq(refreshToken)))
+        when(userAuthenticationService.buildTokenPair(eq(user), any(UUID.class), eq(refreshToken)))
                 .thenReturn(response);
 
-        UserAuthenticationResponse result = service.issueForNewSession(user, email, request);
+        UserAuthenticationResponse result = service.issueForNewSession(user, request);
 
         assertThat(result).isSameAs(response);
-        assertThat(MDC.get("userId")).isEqualTo(userId.toString());
-        assertThat(MDC.get("sessionId")).isNotBlank();
+        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isEqualTo(userId.toString());
+        assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNotBlank();
     }
 
     @Test
@@ -74,35 +74,33 @@ class SessionTokenServiceTest {
     void rotateSessionTokensRotatesAndClearsMdc() {
         UUID userId = UUID.randomUUID();
         UUID sessionId = UUID.randomUUID();
-        String email = "rotate@example.com";
         String oldHash = "old-hash";
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
-        UserEntity user = user(userId, email);
+        UserEntity user = user(userId, "rotate@example.com");
         AuthSessionEntity session = AuthSessionEntity.builder().id(sessionId).userId(userId).build();
         UserAuthenticationResponse response = response(newRefreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(user, sessionId)).thenReturn(newRefreshToken);
         when(jwtBlacklistService.sha256(newRefreshToken)).thenReturn(newHash);
-        when(userAuthenticationService.buildTokenPair(user, email, sessionId, newRefreshToken)).thenReturn(response);
+        when(userAuthenticationService.buildTokenPair(user, sessionId, newRefreshToken)).thenReturn(response);
 
-        UserAuthenticationResponse result = service.rotateSessionTokens(session, oldHash, user, email);
+        UserAuthenticationResponse result = service.rotateSessionTokens(session, oldHash, user);
 
         assertThat(result).isSameAs(response);
         verify(authSessionService).rotateSession(oldHash, newHash);
-        assertThat(MDC.get("userId")).isNull();
-        assertThat(MDC.get("sessionId")).isNull();
+        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
+        assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
 
     @Test
     @DisplayName("migrates a legacy refresh token into a managed session")
     void migrateLegacyRefreshTokenCreatesSessionAndBlacklistsLegacyToken() {
         UUID userId = UUID.randomUUID();
-        String email = "legacy@example.com";
         String legacyToken = "legacy-token";
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
-        UserEntity user = user(userId, email);
+        UserEntity user = user(userId, "legacy@example.com");
         UserAuthenticationResponse response = response(newRefreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(newRefreshToken);
@@ -112,15 +110,15 @@ class SessionTokenServiceTest {
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
-        when(userAuthenticationService.buildTokenPair(eq(user), eq(email), any(UUID.class), eq(newRefreshToken)))
+        when(userAuthenticationService.buildTokenPair(eq(user), any(UUID.class), eq(newRefreshToken)))
                 .thenReturn(response);
 
-        UserAuthenticationResponse result = service.migrateLegacyRefreshToken(user, email, legacyToken, request);
+        UserAuthenticationResponse result = service.migrateLegacyRefreshToken(user, legacyToken, request);
 
         assertThat(result).isSameAs(response);
         verify(jwtBlacklistValidator).addToBlacklist(legacyToken);
-        assertThat(MDC.get("userId")).isNull();
-        assertThat(MDC.get("sessionId")).isNull();
+        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
+        assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
 
     private static UserEntity user(UUID id, String email) {
