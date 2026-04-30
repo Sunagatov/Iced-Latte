@@ -14,6 +14,8 @@ public interface DeliveryAddressRepository extends JpaRepository<DeliveryAddress
 
     List<DeliveryAddressEntity> findAllByUserId(UUID userId);
 
+    boolean existsByUserId(UUID userId);
+
     Optional<DeliveryAddressEntity> findByIdAndUserId(UUID id, UUID userId);
 
     @Modifying

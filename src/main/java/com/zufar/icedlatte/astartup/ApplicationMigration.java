@@ -62,7 +62,8 @@ public class ApplicationMigration implements ApplicationRunner {
     }
 
     private boolean isAwsConfigured() {
-        return fileUploader != null && awsProvider != null && fileMetadataSaver != null
+        return fileUploader != null && fileUploader.isStorageConfigured()
+                && awsProvider != null && fileMetadataSaver != null
                 && productPictureBucket != null && !productPictureBucket.isEmpty()
                 && directoryPath != null && !directoryPath.isEmpty();
     }

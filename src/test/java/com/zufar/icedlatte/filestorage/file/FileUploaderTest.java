@@ -26,6 +26,7 @@ class FileUploaderTest {
     void uploadsFileWhenAwsConfigured() {
         FileUploader uploader = new FileUploader(awsObjectUploader);
 
+        assertThat(uploader.isStorageConfigured()).isTrue();
         boolean result = uploader.upload(multipartFile, "products", "coffee.png");
 
         assertThat(result).isTrue();
@@ -37,6 +38,7 @@ class FileUploaderTest {
     void returnsFalseWhenAwsDisabled() {
         FileUploader uploader = new FileUploader(null);
 
+        assertThat(uploader.isStorageConfigured()).isFalse();
         boolean result = uploader.upload(multipartFile, "products", "coffee.png");
 
         assertThat(result).isFalse();

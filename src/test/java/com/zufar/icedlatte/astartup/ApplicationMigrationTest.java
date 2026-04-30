@@ -64,10 +64,22 @@ class ApplicationMigrationTest {
         }
 
         @Test
+        @DisplayName("skips immediately when file upload capability is unavailable")
+        void skipsWhenFileUploaderIsPresentButStorageIsUnavailable() {
+            when(fileUploader.isStorageConfigured()).thenReturn(false);
+
+            migration.run(args);
+
+            verify(fileUploader).isStorageConfigured();
+            verifyNoInteractions(awsProvider, fileMetadataSaver);
+        }
+
+        @Test
         @DisplayName("when upload is disabled it still fetches and saves metadata")
         void uploadDisabledStillFetchesAndSavesMetadata() {
             List<FileMetadataDto> metadata = List.of(fileMetadata("cover.jpg"));
             ReflectionTestUtils.setField(migration, "uploadEnabled", false);
+            when(fileUploader.isStorageConfigured()).thenReturn(true);
             when(awsProvider.getProductImagesFromAWS("products-bucket")).thenReturn(metadata);
 
             migration.run(args);
@@ -86,6 +98,7 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("uploads the configured directory to the configured bucket")
         void uploadsConfiguredDirectory() {
+            when(fileUploader.isStorageConfigured()).thenReturn(true);
             invokeVoid("uploadFiles");
 
             verify(fileUploader).uploadDirectory("products-bucket", "/seed/products");
@@ -95,6 +108,7 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("swallows file upload failures")
         void swallowsFileUploadFailures() {
+            when(fileUploader.isStorageConfigured()).thenReturn(true);
             doThrow(new FileUploadException("seed.zip", new RuntimeException("boom")))
                     .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
 
@@ -107,6 +121,7 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("swallows file read failures")
         void swallowsFileReadFailures() {
+            when(fileUploader.isStorageConfigured()).thenReturn(true);
             doThrow(new FileReadException("seed.zip", new RuntimeException("boom")))
                     .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
 

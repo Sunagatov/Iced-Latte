@@ -3,11 +3,13 @@ package com.zufar.icedlatte.user.api;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
+import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,14 +35,11 @@ public class DeliveryAddressService {
     public DeliveryAddressDto create(UUID userId, DeliveryAddressRequest request) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        boolean isFirst = addressRepository.findAllByUserId(userId).isEmpty();
+        boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
         var entity = converter.toEntity(request);
         entity.setUser(user);
-        if (isFirst) {
-            addressRepository.clearDefaultForUser(userId);
-            entity.setDefault(true);
-        }
-        return converter.toDto(addressRepository.save(entity));
+        entity.setDefault(shouldBecomeDefault);
+        return converter.toDto(saveAddress(entity));
     }
 
     @Transactional
@@ -69,5 +68,18 @@ public class DeliveryAddressService {
         addressRepository.clearDefaultForUser(userId);
         entity.setDefault(true);
         return converter.toDto(addressRepository.save(entity));
+    }
+
+    private DeliveryAddressEntity saveAddress(DeliveryAddressEntity entity) {
+        try {
+            return addressRepository.save(entity);
+        } catch (DataIntegrityViolationException ex) {
+            if (!entity.isDefault()) {
+                throw ex;
+            }
+            // Another request created the first default address concurrently.
+            entity.setDefault(false);
+            return addressRepository.save(entity);
+        }
     }
 }

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +68,7 @@ class DeliveryAddressServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(converter.toEntity(request)).thenReturn(entity);
-        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(addressRepository.existsByUserId(userId)).thenReturn(false);
         when(addressRepository.save(entity)).thenReturn(entity);
         when(converter.toDto(entity)).thenReturn(dto);
 
@@ -76,9 +77,8 @@ class DeliveryAddressServiceTest {
         assertThat(entity.getUser()).isSameAs(user);
         var inOrder = inOrder(userRepository, addressRepository, converter);
         inOrder.verify(userRepository).findById(userId);
-        inOrder.verify(addressRepository).findAllByUserId(userId);
+        inOrder.verify(addressRepository).existsByUserId(userId);
         inOrder.verify(converter).toEntity(request);
-        inOrder.verify(addressRepository).clearDefaultForUser(userId);
         inOrder.verify(addressRepository).save(entity);
         inOrder.verify(converter).toDto(entity);
     }
@@ -93,7 +93,7 @@ class DeliveryAddressServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(converter.toEntity(request)).thenReturn(entity);
-        when(addressRepository.findAllByUserId(userId)).thenReturn(List.of(new DeliveryAddressEntity()));
+        when(addressRepository.existsByUserId(userId)).thenReturn(true);
         when(addressRepository.save(entity)).thenReturn(entity);
         when(converter.toDto(entity)).thenReturn(new DeliveryAddressDto());
 
@@ -101,9 +101,30 @@ class DeliveryAddressServiceTest {
 
         assertThat(entity.isDefault()).isFalse();
         assertThat(entity.getUser()).isSameAs(user);
-        verify(addressRepository, never()).clearDefaultForUser(userId);
         verify(addressRepository).save(entity);
         verify(converter).toDto(entity);
+    }
+
+    @Test
+    @DisplayName("create retries as non-default when concurrent first-default insert wins")
+    void create_concurrentDefaultConflict_retriesAsNonDefault() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        DeliveryAddressRequest request = new DeliveryAddressRequest();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        DeliveryAddressDto dto = new DeliveryAddressDto();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(converter.toEntity(request)).thenReturn(entity);
+        when(addressRepository.existsByUserId(userId)).thenReturn(false);
+        when(addressRepository.save(entity))
+                .thenThrow(new DataIntegrityViolationException("duplicate default"))
+                .thenReturn(entity);
+        when(converter.toDto(entity)).thenReturn(dto);
+
+        assertThat(service.create(userId, request)).isEqualTo(dto);
+        assertThat(entity.isDefault()).isFalse();
+        verify(addressRepository, times(2)).save(entity);
     }
 
     @Test

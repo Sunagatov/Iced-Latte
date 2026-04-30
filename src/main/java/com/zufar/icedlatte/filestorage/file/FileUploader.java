@@ -25,12 +25,16 @@ public class FileUploader {
         }
     }
 
+    public boolean isStorageConfigured() {
+        return awsObjectUploader != null;
+    }
+
     @Transactional(propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED)
     public boolean upload(final MultipartFile file,
                           String bucketName,
                           String fileName) {
-        if (awsObjectUploader != null) {
+        if (isStorageConfigured()) {
             awsObjectUploader.uploadFile(file, bucketName, fileName);
             return true;
         }
@@ -43,7 +47,7 @@ public class FileUploader {
             isolation = Isolation.READ_COMMITTED)
     public void uploadDirectory(String bucketName,
                                 String directoryPath) {
-        if (awsObjectUploader != null) {
+        if (isStorageConfigured()) {
             try {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
