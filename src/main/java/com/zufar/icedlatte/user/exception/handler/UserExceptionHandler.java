@@ -22,6 +22,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RequiredArgsConstructor
 public class UserExceptionHandler {
 
+    private static final String INVALID_AVATAR_FILE_TYPE_MESSAGE = "Invalid file type. Allowed types: JPEG, PNG, WebP";
+    private static final String USERNAME_NOT_FOUND_MESSAGE = "User not found";
+    private static final String DATA_INTEGRITY_MESSAGE = "Request contains invalid or conflicting data.";
+
     private final ApiErrorResponseCreator apiErrorResponseCreator;
 
     @ExceptionHandler(DeliveryAddressNotFoundException.class)
@@ -36,8 +40,8 @@ public class UserExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleInvalidAvatarFileTypeException(final InvalidAvatarFileTypeException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Invalid file type. Allowed types: JPEG, PNG, WebP", HttpStatus.BAD_REQUEST);
-        log.warn("exception.avatar.invalid_type: status=400");
+                INVALID_AVATAR_FILE_TYPE_MESSAGE, HttpStatus.BAD_REQUEST);
+        log.warn("exception.avatar.invalid_type: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -52,7 +56,7 @@ public class UserExceptionHandler {
     @ExceptionHandler({UsernameNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(USERNAME_NOT_FOUND_MESSAGE, HttpStatus.UNAUTHORIZED);
         log.warn("exception.user.username_not_found: exceptionClass={}, status=401", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
@@ -76,8 +80,8 @@ public class UserExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
-        log.warn("exception.user.data_integrity: status=400");
-        return apiErrorResponseCreator.buildResponse("Request contains invalid or conflicting data.", HttpStatus.BAD_REQUEST);
+        log.warn("exception.user.data_integrity: exceptionClass={}, status=400", exception.getClass().getSimpleName());
+        return apiErrorResponseCreator.buildResponse(DATA_INTEGRITY_MESSAGE, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

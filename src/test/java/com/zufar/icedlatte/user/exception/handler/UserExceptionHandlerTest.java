@@ -39,7 +39,7 @@ class UserExceptionHandlerTest {
 
     @Test
     @DisplayName("Should return ApiErrorResponse with NOT_FOUND status when UserNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserNotFoundExceptionThrown() {
+    void shouldReturnApiErrorResponseWithNotFoundStatusWhenUserNotFoundExceptionThrown() {
         UUID userId = UUID.randomUUID();
         LocalDateTime currentDateTime = LocalDateTime.now();
         UserNotFoundException exception = new UserNotFoundException(userId);
@@ -60,27 +60,27 @@ class UserExceptionHandlerTest {
 
     @Test
     @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UsernameNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUsernameNotFoundExceptionThrown() {
-        UsernameNotFoundException exception = new UsernameNotFoundException("Username not found");
+    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUsernameNotFoundExceptionIsThrown() {
+        UsernameNotFoundException exception = new UsernameNotFoundException("Email cannot be empty");
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Username not found",
+                "User not found",
                 HttpStatus.UNAUTHORIZED.value(),
                 currentDateTime
         );
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        when(apiErrorResponseCreator.buildResponse("User not found", HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
 
         ApiErrorResponse actualResponse = userExceptionHandler.handleUsernameNotFoundException(exception);
 
         assertThat(actualResponse).isEqualTo(expectedResponse);
 
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        verify(apiErrorResponseCreator).buildResponse("User not found", HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when InvalidOldPasswordException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenInvalidOldPasswordExceptionThrown() {
+    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenInvalidOldPasswordExceptionIsThrown() {
         InvalidOldPasswordException exception = new InvalidOldPasswordException();
         LocalDateTime currentDateTime = LocalDateTime.now();
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
