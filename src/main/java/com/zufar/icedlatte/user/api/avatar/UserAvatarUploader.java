@@ -44,24 +44,55 @@ public class UserAvatarUploader {
     @Transactional(propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(java.util.Locale.ROOT))) {
+        String contentType = normalizeContentType(file);
+        validateAvatarFile(userId, file, contentType);
+
+        String fileName = avatarFileName(userId);
+        uploadAvatarFile(file, fileName);
+        replaceAvatarMetadata(userId, fileName);
+        invalidateAvatarCache(fileName);
+    }
+
+    private void validateAvatarFile(UUID userId,
+                                    MultipartFile file,
+                                    String contentType) {
+        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(contentType);
+            throw new InvalidAvatarFileTypeException(file.getContentType());
         }
         if (!hasValidImageSignature(file)) {
             log.warn("avatar.upload.rejected: reason=magic_bytes_mismatch, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(contentType);
+            throw new InvalidAvatarFileTypeException(file.getContentType());
         }
-        String fileName = AVATAR_NAME_PREFIX + userId.toString();
+    }
+
+    private String normalizeContentType(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType == null ? "" : contentType.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private String avatarFileName(UUID userId) {
+        return AVATAR_NAME_PREFIX + userId;
+    }
+
+    private void uploadAvatarFile(MultipartFile file,
+                                  String fileName) {
         boolean uploaded = fileUploader.upload(file, bucketName, fileName);
         if (!uploaded) {
-            throw new com.zufar.icedlatte.filestorage.exception.FileUploadException(fileName,
-                    new IllegalStateException("File storage is not configured"));
+            throw new com.zufar.icedlatte.filestorage.exception.FileUploadException(
+                    fileName,
+                    new IllegalStateException("File storage is not configured")
+            );
         }
+    }
+
+    private void replaceAvatarMetadata(UUID userId,
+                                       String fileName) {
         fileMetadataRepository.deleteByRelatedObjectId(userId);
-        FileMetadataDto fileMetadataDto = new FileMetadataDto(userId, bucketName, fileName);
-        fileMetadataSaver.save(fileMetadataDto);
+        fileMetadataSaver.save(new FileMetadataDto(userId, bucketName, fileName));
+    }
+
+    private void invalidateAvatarCache(String fileName) {
         if (cloudfrontInvalidator != null) {
             cloudfrontInvalidator.invalidate(fileName);
         }
