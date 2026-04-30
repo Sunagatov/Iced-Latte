@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration;
+package com.zufar.icedlatte.security.ratelimit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

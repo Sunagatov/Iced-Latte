@@ -1,8 +1,8 @@
-package com.zufar.icedlatte.security.filter;
+package com.zufar.icedlatte.security.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.RateLimitResult;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpStatus;
@@ -17,18 +17,18 @@ import java.util.concurrent.TimeUnit;
  * Keeps the response format consistent across pre-auth and post-auth paths.
  */
 @UtilityClass
-class RateLimitResponseWriter {
+public class RateLimitResponseWriter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    static void writeRateLimitHeaders(HttpServletResponse response, RateLimitResult result) {
+    public static void writeRateLimitHeaders(HttpServletResponse response, RateLimitResult result) {
         response.setHeader("X-RateLimit-Limit", String.valueOf(result.limit()));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, result.remaining())));
         response.setHeader("X-RateLimit-Reset", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis())));
     }
 
-    static void writeTooManyRequests(HttpServletResponse response,
-                                     RateLimitResult result) throws IOException {
+    public static void writeTooManyRequests(HttpServletResponse response,
+                                            RateLimitResult result) throws IOException {
         long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         writeRateLimitHeaders(response, result);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

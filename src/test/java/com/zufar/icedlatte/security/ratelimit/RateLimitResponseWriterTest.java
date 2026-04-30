@@ -1,7 +1,7 @@
-package com.zufar.icedlatte.security.filter;
+package com.zufar.icedlatte.security.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.RateLimitResult;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;

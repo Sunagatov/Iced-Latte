@@ -31,12 +31,13 @@ public class AuthSessionService {
                                            UUID userId,
                                            String refreshTokenHash,
                                            HttpServletRequest request) {
+        OffsetDateTime now = now();
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)
                 .userId(userId)
                 .refreshTokenHash(refreshTokenHash)
-                .createdAt(OffsetDateTime.now())
-                .expiresAt(OffsetDateTime.now().plus(jwtProperties.refreshExpiration()))
+                .createdAt(now)
+                .expiresAt(expiresAt(now))
                 .userAgent(request.getHeader("User-Agent"))
                 .ipAddress(clientIpExtractor.extract(request))
                 .compromised(false)
@@ -50,10 +51,11 @@ public class AuthSessionService {
     public void rotateSession(String oldRefreshTokenHash,
                               String newRefreshTokenHash) {
         AuthSessionEntity session = findActiveByHash(oldRefreshTokenHash);
+        OffsetDateTime now = now();
         session.setPreviousTokenHash(oldRefreshTokenHash);
         session.setRefreshTokenHash(newRefreshTokenHash);
-        session.setLastUsedAt(OffsetDateTime.now());
-        session.setExpiresAt(OffsetDateTime.now().plus(jwtProperties.refreshExpiration()));
+        session.setLastUsedAt(now);
+        session.setExpiresAt(expiresAt(now));
         sessionRepository.save(session);
         log.info("auth.session.rotated: sessionId={}", session.getId());
     }
@@ -62,15 +64,14 @@ public class AuthSessionService {
     public void revokeByRefreshTokenHash(String refreshTokenHash) {
         sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .ifPresent(session -> {
-                    session.setRevokedAt(OffsetDateTime.now());
-                    sessionRepository.save(session);
+                    revokeSession(session);
                     log.info("auth.session.revoked: sessionId={}", session.getId());
                 });
     }
 
     @Transactional
     public void revokeAllForUser(UUID userId) {
-        sessionRepository.revokeAllByUserId(userId, OffsetDateTime.now());
+        sessionRepository.revokeAllByUserId(userId, now());
         log.info("auth.session.revoked_all: userId={}", userId);
     }
 
@@ -82,8 +83,7 @@ public class AuthSessionService {
         if (!session.getUserId().equals(requestingUserId)) {
             throw new SessionOwnershipException(sessionId);
         }
-        session.setRevokedAt(OffsetDateTime.now());
-        sessionRepository.save(session);
+        revokeSession(session);
         log.info("auth.session.revoked_by_id: sessionId={}, userId={}", sessionId, requestingUserId);
     }
 
@@ -94,46 +94,70 @@ public class AuthSessionService {
         // Guard on both revokedAt and compromised: replay path sets both before throwing,
         // so checking only revokedAt would still fire a duplicate revoke_all.
         sessionRepository.findById(sessionId)
-                .filter(s -> s.getRevokedAt() == null && !s.isCompromised())
+                .filter(this::isActiveSession)
                 .ifPresent(s -> revokeAllForUser(s.getUserId()));
     }
 
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {
-        return sessionRepository.findActiveSessions(userId, OffsetDateTime.now());
+        return sessionRepository.findActiveSessions(userId, now());
     }
 
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
-        // Check if this is a previously-rotated token (replay attack)
-        sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(session -> {
-            if (!session.isCompromised() && session.getRevokedAt() == null) {
-                session.setCompromised(true);
-                session.setRevokedAt(OffsetDateTime.now());
-                sessionRepository.save(session);
-                log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
-                revokeAllForUser(session.getUserId());
-            } else {
-                log.warn("auth.session.replay_repeated: sessionId={}, userId={}", session.getId(), session.getUserId());
-            }
-            throw new JwtTokenBlacklistedException("Refresh token has been rotated");
-        });
+        sessionRepository.findByPreviousTokenHash(refreshTokenHash)
+                .ifPresent(this::handleReplayAttempt);
 
         AuthSessionEntity session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
-        if (session.getRevokedAt() != null || session.isCompromised()) {
-            if (!session.isCompromised()) {
-                session.setCompromised(true);
-                session.setRevokedAt(OffsetDateTime.now());
-                sessionRepository.save(session);
-                log.warn("auth.session.reuse_detected: sessionId={}, userId={}",
-                        session.getId(), session.getUserId());
-                revokeAllForUser(session.getUserId());
-            }
-            throw new JwtTokenBlacklistedException("Refresh token has been revoked");
+        if (!isActiveSession(session)) {
+            handleRevokedOrCompromisedSession(session);
         }
-        if (OffsetDateTime.now().isAfter(session.getExpiresAt())) {
+        if (now().isAfter(session.getExpiresAt())) {
             throw new JwtTokenBlacklistedException("Refresh token has expired");
         }
         return session;
+    }
+
+    private void handleReplayAttempt(AuthSessionEntity session) {
+        if (isActiveSession(session)) {
+            markCompromised(session);
+            log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
+            revokeAllForUser(session.getUserId());
+        } else {
+            log.warn("auth.session.replay_repeated: sessionId={}, userId={}", session.getId(), session.getUserId());
+        }
+        throw new JwtTokenBlacklistedException("Refresh token has been rotated");
+    }
+
+    private void handleRevokedOrCompromisedSession(AuthSessionEntity session) {
+        if (!session.isCompromised()) {
+            markCompromised(session);
+            log.warn("auth.session.reuse_detected: sessionId={}, userId={}",
+                    session.getId(), session.getUserId());
+            revokeAllForUser(session.getUserId());
+        }
+        throw new JwtTokenBlacklistedException("Refresh token has been revoked");
+    }
+
+    private boolean isActiveSession(AuthSessionEntity session) {
+        return session.getRevokedAt() == null && !session.isCompromised();
+    }
+
+    private void markCompromised(AuthSessionEntity session) {
+        session.setCompromised(true);
+        revokeSession(session);
+    }
+
+    private void revokeSession(AuthSessionEntity session) {
+        session.setRevokedAt(now());
+        sessionRepository.save(session);
+    }
+
+    private OffsetDateTime expiresAt(OffsetDateTime now) {
+        return now.plus(jwtProperties.refreshExpiration());
+    }
+
+    private OffsetDateTime now() {
+        return OffsetDateTime.now();
     }
 }

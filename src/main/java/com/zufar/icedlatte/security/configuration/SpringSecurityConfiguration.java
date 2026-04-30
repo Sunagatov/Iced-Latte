@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
-import com.zufar.icedlatte.security.filter.PreAuthRateLimitingFilter;
-import com.zufar.icedlatte.security.filter.RateLimitingFilter;
+import com.zufar.icedlatte.security.ratelimit.filter.PreAuthRateLimitingFilter;
+import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;

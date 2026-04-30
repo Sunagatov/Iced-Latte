@@ -1,9 +1,11 @@
-package com.zufar.icedlatte.security.filter;
+package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.RateLimiter;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration;
-import com.zufar.icedlatte.security.configuration.SecurityConstants;
+import com.zufar.icedlatte.security.ratelimit.RateLimitCategory;
+import com.zufar.icedlatte.security.ratelimit.RateLimitRequestClassifier;
+import com.zufar.icedlatte.security.ratelimit.RateLimitResponseWriter;
+import com.zufar.icedlatte.security.ratelimit.RateLimiter;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -74,20 +76,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     @PostConstruct
     void validate() {
-        assertPositive("global", globalMaxRequests, globalWindowDuration);
-        assertPositive("auth", authMaxRequests, authWindowDuration);
-        assertPositive("search", searchMaxRequests, searchWindowDuration);
-        assertPositive("telemetry", telemetryMaxRequests, telemetryWindowDuration);
-        assertPositive("payment", paymentMaxRequests, paymentWindowDuration);
+        assertPositive(RateLimitCategory.GLOBAL, globalMaxRequests, globalWindowDuration);
+        assertPositive(RateLimitCategory.AUTH, authMaxRequests, authWindowDuration);
+        assertPositive(RateLimitCategory.SEARCH, searchMaxRequests, searchWindowDuration);
+        assertPositive(RateLimitCategory.TELEMETRY, telemetryMaxRequests, telemetryWindowDuration);
+        assertPositive(RateLimitCategory.PAYMENT, paymentMaxRequests, paymentWindowDuration);
     }
 
-    private static void assertPositive(String category,
+    private static void assertPositive(RateLimitCategory category,
                                        int maxRequests,
                                        Duration window) {
         if (maxRequests <= 0) throw new IllegalStateException(
-                "security.rate-limit." + category + ".max-requests must be > 0, got: " + maxRequests);
+                "security.rate-limit." + category.value() + ".max-requests must be > 0, got: " + maxRequests);
         if (window == null || window.isZero() || window.isNegative()) throw new IllegalStateException(
-                "security.rate-limit." + category + ".window-duration must be positive, got: " + window);
+                "security.rate-limit." + category.value() + ".window-duration must be positive, got: " + window);
     }
 
     public RateLimitingFilter(@Qualifier("postAuthRateLimiter") RateLimiter rateLimiter,
@@ -99,93 +101,60 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith("/actuator/")
-                || path.startsWith("/api/docs/");
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        return RateLimitRequestClassifier.shouldSkip(request);
     }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String category = getRateLimitCategory(request);
+        RateLimitCategory category = RateLimitRequestClassifier.resolvePostAuthCategory(request);
         String rateLimitKey = buildRateLimitKey(request, category);
         RateLimitConfig config = getRateLimitConfig(category);
 
-        RateLimitingConfiguration.RateLimitResult result = rateLimiter.tryConsume(
+        RateLimitResult result = rateLimiter.tryConsume(
                 rateLimitKey, config.maxRequests(), config.windowDuration());
 
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
-            meterRegistry.counter("rate_limit.requests.blocked", "category", category).increment();
+            meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
             logExceeded(request, category, result, rateLimitKey);
             RateLimitResponseWriter.writeTooManyRequests(response, result);
             return;
         }
 
-        meterRegistry.counter("rate_limit.requests.allowed", "category", category).increment();
+        meterRegistry.counter("rate_limit.requests.allowed", "category", category.value()).increment();
         filterChain.doFilter(request, response);
     }
 
     private String buildRateLimitKey(HttpServletRequest request,
-                                     String category) {
+                                     RateLimitCategory category) {
         Authentication auth = SecurityContextHolder.getContext()
                 .getAuthentication();
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             // auth category: per-user key so one account can't exhaust another's budget
             // other categories: per-user key so IP changes don't create extra budgets
-            return category + ":user:" + auth.getName();
+            return category.value() + ":user:" + auth.getName();
         }
-        return category + ":ip:" + clientIpExtractor.extract(request);
+        return category.value() + ":ip:" + clientIpExtractor.extract(request);
     }
 
-    private String getRateLimitCategory(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        if (isGlobalAuthPath(path)) return "global";
-        if (path.startsWith("/api/v1/auth/")) return "auth";
-        if (isPaymentPath(path)) return "payment";
-        if (isSearchPath(path, request)) return "search";
-        if (path.startsWith("/api/v1/telemetry/")) return "telemetry";
-        return "global";
-    }
-
-    // Google OAuth paths involve browser redirects that can fire several times per login;
-    // keep them under the looser global bucket to avoid 429s during normal OAuth flows.
-    // login and register are throttled fail-closed in PreAuthRateLimitingFilter (auth bucket);
-    // route them to global here so the post-auth fail-open path doesn't double-count or weaken them.
-    private static boolean isGlobalAuthPath(String path) {
-        return path.startsWith("/api/v1/auth/google")
-                || path.equals(SecurityConstants.AUTH_AUTHENTICATE_URL)
-                || path.equals("/api/v1/auth/register");
-    }
-
-    private static boolean isPaymentPath(String path) {
-        return path.equals("/api/v1/payment") || path.startsWith("/api/v1/payment/");
-    }
-
-    private static boolean isSearchPath(String path,
-                                        HttpServletRequest request) {
-        return path.equals("/api/v1/products") && request.getParameter("keyword") != null;
-    }
-
-    private RateLimitConfig getRateLimitConfig(String category) {
+    private RateLimitConfig getRateLimitConfig(RateLimitCategory category) {
         return switch (category) {
-            case "auth" -> new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case "search" -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
-            case "telemetry" -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
-            case "payment" -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
+            case AUTH -> new RateLimitConfig(authMaxRequests, authWindowDuration);
+            case SEARCH -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
+            case TELEMETRY -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
+            case PAYMENT -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
             default -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
         };
     }
 
     private void logExceeded(HttpServletRequest request,
-                             String category,
-                             RateLimitingConfiguration.RateLimitResult result,
+                             RateLimitCategory category,
+                             RateLimitResult result,
                              String rateLimitKey) {
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -197,11 +166,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (firstBlock) {
             warnedKeys.put(rateLimitKey, Boolean.TRUE);
             log.warn("rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
-                    category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    category.value(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
                     retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
         } else {
             log.debug("rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}",
-                    category, identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    category.value(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
                     retryAfterSeconds);
         }
     }

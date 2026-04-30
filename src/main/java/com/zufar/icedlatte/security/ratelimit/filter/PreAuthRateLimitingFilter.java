@@ -1,8 +1,11 @@
-package com.zufar.icedlatte.security.filter;
+package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.RateLimiter;
-import com.zufar.icedlatte.security.configuration.SecurityConstants;
+import com.zufar.icedlatte.security.ratelimit.RateLimitCategory;
+import com.zufar.icedlatte.security.ratelimit.RateLimitRequestClassifier;
+import com.zufar.icedlatte.security.ratelimit.RateLimitResponseWriter;
+import com.zufar.icedlatte.security.ratelimit.RateLimiter;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -60,28 +63,15 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
     @PostConstruct
     void validate() {
-        if (maxRequests <= 0) throw new IllegalStateException(
-                "security.rate-limit.pre-auth.max-requests must be > 0, got: " + maxRequests);
-        if (windowDuration == null || windowDuration.isZero() || windowDuration.isNegative()) throw new IllegalStateException(
-                "security.rate-limit.pre-auth.window-duration must be positive, got: " + windowDuration);
-        if (authMaxRequests <= 0) throw new IllegalStateException(
-                "security.rate-limit.auth.max-requests must be > 0, got: " + authMaxRequests);
-        if (authWindowDuration == null || authWindowDuration.isZero() || authWindowDuration.isNegative()) throw new IllegalStateException(
-                "security.rate-limit.auth.window-duration must be positive, got: " + authWindowDuration);
-    }
-
-    private boolean isAuthEndpoint(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.equals(SecurityConstants.AUTH_AUTHENTICATE_URL) || path.equals("/api/v1/auth/register");
+        validatePositive("security.rate-limit.pre-auth.max-requests", maxRequests);
+        validatePositive("security.rate-limit.pre-auth.window-duration", windowDuration);
+        validatePositive("security.rate-limit.auth.max-requests", authMaxRequests);
+        validatePositive("security.rate-limit.auth.window-duration", authWindowDuration);
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith("/actuator/")
-                || path.startsWith("/api/docs/");
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        return RateLimitRequestClassifier.shouldSkip(request);
     }
 
     @Override
@@ -92,20 +82,14 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
 
         // Auth endpoints get their own tight bucket here (fail-closed) so that a post-auth
         // limiter backend failure cannot degrade auth throttling from 10/min to 200/min.
-        if (isAuthEndpoint(request)) {
+        if (RateLimitRequestClassifier.isStrictPreAuthPath(request)) {
             var authResult = authRateLimiter.tryConsume("auth:ip:" + ip, authMaxRequests, authWindowDuration);
             RateLimitResponseWriter.writeRateLimitHeaders(response, authResult);
             if (!authResult.allowed()) {
-                meterRegistry.counter("rate_limit.requests.blocked", "category", "auth-pre").increment();
-                long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(authResult.resetTimeMillis() - System.currentTimeMillis()));
-                log.warn("rate_limit.exceeded: category=auth-pre, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
-                        ip, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
-                        retryAfterSeconds, authResult.limit(), Math.max(0, authResult.remaining()));
-                RateLimitResponseWriter.writeTooManyRequests(response, authResult);
+                blockRequest(request, response, authResult, ip, RateLimitCategory.AUTH_PRE);
                 return;
             }
-            meterRegistry.counter("rate_limit.requests.allowed", "category", "auth-pre")
-                    .increment();
+            recordAllowed(RateLimitCategory.AUTH_PRE);
         }
 
         String key = "pre-auth:ip:" + ip;
@@ -114,18 +98,48 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
-            meterRegistry.counter("rate_limit.requests.blocked", "category", "pre-auth")
-                    .increment();
-            long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
-            log.warn("rate_limit.exceeded: category=pre-auth, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
-                    ip, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
-                    retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
-            RateLimitResponseWriter.writeTooManyRequests(response, result);
+            blockRequest(request, response, result, ip, RateLimitCategory.PRE_AUTH);
             return;
         }
 
-        meterRegistry.counter("rate_limit.requests.allowed", "category", "pre-auth")
-                .increment();
+        recordAllowed(RateLimitCategory.PRE_AUTH);
         filterChain.doFilter(request, response);
+    }
+
+    private void blockRequest(HttpServletRequest request,
+                              HttpServletResponse response,
+                              RateLimitResult result,
+                              String ip,
+                              RateLimitCategory category) throws IOException {
+        meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
+        log.warn("rate_limit.exceeded: category={}, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
+                category.value(),
+                ip,
+                request.getMethod(),
+                ClientIpExtractor.sanitize(request.getRequestURI()),
+                retryAfterSeconds(result),
+                result.limit(),
+                Math.max(0, result.remaining()));
+        RateLimitResponseWriter.writeTooManyRequests(response, result);
+    }
+
+    private void recordAllowed(RateLimitCategory category) {
+        meterRegistry.counter("rate_limit.requests.allowed", "category", category.value()).increment();
+    }
+
+    private long retryAfterSeconds(RateLimitResult result) {
+        return Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+    }
+
+    private void validatePositive(String property, int value) {
+        if (value <= 0) {
+            throw new IllegalStateException(property + " must be > 0, got: " + value);
+        }
+    }
+
+    private void validatePositive(String property, Duration value) {
+        if (value == null || value.isZero() || value.isNegative()) {
+            throw new IllegalStateException(property + " must be positive, got: " + value);
+        }
     }
 }

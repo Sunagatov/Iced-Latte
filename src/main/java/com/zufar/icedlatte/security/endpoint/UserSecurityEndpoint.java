@@ -87,15 +87,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
         UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
-        UUID sessionId = UUID.randomUUID();
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
-        AuthSessionEntity session =
-                authSessionService.createSession(sessionId, ((UserEntity) userDetails).getId(),
-                        jwtBlacklistService.sha256(refreshToken), httpRequest);
-        MDC.put(MDC_USER_ID, session.getUserId().toString());
-        MDC.put(MDC_SESSION_ID, session.getId().toString());
-        var response = userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authenticateUser(request, userDetails));
     }
 
     @Override
@@ -125,14 +117,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<List<SessionInfo>> getSessions() {
         UUID userId = securityPrincipalProvider.getUserId();
         List<SessionInfo> sessions = authSessionService.listActiveSessions(userId).stream()
-                .map(s -> new SessionInfo()
-                        .sessionId(s.getId())
-                        .createdAt(s.getCreatedAt())
-                        .expiresAt(s.getExpiresAt())
-                        .lastUsedAt(s.getLastUsedAt())
-                        .userAgent(s.getUserAgent())
-                        .ipAddress(s.getIpAddress())
-                )
+                .map(this::toSessionInfo)
                 .toList();
         return ResponseEntity.ok(sessions);
     }
@@ -160,5 +145,34 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
         passwordResetService.confirmReset(request.getCode(), request.getPassword());
         return ResponseEntity.ok().build();
+    }
+
+    private UserAuthenticationResponse authenticateUser(UserAuthenticationRequest request,
+                                                        UserDetails userDetails) {
+        UUID sessionId = UUID.randomUUID();
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
+        AuthSessionEntity session = authSessionService.createSession(
+                sessionId,
+                ((UserEntity) userDetails).getId(),
+                jwtBlacklistService.sha256(refreshToken),
+                httpRequest
+        );
+        populateAuthenticationMdc(session);
+        return userAuthenticationService.buildTokenPair(userDetails, request.getEmail(), sessionId, refreshToken);
+    }
+
+    private void populateAuthenticationMdc(AuthSessionEntity session) {
+        MDC.put(MDC_USER_ID, session.getUserId().toString());
+        MDC.put(MDC_SESSION_ID, session.getId().toString());
+    }
+
+    private SessionInfo toSessionInfo(AuthSessionEntity session) {
+        return new SessionInfo()
+                .sessionId(session.getId())
+                .createdAt(session.getCreatedAt())
+                .expiresAt(session.getExpiresAt())
+                .lastUsedAt(session.getLastUsedAt())
+                .userAgent(session.getUserAgent())
+                .ipAddress(session.getIpAddress());
     }
 }

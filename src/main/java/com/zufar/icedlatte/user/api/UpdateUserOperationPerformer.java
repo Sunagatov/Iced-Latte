@@ -22,7 +22,7 @@ import java.util.UUID;
 public class UpdateUserOperationPerformer {
 
     private final SingleUserProvider singleUserProvider;
-    private final UserRepository userCrudRepository;
+    private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
     private final AddressDtoConverter addressDtoConverter;
     private final PutUsersRequestValidator putUsersRequestValidator;
@@ -30,26 +30,35 @@ public class UpdateUserOperationPerformer {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateUser(final UUID userId, final UpdateUserAccountRequest updateUserAccountRequest) {
         AddressDto addressDto = updateUserAccountRequest.getAddress();
+        validate(updateUserAccountRequest, addressDto);
+        UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
+        applyUpdates(userEntity, updateUserAccountRequest, mapAddress(addressDto));
+        UserEntity savedUser = userRepository.save(userEntity);
+        return userDtoConverter.toDto(savedUser);
+    }
 
+    private void validate(UpdateUserAccountRequest request, AddressDto addressDto) {
         putUsersRequestValidator.validate(
-                updateUserAccountRequest.getFirstName(),
-                updateUserAccountRequest.getLastName(),
-                updateUserAccountRequest.getPhoneNumber(),
-                updateUserAccountRequest.getBirthDate(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPhoneNumber(),
+                request.getBirthDate(),
                 addressDto
         );
+    }
 
-        UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
-        Address addressEntity = isAddressEmpty(addressDto) ? null : addressDtoConverter.toEntity(addressDto);
+    private Address mapAddress(AddressDto addressDto) {
+        return isAddressEmpty(addressDto) ? null : addressDtoConverter.toEntity(addressDto);
+    }
 
-        userEntity.setFirstName(updateUserAccountRequest.getFirstName());
-        userEntity.setLastName(updateUserAccountRequest.getLastName());
-        userEntity.setBirthDate(updateUserAccountRequest.getBirthDate());
-        userEntity.setPhoneNumber(updateUserAccountRequest.getPhoneNumber());
-        userEntity.setAddress(addressEntity);
-
-        UserEntity userEntityWithId = userCrudRepository.save(userEntity);
-        return userDtoConverter.toDto(userEntityWithId);
+    private void applyUpdates(UserEntity userEntity,
+                              UpdateUserAccountRequest request,
+                              Address address) {
+        userEntity.setFirstName(request.getFirstName());
+        userEntity.setLastName(request.getLastName());
+        userEntity.setBirthDate(request.getBirthDate());
+        userEntity.setPhoneNumber(request.getPhoneNumber());
+        userEntity.setAddress(address);
     }
 
     private boolean isAddressEmpty(AddressDto addressDto) {

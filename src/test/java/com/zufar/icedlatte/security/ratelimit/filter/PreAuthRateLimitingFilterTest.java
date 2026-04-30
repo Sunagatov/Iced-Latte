@@ -1,8 +1,8 @@
-package com.zufar.icedlatte.security.filter;
+package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.RateLimitResult;
-import com.zufar.icedlatte.security.configuration.RateLimiter;
+import com.zufar.icedlatte.security.ratelimit.RateLimiter;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;

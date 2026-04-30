@@ -1,8 +1,8 @@
-package com.zufar.icedlatte.security.configuration;
+package com.zufar.icedlatte.security.ratelimit;
 
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.FailPolicy;
-import com.zufar.icedlatte.security.configuration.RateLimitingConfiguration.RateLimitResult;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.FailPolicy;
+import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
