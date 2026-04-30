@@ -77,7 +77,9 @@ class ProductReviewsProviderTest {
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> provider.getProductReviewForUser(productId, userId))
-                .isInstanceOf(ProductReviewNotFoundException.class);
+                .isInstanceOf(ProductReviewNotFoundException.class)
+                .hasMessageContaining(productId.toString())
+                .hasMessageContaining(userId.toString());
         verify(productReviewValidator).validateProductExists(productId);
     }
 
@@ -101,5 +103,6 @@ class ProductReviewsProviderTest {
         when(productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(any())).thenReturn(expected);
 
         assertThat(provider.getUserReviews(userId, 0, 10, "createdAt", "desc")).isEqualTo(expected);
+        verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
     }
 }

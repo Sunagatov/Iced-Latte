@@ -4,6 +4,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
@@ -108,10 +109,21 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        doThrow(new ProductReviewNotFoundException(productId))
+        doThrow(new ProductReviewNotFoundException(reviewId))
                 .when(productReviewValidator).validateProductIdIsValid(productId, reviewId);
 
         assertThrows(ProductReviewNotFoundException.class,
                 () -> productReviewLikesUpdater.update(productId, reviewId, userId, true));
+    }
+
+    @Test
+    @DisplayName("Should throw GetReviewsBadRequestException when vote is null")
+    void updateFailsWhenVoteIsNull() {
+        var productId = UUID.randomUUID();
+        var reviewId = UUID.randomUUID();
+        var userId = UUID.randomUUID();
+
+        assertThrows(GetReviewsBadRequestException.class,
+                () -> productReviewLikesUpdater.update(productId, reviewId, userId, null));
     }
 }

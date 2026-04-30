@@ -4,12 +4,12 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductReviewLikesUpdater {
@@ -33,6 +32,7 @@ public class ProductReviewLikesUpdater {
                                    final UUID productReviewId,
                                    final UUID userId,
                                    final Boolean newProductReviewLike) {
+        validateVote(newProductReviewLike);
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
         Optional<ProductReviewLike> productReviewLike = productReviewLikeRepository.findByUserIdAndProductReviewId(userId, productReviewId);
@@ -63,5 +63,11 @@ public class ProductReviewLikesUpdater {
         ProductReview productReview = productReviewRepository.findById(productReviewId)
                 .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));
         return productReviewDtoConverter.toProductReviewDto(productReview);
+    }
+
+    private static void validateVote(Boolean vote) {
+        if (vote == null) {
+            throw new GetReviewsBadRequestException("Review vote 'isLike' must be provided.");
+        }
     }
 }
