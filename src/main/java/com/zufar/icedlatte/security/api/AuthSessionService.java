@@ -10,6 +10,7 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ public class AuthSessionService {
                 .refreshTokenHash(refreshTokenHash)
                 .createdAt(now)
                 .expiresAt(expiresAt(now))
-                .userAgent(request.getHeader("User-Agent"))
+                .userAgent(request.getHeader(HttpHeaders.USER_AGENT))
                 .ipAddress(clientIpExtractor.extract(request))
                 .compromised(false)
                 .build();

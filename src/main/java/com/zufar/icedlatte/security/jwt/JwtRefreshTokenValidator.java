@@ -62,7 +62,7 @@ public class JwtRefreshTokenValidator {
      */
     public boolean isSessionManaged(String rawToken) {
         try {
-            Object ver = refreshParser.parseSignedClaims(rawToken).getPayload().get("ver");
+            Object ver = refreshParser.parseSignedClaims(rawToken).getPayload().get(JwtClaimNames.VERSION);
             return ver != null;
         } catch (Exception ex) {
             return false;
@@ -77,7 +77,7 @@ public class JwtRefreshTokenValidator {
         try {
             String sid = (String) refreshParser.parseSignedClaims(rawToken)
                     .getPayload()
-                    .get("sid");
+                    .get(JwtClaimNames.SESSION_ID);
             return StringUtils.hasText(sid)
                     ? Optional.of(UUID.fromString(sid))
                     : Optional.empty();

@@ -15,6 +15,7 @@ import com.zufar.icedlatte.security.api.RefreshTokenService;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.email.api.EmailTokenConformer;
 import com.zufar.icedlatte.email.api.EmailTokenSender;
@@ -45,7 +46,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserSecurityEndpoint implements SecurityApi {
 
-    public static final String USER_SECURITY_API_URL = "/api/v1/auth/";
+    public static final String USER_SECURITY_API_URL = AuthPaths.ROOT;
 
     private final UserAuthenticationService userAuthenticationService;
     private final SessionTokenService sessionTokenService;

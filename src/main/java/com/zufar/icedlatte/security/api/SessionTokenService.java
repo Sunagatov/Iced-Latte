@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
@@ -18,9 +19,6 @@ import java.util.function.Supplier;
 @Service
 @RequiredArgsConstructor
 public class SessionTokenService {
-
-    private static final String MDC_USER_ID = "userId";
-    private static final String MDC_SESSION_ID = "sessionId";
 
     private final JwtBlacklistService jwtBlacklistService;
     private final JwtBlacklistValidator jwtBlacklistValidator;
@@ -82,13 +80,13 @@ public class SessionTokenService {
     }
 
     private void bindSessionToMdc(AuthSessionEntity session) {
-        MDC.put(MDC_USER_ID, session.getUserId().toString());
-        MDC.put(MDC_SESSION_ID, session.getId().toString());
+        MDC.put(RequestContextConstants.USER_ID_MDC_KEY, session.getUserId().toString());
+        MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, session.getId().toString());
     }
 
     private void clearSessionMdc() {
-        MDC.remove(MDC_USER_ID);
-        MDC.remove(MDC_SESSION_ID);
+        MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
+        MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
     }
 
     private record SessionAuthentication(AuthSessionEntity session, UserAuthenticationResponse response) {

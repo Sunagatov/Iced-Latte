@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
@@ -30,9 +32,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String MDC_USER_ID_KEY = "userId";
-    private static final String MDC_SESSION_ID_KEY = "sessionId";
-
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
@@ -44,9 +43,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return "/api/v1/auth/refresh".equals(uri)
-                || "/api/v1/auth/google".equals(uri)
-                || "/api/v1/auth/google/callback".equals(uri);
+        return AuthPaths.REFRESH.equals(uri)
+                || AuthPaths.GOOGLE.equals(uri)
+                || AuthPaths.GOOGLE_CALLBACK.equals(uri);
     }
 
     @Override
@@ -57,11 +56,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            MDC.put(MDC_USER_ID_KEY, securityPrincipalProvider.getUserId().toString());
+            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, securityPrincipalProvider.getUserId().toString());
             try {
                 String rawToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
                 jwtClaimExtractor.extractSessionId(rawToken)
-                        .ifPresent(sid -> MDC.put(MDC_SESSION_ID_KEY, sid.toString()));
+                        .ifPresent(sid -> MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sid.toString()));
             } catch (Exception ignored) {
                 // sid is best-effort; never block the request
             }
@@ -75,8 +74,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(httpRequest, httpResponse);
         } finally {
-            MDC.remove(MDC_USER_ID_KEY);
-            MDC.remove(MDC_SESSION_ID_KEY);
+            MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
         }
     }
 // amazonq-ignore-next-line
@@ -84,7 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void handleAuthenticationException(HttpServletRequest httpRequest,
                                                HttpServletResponse httpResponse,
                                                Exception exception) throws IOException {
-        String requestId = MDC.get("requestId");
+        String requestId = MDC.get(RequestContextConstants.REQUEST_ID_MDC_KEY);
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
         String clientIp = clientIpExtractor.extract(httpRequest);

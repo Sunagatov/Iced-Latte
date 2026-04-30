@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.BrandsDto;
 import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
@@ -35,7 +36,7 @@ import java.util.UUID;
 @RequestMapping(ProductsEndpoint.PRODUCTS_URL)
 public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api.ProductApi {
 
-    public static final String PRODUCTS_URL = "/api/v1/products";
+    public static final String PRODUCTS_URL = ApiPaths.PRODUCTS;
 
     private final ProductsProvider productsProvider;
     private final PageableProductsProvider pageableProductsProvider;

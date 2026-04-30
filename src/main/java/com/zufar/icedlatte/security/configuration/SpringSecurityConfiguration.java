@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.ratelimit.filter.PreAuthRateLimitingFilter;
 import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
@@ -65,8 +66,8 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
                         .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/password/reset/confirm").permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiPaths.USERS_PASSWORD_RESET).permitAll()
+                        .requestMatchers(HttpMethod.POST, ApiPaths.USERS_PASSWORD_RESET_CONFIRM).permitAll()
                         .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
@@ -78,7 +79,7 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
-                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session

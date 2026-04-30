@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.favorite.api.FavoriteListProvider;
 import com.zufar.icedlatte.favorite.api.FavoriteProductAdder;
 import com.zufar.icedlatte.favorite.api.FavoriteProductDeleter;
@@ -29,7 +30,7 @@ import java.util.UUID;
 @RequestMapping(FavoritesEndpoint.FAVORITES_URL)
 public class FavoritesEndpoint implements FavoriteProductsApi {
 
-    public static final String FAVORITES_URL = "/api/v1/favorites";
+    public static final String FAVORITES_URL = ApiPaths.FAVORITES;
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final FavoriteProductAdder favoriteProductAdderHelper;

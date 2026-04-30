@@ -35,7 +35,7 @@ public class JwtClaimExtractor {
 
     public Optional<UUID> extractSessionId(final String jwtToken) {
         try {
-            String sid = (String) extractAllClaims(jwtToken).get("sid");
+            String sid = (String) extractAllClaims(jwtToken).get(JwtClaimNames.SESSION_ID);
             return StringUtils.hasText(sid) ? Optional.of(UUID.fromString(sid)) : Optional.empty();
         } catch (Exception ex) {
             return Optional.empty();

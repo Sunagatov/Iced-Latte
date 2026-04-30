@@ -5,6 +5,7 @@ import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
 import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
 import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
 import com.zufar.icedlatte.cart.exception.EmptyCartItemsException;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
@@ -30,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(CartEndpoint.CART_URL)
 public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.ShoppingCartApi {
 
-    public static final String CART_URL = "/api/v1/cart";
+    public static final String CART_URL = ApiPaths.CART;
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final AddItemsToShoppingCartHelper addItemsToShoppingCartHelper;

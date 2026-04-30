@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @RequiredArgsConstructor
 @Order(0)
+@SuppressWarnings("unused")
 public class SignInExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
@@ -36,7 +38,7 @@ public class SignInExceptionHandler {
         String method = request.getMethod();
         String path = sanitize(request.getRequestURI());
 
-        if (!"/api/v1/auth/refresh".equals(path)) {
+        if (!AuthPaths.REFRESH.equals(path)) {
             log.warn("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
                     exception.getClass().getSimpleName(), method, path);
         }

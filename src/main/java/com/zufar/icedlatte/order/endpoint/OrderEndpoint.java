@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.order.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -28,7 +29,7 @@ import java.util.List;
 @RequestMapping(OrderEndpoint.ORDERS_URL)
 public class OrderEndpoint {
 
-    public static final String ORDERS_URL = "/api/v1/orders";
+    public static final String ORDERS_URL = ApiPaths.ORDERS;
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final OrdersProvider ordersProvider;

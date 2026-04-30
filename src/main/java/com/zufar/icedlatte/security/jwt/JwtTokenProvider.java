@@ -37,23 +37,23 @@ public class JwtTokenProvider {
     public String generateToken(final Map<String, Object> extraClaims,
                                 final UserDetails userDetails, UUID sessionId) {
         Map<String, Object> claims = new HashMap<>(extraClaims);
-        claims.put("jti", UUID.randomUUID().toString());
+        claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
         if (sessionId != null) {
-            claims.put("sid", sessionId.toString());
+            claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
         return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
     }
 
     public String generateRefreshToken(final UserDetails userDetails) {
-        return buildToken(Map.of("jti", UUID.randomUUID().toString()), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+        return buildToken(Map.of(JwtClaimNames.JWT_ID, UUID.randomUUID().toString()), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
     }
 
     public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("jti", UUID.randomUUID().toString());
-        claims.put("ver", 2);
+        claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+        claims.put(JwtClaimNames.VERSION, 2);
         if (sessionId != null) {
-            claims.put("sid", sessionId.toString());
+            claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
         return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
     }

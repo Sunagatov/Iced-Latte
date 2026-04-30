@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import com.zufar.icedlatte.security.ratelimit.RateLimitCategory;
 import com.zufar.icedlatte.security.ratelimit.RateLimitRequestClassifier;
 import com.zufar.icedlatte.security.ratelimit.RateLimitResponseWriter;
@@ -134,7 +135,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Authentication auth = SecurityContextHolder.getContext()
                 .getAuthentication();
 
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+        if (auth != null && auth.isAuthenticated() && !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal())) {
             // auth category: per-user key so one account can't exhaust another's budget
             // other categories: per-user key so IP changes don't create extra budgets
             return category.value() + ":user:" + auth.getName();
@@ -159,7 +160,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String clientIp = clientIpExtractor.extract(request);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String identityType = (auth != null && auth.isAuthenticated() &&
-                !"anonymousUser".equals(auth.getPrincipal())) ? "user" : "ip";
+                !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal())) ? "user" : "ip";
         long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
 
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;

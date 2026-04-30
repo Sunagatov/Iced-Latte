@@ -1,18 +1,15 @@
 package com.zufar.icedlatte.security.ratelimit;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import jakarta.servlet.http.HttpServletRequest;
 
 public final class RateLimitRequestClassifier {
 
-    private static final String AUTH_ROOT = "/api/v1/auth/";
-    private static final String AUTHENTICATE_PATH = AUTH_ROOT + "authenticate";
-    private static final String REGISTER_PATH = AUTH_ROOT + "register";
-    private static final String GOOGLE_AUTH_PATH_PREFIX = AUTH_ROOT + "google";
-    private static final String PAYMENT_ROOT = "/api/v1/payment";
-    private static final String PRODUCTS_PATH = "/api/v1/products";
+    private static final String AUTHENTICATE_PATH = AuthPaths.AUTHENTICATE;
+    private static final String REGISTER_PATH = AuthPaths.ROOT + "/register";
+    private static final String GOOGLE_AUTH_PATH_PREFIX = AuthPaths.GOOGLE;
     private static final String TELEMETRY_ROOT = "/api/v1/telemetry/";
-    private static final String ACTUATOR_ROOT = "/actuator/";
-    private static final String API_DOCS_ROOT = "/api/docs/";
 
     private RateLimitRequestClassifier() {
     }
@@ -21,8 +18,8 @@ public final class RateLimitRequestClassifier {
         String method = request.getMethod();
         String path = request.getRequestURI();
         return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith(ACTUATOR_ROOT)
-                || path.startsWith(API_DOCS_ROOT);
+                || path.startsWith(ApiPaths.ACTUATOR_ROOT)
+                || path.startsWith(ApiPaths.DOCS_ROOT);
     }
 
     public static boolean isStrictPreAuthPath(HttpServletRequest request) {
@@ -35,7 +32,7 @@ public final class RateLimitRequestClassifier {
         if (isGlobalAuthPath(path)) {
             return RateLimitCategory.GLOBAL;
         }
-        if (path.startsWith(AUTH_ROOT)) {
+        if (path.startsWith(AuthPaths.ROOT_PREFIX)) {
             return RateLimitCategory.AUTH;
         }
         if (isPaymentPath(path)) {
@@ -57,11 +54,11 @@ public final class RateLimitRequestClassifier {
     }
 
     private static boolean isPaymentPath(String path) {
-        return path.equals(PAYMENT_ROOT) || path.startsWith(PAYMENT_ROOT + "/");
+        return path.equals(ApiPaths.PAYMENT) || path.startsWith(ApiPaths.PAYMENT + "/");
     }
 
     private static boolean isSearchPath(String path, HttpServletRequest request) {
-        return path.equals(PRODUCTS_PATH) && request.getParameter("keyword") != null;
+        return path.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null;
     }
 
     private static boolean isTelemetryPath(String path) {

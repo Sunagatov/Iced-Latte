@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.common.monitoring;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 
 @Slf4j
 @Configuration
@@ -49,15 +52,15 @@ public class SentryConfiguration {
             var transactionName = transactionContext.getName();
             
             // Sample 100% of critical endpoints
-            if (transactionName.contains("/api/v1/auth/") || 
-                transactionName.contains("/api/v1/payment/") ||
-                transactionName.contains("/api/v1/orders/")) {
+            if (transactionName.contains(AuthPaths.ROOT_PREFIX) ||
+                transactionName.contains(ApiPaths.PAYMENT + "/") ||
+                transactionName.contains(ApiPaths.ORDERS + "/")) {
                 return 1.0;
             }
             
             // Sample 50% of user-facing endpoints
-            if (transactionName.contains("/api/v1/products/") ||
-                transactionName.contains("/api/v1/cart/")) {
+            if (transactionName.contains(ApiPaths.PRODUCTS + "/") ||
+                transactionName.contains(ApiPaths.CART + "/")) {
                 return 0.5;
             }
             
@@ -87,8 +90,8 @@ public class SentryConfiguration {
         if (event.getRequest() != null) {
             var request = event.getRequest();
             if (request.getHeaders() != null) {
-                request.getHeaders().remove("Authorization");
-                request.getHeaders().remove("Cookie");
+                request.getHeaders().remove(HttpHeaders.AUTHORIZATION);
+                request.getHeaders().remove(HttpHeaders.COOKIE);
             }
         }
     }

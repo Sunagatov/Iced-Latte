@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.common.correlation;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.configuration.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,8 +44,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
         return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith("/actuator/")
-                || path.startsWith("/api/docs/");
+                || path.startsWith(ApiPaths.ACTUATOR_ROOT)
+                || path.startsWith(ApiPaths.DOCS_ROOT);
     }
 
     @Override
@@ -92,27 +95,27 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // Endpoints that are polled frequently by the frontend and produce repetitive 2xx lines.
     // Logged at DEBUG to reduce noise; operators can promote to INFO via logging.level.http.access=INFO.
     private static boolean isPollingEndpoint(String path) {
-        return "/api/v1/products/brands".equals(path)
-                || "/api/v1/products/sellers".equals(path)
-                || "/api/v1/users".equals(path)
-                || "/api/v1/cart".equals(path)
-                || "/api/v1/favorites".equals(path);
+        return ApiPaths.PRODUCTS_BRANDS.equals(path)
+                || ApiPaths.PRODUCTS_SELLERS.equals(path)
+                || ApiPaths.USERS.equals(path)
+                || ApiPaths.CART.equals(path)
+                || ApiPaths.FAVORITES.equals(path);
     }
 
     // Expected anonymous bootstrap / probe flow from the frontend.
     // These are not operationally interesting at WARN when the user is simply unauthenticated.
     private static boolean isExpectedAnonymousAuthProbe(String path) {
-        return "/api/v1/auth/refresh".equals(path)
-                || "/api/v1/users".equals(path)
-                || "/api/v1/cart".equals(path)
-                || "/api/v1/favorites".equals(path);
+        return AuthPaths.REFRESH.equals(path)
+                || ApiPaths.USERS.equals(path)
+                || ApiPaths.CART.equals(path)
+                || ApiPaths.FAVORITES.equals(path);
     }
 
     private static boolean isPublicInternetNoise(String path) {
         String normalized = normalizePath(path);
-        return !normalized.startsWith("/api/")
-                && !normalized.startsWith("/actuator/")
-                && !normalized.startsWith("/api/docs/");
+        return !normalized.startsWith(ApiPaths.API_ROOT + "/")
+                && !normalized.startsWith(ApiPaths.ACTUATOR_ROOT)
+                && !normalized.startsWith(ApiPaths.DOCS_ROOT);
     }
 
     private static String resolvePathTemplate(HttpServletRequest request) {
@@ -128,7 +131,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null
                 && auth.isAuthenticated()
-                && !"anonymousUser".equals(auth.getPrincipal());
+                && !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
     }
 
     private static String normalizePath(String value) {

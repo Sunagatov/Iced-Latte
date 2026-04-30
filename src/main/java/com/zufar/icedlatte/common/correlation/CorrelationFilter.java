@@ -16,14 +16,6 @@ import java.util.regex.Pattern;
 @Component
 public class CorrelationFilter extends OncePerRequestFilter {
 
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
-    private static final String CORRELATION_ID_MDC_KEY = "correlationId";
-    private static final String SESSION_ID_HEADER = "X-Session-ID";
-    private static final String SESSION_ID_MDC_KEY = "sessionId";
-    private static final String TRACE_ID_HEADER = "X-Trace-ID";
-    private static final String CLIENT_TRACE_ID_MDC_KEY = "clientTraceId";
-    private static final String REQUEST_ID_MDC_KEY = "requestId";
-    private static final String REQUEST_ID_HEADER = "X-Request-ID";
     private static final int MAX_HEADER_LENGTH = 64;
     private static final Pattern UNSAFE_HEADER_CHARS = Pattern.compile("[^A-Za-z0-9._\\-]");
 
@@ -32,27 +24,27 @@ public class CorrelationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String correlationId = request.getHeader(CORRELATION_ID_HEADER) != null
-                ? sanitizeHeader(request.getHeader(CORRELATION_ID_HEADER))
+        String correlationId = request.getHeader(RequestContextConstants.CORRELATION_ID_HEADER) != null
+                ? sanitizeHeader(request.getHeader(RequestContextConstants.CORRELATION_ID_HEADER))
                 : UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         String requestId = UUID.randomUUID().toString();
-        String sessionId = sanitizeHeader(request.getHeader(SESSION_ID_HEADER));
-        String clientTraceId = sanitizeHeader(request.getHeader(TRACE_ID_HEADER));
+        String sessionId = sanitizeHeader(request.getHeader(RequestContextConstants.SESSION_ID_HEADER));
+        String clientTraceId = sanitizeHeader(request.getHeader(RequestContextConstants.TRACE_ID_HEADER));
 
-        response.setHeader(CORRELATION_ID_HEADER, correlationId);
-        response.setHeader(REQUEST_ID_HEADER, requestId);
-        MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
-        MDC.put(REQUEST_ID_MDC_KEY, requestId);
-        if (sessionId != null) MDC.put(SESSION_ID_MDC_KEY, sessionId);
-        if (clientTraceId != null) MDC.put(CLIENT_TRACE_ID_MDC_KEY, clientTraceId);
+        response.setHeader(RequestContextConstants.CORRELATION_ID_HEADER, correlationId);
+        response.setHeader(RequestContextConstants.REQUEST_ID_HEADER, requestId);
+        MDC.put(RequestContextConstants.CORRELATION_ID_MDC_KEY, correlationId);
+        MDC.put(RequestContextConstants.REQUEST_ID_MDC_KEY, requestId);
+        if (sessionId != null) MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sessionId);
+        if (clientTraceId != null) MDC.put(RequestContextConstants.CLIENT_TRACE_ID_MDC_KEY, clientTraceId);
 
         try {
             filterChain.doFilter(request, response);
         } finally {
-            MDC.remove(CORRELATION_ID_MDC_KEY);
-            MDC.remove(REQUEST_ID_MDC_KEY);
-            MDC.remove(SESSION_ID_MDC_KEY);
-            MDC.remove(CLIENT_TRACE_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.CORRELATION_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.REQUEST_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.CLIENT_TRACE_ID_MDC_KEY);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -39,10 +41,10 @@ public class SecurityEventListener {
     }
 
     private static boolean isExpectedAnonymousDeny(String principal, String path) {
-        return "anonymousUser".equals(principal)
-                && ("/api/v1/users".equals(path)
-                || "/api/v1/cart".equals(path)
-                || "/api/v1/favorites".equals(path));
+        return SecurityConstants.ANONYMOUS_PRINCIPAL.equals(principal)
+                && (ApiPaths.USERS.equals(path)
+                || ApiPaths.CART.equals(path)
+                || ApiPaths.FAVORITES.equals(path));
     }
 
     private static String normalizePath(String value) {
@@ -53,6 +55,6 @@ public class SecurityEventListener {
     }
 
     private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
+        return ClientIpExtractor.sanitize(value);
     }
 }

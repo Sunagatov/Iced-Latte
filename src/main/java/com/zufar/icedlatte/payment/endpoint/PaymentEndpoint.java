@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.payment.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.PaymentConfirmationEmail;
 import com.zufar.icedlatte.openapi.dto.SessionWithClientSecretDto;
 import com.zufar.icedlatte.payment.api.StripeSessionCreator;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
 public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
 
-    public static final String PAYMENT_URL = "/api/v1/payment";
+    public static final String PAYMENT_URL = ApiPaths.PAYMENT;
 
     private final StripeSessionCreator stripeSessionCreator;
     private final StripeWebhookService stripeWebhookService;

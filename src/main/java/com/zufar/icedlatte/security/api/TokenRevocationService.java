@@ -8,6 +8,7 @@ import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +46,7 @@ public class TokenRevocationService {
     }
 
     private void revokeAccessToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (!StringUtils.hasText(authHeader)) {
             return;
         }
@@ -53,7 +54,7 @@ public class TokenRevocationService {
         try {
             jwtBlacklistValidator.addToBlacklist(jwtTokenFromAuthHeaderExtractor.extract(authHeader));
         } catch (AbsentBearerHeaderException ex) {
-            log.debug("auth.logout.token_error: header=Authorization reason={}", ex.getMessage());
+            log.debug("auth.logout.token_error: header={} reason={}", HttpHeaders.AUTHORIZATION, ex.getMessage());
         }
     }
 }
