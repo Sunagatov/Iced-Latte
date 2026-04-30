@@ -58,11 +58,11 @@ public class UserAvatarUploader {
                                     String contentType) {
         if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(file.getContentType());
+            throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
         }
         if (!hasValidImageSignature(file)) {
             log.warn("avatar.upload.rejected: reason=magic_bytes_mismatch, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(file.getContentType());
+            throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
         }
     }
 

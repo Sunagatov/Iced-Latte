@@ -128,7 +128,10 @@ class UserExceptionHandlerTest {
     @Test
     @DisplayName("Should map invalid avatar file type to a sanitized BAD_REQUEST message")
     void shouldHandleInvalidAvatarFileTypeException() {
-        InvalidAvatarFileTypeException exception = new InvalidAvatarFileTypeException("image/gif");
+        InvalidAvatarFileTypeException exception = new InvalidAvatarFileTypeException(
+                "image/gif",
+                java.util.List.of("image/jpeg", "image/png", "image/webp")
+        );
         ApiErrorResponse expectedResponse = new ApiErrorResponse(
                 "Invalid file type. Allowed types: JPEG, PNG, WebP",
                 400,
