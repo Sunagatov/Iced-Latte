@@ -3,6 +3,7 @@ package com.zufar.icedlatte.auth.endpoint;
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
 import com.zufar.icedlatte.auth.api.OAuthStateCache;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,17 @@ import java.util.Base64;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(AuthPaths.ROOT)
 public class AuthEndpoint {
+
     private static final String GOOGLE_CALLBACK_PATH = "/auth/google/callback";
+    private static final String SIGN_IN_PATH = "/signin";
+    private static final String ERROR_QUERY_PARAM = "error";
+    private static final String NEXT_QUERY_PARAM = "next";
+    private static final String GOOGLE_DISABLED_ERROR = "google_disabled";
+    private static final String MISSING_CODE_ERROR = "missing_code";
+    private static final String INVALID_STATE_ERROR = "invalid_state";
+    private static final String AUTH_FAILED_ERROR = "auth_failed";
 
     @Value("${google.auth.server.url:}")
     private String googleAuthServerUrl;
@@ -64,11 +73,7 @@ public class AuthEndpoint {
         }
         log.info("auth.google.initiate");
         String callbackBase = resolveCallbackBase(redirectUrl);
-        byte[] nonceBytes = new byte[16];
-        SECURE_RANDOM.nextBytes(nonceBytes);
-        String nonce = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(nonceBytes);
+        String nonce = generateStateNonce();
         oAuthStateCache.store(nonce, callbackBase);
         URI authUri = UriComponentsBuilder.fromUriString(googleAuthServerUrl)
                 .queryParam("scope", scope)
@@ -120,23 +125,23 @@ public class AuthEndpoint {
                                HttpServletRequest request,
                                HttpServletResponse response) throws IOException {
         if (googleAuthCallbackHandler == null) {
-            response.sendRedirect(frontendUrl + "/signin?error=google_disabled");
+            redirectToSignInError(response, GOOGLE_DISABLED_ERROR);
             return;
         }
         if (code == null || code.isBlank()) {
             log.warn("auth.google.callback.missing-code");
-            response.sendRedirect(frontendUrl + "/signin?error=missing_code");
+            redirectToSignInError(response, MISSING_CODE_ERROR);
             return;
         }
         if (state == null || state.isBlank()) {
             log.warn("auth.google.callback.missing-state");
-            response.sendRedirect(frontendUrl + "/signin?error=invalid_state");
+            redirectToSignInError(response, INVALID_STATE_ERROR);
             return;
         }
         String stored = oAuthStateCache.consume(state);
         if (stored == null) {
             log.warn("auth.google.callback.invalid-state");
-            response.sendRedirect(frontendUrl + "/signin?error=invalid_state");
+            redirectToSignInError(response, INVALID_STATE_ERROR);
             return;
         }
         try {
@@ -156,8 +161,30 @@ public class AuthEndpoint {
                 + "&refreshToken=" + urlEncode(tokens.getRefreshToken());
     }
 
+    private static String generateStateNonce() {
+        byte[] nonceBytes = new byte[16];
+        SECURE_RANDOM.nextBytes(nonceBytes);
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(nonceBytes);
+    }
+
+    private void redirectToSignInError(HttpServletResponse response,
+                                       String errorCode) throws IOException {
+        response.sendRedirect(buildSignInErrorRedirect(frontendUrl, errorCode));
+    }
+
     private static String urlEncode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private static String buildSignInErrorRedirect(String frontendBaseUrl,
+                                                   String errorCode) {
+        return UriComponentsBuilder.fromUriString(frontendBaseUrl)
+                .path(SIGN_IN_PATH)
+                .queryParam(ERROR_QUERY_PARAM, errorCode)
+                .build(true)
+                .toUriString();
     }
 
     private static String buildFrontendErrorRedirect(String callbackBase,
@@ -167,18 +194,18 @@ public class AuthEndpoint {
             URI frontendUri = new URI(frontendBaseUrl);
             UriComponentsBuilder redirectBuilder = UriComponentsBuilder
                     .fromUri(frontendUri)
-                    .path("/signin")
-                    .queryParam("error", "auth_failed");
+                    .path(SIGN_IN_PATH)
+                    .queryParam(ERROR_QUERY_PARAM, AUTH_FAILED_ERROR);
             String next = UriComponentsBuilder.fromUri(callbackUri)
                     .build()
                     .getQueryParams()
-                    .getFirst("next");
+                    .getFirst(NEXT_QUERY_PARAM);
             if (next != null && !next.isBlank()) {
-                redirectBuilder.queryParam("next", next);
+                redirectBuilder.queryParam(NEXT_QUERY_PARAM, next);
             }
             return redirectBuilder.build(true).toUriString();
         } catch (URISyntaxException e) {
-            return frontendBaseUrl + "/signin?error=" + urlEncode("auth_failed");
+            return buildSignInErrorRedirect(frontendBaseUrl, AUTH_FAILED_ERROR);
         }
     }
 }

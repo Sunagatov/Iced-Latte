@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.review.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.api.ProductReviewsProvider;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
+@RequestMapping(ApiPaths.USERS)
 public class UserReviewEndpoint {
 
     private final ProductReviewsProvider productReviewsProvider;

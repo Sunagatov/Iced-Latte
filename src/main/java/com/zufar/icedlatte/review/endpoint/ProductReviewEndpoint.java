@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.review.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewLikeDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
@@ -36,7 +37,7 @@ import java.util.UUID;
 @RequestMapping(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
 public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.product.review.api.ProductReviewApi {
 
-    public static final String PRODUCT_REVIEW_URL = "/api/v1/products/";
+    public static final String PRODUCT_REVIEW_URL = ApiPaths.PRODUCTS;
 
     private final ProductReviewCreator productReviewCreator;
     private final ProductReviewDeleter productReviewDeleter;
