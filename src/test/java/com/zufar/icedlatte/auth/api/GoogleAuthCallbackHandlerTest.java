@@ -97,23 +97,26 @@ class GoogleAuthCallbackHandlerTest {
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
 
         ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
-        verify(userRepository, times(2)).save(savedUsers.capture());
-        UserEntity initiallySaved = savedUsers.getAllValues().getFirst();
-        UserEntity finalSaved = savedUsers.getAllValues().getLast();
+        verify(userRepository).save(savedUsers.capture());
+        UserEntity savedUser = savedUsers.getValue();
 
-        assertThat(initiallySaved.getFirstName()).isEqualTo("New");
-        assertThat(initiallySaved.getLastName()).isEqualTo("User");
-        assertThat(initiallySaved.getEmail()).isEqualTo("new@example.com");
-        assertThat(initiallySaved.getPassword()).isEqualTo("encoded-random-password");
-        assertThat(initiallySaved.isOauthUser()).isTrue();
-        assertThat(initiallySaved.isAccountNonExpired()).isTrue();
-        assertThat(initiallySaved.isAccountNonLocked()).isTrue();
-        assertThat(initiallySaved.isCredentialsNonExpired()).isTrue();
-        assertThat(initiallySaved.isEnabled()).isTrue();
-        assertThat(finalSaved.getAuthorities())
+        assertThat(savedUser.getFirstName()).isEqualTo("New");
+        assertThat(savedUser.getLastName()).isEqualTo("User");
+        assertThat(savedUser.getEmail()).isEqualTo("new@example.com");
+        assertThat(savedUser.getPassword()).isEqualTo("encoded-random-password");
+        assertThat(savedUser.isOauthUser()).isTrue();
+        assertThat(savedUser.isAccountNonExpired()).isTrue();
+        assertThat(savedUser.isAccountNonLocked()).isTrue();
+        assertThat(savedUser.isCredentialsNonExpired()).isTrue();
+        assertThat(savedUser.isEnabled()).isTrue();
+        assertThat(savedUser.getAuthorities())
                 .singleElement()
                 .extracting(UserGrantedAuthority::getAuthority)
                 .isEqualTo(Authority.USER.name());
+        assertThat(savedUser.getAuthorities())
+                .singleElement()
+                .extracting(UserGrantedAuthority::getUser)
+                .isSameAs(savedUser);
     }
 
     @Test

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -67,13 +66,10 @@ public class GoogleAuthCallbackHandler {
                 .credentialsNonExpired(true)
                 .enabled(true)
                 .build();
-        UserEntity saved = userRepository.save(user);
-        UserGrantedAuthority authority = UserGrantedAuthority.builder()
+        user.addAuthority(UserGrantedAuthority.builder()
                 .authority(Authority.USER)
-                .user(saved)
-                .build();
-        saved.setAuthorities(Set.of(authority));
-        userRepository.save(saved);
+                .build());
+        UserEntity saved = userRepository.save(user);
         log.info("user.registered.google: userId={}", saved.getId());
         return saved;
     }
