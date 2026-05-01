@@ -19,9 +19,9 @@ import static org.mockito.Mockito.when;
 @DisplayName("TokenManager unit tests")
 class TokenManagerTest {
 
-    @Mock private TokenCache tokenCache;
+    @Mock private EmailTokenCache tokenCache;
     @Mock private TokenGenerator tokenGenerator;
-    @Mock private TokenTimeExpirationCache tokenTimeExpirationCache;
+    @Mock private EmailTokenCooldownCache tokenTimeExpirationCache;
 
     @InjectMocks private TokenManager tokenManager;
 

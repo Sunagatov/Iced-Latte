@@ -11,7 +11,7 @@ import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
-public class EmailTokenCache implements TokenCache {
+public class EmailTokenCache {
 
     private static final String KEY_PREFIX = "email:token:";
 
@@ -20,7 +20,6 @@ public class EmailTokenCache implements TokenCache {
     @Value("${temporary-cache.time.token}")
     private int expireTimeMinutes;
 
-    @Override
     public void addToken(String tokenKey,
                          UserRegistrationRequest request,
                          TokenPurpose purpose) {
@@ -29,7 +28,6 @@ public class EmailTokenCache implements TokenCache {
                 Duration.ofMinutes(expireTimeMinutes));
     }
 
-    @Override
     public UserRegistrationRequest getToken(String tokenKey,
                                             TokenPurpose expectedPurpose) {
         TokenEntry entry = temporaryStore.get(namespacedKey(tokenKey), TokenEntry.class)
@@ -40,7 +38,6 @@ public class EmailTokenCache implements TokenCache {
         return entry.request();
     }
 
-    @Override
     public void removeToken(String tokenKey) {
         temporaryStore.remove(namespacedKey(tokenKey));
     }

@@ -13,10 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DisplayName("TokenCache unit tests")
+@DisplayName("EmailTokenCache contract tests")
 class TokenCacheTest {
 
-    private TokenCache tokenCache;
+    private EmailTokenCache tokenCache;
     private UserRegistrationRequest request;
 
     @BeforeEach

@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 class JwtRefreshTokenValidatorTest {
 
     @Mock private JwtTokenFromAuthHeaderExtractor tokenExtractor;
-    @Mock private JwtBlacklistService blacklistService;
+    @Mock private JwtBlacklistStore blacklistService;
 
     private JwtRefreshTokenValidator validator;
 

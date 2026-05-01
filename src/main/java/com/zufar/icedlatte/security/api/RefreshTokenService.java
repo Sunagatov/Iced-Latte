@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RefreshTokenService {
 
     private final JwtRefreshTokenValidator jwtRefreshTokenValidator;
-    private final JwtBlacklistService jwtBlacklistService;
+    private final JwtBlacklistStore jwtBlacklistService;
     private final UserDetailsService userDetailsService;
     private final AuthSessionService authSessionService;
     private final SessionTokenService sessionTokenService;

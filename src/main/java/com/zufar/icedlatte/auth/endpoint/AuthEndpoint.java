@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.auth.endpoint;
 
 import com.zufar.icedlatte.auth.api.GoogleAuthCallbackHandler;
-import com.zufar.icedlatte.auth.api.OAuthStateCache;
+import com.zufar.icedlatte.auth.api.OAuthStateStore;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,12 +55,12 @@ public class AuthEndpoint {
     private String frontendUrl;
 
     private final GoogleAuthCallbackHandler googleAuthCallbackHandler;
-    private final OAuthStateCache oAuthStateCache;
+    private final OAuthStateStore oAuthStateCache;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public AuthEndpoint(@Autowired(required = false) GoogleAuthCallbackHandler googleAuthCallbackHandler,
-                        OAuthStateCache oAuthStateCache) {
+                        OAuthStateStore oAuthStateCache) {
         this.googleAuthCallbackHandler = googleAuthCallbackHandler;
         this.oAuthStateCache = oAuthStateCache;
     }

@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 @DisplayName("SessionTokenService unit tests")
 class SessionTokenServiceTest {
 
-    @Mock private JwtBlacklistService jwtBlacklistService;
+    @Mock private JwtBlacklistStore jwtBlacklistService;
     @Mock private JwtBlacklistValidator jwtBlacklistValidator;
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private AuthSessionService authSessionService;

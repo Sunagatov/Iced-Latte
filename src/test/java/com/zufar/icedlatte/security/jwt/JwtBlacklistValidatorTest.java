@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 class JwtBlacklistValidatorTest {
 
     @Mock
-    private JwtBlacklistService blacklistService;
+    private JwtBlacklistStore blacklistService;
 
     @InjectMocks
     private JwtBlacklistValidator jwtBlacklistValidator;

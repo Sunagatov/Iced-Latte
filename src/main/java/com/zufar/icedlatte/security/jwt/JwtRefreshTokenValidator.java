@@ -16,11 +16,11 @@ public class JwtRefreshTokenValidator {
 
     private final JwtParser refreshParser;
     private final JwtTokenFromAuthHeaderExtractor tokenExtractor;
-    private final JwtBlacklistService blacklistService;
+    private final JwtBlacklistStore blacklistService;
 
     public JwtRefreshTokenValidator(JwtSignKeyProvider keyProvider,
                                     JwtTokenFromAuthHeaderExtractor tokenExtractor,
-                                    JwtBlacklistService blacklistService) {
+                                    JwtBlacklistStore blacklistService) {
         this.refreshParser = Jwts.parser().verifyWith(keyProvider.getRefresh()).build();
         this.tokenExtractor = tokenExtractor;
         this.blacklistService = blacklistService;

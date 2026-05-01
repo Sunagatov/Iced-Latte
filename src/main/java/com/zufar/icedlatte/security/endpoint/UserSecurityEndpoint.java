@@ -8,24 +8,15 @@ import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
-import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.security.api.LogoutService;
-import com.zufar.icedlatte.security.api.PasswordResetService;
-import com.zufar.icedlatte.security.api.RefreshTokenService;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.api.SessionTokenService;
-import com.zufar.icedlatte.security.api.UserAuthenticationService;
+import com.zufar.icedlatte.security.api.UserSecurityService;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
-import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.email.api.EmailTokenConformer;
-import com.zufar.icedlatte.email.api.EmailTokenSender;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,88 +39,68 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     public static final String USER_SECURITY_API_URL = AuthPaths.ROOT;
 
-    private final UserAuthenticationService userAuthenticationService;
-    private final SessionTokenService sessionTokenService;
-    private final EmailTokenSender emailTokenSender;
-    private final EmailTokenConformer emailTokenConformer;
-    private final AuthSessionService authSessionService;
+    private final UserSecurityService userSecurityService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final RefreshTokenService refreshTokenService;
-    private final LogoutService logoutService;
-    private final PasswordResetService passwordResetService;
     private final HttpServletRequest httpRequest;
 
     @Override
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
-        log.debug("auth.register.processing");
-        emailTokenSender.sendEmailVerificationCode(request);
-        log.debug("auth.register.email_sent");
+        userSecurityService.requestRegistration(request);
         return ResponseEntity.ok("Email verification token sent");
     }
 
     @Override
     @PostMapping("/confirm")
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(@Validated @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        log.debug("auth.email.confirming");
-        var response = emailTokenConformer.confirmEmailByCode(confirmEmailRequest, httpRequest);
-        log.info("auth.email.confirmed");
+        var response = userSecurityService.confirmEmail(confirmEmailRequest, httpRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
-        UserDetails userDetails = userAuthenticationService.verifyCredentials(request);
-        return ResponseEntity.ok(authenticateUser(userDetails));
+        return ResponseEntity.ok(userSecurityService.authenticate(request, httpRequest));
     }
 
     @Override
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
-        return refreshTokenService.refresh(httpRequest);
+        return userSecurityService.refresh(httpRequest);
     }
 
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(name = "X-Refresh-Token", required = false)
                                        String xRefreshToken) {
-        logoutService.logout(xRefreshToken, httpRequest);
+        userSecurityService.logout(xRefreshToken, httpRequest);
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping("/logout-all")
     public ResponseEntity<Void> logoutAll() {
-        log.debug("auth.logout_all.processing");
-        logoutService.logoutAll(securityPrincipalProvider.getUserId());
+        userSecurityService.logoutAll(securityPrincipalProvider.getUserId());
         return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionInfo>> getSessions() {
-        UUID userId = securityPrincipalProvider.getUserId();
-        List<SessionInfo> sessions = authSessionService.listActiveSessions(userId).stream()
-                .map(this::toSessionInfo)
-                .toList();
-        return ResponseEntity.ok(sessions);
+        return ResponseEntity.ok(userSecurityService.getSessions(securityPrincipalProvider.getUserId()));
     }
 
     @Override
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> revokeSession(@PathVariable UUID sessionId) {
-        UUID userId = securityPrincipalProvider.getUserId();
-        authSessionService.revokeById(sessionId, userId);
-        log.info("auth.session.revoked_remote: sessionId={}, userId={}", sessionId, userId);
+        userSecurityService.revokeSession(sessionId, securityPrincipalProvider.getUserId());
         return ResponseEntity.noContent().build();
     }
 
     @Override
     @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        log.debug("auth.password.forgot.processing");
-        passwordResetService.requestReset(request.getEmail());
+        userSecurityService.requestPasswordReset(request);
         return ResponseEntity.ok().build();
     }
 
@@ -137,21 +108,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        passwordResetService.confirmReset(request.getCode(), request.getPassword());
+        userSecurityService.confirmPasswordReset(request);
         return ResponseEntity.ok().build();
-    }
-
-    private UserAuthenticationResponse authenticateUser(UserDetails userDetails) {
-        return sessionTokenService.issueForNewSession(userDetails, httpRequest);
-    }
-
-    private SessionInfo toSessionInfo(AuthSessionEntity session) {
-        return new SessionInfo()
-                .sessionId(session.getId())
-                .createdAt(session.getCreatedAt())
-                .expiresAt(session.getExpiresAt())
-                .lastUsedAt(session.getLastUsedAt())
-                .userAgent(session.getUserAgent())
-                .ipAddress(session.getIpAddress());
     }
 }

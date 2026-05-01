@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 public class TokenRevocationService {
 
     private final JwtRefreshTokenValidator jwtRefreshTokenValidator;
-    private final JwtBlacklistService jwtBlacklistService;
+    private final JwtBlacklistStore jwtBlacklistService;
     private final JwtBlacklistValidator jwtBlacklistValidator;
     private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
     private final AuthSessionService authSessionService;

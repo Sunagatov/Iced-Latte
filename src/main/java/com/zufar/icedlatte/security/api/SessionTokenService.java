@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class SessionTokenService {
 
-    private final JwtBlacklistService jwtBlacklistService;
+    private final JwtBlacklistStore jwtBlacklistService;
     private final JwtBlacklistValidator jwtBlacklistValidator;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;

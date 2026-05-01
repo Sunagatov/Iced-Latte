@@ -11,10 +11,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DisplayName("TokenTimeExpirationCache unit tests")
+@DisplayName("EmailTokenCooldownCache contract tests")
 class TokenTimeExpirationCacheTest {
 
-    private TokenTimeExpirationCache cache;
+    private EmailTokenCooldownCache cache;
 
     @BeforeEach
     void setUp() {

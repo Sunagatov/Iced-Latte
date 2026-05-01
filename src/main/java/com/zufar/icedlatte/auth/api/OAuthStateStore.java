@@ -9,7 +9,7 @@ import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
-public class OAuthStateStore implements OAuthStateCache {
+public class OAuthStateStore {
 
     private static final String KEY_PREFIX = "oauth:state:";
 
@@ -18,12 +18,10 @@ public class OAuthStateStore implements OAuthStateCache {
     @Value("${oauth.state-ttl-minutes:10}")
     private int ttlMinutes;
 
-    @Override
     public void store(String nonce, String callbackBase) {
         temporaryStore.put(namespacedKey(nonce), callbackBase, Duration.ofMinutes(ttlMinutes));
     }
 
-    @Override
     public String consume(String nonce) {
         return temporaryStore.take(namespacedKey(nonce), String.class).orElse(null);
     }

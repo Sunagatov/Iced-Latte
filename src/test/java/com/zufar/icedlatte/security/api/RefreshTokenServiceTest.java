@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.api;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 class RefreshTokenServiceTest {
 
     @Mock private JwtRefreshTokenValidator jwtRefreshTokenValidator;
-    @Mock private JwtBlacklistService jwtBlacklistService;
+    @Mock private JwtBlacklistStore jwtBlacklistService;
     @Mock private UserDetailsService userDetailsService;
     @Mock private AuthSessionService authSessionService;
     @Mock private SessionTokenService sessionTokenService;

@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistService;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistStore;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtRefreshTokenValidator;
 import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class TokenRevocationServiceTest {
 
     @Mock private JwtRefreshTokenValidator jwtRefreshTokenValidator;
-    @Mock private JwtBlacklistService jwtBlacklistService;
+    @Mock private JwtBlacklistStore jwtBlacklistService;
     @Mock private JwtBlacklistValidator jwtBlacklistValidator;
     @Mock private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
     @Mock private AuthSessionService authSessionService;

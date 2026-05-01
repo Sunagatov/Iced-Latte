@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 
 @Component
 @RequiredArgsConstructor
-public class EmailTokenCooldownCache implements TokenTimeExpirationCache {
+public class EmailTokenCooldownCache {
 
     private static final String KEY_PREFIX = "email:rate:";
 
@@ -20,13 +20,11 @@ public class EmailTokenCooldownCache implements TokenTimeExpirationCache {
     @Value("${temporary-cache.time.token}")
     private int expireTimeMinutes;
 
-    @Override
     public void manageEmailSendingRate(String email) {
         Duration ttl = Duration.ofMinutes(expireTimeMinutes);
         temporaryStore.put(namespacedKey(email), OffsetDateTime.now().plus(ttl).toString(), ttl);
     }
 
-    @Override
     public void validateTimeToken(String email) {
         temporaryStore.get(namespacedKey(email), String.class)
                 .map(OffsetDateTime::parse)
@@ -35,7 +33,6 @@ public class EmailTokenCooldownCache implements TokenTimeExpirationCache {
                 });
     }
 
-    @Override
     public void removeToken(String email) {
         temporaryStore.remove(namespacedKey(email));
     }

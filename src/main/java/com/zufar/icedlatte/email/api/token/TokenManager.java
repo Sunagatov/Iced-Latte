@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TokenManager {
 
-    private final TokenCache tokenCache;
+    private final EmailTokenCache tokenCache;
     private final TokenGenerator tokenGenerator;
-    private final TokenTimeExpirationCache tokenTimeExpirationCache;
+    private final EmailTokenCooldownCache tokenTimeExpirationCache;
 
     public String generateToken(final UserRegistrationRequest request,
                                 final TokenPurpose purpose) {

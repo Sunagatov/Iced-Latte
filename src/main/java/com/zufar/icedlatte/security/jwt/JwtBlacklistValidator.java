@@ -11,7 +11,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class JwtBlacklistValidator {
 
-    private final JwtBlacklistService blacklistService;
+    private final JwtBlacklistStore blacklistService;
 
     public void addToBlacklist(String token) {
         if (!StringUtils.hasText(token)) {
