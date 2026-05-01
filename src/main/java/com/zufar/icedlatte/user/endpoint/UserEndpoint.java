@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.user.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.filestorage.file.*;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.*;
 import com.zufar.icedlatte.user.api.*;
 import com.zufar.icedlatte.user.api.avatar.*;
-import com.zufar.icedlatte.filestorage.file.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,28 +25,25 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     public static final String API_CUSTOMERS = ApiPaths.USERS;
 
-    private final UpdateUserOperationPerformer updateUserOperationPerformer;
-    private final SingleUserProvider singleUserProvider;
+    private final UserProfileService userProfileService;
     private final ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
-    private final UserAccountService userAccountService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final FileDeleter fileDeleter;
-    private final UserAvatarLinkProvider userAvatarLinkProvider;
 
     @Override
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
         log.debug("user.profile.get: userId={}", userId);
-        return ResponseEntity.ok(singleUserProvider.getUserById(userId));
+        return ResponseEntity.ok(userProfileService.getUserProfile(userId));
     }
 
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
         var userId = securityPrincipalProvider.getUserId();
-        UserDto updated = updateUserOperationPerformer.updateUser(userId, updateUserAccountRequest);
+        UserDto updated = userProfileService.updateUserProfile(userId, updateUserAccountRequest);
         log.info("user.profile.updated: userId={}", userId);
         return ResponseEntity.ok(updated);
     }
@@ -64,7 +61,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
         var userId = securityPrincipalProvider.getUserId();
-        userAccountService.deleteUser(userId);
+        userProfileService.deleteUserProfile(userId);
         log.info("user.account.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
     }
@@ -83,8 +80,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<String> getUserAvatarLink() {
         var userId = securityPrincipalProvider.getUserId();
         log.debug("user.avatar.get: userId={}", userId);
-        String link = userAvatarLinkProvider.getLink(userId);
-        return link != null ? ResponseEntity.ok(link) : ResponseEntity.notFound().build();
+        return userProfileService.getAvatarLink(userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Override

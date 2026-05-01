@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.api;
 
+import com.zufar.icedlatte.filestorage.file.FileProvider;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,30 +30,54 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("User operation performer unit tests")
-class UserOperationPerformerTest {
+@DisplayName("UserProfileService unit tests")
+class UserProfileServiceTest {
 
+    @Mock
+    private SingleUserProvider singleUserProvider;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private UserDtoConverter userDtoConverter;
+    @Mock
+    private AddressDtoConverter addressDtoConverter;
+    @Mock
+    @SuppressWarnings("unused")
+    private PutUsersRequestValidator putUsersRequestValidator;
+    @Mock
+    private FileProvider fileProvider;
+
+    @InjectMocks
+    private UserProfileService userProfileService;
 
     @Nested
-    @DisplayName("UpdateUserOperationPerformer")
-    class UpdateTests {
-
-        @Mock
-        private SingleUserProvider singleUserProvider;
-        @Mock
-        private UserRepository userCrudRepository;
-        @Mock
-        private UserDtoConverter userDtoConverter;
-        @Mock
-        private AddressDtoConverter addressDtoConverter;
-        @Mock
-        @SuppressWarnings("unused") // required by @InjectMocks, validate() is void — no stubbing needed
-        private PutUsersRequestValidator putUsersRequestValidator;
-        @InjectMocks
-        private UpdateUserOperationPerformer updater;
+    @DisplayName("getUserProfile")
+    class GetUserProfile {
 
         @Test
-        @DisplayName("Updates user fields and returns DTO")
+        @DisplayName("returns converted dto with avatar link when user exists")
+        void returnsConvertedDtoWithAvatarLink() {
+            UUID userId = UUID.randomUUID();
+            UserEntity userEntity = UserEntity.builder().id(userId).build();
+            UserDto userDto = new UserDto();
+
+            when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
+            when(userDtoConverter.toDto(userEntity)).thenReturn(userDto);
+            when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
+
+            UserDto result = userProfileService.getUserProfile(userId);
+
+            assertThat(result).isSameAs(userDto);
+            assertThat(result.getAvatarLink()).isEqualTo("https://cdn.example.com/avatar.jpg");
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserProfile")
+    class UpdateUserProfile {
+
+        @Test
+        @DisplayName("updates user fields and returns dto")
         void updateUser_validRequest_updatesAndReturnsDto() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder().id(userId).build();
@@ -74,28 +100,31 @@ class UserOperationPerformerTest {
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(addressDtoConverter.toEntity(addressDto)).thenReturn(address);
-            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(expectedDto);
+            when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
 
-            UserDto result = updater.updateUser(userId, request);
+            UserDto result = userProfileService.updateUserProfile(userId, request);
 
             assertThat(result).isEqualTo(expectedDto);
+            assertThat(result.getAvatarLink()).isEqualTo("https://cdn.example.com/avatar.jpg");
             assertThat(userEntity.getFirstName()).isEqualTo("Alice");
             assertThat(userEntity.getLastName()).isEqualTo("Smith");
             assertThat(userEntity.getPhoneNumber()).isEqualTo("+1234567890");
             assertThat(userEntity.getBirthDate()).isEqualTo(birthDate);
             assertThat(userEntity.getAddress()).isEqualTo(address);
             verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
-            var inOrder = inOrder(putUsersRequestValidator, singleUserProvider, addressDtoConverter, userCrudRepository, userDtoConverter);
+            var inOrder = inOrder(putUsersRequestValidator, singleUserProvider, addressDtoConverter, userRepository, userDtoConverter, fileProvider);
             inOrder.verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
             inOrder.verify(singleUserProvider).getUserEntityById(userId);
             inOrder.verify(addressDtoConverter).toEntity(addressDto);
-            inOrder.verify(userCrudRepository).save(userEntity);
+            inOrder.verify(userRepository).save(userEntity);
             inOrder.verify(userDtoConverter).toDto(userEntity);
+            inOrder.verify(fileProvider).getRelatedObjectUrl(userId);
         }
 
         @Test
-        @DisplayName("Handles null address without NPE")
+        @DisplayName("handles null address without conversion")
         void updateUser_nullAddress_setsNullAddress() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder().id(userId).build();
@@ -106,10 +135,11 @@ class UserOperationPerformerTest {
             request.setAddress(null);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
+            when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.empty());
 
-            updater.updateUser(userId, request);
+            userProfileService.updateUserProfile(userId, request);
 
             assertThat(userEntity.getAddress()).isNull();
             verify(addressDtoConverter, never()).toEntity(org.mockito.ArgumentMatchers.any());
@@ -117,7 +147,7 @@ class UserOperationPerformerTest {
         }
 
         @Test
-        @DisplayName("Treats a blank address payload as absent and skips address conversion")
+        @DisplayName("treats blank address payload as absent")
         void updateUser_blankAddressPayload_skipsAddressConversion() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder()
@@ -138,10 +168,11 @@ class UserOperationPerformerTest {
             request.setAddress(blankAddress);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
+            when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.empty());
 
-            updater.updateUser(userId, request);
+            userProfileService.updateUserProfile(userId, request);
 
             assertThat(userEntity.getAddress()).isNull();
             verify(addressDtoConverter, never()).toEntity(blankAddress);
@@ -149,7 +180,7 @@ class UserOperationPerformerTest {
         }
 
         @Test
-        @DisplayName("Converts partially filled address payloads instead of dropping them")
+        @DisplayName("converts partially filled address payloads")
         void updateUser_partialAddressPayload_convertsAddress() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder().id(userId).build();
@@ -164,14 +195,35 @@ class UserOperationPerformerTest {
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(addressDtoConverter.toEntity(partialAddress)).thenReturn(mappedAddress);
-            when(userCrudRepository.save(userEntity)).thenReturn(userEntity);
+            when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
+            when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(Optional.empty());
 
-            updater.updateUser(userId, request);
+            userProfileService.updateUserProfile(userId, request);
 
             assertThat(userEntity.getAddress()).isSameAs(mappedAddress);
             verify(addressDtoConverter).toEntity(partialAddress);
             verifyNoMoreInteractions(addressDtoConverter);
         }
+    }
+
+    @Test
+    @DisplayName("deleteUserProfile delegates to repository")
+    void deleteUserProfileDelegatesToRepository() {
+        UUID userId = UUID.randomUUID();
+
+        userProfileService.deleteUserProfile(userId);
+
+        verify(userRepository).deleteById(userId);
+    }
+
+    @Test
+    @DisplayName("getAvatarLink delegates to file provider")
+    void getAvatarLinkDelegatesToFileProvider() {
+        UUID userId = UUID.randomUUID();
+        Optional<String> avatarLink = Optional.of("https://cdn.example.com/avatar.jpg");
+        when(fileProvider.getRelatedObjectUrl(userId)).thenReturn(avatarLink);
+
+        assertThat(userProfileService.getAvatarLink(userId)).isEqualTo(avatarLink);
     }
 }

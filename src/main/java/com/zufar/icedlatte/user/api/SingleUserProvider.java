@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.user.api;
 
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -16,16 +14,6 @@ import java.util.UUID;
 public class SingleUserProvider {
 
     private final UserRepository userCrudRepository;
-    private final UserDtoConverter userDtoConverter;
-    private final UserAvatarLinkUpdater userAvatarLinkUpdater;
-
-    @Transactional(readOnly = true)
-    public UserDto getUserById(final UUID userId) throws UserNotFoundException {
-        return userCrudRepository.findById(userId)
-                .map(userDtoConverter::toDto)
-                .map(userAvatarLinkUpdater::update)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-    }
 
     @Transactional(readOnly = true)
     public UserEntity getUserEntityById(final UUID userId) throws UserNotFoundException {

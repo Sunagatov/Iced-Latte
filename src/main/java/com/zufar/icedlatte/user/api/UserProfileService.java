@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.api;
 
+import com.zufar.icedlatte.filestorage.file.FileProvider;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
@@ -15,26 +16,49 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UpdateUserOperationPerformer {
+public class UserProfileService {
 
     private final SingleUserProvider singleUserProvider;
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
     private final AddressDtoConverter addressDtoConverter;
     private final PutUsersRequestValidator putUsersRequestValidator;
+    private final FileProvider fileProvider;
+
+    @Transactional(readOnly = true)
+    public UserDto getUserProfile(UUID userId) {
+        return toUserProfile(singleUserProvider.getUserEntityById(userId));
+    }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public UserDto updateUser(final UUID userId, final UpdateUserAccountRequest updateUserAccountRequest) {
-        AddressDto addressDto = updateUserAccountRequest.getAddress();
-        validate(updateUserAccountRequest, addressDto);
+    public UserDto updateUserProfile(UUID userId, UpdateUserAccountRequest request) {
+        AddressDto addressDto = request.getAddress();
+        validate(request, addressDto);
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
-        applyUpdates(userEntity, updateUserAccountRequest, mapAddress(addressDto));
+        applyUpdates(userEntity, request, mapAddress(addressDto));
         UserEntity savedUser = userRepository.save(userEntity);
-        return userDtoConverter.toDto(savedUser);
+        return toUserProfile(savedUser);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void deleteUserProfile(UUID userId) {
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> getAvatarLink(UUID userId) {
+        return fileProvider.getRelatedObjectUrl(userId);
+    }
+
+    private UserDto toUserProfile(UserEntity userEntity) {
+        UserDto userDto = userDtoConverter.toDto(userEntity);
+        userDto.setAvatarLink(getAvatarLink(userEntity.getId()).orElse(null));
+        return userDto;
     }
 
     private void validate(UpdateUserAccountRequest request, AddressDto addressDto) {
@@ -62,7 +86,9 @@ public class UpdateUserOperationPerformer {
     }
 
     private boolean isAddressEmpty(AddressDto addressDto) {
-        if (addressDto == null) return true;
+        if (addressDto == null) {
+            return true;
+        }
         return isBlank(addressDto.getCountry())
                 && isBlank(addressDto.getCity())
                 && isBlank(addressDto.getLine())
