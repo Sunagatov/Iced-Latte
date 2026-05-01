@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.validator;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
@@ -31,7 +31,7 @@ class ProductReviewValidatorTest {
     @Mock
     private ProductReviewRepository productReviewRepository;
     @Mock
-    private ProductInfoRepository productInfoRepository;
+    private ProductReviewProductGateway productReviewProductGateway;
     @InjectMocks
     private ProductReviewValidator validator;
 
@@ -70,7 +70,7 @@ class ProductReviewValidatorTest {
     @DisplayName("validateProductExists: existing product passes")
     void validateProductExistsProductFoundNoException() {
         UUID productId = UUID.randomUUID();
-        when(productInfoRepository.findById(productId)).thenReturn(Optional.of(new com.zufar.icedlatte.product.entity.ProductInfo()));
+        when(productReviewProductGateway.exists(productId)).thenReturn(true);
 
         assertThatCode(() -> validator.validateProductExists(productId)).doesNotThrowAnyException();
     }
@@ -79,7 +79,7 @@ class ProductReviewValidatorTest {
     @DisplayName("validateProductExists: missing product throws ProductNotFoundForReviewException")
     void validateProductExistsProductNotFoundThrowsProductNotFoundForReviewException() {
         UUID productId = UUID.randomUUID();
-        when(productInfoRepository.findById(productId)).thenReturn(Optional.empty());
+        when(productReviewProductGateway.exists(productId)).thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductExists(productId))
                 .isInstanceOf(ProductNotFoundForReviewException.class);
@@ -146,7 +146,7 @@ class ProductReviewValidatorTest {
     void validateProductIdIsValidReviewBelongsToProductNoException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        when(productInfoRepository.existsById(productId)).thenReturn(true);
+        when(productReviewProductGateway.exists(productId)).thenReturn(true);
         when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(true);
 
         assertThatCode(() -> validator.validateProductIdIsValid(productId, reviewId)).doesNotThrowAnyException();
@@ -157,7 +157,7 @@ class ProductReviewValidatorTest {
     void validateProductIdIsValidProductMissingThrowsProductNotFoundForReviewException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        when(productInfoRepository.existsById(productId)).thenReturn(false);
+        when(productReviewProductGateway.exists(productId)).thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
                 .isInstanceOf(ProductNotFoundForReviewException.class);
@@ -168,7 +168,7 @@ class ProductReviewValidatorTest {
     void validateProductIdIsValidReviewMissingThrowsProductReviewNotFoundException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        when(productInfoRepository.existsById(productId)).thenReturn(true);
+        when(productReviewProductGateway.exists(productId)).thenReturn(true);
         when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
@@ -180,7 +180,7 @@ class ProductReviewValidatorTest {
     void validateProductIdIsValidReviewBelongsToDifferentProductThrowsProductReviewNotFoundException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        when(productInfoRepository.existsById(productId)).thenReturn(true);
+        when(productReviewProductGateway.exists(productId)).thenReturn(true);
         when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))

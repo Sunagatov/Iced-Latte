@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -47,26 +46,13 @@ class GlobalExceptionHandlerTest {
     private GlobalExceptionHandler handler;
 
     @Nested
-    @DisplayName("resource and generic exceptions")
-    class ResourceAndGenericExceptions {
-
-        @Test
-        @DisplayName("returns 404 for resource not found")
-        void returns404ForResourceNotFound() {
-            ResourceNotFoundException ex = new ResourceNotFoundException("not found");
-            when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(stub(404));
-
-            ApiErrorResponse result = handler.handleResourceNotFoundException(ex);
-
-            assertThat(result.httpStatusCode()).isEqualTo(404);
-            verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
-            verifyNoMoreInteractions(apiErrorResponseCreator);
-        }
+    @DisplayName("generic exceptions")
+    class GenericExceptions {
 
         @Test
         @DisplayName("returns 404 for missing static resource")
         void returns404ForMissingStaticResource() {
-            NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/missing", null);
+            NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/missing", "classpath:/static/");
             when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(stub(404));
 
             ApiErrorResponse result = handler.handleNoResourceFoundException(ex);
@@ -97,7 +83,7 @@ class GlobalExceptionHandlerTest {
         @Test
         @DisplayName("returns validation response for constraint violations")
         void returnsValidationResponseForConstraintViolations() {
-            ConstraintViolation<?> violation = violation("pageSize", "must be greater than 0");
+            ConstraintViolation<?> violation = pageSizeViolation();
             ConstraintViolationException ex = new ConstraintViolationException("violation", Set.of(violation));
 
             ApiErrorResponse result = handler.handleConstraintViolationException(ex);
@@ -219,12 +205,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static ConstraintViolation<?> violation(String path, String message) {
+    private static ConstraintViolation<?> pageSizeViolation() {
         ConstraintViolation<Object> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
         Path propertyPath = org.mockito.Mockito.mock(Path.class);
-        when(propertyPath.toString()).thenReturn(path);
+        when(propertyPath.toString()).thenReturn("pageSize");
         when(violation.getPropertyPath()).thenReturn(propertyPath);
-        when(violation.getMessage()).thenReturn(message);
+        when(violation.getMessage()).thenReturn("must be greater than 0");
         return violation;
     }
 }

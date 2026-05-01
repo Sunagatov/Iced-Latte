@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -48,15 +47,6 @@ public class GlobalExceptionHandler {
                 .timestamp(java.time.LocalDateTime.now())
                 .errors(fieldErrors)
                 .build();
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.debug("exception.resource_not_found: exceptionClass={}, status=404",
-                exception.getClass().getSimpleName());
-        return apiErrorResponse;
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.review.ai;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,7 +29,7 @@ import static org.mockito.Mockito.when;
 class ProductReviewSummaryDebouncerTest {
 
     @Mock private ProductSummaryService productSummaryService;
-    @Mock private ProductInfoRepository productInfoRepository;
+    @Mock private ProductReviewProductGateway productReviewProductGateway;
     @Mock private ApplicationContext applicationContext;
     @Mock private ScheduledExecutorService scheduler;
     @Mock private ScheduledFuture<Object> future;
@@ -95,31 +93,26 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("runSummary saves the generated summary and clears pending state")
     void runSummarySavesGeneratedSummaryAndClearsPendingState() {
         UUID productId = UUID.randomUUID();
-        ProductInfo product = new ProductInfo();
         when(productSummaryService.summarize(productId)).thenReturn("Fresh summary");
-        when(productInfoRepository.findById(productId)).thenReturn(Optional.of(product));
         pending().put(productId, future);
         firstTriggerTime().put(productId, 123L);
 
         debouncer.runSummary(productId);
 
-        assertThat(product.getAiSummary()).isEqualTo("Fresh summary");
-        verify(productInfoRepository).save(product);
+        verify(productReviewProductGateway).updateAiSummary(productId, "Fresh summary");
         assertThat(pending()).doesNotContainKey(productId);
         assertThat(firstTriggerTime()).doesNotContainKey(productId);
     }
 
     @Test
-    @DisplayName("runSummary tolerates missing products after generating the summary")
-    void runSummaryToleratesMissingProductsAfterGeneratingSummary() {
+    @DisplayName("runSummary delegates summary persistence through the product gateway")
+    void runSummaryDelegatesSummaryPersistenceThroughProductGateway() {
         UUID productId = UUID.randomUUID();
         when(productSummaryService.summarize(productId)).thenReturn("Fresh summary");
-        when(productInfoRepository.findById(productId)).thenReturn(Optional.empty());
 
         debouncer.runSummary(productId);
 
-        verify(productInfoRepository).findById(productId);
-        verify(productInfoRepository, org.mockito.Mockito.never()).save(any());
+        verify(productReviewProductGateway).updateAiSummary(productId, "Fresh summary");
     }
 
     @SuppressWarnings("unchecked")

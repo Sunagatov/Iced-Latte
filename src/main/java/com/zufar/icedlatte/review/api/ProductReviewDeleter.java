@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -18,7 +18,7 @@ public class ProductReviewDeleter {
 
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewValidator productReviewValidator;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductReviewProductGateway productReviewProductGateway;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -30,8 +30,7 @@ public class ProductReviewDeleter {
 
         reviewRepository.deleteById(productReviewId);
 
-        productInfoRepository.updateAverageRating(productId);
-        productInfoRepository.updateReviewsCount(productId);
+        productReviewProductGateway.refreshReviewAggregates(productId);
 
         summaryDebouncer.schedule(productId);
     }

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     @Value("${migration.ratings.enabled:false}")
     private boolean enabled;
 
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductReviewProductGateway productReviewProductGateway;
     private final ProductReviewRepository productReviewRepository;
     private final TransactionTemplate transactionTemplate;
 
@@ -37,8 +37,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
                 transactionTemplate.executeWithoutResult(_ -> {
                     log.info("migration.ratings.start");
                     long t0 = System.currentTimeMillis();
-                    productInfoRepository.updateAllAverageRatings();
-                    productInfoRepository.updateAllReviewsCounts();
+                    productReviewProductGateway.refreshAllReviewAggregates();
                     productReviewRepository.updateAllLikesCounts();
                     productReviewRepository.updateAllDislikesCounts();
                     log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);

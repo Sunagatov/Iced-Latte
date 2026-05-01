@@ -2,7 +2,7 @@ package com.zufar.icedlatte.review.api;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
@@ -12,9 +12,9 @@ import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,13 +41,25 @@ class ProductReviewCreatorTest {
     @Mock
     private ProductReviewValidator productReviewValidator;
     @Mock
-    private ProductInfoRepository productInfoRepository;
+    private ProductReviewProductGateway productReviewProductGateway;
     @Mock
     private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
     @Mock
     private ApplicationEventPublisher eventPublisher;
-    @InjectMocks
     private ProductReviewCreator creator;
+
+    @BeforeEach
+    void setUp() {
+        creator = new ProductReviewCreator(
+                reviewRepository,
+                productReviewDtoConverter,
+                singleUserProvider,
+                productReviewValidator,
+                productReviewProductGateway,
+                summaryDebouncer,
+                eventPublisher
+        );
+    }
 
     @Test
     @DisplayName("Creates review, trims text, updates stats, returns DTO")
@@ -76,8 +88,12 @@ class ProductReviewCreatorTest {
         assertThat(captor.getValue().getLikesCount()).isZero();
         assertThat(captor.getValue().getDislikesCount()).isZero();
 
-        verify(productInfoRepository).updateAverageRating(productId);
-        verify(productInfoRepository).updateReviewsCount(productId);
+        verify(summaryDebouncer).schedule(productId);
+        verify(productReviewProductGateway).refreshReviewAggregates(productId);
+        ArgumentCaptor<ReviewCreatedEvent> eventCaptor = ArgumentCaptor.forClass(ReviewCreatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().text()).isEqualTo("Great coffee!");
+        assertThat(eventCaptor.getValue().productId()).isEqualTo(productId);
     }
 
     @Test

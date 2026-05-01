@@ -8,6 +8,7 @@ import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
+import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,6 +91,20 @@ class ProductReviewExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(expected);
 
         ApiErrorResponse result = handler.handleProductNotFoundForReviewException(ex);
+
+        assertThat(result).isEqualTo(expected);
+        verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("handleProductReviewNotFoundException returns NOT_FOUND response")
+    void handleProductReviewNotFound_returnsNotFound() {
+        UUID reviewId = UUID.randomUUID();
+        ProductReviewNotFoundException ex = new ProductReviewNotFoundException(reviewId);
+        ApiErrorResponse expected = new ApiErrorResponse("Review not found", 404, LocalDateTime.now());
+        when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(expected);
+
+        ApiErrorResponse result = handler.handleProductReviewNotFoundException(ex);
 
         assertThat(result).isEqualTo(expected);
         verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);

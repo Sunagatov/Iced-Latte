@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.validator;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class ProductReviewValidator {
 
     private final ProductReviewRepository productReviewRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductReviewProductGateway productReviewProductGateway;
 
     private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
 
@@ -35,7 +35,7 @@ public class ProductReviewValidator {
     }
 
     public void validateProductExists(final UUID productId) {
-        if (productInfoRepository.findById(productId).isEmpty()) {
+        if (!productReviewProductGateway.exists(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
     }
@@ -56,7 +56,7 @@ public class ProductReviewValidator {
     }
 
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
-        if (!productInfoRepository.existsById(productId)) {
+        if (!productReviewProductGateway.exists(productId)) {
             throw new ProductNotFoundForReviewException(productId);
         }
         if (!productReviewRepository.existsByIdAndProductId(productReviewId, productId)) {

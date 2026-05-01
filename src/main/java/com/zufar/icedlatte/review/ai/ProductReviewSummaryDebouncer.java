@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.ai;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class ProductReviewSummaryDebouncer {
     private static final long MAX_WAIT_SEC = 600;
 
     private final ProductSummaryService productSummaryService;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductReviewProductGateway productReviewProductGateway;
     private final ApplicationContext applicationContext;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -63,11 +63,8 @@ public class ProductReviewSummaryDebouncer {
         firstTriggerTime.remove(productId);
         try {
             var summary = productSummaryService.summarize(productId);
-            productInfoRepository.findById(productId).ifPresent(product -> {
-                product.setAiSummary(summary);
-                productInfoRepository.save(product);
-                log.info("product.ai_summary.updated: productId={}", productId);
-            });
+            productReviewProductGateway.updateAiSummary(productId, summary);
+            log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
             log.warn("product.ai_summary.failed: productId={}, exceptionClass={}",
                     productId, e.getClass().getSimpleName());

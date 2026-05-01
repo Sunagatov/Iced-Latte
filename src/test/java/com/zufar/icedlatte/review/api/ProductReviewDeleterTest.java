@@ -1,13 +1,13 @@
 package com.zufar.icedlatte.review.api;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,11 +26,20 @@ class ProductReviewDeleterTest {
     @Mock
     private ProductReviewValidator productReviewValidator;
     @Mock
-    private ProductInfoRepository productInfoRepository;
+    private ProductReviewProductGateway productReviewProductGateway;
     @Mock
     private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
-    @InjectMocks
     private ProductReviewDeleter deleter;
+
+    @BeforeEach
+    void setUp() {
+        deleter = new ProductReviewDeleter(
+                reviewRepository,
+                productReviewValidator,
+                productReviewProductGateway,
+                summaryDebouncer
+        );
+    }
 
     @Test
     @DisplayName("Deletes review and updates product stats")
@@ -44,8 +53,8 @@ class ProductReviewDeleterTest {
         verify(productReviewValidator).validateProductReviewDeletionAllowed(reviewId, userId);
         verify(productReviewValidator).validateProductIdIsValid(productId, reviewId);
         verify(reviewRepository).deleteById(reviewId);
-        verify(productInfoRepository).updateAverageRating(productId);
-        verify(productInfoRepository).updateReviewsCount(productId);
+        verify(productReviewProductGateway).refreshReviewAggregates(productId);
+        verify(summaryDebouncer).schedule(productId);
     }
 
     @Test

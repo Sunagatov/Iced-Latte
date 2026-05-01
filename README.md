@@ -139,6 +139,7 @@ Iced Latte has earned recognition from the broader tech community.
 | --- | --- |
 | [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
 | [Infrastructure](docs/infrastructure.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
+| [Architecture: Feature Packaging](docs/architecture/feature-packaging.md) | Modular-monolith rule: keep business code inside its owning feature package |
 | [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
 | [Security Policy](.github/SECURITY.md) | Security policy and vulnerability reporting |
 | [Code of Conduct](.github/CODE_OF_CONDUCT.md) | Community standards and expected behaviour |

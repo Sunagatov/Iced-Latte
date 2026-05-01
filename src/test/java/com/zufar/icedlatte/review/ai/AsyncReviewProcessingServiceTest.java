@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.ai;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -25,7 +25,7 @@ class AsyncReviewProcessingServiceTest {
 
     @Mock private ReviewModerationService moderationService;
     @Mock private ProductReviewRepository reviewRepository;
-    @Mock private ProductInfoRepository productInfoRepository;
+    @Mock private ProductReviewProductGateway productReviewProductGateway;
     @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
 
     @InjectMocks private AsyncReviewProcessingService service;
@@ -38,7 +38,7 @@ class AsyncReviewProcessingServiceTest {
         service.process(event);
 
         verify(moderationService).moderate("Great coffee");
-        verifyNoInteractions(reviewRepository, productInfoRepository, summaryDebouncer);
+        verifyNoInteractions(reviewRepository, productReviewProductGateway, summaryDebouncer);
     }
 
     @Test
@@ -55,8 +55,7 @@ class AsyncReviewProcessingServiceTest {
         service.process(event);
 
         verify(reviewRepository).deleteById(reviewId);
-        verify(productInfoRepository).updateAverageRating(productId);
-        verify(productInfoRepository).updateReviewsCount(productId);
+        verify(productReviewProductGateway).refreshReviewAggregates(productId);
         verify(summaryDebouncer).schedule(productId);
     }
 
@@ -72,6 +71,6 @@ class AsyncReviewProcessingServiceTest {
         service.process(event);
 
         verify(reviewRepository).findById(reviewId);
-        verifyNoInteractions(productInfoRepository, summaryDebouncer);
+        verifyNoInteractions(productReviewProductGateway, summaryDebouncer);
     }
 }

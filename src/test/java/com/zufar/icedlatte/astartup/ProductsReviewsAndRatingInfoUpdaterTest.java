@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @DisplayName("ProductsReviewsAndRatingInfoUpdater unit tests")
 class ProductsReviewsAndRatingInfoUpdaterTest {
 
-    @Mock private ProductInfoRepository productInfoRepository;
+    @Mock private ProductReviewProductGateway productReviewProductGateway;
     @Mock private ProductReviewRepository productReviewRepository;
     @Mock private TransactionTemplate transactionTemplate;
     @Mock private ApplicationArguments args;
@@ -41,7 +41,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
     @BeforeEach
     void setUp() {
         updater = new ProductsReviewsAndRatingInfoUpdater(
-                productInfoRepository, productReviewRepository, transactionTemplate);
+                productReviewProductGateway, productReviewRepository, transactionTemplate);
         ReflectionTestUtils.setField(updater, "enabled", true);
     }
 
@@ -56,7 +56,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
 
             updater.run(args);
 
-            verifyNoInteractions(transactionTemplate, productInfoRepository, productReviewRepository);
+            verifyNoInteractions(transactionTemplate, productReviewProductGateway, productReviewRepository);
         }
 
         @Test
@@ -71,12 +71,11 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
             updater.run(args);
 
             verify(transactionTemplate, timeout(1000)).executeWithoutResult(any());
-            InOrder inOrder = inOrder(productInfoRepository, productReviewRepository);
-            inOrder.verify(productInfoRepository).updateAllAverageRatings();
-            inOrder.verify(productInfoRepository).updateAllReviewsCounts();
+            InOrder inOrder = inOrder(productReviewProductGateway, productReviewRepository);
+            inOrder.verify(productReviewProductGateway).refreshAllReviewAggregates();
             inOrder.verify(productReviewRepository).updateAllLikesCounts();
             inOrder.verify(productReviewRepository).updateAllDislikesCounts();
-            verifyNoMoreInteractions(transactionTemplate, productInfoRepository, productReviewRepository);
+            verifyNoMoreInteractions(transactionTemplate, productReviewProductGateway, productReviewRepository);
         }
 
         @Test
@@ -88,7 +87,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
             assertThatCode(() -> updater.run(args)).doesNotThrowAnyException();
 
             verify(transactionTemplate, timeout(1000)).executeWithoutResult(any());
-            verifyNoInteractions(productInfoRepository, productReviewRepository);
+            verifyNoInteractions(productReviewProductGateway, productReviewRepository);
             verifyNoMoreInteractions(transactionTemplate);
         }
     }

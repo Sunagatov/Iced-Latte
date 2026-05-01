@@ -8,6 +8,7 @@ import com.zufar.icedlatte.review.exception.InvalidProductReviewTextException;
 import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
+import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -71,6 +72,16 @@ public class ProductReviewExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
 
         log.debug("exception.review.product_not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
+
+        return apiErrorResponse;
+    }
+
+    @ExceptionHandler(ProductReviewNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleProductReviewNotFoundException(final ProductReviewNotFoundException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+
+        log.debug("exception.review.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
 
         return apiErrorResponse;
     }

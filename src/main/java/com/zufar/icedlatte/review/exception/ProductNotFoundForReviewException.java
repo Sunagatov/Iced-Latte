@@ -1,10 +1,8 @@
 package com.zufar.icedlatte.review.exception;
 
-import com.zufar.icedlatte.common.exception.ResourceNotFoundException;
-
 import java.util.UUID;
 
-public class ProductNotFoundForReviewException extends ResourceNotFoundException {
+public class ProductNotFoundForReviewException extends RuntimeException {
 
     public ProductNotFoundForReviewException(UUID productId) {
         super(String.format("Product with productId = '%s' was not found. " +
