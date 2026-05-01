@@ -36,7 +36,7 @@ class RateLimitingConfigurationTest {
             when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:search:ip:1.2.3.4")), eq("1000")))
                     .thenThrow(new IllegalStateException("redis down"));
 
-            RateLimiter limiter = configuration.preAuthFloodRedisRateLimiter(redisTemplate);
+            RateLimiter limiter = configuration.openRedisRateLimiter(redisTemplate);
             var result = limiter.tryConsume("search:ip:1.2.3.4", 5, Duration.ofSeconds(1));
 
             assertThat(result.allowed()).isTrue();
@@ -51,7 +51,7 @@ class RateLimitingConfigurationTest {
             when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:auth:ip:1.2.3.4")), eq("1000")))
                     .thenThrow(new IllegalStateException("redis down"));
 
-            RateLimiter limiter = configuration.preAuthAuthRedisRateLimiter(redisTemplate);
+            RateLimiter limiter = configuration.closedRedisRateLimiter(redisTemplate);
             var result = limiter.tryConsume("auth:ip:1.2.3.4", 10, Duration.ofSeconds(1));
 
             assertThat(result.allowed()).isFalse();
@@ -65,7 +65,7 @@ class RateLimitingConfigurationTest {
             when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:global:user:alice")), eq("60000")))
                     .thenReturn(List.of(3L, 42_000L));
 
-            RateLimiter limiter = configuration.postAuthRedisRateLimiter(redisTemplate);
+            RateLimiter limiter = configuration.openRedisRateLimiter(redisTemplate);
             long before = System.currentTimeMillis();
             var result = limiter.tryConsume("global:user:alice", 5, Duration.ofMinutes(1));
 
@@ -84,7 +84,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth flood fallback uses open policy semantics")
         void preAuthFloodFallbackUsesOpenPolicy() {
-            RateLimiter limiter = configuration.preAuthFloodCaffeineRateLimiter();
+            RateLimiter limiter = configuration.openCaffeineRateLimiter();
 
             var first = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
             var second = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
@@ -96,7 +96,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth auth fallback uses closed-policy limiter behavior")
         void preAuthAuthFallbackCreatesClosedPolicyLimiter() {
-            RateLimiter limiter = configuration.preAuthAuthCaffeineRateLimiter();
+            RateLimiter limiter = configuration.closedCaffeineRateLimiter();
 
             var result = limiter.tryConsume("auth:ip:1.2.3.4", 2, Duration.ofMinutes(1));
 

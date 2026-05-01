@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpStatus;

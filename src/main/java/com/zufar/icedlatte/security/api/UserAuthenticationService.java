@@ -49,7 +49,7 @@ public class UserAuthenticationService {
             return userDetails;
         } catch (UsernameNotFoundException exception) {
             // Unknown email — do not persist a DB row for a non-existent account.
-            // Rate limiting via PreAuthRateLimitingFilter still applies.
+            // Request-level rate limiting still applies before authentication.
             log.debug("auth.failed: reason=user_not_found");
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {

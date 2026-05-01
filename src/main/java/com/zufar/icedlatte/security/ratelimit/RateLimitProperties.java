@@ -1,0 +1,36 @@
+package com.zufar.icedlatte.security.ratelimit;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.time.Duration;
+
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "security.rate-limit")
+public class RateLimitProperties {
+
+    private Bucket global = new Bucket(60, Duration.ofMinutes(1));
+    private Bucket auth = new Bucket(10, Duration.ofMinutes(1));
+    private Bucket search = new Bucket(30, Duration.ofMinutes(1));
+    private Bucket telemetry = new Bucket(120, Duration.ofMinutes(1));
+    private Bucket payment = new Bucket(20, Duration.ofMinutes(1));
+    private Bucket preAuth = new Bucket(200, Duration.ofMinutes(1));
+
+    @Getter
+    @Setter
+    public static class Bucket {
+        private int maxRequests;
+        private Duration windowDuration;
+
+        public Bucket() {
+        }
+
+        public Bucket(int maxRequests, Duration windowDuration) {
+            this.maxRequests = maxRequests;
+            this.windowDuration = windowDuration;
+        }
+
+    }
+}

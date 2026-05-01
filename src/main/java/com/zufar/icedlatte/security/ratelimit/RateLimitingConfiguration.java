@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.ratelimit;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Configuration
+@EnableConfigurationProperties(RateLimitProperties.class)
 public class RateLimitingConfiguration {
 
     private static final Cache<String, Boolean> LOGGED_LIMITER_ERRORS = Caffeine.newBuilder()
@@ -35,52 +37,32 @@ public class RateLimitingConfiguration {
 
     public enum FailPolicy { OPEN, CLOSED }
 
-    // --- pre-auth flood bean: fail-OPEN — public read traffic should not 429 on transient Redis transport errors ---
-
-    @Bean("preAuthFloodRateLimiter")
+    @Bean("openRateLimiter")
     @ConditionalOnProperty(name = "spring.data.redis.host")
-    public RateLimiter preAuthFloodRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
-        log.info("rate_limit.pre-auth.flood.mode: Redis (fail-open)");
+    public RateLimiter openRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.mode.open: Redis");
         return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.OPEN);
     }
 
-    @Bean("preAuthFloodRateLimiter")
-    @ConditionalOnMissingBean(name = "preAuthFloodRateLimiter")
-    public RateLimiter preAuthFloodCaffeineRateLimiter() {
-        log.info("rate_limit.pre-auth.flood.mode: in-memory Caffeine (fail-open)");
+    @Bean("openRateLimiter")
+    @ConditionalOnMissingBean(name = "openRateLimiter")
+    public RateLimiter openCaffeineRateLimiter() {
+        log.info("rate_limit.mode.open: in-memory Caffeine");
         return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
     }
 
-    // --- auth pre-auth bean: fail-CLOSED — deny auth floods when the backend limiter is unavailable ---
-
-    @Bean("preAuthAuthRateLimiter")
+    @Bean("closedRateLimiter")
     @ConditionalOnProperty(name = "spring.data.redis.host")
-    public RateLimiter preAuthAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
-        log.info("rate_limit.pre-auth.auth.mode: Redis (fail-closed)");
+    public RateLimiter closedRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
+        log.info("rate_limit.mode.closed: Redis");
         return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.CLOSED);
     }
 
-    @Bean("preAuthAuthRateLimiter")
-    @ConditionalOnMissingBean(name = "preAuthAuthRateLimiter")
-    public RateLimiter preAuthAuthCaffeineRateLimiter() {
-        log.info("rate_limit.pre-auth.auth.mode: in-memory Caffeine (fail-closed)");
+    @Bean("closedRateLimiter")
+    @ConditionalOnMissingBean(name = "closedRateLimiter")
+    public RateLimiter closedCaffeineRateLimiter() {
+        log.info("rate_limit.mode.closed: in-memory Caffeine");
         return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
-    }
-
-    // --- post-auth bean: fail-OPEN — allow on backend error to avoid blocking legitimate traffic ---
-
-    @Bean("postAuthRateLimiter")
-    @ConditionalOnProperty(name = "spring.data.redis.host")
-    public RateLimiter postAuthRedisRateLimiter(RedisTemplate<String, String> redisTemplate) {
-        log.info("rate_limit.post-auth.mode: Redis (fail-open)");
-        return redisRateLimiterWithPolicy(redisTemplate, FailPolicy.OPEN);
-    }
-
-    @Bean("postAuthRateLimiter")
-    @ConditionalOnMissingBean(name = "postAuthRateLimiter")
-    public RateLimiter postAuthCaffeineRateLimiter() {
-        log.info("rate_limit.post-auth.mode: in-memory Caffeine (fail-open)");
-        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
     }
 
     private RateLimiter redisRateLimiterWithPolicy(RedisTemplate<String, String> redisTemplate, FailPolicy policy) {
@@ -172,5 +154,4 @@ public class RateLimitingConfiguration {
         }
     }
 
-    public record RateLimitResult(boolean allowed, int limit, int remaining, long resetTimeMillis) {}
 }

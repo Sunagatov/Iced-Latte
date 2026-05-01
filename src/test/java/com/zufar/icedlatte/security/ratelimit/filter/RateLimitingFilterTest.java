@@ -1,11 +1,14 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
+import com.zufar.icedlatte.security.jwt.JwtClaimExtractor;
+import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
+import com.zufar.icedlatte.security.ratelimit.RateLimitProperties;
+import com.zufar.icedlatte.security.ratelimit.RateLimitResult;
 import com.zufar.icedlatte.security.ratelimit.RateLimiter;
-import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +22,14 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,8 +40,12 @@ import static org.mockito.Mockito.when;
 @DisplayName("RateLimitingFilter Tests")
 class RateLimitingFilterTest {
 
-    @Mock private RateLimiter rateLimiter;
+    @Mock private RateLimiter openRateLimiter;
+    @Mock private RateLimiter closedRateLimiter;
     @Mock private ClientIpExtractor clientIpExtractor;
+    @Mock private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+    @Mock private JwtClaimExtractor jwtClaimExtractor;
+    @Mock private JwtBlacklistValidator jwtBlacklistValidator;
 
     private RateLimitingFilter filter;
 
@@ -50,23 +53,16 @@ class RateLimitingFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new RateLimitingFilter(rateLimiter, new SimpleMeterRegistry(), clientIpExtractor);
-        ReflectionTestUtils.setField(filter, "globalMaxRequests", 60);
-        ReflectionTestUtils.setField(filter, "globalWindowDuration", Duration.ofMinutes(1));
-        ReflectionTestUtils.setField(filter, "authMaxRequests", 10);
-        ReflectionTestUtils.setField(filter, "authWindowDuration", Duration.ofMinutes(1));
-        ReflectionTestUtils.setField(filter, "searchMaxRequests", 30);
-        ReflectionTestUtils.setField(filter, "searchWindowDuration", Duration.ofMinutes(1));
-        ReflectionTestUtils.setField(filter, "telemetryMaxRequests", 120);
-        ReflectionTestUtils.setField(filter, "telemetryWindowDuration", Duration.ofMinutes(1));
-        ReflectionTestUtils.setField(filter, "paymentMaxRequests", 20);
-        ReflectionTestUtils.setField(filter, "paymentWindowDuration", Duration.ofMinutes(1));
-        SecurityContextHolder.clearContext();
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+        filter = new RateLimitingFilter(
+                openRateLimiter,
+                closedRateLimiter,
+                new SimpleMeterRegistry(),
+                clientIpExtractor,
+                jwtTokenFromAuthHeaderExtractor,
+                jwtClaimExtractor,
+                jwtBlacklistValidator,
+                properties()
+        );
     }
 
     @ParameterizedTest(name = "{0} -> {1}")
@@ -85,7 +81,11 @@ class RateLimitingFilterTest {
     @DisplayName("resolves correct rate-limit category for path")
     void categoryResolution(String path, String expectedCategory) throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
-        when(rateLimiter.tryConsume(contains(expectedCategory.trim()), anyInt(), any()))
+        when(closedRateLimiter.tryConsume(any(), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith(expectedCategory.trim() + ":")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", path.trim());
@@ -93,7 +93,9 @@ class RateLimitingFilterTest {
 
         filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
 
-        verify(rateLimiter).tryConsume(contains(expectedCategory.trim()), anyInt(), any());
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(openRateLimiter, org.mockito.Mockito.atLeastOnce()).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.startsWith(expectedCategory.trim() + ":"));
         verify(chain).doFilter(any(), any());
     }
 
@@ -101,7 +103,9 @@ class RateLimitingFilterTest {
     @DisplayName("search category resolved when keyword parameter present")
     void searchCategoryWhenKeywordPresent() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
-        when(rateLimiter.tryConsume(contains("search"), anyInt(), any()))
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("search:")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 30, 29, RESET_MILLIS));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products");
@@ -110,14 +114,16 @@ class RateLimitingFilterTest {
 
         filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
 
-        verify(rateLimiter).tryConsume(contains("search"), anyInt(), any());
+        verify(openRateLimiter).tryConsume(argThat(key -> key != null && key.startsWith("search:")), anyInt(), any());
     }
 
     @Test
     @DisplayName("products path without keyword stays in the global bucket")
     void productsPathWithoutKeywordUsesGlobalBucket() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
-        when(rateLimiter.tryConsume(contains("global"), anyInt(), any()))
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("global:")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
         filter.doFilterInternal(
@@ -126,15 +132,17 @@ class RateLimitingFilterTest {
                 mock(FilterChain.class)
         );
 
-        verify(rateLimiter).tryConsume(contains("global"), anyInt(), any());
-        verify(rateLimiter, never()).tryConsume(contains("search"), anyInt(), any());
+        verify(openRateLimiter).tryConsume(argThat(key -> key != null && key.startsWith("global:")), anyInt(), any());
+        verify(openRateLimiter, never()).tryConsume(argThat(key -> key != null && key.startsWith("search:")), anyInt(), any());
     }
 
     @Test
     @DisplayName("allowed request passes through with rate-limit headers set")
     void allowedRequestPassesThroughWithHeaders() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
-        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("global:")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 42, RESET_MILLIS));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products");
@@ -154,7 +162,7 @@ class RateLimitingFilterTest {
     @DisplayName("blocked request returns 429 with Retry-After and JSON body")
     void blockedRequestReturns429() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
-        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+        when(closedRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
@@ -172,52 +180,52 @@ class RateLimitingFilterTest {
     @Test
     @DisplayName("authenticated user key uses username only, not username+ip")
     void authenticatedUserKeyContainsUsernameOnly() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("alice@example.com", null, List.of()));
-        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+        when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
+        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenReturn("valid-token");
+        when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
+        when(jwtClaimExtractor.extractEmail("valid-token")).thenReturn("alice@example.com");
 
         filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/cart"),
                 new MockHttpServletResponse(), mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(rateLimiter).tryConsume(keyCaptor.capture(), anyInt(), any());
-        assertThat(keyCaptor.getValue()).contains("user:alice@example.com");
-        assertThat(keyCaptor.getValue()).doesNotContain(":ip:");
-        verify(clientIpExtractor, never()).extract(any());
+        verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("user:alice@example.com"));
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("pre-auth:ip:5.5.5.5"));
     }
 
     @Test
     @DisplayName("anonymous request key uses IP")
     void anonymousRequestKeyContainsIp() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
-        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenThrow(new RuntimeException("no token"));
+        when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
         filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"),
                 new MockHttpServletResponse(), mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(rateLimiter).tryConsume(keyCaptor.capture(), anyInt(), any());
-        assertThat(keyCaptor.getValue()).contains("ip:5.5.5.5");
+        verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("global:ip:5.5.5.5"));
     }
 
     @Test
-    @DisplayName("anonymousUser principal still uses IP-based key")
-    void anonymousUserPrincipalStillUsesIpKey() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("anonymousUser", null, List.of()));
+    @DisplayName("invalid token falls back to IP-based key")
+    void invalidTokenStillUsesIpKey() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("7.7.7.7");
-        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenReturn("revoked-token");
+        org.mockito.Mockito.doThrow(new RuntimeException("revoked")).when(jwtBlacklistValidator).validate("revoked-token");
+        when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
         filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"),
                 new MockHttpServletResponse(), mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(rateLimiter).tryConsume(keyCaptor.capture(), anyInt(), any());
-        assertThat(keyCaptor.getValue()).contains("ip:7.7.7.7");
-        verify(clientIpExtractor).extract(any());
+        verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("global:ip:7.7.7.7"));
     }
 
     @Test
@@ -238,7 +246,10 @@ class RateLimitingFilterTest {
     void firstBlockWarnSecondBlockDebug() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("9.9.9.9");
         RateLimitResult blocked = new RateLimitResult(false, 10, 0, RESET_MILLIS);
-        when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(blocked);
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("auth:")), anyInt(), any()))
+                .thenReturn(blocked);
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/refresh");
         // First call — warnedKeys cache is empty, so WARN path is taken
@@ -253,13 +264,17 @@ class RateLimitingFilterTest {
 
         // Both calls still blocked — the logging path difference is internal;
         // we verify the filter ran twice and both returned 429
-        verify(rateLimiter, org.mockito.Mockito.times(2)).tryConsume(any(), anyInt(), any());
+        verify(openRateLimiter, org.mockito.Mockito.times(4)).tryConsume(any(), anyInt(), any());
     }
 
     @Test
     @DisplayName("validation rejects non-positive auth limit")
     void validateRejectsNonPositiveAuthLimit() {
-        ReflectionTestUtils.setField(filter, "authMaxRequests", 0);
+        RateLimitProperties properties = properties();
+        properties.getAuth().setMaxRequests(0);
+        filter = new RateLimitingFilter(
+                openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
+                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties);
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
@@ -269,10 +284,47 @@ class RateLimitingFilterTest {
     @Test
     @DisplayName("validation rejects non-positive search window")
     void validateRejectsNonPositiveSearchWindow() {
-        ReflectionTestUtils.setField(filter, "searchWindowDuration", Duration.ZERO);
+        RateLimitProperties properties = properties();
+        properties.getSearch().setWindowDuration(Duration.ZERO);
+        filter = new RateLimitingFilter(
+                openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
+                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties);
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("search.window-duration must be positive");
+    }
+
+    @Test
+    @DisplayName("strict pre-auth bucket blocks login before flood and primary rules")
+    void strictPreAuthBucketBlocksLogin() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
+        when(closedRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("auth:ip:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, mock(FilterChain.class));
+
+        assertThat(response.getStatus()).isEqualTo(429);
+        verify(openRateLimiter, never()).tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any());
+    }
+
+    private static RateLimitProperties properties() {
+        RateLimitProperties properties = new RateLimitProperties();
+        properties.getPreAuth().setMaxRequests(200);
+        properties.getPreAuth().setWindowDuration(Duration.ofMinutes(1));
+        properties.getAuth().setMaxRequests(10);
+        properties.getAuth().setWindowDuration(Duration.ofMinutes(1));
+        properties.getGlobal().setMaxRequests(60);
+        properties.getGlobal().setWindowDuration(Duration.ofMinutes(1));
+        properties.getSearch().setMaxRequests(30);
+        properties.getSearch().setWindowDuration(Duration.ofMinutes(1));
+        properties.getTelemetry().setMaxRequests(120);
+        properties.getTelemetry().setWindowDuration(Duration.ofMinutes(1));
+        properties.getPayment().setMaxRequests(20);
+        properties.getPayment().setWindowDuration(Duration.ofMinutes(1));
+        return properties;
     }
 }

@@ -1,12 +1,17 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.SecurityConstants;
+import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
+import com.zufar.icedlatte.security.jwt.JwtClaimExtractor;
+import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
 import com.zufar.icedlatte.security.ratelimit.RateLimitCategory;
-import com.zufar.icedlatte.security.ratelimit.RateLimitRequestClassifier;
+import com.zufar.icedlatte.security.ratelimit.RateLimitProperties;
+import com.zufar.icedlatte.security.ratelimit.RateLimitProperties.Bucket;
+import com.zufar.icedlatte.security.ratelimit.RateLimitResult;
 import com.zufar.icedlatte.security.ratelimit.RateLimitResponseWriter;
 import com.zufar.icedlatte.security.ratelimit.RateLimiter;
-import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,150 +22,189 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.jspecify.annotations.NonNull;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private final RateLimiter rateLimiter;
+    private final RateLimiter openRateLimiter;
+    private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
+    private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+    private final JwtClaimExtractor jwtClaimExtractor;
+    private final JwtBlacklistValidator jwtBlacklistValidator;
+    private final RateLimitProperties properties;
 
-    // Tracks keys that have already had their first-block WARN emitted in the current window.
-    // TTL matches the longest possible window (auth = 1 min by default) so entries expire naturally.
     private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
             .maximumSize(5_000)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build();
 
-    @Value("${security.rate-limit.global.max-requests:60}")
-    private int globalMaxRequests;
-
-    @Value("${security.rate-limit.global.window-duration:PT1M}")
-    private Duration globalWindowDuration;
-
-    @Value("${security.rate-limit.auth.max-requests:10}")
-    private int authMaxRequests;
-
-    @Value("${security.rate-limit.auth.window-duration:PT1M}")
-    private Duration authWindowDuration;
-
-    @Value("${security.rate-limit.search.max-requests:30}")
-    private int searchMaxRequests;
-
-    @Value("${security.rate-limit.search.window-duration:PT1M}")
-    private Duration searchWindowDuration;
-
-    @Value("${security.rate-limit.telemetry.max-requests:120}")
-    private int telemetryMaxRequests;
-
-    @Value("${security.rate-limit.telemetry.window-duration:PT1M}")
-    private Duration telemetryWindowDuration;
-
-    // payment bucket is kept intentionally: routes /api/v1/payment/** when Stripe is re-enabled.
-    // See architecture.md STRIPE_RESTORE_POINT for restore instructions.
-    @Value("${security.rate-limit.payment.max-requests:20}")
-    private int paymentMaxRequests;
-
-    @Value("${security.rate-limit.payment.window-duration:PT1M}")
-    private Duration paymentWindowDuration;
-
     @PostConstruct
     void validate() {
-        assertPositive(RateLimitCategory.GLOBAL, globalMaxRequests, globalWindowDuration);
-        assertPositive(RateLimitCategory.AUTH, authMaxRequests, authWindowDuration);
-        assertPositive(RateLimitCategory.SEARCH, searchMaxRequests, searchWindowDuration);
-        assertPositive(RateLimitCategory.TELEMETRY, telemetryMaxRequests, telemetryWindowDuration);
-        assertPositive(RateLimitCategory.PAYMENT, paymentMaxRequests, paymentWindowDuration);
+        assertPositive("pre-auth", properties.getPreAuth());
+        assertPositive("auth", properties.getAuth());
+        assertPositive("global", properties.getGlobal());
+        assertPositive("search", properties.getSearch());
+        assertPositive("telemetry", properties.getTelemetry());
+        assertPositive("payment", properties.getPayment());
     }
 
-    private static void assertPositive(RateLimitCategory category,
-                                       int maxRequests,
-                                       Duration window) {
-        if (maxRequests <= 0) throw new IllegalStateException(
-                "security.rate-limit." + category.value() + ".max-requests must be > 0, got: " + maxRequests);
-        if (window == null || window.isZero() || window.isNegative()) throw new IllegalStateException(
-                "security.rate-limit." + category.value() + ".window-duration must be positive, got: " + window);
+    private static void assertPositive(String bucketName, Bucket bucket) {
+        if (bucket.getMaxRequests() <= 0) {
+            throw new IllegalStateException(
+                    "security.rate-limit." + bucketName + ".max-requests must be > 0, got: " + bucket.getMaxRequests());
+        }
+        if (bucket.getWindowDuration() == null || bucket.getWindowDuration().isZero() || bucket.getWindowDuration().isNegative()) {
+            throw new IllegalStateException(
+                    "security.rate-limit." + bucketName + ".window-duration must be positive, got: " + bucket.getWindowDuration());
+        }
     }
 
-    public RateLimitingFilter(@Qualifier("postAuthRateLimiter") RateLimiter rateLimiter,
+    public RateLimitingFilter(@Qualifier("openRateLimiter") RateLimiter openRateLimiter,
+                              @Qualifier("closedRateLimiter") RateLimiter closedRateLimiter,
                               MeterRegistry meterRegistry,
-                              ClientIpExtractor clientIpExtractor) {
-        this.rateLimiter = rateLimiter;
+                              ClientIpExtractor clientIpExtractor,
+                              JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor,
+                              JwtClaimExtractor jwtClaimExtractor,
+                              JwtBlacklistValidator jwtBlacklistValidator,
+                              RateLimitProperties properties) {
+        this.openRateLimiter = openRateLimiter;
+        this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
+        this.jwtTokenFromAuthHeaderExtractor = jwtTokenFromAuthHeaderExtractor;
+        this.jwtClaimExtractor = jwtClaimExtractor;
+        this.jwtBlacklistValidator = jwtBlacklistValidator;
+        this.properties = properties;
     }
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return RateLimitRequestClassifier.shouldSkip(request);
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        return "OPTIONS".equalsIgnoreCase(method)
+                || path.startsWith(ApiPaths.ACTUATOR_ROOT)
+                || path.startsWith(ApiPaths.DOCS_ROOT);
     }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        RateLimitCategory category = RateLimitRequestClassifier.resolvePostAuthCategory(request);
-        String rateLimitKey = buildRateLimitKey(request, category);
-        RateLimitConfig config = getRateLimitConfig(category);
+        String ip = clientIpExtractor.extract(request);
 
-        RateLimitResult result = rateLimiter.tryConsume(
-                rateLimitKey, config.maxRequests(), config.windowDuration());
+        if (isStrictPreAuthPath(request.getRequestURI())
+                && isBlocked(request, response, "auth:ip:" + ip, RateLimitCategory.AUTH_PRE, properties.getAuth(), closedRateLimiter, "ip", ip)) {
+            return;
+        }
 
+        if (isBlocked(request, response, "pre-auth:ip:" + ip, RateLimitCategory.PRE_AUTH, properties.getPreAuth(), openRateLimiter, "ip", ip)) {
+            return;
+        }
+
+        RateLimitCategory category = resolvePrimaryCategory(request);
+        Identity identity = resolveIdentity(request, ip);
+        if (isBlocked(request, response, identity.key(category), category, bucketFor(category), openRateLimiter, identity.type(), ip)) {
+            return;
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean isBlocked(HttpServletRequest request,
+                              HttpServletResponse response,
+                              String key,
+                              RateLimitCategory category,
+                              Bucket bucket,
+                              RateLimiter limiter,
+                              String identityType,
+                              String clientIp) throws IOException {
+        RateLimitResult result = limiter.tryConsume(key, bucket.getMaxRequests(), bucket.getWindowDuration());
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
-            logExceeded(request, category, result, rateLimitKey);
+            logExceeded(request, category, result, key, identityType, clientIp);
             RateLimitResponseWriter.writeTooManyRequests(response, result);
-            return;
+            return true;
         }
 
         meterRegistry.counter("rate_limit.requests.allowed", "category", category.value()).increment();
-        filterChain.doFilter(request, response);
+        return false;
     }
 
-    private String buildRateLimitKey(HttpServletRequest request,
-                                     RateLimitCategory category) {
-        Authentication auth = SecurityContextHolder.getContext()
-                .getAuthentication();
-
-        if (auth != null && auth.isAuthenticated() && !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal())) {
-            // auth category: per-user key so one account can't exhaust another's budget
-            // other categories: per-user key so IP changes don't create extra budgets
-            return category.value() + ":user:" + auth.getName();
-        }
-        return category.value() + ":ip:" + clientIpExtractor.extract(request);
-    }
-
-    private RateLimitConfig getRateLimitConfig(RateLimitCategory category) {
+    private Bucket bucketFor(RateLimitCategory category) {
         return switch (category) {
-            case AUTH -> new RateLimitConfig(authMaxRequests, authWindowDuration);
-            case SEARCH -> new RateLimitConfig(searchMaxRequests, searchWindowDuration);
-            case TELEMETRY -> new RateLimitConfig(telemetryMaxRequests, telemetryWindowDuration);
-            case PAYMENT -> new RateLimitConfig(paymentMaxRequests, paymentWindowDuration);
-            default -> new RateLimitConfig(globalMaxRequests, globalWindowDuration);
+            case AUTH, AUTH_PRE -> properties.getAuth();
+            case SEARCH -> properties.getSearch();
+            case TELEMETRY -> properties.getTelemetry();
+            case PAYMENT -> properties.getPayment();
+            case PRE_AUTH -> properties.getPreAuth();
+            default -> properties.getGlobal();
         };
+    }
+
+    private RateLimitCategory resolvePrimaryCategory(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        if (isGlobalAuthPath(path)) {
+            return RateLimitCategory.GLOBAL;
+        }
+        if (path.startsWith(AuthPaths.ROOT_PREFIX)) {
+            return RateLimitCategory.AUTH;
+        }
+        if (path.equals(ApiPaths.PAYMENT) || path.startsWith(ApiPaths.PAYMENT + "/")) {
+            return RateLimitCategory.PAYMENT;
+        }
+        if (path.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null) {
+            return RateLimitCategory.SEARCH;
+        }
+        if (path.startsWith("/api/v1/telemetry/")) {
+            return RateLimitCategory.TELEMETRY;
+        }
+        return RateLimitCategory.GLOBAL;
+    }
+
+    private boolean isStrictPreAuthPath(String path) {
+        return path.equals(AuthPaths.AUTHENTICATE) || path.equals(AuthPaths.ROOT + "/register");
+    }
+
+    private boolean isGlobalAuthPath(String path) {
+        return path.startsWith(AuthPaths.GOOGLE)
+                || path.equals(AuthPaths.AUTHENTICATE)
+                || path.equals(AuthPaths.ROOT + "/register");
+    }
+
+    private Identity resolveIdentity(HttpServletRequest request, String ip) {
+        return resolveUserIdentity(request)
+                .map(user -> new Identity("user", user))
+                .orElseGet(() -> new Identity("ip", ip));
+    }
+
+    private Optional<String> resolveUserIdentity(HttpServletRequest request) {
+        try {
+            String token = jwtTokenFromAuthHeaderExtractor.extract(request);
+            jwtBlacklistValidator.validate(token);
+            return Optional.of(jwtClaimExtractor.extractEmail(token));
+        } catch (Exception ignored) {
+            return Optional.empty();
+        }
     }
 
     private void logExceeded(HttpServletRequest request,
                              RateLimitCategory category,
                              RateLimitResult result,
-                             String rateLimitKey) {
-        String clientIp = clientIpExtractor.extract(request);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String identityType = (auth != null && auth.isAuthenticated() &&
-                !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal())) ? "user" : "ip";
+                             String rateLimitKey,
+                             String identityType,
+                             String clientIp) {
         long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
 
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
@@ -176,5 +220,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
     }
 
-    private record RateLimitConfig(int maxRequests, Duration windowDuration) {}
+    private record Identity(String type, String value) {
+        String key(RateLimitCategory category) {
+            return category.value() + ":" + type + ":" + value;
+        }
+    }
 }
