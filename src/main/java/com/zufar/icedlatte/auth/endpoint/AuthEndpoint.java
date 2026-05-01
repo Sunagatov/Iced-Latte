@@ -101,12 +101,12 @@ public class AuthEndpoint {
                     && allowed.getPort() == incoming.getPort();
             boolean expectedPath = GOOGLE_CALLBACK_PATH.equals(incoming.getPath());
             if (!sameOrigin || !expectedPath) {
-                log.warn("auth.google.redirect.rejected: reasonCode={}",
+            log.info("auth.google.redirect.rejected: reasonCode={}",
                         sameOrigin ? "PATH_MISMATCH" : "ORIGIN_MISMATCH");
                 return defaultCallbackBase();
             }
         } catch (URISyntaxException _) {
-            log.warn("auth.google.redirect.invalid: reasonCode=INVALID_URI");
+            log.debug("auth.google.redirect.invalid: reasonCode=INVALID_URI");
             return defaultCallbackBase();
         }
         return redirectUrl;
@@ -129,18 +129,18 @@ public class AuthEndpoint {
             return;
         }
         if (code == null || code.isBlank()) {
-            log.warn("auth.google.callback.missing-code");
+            log.debug("auth.google.callback.missing-code");
             redirectToSignInError(response, MISSING_CODE_ERROR);
             return;
         }
         if (state == null || state.isBlank()) {
-            log.warn("auth.google.callback.missing-state");
+            log.debug("auth.google.callback.missing-state");
             redirectToSignInError(response, INVALID_STATE_ERROR);
             return;
         }
         String stored = oAuthStateCache.consume(state);
         if (stored == null) {
-            log.warn("auth.google.callback.invalid-state");
+            log.info("auth.google.callback.invalid-state");
             redirectToSignInError(response, INVALID_STATE_ERROR);
             return;
         }
@@ -148,8 +148,8 @@ public class AuthEndpoint {
             var tokens = googleAuthCallbackHandler.handle(code, request);
             response.sendRedirect(buildCallbackUrlWithFragmentTokens(stored, tokens));
         } catch (Exception e) {
-            log.warn("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE, message={}",
-                    e.getClass().getSimpleName(), e.getMessage());
+            log.error("auth.google.callback.failed: exceptionClass={}, reasonCode=CALLBACK_FAILURE",
+                    e.getClass().getSimpleName(), e);
             response.sendRedirect(buildFrontendErrorRedirect(stored, frontendUrl));
         }
     }

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.config;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.type.TypeFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 @Slf4j
@@ -30,6 +32,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.data.redis.host")
 public class RedisConfig implements CachingConfigurer {
+
+    private static final com.github.benmanes.caffeine.cache.Cache<String, Boolean> LOGGED_CACHE_ERRORS = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .maximumSize(1_000)
+            .build();
 
     private final CacheProperties cacheProperties;
 
@@ -95,30 +102,41 @@ public class RedisConfig implements CachingConfigurer {
             public void handleCacheGetError(@NonNull RuntimeException e,
                                             @NonNull Cache cache,
                                             @NonNull Object key) {
-                log.warn("cache.get.error: cache={}, key={}, cause={}",
-                        cache.getName(), key, e.getMessage());
+                logCacheError("get", cache.getName(), key, e);
             }
             @Override
             public void handleCachePutError(@NonNull RuntimeException e,
                                             @NonNull Cache cache,
                                             @NonNull Object key,
                                             Object value) {
-                log.warn("cache.put.error: cache={}, key={}, cause={}",
-                        cache.getName(), key, e.getMessage());
+                logCacheError("put", cache.getName(), key, e);
             }
             @Override
             public void handleCacheEvictError(@NonNull RuntimeException e,
                                               @NonNull Cache cache,
                                               @NonNull Object key) {
-                log.warn("cache.evict.error: cache={}, key={}, cause={}",
-                        cache.getName(), key, e.getMessage());
+                logCacheError("evict", cache.getName(), key, e);
             }
             @Override
             public void handleCacheClearError(@NonNull RuntimeException e,
                                               @NonNull Cache cache) {
-                log.warn("cache.clear.error: cache={}, cause={}",
-                        cache.getName(), e.getMessage());
+                logCacheError("clear", cache.getName(), null, e);
             }
         };
+    }
+
+    private static void logCacheError(String operation,
+                                      String cacheName,
+                                      Object key,
+                                      RuntimeException exception) {
+        String exceptionClass = exception.getClass().getSimpleName();
+        String dedupKey = operation + "|" + cacheName + "|" + exceptionClass;
+        if (LOGGED_CACHE_ERRORS.asMap().putIfAbsent(dedupKey, Boolean.TRUE) == null) {
+            log.warn("cache.{}.error: cache={}, key={}, exceptionClass={}",
+                    operation, cacheName, key, exceptionClass);
+        } else {
+            log.debug("cache.{}.error: cache={}, key={}, exceptionClass={}",
+                    operation, cacheName, key, exceptionClass);
+        }
     }
 }

@@ -25,17 +25,17 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleEmptyShoppingCartException(final EmptyShoppingCartException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.order.empty_cart: message={}", apiErrorResponse.message());
+        log.debug("exception.order.empty_cart: status=400");
         return apiErrorResponse;
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentTypeMismatchException exception) {
+    public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentTypeMismatchException ignored) {
         String message = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
 
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
-        log.warn("exception.order.type_mismatch: message={}", message);
+        log.debug("exception.order.type_mismatch: status=400");
 
         return apiErrorResponse;
     }

@@ -52,7 +52,6 @@ class SecurityEndpointTest extends IntegrationTestBase {
     @BeforeEach
     void setupSpecification() {
         specification = given()
-                .log().all(true)
                 .port(port)
                 .basePath(AUTH_BASE_PATH)
                 .contentType(ContentType.JSON)

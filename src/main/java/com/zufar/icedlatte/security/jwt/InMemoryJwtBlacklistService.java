@@ -29,7 +29,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     public synchronized void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("jwt.blacklist.empty_token");
+            log.debug("jwt.blacklist.empty_token");
             return;
         }
 
@@ -45,7 +45,7 @@ public class InMemoryJwtBlacklistService implements JwtBlacklistService {
 
     public boolean isBlacklisted(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("jwt.blacklist.validate.empty_token");
+            log.debug("jwt.blacklist.validate.empty_token");
             return true;
         }
 

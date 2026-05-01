@@ -58,7 +58,6 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
             cachedJwtToken = getJwtToken(port, email, password);
         }
         specification = given()
-                .log().all(true)
                 .port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
@@ -120,7 +119,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should fetch review statistics successfully")
     void shouldFetchReviewStatsSuccessfully() {
-        RequestSpecification noAuth = given().log().all(true).port(port)
+        RequestSpecification noAuth = given().port(port)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).accept(ContentType.JSON);
 
         assertRestApiBodySchemaResponse(given(noAuth).get("/{productId}/reviews/statistics", ESPRESSO_ID), HttpStatus.OK, RATING_RESPONSE_SCHEMA)
@@ -137,7 +136,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Reviews and ratings with default pagination and sorting for unauthorized user. Should return 200 OK")
     void shouldSuccessfullyReturnReviewsForDefaultPaginationAndSortingForAnonymous() {
-        RequestSpecification noAuth = given().log().all(true).port(port)
+        RequestSpecification noAuth = given().port(port)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).contentType(ContentType.JSON).accept(ContentType.JSON);
 
         assertRestApiOkResponse(given(noAuth).get("/{productId}/reviews", AMERICANO_ID), REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA);
@@ -200,7 +199,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should return 401 Unauthorized for protected endpoints without token")
     void shouldReturnUnauthorizedWithoutToken() {
-        RequestSpecification noAuth = given().log().all(true).port(port)
+        RequestSpecification noAuth = given().port(port)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).contentType(ContentType.JSON).accept(ContentType.JSON);
 
         given(noAuth).body(getRequestBody(REVIEW_ADD_BODY)).post("/{productId}/reviews", AMERICANO_ID)

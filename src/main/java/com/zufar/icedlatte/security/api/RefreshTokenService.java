@@ -40,7 +40,7 @@ public class RefreshTokenService {
                         .ifPresent(authSessionService::revokeAllForUserBySessionId);
                 throw ex;
             }
-            log.warn("auth.token.refresh_legacy_migrate: reason={}", ex.getMessage());
+            log.warn("auth.token.refresh_legacy_migrate: reason=token_invalidated");
             String userEmail = jwtRefreshTokenValidator.extractEmail(request);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);

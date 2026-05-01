@@ -35,7 +35,6 @@ class UserReviewEndpointTest extends IntegrationTestBase {
             cachedJwtToken = getJwtToken(port, email, password);
         }
         specification = given()
-                .log().all(true)
                 .port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath("/api/v1/users")

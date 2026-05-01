@@ -13,6 +13,7 @@ import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.zufar.icedlatte.payment.exception.StripeSessionIsNotComplete;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -32,21 +33,24 @@ public class StripeWebhookService {
     private String webhookSecret;
 
     public void processWebhook(String payload, String stripeSignature) {
-        log.info("payment.webhook.processing");
         Event event = parseEvent(payload, stripeSignature);
-        Session session = extractSession(event);
 
         switch (event.getType()) {
-            case "checkout.session.completed" -> handleCompleted(session);
-            case "checkout.session.expired" -> log.info("payment.session.expired: sessionId={}", session.getId());
-            default -> log.warn("payment.webhook.no_handler: eventType={}", event.getType());
+            case "checkout.session.completed" -> {
+                handleCompleted(requireSession(event));
+                log.info("payment.webhook.processed: eventType={}, eventId={}", event.getType(), event.getId());
+            }
+            case "checkout.session.expired" -> {
+                Session session = requireSession(event);
+                log.info("payment.session.expired: sessionId={}", maskSessionId(session.getId()));
+                log.info("payment.webhook.processed: eventType={}, eventId={}", event.getType(), event.getId());
+            }
+            default -> log.debug("payment.webhook.unhandled: eventType={}, eventId={}", event.getType(), event.getId());
         }
-
-        log.info("payment.webhook.processed: eventType={}", event.getType());
     }
 
     public PaymentConfirmationEmail processRedirect(String sessionId) {
-        log.info("payment.redirect.processing: sessionId={}", sessionId);
+        log.debug("payment.redirect.processing: sessionId={}", maskSessionId(sessionId));
         Session session = retrieveSession(sessionId);
         if (!SESSION_COMPLETE.equals(session.getStatus())) {
             log.warn("payment.redirect.session_not_complete: status={}", session.getStatus());
@@ -60,9 +64,9 @@ public class StripeWebhookService {
         boolean created = orderCreator.createOrderAndDeleteCart(session);
         if (created) {
             paymentEmailConfirmation.send(session);
-            log.info("payment.session.email.sent: sessionId={}", session.getId());
+            log.info("payment.email_confirmation.sent: sessionId={}", maskSessionId(session.getId()));
         } else {
-            log.info("payment.session.already_processed: sessionId={}", session.getId());
+            log.info("payment.session.already_processed: sessionId={}", maskSessionId(session.getId()));
         }
     }
 
@@ -71,16 +75,19 @@ public class StripeWebhookService {
             return Webhook.constructEvent(payload, signature, webhookSecret);
         } catch (SignatureVerificationException e) {
             log.warn("payment.webhook.signature_invalid");
-            throw new PaymentEventProcessingException(signature);
+            throw new PaymentEventProcessingException();
         }
     }
 
-    private Session extractSession(Event event) {
+    private Session requireSession(Event event) {
         return event.getDataObjectDeserializer()
                 .getObject()
                 .filter(Session.class::isInstance)
                 .map(Session.class::cast)
-                .orElse(null);
+                .orElseThrow(() -> {
+                    log.warn("payment.webhook.session_missing: eventType={}, eventId={}", event.getType(), event.getId());
+                    return new IllegalStateException("Stripe webhook event session data is missing.");
+                });
     }
 
     private Session retrieveSession(String sessionId) {
@@ -89,5 +96,12 @@ public class StripeWebhookService {
         } catch (StripeException e) {
             throw new StripeSessionCreationException(e.getMessage(), e);
         }
+    }
+
+    private static String maskSessionId(String sessionId) {
+        if (StringUtils.isBlank(sessionId)) {
+            return "unknown";
+        }
+        return StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10);
     }
 }

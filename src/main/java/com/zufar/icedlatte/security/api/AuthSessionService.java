@@ -10,6 +10,7 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class AuthSessionService {
                 .compromised(false)
                 .build();
         sessionRepository.save(session);
-        log.info("auth.session.created: userId={}, sessionId={}", userId, session.getId());
+        log.info("auth.session.created: userId={}, sessionId={}", userId, maskSessionId(session.getId()));
         return session;
     }
 
@@ -58,7 +59,7 @@ public class AuthSessionService {
         session.setLastUsedAt(now);
         session.setExpiresAt(expiresAt(now));
         sessionRepository.save(session);
-        log.info("auth.session.rotated: sessionId={}", session.getId());
+        log.info("auth.session.rotated: sessionId={}", maskSessionId(session.getId()));
     }
 
     @Transactional
@@ -66,7 +67,7 @@ public class AuthSessionService {
         sessionRepository.findByRefreshTokenHash(refreshTokenHash)
                 .ifPresent(session -> {
                     revokeSession(session);
-                    log.info("auth.session.revoked: sessionId={}", session.getId());
+                    log.info("auth.session.revoked: sessionId={}", maskSessionId(session.getId()));
                 });
     }
 
@@ -85,7 +86,7 @@ public class AuthSessionService {
             throw new SessionOwnershipException(sessionId);
         }
         revokeSession(session);
-        log.info("auth.session.revoked_by_id: sessionId={}, userId={}", sessionId, requestingUserId);
+        log.info("auth.session.revoked_by_id: sessionId={}, userId={}", maskSessionId(sessionId), requestingUserId);
     }
 
     @Transactional
@@ -122,10 +123,12 @@ public class AuthSessionService {
     private void handleReplayAttempt(AuthSessionEntity session) {
         if (isActiveSession(session)) {
             markCompromised(session);
-            log.warn("auth.session.replay_detected: sessionId={}, userId={}", session.getId(), session.getUserId());
+            log.warn("auth.session.replay_detected: sessionId={}, userId={}",
+                    maskSessionId(session.getId()), session.getUserId());
             revokeAllForUser(session.getUserId());
         } else {
-            log.warn("auth.session.replay_repeated: sessionId={}, userId={}", session.getId(), session.getUserId());
+            log.warn("auth.session.replay_repeated: sessionId={}, userId={}",
+                    maskSessionId(session.getId()), session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been rotated");
     }
@@ -134,7 +137,7 @@ public class AuthSessionService {
         if (!session.isCompromised()) {
             markCompromised(session);
             log.warn("auth.session.reuse_detected: sessionId={}, userId={}",
-                    session.getId(), session.getUserId());
+                    maskSessionId(session.getId()), session.getUserId());
             revokeAllForUser(session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been revoked");
@@ -160,5 +163,13 @@ public class AuthSessionService {
 
     private OffsetDateTime now() {
         return OffsetDateTime.now();
+    }
+
+    private static String maskSessionId(UUID sessionId) {
+        if (sessionId == null) {
+            return "unknown";
+        }
+        String value = sessionId.toString();
+        return StringUtils.left(StringUtils.overlay(value, "****", 6, value.length()), 10);
     }
 }

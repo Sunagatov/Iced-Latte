@@ -108,13 +108,13 @@ class AwsObjectUploaderTest {
     @Test
     @DisplayName("uploadFileDirectory wraps AWS client connectivity failures")
     void uploadFileDirectoryWrapsAwsClientConnectivityFailures(@TempDir Path tempDir) throws IOException {
-        Path file = Files.writeString(tempDir.resolve("root.txt"), "root");
+        Files.writeString(tempDir.resolve("root.txt"), "root");
         doThrow(SdkClientException.create("offline"))
                 .when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
 
         assertThatThrownBy(() -> uploader.uploadFileDirectory("bucket-name", tempDir.toString()))
                 .isInstanceOf(FileUploadException.class)
-                .hasMessageContaining(file.toString())
+                .hasMessageContaining("root.txt")
                 .hasCauseInstanceOf(SdkClientException.class);
     }
 }

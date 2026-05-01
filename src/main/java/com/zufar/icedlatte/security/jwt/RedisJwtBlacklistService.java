@@ -27,7 +27,7 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
     @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
     public void blacklistToken(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("jwt.blacklist.empty_token");
+            log.debug("jwt.blacklist.empty_token");
             return;
         }
         String key = buildBlacklistKey(token);
@@ -37,7 +37,7 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
 
     public boolean isBlacklisted(String token) {
         if (!StringUtils.hasText(token)) {
-            log.warn("jwt.blacklist.validate.empty_token");
+            log.debug("jwt.blacklist.validate.empty_token");
             return true;
         }
         String key = buildBlacklistKey(token);
@@ -45,7 +45,8 @@ public class RedisJwtBlacklistService implements JwtBlacklistService {
             Boolean hasKey = redisTemplate.hasKey(key);
             return hasKey != null && hasKey;
         } catch (RuntimeException ex) {
-            log.error("jwt.blacklist.redis_error: message={}", ex.getMessage(), ex);
+            log.error("jwt.blacklist.redis_error: exceptionClass={}",
+                    ex.getClass().getSimpleName(), ex);
             return true;
         }
     }

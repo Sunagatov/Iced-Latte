@@ -26,37 +26,40 @@ public class DeliveryAddressEndpoint {
     @GetMapping
     public ResponseEntity<List<DeliveryAddressDto>> getAll() {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("delivery_address.get_all: userId={}", userId);
+        log.debug("delivery_address.list_requested: userId={}", userId);
         return ResponseEntity.ok(deliveryAddressService.getAll(userId));
     }
 
     @PostMapping
     public ResponseEntity<DeliveryAddressDto> create(@Valid @RequestBody DeliveryAddressRequest request) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("delivery_address.create: userId={}", userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(deliveryAddressService.create(userId, request));
+        DeliveryAddressDto created = deliveryAddressService.create(userId, request);
+        log.info("delivery_address.created: userId={}, addressId={}", userId, created.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{addressId}")
     public ResponseEntity<DeliveryAddressDto> update(@PathVariable UUID addressId,
                                                      @Valid @RequestBody DeliveryAddressRequest request) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("delivery_address.update: userId={}, addressId={}", userId, addressId);
-        return ResponseEntity.ok(deliveryAddressService.update(userId, addressId, request));
+        DeliveryAddressDto updated = deliveryAddressService.update(userId, addressId, request);
+        log.info("delivery_address.updated: userId={}, addressId={}", userId, updated.getId());
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{addressId}")
     public ResponseEntity<Void> delete(@PathVariable UUID addressId) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("delivery_address.delete: userId={}, addressId={}", userId, addressId);
         deliveryAddressService.delete(userId, addressId);
+        log.info("delivery_address.deleted: userId={}, addressId={}", userId, addressId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{addressId}/default")
     public ResponseEntity<DeliveryAddressDto> setDefault(@PathVariable UUID addressId) {
         var userId = securityPrincipalProvider.getUserId();
-        log.info("delivery_address.set_default: userId={}, addressId={}", userId, addressId);
-        return ResponseEntity.ok(deliveryAddressService.setDefault(userId, addressId));
+        DeliveryAddressDto updated = deliveryAddressService.setDefault(userId, addressId);
+        log.info("delivery_address.default_changed: userId={}, addressId={}", userId, updated.getId());
+        return ResponseEntity.ok(updated);
     }
 }

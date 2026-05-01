@@ -80,28 +80,27 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
     public boolean createOrderAndDeleteCart(Session stripeSession) {
         String sessionId = stripeSession.getId();
-        log.info("order.session.handling: sessionId={}",
-                StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
-
         UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
+        String maskedSessionId = maskSessionId(sessionId);
 
         Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
-            log.info("order.session.already_handled: sessionId={}",
-                    StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10));
+            log.info("order.session.already_handled: userId={}, sessionId={}", userId, maskedSessionId);
             return false;
         }
 
         ShoppingCartDto shoppingCartDto = shoppingCartProvider.getByUserIdOrThrow(userId);
         UserEntity user = singleUserProvider.getUserEntityById(userId);
 
-        log.info("order.creating: userId={}", userId);
         Order orderEntity = createOrderEntityFromSession(user, shoppingCartDto, sessionId);
-        orderRepository.saveAndFlush(orderEntity);
-        log.info("order.created: userId={}", userId);
-
+        Order savedOrder = orderRepository.saveAndFlush(orderEntity);
         shoppingCartRepository.deleteByUserId(userId);
-        log.info("cart.deleted: userId={}", userId);
+        log.info("checkout.completed: userId={}, orderId={}, sessionId={}, itemsQuantity={}, amount={}",
+                userId,
+                savedOrder.getId(),
+                maskedSessionId,
+                savedOrder.getItemsQuantity(),
+                savedOrder.getItemsTotalPrice());
 
         return true;
     }
@@ -130,5 +129,12 @@ public class OrderCreator {
                 .itemsTotalPrice(shoppingCartDto.getItemsTotalPrice())
                 .items(shoppingOrderItems)
                 .build();
+    }
+
+    private static String maskSessionId(String sessionId) {
+        if (StringUtils.isBlank(sessionId)) {
+            return "unknown";
+        }
+        return StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10);
     }
 }

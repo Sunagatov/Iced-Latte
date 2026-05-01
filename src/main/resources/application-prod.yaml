@@ -56,6 +56,10 @@ springdoc:
   swagger-ui:
     enabled: false
 
+logging:
+  level:
+    http.access: ${HTTP_ACCESS_LOG_LEVEL:WARN}
+
 # Pyroscope continuous profiling
 pyroscope:
   application-name: iced-latte-backend

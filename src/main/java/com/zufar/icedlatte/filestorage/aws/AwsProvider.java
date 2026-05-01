@@ -34,10 +34,11 @@ public class AwsProvider {
                     .toList();
             return getFileMetadataDtos(allObjects, bucketName);
         } catch (S3Exception e) {
-            log.error("aws.s3.list.error: message={}", e.getMessage(), e);
+            log.error("aws.s3.list.error: bucket={}, exceptionClass={}", bucketName, e.getClass().getSimpleName(), e);
             return List.of();
         } catch (SdkClientException e) {
-            log.error("aws.s3.list.unreachable: message={}", e.getMessage(), e);
+            log.error("aws.s3.list.unreachable: bucket={}, exceptionClass={}",
+                    bucketName, e.getClass().getSimpleName(), e);
             return List.of();
         }
     }

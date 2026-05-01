@@ -64,11 +64,13 @@ class CorrelationFilterTest {
         request.addHeader("X-Trace-ID", "trace-1");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
-        doAnswer(invocation -> {
+        doAnswer(ignored -> {
             assertThat(MDC.get("correlationId")).isNotBlank();
             assertThat(MDC.get("requestId")).isNotBlank();
             assertThat(MDC.get("sessionId")).isEqualTo("session-1");
             assertThat(MDC.get("clientTraceId")).isEqualTo("trace-1");
+            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, "user-1");
+            assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isEqualTo("user-1");
             return null;
         }).when(chain).doFilter(request, response);
 
@@ -78,5 +80,6 @@ class CorrelationFilterTest {
         assertThat(MDC.get("requestId")).isNull();
         assertThat(MDC.get("sessionId")).isNull();
         assertThat(MDC.get("clientTraceId")).isNull();
+        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
     }
 }

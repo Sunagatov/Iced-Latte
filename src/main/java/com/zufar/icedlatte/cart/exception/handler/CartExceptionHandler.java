@@ -23,9 +23,10 @@ public class CartExceptionHandler {
 
     @ExceptionHandler(EmptyCartItemsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @SuppressWarnings("unused")
     public ApiErrorResponse handleEmptyCartItemsException(final EmptyCartItemsException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.cart.empty_items: status=400");
+        log.debug("exception.cart.empty_items: status=400");
         return apiErrorResponse;
     }
 
@@ -33,7 +34,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleInvalidItemProductQuantityException(final InvalidItemProductQuantityException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.cart.quantity_invalid: exceptionClass={}, status=400", exception.getClass().getSimpleName());
+        log.debug("exception.cart.quantity_invalid: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -41,7 +42,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleInvalidShoppingCartIdException(final InvalidShoppingCartIdException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.cart.id_invalid: exceptionClass={}, status=400", exception.getClass().getSimpleName());
+        log.debug("exception.cart.id_invalid: exceptionClass={}, status=400", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -49,7 +50,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleShoppingCartItemNotFoundException(final ShoppingCartItemNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.cart.item_not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
+        log.debug("exception.cart.item_not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -57,7 +58,7 @@ public class CartExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleShoppingCartNotFoundException(final ShoppingCartNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.cart.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
+        log.debug("exception.cart.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 }

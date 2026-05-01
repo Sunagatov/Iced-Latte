@@ -28,10 +28,12 @@ public class AwsObjectDeleter {
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception ase) {
-            log.error("aws.s3.delete.error: message={}", ase.getMessage(), ase);
+            log.error("aws.s3.delete.error: bucket={}, key={}, exceptionClass={}",
+                    bucketName, fileName, ase.getClass().getSimpleName(), ase);
             throw ase;
         } catch (SdkClientException sce) {
-            log.error("aws.s3.delete.unreachable: message={}", sce.getMessage(), sce);
+            log.error("aws.s3.delete.unreachable: bucket={}, key={}, exceptionClass={}",
+                    bucketName, fileName, sce.getClass().getSimpleName(), sce);
             throw sce;
         }
     }

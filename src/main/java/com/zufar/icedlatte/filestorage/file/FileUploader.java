@@ -51,7 +51,8 @@ public class FileUploader {
             try {
                 awsObjectUploader.uploadFileDirectory(bucketName, directoryPath);
             } catch (IOException e) {
-                log.error("file.upload.io_error: message={}", e.getMessage(), e);
+                log.error("file.upload.io_error: target={}, exceptionClass={}",
+                        directoryPath, e.getClass().getSimpleName(), e);
                 throw new FileUploadException(directoryPath, e);
             }
         } else {

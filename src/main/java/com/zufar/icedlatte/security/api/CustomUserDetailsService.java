@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @NonNull
     public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
         if (!StringUtils.hasText(email)) {
-            log.warn("auth.user_details.empty_email");
+            log.debug("auth.user_details.empty_email");
             throw new UsernameNotFoundException("Email cannot be empty");
         }
         String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();

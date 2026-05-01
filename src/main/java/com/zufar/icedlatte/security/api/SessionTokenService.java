@@ -29,8 +29,7 @@ public class SessionTokenService {
     public UserAuthenticationResponse issueForNewSession(UserDetails userDetails,
                                                          HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
-        bindSessionToMdc(sessionAuthentication.session());
-        return sessionAuthentication.response();
+        return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 
     public UserAuthenticationResponse rotateSessionTokens(AuthSessionEntity session,

@@ -18,6 +18,11 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class RateLimitingConfiguration {
 
+    private static final Cache<String, Boolean> LOGGED_LIMITER_ERRORS = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .maximumSize(1_000)
+            .build();
+
     @SuppressWarnings("rawtypes")
     private static final DefaultRedisScript<List> RATE_LIMIT_SCRIPT = new DefaultRedisScript<>("""
             local current = redis.call('INCR', KEYS[1])
@@ -93,11 +98,7 @@ public class RateLimitingConfiguration {
                 int remaining = (int) Math.max(0, maxTokens - count);
                 return new RateLimitResult(count <= maxTokens, maxTokens, remaining, resetTimeMillis);
             } catch (Exception e) {
-                if (policy == FailPolicy.OPEN) {
-                    log.warn("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage());
-                } else {
-                    log.error("rate_limit.redis_error: key={}, policy={}, message={}", key, policy, e.getMessage(), e);
-                }
+                logRepeatedLimiterFailure("rate_limit.redis_error", key, policy, e, policy == FailPolicy.OPEN);
                 boolean allowed = policy == FailPolicy.OPEN;
                 return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
                         System.currentTimeMillis() + windowDuration.toMillis());
@@ -122,7 +123,7 @@ public class RateLimitingConfiguration {
                 FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));
                 return window.tryConsume(maxTokens);
             } catch (Exception e) {
-                log.error("rate_limit.cache_error: key={}, policy={}, message={}", key, failPolicy, e.getMessage(), e);
+                logRepeatedLimiterFailure("rate_limit.cache_error", key, failPolicy, e, false);
                 boolean allowed = failPolicy == FailPolicy.OPEN;
                 return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
                         System.currentTimeMillis() + windowDuration.toMillis());
@@ -150,6 +151,24 @@ public class RateLimitingConfiguration {
                 int remaining = (int) Math.max(0, maxTokens - current);
                 return new RateLimitResult(current <= maxTokens, maxTokens, remaining, resetTimeMillis);
             }
+        }
+    }
+
+    private static void logRepeatedLimiterFailure(String event,
+                                                  String key,
+                                                  FailPolicy policy,
+                                                  Exception exception,
+                                                  boolean warnOnFirst) {
+        String exceptionClass = exception.getClass().getSimpleName();
+        String dedupKey = event + "|" + policy + "|" + exceptionClass;
+        if (LOGGED_LIMITER_ERRORS.asMap().putIfAbsent(dedupKey, Boolean.TRUE) == null) {
+            if (warnOnFirst) {
+                log.warn("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass);
+            } else {
+                log.error("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass, exception);
+            }
+        } else {
+            log.debug("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass);
         }
     }
 

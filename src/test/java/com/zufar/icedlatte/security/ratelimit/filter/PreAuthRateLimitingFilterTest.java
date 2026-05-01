@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.ratelimit.RateLimiter;
 import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
@@ -14,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -91,6 +96,26 @@ class PreAuthRateLimitingFilterTest {
         assertThat(response.getHeader("X-RateLimit-Remaining")).isEqualTo("0");
         assertThat(response.getHeader("X-RateLimit-Reset")).isNotNull();
         assertThat(response.getContentType()).contains("application/json");
+    }
+
+    @Test
+    @DisplayName("repeated blocked requests log warn once and then debug")
+    void repeatedBlockedRequestsAreWarnedOnceThenDebugged() throws Exception {
+        ListAppender<ILoggingEvent> appender = attachAppender();
+        when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
+        when(floodRateLimiter.tryConsume(contains("pre-auth"), anyInt(), any()))
+                .thenReturn(new RateLimitResult(false, 200, 0, RESET_MILLIS));
+
+        MockHttpServletRequest firstRequest = new MockHttpServletRequest("GET", "/api/v1/products");
+        MockHttpServletRequest secondRequest = new MockHttpServletRequest("GET", "/api/v1/products");
+
+        filter.doFilterInternal(firstRequest, new MockHttpServletResponse(), mock(FilterChain.class));
+        filter.doFilterInternal(secondRequest, new MockHttpServletResponse(), mock(FilterChain.class));
+
+        assertThat(appender.list)
+                .hasSize(2)
+                .extracting(ILoggingEvent::getLevel)
+                .containsExactly(Level.WARN, Level.DEBUG);
     }
 
     @Test
@@ -224,5 +249,14 @@ class PreAuthRateLimitingFilterTest {
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("auth.window-duration must be positive");
+    }
+
+    private static ListAppender<ILoggingEvent> attachAppender() {
+        Logger logger = (Logger) LoggerFactory.getLogger(PreAuthRateLimitingFilter.class);
+        logger.setLevel(Level.DEBUG);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        return appender;
     }
 }

@@ -46,7 +46,6 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
             cachedJwtToken = getJwtToken(port, email, password);
         }
         specification = given()
-                .log().all(true)
                 .port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(CartEndpoint.CART_URL)
@@ -108,7 +107,7 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should return 401 when accessing cart without authentication")
     void shouldReturnUnauthorizedWithoutToken() {
-        given().log().all(true).port(port).basePath(CartEndpoint.CART_URL)
+        given().port(port).basePath(CartEndpoint.CART_URL)
                 .contentType(ContentType.JSON).accept(ContentType.JSON)
                 .get()
                 .then().statusCode(HttpStatus.UNAUTHORIZED.value());

@@ -31,6 +31,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @SuppressWarnings("unused")
     public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
         List<ApiErrorResponse.FieldError> fieldErrors = exception.getBindingResult().getFieldErrors().stream()
                 .map(fe -> new ApiErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
@@ -39,7 +40,7 @@ public class GlobalExceptionHandler {
                 .map(ApiErrorResponse.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
-        log.warn("exception.validation: errorCount={}, fields={}, status=400",
+        log.debug("exception.validation: errorCount={}, fields={}, status=400",
                 exception.getBindingResult().getErrorCount(), fieldNames);
         return ApiErrorResponse.builder()
                 .message("Validation failed")
@@ -53,7 +54,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleResourceNotFoundException(final ResourceNotFoundException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.warn("exception.resource_not_found: exceptionClass={}, status=404",
+        log.debug("exception.resource_not_found: exceptionClass={}, status=404",
                 exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
@@ -69,7 +70,7 @@ public class GlobalExceptionHandler {
                 .map(ApiErrorResponse.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
-        log.warn("exception.constraint_violation: errorCount={}, fields={}, status=400",
+        log.debug("exception.constraint_violation: errorCount={}, fields={}, status=400",
                 exception.getConstraintViolations().size(), fieldNames);
         return ApiErrorResponse.builder()
                 .message("Validation failed")
@@ -89,7 +90,7 @@ public class GlobalExceptionHandler {
         if (isPublicInternetNoise(path)) {
             log.debug("exception.resource_not_found.scan: method={}, path={}", method, path);
         } else {
-            log.warn("exception.resource_not_found: method={}, path={}", method, path);
+            log.debug("exception.resource_not_found: method={}, path={}", method, path);
         }
 
         return apiErrorResponse;
@@ -102,7 +103,7 @@ public class GlobalExceptionHandler {
                 "Uploaded file is too large",
                 HttpStatus.CONTENT_TOO_LARGE
         );
-        log.warn("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
+        log.debug("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
                 exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
@@ -114,7 +115,7 @@ public class GlobalExceptionHandler {
                 "Malformed multipart request",
                 HttpStatus.BAD_REQUEST
         );
-        log.warn("exception.multipart.invalid_request: exceptionClass={}, status=400",
+        log.debug("exception.multipart.invalid_request: exceptionClass={}, status=400",
                 exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
@@ -124,17 +125,17 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 "Invalid value for parameter '" + exception.getName() + "'", HttpStatus.BAD_REQUEST);
-        log.warn("exception.type_mismatch: param={}, value={}, status=400",
-                exception.getName(), exception.getValue());
+        log.debug("exception.type_mismatch: param={}, status=400",
+                exception.getName());
         return apiErrorResponse;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleHttpMessageNotReadableException(final HttpMessageNotReadableException exception) {
+    public ApiErrorResponse handleHttpMessageNotReadableException(final HttpMessageNotReadableException ignored) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 "Malformed or unreadable request body", HttpStatus.BAD_REQUEST);
-        log.warn("exception.message_not_readable: status=400");
+        log.debug("exception.message_not_readable: status=400");
         return apiErrorResponse;
     }
 
@@ -143,7 +144,7 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleMissingServletRequestParameterException(final MissingServletRequestParameterException exception) {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 "Required parameter '" + exception.getParameterName() + "' is missing", HttpStatus.BAD_REQUEST);
-        log.warn("exception.missing_param: param={}, status=400", exception.getParameterName());
+        log.debug("exception.missing_param: param={}, status=400", exception.getParameterName());
         return apiErrorResponse;
     }
 

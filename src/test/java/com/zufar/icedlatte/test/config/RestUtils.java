@@ -16,7 +16,6 @@ public class RestUtils {
 
     public static String getJwtToken(Integer port, String email, String password) {
         var specification = given()
-                .log().all(true)
                 .port(port)
                 .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
                 .contentType(ContentType.JSON)

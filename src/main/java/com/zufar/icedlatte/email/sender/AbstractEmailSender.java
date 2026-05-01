@@ -35,10 +35,10 @@ public abstract class AbstractEmailSender<T> {
             mailMessage.setText(message);
             mailMessage.setSubject(subject);
             javaMailSender.send(mailMessage);
-            log.info("email.sent: subject={}", subject);
+            log.info("email.sent: senderClass={}", getClass().getSimpleName());
         } catch (Exception e) {
-            log.error("email.send.failed: subject={}, cause={}",
-                    subject, e.getMessage(), e);
+            log.error("email.send.failed: senderClass={}, exceptionClass={}",
+                    getClass().getSimpleName(), e.getClass().getSimpleName(), e);
             throw e;
         }
     }

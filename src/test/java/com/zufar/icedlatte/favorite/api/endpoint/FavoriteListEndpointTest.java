@@ -44,7 +44,6 @@ class FavoriteListEndpointTest extends IntegrationTestBase {
             cachedJwtToken = getJwtToken(port, email, password);
         }
         specification = given()
-                .log().all(true)
                 .port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(FavoritesEndpoint.FAVORITES_URL)

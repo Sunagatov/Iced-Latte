@@ -30,14 +30,14 @@ public class JwtTokenExceptionsHandler {
     @ExceptionHandler(JwtTokenBlacklistedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleJwtTokenBlacklistedException(final JwtTokenBlacklistedException exception) {
-        log.warn("auth.refresh.rejected: reason={}, status=401", exception.getMessage());
+        log.debug("auth.refresh.rejected: reason=token_invalidated, status=401");
         return apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(JwtTokenHasNoUserEmailException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleJwtTokenHasNoUserEmailException(final JwtTokenHasNoUserEmailException exception) {
-        log.warn("auth.refresh.rejected: reason=invalid_token, status=401");
+        log.debug("auth.refresh.rejected: reason=invalid_token, status=401");
         return apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
     }
 }

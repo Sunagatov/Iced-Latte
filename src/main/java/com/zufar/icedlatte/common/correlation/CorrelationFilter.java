@@ -45,6 +45,7 @@ public class CorrelationFilter extends OncePerRequestFilter {
             MDC.remove(RequestContextConstants.REQUEST_ID_MDC_KEY);
             MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
             MDC.remove(RequestContextConstants.CLIENT_TRACE_ID_MDC_KEY);
+            MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
         }
     }
 

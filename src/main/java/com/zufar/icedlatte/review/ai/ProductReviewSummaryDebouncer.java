@@ -49,8 +49,8 @@ public class ProductReviewSummaryDebouncer {
             try {
                 applicationContext.getBean(ProductReviewSummaryDebouncer.class).runSummary(productId);
             } catch (Exception e) {
-                log.warn("product.ai_summary.schedule.failed: productId={} cause={}",
-                        productId, e.getMessage(), e);
+                log.warn("product.ai_summary.schedule.failed: productId={}, exceptionClass={}",
+                        productId, e.getClass().getSimpleName(), e);
             }
         }, delay, TimeUnit.SECONDS);
         pendingDebounce.put(productId, future);
@@ -69,7 +69,8 @@ public class ProductReviewSummaryDebouncer {
                 log.info("product.ai_summary.updated: productId={}", productId);
             });
         } catch (Exception e) {
-            log.warn("product.ai_summary.failed: productId={} cause={}", productId, e.getMessage());
+            log.warn("product.ai_summary.failed: productId={}, exceptionClass={}",
+                    productId, e.getClass().getSimpleName());
         }
     }
 

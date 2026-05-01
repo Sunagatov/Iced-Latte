@@ -82,8 +82,10 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 ACCESS_LOG.debug(OUTCOME, args);
             } else if (!authenticated && status == HttpServletResponse.SC_UNAUTHORIZED && isExpectedAnonymousAuthProbe(path)) {
                 ACCESS_LOG.debug(OUTCOME, args);
-            } else if (status >= 400 || slow) {
+            } else if (slow) {
                 ACCESS_LOG.warn(OUTCOME, args);
+            } else if (status >= 400) {
+                ACCESS_LOG.debug(OUTCOME, args);
             } else if (isPollingEndpoint(path)) {
                 ACCESS_LOG.debug(OUTCOME, args);
             } else {

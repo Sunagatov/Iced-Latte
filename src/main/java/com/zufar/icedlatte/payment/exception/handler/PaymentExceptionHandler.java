@@ -24,30 +24,29 @@ public class PaymentExceptionHandler {
 
     @ExceptionHandler(PaymentEventProcessingException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @SuppressWarnings("unused")
     public ApiErrorResponse handlePaymentEventProcessingException(final PaymentEventProcessingException e) {
-        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
-        log.warn("exception.payment.event_processing: message={}", response.message());
-        return response;
+        return apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(StripeSessionCreationException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    @SuppressWarnings("unused")
     public ApiErrorResponse handleStripeSessionCreationException(final StripeSessionCreationException e) {
         ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_GATEWAY);
         Throwable cause = e.getCause();
         if (cause instanceof AuthenticationException) {
             log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);
         } else {
-            log.warn("payment.session.failed: message={}, status=502", e.getMessage());
+            log.warn("payment.session.failed: exceptionClass={}, status=502", e.getClass().getSimpleName());
         }
         return response;
     }
 
     @ExceptionHandler(StripeSessionIsNotComplete.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @SuppressWarnings("unused")
     public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete e) {
-        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
-        log.warn("exception.payment.session_incomplete: message={}", response.message());
-        return response;
+        return apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
     }
 }

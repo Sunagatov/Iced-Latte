@@ -44,7 +44,7 @@ class SessionTokenServiceTest {
     }
 
     @Test
-    @DisplayName("issues a fresh managed session and keeps MDC bound to the request")
+    @DisplayName("issues a fresh managed session and clears MDC afterward")
     void issueForNewSessionCreatesManagedSession() {
         UUID userId = UUID.randomUUID();
         String refreshToken = "refresh-token";
@@ -65,8 +65,8 @@ class SessionTokenServiceTest {
         UserAuthenticationResponse result = service.issueForNewSession(user, request);
 
         assertThat(result).isSameAs(response);
-        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isEqualTo(userId.toString());
-        assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNotBlank();
+        assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
+        assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
 
     @Test

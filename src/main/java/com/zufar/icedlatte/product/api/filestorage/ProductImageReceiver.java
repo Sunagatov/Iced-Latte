@@ -31,12 +31,12 @@ public class ProductImageReceiver {
         try {
             return fileProvider.getRelatedObjectUrl(productId)
                     .orElseGet(() -> {
-                        log.warn("product.image.not_found: productId={}", productId);
+                        log.debug("product.image.not_found: productId={}", productId);
                         return DEFAULT_FILE_URL;
                     });
         } catch (RuntimeException ex) {
-            log.error("product.image.error: productId={}, message={}",
-                    productId, ex.getMessage(), ex);
+            log.error("product.image.error: productId={}, exceptionClass={}",
+                    productId, ex.getClass().getSimpleName(), ex);
             return DEFAULT_FILE_URL;
         }
     }
@@ -65,7 +65,8 @@ public class ProductImageReceiver {
         try {
             fileUrls = fileProvider.getRelatedObjectUrls(productIds);
         } catch (RuntimeException ex) {
-            log.error("product.images.error: count={}, message={}", productIds.size(), ex.getMessage(), ex);
+            log.error("product.images.error: count={}, exceptionClass={}",
+                    productIds.size(), ex.getClass().getSimpleName(), ex);
             fileUrls = Map.of();
         }
         final Map<UUID, String> resolved = fileUrls;

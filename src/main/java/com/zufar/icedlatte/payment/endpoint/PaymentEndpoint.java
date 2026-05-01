@@ -8,6 +8,7 @@ import com.zufar.icedlatte.payment.api.StripeWebhookService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,14 +30,14 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @PostMapping
     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
         SessionWithClientSecretDto response = stripeSessionCreator.createSession(httpRequest);
-        log.info("payment.session.created: sessionId={}", response.getSessionId());
+        log.info("payment.session.created: sessionId={}", maskSessionId(response.getSessionId()));
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/stripe/webhook")
     public ResponseEntity<Void> processStripeWebhook(@RequestHeader("Stripe-Signature") String stripeSignature,
                                                      @RequestBody String payload) {
-        log.info("payment.webhook.receiving");
+        log.debug("payment.webhook.receiving");
         stripeWebhookService.processWebhook(payload, stripeSignature);
         return ResponseEntity.ok().build();
     }
@@ -45,5 +46,12 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @GetMapping("/order")
     public ResponseEntity<PaymentConfirmationEmail> processRedirectEvent(@RequestParam String sessionId) {
         return ResponseEntity.ok(stripeWebhookService.processRedirect(sessionId));
+    }
+
+    private static String maskSessionId(String sessionId) {
+        if (StringUtils.isBlank(sessionId)) {
+            return "unknown";
+        }
+        return StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10);
     }
 }

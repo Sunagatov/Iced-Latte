@@ -21,7 +21,7 @@ public class CommonExceptionHandler {
     public ApiErrorResponse handleFileReadException(final FileReadException exception) {
         ApiErrorResponse apiErrorResponse =
                 apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.warn("exception.file.read_failed: exceptionClass={}, status=400",
+        log.debug("exception.file.read_failed: exceptionClass={}, status=400",
                 exception.getClass().getSimpleName());
         return apiErrorResponse;
     }

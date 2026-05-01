@@ -24,10 +24,10 @@ public class PasswordResetService {
             singleUserProvider.getUserEntityByEmail(email);
             emailTokenSender.sendPasswordResetCode(email);
         } catch (UserNotFoundException _) {
-            log.warn("auth.password.forgot.unknown_email");
+            log.debug("auth.password.forgot.unknown_email");
         } catch (TimeTokenException _) {
             // Swallow cooldown error — returning a distinct response would confirm the email exists.
-            log.warn("auth.password.forgot.cooldown");
+            log.debug("auth.password.forgot.cooldown");
         }
     }
 

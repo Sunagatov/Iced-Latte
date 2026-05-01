@@ -41,10 +41,12 @@ public class AwsObjectUploader {
             s3Client.putObject(putObjectRequest,
                     RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (S3Exception ase) {
-            log.error("aws.s3.upload.error: message={}", ase.getMessage(), ase);
+            log.error("aws.s3.upload.error: bucket={}, key={}, exceptionClass={}",
+                    bucketName, fileName, ase.getClass().getSimpleName(), ase);
             throw new FileUploadException(fileName, ase);
         } catch (SdkClientException sce) {
-            log.error("aws.s3.upload.unreachable: message={}", sce.getMessage(), sce);
+            log.error("aws.s3.upload.unreachable: bucket={}, key={}, exceptionClass={}",
+                    bucketName, fileName, sce.getClass().getSimpleName(), sce);
             throw new FileUploadException(fileName, sce);
         } catch (IOException e) {
             throw new FileReadException(fileName, e);
@@ -74,13 +76,15 @@ public class AwsObjectUploader {
                                     .build();
                             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
                         } catch (S3Exception e) {
-                            log.error("aws.s3.upload.file_error: key={}, message={}",
-                                    filePath, e.getMessage(), e);
-                            throw new FileUploadException(filePath.toString(), e);
+                            String key = normalizedPath.relativize(filePath).toString().replace("\\", "/");
+                            log.error("aws.s3.upload.file_error: bucket={}, key={}, exceptionClass={}",
+                                    bucketName, key, e.getClass().getSimpleName(), e);
+                            throw new FileUploadException(key, e);
                         } catch (SdkClientException e) {
-                            log.error("aws.s3.upload.file_unreachable: key={}, message={}",
-                                    filePath, e.getMessage(), e);
-                            throw new FileUploadException(filePath.toString(), e);
+                            String key = normalizedPath.relativize(filePath).toString().replace("\\", "/");
+                            log.error("aws.s3.upload.file_unreachable: bucket={}, key={}, exceptionClass={}",
+                                    bucketName, key, e.getClass().getSimpleName(), e);
+                            throw new FileUploadException(key, e);
                         }
                     });
         }

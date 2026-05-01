@@ -6,6 +6,8 @@ import com.zufar.icedlatte.security.ratelimit.RateLimitRequestClassifier;
 import com.zufar.icedlatte.security.ratelimit.RateLimitResponseWriter;
 import com.zufar.icedlatte.security.ratelimit.RateLimiter;
 import com.zufar.icedlatte.security.ratelimit.RateLimitingConfiguration.RateLimitResult;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -21,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 /**
  * IP-only rate limiter that runs before JWT authentication.
@@ -50,6 +53,10 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter authRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
+    private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
+            .maximumSize(5_000)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
 
     public PreAuthRateLimitingFilter(@Qualifier("preAuthFloodRateLimiter") RateLimiter floodRateLimiter,
                                      @Qualifier("preAuthAuthRateLimiter") RateLimiter authRateLimiter,
@@ -86,7 +93,7 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
             var authResult = authRateLimiter.tryConsume("auth:ip:" + ip, authMaxRequests, authWindowDuration);
             RateLimitResponseWriter.writeRateLimitHeaders(response, authResult);
             if (!authResult.allowed()) {
-                blockRequest(request, response, authResult, ip, RateLimitCategory.AUTH_PRE);
+                blockRequest(request, response, authResult, ip, RateLimitCategory.AUTH_PRE, "auth:ip:" + ip);
                 return;
             }
             recordAllowed(RateLimitCategory.AUTH_PRE);
@@ -98,7 +105,7 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
-            blockRequest(request, response, result, ip, RateLimitCategory.PRE_AUTH);
+            blockRequest(request, response, result, ip, RateLimitCategory.PRE_AUTH, key);
             return;
         }
 
@@ -110,16 +117,29 @@ public class PreAuthRateLimitingFilter extends OncePerRequestFilter {
                               HttpServletResponse response,
                               RateLimitResult result,
                               String ip,
-                              RateLimitCategory category) throws IOException {
+                              RateLimitCategory category,
+                              String rateLimitKey) throws IOException {
         meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
-        log.warn("rate_limit.exceeded: category={}, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
-                category.value(),
-                ip,
-                request.getMethod(),
-                ClientIpExtractor.sanitize(request.getRequestURI()),
-                retryAfterSeconds(result),
-                result.limit(),
-                Math.max(0, result.remaining()));
+        long retryAfterSeconds = retryAfterSeconds(result);
+        boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
+        if (firstBlock) {
+            warnedKeys.put(rateLimitKey, Boolean.TRUE);
+            log.warn("rate_limit.exceeded: category={}, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
+                    category.value(),
+                    ip,
+                    request.getMethod(),
+                    ClientIpExtractor.sanitize(request.getRequestURI()),
+                    retryAfterSeconds,
+                    result.limit(),
+                    Math.max(0, result.remaining()));
+        } else {
+            log.debug("rate_limit.exceeded: category={}, identity_type=ip, client_ip={}, method={}, path={}, retry_after_seconds={}",
+                    category.value(),
+                    ip,
+                    request.getMethod(),
+                    ClientIpExtractor.sanitize(request.getRequestURI()),
+                    retryAfterSeconds);
+        }
         RateLimitResponseWriter.writeTooManyRequests(response, result);
     }
 

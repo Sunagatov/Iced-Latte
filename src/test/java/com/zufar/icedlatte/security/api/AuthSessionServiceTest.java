@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.security.api;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -52,6 +57,28 @@ class AuthSessionServiceTest {
 
         assertThat(result.getId()).isEqualTo(sessionId);
         verify(sessionRepository).save(any(AuthSessionEntity.class));
+    }
+
+    @Test
+    @DisplayName("createSession logs a masked session identifier")
+    void createSessionLogsMaskedSessionIdentifier() {
+        ListAppender<ILoggingEvent> appender = attachAppender();
+        when(jwtProperties.refreshExpiration()).thenReturn(Duration.ofDays(1));
+        UUID sessionId = UUID.fromString("12345678-1234-5678-1234-567812345678");
+        UUID userId = UUID.randomUUID();
+        when(request.getHeader("User-Agent")).thenReturn("TestAgent");
+        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
+
+        service.createSession(sessionId, userId, "hash123", request);
+
+        assertThat(appender.list)
+                .filteredOn(event -> event.getFormattedMessage().startsWith("auth.session.created"))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.getLevel()).isEqualTo(Level.INFO);
+                    assertThat(event.getFormattedMessage()).contains("123456****");
+                    assertThat(event.getFormattedMessage()).doesNotContain(sessionId.toString());
+                });
     }
 
     @Test
@@ -291,5 +318,14 @@ class AuthSessionServiceTest {
         service.revokeAllForUserBySessionId(sessionId);
 
         verify(sessionRepository, never()).revokeAllByUserId(any(UUID.class), any(OffsetDateTime.class));
+    }
+
+    private static ListAppender<ILoggingEvent> attachAppender() {
+        Logger logger = (Logger) LoggerFactory.getLogger(AuthSessionService.class);
+        logger.setLevel(Level.INFO);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        return appender;
     }
 }

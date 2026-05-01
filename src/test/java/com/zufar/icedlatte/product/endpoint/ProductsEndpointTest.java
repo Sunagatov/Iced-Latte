@@ -42,7 +42,6 @@ class ProductsEndpointTest extends IntegrationTestBase {
     @BeforeEach
     void setEndpointUrl() {
         specification = given()
-                .log().all(true)
                 .port(port)
                 .basePath(ProductsEndpoint.PRODUCTS_URL)
                 .accept(ContentType.JSON);

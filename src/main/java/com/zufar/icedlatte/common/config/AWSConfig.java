@@ -59,7 +59,8 @@ public class AWSConfig {
                 return builder.build();
             }
         } catch (SdkClientException ace) {
-            log.error("aws.s3.client.init_error: message={}", ace.getMessage(), ace);
+            log.error("aws.s3.client.init_error: region={}, endpointOverrideConfigured={}, exceptionClass={}",
+                    region, StringUtils.hasText(endpointUrl), ace.getClass().getSimpleName(), ace);
             throw ace;
         }
     }

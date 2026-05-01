@@ -47,11 +47,11 @@ public class ProductQuantityItemUpdater {
                                         ShoppingCartItem item) {
         int newQuantity = item.getProductQuantity() + productQuantityChange;
         if (newQuantity < 1) {
-            log.warn("cart.item.quantity.invalid: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
+            log.debug("cart.item.quantity.invalid: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
         if (productQuantityChange == 0) {
-            log.warn("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
+            log.debug("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
             throw new InvalidItemProductQuantityException(newQuantity);
         }
     }

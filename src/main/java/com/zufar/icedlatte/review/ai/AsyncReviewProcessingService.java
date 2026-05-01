@@ -32,7 +32,7 @@ public class AsyncReviewProcessingService {
             moderationService.moderate(event.text());
         } catch (ReviewModerationException e) {
             UUID reviewId = event.reviewId();
-            log.warn("review.moderation.failed: reviewId={} reason={}", reviewId, e.getMessage());
+            log.warn("review.moderation.failed: reviewId={}, reasonCode=REJECTED_BY_MODERATION", reviewId);
             reviewRepository.findById(reviewId).ifPresent(review -> {
                 UUID productId = review.getProductId();
                 reviewRepository.deleteById(reviewId);

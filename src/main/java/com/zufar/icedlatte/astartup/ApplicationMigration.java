@@ -57,7 +57,10 @@ public class ApplicationMigration implements ApplicationRunner {
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((_, e) -> {
                     executor.close();
-                    if (e != null) log.error("migration.aws.error: message={}", e.getMessage(), e);
+                    if (e != null) {
+                        log.error("migration.aws.error: exceptionClass={}",
+                                e.getClass().getSimpleName(), e);
+                    }
                 });
     }
 
@@ -75,9 +78,9 @@ public class ApplicationMigration implements ApplicationRunner {
             fileUploader.uploadDirectory(productPictureBucket, directoryPath);
             log.info("migration.upload.finish: bucket={}, path={}, durationMs={}", productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
-            log.warn("migration.upload.error: reason={}", e.getMessage(), e);
+            log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
         } catch (FileReadException e) {
-            log.warn("migration.upload.read_error: reason={}", e.getMessage(), e);
+            log.warn("migration.upload.read_error: exceptionClass={}", e.getClass().getSimpleName(), e);
         }
     }
 
@@ -87,7 +90,7 @@ public class ApplicationMigration implements ApplicationRunner {
             log.info("migration.metadata.fetched: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
             return fileMetadataDtos;
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
-            log.warn("migration.metadata.fetch_error: reason={}", e.getMessage(), e);
+            log.warn("migration.metadata.fetch_error: exceptionClass={}", e.getClass().getSimpleName(), e);
             return List.of();
         }
     }
@@ -101,7 +104,7 @@ public class ApplicationMigration implements ApplicationRunner {
             fileMetadataSaver.replaceAllByBucket(productPictureBucket, fileMetadataDtos);
             log.info("migration.metadata.saved: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
         } catch (DataAccessException e) {
-            log.warn("migration.metadata.save_error: reason={}", e.getMessage(), e);
+            log.warn("migration.metadata.save_error: exceptionClass={}", e.getClass().getSimpleName(), e);
         }
     }
 }
