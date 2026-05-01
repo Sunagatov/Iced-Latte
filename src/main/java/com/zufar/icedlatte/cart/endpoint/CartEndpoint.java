@@ -1,9 +1,6 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.cart.api.AddItemsToShoppingCartHelper;
-import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
-import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
-import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
@@ -34,10 +31,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public static final String CART_URL = ApiPaths.CART;
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final AddItemsToShoppingCartHelper addItemsToShoppingCartHelper;
-    private final ProductQuantityItemUpdater productQuantityItemUpdater;
-    private final ShoppingCartProvider shoppingCartProvider;
-    private final ShoppingCartItemsDeleter shoppingCartItemsDeleter;
+    private final ShoppingCartService shoppingCartService;
 
     @Override
     @PostMapping("/items")
@@ -47,7 +41,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
         }
         log.debug("cart.items.adding: count={}", request.getItems().size());
         var userId = securityPrincipalProvider.getUserId();
-        var shoppingCart = addItemsToShoppingCartHelper.add(userId, request.getItems());
+        var shoppingCart = shoppingCartService.addItems(userId, request.getItems());
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }
@@ -57,7 +51,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public ResponseEntity<ShoppingCartDto> getShoppingCart() {
         var userId = securityPrincipalProvider.getUserId();
         log.debug("cart.get: userId={}", userId);
-        return ResponseEntity.ok(shoppingCartProvider.getByUserId(userId));
+        return ResponseEntity.ok(shoppingCartService.getByUserId(userId));
     }
 
     @Override
@@ -67,7 +61,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
         var quantityChange = request.getProductQuantityChange();
         var userId = securityPrincipalProvider.getUserId();
         log.debug("cart.items.quantity.updating: itemId={}, change={}", itemId, quantityChange);
-        var shoppingCart = productQuantityItemUpdater.update(itemId, userId, quantityChange);
+        var shoppingCart = shoppingCartService.updateItemQuantity(itemId, userId, quantityChange);
         log.debug("cart.items.quantity.updated: itemId={}", itemId);
         return ResponseEntity.ok(shoppingCart);
     }
@@ -80,7 +74,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
         }
         var userId = securityPrincipalProvider.getUserId();
         log.debug("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());
-        var shoppingCart = shoppingCartItemsDeleter.delete(request, userId);
+        var shoppingCart = shoppingCartService.deleteItems(request, userId);
         log.debug("cart.items.deleted");
         return ResponseEntity.ok(shoppingCart);
     }

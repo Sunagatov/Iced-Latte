@@ -30,20 +30,20 @@ public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
     }
 
     @Override
-    public void put(String key, Object value, Duration ttl) {
+    public void put(String key, String value, Duration ttl) {
         cache.put(key, new CacheValue(value, Instant.now().plus(ttl)));
     }
 
     @Override
-    public <T> Optional<T> get(String key, Class<T> valueType) {
+    public Optional<String> get(String key) {
         CacheValue value = cache.getIfPresent(key);
-        return value == null ? Optional.empty() : value.cast(valueType);
+        return value == null ? Optional.empty() : Optional.of(value.value());
     }
 
     @Override
-    public <T> Optional<T> take(String key, Class<T> valueType) {
+    public Optional<String> take(String key) {
         CacheValue value = cache.asMap().remove(key);
-        return value == null ? Optional.empty() : value.cast(valueType);
+        return value == null ? Optional.empty() : Optional.of(value.value());
     }
 
     @Override
@@ -56,12 +56,7 @@ public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
         return cache.getIfPresent(key) != null;
     }
 
-    private record CacheValue(Object value, Instant expiresAt) {
-
-        <T> Optional<T> cast(Class<T> valueType) {
-            return valueType.isInstance(value) ? Optional.of(valueType.cast(value)) : Optional.empty();
-        }
-    }
+    private record CacheValue(String value, Instant expiresAt) { }
 
     private static final class CacheValueExpiry implements Expiry<String, CacheValue> {
 

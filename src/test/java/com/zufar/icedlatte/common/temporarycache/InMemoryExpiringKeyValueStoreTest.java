@@ -17,7 +17,7 @@ class InMemoryExpiringKeyValueStoreTest {
     void putAndGetReturnStoredValue() {
         store.put("key", "value", Duration.ofMinutes(5));
 
-        assertThat(store.get("key", String.class)).contains("value");
+        assertThat(store.get("key")).contains("value");
     }
 
     @Test
@@ -25,8 +25,8 @@ class InMemoryExpiringKeyValueStoreTest {
     void takeReturnsAndRemovesStoredValue() {
         store.put("key", "value", Duration.ofMinutes(5));
 
-        assertThat(store.take("key", String.class)).contains("value");
-        assertThat(store.get("key", String.class)).isEmpty();
+        assertThat(store.take("key")).contains("value");
+        assertThat(store.get("key")).isEmpty();
     }
 
     @Test
@@ -36,13 +36,13 @@ class InMemoryExpiringKeyValueStoreTest {
 
         store.remove("key");
 
-        assertThat(store.get("key", String.class)).isEmpty();
+        assertThat(store.get("key")).isEmpty();
     }
 
     @Test
     @DisplayName("contains reflects whether the key is present")
     void containsReflectsPresence() {
-        store.put("key", Boolean.TRUE, Duration.ofMinutes(5));
+        store.put("key", "true", Duration.ofMinutes(5));
 
         assertThat(store.contains("key")).isTrue();
 

@@ -43,7 +43,7 @@ class JwtBlacklistStoreTest {
 
         service.blacklistToken(TOKEN);
 
-        verify(temporaryStore).put(eq("jwt:blacklist:" + service.sha256(TOKEN)), eq(Boolean.TRUE), eq(TTL));
+        verify(temporaryStore).put(eq("jwt:blacklist:" + service.sha256(TOKEN)), eq("true"), eq(TTL));
     }
 
     @Test

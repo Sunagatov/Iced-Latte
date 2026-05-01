@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.order.api;
 
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
@@ -35,13 +35,13 @@ public class OrderCreator {
     private final OrderRepository orderRepository;
     private final OrderProvider orderProvider;
     private final OrderDtoConverter orderDtoConverter;
-    private final ShoppingCartProvider shoppingCartProvider;
+    private final ShoppingCartService shoppingCartService;
     private final ShoppingCartRepository shoppingCartRepository;
     private final SingleUserProvider singleUserProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request) {
-        ShoppingCartDto cart = shoppingCartProvider.getByUserIdOrThrow(userId);
+        ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new BadRequestException(String.format("Cannot create order: shopping cart is empty for userId=%s.", userId));
@@ -89,7 +89,7 @@ public class OrderCreator {
             return false;
         }
 
-        ShoppingCartDto shoppingCartDto = shoppingCartProvider.getByUserIdOrThrow(userId);
+        ShoppingCartDto shoppingCartDto = shoppingCartService.getByUserIdOrThrow(userId);
         UserEntity user = singleUserProvider.getUserEntityById(userId);
 
         Order orderEntity = createOrderEntityFromSession(user, shoppingCartDto, sessionId);

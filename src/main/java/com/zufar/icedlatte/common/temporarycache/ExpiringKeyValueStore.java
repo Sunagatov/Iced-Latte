@@ -5,11 +5,11 @@ import java.util.Optional;
 
 public interface ExpiringKeyValueStore {
 
-    void put(String key, Object value, Duration ttl);
+    void put(String key, String value, Duration ttl);
 
-    <T> Optional<T> get(String key, Class<T> valueType);
+    Optional<String> get(String key);
 
-    <T> Optional<T> take(String key, Class<T> valueType);
+    Optional<String> take(String key);
 
     void remove(String key);
 

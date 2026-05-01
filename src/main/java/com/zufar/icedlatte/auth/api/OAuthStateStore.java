@@ -23,7 +23,7 @@ public class OAuthStateStore {
     }
 
     public String consume(String nonce) {
-        return temporaryStore.take(namespacedKey(nonce), String.class).orElse(null);
+        return temporaryStore.take(namespacedKey(nonce)).orElse(null);
     }
 
     private String namespacedKey(String nonce) {

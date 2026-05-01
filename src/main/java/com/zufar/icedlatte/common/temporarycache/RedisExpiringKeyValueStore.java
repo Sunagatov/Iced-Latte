@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.common.temporarycache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,27 +16,20 @@ import java.util.Optional;
 public class RedisExpiringKeyValueStore implements ExpiringKeyValueStore {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
 
     @Override
-    public void put(String key, Object value, Duration ttl) {
-        try {
-            redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(value), ttl);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize temporary cache value", e);
-        }
+    public void put(String key, String value, Duration ttl) {
+        redisTemplate.opsForValue().set(key, value, ttl);
     }
 
     @Override
-    public <T> Optional<T> get(String key, Class<T> valueType) {
-        String value = redisTemplate.opsForValue().get(key);
-        return deserialize(value, valueType);
+    public Optional<String> get(String key) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }
 
     @Override
-    public <T> Optional<T> take(String key, Class<T> valueType) {
-        String value = redisTemplate.opsForValue().getAndDelete(key);
-        return deserialize(value, valueType);
+    public Optional<String> take(String key) {
+        return Optional.ofNullable(redisTemplate.opsForValue().getAndDelete(key));
     }
 
     @Override
@@ -50,16 +41,5 @@ public class RedisExpiringKeyValueStore implements ExpiringKeyValueStore {
     public boolean contains(String key) {
         Boolean hasKey = redisTemplate.hasKey(key);
         return hasKey != null && hasKey;
-    }
-
-    private <T> Optional<T> deserialize(String value, Class<T> valueType) {
-        if (value == null) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(objectMapper.readValue(value, valueType));
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to deserialize temporary cache value", e);
-        }
     }
 }

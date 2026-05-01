@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.email.api.EmailVerificationService;
 import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
@@ -22,7 +22,7 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
     private Integer port;
 
     @Autowired
-    private TokenManager tokenManager;
+    private EmailVerificationService emailVerificationService;
 
     private RequestSpecification spec;
 
@@ -42,7 +42,7 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
     private String registerAndGetRefreshToken(String email) {
         UserRegistrationRequest pending = new UserRegistrationRequest(
                 "Replay", "Test", email, "!h2h3kKl22");
-        String token = tokenManager.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         given(spec).body("{\"token\":\"" + token + "\"}").post("/confirm")
                 .then().statusCode(HttpStatus.CREATED.value());

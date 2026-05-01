@@ -13,7 +13,9 @@ import java.util.List;
 
 @Component
 @ConditionalOnProperty(name = "email.enabled", havingValue = "true")
-public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDto> {
+public class AuthTokenEmailConfirmation
+        extends AbstractEmailSender<EmailTokenDto>
+        implements AuthTokenEmailSender {
 
     @Value("${spring.mail.subject.confirmation}")
     private String subject;
@@ -25,6 +27,7 @@ public class AuthTokenEmailConfirmation extends AbstractEmailSender<EmailTokenDt
         super(javaMailSender, mailMessage, List.of(emailConfirmMessage));
     }
 
+    @Override
     public void sendTemporaryCode(String email,
                                   String message) {
         String buildMessage = getMessage(new EmailTokenDto(message));

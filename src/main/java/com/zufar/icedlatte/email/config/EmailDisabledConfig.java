@@ -1,14 +1,10 @@
 package com.zufar.icedlatte.email.config;
 
-import com.zufar.icedlatte.email.message.EmailConfirmMessage;
-import com.zufar.icedlatte.email.sender.AuthTokenEmailConfirmation;
+import com.zufar.icedlatte.email.sender.AuthTokenEmailSender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 @Slf4j
 @Configuration
@@ -16,24 +12,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 public class EmailDisabledConfig {
 
     @Bean
-    public JavaMailSender noOpMailSender() {
-        return new JavaMailSenderImpl();
-    }
-
-    @Bean
-    public SimpleMailMessage noOpMailMessage() {
-        return new SimpleMailMessage();
-    }
-
-    @Bean
-    public AuthTokenEmailConfirmation noOpAuthTokenEmailConfirmation(JavaMailSender mailSender,
-                                                                     SimpleMailMessage mailMessage,
-                                                                     EmailConfirmMessage emailConfirmMessage) {
-        return new AuthTokenEmailConfirmation(mailSender, mailMessage, emailConfirmMessage) {
-            @Override
-            public void sendTemporaryCode(String email, String message) {
-                log.debug("email.send.skipped: email.enabled=false");
-            }
-        };
+    public AuthTokenEmailSender noOpAuthTokenEmailSender() {
+        return (_, _) -> log.debug("email.send.skipped: email.enabled=false");
     }
 }

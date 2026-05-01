@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.temporarycache;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,43 +22,41 @@ class RedisExpiringKeyValueStoreTest {
     @Mock private RedisTemplate<String, String> redisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Test
-    @DisplayName("put serializes and stores the value with TTL")
-    void putSerializesAndStoresValueWithTtl() {
+    @DisplayName("put stores the raw string value with TTL")
+    void putStoresTheRawStringValueWithTtl() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate, objectMapper);
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
 
         store.put("key", "value", Duration.ofMinutes(5));
 
-        verify(valueOperations).set("key", "\"value\"", Duration.ofMinutes(5));
+        verify(valueOperations).set("key", "value", Duration.ofMinutes(5));
     }
 
     @Test
-    @DisplayName("get deserializes stored values")
-    void getDeserializesStoredValues() {
+    @DisplayName("get returns stored values")
+    void getReturnsStoredValues() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("key")).thenReturn("\"value\"");
-        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate, objectMapper);
+        when(valueOperations.get("key")).thenReturn("value");
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
 
-        assertThat(store.get("key", String.class)).contains("value");
+        assertThat(store.get("key")).contains("value");
     }
 
     @Test
-    @DisplayName("take deserializes and removes stored values")
-    void takeDeserializesAndRemovesStoredValues() {
+    @DisplayName("take returns and removes stored values")
+    void takeReturnsAndRemovesStoredValues() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.getAndDelete("key")).thenReturn("\"value\"");
-        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate, objectMapper);
+        when(valueOperations.getAndDelete("key")).thenReturn("value");
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
 
-        assertThat(store.take("key", String.class)).contains("value");
+        assertThat(store.take("key")).contains("value");
     }
 
     @Test
     @DisplayName("remove deletes the key")
     void removeDeletesKey() {
-        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate, objectMapper);
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
 
         store.remove("key");
 
@@ -70,7 +67,7 @@ class RedisExpiringKeyValueStoreTest {
     @DisplayName("contains delegates to Redis hasKey")
     void containsDelegatesToRedisHasKey() {
         when(redisTemplate.hasKey("key")).thenReturn(true);
-        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate, objectMapper);
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
 
         assertThat(store.contains("key")).isTrue();
         verify(redisTemplate).hasKey(eq("key"));

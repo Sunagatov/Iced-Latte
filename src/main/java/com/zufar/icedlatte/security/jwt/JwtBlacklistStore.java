@@ -31,7 +31,7 @@ public class JwtBlacklistStore {
             log.debug("jwt.blacklist.empty_token");
             return;
         }
-        temporaryStore.put(namespacedKey(token), Boolean.TRUE, jwtProperties.expiration());
+        temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
         log.debug("jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
     }
 

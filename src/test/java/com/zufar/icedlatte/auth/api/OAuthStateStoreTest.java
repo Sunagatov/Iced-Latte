@@ -41,7 +41,7 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("consume returns the stored callback")
     void consumeReturnsStoredCallback() {
-        when(temporaryStore.take("oauth:state:nonce-1", String.class))
+        when(temporaryStore.take("oauth:state:nonce-1"))
                 .thenReturn(Optional.of("https://example.com/callback"));
 
         assertThat(cache.consume("nonce-1")).isEqualTo("https://example.com/callback");
@@ -50,7 +50,7 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("consume returns null when the nonce is absent")
     void consumeReturnsNullWhenNonceIsAbsent() {
-        when(temporaryStore.take("oauth:state:missing", String.class)).thenReturn(Optional.empty());
+        when(temporaryStore.take("oauth:state:missing")).thenReturn(Optional.empty());
 
         assertThat(cache.consume("missing")).isNull();
     }

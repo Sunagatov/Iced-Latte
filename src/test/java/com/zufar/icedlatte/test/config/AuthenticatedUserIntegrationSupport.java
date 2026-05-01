@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.test.config;
 
-import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.email.api.EmailVerificationService;
 import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import io.restassured.http.ContentType;
@@ -19,7 +19,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     protected Integer port;
 
     @Autowired
-    private TokenManager tokenManager;
+    private EmailVerificationService emailVerificationService;
 
     protected RequestSpecification jsonSpec(String basePath) {
         return given()
@@ -49,7 +49,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
             String password
     ) {
         UserRegistrationRequest pending = new UserRegistrationRequest(firstName, lastName, email, password);
-        String confirmationToken = tokenManager.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String confirmationToken = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         var response = given(jsonSpec(AUTH_BASE_PATH))
                 .body("""

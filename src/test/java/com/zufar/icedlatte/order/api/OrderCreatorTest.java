@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.order.api;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
@@ -40,7 +40,7 @@ class OrderCreatorTest {
     @Mock
     private OrderDtoConverter orderDtoConverter;
     @Mock
-    private ShoppingCartProvider shoppingCartProvider;
+    private ShoppingCartService shoppingCartService;
     @Mock
     @SuppressWarnings("unused") // required by @InjectMocks (@RequiredArgsConstructor), never called in tested paths
     private SingleUserProvider singleUserProvider;
@@ -66,7 +66,7 @@ class OrderCreatorTest {
         request.setRecipientName("John");
         request.setRecipientSurname("Doe");
 
-        when(shoppingCartProvider.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
+        when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
 
         assertThatThrownBy(() -> orderCreator.create(userId, request))
                 .isInstanceOf(BadRequestException.class);
@@ -106,7 +106,7 @@ class OrderCreatorTest {
                 .build();
         OrderDto expectedDto = new OrderDto();
 
-        when(shoppingCartProvider.getByUserIdOrThrow(userId)).thenReturn(cart);
+        when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(cartItem)).thenReturn(orderItem);
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(orderDtoConverter.toResponseDto(savedOrder)).thenReturn(expectedDto);
@@ -149,7 +149,7 @@ class OrderCreatorTest {
         request.setRecipientSurname("Schmidt");
 
         Order savedOrder = Order.builder().id(UUID.randomUUID()).build();
-        when(shoppingCartProvider.getByUserIdOrThrow(userId)).thenReturn(cart);
+        when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(cartItem)).thenReturn(new OrderItem());
         when(orderRepository.save(any())).thenReturn(savedOrder);
         when(orderDtoConverter.toResponseDto(savedOrder)).thenReturn(new OrderDto());

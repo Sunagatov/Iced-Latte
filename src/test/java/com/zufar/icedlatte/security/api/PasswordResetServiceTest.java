@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.email.api.EmailTokenConformer;
-import com.zufar.icedlatte.email.api.EmailTokenSender;
+import com.zufar.icedlatte.email.api.EmailVerificationService;
 import com.zufar.icedlatte.email.exception.TimeTokenException;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -25,8 +24,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class PasswordResetServiceTest {
 
     @Mock private SingleUserProvider singleUserProvider;
-    @Mock private EmailTokenSender emailTokenSender;
-    @Mock private EmailTokenConformer emailTokenConformer;
+    @Mock private EmailVerificationService emailVerificationService;
 
     @InjectMocks private PasswordResetService service;
 
@@ -42,7 +40,7 @@ class PasswordResetServiceTest {
             service.requestReset(email);
 
             verify(singleUserProvider).getUserEntityByEmail(email);
-            verify(emailTokenSender).sendPasswordResetCode(email);
+            verify(emailVerificationService).sendPasswordResetCode(email);
         }
 
         @Test
@@ -55,7 +53,7 @@ class PasswordResetServiceTest {
             service.requestReset(email);
 
             verify(singleUserProvider).getUserEntityByEmail(email);
-            verifyNoInteractions(emailTokenSender);
+            verifyNoInteractions(emailVerificationService);
         }
 
         @Test
@@ -63,12 +61,12 @@ class PasswordResetServiceTest {
         void swallowsCooldownFailures() {
             String email = "known@example.com";
             doThrow(new TimeTokenException(email, OffsetDateTime.now().plusMinutes(1)))
-                    .when(emailTokenSender).sendPasswordResetCode(email);
+                    .when(emailVerificationService).sendPasswordResetCode(email);
 
             service.requestReset(email);
 
             verify(singleUserProvider).getUserEntityByEmail(email);
-            verify(emailTokenSender).sendPasswordResetCode(email);
+            verify(emailVerificationService).sendPasswordResetCode(email);
         }
     }
 
@@ -77,7 +75,7 @@ class PasswordResetServiceTest {
     void confirmResetDelegatesWithProvidedTokenAndPassword() {
         service.confirmReset("reset-token", "new-password");
 
-        verify(emailTokenConformer).confirmResetPasswordEmailByCode(
+        verify(emailVerificationService).confirmResetPasswordEmailByCode(
                 argThat(request -> request != null && "reset-token".equals(request.getToken())),
                 org.mockito.ArgumentMatchers.eq("new-password"));
     }

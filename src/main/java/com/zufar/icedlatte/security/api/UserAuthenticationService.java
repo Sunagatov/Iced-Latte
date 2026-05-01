@@ -32,8 +32,7 @@ public class UserAuthenticationService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-    private final LoginFailureHandler loginFailureHandler;
-    private final ResetLoginAttemptsService resetLoginAttemptsService;
+    private final LoginAttemptService loginAttemptService;
 
     public UserDetails verifyCredentials(final UserAuthenticationRequest request) {
         String userEmail = request.getEmail();
@@ -53,7 +52,7 @@ public class UserAuthenticationService {
             log.debug("auth.failed: reason=user_not_found");
             throw new InvalidCredentialsException(exception);
         } catch (BadCredentialsException exception) {
-            loginFailureHandler.handle(userEmail);
+            loginAttemptService.recordFailure(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
             log.debug("auth.failed: reason=account_locked");
@@ -68,7 +67,7 @@ public class UserAuthenticationService {
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
         log.info("auth.sign_in.succeeded: sessionId={}", maskSessionId(sessionId));
-        resetLoginAttemptsService.reset(userDetails.getUsername());
+        loginAttemptService.resetAfterSuccessfulAuthentication(userDetails.getUsername());
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);

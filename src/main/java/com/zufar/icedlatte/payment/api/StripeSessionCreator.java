@@ -4,7 +4,7 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.SessionWithClientSecretDto;
 import com.zufar.icedlatte.openapi.dto.UserDto;
@@ -34,7 +34,7 @@ public class StripeSessionCreator {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final StripeSessionLineItemListConverter lineItemConverter;
-    private final ShoppingCartProvider shoppingCartProvider;
+    private final ShoppingCartService shoppingCartService;
 
     @Value("${stripe.secret-key}")
     private String stripeSecretKey;
@@ -48,7 +48,7 @@ public class StripeSessionCreator {
         log.info("payment.session.initiating");
         UserDto user = securityPrincipalProvider.get();
         UUID userId = user.getId();
-        ShoppingCartDto cart = shoppingCartProvider.getByUserId(userId);
+        ShoppingCartDto cart = shoppingCartService.getByUserId(userId);
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)

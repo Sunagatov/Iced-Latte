@@ -40,10 +40,7 @@ class UserAuthenticationServiceTest {
     private AuthenticationManager authenticationManager;
 
     @Mock
-    private LoginFailureHandler loginFailureHandler;
-
-    @Mock
-    private ResetLoginAttemptsService resetLoginAttemptsService;
+    private LoginAttemptService loginAttemptService;
 
     private final UserAuthenticationRequest request = mock(UserAuthenticationRequest.class);
     private final UserDetails userDetails = mock(UserDetails.class);
@@ -70,8 +67,7 @@ class UserAuthenticationServiceTest {
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verify(loginFailureHandler).handle("known@example.com");
-        verifyNoInteractions(resetLoginAttemptsService);
+        verify(loginAttemptService).recordFailure("known@example.com");
     }
 
     @Test
@@ -82,7 +78,7 @@ class UserAuthenticationServiceTest {
 
         assertThrows(UserAccountLockedException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+        verifyNoInteractions(loginAttemptService);
     }
 
     @Test
@@ -93,7 +89,7 @@ class UserAuthenticationServiceTest {
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+        verifyNoInteractions(loginAttemptService);
     }
 
     @Test
@@ -105,7 +101,7 @@ class UserAuthenticationServiceTest {
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+        verifyNoInteractions(loginAttemptService);
     }
 
     @Test
@@ -119,7 +115,7 @@ class UserAuthenticationServiceTest {
                 assertThrows(AuthenticationException.class, () -> userAuthenticationService.verifyCredentials(request));
 
         assertSame(failure, thrown);
-        verifyNoInteractions(loginFailureHandler, resetLoginAttemptsService);
+        verifyNoInteractions(loginAttemptService);
     }
 
     @Test
@@ -138,6 +134,6 @@ class UserAuthenticationServiceTest {
         assertNotNull(response);
         assertEquals(expectedAccessToken, response.getToken());
         assertEquals(refreshToken, response.getRefreshToken());
-        verify(resetLoginAttemptsService).reset(email);
+        verify(loginAttemptService).resetAfterSuccessfulAuthentication(email);
     }
 }

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.config;
 
-import com.zufar.icedlatte.email.message.EmailConfirmMessage;
+import com.zufar.icedlatte.email.sender.AuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
@@ -13,7 +13,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 @DisplayName("EmailConfig unit tests")
 class EmailConfigTest {
@@ -59,20 +58,10 @@ class EmailConfigTest {
     }
 
     @Test
-    @DisplayName("disabled config returns no-op mail beans and sender")
-    void disabledConfigReturnsNoOpBeans() {
+    @DisplayName("disabled config returns a no-op auth token sender")
+    void disabledConfigReturnsNoOpSender() {
         EmailDisabledConfig config = new EmailDisabledConfig();
-
-        JavaMailSender mailSender = config.noOpMailSender();
-        SimpleMailMessage mailMessage = config.noOpMailMessage();
-        var confirmation = config.noOpAuthTokenEmailConfirmation(
-                mailSender,
-                mailMessage,
-                new EmailConfirmMessage(mock(MessageSource.class))
-        );
-
-        assertThat(mailSender).isInstanceOf(JavaMailSenderImpl.class);
-        assertThat(mailMessage).isNotNull();
+        AuthTokenEmailSender confirmation = config.noOpAuthTokenEmailSender();
         assertThat(confirmation).isNotNull();
 
         confirmation.sendTemporaryCode("user@example.com", "123456");

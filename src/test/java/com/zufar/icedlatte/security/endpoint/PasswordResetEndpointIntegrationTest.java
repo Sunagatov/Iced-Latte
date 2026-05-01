@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.email.api.token.TokenManager;
+import com.zufar.icedlatte.email.api.EmailVerificationService;
 import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
@@ -18,7 +18,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
     private static final String AUTH_BASE_PATH = "/api/v1/auth";
 
     @Autowired
-    private TokenManager tokenManager;
+    private EmailVerificationService emailVerificationService;
 
     @Test
     @DisplayName("Should return OK for forgot-password for both known and unknown email")
@@ -55,7 +55,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
 
-        String resetToken = tokenManager.generateToken(resetRequest, TokenPurpose.PASSWORD_RESET);
+        String resetToken = emailVerificationService.generateToken(resetRequest, TokenPurpose.PASSWORD_RESET);
 
         given(jsonSpec(AUTH_BASE_PATH))
                 .body("""
@@ -117,7 +117,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
 
-        String resetToken = tokenManager.generateToken(resetRequest, TokenPurpose.PASSWORD_RESET);
+        String resetToken = emailVerificationService.generateToken(resetRequest, TokenPurpose.PASSWORD_RESET);
 
         given(jsonSpec(AUTH_BASE_PATH))
                 .body("""
