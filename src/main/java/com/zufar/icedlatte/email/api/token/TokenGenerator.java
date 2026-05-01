@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.api.token;
 
-import com.zufar.icedlatte.email.exception.IncorrectTokenFormatException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -17,7 +17,7 @@ public class TokenGenerator {
 
     public void tokenIsValid(String token) {
         if (token == null || token.length() != TOKEN_LENGTH || !token.chars().allMatch(Character::isDigit)) {
-            throw new IncorrectTokenFormatException("#".repeat(TOKEN_LENGTH));
+            throw new BadRequestException("Incorrect token format, token must be " + "#".repeat(TOKEN_LENGTH));
         }
     }
 }

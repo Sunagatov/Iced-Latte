@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.product.validator;
 
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,7 +40,7 @@ class GetProductsRequestValidatorTest {
         void rejectsNegativeMinPrice() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     BigDecimal.valueOf(-1), null, null, null, null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("minPrice");
         }
 
@@ -49,7 +49,7 @@ class GetProductsRequestValidatorTest {
         void rejectsNegativeMaxPrice() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     null, BigDecimal.valueOf(-5), null, null, null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("maxPrice");
         }
 
@@ -58,7 +58,7 @@ class GetProductsRequestValidatorTest {
         void rejectsMinPriceGreaterThanMaxPrice() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     BigDecimal.TEN, BigDecimal.ONE, null, null, null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("maxPrice");
         }
 
@@ -67,7 +67,7 @@ class GetProductsRequestValidatorTest {
         void rejectsUnsupportedMinimumAverageRating() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     null, null, 5, null, null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("minimumAverageRating");
         }
 
@@ -87,7 +87,7 @@ class GetProductsRequestValidatorTest {
         void rejectsBlankBrandName() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     null, null, null, List.of("Brand", ""), null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("brandNames");
         }
 
@@ -96,7 +96,7 @@ class GetProductsRequestValidatorTest {
         void rejectsDuplicateBrandNames() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     null, null, null, List.of("Brand", "Brand"), null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("brandNames");
         }
 
@@ -105,7 +105,7 @@ class GetProductsRequestValidatorTest {
         void rejectsDuplicateSellerNames() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
                     null, null, null, null, List.of("Seller", "Seller")))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("sellerNames");
         }
 
@@ -114,7 +114,7 @@ class GetProductsRequestValidatorTest {
         void rejectsInvalidSortAttribute() {
             assertThatThrownBy(() -> validator.validate(0, 10, "unknown", "asc",
                     null, null, null, null, null))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("sortAttribute");
         }
 
@@ -131,7 +131,7 @@ class GetProductsRequestValidatorTest {
         void aggregatesIndependentValidationErrorsIntoOneException() {
             assertThatThrownBy(() -> validator.validate(-1, 0, "unknown", "asc",
                     BigDecimal.valueOf(-1), BigDecimal.valueOf(-2), 5, List.of(""), List.of("Seller", "Seller")))
-                    .isInstanceOf(GetProductsBadRequestException.class)
+                    .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("PageNumber")
                     .hasMessageContaining("PageSize")
                     .hasMessageContaining("sortAttribute")

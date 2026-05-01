@@ -1,10 +1,9 @@
 package com.zufar.icedlatte.user.api.avatar;
 
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
-import com.zufar.icedlatte.filestorage.file.FileUploader;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +33,7 @@ public class UserAvatarUploader {
     private String bucketName;
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
-    private final FileUploader fileUploader;
-    private final FileMetadataSaver fileMetadataSaver;
-    private final FileMetadataRepository fileMetadataRepository;
+    private final FileStorageService fileStorageService;
 
     @Autowired(required = false)
     private AwsCloudFrontInvalidator cloudfrontInvalidator;
@@ -48,8 +45,7 @@ public class UserAvatarUploader {
         validateAvatarFile(userId, file, contentType);
 
         String fileName = avatarFileName(userId);
-        uploadAvatarFile(file, fileName);
-        replaceAvatarMetadata(userId, fileName);
+        uploadAvatarFile(file, userId, fileName);
         invalidateAvatarCache(fileName);
     }
 
@@ -76,20 +72,15 @@ public class UserAvatarUploader {
     }
 
     private void uploadAvatarFile(MultipartFile file,
+                                  UUID userId,
                                   String fileName) {
-        boolean uploaded = fileUploader.upload(file, bucketName, fileName);
-        if (!uploaded) {
-            throw new com.zufar.icedlatte.filestorage.exception.FileUploadException(
+        if (!fileStorageService.isEnabled()) {
+            throw new FileUploadException(
                     fileName,
                     new IllegalStateException("File storage is not configured")
             );
         }
-    }
-
-    private void replaceAvatarMetadata(UUID userId,
-                                       String fileName) {
-        fileMetadataRepository.deleteByRelatedObjectId(userId);
-        fileMetadataSaver.save(new FileMetadataDto(userId, bucketName, fileName));
+        fileStorageService.store(file, new FileMetadataDto(userId, bucketName, fileName));
     }
 
     private void invalidateAvatarCache(String fileName) {

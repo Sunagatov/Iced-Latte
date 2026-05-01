@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class GetReviewsRequestValidatorTest {
     @DisplayName("Invalid rating value throws")
     void validate_invalidRatingValue_throws() {
         assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of(6)))
-                .isInstanceOf(GetReviewsBadRequestException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("productRating");
     }
 
@@ -47,7 +47,7 @@ class GetReviewsRequestValidatorTest {
     @DisplayName("Duplicate rating values throws")
     void validate_duplicateRatings_throws() {
         assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of(1, 1)))
-                .isInstanceOf(GetReviewsBadRequestException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("duplicates");
     }
 
@@ -58,14 +58,14 @@ class GetReviewsRequestValidatorTest {
         withNull.add(1);
         withNull.add(null);
         assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", withNull))
-                .isInstanceOf(GetReviewsBadRequestException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("Invalid sortAttribute throws")
     void validate_invalidSortAttribute_throws() {
         assertThatThrownBy(() -> validator.validate(0, 10, "unknown", "asc", null))
-                .isInstanceOf(GetReviewsBadRequestException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("sortAttribute");
     }
 

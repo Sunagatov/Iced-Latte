@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.user.api;
 
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
-import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -45,7 +45,8 @@ public class DeliveryAddressService {
     @Transactional
     public DeliveryAddressDto update(UUID userId, UUID addressId, DeliveryAddressRequest request) {
         var entity = addressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Delivery address with id = %s is not found.", addressId)));
         entity.setLabel(request.getLabel());
         entity.setLine(request.getLine());
         entity.setCity(request.getCity());
@@ -57,14 +58,16 @@ public class DeliveryAddressService {
     @Transactional
     public void delete(UUID userId, UUID addressId) {
         var entity = addressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Delivery address with id = %s is not found.", addressId)));
         addressRepository.delete(entity);
     }
 
     @Transactional
     public DeliveryAddressDto setDefault(UUID userId, UUID addressId) {
         var entity = addressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new DeliveryAddressNotFoundException(addressId));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Delivery address with id = %s is not found.", addressId)));
         addressRepository.clearDefaultForUser(userId);
         entity.setDefault(true);
         return converter.toDto(addressRepository.save(entity));

@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.api;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
@@ -12,7 +13,6 @@ import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
-import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,8 +48,8 @@ class OrderCreatorTest {
     private OrderCreator orderCreator;
 
     @Test
-    @DisplayName("Throws EmptyShoppingCartException when cart has no items")
-    void createEmptyCartThrowsEmptyShoppingCartException() {
+    @DisplayName("Throws BadRequestException when cart has no items")
+    void createEmptyCartThrowsBadRequestException() {
         UUID userId = UUID.randomUUID();
 
         ShoppingCartDto emptyCart = new ShoppingCartDto();
@@ -69,7 +69,7 @@ class OrderCreatorTest {
         when(shoppingCartProvider.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
 
         assertThatThrownBy(() -> orderCreator.create(userId, request))
-                .isInstanceOf(EmptyShoppingCartException.class);
+                .isInstanceOf(BadRequestException.class);
 
         verify(orderRepository, never()).save(any());
     }

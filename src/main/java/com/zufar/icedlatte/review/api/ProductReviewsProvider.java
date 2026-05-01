@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.review.api;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +51,8 @@ public class ProductReviewsProvider {
         productReviewValidator.validateProductExists(productId);
         return reviewRepository.findByUserIdAndProductId(userId, productId)
                 .map(productReviewDtoConverter::toProductReviewDto)
-                .orElseThrow(() -> new ProductReviewNotFoundException(productId, userId));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Product's review for productId = '%s' and userId = '%s' was not found", productId, userId)));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)

@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.user.api;
 
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -164,14 +164,14 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
-    @DisplayName("update throws DeliveryAddressNotFoundException when not found")
+    @DisplayName("update throws NotFoundException when not found")
     void update_notFound_throws() {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(userId, addressId, new DeliveryAddressRequest()))
-                .isInstanceOf(DeliveryAddressNotFoundException.class);
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -188,14 +188,14 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
-    @DisplayName("delete throws DeliveryAddressNotFoundException when not found")
+    @DisplayName("delete throws NotFoundException when not found")
     void delete_notFound_throws() {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(userId, addressId))
-                .isInstanceOf(DeliveryAddressNotFoundException.class);
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -221,13 +221,13 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
-    @DisplayName("setDefault throws DeliveryAddressNotFoundException when not found")
+    @DisplayName("setDefault throws NotFoundException when not found")
     void setDefault_notFound_throws() {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.setDefault(userId, addressId))
-                .isInstanceOf(DeliveryAddressNotFoundException.class);
+                .isInstanceOf(NotFoundException.class);
     }
 }

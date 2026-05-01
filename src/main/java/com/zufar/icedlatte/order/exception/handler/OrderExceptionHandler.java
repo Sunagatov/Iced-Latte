@@ -3,7 +3,6 @@ package com.zufar.icedlatte.order.exception.handler;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,14 +19,6 @@ import java.util.Arrays;
 public class OrderExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-
-    @ExceptionHandler(EmptyShoppingCartException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleEmptyShoppingCartException(final EmptyShoppingCartException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.debug("exception.order.empty_cart: status=400");
-        return apiErrorResponse;
-    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

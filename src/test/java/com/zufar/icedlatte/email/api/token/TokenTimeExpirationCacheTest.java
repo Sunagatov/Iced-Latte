@@ -1,10 +1,12 @@
 package com.zufar.icedlatte.email.api.token;
 
+import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.email.exception.TimeTokenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,7 +18,9 @@ class TokenTimeExpirationCacheTest {
 
     @BeforeEach
     void setUp() {
-        cache = new InMemoryTokenTimeExpirationCache(5);
+        EmailTokenCooldownCache cooldownCache = new EmailTokenCooldownCache(new InMemoryExpiringKeyValueStore());
+        ReflectionTestUtils.setField(cooldownCache, "expireTimeMinutes", 5);
+        cache = cooldownCache;
     }
 
     @Nested

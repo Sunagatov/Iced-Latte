@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.validator;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,9 @@ public class GetReviewsRequestValidator {
         }
 
         if (!errors.isEmpty()) {
-            throw new GetReviewsBadRequestException(String.join(" ", errors));
+            throw new BadRequestException(String.format(
+                    "GetReviewsRequest parameters are incorrect. Error messages are [ %s ].",
+                    String.join(" ", errors)));
         }
     }
 

@@ -3,12 +3,12 @@ package com.zufar.icedlatte.order.api;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
-import com.zufar.icedlatte.order.exception.EmptyShoppingCartException;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
@@ -44,7 +44,7 @@ public class OrderCreator {
         ShoppingCartDto cart = shoppingCartProvider.getByUserIdOrThrow(userId);
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
-            throw new EmptyShoppingCartException(userId);
+            throw new BadRequestException(String.format("Cannot create order: shopping cart is empty for userId=%s.", userId));
         }
 
         List<OrderItem> items = cart.getItems().stream()
@@ -109,7 +109,7 @@ public class OrderCreator {
                                                final ShoppingCartDto shoppingCartDto,
                                                final String sessionId) {
         if (shoppingCartDto.getItems() == null || shoppingCartDto.getItems().isEmpty()) {
-            throw new EmptyShoppingCartException(user.getId());
+            throw new BadRequestException(String.format("Cannot create order: shopping cart is empty for userId=%s.", user.getId()));
         }
 
         List<OrderItem> shoppingOrderItems = shoppingCartDto.getItems().stream()

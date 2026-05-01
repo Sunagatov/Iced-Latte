@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.review.api;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
@@ -97,17 +97,17 @@ class ProductReviewCreatorTest {
     }
 
     @Test
-    @DisplayName("Propagates EmptyProductReviewException from validator")
-    void create_emptyText_throwsEmptyProductReviewException() {
+    @DisplayName("Propagates BadRequestException from validator")
+    void create_emptyText_throwsBadRequestException() {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         ProductReviewRequest request = new ProductReviewRequest();
         request.setText("   ");
         request.setRating(3);
 
-        doThrow(new EmptyProductReviewException()).when(productReviewValidator).validateReviewText("   ");
+        doThrow(new BadRequestException("Product's review is empty")).when(productReviewValidator).validateReviewText("   ");
 
         assertThatThrownBy(() -> creator.create(productId, userId, request))
-                .isInstanceOf(EmptyProductReviewException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 }

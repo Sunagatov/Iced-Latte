@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.validator;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
-import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,9 +37,9 @@ class PutUsersRequestValidatorTest {
     }
 
     @Test
-    @DisplayName("Should throw PutUsersBadRequestException when name and phone are incorrect")
+    @DisplayName("Should throw BadRequestException when name and phone are incorrect")
     void shouldThrowWhenCoreParametersAreIncorrect() {
-        assertThrows(PutUsersBadRequestException.class, () ->
+        assertThrows(BadRequestException.class, () ->
                 validator.validate(null, "s", "+7900000000b", null, null));
     }
 }

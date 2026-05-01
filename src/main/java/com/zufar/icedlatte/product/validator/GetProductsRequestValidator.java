@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.product.validator;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,9 @@ public class GetProductsRequestValidator {
         }
 
         if (!errors.isEmpty()) {
-            throw new GetProductsBadRequestException(String.join(" ", errors));
+            throw new BadRequestException(String.format(
+                    "GetProductsRequest parameters are incorrect. Error messages are [ %s ].",
+                    String.join(" ", errors)));
         }
     }
 

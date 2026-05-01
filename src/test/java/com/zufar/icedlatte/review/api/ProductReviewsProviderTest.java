@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.review.api;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -73,12 +73,12 @@ class ProductReviewsProviderTest {
     }
 
     @Test
-    @DisplayName("getProductReviewForUser throws ProductReviewNotFoundException when no review found")
+    @DisplayName("getProductReviewForUser throws NotFoundException when no review found")
     void getProductReviewForUserNoReviewReturnsEmpty() {
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> provider.getProductReviewForUser(productId, userId))
-                .isInstanceOf(ProductReviewNotFoundException.class)
+                .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining(productId.toString())
                 .hasMessageContaining(userId.toString());
         verify(productReviewValidator).validateProductExists(productId);

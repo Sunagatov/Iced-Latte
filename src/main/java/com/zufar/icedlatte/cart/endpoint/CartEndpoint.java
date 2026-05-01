@@ -4,7 +4,7 @@ import com.zufar.icedlatte.cart.api.AddItemsToShoppingCartHelper;
 import com.zufar.icedlatte.cart.api.ProductQuantityItemUpdater;
 import com.zufar.icedlatte.cart.api.ShoppingCartItemsDeleter;
 import com.zufar.icedlatte.cart.api.ShoppingCartProvider;
-import com.zufar.icedlatte.cart.exception.EmptyCartItemsException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
@@ -43,7 +43,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @PostMapping("/items")
     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new EmptyCartItemsException();
+            throw new BadRequestException("Cart items list must not be empty");
         }
         log.debug("cart.items.adding: count={}", request.getItems().size());
         var userId = securityPrincipalProvider.getUserId();
@@ -76,7 +76,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @DeleteMapping("/items")
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
         if (request.getShoppingCartItemIds().isEmpty()) {
-            throw new EmptyCartItemsException();
+            throw new BadRequestException("Cart items list must not be empty");
         }
         var userId = securityPrincipalProvider.getUserId();
         log.debug("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());

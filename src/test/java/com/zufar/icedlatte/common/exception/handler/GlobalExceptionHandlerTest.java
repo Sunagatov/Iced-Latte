@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,10 +71,27 @@ class GlobalExceptionHandlerTest {
             Exception ex = new RuntimeException("boom");
             when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR)).thenReturn(stub(500));
 
-            ApiErrorResponse result = handler.handleUnhandledException(ex);
+            ResponseEntity<ApiErrorResponse> result = handler.handleUnhandledException(ex);
+            ApiErrorResponse body = Objects.requireNonNull(result.getBody());
 
-            assertThat(result.httpStatusCode()).isEqualTo(500);
+            assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(body.httpStatusCode()).isEqualTo(500);
             verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
+            verifyNoMoreInteractions(apiErrorResponseCreator);
+        }
+
+        @Test
+        @DisplayName("returns annotated status for domain exceptions")
+        void returnsAnnotatedStatusForDomainExceptions() {
+            UserNotFoundException ex = new UserNotFoundException("mail@example.com");
+            when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(stub(404));
+
+            ResponseEntity<ApiErrorResponse> result = handler.handleUnhandledException(ex);
+            ApiErrorResponse body = Objects.requireNonNull(result.getBody());
+
+            assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(body.httpStatusCode()).isEqualTo(404);
+            verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
             verifyNoMoreInteractions(apiErrorResponseCreator);
         }
     }
@@ -140,6 +160,19 @@ class GlobalExceptionHandlerTest {
 
             assertThat(result.httpStatusCode()).isEqualTo(400);
             verify(apiErrorResponseCreator).buildResponse("Required parameter 'page' is missing", HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @DisplayName("returns 400 for data integrity violations")
+        void returns400ForDataIntegrityViolations() {
+            DataIntegrityViolationException ex = new DataIntegrityViolationException("duplicate key");
+            when(apiErrorResponseCreator.buildResponse("Request conflicts with existing data.", HttpStatus.BAD_REQUEST))
+                    .thenReturn(stub(400));
+
+            ApiErrorResponse result = handler.handleDataIntegrityViolationException(ex);
+
+            assertThat(result.httpStatusCode()).isEqualTo(400);
+            verify(apiErrorResponseCreator).buildResponse("Request conflicts with existing data.", HttpStatus.BAD_REQUEST);
         }
     }
 

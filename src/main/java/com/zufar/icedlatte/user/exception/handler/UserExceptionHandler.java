@@ -2,39 +2,27 @@ package com.zufar.icedlatte.user.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
-import com.zufar.icedlatte.user.exception.InvalidOldPasswordException;
-import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class UserExceptionHandler {
 
     private static final String INVALID_AVATAR_FILE_TYPE_MESSAGE = "Invalid file type. Allowed types: JPEG, PNG, WebP";
     private static final String USERNAME_NOT_FOUND_MESSAGE = "User not found";
-    private static final String DATA_INTEGRITY_MESSAGE = "Request contains invalid or conflicting data.";
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
-
-    @ExceptionHandler(DeliveryAddressNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleDeliveryAddressNotFoundException(final DeliveryAddressNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.debug("exception.delivery_address.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
-        return apiErrorResponse;
-    }
 
     @ExceptionHandler(InvalidAvatarFileTypeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -42,14 +30,6 @@ public class UserExceptionHandler {
         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
                 INVALID_AVATAR_FILE_TYPE_MESSAGE, HttpStatus.BAD_REQUEST);
         log.debug("exception.avatar.invalid_type: exceptionClass={}, status=400", exception.getClass().getSimpleName());
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
-        log.debug("exception.user.not_found: exceptionClass={}, status=404", exception.getClass().getSimpleName());
         return apiErrorResponse;
     }
 
@@ -61,45 +41,4 @@ public class UserExceptionHandler {
         return apiErrorResponse;
     }
 
-    @ExceptionHandler({InvalidOldPasswordException.class})
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleInvalidOldPasswordException(final InvalidOldPasswordException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        log.debug("exception.user.invalid_password: exceptionClass={}, status=401", exception.getClass().getSimpleName());
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler({PutUsersBadRequestException.class})
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handlePutUsersBadRequestException(final PutUsersBadRequestException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.BAD_REQUEST);
-        log.debug("exception.user.invalid_property: exceptionClass={}, status=400", exception.getClass().getSimpleName());
-        return apiErrorResponse;
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
-        log.debug("exception.user.data_integrity: exceptionClass={}, status=400", exception.getClass().getSimpleName());
-        return apiErrorResponseCreator.buildResponse(DATA_INTEGRITY_MESSAGE, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleValidationExceptions(MethodArgumentNotValidException ex) {
-        String fieldNames = ex.getBindingResult().getFieldErrors().stream()
-                .map(org.springframework.validation.FieldError::getField)
-                .distinct()
-                .collect(java.util.stream.Collectors.joining(","));
-        StringBuilder errorMessage = new StringBuilder();
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            if (!errorMessage.isEmpty()) {
-                errorMessage.append(" and ");
-            }
-            errorMessage.append(error.getDefaultMessage());
-        });
-        log.debug("exception.user.validation: fields={}, errorCount={}, status=400",
-                fieldNames, ex.getBindingResult().getErrorCount());
-        return apiErrorResponseCreator.buildResponse(errorMessage.toString(), HttpStatus.BAD_REQUEST);
-    }
 }

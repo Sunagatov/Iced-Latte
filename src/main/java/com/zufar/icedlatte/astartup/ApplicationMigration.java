@@ -2,25 +2,22 @@ package com.zufar.icedlatte.astartup;
 
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.filestorage.aws.AwsProvider;
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.file.FileUploader;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
+import com.zufar.icedlatte.filestorage.FileStorageService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ApplicationMigration implements ApplicationRunner {
 
     @Value("${spring.aws.buckets.products:}")
@@ -32,17 +29,7 @@ public class ApplicationMigration implements ApplicationRunner {
     @Value("${migration.upload.enabled:false}")
     private boolean uploadEnabled;
 
-    private final FileUploader fileUploader;
-    private final AwsProvider awsProvider;
-    private final FileMetadataSaver fileMetadataSaver;
-
-    public ApplicationMigration(@Autowired(required = false) FileUploader fileUploader,
-                                @Autowired(required = false) AwsProvider awsProvider,
-                                @Autowired(required = false) FileMetadataSaver fileMetadataSaver) {
-        this.fileUploader = fileUploader;
-        this.awsProvider = awsProvider;
-        this.fileMetadataSaver = fileMetadataSaver;
-    }
+    private final FileStorageService fileStorageService;
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
@@ -52,8 +39,7 @@ public class ApplicationMigration implements ApplicationRunner {
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         CompletableFuture.runAsync(uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled"), executor)
-                .thenComposeAsync(_ -> CompletableFuture.supplyAsync(this::fetchMetadata, executor), executor)
-                .thenAcceptAsync(this::saveMetadata, executor)
+                .thenRunAsync(this::refreshMetadataIndex, executor)
                 .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((_, e) -> {
                     executor.close();
@@ -67,44 +53,32 @@ public class ApplicationMigration implements ApplicationRunner {
     private boolean isAwsConfigured() {
         return productPictureBucket != null && !productPictureBucket.isEmpty()
                 && directoryPath != null && !directoryPath.isEmpty()
-                && fileUploader != null && fileUploader.isStorageConfigured()
-                && awsProvider != null && fileMetadataSaver != null;
+                && fileStorageService.isEnabled();
     }
 
     private void uploadFiles() {
         try {
             log.info("migration.upload.start: path={}", directoryPath);
             long t0 = System.currentTimeMillis();
-            fileUploader.uploadDirectory(productPictureBucket, directoryPath);
+            fileStorageService.storeDirectory(productPictureBucket, directoryPath);
             log.info("migration.upload.finish: bucket={}, path={}, durationMs={}", productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
         } catch (FileReadException e) {
             log.warn("migration.upload.read_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+        } catch (java.io.IOException e) {
+            log.warn("migration.upload.io_error: exceptionClass={}", e.getClass().getSimpleName(), e);
         }
     }
 
-    private List<FileMetadataDto> fetchMetadata() {
+    private void refreshMetadataIndex() {
         try {
-            var fileMetadataDtos = awsProvider.getProductImagesFromAWS(productPictureBucket);
-            log.info("migration.metadata.fetched: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
-            return fileMetadataDtos;
+            fileStorageService.refreshBucketIndex(productPictureBucket);
+            log.info("migration.metadata.refreshed: bucket={}", productPictureBucket);
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
-            log.warn("migration.metadata.fetch_error: exceptionClass={}", e.getClass().getSimpleName(), e);
-            return List.of();
-        }
-    }
-
-    private void saveMetadata(List<FileMetadataDto> fileMetadataDtos) {
-        if (fileMetadataDtos.isEmpty()) {
-            log.info("migration.metadata.skipped: reason=empty");
-            return;
-        }
-        try {
-            fileMetadataSaver.replaceAllByBucket(productPictureBucket, fileMetadataDtos);
-            log.info("migration.metadata.saved: bucket={}, count={}", productPictureBucket, fileMetadataDtos.size());
+            log.warn("migration.metadata.refresh_error: exceptionClass={}", e.getClass().getSimpleName(), e);
         } catch (DataAccessException e) {
-            log.warn("migration.metadata.save_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            log.warn("migration.metadata.persist_error: exceptionClass={}", e.getClass().getSimpleName(), e);
         }
     }
 }

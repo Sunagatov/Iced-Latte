@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.validator;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
-import com.zufar.icedlatte.user.exception.PutUsersBadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,9 @@ public class PutUsersRequestValidator {
         validateAddress(addressDto, errors);
 
         if (!errors.isEmpty()) {
-            throw new PutUsersBadRequestException(String.join(" ", errors));
+            throw new BadRequestException(String.format(
+                    "PutUsersRequest parameters are incorrect. Error messages are [ %s ].",
+                    String.join(" ", errors)));
         }
     }
 

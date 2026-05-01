@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.review.api;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
-import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import org.junit.jupiter.api.DisplayName;
@@ -58,16 +58,16 @@ class ProductReviewDeleterTest {
     }
 
     @Test
-    @DisplayName("Propagates DeniedProductReviewDeletionException when deletion not allowed")
-    void delete_notOwner_throwsDeniedDeletionException() {
+    @DisplayName("Propagates BadRequestException when deletion not allowed")
+    void delete_notOwner_throwsBadRequestException() {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        doThrow(new DeniedProductReviewDeletionException(userId, reviewId))
+        doThrow(new BadRequestException("Deletion denied"))
                 .when(productReviewValidator).validateProductReviewDeletionAllowed(reviewId, userId);
 
         assertThatThrownBy(() -> deleter.delete(productId, reviewId, userId))
-                .isInstanceOf(DeniedProductReviewDeletionException.class);
+                .isInstanceOf(BadRequestException.class);
     }
 }

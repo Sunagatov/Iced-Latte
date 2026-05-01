@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.endpoint;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.BrandsDto;
 import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
@@ -10,7 +11,6 @@ import com.zufar.icedlatte.product.api.PageableProductsProvider;
 import com.zufar.icedlatte.product.api.ProductFilterOptionsProvider;
 import com.zufar.icedlatte.product.api.ProductsProvider;
 import com.zufar.icedlatte.product.api.SingleProductProvider;
-import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
 import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +83,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
         var ids = productIdsDto.getProductIds();
         if (ids == null || ids.isEmpty()) {
-            throw new GetProductsBadRequestException("productIds must not be empty");
+            throw new BadRequestException("GetProductsRequest parameters are incorrect. Error messages are [ productIds must not be empty ].");
         }
         log.debug("product.ids.fetching: count={}", ids.size());
         var products = productsProvider.getProducts(ids);

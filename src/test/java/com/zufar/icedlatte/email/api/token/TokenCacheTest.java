@@ -1,11 +1,13 @@
 package com.zufar.icedlatte.email.api.token;
 
-import com.zufar.icedlatte.email.exception.IncorrectTokenException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -19,7 +21,9 @@ class TokenCacheTest {
 
     @BeforeEach
     void setUp() {
-        tokenCache = new InMemoryTokenCache(5);
+        EmailTokenCache emailTokenCache = new EmailTokenCache(new InMemoryExpiringKeyValueStore());
+        ReflectionTestUtils.setField(emailTokenCache, "expireTimeMinutes", 5);
+        tokenCache = emailTokenCache;
         request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
     }
 
@@ -41,7 +45,7 @@ class TokenCacheTest {
         @DisplayName("throws when token key is unknown")
         void throwsWhenTokenKeyIsUnknown() {
             assertThatThrownBy(() -> tokenCache.getToken("000000000", TokenPurpose.EMAIL_VERIFICATION))
-                    .isInstanceOf(IncorrectTokenException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
 
         @Test
@@ -50,7 +54,7 @@ class TokenCacheTest {
             tokenCache.addToken("123456789", request, TokenPurpose.EMAIL_VERIFICATION);
 
             assertThatThrownBy(() -> tokenCache.getToken("123456789", TokenPurpose.PASSWORD_RESET))
-                    .isInstanceOf(IncorrectTokenException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
     }
 
@@ -66,7 +70,7 @@ class TokenCacheTest {
             tokenCache.removeToken("987654321");
 
             assertThatThrownBy(() -> tokenCache.getToken("987654321", TokenPurpose.PASSWORD_RESET))
-                    .isInstanceOf(IncorrectTokenException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
 
         @Test

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api.filestorage;
 
-import com.zufar.icedlatte.filestorage.file.FileProvider;
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +27,7 @@ class ProductImageReceiverTest {
 
     private static final String PLACEHOLDER = "/assets/images/product-placeholder.png";
 
-    @Mock private FileProvider fileProvider;
+    @Mock private FileStorageService fileStorageService;
     @Mock private ProductImageRepository productImageRepository;
 
     @InjectMocks
@@ -41,33 +41,33 @@ class ProductImageReceiverTest {
         @DisplayName("returns the provider URL when present")
         void returnsProviderUrlWhenPresent() {
             UUID productId = UUID.randomUUID();
-            when(fileProvider.getRelatedObjectUrl(productId)).thenReturn(Optional.of("https://cdn.example.com/hero.jpg"));
+            when(fileStorageService.findFileUrl(productId)).thenReturn(Optional.of("https://cdn.example.com/hero.jpg"));
 
             assertThat(receiver.getProductFileUrl(productId)).isEqualTo("https://cdn.example.com/hero.jpg");
-            verify(fileProvider).getRelatedObjectUrl(productId);
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verify(fileStorageService).findFileUrl(productId);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 
         @Test
         @DisplayName("returns the placeholder when the provider has no URL")
         void returnsPlaceholderWhenProviderHasNoUrl() {
             UUID productId = UUID.randomUUID();
-            when(fileProvider.getRelatedObjectUrl(productId)).thenReturn(Optional.empty());
+            when(fileStorageService.findFileUrl(productId)).thenReturn(Optional.empty());
 
             assertThat(receiver.getProductFileUrl(productId)).isEqualTo(PLACEHOLDER);
-            verify(fileProvider).getRelatedObjectUrl(productId);
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verify(fileStorageService).findFileUrl(productId);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 
         @Test
         @DisplayName("returns the placeholder when the provider throws")
         void returnsPlaceholderWhenProviderThrows() {
             UUID productId = UUID.randomUUID();
-            when(fileProvider.getRelatedObjectUrl(productId)).thenThrow(new RuntimeException("S3 down"));
+            when(fileStorageService.findFileUrl(productId)).thenThrow(new RuntimeException("S3 down"));
 
             assertThat(receiver.getProductFileUrl(productId)).isEqualTo(PLACEHOLDER);
-            verify(fileProvider).getRelatedObjectUrl(productId);
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verify(fileStorageService).findFileUrl(productId);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }
 
@@ -88,7 +88,7 @@ class ProductImageReceiverTest {
 
             assertThat(result).containsExactly("url-1", "url-2");
             verify(productImageRepository).findByProductIdOrderByPosition(productId);
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 
         @Test
@@ -99,7 +99,7 @@ class ProductImageReceiverTest {
 
             assertThat(receiver.getProductImageUrls(productId)).isEmpty();
             verify(productImageRepository).findByProductIdOrderByPosition(productId);
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }
 
@@ -123,7 +123,7 @@ class ProductImageReceiverTest {
             assertThat(result).containsEntry(productId1, List.of("p1-1", "p1-2"));
             assertThat(result).containsEntry(productId2, List.of("p2-1"));
             verify(productImageRepository).findByProductIdInOrderByPosition(List.of(productId1, productId2));
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }
 
@@ -136,15 +136,15 @@ class ProductImageReceiverTest {
         void fillsPlaceholdersForProductsMissingFromProviderResult() {
             UUID productId1 = UUID.randomUUID();
             UUID productId2 = UUID.randomUUID();
-            when(fileProvider.getRelatedObjectUrls(List.of(productId1, productId2)))
+            when(fileStorageService.findFileUrls(List.of(productId1, productId2)))
                     .thenReturn(Map.of(productId1, "https://cdn.example.com/img1.jpg"));
 
             Map<UUID, String> result = receiver.getProductFileUrls(List.of(productId1, productId2));
 
             assertThat(result).containsEntry(productId1, "https://cdn.example.com/img1.jpg");
             assertThat(result).containsEntry(productId2, PLACEHOLDER);
-            verify(fileProvider).getRelatedObjectUrls(List.of(productId1, productId2));
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verify(fileStorageService).findFileUrls(List.of(productId1, productId2));
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 
         @Test
@@ -152,14 +152,14 @@ class ProductImageReceiverTest {
         void returnsPlaceholdersForAllProductsWhenProviderThrows() {
             UUID productId1 = UUID.randomUUID();
             UUID productId2 = UUID.randomUUID();
-            when(fileProvider.getRelatedObjectUrls(List.of(productId1, productId2))).thenThrow(new RuntimeException("S3 down"));
+            when(fileStorageService.findFileUrls(List.of(productId1, productId2))).thenThrow(new RuntimeException("S3 down"));
 
             Map<UUID, String> result = receiver.getProductFileUrls(List.of(productId1, productId2));
 
             assertThat(result).containsEntry(productId1, PLACEHOLDER);
             assertThat(result).containsEntry(productId2, PLACEHOLDER);
-            verify(fileProvider).getRelatedObjectUrls(List.of(productId1, productId2));
-            verifyNoMoreInteractions(fileProvider, productImageRepository);
+            verify(fileStorageService).findFileUrls(List.of(productId1, productId2));
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }
 }

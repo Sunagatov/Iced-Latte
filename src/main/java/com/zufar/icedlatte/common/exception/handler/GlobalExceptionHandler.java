@@ -5,6 +5,8 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -25,6 +27,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private static final String DATA_INTEGRITY_MESSAGE = "Request conflicts with existing data.";
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;
 
@@ -138,6 +142,16 @@ public class GlobalExceptionHandler {
         return apiErrorResponse;
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
+                DATA_INTEGRITY_MESSAGE, HttpStatus.BAD_REQUEST);
+        log.debug("exception.data_integrity: exceptionClass={}, status=400",
+                exception.getClass().getSimpleName());
+        return apiErrorResponse;
+    }
+
     @ExceptionHandler(AsyncRequestNotUsableException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public void handleAsyncRequestNotUsableException(final AsyncRequestNotUsableException exception) {
@@ -161,11 +175,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiErrorResponse handleUnhandledException(final Exception exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
-        log.error("exception.unhandled: exceptionClass={}, status=500", exception.getClass().getName(), exception);
-        return apiErrorResponse;
+    public ResponseEntity<ApiErrorResponse> handleUnhandledException(final Exception exception) {
+        HttpStatus status = resolveHttpStatus(exception);
+        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, status);
+
+        if (status.is5xxServerError()) {
+            log.error("exception.unhandled: exceptionClass={}, status={}", exception.getClass().getName(), status.value(), exception);
+        } else {
+            log.debug("exception.annotated: exceptionClass={}, status={}",
+                    exception.getClass().getSimpleName(), status.value());
+        }
+
+        return ResponseEntity.status(status).body(apiErrorResponse);
     }
 
     private static boolean isPublicInternetNoise(String path) {
@@ -183,5 +204,11 @@ public class GlobalExceptionHandler {
 
     private static String sanitize(String value) {
         return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
+    }
+
+    private static HttpStatus resolveHttpStatus(Exception exception) {
+        ResponseStatus responseStatus = AnnotatedElementUtils.findMergedAnnotation(
+                exception.getClass(), ResponseStatus.class);
+        return responseStatus != null ? responseStatus.code() : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

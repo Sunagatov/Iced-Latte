@@ -1,12 +1,11 @@
 package com.zufar.icedlatte.review.api;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
-import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
-import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
-import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -88,42 +87,42 @@ class ProductReviewLikesUpdaterTest {
     }
 
     @Test
-    @DisplayName("Should throw ProductNotFoundForReviewException when product does not exist")
+    @DisplayName("Should throw NotFoundException when product does not exist")
     void updateFailsWhenProductNotFound() {
         var productId = UUID.randomUUID();
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        doThrow(new ProductNotFoundForReviewException(productId))
+        doThrow(new NotFoundException("product not found"))
                 .when(productReviewValidator)
                 .validateProductIdIsValid(productId, reviewId);
 
-        assertThrows(ProductNotFoundForReviewException.class,
+        assertThrows(NotFoundException.class,
                 () -> productReviewLikesUpdater.update(productId, reviewId, userId, true));
     }
 
     @Test
-    @DisplayName("Should throw ProductReviewNotFoundException when review does not exist for user")
+    @DisplayName("Should throw NotFoundException when review does not exist for user")
     void updateFailsWhenReviewNotFound() {
         var productId = UUID.randomUUID();
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        doThrow(new ProductReviewNotFoundException(reviewId))
+        doThrow(new NotFoundException("review not found"))
                 .when(productReviewValidator).validateProductIdIsValid(productId, reviewId);
 
-        assertThrows(ProductReviewNotFoundException.class,
+        assertThrows(NotFoundException.class,
                 () -> productReviewLikesUpdater.update(productId, reviewId, userId, true));
     }
 
     @Test
-    @DisplayName("Should throw GetReviewsBadRequestException when vote is null")
+    @DisplayName("Should throw BadRequestException when vote is null")
     void updateFailsWhenVoteIsNull() {
         var productId = UUID.randomUUID();
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
 
-        assertThrows(GetReviewsBadRequestException.class,
+        assertThrows(BadRequestException.class,
                 () -> productReviewLikesUpdater.update(productId, reviewId, userId, null));
     }
 }

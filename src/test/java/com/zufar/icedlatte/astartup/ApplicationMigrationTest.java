@@ -1,11 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.filestorage.aws.AwsProvider;
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.filestorage.file.FileUploader;
-import com.zufar.icedlatte.filestorage.filemetadata.FileMetadataSaver;
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,10 +15,6 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.exception.SdkClientException;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
@@ -34,16 +27,14 @@ import static org.mockito.Mockito.when;
 @DisplayName("ApplicationMigration unit tests")
 class ApplicationMigrationTest {
 
-    @Mock private FileUploader fileUploader;
-    @Mock private AwsProvider awsProvider;
-    @Mock private FileMetadataSaver fileMetadataSaver;
+    @Mock private FileStorageService fileStorageService;
     @Mock private ApplicationArguments args;
 
     private ApplicationMigration migration;
 
     @BeforeEach
     void setUp() {
-        migration = new ApplicationMigration(fileUploader, awsProvider, fileMetadataSaver);
+        migration = new ApplicationMigration(fileStorageService);
         ReflectionTestUtils.setField(migration, "productPictureBucket", "products-bucket");
         ReflectionTestUtils.setField(migration, "directoryPath", "/seed/products");
         ReflectionTestUtils.setField(migration, "uploadEnabled", true);
@@ -60,34 +51,31 @@ class ApplicationMigrationTest {
 
             migration.run(args);
 
-            verifyNoInteractions(fileUploader, awsProvider, fileMetadataSaver);
+            verifyNoInteractions(fileStorageService);
         }
 
         @Test
-        @DisplayName("skips immediately when file upload capability is unavailable")
-        void skipsWhenFileUploaderIsPresentButStorageIsUnavailable() {
-            when(fileUploader.isStorageConfigured()).thenReturn(false);
+        @DisplayName("skips immediately when storage is unavailable")
+        void skipsWhenStorageIsUnavailable() {
+            when(fileStorageService.isEnabled()).thenReturn(false);
 
             migration.run(args);
 
-            verify(fileUploader).isStorageConfigured();
-            verifyNoInteractions(awsProvider, fileMetadataSaver);
+            verify(fileStorageService).isEnabled();
+            verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
-        @DisplayName("when upload is disabled it still fetches and saves metadata")
-        void uploadDisabledStillFetchesAndSavesMetadata() {
-            List<FileMetadataDto> metadata = List.of(fileMetadata("cover.jpg"));
+        @DisplayName("when upload is disabled it still refreshes metadata")
+        void uploadDisabledStillRefreshesMetadata() {
             ReflectionTestUtils.setField(migration, "uploadEnabled", false);
-            when(fileUploader.isStorageConfigured()).thenReturn(true);
-            when(awsProvider.getProductImagesFromAWS("products-bucket")).thenReturn(metadata);
+            when(fileStorageService.isEnabled()).thenReturn(true);
 
             migration.run(args);
 
-            verify(awsProvider, timeout(1000)).getProductImagesFromAWS("products-bucket");
-            verify(fileMetadataSaver, timeout(1000)).replaceAllByBucket("products-bucket", metadata);
-            verify(fileUploader).isStorageConfigured();
-            verifyNoMoreInteractions(fileUploader, awsProvider, fileMetadataSaver);
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
+            verify(fileStorageService).isEnabled();
+            verifyNoMoreInteractions(fileStorageService);
         }
     }
 
@@ -97,112 +85,79 @@ class ApplicationMigrationTest {
 
         @Test
         @DisplayName("uploads the configured directory to the configured bucket")
-        void uploadsConfiguredDirectory() {
+        void uploadsConfiguredDirectory() throws Exception {
             invokeVoid("uploadFiles");
 
-            verify(fileUploader).uploadDirectory("products-bucket", "/seed/products");
-            verifyNoMoreInteractions(fileUploader);
+            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+            verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
         @DisplayName("swallows file upload failures")
-        void swallowsFileUploadFailures() {
+        void swallowsFileUploadFailures() throws Exception {
             doThrow(new FileUploadException("seed.zip", new RuntimeException("boom")))
-                    .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
+                    .when(fileStorageService).storeDirectory("products-bucket", "/seed/products");
 
             assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
 
-            verify(fileUploader).uploadDirectory("products-bucket", "/seed/products");
-            verifyNoMoreInteractions(fileUploader);
+            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+            verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
         @DisplayName("swallows file read failures")
-        void swallowsFileReadFailures() {
+        void swallowsFileReadFailures() throws Exception {
             doThrow(new FileReadException("seed.zip", new RuntimeException("boom")))
-                    .when(fileUploader).uploadDirectory("products-bucket", "/seed/products");
+                    .when(fileStorageService).storeDirectory("products-bucket", "/seed/products");
 
             assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
 
-            verify(fileUploader).uploadDirectory("products-bucket", "/seed/products");
-            verifyNoMoreInteractions(fileUploader);
+            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+            verifyNoMoreInteractions(fileStorageService);
         }
     }
 
     @Nested
-    @DisplayName("fetchMetadata")
-    class FetchMetadata {
+    @DisplayName("refreshMetadataIndex")
+    class RefreshMetadataIndex {
 
         @Test
-        @DisplayName("returns metadata fetched from AWS")
-        void returnsFetchedMetadata() {
-            List<FileMetadataDto> metadata = List.of(fileMetadata("gallery/cover.jpg"));
-            when(awsProvider.getProductImagesFromAWS("products-bucket")).thenReturn(metadata);
+        @DisplayName("refreshes metadata from storage")
+        void refreshesMetadataFromStorage() {
+            invokeVoid("refreshMetadataIndex");
 
-            List<FileMetadataDto> result = invoke("fetchMetadata");
-
-            assertThat(result).containsExactlyElementsOf(metadata);
-            verify(awsProvider).getProductImagesFromAWS("products-bucket");
-            verifyNoMoreInteractions(awsProvider);
+            verify(fileStorageService).refreshBucketIndex("products-bucket");
+            verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
-        @DisplayName("returns an empty list when AWS access fails")
-        void returnsEmptyListWhenAwsFails() {
-            when(awsProvider.getProductImagesFromAWS("products-bucket"))
-                    .thenThrow(SdkClientException.create("unreachable"));
+        @DisplayName("swallows SDK failures")
+        void swallowsSdkFailures() {
+            doThrow(SdkClientException.create("unreachable"))
+                    .when(fileStorageService).refreshBucketIndex("products-bucket");
 
-            List<FileMetadataDto> result = invoke("fetchMetadata");
+            assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
 
-            assertThat(result).isEmpty();
-            verify(awsProvider).getProductImagesFromAWS("products-bucket");
-            verifyNoMoreInteractions(awsProvider);
+            verify(fileStorageService).refreshBucketIndex("products-bucket");
+            verifyNoMoreInteractions(fileStorageService);
         }
     }
 
     @Nested
-    @DisplayName("saveMetadata")
-    class SaveMetadata {
-
-        @Test
-        @DisplayName("skips persistence when metadata is empty")
-        void skipsEmptyMetadata() {
-            invokeVoid("saveMetadata", List.of());
-
-            verifyNoInteractions(fileMetadataSaver);
-        }
-
-        @Test
-        @DisplayName("replaces stored metadata when entries exist")
-        void replacesMetadataWhenEntriesExist() {
-            List<FileMetadataDto> metadata = List.of(fileMetadata("gallery/cover.jpg"));
-
-            invokeVoid("saveMetadata", metadata);
-
-            verify(fileMetadataSaver).replaceAllByBucket("products-bucket", metadata);
-            verifyNoMoreInteractions(fileMetadataSaver);
-        }
+    @DisplayName("refreshMetadataIndex persistence")
+    class RefreshMetadataPersistence {
 
         @Test
         @DisplayName("swallows persistence failures")
         void swallowsPersistenceFailures() {
-            List<FileMetadataDto> metadata = List.of(fileMetadata("gallery/cover.jpg"));
             doThrow(new DataAccessResourceFailureException("db down"))
-                    .when(fileMetadataSaver).replaceAllByBucket("products-bucket", metadata);
+                    .when(fileStorageService).refreshBucketIndex("products-bucket");
 
-            assertThatCode(() -> invokeVoid("saveMetadata", metadata)).doesNotThrowAnyException();
+            assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
 
-            verify(fileMetadataSaver).replaceAllByBucket("products-bucket", metadata);
-            verifyNoMoreInteractions(fileMetadataSaver);
+            verify(fileStorageService).refreshBucketIndex("products-bucket");
+            verifyNoMoreInteractions(fileStorageService);
         }
-    }
-
-    private FileMetadataDto fileMetadata(String fileName) {
-        return new FileMetadataDto(UUID.randomUUID(), "products-bucket", fileName);
-    }
-
-    private <T> T invoke(String methodName, Object... args) {
-        return ReflectionTestUtils.invokeMethod(migration, methodName, args);
     }
 
     private void invokeVoid(String methodName, Object... args) {

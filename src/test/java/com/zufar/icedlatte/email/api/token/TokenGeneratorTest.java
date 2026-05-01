@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.api.token;
 
-import com.zufar.icedlatte.email.exception.IncorrectTokenFormatException;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
@@ -50,28 +50,28 @@ class TokenGeneratorTest {
         @DisplayName("rejects token with wrong length")
         void rejectsTokenWithWrongLength() {
             assertThatThrownBy(() -> tokenGenerator.tokenIsValid("12345"))
-                    .isInstanceOf(IncorrectTokenFormatException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
 
         @Test
         @DisplayName("rejects token with non-digit characters")
         void rejectsTokenWithNonDigitCharacters() {
             assertThatThrownBy(() -> tokenGenerator.tokenIsValid("12345678a"))
-                    .isInstanceOf(IncorrectTokenFormatException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
 
         @Test
         @DisplayName("rejects empty token")
         void rejectsEmptyToken() {
             assertThatThrownBy(() -> tokenGenerator.tokenIsValid(""))
-                    .isInstanceOf(IncorrectTokenFormatException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
 
         @Test
         @DisplayName("rejects null token")
         void rejectsNullToken() {
             assertThatThrownBy(() -> tokenGenerator.tokenIsValid(null))
-                    .isInstanceOf(IncorrectTokenFormatException.class);
+                    .isInstanceOf(BadRequestException.class);
         }
     }
 }

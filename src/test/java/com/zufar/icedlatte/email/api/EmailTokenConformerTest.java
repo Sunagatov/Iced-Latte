@@ -6,8 +6,8 @@ import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
-import com.zufar.icedlatte.user.api.ChangeUserPasswordOperationPerformer;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
+import com.zufar.icedlatte.user.api.UserProfileService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ class EmailTokenConformerTest {
     private SingleUserProvider singleUserProvider;
 
     @Mock
-    private ChangeUserPasswordOperationPerformer changeUserPasswordOperationPerformer;
+    private UserProfileService userProfileService;
 
     @Mock
     private HttpServletRequest httpRequest;
@@ -67,7 +67,7 @@ class EmailTokenConformerTest {
             assertThat(result).isSameAs(authResponse);
             verify(tokenManager).validateToken(confirmRequest, TokenPurpose.EMAIL_VERIFICATION);
             verify(userRegistrationService).register(registrationRequest, httpRequest);
-            verifyNoMoreInteractions(tokenManager, userRegistrationService, singleUserProvider, changeUserPasswordOperationPerformer);
+            verifyNoMoreInteractions(tokenManager, userRegistrationService, singleUserProvider, userProfileService);
         }
     }
 
@@ -90,8 +90,8 @@ class EmailTokenConformerTest {
 
             verify(tokenManager).validateToken(confirmRequest, TokenPurpose.PASSWORD_RESET);
             verify(singleUserProvider).getUserEntityByEmail("user@example.com");
-            verify(changeUserPasswordOperationPerformer).changeUserPassword(userId, "newPass123!");
-            verifyNoMoreInteractions(tokenManager, singleUserProvider, changeUserPasswordOperationPerformer, userRegistrationService);
+            verify(userProfileService).changePassword(userId, "newPass123!");
+            verifyNoMoreInteractions(tokenManager, singleUserProvider, userProfileService, userRegistrationService);
         }
     }
 }

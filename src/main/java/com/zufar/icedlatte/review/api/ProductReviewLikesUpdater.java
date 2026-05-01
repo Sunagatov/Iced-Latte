@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.review.api;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
-import com.zufar.icedlatte.review.exception.GetReviewsBadRequestException;
-import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -61,13 +61,15 @@ public class ProductReviewLikesUpdater {
         productReviewRepository.updateDislikesCount(productReviewId);
 
         ProductReview productReview = productReviewRepository.findById(productReviewId)
-                .orElseThrow(() -> new ProductReviewNotFoundException(productReviewId));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
         return productReviewDtoConverter.toProductReviewDto(productReview);
     }
 
     private static void validateVote(Boolean vote) {
         if (vote == null) {
-            throw new GetReviewsBadRequestException("Review vote 'isLike' must be provided.");
+            throw new BadRequestException(
+                    "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].");
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.email.sender;
 
-import com.zufar.icedlatte.email.exception.MessageBuilderNotFoundException;
+import com.zufar.icedlatte.common.exception.InternalServerErrorException;
 import com.zufar.icedlatte.email.message.MessageBuilder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ class AbstractEmailSenderTest {
         TestEmailSender sender = new TestEmailSender(javaMailSender, mailMessage, List.of(messageBuilder));
 
         assertThatThrownBy(() -> sender.getMessageFor(event))
-                .isInstanceOf(MessageBuilderNotFoundException.class)
+                .isInstanceOf(InternalServerErrorException.class)
                 .hasMessageContaining(event.getClass().getName());
     }
 
