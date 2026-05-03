@@ -458,10 +458,10 @@ components:
 
     PasswordField:
       type: "string"
-      description: "Password must be between 8 and 128 characters, with at least one letter, one digit, and may include special characters @$!%*?&."
+      description: "Password must be between 8 and 128 characters, with at least one lowercase letter, one uppercase letter, and one digit."
       minLength: 8
       maxLength: 128
-      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,}$"
+      pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
