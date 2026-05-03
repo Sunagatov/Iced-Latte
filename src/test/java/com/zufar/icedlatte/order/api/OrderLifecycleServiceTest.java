@@ -25,17 +25,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("OrderCancellationService unit tests")
-class OrderCancellationServiceTest {
+@DisplayName("OrderLifecycleService unit tests")
+class OrderLifecycleServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private OrderStatusTransitioner statusTransitioner;
     @Mock private OrderDtoConverter orderDtoConverter;
-    @InjectMocks private OrderCancellationService cancellationService;
+    @InjectMocks private OrderLifecycleService lifecycleService;
 
     @Test
-    @DisplayName("Cancels a CREATED order owned by the user")
-    void cancelCreatedOrder() {
+    @DisplayName("Cancel delegates to transitioner with CANCEL event")
+    void cancelDelegatesToTransitioner() {
         UUID orderId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         Order order = Order.builder().id(orderId).userId(userId).status(OrderStatus.CREATED).build();
@@ -46,32 +46,44 @@ class OrderCancellationServiceTest {
                 .thenReturn(cancelled);
         when(orderDtoConverter.toResponseDto(cancelled)).thenReturn(new OrderDto());
 
-        cancellationService.cancel(orderId, userId);
+        lifecycleService.cancel(orderId, userId);
+        verify(statusTransitioner).transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
+    }
 
-        verify(statusTransitioner).transition(eq(orderId), eq(OrderEvent.CANCEL), eq(userId), eq("User cancelled"));
+    @Test
+    @DisplayName("Refund delegates to transitioner with REQUEST_REFUND event")
+    void refundDelegatesToTransitioner() {
+        UUID orderId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Order order = Order.builder().id(orderId).userId(userId).status(OrderStatus.PAID).build();
+        Order refunded = Order.builder().id(orderId).userId(userId).status(OrderStatus.REFUND_REQUESTED).build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(statusTransitioner.transition(orderId, OrderEvent.REQUEST_REFUND, userId, "Damaged"))
+                .thenReturn(refunded);
+        when(orderRepository.save(any())).thenReturn(refunded);
+        when(orderDtoConverter.toResponseDto(refunded)).thenReturn(new OrderDto());
+
+        lifecycleService.requestRefund(orderId, userId, "Damaged");
+        verify(statusTransitioner).transition(orderId, OrderEvent.REQUEST_REFUND, userId, "Damaged");
     }
 
     @Test
     @DisplayName("Throws OrderNotFoundException when order does not exist")
-    void cancelNonExistentOrderThrows() {
-        UUID orderId = UUID.randomUUID();
-        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> cancellationService.cancel(orderId, UUID.randomUUID()))
+    void cancelNotFoundThrows() {
+        when(orderRepository.findById(any())).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> lifecycleService.cancel(UUID.randomUUID(), UUID.randomUUID()))
                 .isInstanceOf(OrderNotFoundException.class);
     }
 
     @Test
-    @DisplayName("Throws OrderAccessDeniedException when user doesn't own the order")
-    void cancelOtherUsersOrderThrows() {
+    @DisplayName("Throws OrderAccessDeniedException for other user's order")
+    void cancelOtherUserThrows() {
         UUID orderId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
-        UUID otherUserId = UUID.randomUUID();
-        Order order = Order.builder().id(orderId).userId(ownerId).status(OrderStatus.CREATED).build();
-
+        Order order = Order.builder().id(orderId).userId(UUID.randomUUID()).status(OrderStatus.CREATED).build();
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> cancellationService.cancel(orderId, otherUserId))
+        assertThatThrownBy(() -> lifecycleService.cancel(orderId, UUID.randomUUID()))
                 .isInstanceOf(OrderAccessDeniedException.class);
     }
 }

@@ -18,7 +18,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderCancellationService {
+public class OrderLifecycleService {
 
     private final OrderRepository orderRepository;
     private final OrderStatusTransitioner statusTransitioner;
@@ -26,25 +26,41 @@ public class OrderCancellationService {
 
     @Transactional
     public OrderDto cancel(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
-
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
-        }
-
+        Order order = findOwnedOrder(orderId, userId);
         boolean wasPaid = order.getStatus() == OrderStatus.PAID;
 
         Order cancelled = statusTransitioner.transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
 
         if (wasPaid) {
-            log.warn("order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}. " +
-                            "Automatic Stripe refund will be triggered when Stripe integration is active.",
+            log.warn("order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}",
                     orderId, order.getStripePaymentIntentId());
-            // TODO: When Stripe refund API is integrated (Phase 5), call it here with @Retryable.
-            // On failure after retries, log CRITICAL alert for manual admin intervention.
         }
 
         return orderDtoConverter.toResponseDto(cancelled);
+    }
+
+    @Transactional
+    public OrderDto requestRefund(UUID orderId, UUID userId, String reason) {
+        findOwnedOrder(orderId, userId);
+
+        Order refundRequested = statusTransitioner.transition(
+                orderId, OrderEvent.REQUEST_REFUND, userId, reason);
+
+        refundRequested.setRefundReason(reason);
+        orderRepository.save(refundRequested);
+
+        log.info("order.refund.requested: orderId={}, stripePaymentIntentId={}",
+                orderId, refundRequested.getStripePaymentIntentId());
+
+        return orderDtoConverter.toResponseDto(refundRequested);
+    }
+
+    private Order findOwnedOrder(UUID orderId, UUID userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUserId().equals(userId)) {
+            throw new OrderAccessDeniedException(orderId);
+        }
+        return order;
     }
 }

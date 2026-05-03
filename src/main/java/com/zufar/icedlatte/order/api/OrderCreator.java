@@ -10,12 +10,10 @@ import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.order.config.OrderConfig;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.order.validator.OrderAddressValidator;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.Address;
@@ -24,6 +22,7 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -40,15 +39,16 @@ import java.util.UUID;
 public class OrderCreator {
 
     private final OrderRepository orderRepository;
-    private final OrderProvider orderProvider;
+    private final OrderDetailProvider orderDetailProvider;
     private final OrderDtoConverter orderDtoConverter;
     private final ShoppingCartService shoppingCartService;
     private final ShoppingCartRepository shoppingCartRepository;
     private final SingleUserProvider singleUserProvider;
-    private final OrderAddressValidator orderAddressValidator;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final ProductInfoRepository productInfoRepository;
-    private final OrderConfig orderConfig;
+
+    @Value("${order.cancellation-window-minutes:30}")
+    private int cancellationWindowMinutes;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request,
@@ -61,7 +61,7 @@ public class OrderCreator {
             }
         }
 
-        orderAddressValidator.validate(request);
+        validateAddressInput(request);
 
         ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
@@ -93,7 +93,7 @@ public class OrderCreator {
                 .recipientPhone(request.getRecipientPhone())
                 .itemsQuantity(cart.getItemsQuantity())
                 .itemsTotalPrice(cart.getItemsTotalPrice())
-                .cancellationDeadline(OffsetDateTime.now().plusMinutes(orderConfig.getCancellationWindowMinutes()))
+                .cancellationDeadline(OffsetDateTime.now().plusMinutes(cancellationWindowMinutes))
                 .idempotencyKey(idempotencyKey)
                 .build();
 
@@ -109,7 +109,7 @@ public class OrderCreator {
         UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
         String maskedSessionId = SessionIdMasker.mask(sessionId);
 
-        Optional<Order> existingOrder = orderProvider.getOrderEntityByUserAndSession(userId, sessionId);
+        Optional<Order> existingOrder = orderDetailProvider.getOrderByUserAndSession(userId, sessionId);
         if (existingOrder.isPresent()) {
             log.info("order.session.already_handled: userId={}, sessionId={}", userId, maskedSessionId);
             return false;
@@ -138,7 +138,7 @@ public class OrderCreator {
                 .itemsQuantity(cart.getItemsQuantity())
                 .itemsTotalPrice(cart.getItemsTotalPrice())
                 .items(items)
-                .cancellationDeadline(OffsetDateTime.now().plusMinutes(orderConfig.getCancellationWindowMinutes()))
+                .cancellationDeadline(OffsetDateTime.now().plusMinutes(cancellationWindowMinutes))
                 .build();
 
         Order saved = orderRepository.saveAndFlush(order);
@@ -192,5 +192,16 @@ public class OrderCreator {
                 .line(entity.getLine())
                 .postcode(entity.getPostcode())
                 .build();
+    }
+
+    private static void validateAddressInput(CreateNewOrderRequestDto request) {
+        boolean hasId = request.getDeliveryAddressId() != null;
+        boolean hasInline = request.getAddress() != null;
+        if (!hasId && !hasInline) {
+            throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
+        }
+        if (hasId && hasInline) {
+            throw new BadRequestException("Provide either 'deliveryAddressId' or 'address', not both.");
+        }
     }
 }

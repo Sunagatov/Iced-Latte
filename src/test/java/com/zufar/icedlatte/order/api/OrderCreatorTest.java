@@ -9,16 +9,15 @@ import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
-import com.zufar.icedlatte.order.config.OrderConfig;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.order.validator.OrderAddressValidator;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -46,13 +46,16 @@ class OrderCreatorTest {
     @Mock private OrderDtoConverter orderDtoConverter;
     @Mock private ShoppingCartService shoppingCartService;
     @Mock private ShoppingCartRepository shoppingCartRepository;
-    @Mock private OrderAddressValidator orderAddressValidator;
     @Mock private DeliveryAddressRepository deliveryAddressRepository;
     @Mock private ProductInfoRepository productInfoRepository;
-    @Mock private OrderConfig orderConfig;
-    @Mock @SuppressWarnings("unused") private OrderProvider orderProvider;
+    @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;
     @Mock @SuppressWarnings("unused") private SingleUserProvider singleUserProvider;
     @InjectMocks private OrderCreator orderCreator;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(orderCreator, "cancellationWindowMinutes", 30);
+    }
 
     @Test
     @DisplayName("Throws BadRequestException when cart is empty")
@@ -79,7 +82,6 @@ class OrderCreatorTest {
         Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
         OrderItem orderItem = OrderItem.builder().productId(productId).productName("Test").build();
 
-        when(orderConfig.getCancellationWindowMinutes()).thenReturn(30);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productInfoRepository.existsById(productId)).thenReturn(true);
@@ -107,7 +109,6 @@ class OrderCreatorTest {
 
         DeliveryAddressEntity savedAddr = DeliveryAddressEntity.builder()
                 .id(addressId).country("DE").city("Berlin").line("Unter den Linden 1").postcode("10117").build();
-        when(orderConfig.getCancellationWindowMinutes()).thenReturn(30);
         when(deliveryAddressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(savedAddr));
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);

@@ -17,26 +17,42 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RefundMonitorJob {
+public class OrderMaintenanceJob {
 
     private final OrderRepository orderRepository;
+
+    @Scheduled(fixedDelayString = "${order.expiration-check-interval-ms:3600000}")
+    @Transactional
+    public void expireUnpaidOrders() {
+        OffsetDateTime cutoff = OffsetDateTime.now().minusHours(24);
+        Specification<Order> spec = Specification
+                .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.CREATED)))
+                .and((root, _, cb) -> cb.lessThan(root.get("createdAt"), cutoff));
+
+        List<Order> expired = orderRepository.findAll(spec);
+        for (Order order : expired) {
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+            log.info("order.expired: orderId={}", order.getId());
+        }
+        if (!expired.isEmpty()) {
+            log.info("order.expiration.completed: count={}", expired.size());
+        }
+    }
 
     @Scheduled(fixedDelayString = "${order.refund-monitor-interval-ms:3600000}")
     @Transactional(readOnly = true)
     public void checkStuckRefunds() {
         OffsetDateTime cutoff = OffsetDateTime.now().minusHours(4);
-
         Specification<Order> spec = Specification
                 .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.REFUND_REQUESTED)))
                 .and((root, _, cb) -> cb.lessThan(root.get("updatedAt"), cutoff));
 
         List<Order> stuck = orderRepository.findAll(spec);
-
         for (Order order : stuck) {
-            log.warn("order.refund.stuck: orderId={}, stripePaymentIntentId={}, updatedAt={}",
-                    order.getId(), order.getStripePaymentIntentId(), order.getUpdatedAt());
+            log.warn("order.refund.stuck: orderId={}, stripePaymentIntentId={}",
+                    order.getId(), order.getStripePaymentIntentId());
         }
-
         if (!stuck.isEmpty()) {
             log.warn("order.refund.stuck.total: count={}", stuck.size());
         }

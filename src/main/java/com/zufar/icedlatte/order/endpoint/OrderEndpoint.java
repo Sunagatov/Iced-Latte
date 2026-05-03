@@ -10,16 +10,11 @@ import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.RefundRequestDto;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatusHistoryDto;
-import com.zufar.icedlatte.order.api.OrderCancellationService;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
-import com.zufar.icedlatte.order.api.OrderRefundService;
+import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.order.api.OrderReorderService;
 import com.zufar.icedlatte.order.api.OrdersProvider;
-import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
-import com.zufar.icedlatte.order.exception.OrderNotFoundException;
-import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,11 +49,8 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     private final OrdersProvider ordersProvider;
     private final OrderDetailProvider orderDetailProvider;
     private final OrderCreator orderCreator;
-    private final OrderCancellationService orderCancellationService;
-    private final OrderRefundService orderRefundService;
+    private final OrderLifecycleService orderLifecycleService;
     private final OrderReorderService orderReorderService;
-    private final OrderRepository orderRepository;
-    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final PaginationConfig paginationConfig;
 
     @GetMapping
@@ -105,7 +97,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
         log.info("orders.cancel: userId={}, orderId={}", userId, orderId);
-        var order = orderCancellationService.cancel(orderId, userId);
+        var order = orderLifecycleService.cancel(orderId, userId);
         return ResponseEntity.ok(order);
     }
 
@@ -116,7 +108,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         var userId = securityPrincipalProvider.getUserId();
         String reason = request != null ? request.getReason() : null;
         log.info("orders.refund: userId={}, orderId={}", userId, orderId);
-        var order = orderRefundService.requestRefund(orderId, userId, reason);
+        var order = orderLifecycleService.requestRefund(orderId, userId, reason);
         return ResponseEntity.ok(order);
     }
 
@@ -131,21 +123,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @GetMapping("/{orderId}/history")
     public ResponseEntity<List<OrderStatusHistoryDto>> getOrderHistory(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
-        var order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
-        }
-        var history = orderStatusHistoryRepository.findByOrderIdOrderByChangedAtAsc(orderId).stream()
-                .map(h -> new OrderStatusHistoryDto()
-                        .id(h.getId())
-                        .orderId(h.getOrderId())
-                        .oldStatus(h.getOldStatus())
-                        .newStatus(h.getNewStatus())
-                        .changedBy(h.getChangedBy())
-                        .reason(h.getReason())
-                        .changedAt(h.getChangedAt()))
-                .toList();
+        var history = orderDetailProvider.getOrderHistory(orderId, userId);
         return ResponseEntity.ok(history);
     }
 }
