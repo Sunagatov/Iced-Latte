@@ -16,12 +16,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -51,9 +51,12 @@ public class Order extends AuditableEntity {
     @Column(name = "status", nullable = false)
     private OrderStatus status;
 
-    @CreationTimestamp
-    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
-    private OffsetDateTime createdAt;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version;
+
+    @Column(name = "idempotency_key", length = 64)
+    private String idempotencyKey;
 
     @OneToMany(mappedBy = "orderId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
@@ -76,6 +79,18 @@ public class Order extends AuditableEntity {
 
     @Column(name = "items_total_price", nullable = false)
     private BigDecimal itemsTotalPrice;
+
+    @Column(name = "cancellation_deadline")
+    private OffsetDateTime cancellationDeadline;
+
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
+
+    @Column(name = "refund_reason", length = 500)
+    private String refundReason;
+
+    @Column(name = "refunded_at")
+    private OffsetDateTime refundedAt;
 
     @PrePersist
     public void prePersist() {

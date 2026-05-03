@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.test.config;
 
+import com.zufar.icedlatte.filestorage.ObjectStorage;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
@@ -7,7 +8,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
@@ -17,7 +18,10 @@ public abstract class IntegrationTestBase {
     @MockitoBean
     protected JavaMailSender javaMailSender;
 
-    protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(DockerImageName.parse("postgres:13.11-bullseye"));
+    @MockitoBean
+    protected ObjectStorage objectStorage;
+
+    protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(DockerImageName.parse("postgres:13.11-bullseye"));
     @SuppressWarnings("resource")
     protected static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 

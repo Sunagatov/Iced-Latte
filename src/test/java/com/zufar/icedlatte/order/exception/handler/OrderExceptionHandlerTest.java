@@ -44,7 +44,7 @@ class OrderExceptionHandlerTest {
         when(apiErrorResponseCreator.buildResponse(contains("Incorrect status value"), eq(HttpStatus.BAD_REQUEST)))
                 .thenReturn(expected);
 
-        ApiErrorResponse result = handler.handleMethodArgumentNotValidException(ex);
+        ApiErrorResponse result = handler.handleTypeMismatch(ex);
 
         assertThat(result).isEqualTo(expected);
     }

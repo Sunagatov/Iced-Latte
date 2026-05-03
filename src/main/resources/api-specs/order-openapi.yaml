@@ -3,13 +3,13 @@ openapi: "3.0.3"
 info:
   title: "Iced Latte Order API"
   description: "API for managing orders, including retrieving and placing orders. Supports filtering orders by status and provides detailed order information."
-  version: "1.0.0"
+  version: "2.0.0"
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
     url: "https://github.com/Sunagatov/Iced-Latte"
   license:
-    name: "MIT"
+    name: "CC BY-NC 4.0"
     url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
@@ -30,27 +30,68 @@ paths:
     get:
       tags:
         - "Orders"
-      summary: "Retrieve orders for the authorized user based on status"
-      description: "Fetches all orders for the authenticated user, optionally filtered by status codes."
+      summary: "Retrieve paginated order history for the authorized user"
+      description: "Fetches orders with pagination, optional status filter, year filter, and date range."
       operationId: "getOrders"
       parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+            minimum: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 10
+            minimum: 1
+            maximum: 50
+        - name: "sortBy"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "createdAt"
+        - name: "sortDirection"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "DESC"
         - name: "status"
-          description: "Filter orders by status. Multiple status codes can be provided as an array."
           in: "query"
           required: false
           schema:
             type: "array"
             items:
               $ref: "#/components/schemas/OrderStatus"
+        - name: "year"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+        - name: "dateFrom"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "dateTo"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
       responses:
         "200":
-          description: "List of orders successfully retrieved. Returns an empty array if no orders match the criteria."
+          description: "Paginated list of orders."
           content:
             application/json:
               schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/OrderDto"
+                $ref: "#/components/schemas/OrderPageDto"
         "400":
           description: "Invalid query parameters."
           content:
@@ -74,7 +115,7 @@ paths:
       tags:
         - "Orders"
       summary: "Place a new order for the authorized user"
-      description: "Creates a new order for the authenticated user. Requires address and recipient information."
+      description: "Creates a new order from the authenticated user's shopping cart."
       operationId: "createOrder"
       requestBody:
         required: true
@@ -114,6 +155,345 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/orders/{orderId}:
+    get:
+      tags:
+        - "Orders"
+      summary: "Retrieve a single order by ID"
+      description: "Returns full order details. Only the order owner can access."
+      operationId: "getOrderById"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Order details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDto"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Access denied — not your order."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/orders/{orderId}/cancel:
+    post:
+      tags:
+        - "Orders"
+      summary: "Cancel an order"
+      description: "Cancels an order if within the cancellation window. Only the order owner can cancel."
+      operationId: "cancelOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Order cancelled."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Access denied."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Order cannot be cancelled (wrong status or window expired)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/orders/{orderId}/refund:
+    post:
+      tags:
+        - "Orders"
+      summary: "Request a refund"
+      description: "Requests a refund for a paid order. Only the order owner can request."
+      operationId: "requestRefund"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundRequestDto"
+      responses:
+        "200":
+          description: "Refund requested."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Access denied."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Order cannot be refunded (wrong status)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/orders/{orderId}/reorder:
+    post:
+      tags:
+        - "Orders"
+      summary: "Re-order items from a past order"
+      operationId: "reorder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Items added to cart."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReorderResponseDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Access denied."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/orders/{orderId}/history:
+    get:
+      tags:
+        - "Orders"
+      summary: "Get order status change history"
+      operationId: "getOrderHistory"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Status change history."
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/OrderStatusHistoryDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Access denied."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/admin/orders:
+    get:
+      tags:
+        - "Admin Orders"
+      summary: "List all orders (admin)"
+      operationId: "getAllOrders"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 10
+        - name: "status"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/OrderStatus"
+        - name: "userId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Paginated order list."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderPageDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Not admin."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/admin/orders/{orderId}/status:
+    patch:
+      tags:
+        - "Admin Orders"
+      summary: "Update order status (admin)"
+      operationId: "updateOrderStatus"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminOrderStatusUpdateDto"
+      responses:
+        "200":
+          description: "Order status updated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDto"
+        "401":
+          description: "Unauthorized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Not admin."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Order not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Invalid transition."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -125,38 +505,54 @@ components:
   schemas:
     OrderStatus:
       type: "string"
-      description: "The status of an order."
+      description: "The status of an order. DELIVERY and FINISHED are deprecated — use SHIPPED and DELIVERED instead."
       enum:
         - CREATED
         - PAID
         - DELIVERY
+        - SHIPPED
         - FINISHED
+        - DELIVERED
+        - CANCELLED
+        - REFUND_REQUESTED
+        - REFUNDED
+
+    OrderEvent:
+      type: "string"
+      description: "Events that trigger order status transitions."
+      enum:
+        - PAYMENT_CONFIRMED
+        - SHIP
+        - DELIVER
+        - CANCEL
+        - REQUEST_REFUND
+        - REFUND_CONFIRMED
 
     CreateNewOrderRequestDto:
       type: "object"
-      description: "Details required to create a new order."
+      description: "Details required to create a new order. Provide either deliveryAddressId (saved address) or address (inline), not both."
       required:
-        - address
         - recipientName
         - recipientSurname
       properties:
+        deliveryAddressId:
+          type: "string"
+          format: "uuid"
+          description: "ID of a saved delivery address. Mutually exclusive with address."
         address:
           $ref: "user-openapi.yaml#/components/schemas/AddressDto"
         recipientName:
           type: "string"
-          description: "Name of the order recipient. Can be different from the user's name."
           minLength: 2
           maxLength: 128
           example: "John"
         recipientSurname:
           type: "string"
-          description: "Surname of the order recipient. Can be different from the user's surname."
           minLength: 2
           maxLength: 128
           example: "Doe"
         recipientPhone:
           type: "string"
-          description: "Phone number for delivery notifications."
           example: "+12025550123"
 
     OrderItemDto:
@@ -179,22 +575,19 @@ components:
 
     OrderDto:
       type: "object"
-      description: "Represents an order in the system."
-      required:
-        - id
-        - status
-        - createdAt
+      description: "Full order representation."
       properties:
         id:
           type: "string"
           format: "uuid"
-          description: "Unique identifier for the order."
         status:
           $ref: "#/components/schemas/OrderStatus"
         createdAt:
           type: "string"
           format: "date-time"
-          description: "The date and time when the order was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
         itemsQuantity:
           type: "integer"
         itemsTotalPrice:
@@ -206,6 +599,127 @@ components:
             $ref: "#/components/schemas/OrderItemDto"
         deliveryAddress:
           $ref: "user-openapi.yaml#/components/schemas/AddressDto"
+        recipientName:
+          type: "string"
+        recipientSurname:
+          type: "string"
+        recipientPhone:
+          type: "string"
+        cancellationDeadline:
+          type: "string"
+          format: "date-time"
+        canCancel:
+          type: "boolean"
+        canRefund:
+          type: "boolean"
+
+    OrderSummaryDto:
+      type: "object"
+      description: "Lightweight order for list views."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        itemsQuantity:
+          type: "integer"
+        itemsTotalPrice:
+          type: "number"
+          format: "double"
+        firstItemName:
+          type: "string"
+        itemCount:
+          type: "integer"
+          description: "Total number of distinct items in the order."
+
+    OrderPageDto:
+      type: "object"
+      description: "Paginated order list."
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OrderSummaryDto"
+        page:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
+
+    RefundRequestDto:
+      type: "object"
+      description: "Optional refund request details."
+      properties:
+        reason:
+          type: "string"
+          maxLength: 500
+          description: "Reason for the refund request."
+          example: "Product arrived damaged"
+
+    ReorderResponseDto:
+      type: "object"
+      description: "Result of a re-order operation."
+      properties:
+        cartId:
+          type: "string"
+          format: "uuid"
+        addedItems:
+          type: "integer"
+        unavailableItems:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/UnavailableItemDto"
+
+    UnavailableItemDto:
+      type: "object"
+      properties:
+        productName:
+          type: "string"
+        reason:
+          type: "string"
+
+    AdminOrderStatusUpdateDto:
+      type: "object"
+      description: "Admin request to update order status."
+      required:
+        - event
+      properties:
+        event:
+          $ref: "#/components/schemas/OrderEvent"
+        reason:
+          type: "string"
+          maxLength: 500
+
+    OrderStatusHistoryDto:
+      type: "object"
+      description: "A single status change entry."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        orderId:
+          type: "string"
+          format: "uuid"
+        oldStatus:
+          $ref: "#/components/schemas/OrderStatus"
+        newStatus:
+          $ref: "#/components/schemas/OrderStatus"
+        changedBy:
+          type: "string"
+          format: "uuid"
+        reason:
+          type: "string"
+        changedAt:
+          type: "string"
+          format: "date-time"

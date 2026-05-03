@@ -78,6 +78,7 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**").hasRole("ADMIN")
+                        .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN).hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session

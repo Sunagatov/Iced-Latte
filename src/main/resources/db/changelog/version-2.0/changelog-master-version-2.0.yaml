@@ -27,3 +27,14 @@ databaseChangeLog:
       file: db/changelog/version-2.0/add-favorite-item-unique-constraint.sql
   - include:
       file: db/changelog/version-2.0/add-file-metadata-related-object-id-index.sql
+
+  # ========== ORDER MODULE ENHANCEMENTS ==========
+  - include:
+      file: db/changelog/version-2.0/03.05.2026.part1.add-order-indexes-and-fk.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/03.05.2026.part2.add-order-lifecycle-columns.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/03.05.2026.part3.create-order-status-history-table.sql
+      errorIfMissing: true

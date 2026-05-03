@@ -15,6 +15,9 @@ server:
 management:
   server:
     port: 8083
+  health:
+    mail:
+      enabled: false
 
 spring:
   #

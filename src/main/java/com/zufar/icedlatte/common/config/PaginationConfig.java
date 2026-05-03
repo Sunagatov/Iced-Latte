@@ -15,7 +15,8 @@ public class PaginationConfig {
     
     private Products products = new Products();
     private Reviews reviews = new Reviews();
-    
+    private Orders orders = new Orders();
+
     @Getter
     @Setter
     public static class Products {
@@ -23,11 +24,20 @@ public class PaginationConfig {
         private String defaultSortAttribute = "name";
         private String defaultSortDirection = "desc";
     }
-    
+
     @Getter
     @Setter
     public static class Reviews {
         private int defaultPageSize = 10;
+        private String defaultSortAttribute = "createdAt";
+        private String defaultSortDirection = "desc";
+    }
+
+    @Getter
+    @Setter
+    public static class Orders {
+        private int defaultPageSize = 10;
+        private int maxPageSize = 50;
         private String defaultSortAttribute = "createdAt";
         private String defaultSortDirection = "desc";
     }
