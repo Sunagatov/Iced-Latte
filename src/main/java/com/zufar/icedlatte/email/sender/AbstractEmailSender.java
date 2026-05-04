@@ -43,12 +43,12 @@ public abstract class AbstractEmailSender<T> {
         }
     }
 
-protected String getMessage(T event) {
-    return messageBuilders.stream()
-            .filter(builder -> builder.supports(event.getClass()))
-            .findFirst()
-            .orElseThrow(() -> new InternalServerErrorException(
-                    "No message builder found for " + event.getClass().getName()))
-            .buildMessage(event, Locale.ROOT);
-}
+    protected String getMessage(T event) {
+        return messageBuilders.stream()
+                .filter(builder -> builder.supports(event.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new InternalServerErrorException(
+                        "No message builder found for " + event.getClass().getName()))
+                .buildMessage(event, Locale.ROOT);
+    }
 }

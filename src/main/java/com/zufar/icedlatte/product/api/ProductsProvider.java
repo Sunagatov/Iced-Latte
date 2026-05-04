@@ -29,20 +29,20 @@ public class ProductsProvider {
             return List.of();
         }
 
-        List<ProductInfoDto> productDtos = productInfoRepository.findAllById(uuids).stream()
+        List<ProductInfoDto> products = productInfoRepository.findAllById(uuids).stream()
                 .map(productInfoDtoConverter::toDto)
                 .toList();
-        
-        List<ProductInfoDto> updatedProductDtos = productPictureLinkUpdater.updateBatch(productDtos);
-        
-        var dtosById = updatedProductDtos.stream()
+
+        List<ProductInfoDto> productsWithImages = productPictureLinkUpdater.updateBatch(products);
+
+        var productsById = productsWithImages.stream()
                 .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
 
-        List<UUID> missing = uuids.stream().filter(id -> !dtosById.containsKey(id)).toList();
+        List<UUID> missing = uuids.stream().filter(id -> !productsById.containsKey(id)).toList();
         if (!missing.isEmpty()) {
             throw new ProductNotFoundException(missing);
         }
 
-        return uuids.stream().map(dtosById::get).toList();
+        return uuids.stream().map(productsById::get).toList();
     }
 }

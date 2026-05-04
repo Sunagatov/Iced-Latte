@@ -60,13 +60,13 @@ public class PageableProductsProvider {
         Page<ProductInfo> rawPage = productInfoRepository
                 .findAll(spec, PageRequestFactory.of(page, size, sortAttr, sortDir));
 
-        List<ProductInfoDto> dtos = rawPage.getContent().stream()
+        List<ProductInfoDto> products = rawPage.getContent().stream()
                 .map(productInfoDtoConverter::toDto)
                 .toList();
-        List<ProductInfoDto> updatedDtos = productPictureLinkUpdater.updateBatch(dtos);
+        List<ProductInfoDto> productsWithImages = productPictureLinkUpdater.updateBatch(products);
 
         Page<ProductInfoDto> result = new PageImpl<>(
-                updatedDtos, rawPage.getPageable(), rawPage.getTotalElements());
+                productsWithImages, rawPage.getPageable(), rawPage.getTotalElements());
 
         return productInfoDtoConverter.toProductPaginationDto(result);
     }

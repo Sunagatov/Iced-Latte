@@ -23,19 +23,19 @@ public class ProductPictureLinkUpdater {
         return productInfoDto;
     }
 
-    public List<ProductInfoDto> updateBatch(List<ProductInfoDto> productInfoDtos) {
-        List<UUID> productIds = productInfoDtos.stream()
+    public List<ProductInfoDto> updateBatch(List<ProductInfoDto> products) {
+        List<UUID> productIds = products.stream()
                 .map(ProductInfoDto::getId)
                 .toList();
 
         Map<UUID, String> fileUrls = productImageReceiver.getProductFileUrls(productIds);
         Map<UUID, List<String>> imageUrls = productImageReceiver.getProductImageUrlsBatch(productIds);
 
-        productInfoDtos.forEach(product -> {
+        products.forEach(product -> {
             product.setProductFileUrl(fileUrls.get(product.getId()));
             product.setProductImageUrls(imageUrls.getOrDefault(product.getId(), List.of()));
         });
 
-        return productInfoDtos;
+        return products;
     }
 }

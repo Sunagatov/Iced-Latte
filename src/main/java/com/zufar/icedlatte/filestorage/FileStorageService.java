@@ -74,12 +74,12 @@ public class FileStorageService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshBucketIndex(String bucketName) {
-        List<FileMetadataDto> fileMetadataDtos = objectStorage.listObjectKeys(bucketName).stream()
+        List<FileMetadataDto> fileMetadataList = objectStorage.listObjectKeys(bucketName).stream()
                 .map(fileName -> toFileMetadata(fileName, bucketName))
                 .flatMap(Optional::stream)
                 .toList();
         fileMetadataRepository.deleteByBucketName(bucketName);
-        fileMetadataRepository.saveAll(fileMetadataDtoConverter.toEntityList(fileMetadataDtos));
+        fileMetadataRepository.saveAll(fileMetadataDtoConverter.toEntityList(fileMetadataList));
     }
 
     private Optional<FileMetadataDto> findMetadata(UUID relatedObjectId) {
