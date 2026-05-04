@@ -11,13 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 
 /**
- * Transactional helper for webhook event persistence.
- * Extracted from StripeWebhookEventRecorder to avoid Spring self-invocation
- * bypassing @Transactional proxy.
+ * Transaction-boundary bean for webhook event persistence.
+ * Each method runs in REQUIRES_NEW so the event state is committed
+ * independently of the outer webhook-processing transaction.
+ * <p>
+ * This bean exists only to make Spring @Transactional proxy work —
+ * self-invocation inside StripeWebhookEventRecorder would bypass it.
  */
 @Service
 @RequiredArgsConstructor
-class StripeWebhookEventTxHelper {
+class StripeWebhookEventTransactionService {
 
     private final StripeWebhookEventRepository repository;
 

@@ -19,18 +19,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("StripeWebhookEventTxHelper unit tests")
-class StripeWebhookEventTxHelperTest {
+@DisplayName("StripeWebhookEventTransactionService unit tests")
+class StripeWebhookEventTransactionServiceTest {
 
     @Mock private StripeWebhookEventRepository repository;
-    @InjectMocks private StripeWebhookEventTxHelper helper;
+    @InjectMocks private StripeWebhookEventTransactionService service;
 
     @Test
     @DisplayName("tryInsertNewEvent saves event with PROCESSING status")
     void tryInsertNewEvent_savesProcessing() {
         when(repository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(helper.tryInsertNewEvent("evt_1", "checkout.session.completed")).isTrue();
+        assertThat(service.tryInsertNewEvent("evt_1", "checkout.session.completed")).isTrue();
 
         ArgumentCaptor<StripeWebhookEvent> captor = ArgumentCaptor.forClass(StripeWebhookEvent.class);
         verify(repository).saveAndFlush(captor.capture());
@@ -46,7 +46,7 @@ class StripeWebhookEventTxHelperTest {
                 OffsetDateTime.now(), null, "DB timeout");
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
-        assertThat(helper.tryReacquireRetryableEvent("evt_1")).isTrue();
+        assertThat(service.tryReacquireRetryableEvent("evt_1")).isTrue();
         assertThat(event.getStatus()).isEqualTo(WebhookEventStatus.PROCESSING);
         assertThat(event.getFailureReason()).isNull();
     }
@@ -59,7 +59,7 @@ class StripeWebhookEventTxHelperTest {
                 OffsetDateTime.now(), OffsetDateTime.now(), null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
-        assertThat(helper.tryReacquireRetryableEvent("evt_1")).isFalse();
+        assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class StripeWebhookEventTxHelperTest {
                 OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
-        assertThat(helper.tryReacquireRetryableEvent("evt_1")).isFalse();
+        assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
     }
 
     @Test
@@ -81,7 +81,7 @@ class StripeWebhookEventTxHelperTest {
                 OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
-        helper.markProcessed("evt_1");
+        service.markProcessed("evt_1");
 
         assertThat(event.getStatus()).isEqualTo(WebhookEventStatus.PROCESSED);
         assertThat(event.getProcessedAt()).isNotNull();
@@ -95,7 +95,7 @@ class StripeWebhookEventTxHelperTest {
                 OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
-        helper.markRetryableFailed("evt_1", "Connection timeout");
+        service.markRetryableFailed("evt_1", "Connection timeout");
 
         assertThat(event.getStatus()).isEqualTo(WebhookEventStatus.RETRYABLE_FAILED);
         assertThat(event.getFailureReason()).isEqualTo("Connection timeout");

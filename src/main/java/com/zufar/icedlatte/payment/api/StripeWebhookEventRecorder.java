@@ -6,28 +6,28 @@ import org.springframework.stereotype.Service;
 
 /**
  * Non-transactional coordinator for webhook event deduplication.
- * Delegates to {@link StripeWebhookEventTxHelper} so that each
+ * Delegates to {@link StripeWebhookEventTransactionService} so that each
  * REQUIRES_NEW transaction goes through the Spring proxy.
  */
 @Service
 @RequiredArgsConstructor
 public class StripeWebhookEventRecorder {
 
-    private final StripeWebhookEventTxHelper txHelper;
+    private final StripeWebhookEventTransactionService txService;
 
     public boolean tryAcquire(String eventId, String eventType) {
         try {
-            return txHelper.tryInsertNewEvent(eventId, eventType);
+            return txService.tryInsertNewEvent(eventId, eventType);
         } catch (DataIntegrityViolationException e) {
-            return txHelper.tryReacquireRetryableEvent(eventId);
+            return txService.tryReacquireRetryableEvent(eventId);
         }
     }
 
     public void markProcessed(String eventId) {
-        txHelper.markProcessed(eventId);
+        txService.markProcessed(eventId);
     }
 
     public void markRetryableFailed(String eventId, String reason) {
-        txHelper.markRetryableFailed(eventId, reason);
+        txService.markRetryableFailed(eventId, reason);
     }
 }

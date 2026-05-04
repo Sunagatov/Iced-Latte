@@ -86,8 +86,8 @@ public class StripeWebhookBusinessProcessor {
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
                 .orElseThrow(() -> new IllegalStateException("No Payment for orderId=" + orderId));
 
-        if (payment.getStatus() == PaymentStatus.PAID) {
-            log.info("payment.already_paid: orderId={}", orderId);
+        if (payment.getStatus().isTerminal()) {
+            log.info("payment.paid.skipped_terminal: orderId={}, status={}", orderId, payment.getStatus());
             return;
         }
 

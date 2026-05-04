@@ -83,7 +83,7 @@ class CheckoutPaymentTransactionServiceTest {
     void prepareCheckout_idempotentHit_returnsExisting() {
         UUID orderId = UUID.randomUUID();
         Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
-                .status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+                .providerSessionId("cs_test_existing").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
         Order existingOrder = Order.builder().id(orderId).userId(USER_ID).build();
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
@@ -99,6 +99,27 @@ class CheckoutPaymentTransactionServiceTest {
         assertThat(result.payment()).isEqualTo(existingPayment);
         assertThat(result.cartItems()).isEmpty();
         verify(shoppingCartService, never()).getByUserIdOrThrow(any());
+    }
+
+    @Test
+    @DisplayName("prepareCheckout uses fetch join for items when providerSessionId is null (retry before Stripe call)")
+    void prepareCheckout_idempotentHit_noSessionId_usesFetchJoin() {
+        UUID orderId = UUID.randomUUID();
+        Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
+                .providerSessionId(null).status(PaymentStatus.CREATED).build();
+        Order existingOrder = Order.builder().id(orderId).userId(USER_ID).build();
+
+        when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
+                .thenReturn(Optional.of(existingPayment));
+        when(orderRepository.findByIdWithItems(orderId)).thenReturn(Optional.of(existingOrder));
+
+        CheckoutPreparation result = service.prepareCheckout(
+                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
+                IDEMPOTENCY_KEY);
+
+        assertThat(result.existing()).isTrue();
+        verify(orderRepository).findByIdWithItems(orderId);
+        verify(orderRepository, never()).findById(orderId);
     }
 
     @Test

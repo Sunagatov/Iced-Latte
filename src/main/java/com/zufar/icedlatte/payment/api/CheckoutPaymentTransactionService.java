@@ -46,7 +46,11 @@ public class CheckoutPaymentTransactionService {
                 .orElse(null);
         if (existing != null) {
             // Do NOT read the live cart — it may be deleted after successful payment.
-            Order order = orderRepository.findById(existing.getOrderId()).orElseThrow();
+            // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
+            Order order = (existing.getProviderSessionId() == null
+                    ? orderRepository.findByIdWithItems(existing.getOrderId())
+                    : orderRepository.findById(existing.getOrderId())
+            ).orElseThrow();
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
             return new CheckoutPreparation(order, existing, List.of(), true);
         }
