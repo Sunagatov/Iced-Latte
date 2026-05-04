@@ -410,7 +410,10 @@ components:
           format: "email"
           description: "User's email address."
         password:
-          $ref: "#/components/schemas/PasswordField"
+          type: "string"
+          description: "User's password. No pattern validation on login — legacy passwords may not match current rules."
+          minLength: 1
+          maxLength: 128
 
     UserAuthenticationResponse:
       type: "object"

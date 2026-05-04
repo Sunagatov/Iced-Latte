@@ -31,7 +31,9 @@ public class RestUtils {
         String jwtToken = response.getBody().jsonPath().getString("token");
 
         if (isJwtTokenNotValid(jwtToken)) {
-            throw new IllegalArgumentException("JWT Token is empty or null. Test failed.");
+            throw new IllegalArgumentException("JWT Token is empty or null. Test failed."
+                    + " HTTP " + response.getStatusCode()
+                    + ": " + response.getBody().asString());
         }
 
         return jwtToken;

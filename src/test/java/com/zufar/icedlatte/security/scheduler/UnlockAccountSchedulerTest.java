@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.scheduler;
 
-import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.security.api.LoginAttemptService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,17 +9,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UnlockAccountScheduler Tests")
 class UnlockAccountSchedulerTest {
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private LoginAttemptRepository loginAttemptRepository;
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private UnlockAccountScheduler unlockAccountScheduler;
@@ -30,8 +25,6 @@ class UnlockAccountSchedulerTest {
     void shouldExecuteScheduledTaskToUnlockAccounts() {
         unlockAccountScheduler.unlockLockoutExpiredAccounts();
 
-        verify(loginAttemptRepository).resetLockedAccounts();
-        verify(userRepository).unlockUsers();
-        verifyNoMoreInteractions(loginAttemptRepository, userRepository);
+        verify(loginAttemptService).unlockExpiredAccounts();
     }
 }
