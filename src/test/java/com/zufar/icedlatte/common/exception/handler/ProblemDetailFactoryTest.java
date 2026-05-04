@@ -25,6 +25,13 @@ class ProblemDetailFactoryTest {
     }
 
     @Test
+    @DisplayName("build() with absolute URI slug uses it directly")
+    void absoluteUriSlugUsedDirectly() {
+        ProblemDetail pd = factory.build("about:blank", "Method Not Allowed", HttpStatus.METHOD_NOT_ALLOWED, "detail");
+        assertThat(pd.getType()).isEqualTo(URI.create("about:blank"));
+    }
+
+    @Test
     @DisplayName("build() sets title, status, detail")
     void setsTitleStatusDetail() {
         ProblemDetail pd = factory.build("not-found", "Not Found", HttpStatus.NOT_FOUND, "Resource missing");

@@ -31,7 +31,7 @@ public class ProblemDetailFactory {
         String safeDetail = status.is5xxServerError() ? SAFE_5XX_MESSAGE : detail;
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, safeDetail);
-        pd.setType(URI.create(TYPE_BASE + typeSlug));
+        pd.setType(typeSlug.contains(":") ? URI.create(typeSlug) : URI.create(TYPE_BASE + typeSlug));
         pd.setTitle(title);
         pd.setInstance(resolveInstance());
         pd.setProperty("timestamp", Instant.now().toString());
