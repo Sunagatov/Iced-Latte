@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS public.payments (
     raw_event_id                VARCHAR(255),
     latest_event_type           VARCHAR(100),
     checkout_idempotency_key    VARCHAR(100),
-    checkout_request_hash       VARCHAR(64),
     created_at                  TIMESTAMPTZ DEFAULT current_timestamp,
     updated_at                  TIMESTAMPTZ,
     created_by                  UUID,
