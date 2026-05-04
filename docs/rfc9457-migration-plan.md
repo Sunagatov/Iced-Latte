@@ -50,6 +50,21 @@ The 4 common base exceptions have `@ResponseStatus` and are used heavily (26 thr
 - `SpringSecurityConfiguration.java:127,136,139` — startup config errors (not runtime, leave as-is)
 - `RateLimitingFilter.java:63,67` — startup config errors (not runtime, leave as-is)
 - `JwtBlacklistStore.java:62` — `"SHA-256 not available"` (true 500, leave as-is)
+- `ShoppingCartService.java:120` — `"Cart not found after uniqueness conflict for userId=" + userId` — **⚠️ leaks userId, true 500 but message must be sanitized in Phase 1**
+
+### Backend: remaining message sanitization risks
+
+The catch-all handler uses `exception.getMessage()` for the response body (see above). Several exceptions still include internal identifiers in their messages:
+
+| Exception | Leaks | Current status |
+|---|---|---|
+| `OrderNotFoundException(Object orderId)` | orderId UUID | All 6 call sites use this constructor |
+| `UserNotFoundException(UUID userId)` | userId UUID | Used in non-auth contexts |
+| `UserNotFoundException(String email)` | email address | Used in `SignInExceptionHandler` → 401 |
+| `ShoppingCartNotFoundException(UUID userId)` | userId UUID | `@ResponseStatus(404)` but message leaks |
+| `ShoppingCartService` `IllegalStateException` | userId UUID | Hits catch-all → 500 |
+
+**Phase 1 must sanitize all of these.** For `ProblemDetailFactory`: never use `exception.getMessage()` for 5xx responses. For 4xx, use the exception message only if it has been explicitly sanitized (or use the `title` from the type URI catalog instead).
 
 ### Backend: `OrderExceptionHandler` scoping bug — ✅ FIXED
 
@@ -65,7 +80,13 @@ The 4 common base exceptions have `@ResponseStatus` and are used heavily (26 thr
 
 ### Backend: `UserNotFoundException` dual-status ambiguity
 
-`UserNotFoundException` is handled by both `UserExceptionHandler` (HIGHEST_PRECEDENCE → 401) and `SignInExceptionHandler` (@Order(0) → 401). While functionally equivalent today, 401 is semantically wrong for non-auth contexts (e.g., admin user lookup). The migration should decide on a single semantic.
+`UserNotFoundException` has `@ResponseStatus(NOT_FOUND)` (404) but is handled by `SignInExceptionHandler` as 401 for auth flows. `SignInExceptionHandler` passes `exception.getMessage()` through, which leaks email/UUID (e.g., "User with email = foo@bar.com is not found.").
+
+**Note:** `UserExceptionHandler` handles `UsernameNotFoundException` (Spring Security's class), NOT `UserNotFoundException` (Iced Latte's class). The plan's error type URI catalog lists `UserNotFoundException` under `UserExceptionHandler` — this is wrong. It is only handled explicitly by `SignInExceptionHandler` (as 401). Outside auth flows, it falls to the catch-all which resolves `@ResponseStatus(NOT_FOUND)` → 404.
+
+**Phase 1 must:**
+1. Sanitize the message — remove email/UUID from `UserNotFoundException` constructors
+2. Decide: keep one exception with context-dependent status, or split into `AuthUserNotFoundException` (401) vs `UserNotFoundException` (404)
 
 ### Backend: handler ordering fragility
 
@@ -135,7 +156,7 @@ The proxy also emits synthetic errors with shape `{ error: 'API unavailable' }` 
 |---|---|---|
 | `handleError()` → `errorMessage` state → rendered | `LoginForm`, `RegistrationForm`, `VerifyEmailCodeForm`, `ForgotPassForm`, `AuthResetPassForm`, `GuestResetPassForm`, `FormProfile`, `ReviewForm` | ✅ Works — shows `errorMessage` inline |
 | `handleError()` → `errorMessage` state → rendered | `ImageUpload` | ✅ FIXED — now renders error below avatar |
-| `handleError()` → `errorMessage` state → **never rendered** | `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` | ❌ Error swallowed — user sees nothing (fix in Phase 3.2) |
+| `handleError()` → `errorMessage` state → **never rendered** | `ReviewsList`, `UserBar`, `ProductWithReviews` | ❌ Error swallowed — user sees nothing (fix in Phase 3.2) |
 | Hardcoded error strings | `OrderCard.tsx` (`'Could not cancel order.'`, etc.) | Backend message discarded (UX choice, not a bug) |
 | `setCartError()` → `lastError` in store | `cart.mutations.ts`, `cart.sync.ts` | ✅ FIXED — now reads backend `data.message` via `handleAxiosError` |
 | `error` state in address store | `addresses/store.ts` | ✅ FIXED — all mutations now have try/catch with `handleAxiosError` |
@@ -204,7 +225,7 @@ Previously read `err.message` (Axios's "Request failed with status code 400"). N
 | **H1** | `errors[]` validation array never read by frontend | Backend sends `[{field: "email", message: "must not be blank"}]` — user sees only "Validation failed" with no field details | ⏳ Phase 3.4 |
 | **H2** | `retryAfter` from rate limiter ignored | No countdown/backoff UI | ⏳ Out of scope |
 | **H3** | `requestId` from JWT filter ignored | No log correlation for support | ⏳ Out of scope |
-| **H4** | ~~5 components call `handleError()` but never render `errorMessage`~~ | `ImageUpload` fixed. Remaining: `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` | **1/5 FIXED**, rest ⏳ Phase 3.2 |
+| **H4** | ~~5 components call `handleError()` but never render `errorMessage`~~ | `ImageUpload` and `ReviewsSection` fixed. Remaining: `ReviewsList`, `UserBar`, `ProductWithReviews` | **2/5 FIXED**, rest ⏳ Phase 3.2 |
 | **H5** | ~~Cart errors silently swallowed~~ | `setCartError` now extracts backend message via `handleAxiosError` | **✅ FIXED** (but `lastError` still not rendered in UI) |
 | **H6** | ~~14 JDK exception throw sites → 500~~ | 5 runtime throw sites fixed (replaced with proper exceptions). 9 remaining are startup-only or true 500s. | **✅ FIXED** |
 | **H7** | ~~Empty-body error response (AuthEndpoint 503)~~ | Now returns `{message, status}` body | **✅ FIXED** |
@@ -257,7 +278,7 @@ Backend Exception
 | `SignInExceptionHandler` | `UserAccountLockedException` | 401 | "User account is locked." |
 | `UserExceptionHandler` | `UserNotFoundException` | 401 | "The user with id '{id}' is not found." |
 | `UserExceptionHandler` | `InvalidAvatarFileTypeException` | 400 | "Invalid avatar file type: {type}. Allowed: {types}" |
-| `OrderExceptionHandler` | `OrderNotFoundException` | 404 | "Order not found." |
+| `OrderExceptionHandler` | `OrderNotFoundException` | 404 | "Order not found." (safe) or "Order not found: {orderId}" — **⚠️ `Object orderId` constructor still leaks orderId in all 6 call sites; remove or sanitize before Phase 1** |
 | `OrderExceptionHandler` | `OrderAccessDeniedException` | 403 | "Access denied." |
 | `OrderExceptionHandler` | `InvalidOrderStateTransitionException` | 409 | "Cannot transition order from {from} to {to}." |
 | `OrderExceptionHandler` | `OrderCancellationWindowExpiredException` | 409 | "Order cannot be cancelled: cancellation window has expired." |
@@ -269,8 +290,10 @@ Backend Exception
 | `GlobalExceptionHandler` | `ConstraintViolationException` | 400 | "Validation failed" + `errors[]` array |
 | `GlobalExceptionHandler` | `MaxUploadSizeExceededException` | 413 | "Maximum upload size exceeded" |
 | `GlobalExceptionHandler` | `NoResourceFoundException` | 404 | "No resource found for {method} {path}" |
-| `GlobalExceptionHandler` | Catch-all (with `@ResponseStatus`) | varies | exception message |
-| `GlobalExceptionHandler` | Catch-all (without `@ResponseStatus`) | 500 | "An internal server error occurred." |
+| `GlobalExceptionHandler` | Catch-all (with `@ResponseStatus`) | varies | `exception.getMessage()` — **⚠️ LEAKS internal details** |
+| `GlobalExceptionHandler` | Catch-all (without `@ResponseStatus`) | 500 | `exception.getMessage()` — **⚠️ LEAKS internal details** |
+
+**⚠️ CRITICAL for Phase 1:** The catch-all handler calls `apiErrorResponseCreator.buildResponse(exception, status)` which uses `exception.getMessage()` as the response body. This means ANY unhandled exception's raw message is exposed to the client. `ProblemDetailFactory` MUST sanitize 5xx responses: use `"An internal server error occurred."` for all 500s without `@ResponseStatus`, and never pass `exception.getMessage()` through for server errors. Log the real exception server-side only.
 
 ### Filter-level → response body mapping
 
@@ -299,13 +322,16 @@ Backend Exception
 
 ### Key implementation notes for Phase 1
 
-1. **`message` field MUST be present** in every ProblemDetail response — it's the primary field the frontend reads. Set it equal to `detail`.
-2. **`error` field SHOULD be present** — it's the fallback for Spring Boot's `BasicErrorController` responses and proxy-level errors. Set it equal to `title`.
-3. **Content-Type should remain `application/json`** for handlers — the proxy handles `application/problem+json` too, but `application/json` is safer for defense-in-depth.
+1. **`message` field MUST be present during the compatibility window** — it's the primary field the frontend reads. Set it equal to `detail`. Once the frontend maps `type` URIs to user-facing copy (Phase 3 follow-up), this alias can be removed.
+2. **`error` field SHOULD be present during the compatibility window** — it's the fallback for Spring Boot's `BasicErrorController` responses and proxy-level errors. Set it equal to `title`. Remove alongside `message`.
+3. **Content-Type should be `application/problem+json`** for controller-level `ProblemDetail` responses (proper RFC 9457). The proxy supports it. Filter-level responses may initially keep `application/json`.
 4. **`errors[]` array must keep shape `[{field, message}]`** — even though frontend doesn't render it yet, the type is declared and Phase 3.4 will use it.
 5. **Filter-level responses** (JWT, rate limiter, security config) should adopt the same ProblemDetail shape but can keep `application/json` content type since they write directly to `HttpServletResponse`.
 6. **The `httpStatusCode` field can be dropped** — no frontend code reads it (verified by grep). Replace with `status` (ProblemDetail standard).
 7. **Timestamp format should standardize to ISO-8601** — filters already use it, handlers use `"yyyy-MM-dd HH:mm:ss"`. No frontend code parses timestamps.
+8. **⚠️ 5xx responses MUST NOT use `exception.getMessage()`** — the current catch-all leaks internal details. `ProblemDetailFactory` must return `"An internal server error occurred."` for all unhandled 500s. Log the real exception server-side only.
+9. **4xx exception messages must be sanitized** — several exceptions still include UUIDs/emails in their messages (see "remaining message sanitization risks" section). Either sanitize the constructors or have `ProblemDetailFactory` use the `title` from the type URI catalog instead of `exception.getMessage()`.
+10. **Frontend `type` → user message mapping** is the real final goal. During Phase 1, the frontend continues to read `detail`/`message`. A follow-up Phase 3 step should introduce `ERROR_MESSAGE_BY_TYPE` mapping so the frontend owns user-facing copy and the backend owns machine-readable error codes.
 
 ---
 
@@ -328,7 +354,7 @@ Every error response from the backend — whether from `@ExceptionHandler`, secu
 
 Content-Type: `application/problem+json` (from handlers) or `application/json` (from filters).
 
-**Important:** The `@ExceptionHandler` methods must explicitly set `produces = "application/json"` (NOT `application/problem+json`) because the frontend proxy only parses `application/json`. Alternatively, the proxy must be updated first (see Phase 0). The recommended approach is to **keep `application/json`** content type and simply change the JSON body shape to match RFC 9457. This is a pragmatic deviation from the spec that avoids the proxy breakage.
+**Important:** The frontend proxy now supports `application/problem+json` (Phase 0.2 fix). Controller-level `@ExceptionHandler` methods should return `ProblemDetail` with `application/problem+json` content type (proper RFC 9457). Filter-level writers may use `application/json` initially. During the compatibility window, include `message` and `error` as extension properties so the frontend works with both old and new shapes.
 
 ### Backward compatibility
 
@@ -363,8 +389,10 @@ Fields dropped: `httpStatusCode` (use `status`), old timestamp format.
 
 | Exception | `type` slug | Status | `title` |
 |---|---|---|---|
-| `UserNotFoundException` | `user-not-found` | 401 | User not found |
+| `UserNotFoundException` | `user-not-found` | 404 (via `@ResponseStatus`) or 401 (via `SignInExceptionHandler`) — **decision needed: split or unify** | User not found |
 | `InvalidAvatarFileTypeException` | `invalid-avatar-type` | 400 | Invalid file type |
+
+**Note:** `UserExceptionHandler` handles `UsernameNotFoundException` (Spring Security), not `UserNotFoundException`. `UserNotFoundException` is only explicitly handled by `SignInExceptionHandler` (as 401). Outside auth flows, it falls to the catch-all which resolves `@ResponseStatus(NOT_FOUND)` → 404.
 
 ### Cart
 
@@ -421,10 +449,10 @@ Fields dropped: `httpStatusCode` (use `status`), old timestamp format.
 
 | Exception | `type` slug | Status | `title` |
 |---|---|---|---|
-| `BadRequestException` (common) | `about:blank` | 400 | Bad request |
-| `NotFoundException` (common) | `about:blank` | 404 | Not found |
-| `UnauthorizedException` (common) | `about:blank` | 401 | Unauthorized |
-| `InternalServerErrorException` (common) | `about:blank` | 500 | Internal server error |
+| `BadRequestException` (common) | `bad-request` | 400 | Bad request |
+| `NotFoundException` (common) | `not-found` | 404 | Not found |
+| `UnauthorizedException` (common) | `unauthorized` | 401 | Unauthorized |
+| `InternalServerErrorException` (common) | `internal-error` | 500 | Internal server error |
 | `MethodArgumentNotValidException` | `validation-failed` | 400 | Validation failed |
 | `ConstraintViolationException` | `validation-failed` | 400 | Validation failed |
 | `DataIntegrityViolationException` | `data-conflict` | 400 | Data conflict |
@@ -525,10 +553,11 @@ Replaces `ApiErrorResponseCreator`. Methods:
 - `build(String typeSlug, String title, HttpStatus status, String detail, List<FieldError> errors)` → `ProblemDetail`
 - Auto-sets `timestamp` (ISO-8601), `message` (= `detail`), `error` (= `title`) as extension properties
 - `instance` set from `RequestContextHolder` if available
+- **For 5xx status codes:** `detail`/`message` MUST be a safe generic string (e.g., "An internal server error occurred."), never `exception.getMessage()`. The real exception is logged server-side only.
 
 Constant: `TYPE_BASE = "https://iced-latte.uk/errors/"`.
 
-**Content-Type decision:** Use `produces = MediaType.APPLICATION_JSON_VALUE` on all handlers (not `application/problem+json`). This avoids the proxy content-type issue even if Step 0.2 hasn't been deployed yet. The JSON body follows RFC 9457 structure regardless of content type.
+**Content-Type decision:** The frontend proxy now supports both `application/json` and `application/problem+json` (Phase 0.2). Prefer `application/problem+json` for controller-level `ProblemDetail` responses (proper RFC 9457 compliance). Filter-level responses may initially keep `application/json` if direct servlet writing makes migration simpler, but should use the same body shape. During the compatibility window, include `message` (= `detail`) and `error` (= `title`) as extension properties; remove these aliases once the frontend maps `type` URIs to user-facing copy.
 
 #### Step 1.2: Migrate all 7 `@RestControllerAdvice` classes
 
@@ -669,10 +698,10 @@ This reads `detail` first (ProblemDetail), falls back to `message` (current form
 
 Add `{errorMessage && <p className="text-negative text-sm" role="alert">{errorMessage}</p>}` to:
 - ~~`ImageUpload.tsx`~~ **✅ DONE**
+- ~~`ReviewsSection.tsx`~~ **✅ Already renders errorMessage**
 - `ReviewsList.tsx`
 - `UserBar.tsx`
 - `ProductWithReviews.tsx`
-- `ReviewsSection.tsx`
 
 #### Step 3.3: Update `ErrorResponse` type — ✅ ALREADY DONE (Phase 0.3)
 
@@ -805,6 +834,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 - `spring.mvc.problemdetails.enabled=true` (too broad — affects actuator, `/error` endpoint)
 - `OrderCard.tsx` using backend messages instead of hardcoded strings (UX decision)
 - Google OAuth callback error display (G4 — `src/app/auth/google/callback/page.tsx`)
-- Rendering errors in `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` (Phase 3.2)
+- Rendering errors in `ReviewsList`, `UserBar`, `ProductWithReviews` (Phase 3.2)
+- Frontend `type` URI → user-facing message mapping (Phase 3 follow-up — the real BE/FE contract)
 - HTTP 409 Conflict specific UX (G2)
 - HTTP 502 Bad Gateway specific UX (G3)
