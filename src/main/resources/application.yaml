@@ -165,7 +165,7 @@ cache:
 #
 temporary-cache:
   time:
-    token: 1
+    token: 5
   get-token-enabled: true
 
 #
