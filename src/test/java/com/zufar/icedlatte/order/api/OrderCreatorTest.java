@@ -4,6 +4,7 @@ import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -159,6 +160,49 @@ class OrderCreatorTest {
 
         assertThat(result).isEqualTo(expectedDto);
         verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Checkout: rejects when both deliveryAddressId and address are provided")
+    void createPendingPaymentOrder_bothAddressInputs_throws() {
+        UUID userId = UUID.randomUUID();
+        CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
+                .recipientName("A").recipientSurname("B")
+                .deliveryAddressId(UUID.randomUUID()).address(buildAddressDto());
+
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, buildCart()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("not both");
+    }
+
+    @Test
+    @DisplayName("Checkout: rejects when neither deliveryAddressId nor address is provided")
+    void createPendingPaymentOrder_noAddress_throws() {
+        UUID userId = UUID.randomUUID();
+        CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
+                .recipientName("A").recipientSurname("B");
+
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, buildCart()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("must be provided");
+    }
+
+    @Test
+    @DisplayName("Checkout: rejects when product is no longer available")
+    void createPendingPaymentOrder_unavailableProduct_throws() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
+                .recipientName("A").recipientSurname("B").address(buildAddressDto());
+        ShoppingCartDto cart = buildCart();
+        OrderItem orderItem = OrderItem.builder().productId(productId).productName("Deleted Coffee").build();
+
+        when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
+        when(productInfoRepository.existsById(productId)).thenReturn(false);
+
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, cart))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("no longer available");
     }
 
     private CreateNewOrderRequestDto buildRequest(UUID deliveryAddressId, AddressDto address) {

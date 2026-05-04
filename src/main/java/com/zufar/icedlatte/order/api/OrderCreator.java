@@ -69,13 +69,7 @@ public class OrderCreator {
                 .map(orderDtoConverter::toOrderItem)
                 .toList();
 
-        List<String> unavailable = items.stream()
-                .filter(item -> !productInfoRepository.existsById(item.getProductId()))
-                .map(OrderItem::getProductName)
-                .toList();
-        if (!unavailable.isEmpty()) {
-            throw new BadRequestException("Products no longer available: " + String.join(", ", unavailable));
-        }
+        validateProductAvailability(items);
 
         Address deliveryAddress = resolveAddress(request, userId);
 
@@ -107,12 +101,16 @@ public class OrderCreator {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request,
                                            ShoppingCartDto cart) {
+        validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
+
         Address deliveryAddress = resolveDeliveryAddress(
                 request.getDeliveryAddressId(), request.getAddress(), userId);
 
         List<OrderItem> items = cart.getItems().stream()
                 .map(orderDtoConverter::toOrderItem)
                 .toList();
+
+        validateProductAvailability(items);
 
         Order order = Order.builder()
                 .userId(userId)
@@ -131,6 +129,16 @@ public class OrderCreator {
         Order saved = orderRepository.save(order);
         log.info("order.pending_payment: orderId={}, userId={}", saved.getId(), userId);
         return saved;
+    }
+
+    private void validateProductAvailability(List<OrderItem> items) {
+        List<String> unavailable = items.stream()
+                .filter(item -> !productInfoRepository.existsById(item.getProductId()))
+                .map(OrderItem::getProductName)
+                .toList();
+        if (!unavailable.isEmpty()) {
+            throw new BadRequestException("Products no longer available: " + String.join(", ", unavailable));
+        }
     }
 
     private Address resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
@@ -166,8 +174,12 @@ public class OrderCreator {
     }
 
     private static void validateAddressInput(CreateNewOrderRequestDto request) {
-        boolean hasId = request.getDeliveryAddressId() != null;
-        boolean hasInline = request.getAddress() != null;
+        validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
+    }
+
+    private static void validateCheckoutAddressInput(UUID deliveryAddressId, AddressDto inlineAddress) {
+        boolean hasId = deliveryAddressId != null;
+        boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {
             throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
         }

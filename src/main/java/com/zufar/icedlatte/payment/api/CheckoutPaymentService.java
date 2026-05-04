@@ -41,6 +41,13 @@ public class CheckoutPaymentService {
     private final StripeCheckoutSessionCreator stripeSessionCreator;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new BadRequestException("Idempotency-Key header is required and must not be blank.");
+        }
+        if (idempotencyKey.length() > 100) {
+            throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
+        }
+
         UserDto user = securityPrincipalProvider.get();
         UUID userId = user.getId();
 

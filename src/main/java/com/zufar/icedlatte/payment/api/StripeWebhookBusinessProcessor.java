@@ -62,12 +62,16 @@ public class StripeWebhookBusinessProcessor {
     private void handleSessionCompleted(Event event, Session stripeSession) {
         if (!"paid".equals(stripeSession.getPaymentStatus())) {
             UUID orderId = extractOrderId(stripeSession);
-            paymentRepository.findByOrderId(orderId).ifPresent(payment -> {
-                payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
-                payment.setRawEventId(event.getId());
-                payment.setLatestEventType(event.getType());
-                paymentRepository.save(payment);
-            });
+            Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
+            if (payment == null || isTerminal(payment.getStatus())) {
+                log.info("payment.awaiting_async.skipped: orderId={}, status={}",
+                        orderId, payment != null ? payment.getStatus() : "missing");
+                return;
+            }
+            payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
+            payment.setRawEventId(event.getId());
+            payment.setLatestEventType(event.getType());
+            paymentRepository.save(payment);
             log.info("payment.awaiting_async: orderId={}, paymentStatus={}",
                     orderId, stripeSession.getPaymentStatus());
             return;
@@ -127,10 +131,15 @@ public class StripeWebhookBusinessProcessor {
     private void handleExpired(Session stripeSession) {
         UUID orderId = extractOrderId(stripeSession);
 
-        paymentRepository.findByOrderId(orderId).ifPresent(payment -> {
-            payment.setStatus(PaymentStatus.EXPIRED);
-            paymentRepository.save(payment);
-        });
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
+        if (payment == null || isTerminal(payment.getStatus())) {
+            log.info("payment.expired.skipped: orderId={}, status={}",
+                    orderId, payment != null ? payment.getStatus() : "missing");
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.EXPIRED);
+        paymentRepository.save(payment);
 
         try {
             orderStatusTransitioner.transition(
@@ -143,10 +152,15 @@ public class StripeWebhookBusinessProcessor {
     private void handleAsyncPaymentFailed(Session stripeSession) {
         UUID orderId = extractOrderId(stripeSession);
 
-        paymentRepository.findByOrderId(orderId).ifPresent(payment -> {
-            payment.setStatus(PaymentStatus.FAILED);
-            paymentRepository.save(payment);
-        });
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
+        if (payment == null || isTerminal(payment.getStatus())) {
+            log.info("payment.async_failed.skipped: orderId={}, status={}",
+                    orderId, payment != null ? payment.getStatus() : "missing");
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentRepository.save(payment);
 
         try {
             orderStatusTransitioner.transition(
@@ -154,6 +168,12 @@ public class StripeWebhookBusinessProcessor {
         } catch (InvalidOrderStateTransitionException e) {
             log.warn("order.payment_failed.transition_failed: orderId={}", orderId);
         }
+    }
+
+    private static boolean isTerminal(PaymentStatus status) {
+        return status == PaymentStatus.PAID
+                || status == PaymentStatus.REFUNDED
+                || status == PaymentStatus.RECONCILIATION_FAILED;
     }
 
     private void handleChargeRefunded(Event event) {

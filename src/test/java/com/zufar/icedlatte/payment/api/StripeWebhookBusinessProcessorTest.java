@@ -2,7 +2,6 @@ package com.zufar.icedlatte.payment.api;
 
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
-import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
@@ -16,7 +15,6 @@ import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -77,7 +75,7 @@ class StripeWebhookBusinessProcessorTest {
         mockEventSession(event, session);
 
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         processor.process(event);
@@ -130,7 +128,7 @@ class StripeWebhookBusinessProcessorTest {
         mockEventSession(event, session);
 
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         processor.process(event);
@@ -148,7 +146,7 @@ class StripeWebhookBusinessProcessorTest {
         mockEventSession(event, session);
 
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.AWAITING_ASYNC_CONFIRMATION).build();
-        when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         processor.process(event);
@@ -156,6 +154,40 @@ class StripeWebhookBusinessProcessorTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
         verify(orderStatusTransitioner).transition(eq(ORDER_ID), eq(OrderEvent.PAYMENT_FAILED_EVENT),
                 any(), eq("Stripe async payment failed"));
+    }
+
+    @Test
+    @DisplayName("checkout.session.expired does not overwrite PAID payment")
+    void handleExpired_paidPayment_skipped() {
+        Event event = mockEvent("checkout.session.expired", "evt_7");
+        Session session = mockSession(null, null, null, null);
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        verify(paymentRepository, never()).save(any());
+        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("checkout.session.async_payment_failed does not overwrite PAID payment")
+    void handleAsyncPaymentFailed_paidPayment_skipped() {
+        Event event = mockEvent("checkout.session.async_payment_failed", "evt_8");
+        Session session = mockSession(null, null, null, null);
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        verify(paymentRepository, never()).save(any());
+        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
     }
 
     // --- Helpers ---

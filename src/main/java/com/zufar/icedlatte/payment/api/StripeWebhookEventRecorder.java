@@ -24,26 +24,38 @@ public class StripeWebhookEventRecorder {
 
     /**
      * Attempts to acquire the event for processing.
-     * If the event already exists with RETRYABLE_FAILED, re-acquires it.
-     * If PROCESSING or PROCESSED, returns false (already handled).
+     * Insert and re-acquire run in separate REQUIRES_NEW transactions because
+     * a failed saveAndFlush marks the Hibernate session rollback-only.
+     * <p>
+     * This method is NOT @Transactional — it coordinates two independent TXs.
+     * Callers must invoke it from a non-transactional context (e.g., StripeWebhookService).
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryAcquire(String eventId, String eventType) {
         try {
-            repository.saveAndFlush(new StripeWebhookEvent(
-                    eventId, eventType, WebhookEventStatus.PROCESSING,
-                    OffsetDateTime.now(), null, null));
-            return true;
+            return tryInsertNewEvent(eventId, eventType);
         } catch (DataIntegrityViolationException e) {
-            return repository.findById(eventId)
-                    .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED)
-                    .map(evt -> {
-                        evt.setStatus(WebhookEventStatus.PROCESSING);
-                        evt.setFailureReason(null);
-                        return true;
-                    })
-                    .orElse(false);
+            return tryReacquireRetryableEvent(eventId);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean tryInsertNewEvent(String eventId, String eventType) {
+        repository.saveAndFlush(new StripeWebhookEvent(
+                eventId, eventType, WebhookEventStatus.PROCESSING,
+                OffsetDateTime.now(), null, null));
+        return true;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean tryReacquireRetryableEvent(String eventId) {
+        return repository.findById(eventId)
+                .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED)
+                .map(evt -> {
+                    evt.setStatus(WebhookEventStatus.PROCESSING);
+                    evt.setFailureReason(null);
+                    return true;
+                })
+                .orElse(false);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
