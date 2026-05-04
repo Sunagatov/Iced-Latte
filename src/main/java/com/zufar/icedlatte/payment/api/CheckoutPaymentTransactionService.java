@@ -1,0 +1,115 @@
+package com.zufar.icedlatte.payment.api;
+
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.order.api.OrderCreator;
+import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.payment.entity.Payment;
+import com.zufar.icedlatte.payment.entity.PaymentProvider;
+import com.zufar.icedlatte.payment.entity.PaymentStatus;
+import com.zufar.icedlatte.payment.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Transactional methods for the checkout flow, extracted into a separate bean
+ * to avoid Spring self-invocation on @Transactional (proxy-based AOP).
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CheckoutPaymentTransactionService {
+
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
+    private final OrderCreator orderCreator;
+    private final ShoppingCartService shoppingCartService;
+
+    @Transactional
+    public CheckoutPreparation prepareCheckout(UUID userId,
+                                               CreateCheckoutRequestDto request,
+                                               String idempotencyKey) {
+        // Application-level idempotency: same user + same key → return existing
+        Optional<Payment> existing = paymentRepository
+                .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId);
+        if (existing.isPresent()) {
+            // Do NOT read the live cart — it may be deleted after successful payment.
+            Order order = orderRepository.findById(existing.get().getOrderId()).orElseThrow();
+            log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
+            return new CheckoutPreparation(order, existing.get(), List.of(), true);
+        }
+
+        ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new BadRequestException("Cannot checkout: shopping cart is empty");
+        }
+
+        Order order = orderCreator.createPendingPaymentOrder(userId, request, cart);
+
+        Payment payment = Payment.builder()
+                .orderId(order.getId())
+                .userId(userId)
+                .provider(PaymentProvider.STRIPE)
+                .status(PaymentStatus.CREATED)
+                .amountMinor(toMinorUnits(order.getItemsTotalPrice()))
+                .currency("usd")
+                .checkoutIdempotencyKey(idempotencyKey)
+                .checkoutRequestHash(computeCheckoutSnapshotHash(request, cart))
+                .build();
+        payment = paymentRepository.save(payment);
+
+        return new CheckoutPreparation(order, payment, cart.getItems(), false);
+    }
+
+    @Transactional
+    public void saveStripeDetails(UUID paymentId, StripeSessionResult stripeResult) {
+        Payment payment = paymentRepository.findById(paymentId).orElseThrow();
+        payment.setProviderSessionId(stripeResult.sessionId());
+        payment.setStatus(PaymentStatus.STRIPE_SESSION_CREATED);
+        paymentRepository.save(payment);
+    }
+
+    private long toMinorUnits(BigDecimal amount) {
+        return amount.multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.UNNECESSARY)
+                .longValueExact();
+    }
+
+    /**
+     * SHA-256 hash of the full checkout snapshot: recipient fields, address,
+     * cart item IDs/quantities/prices, currency, and total amount.
+     * Used to detect Idempotency-Key reuse with different checkout parameters.
+     */
+    private String computeCheckoutSnapshotHash(CreateCheckoutRequestDto request,
+                                               ShoppingCartDto cart) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(request.getRecipientName()).append('|');
+        sb.append(request.getRecipientSurname()).append('|');
+        sb.append(request.getRecipientPhone()).append('|');
+        sb.append(request.getDeliveryAddressId()).append('|');
+        cart.getItems().stream()
+                .sorted(Comparator.comparing(i -> i.getProductInfo().getId()))
+                .forEach(item -> {
+                    sb.append(item.getProductInfo().getId()).append(':');
+                    sb.append(item.getProductQuantity()).append(':');
+                    sb.append(item.getProductInfo().getPrice()).append('|');
+                });
+        sb.append("usd").append('|');
+        sb.append(toMinorUnits(cart.getItemsTotalPrice()));
+        return DigestUtils.sha256Hex(sb.toString());
+    }
+}

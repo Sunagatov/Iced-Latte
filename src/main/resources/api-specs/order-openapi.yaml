@@ -507,6 +507,7 @@ components:
       type: "string"
       description: "The status of an order. DELIVERY and FINISHED are deprecated — use SHIPPED and DELIVERED instead."
       enum:
+        - PENDING_PAYMENT
         - CREATED
         - PAID
         - DELIVERY
@@ -516,11 +517,16 @@ components:
         - CANCELLED
         - REFUND_REQUESTED
         - REFUNDED
+        - PAYMENT_FAILED
+        - PAYMENT_EXPIRED
 
     OrderEvent:
       type: "string"
       description: "Events that trigger order status transitions."
       enum:
+        - PENDING_PAYMENT_CONFIRMED
+        - PAYMENT_FAILED_EVENT
+        - PAYMENT_EXPIRED_EVENT
         - PAYMENT_CONFIRMED
         - SHIP
         - DELIVER

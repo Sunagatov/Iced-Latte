@@ -1,57 +1,61 @@
 package com.zufar.icedlatte.payment.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.openapi.dto.PaymentConfirmationEmail;
-import com.zufar.icedlatte.openapi.dto.SessionWithClientSecretDto;
-import com.zufar.icedlatte.payment.api.StripeSessionCreator;
+import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
+import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
+import com.zufar.icedlatte.payment.api.CheckoutPaymentService;
+import com.zufar.icedlatte.payment.api.PaymentStatusService;
 import com.zufar.icedlatte.payment.api.StripeWebhookService;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
+/**
+ * Stripe Hosted Checkout endpoints (test mode only — no real money).
+ */
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping(PaymentEndpoint.PAYMENT_URL)
+@RequestMapping(ApiPaths.PAYMENT)
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
 public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
 
-    public static final String PAYMENT_URL = ApiPaths.PAYMENT;
-
-    private final StripeSessionCreator stripeSessionCreator;
+    private final CheckoutPaymentService checkoutPaymentService;
+    private final PaymentStatusService paymentStatusService;
     private final StripeWebhookService stripeWebhookService;
-    private final HttpServletRequest httpRequest;
 
     @Override
-    @PostMapping
-    public ResponseEntity<SessionWithClientSecretDto> processPayment() {
-        SessionWithClientSecretDto response = stripeSessionCreator.createSession(httpRequest);
-        log.info("payment.session.created: sessionId={}", maskSessionId(response.getSessionId()));
+    @PostMapping("/checkout")
+    public ResponseEntity<CheckoutResponseDto> createCheckout(
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @Valid @RequestBody CreateCheckoutRequestDto request) {
+        CheckoutResponseDto response = checkoutPaymentService.checkout(request, idempotencyKey);
         return ResponseEntity.ok(response);
     }
 
+    @Override
+    @GetMapping("/checkout/{orderId}/status")
+    public ResponseEntity<CheckoutStatusDto> getCheckoutStatus(@PathVariable UUID orderId) {
+        return ResponseEntity.ok(paymentStatusService.getStatus(orderId));
+    }
+
     @PostMapping("/stripe/webhook")
-    public ResponseEntity<Void> processStripeWebhook(@RequestHeader("Stripe-Signature") String stripeSignature,
-                                                     @RequestBody String payload) {
-        log.debug("payment.webhook.receiving");
+    public ResponseEntity<Void> processStripeWebhook(
+            @RequestHeader("Stripe-Signature") String stripeSignature,
+            @RequestBody String payload) {
         stripeWebhookService.processWebhook(payload, stripeSignature);
         return ResponseEntity.ok().build();
-    }
-
-    @Override
-    @GetMapping("/order")
-    public ResponseEntity<PaymentConfirmationEmail> processRedirectEvent(@RequestParam String sessionId) {
-        return ResponseEntity.ok(stripeWebhookService.processRedirect(sessionId));
-    }
-
-    private static String maskSessionId(String sessionId) {
-        if (StringUtils.isBlank(sessionId)) {
-            return "unknown";
-        }
-        return StringUtils.left(StringUtils.overlay(sessionId, "****", 6, sessionId.length()), 10);
     }
 }

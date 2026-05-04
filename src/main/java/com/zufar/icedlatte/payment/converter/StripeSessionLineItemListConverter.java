@@ -9,6 +9,7 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
@@ -25,6 +26,8 @@ public interface StripeSessionLineItemListConverter {
 
     @Named("toStripeUnitAmount")
     default Long toStripeUnitAmount(final BigDecimal price) {
-        return price.multiply(BigDecimal.valueOf(100)).longValue();
+        return price.multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.UNNECESSARY)
+                .longValueExact();
     }
 }

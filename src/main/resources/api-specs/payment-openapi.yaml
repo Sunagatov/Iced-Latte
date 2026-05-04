@@ -2,14 +2,17 @@ openapi: "3.0.3"
 
 info:
   title: "Iced Latte Payment API"
-  description: "API for accessing payment and related operations in the Iced-Latte platform"
-  version: "1.0.0"
+  description: >
+    API for Stripe Hosted Checkout integration.
+    Iced Latte uses Stripe test mode only — no real money is charged.
+    Use Stripe test cards for testing (e.g., 4242 4242 4242 4242).
+  version: "2.0.0"
   contact:
     name: "Iced Latte Support"
     email: "zufar.sunagatov@gmail.com"
     url: "https://github.com/Sunagatov/Iced-Latte"
   license:
-    name: "MIT"
+    name: "CC BY-NC 4.0"
     url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
 
 servers:
@@ -23,25 +26,41 @@ security:
 
 tags:
   - name: "Payment"
-    description: "An API for managing and retrieving payment information"
+    description: "Stripe Hosted Checkout — test mode only"
 
 paths:
-  /api/v1/payment:
+  /api/v1/payment/checkout:
     post:
       tags:
         - "Payment"
-      summary: "Creates Stripe Session for an authorized user"
-      description: "Initiates a Stripe payment session for the authenticated user's current order and returns the client secret."
-      operationId: "processPayment"
+      summary: "Create order and Stripe Checkout Session"
+      description: >
+        Validates cart/address, creates a local Order (PENDING_PAYMENT),
+        creates a Stripe Hosted Checkout Session, returns the redirect URL.
+        Requires Idempotency-Key header.
+      operationId: "createCheckout"
+      parameters:
+        - name: "Idempotency-Key"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+          description: "Client-generated UUID for idempotent checkout creation."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutRequestDto"
       responses:
         "200":
-          description: "Session created successfully"
+          description: "Checkout session created"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SessionWithClientSecretDto"
+                $ref: "#/components/schemas/CheckoutResponseDto"
         "400":
-          description: "Cannot create session"
+          description: "Validation error (empty cart, invalid address)"
           content:
             application/json:
               schema:
@@ -52,54 +71,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: "Internal server error"
+        "409":
+          description: "Idempotency conflict (same key, different request)"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/payment/order:
+  /api/v1/payment/checkout/{orderId}/status:
     get:
       tags:
         - "Payment"
-      summary: "Stripe checkout redirect callback"
-      description: "Called by Stripe after a successful checkout session. Processes the session and creates the corresponding order."
-      operationId: "processRedirectEvent"
+      summary: "Check payment status for an order"
+      description: >
+        Read-only endpoint for the success page to poll.
+        Returns current order and payment status. Does NOT create or modify anything.
+      operationId: "getCheckoutStatus"
       parameters:
-        - name: "sessionId"
-          description: "Stripe checkout session ID"
-          in: "query"
+        - name: "orderId"
+          in: "path"
           required: true
           schema:
             type: "string"
+            format: "uuid"
       responses:
         "200":
-          description: "Order created successfully"
+          description: "Current checkout status"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentConfirmationEmail"
-        "400":
-          description: "Cannot create order"
+                $ref: "#/components/schemas/CheckoutStatusDto"
+        "401":
+          description: "Unauthorized"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: "Unauthorized"
+        "403":
+          description: "Not your order"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: "Stripe session not found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: "Internal server error"
+          description: "Order not found"
           content:
             application/json:
               schema:
@@ -111,30 +126,74 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  schemas:
-    SessionWithClientSecretDto:
-      type: "object"
-      description: "Contains the Stripe session ID and client secret required to complete the payment on the frontend."
-      required:
-        - sessionId
-        - clientSecret
-      properties:
-        sessionId:
-          type: "string"
-          description: "The Stripe checkout session ID."
-        clientSecret:
-          type: "string"
-          description: "The client secret used to confirm the payment on the client side."
 
-    PaymentConfirmationEmail:
+  schemas:
+    CreateCheckoutRequestDto:
       type: "object"
-      description: "Contains the customer email address for payment confirmation notification."
+      description: "Checkout request with recipient and delivery address."
       required:
-        - customerEmail
+        - recipientName
+        - recipientSurname
       properties:
-        customerEmail:
+        recipientName:
           type: "string"
-          description: "The email address of the customer who completed the payment."
+          minLength: 2
+          maxLength: 128
+        recipientSurname:
+          type: "string"
+          minLength: 2
+          maxLength: 128
+        recipientPhone:
+          type: "string"
+          maxLength: 32
+        deliveryAddressId:
+          type: "string"
+          format: "uuid"
+          description: "ID of a saved delivery address. Mutually exclusive with address."
+        address:
+          $ref: "user-openapi.yaml#/components/schemas/AddressDto"
+
+    CheckoutResponseDto:
+      type: "object"
+      description: "Response after creating a Stripe Checkout Session."
+      required:
+        - orderId
+        - stripeSessionId
+        - checkoutUrl
+      properties:
+        orderId:
+          type: "string"
+          format: "uuid"
+        stripeSessionId:
+          type: "string"
+        checkoutUrl:
+          type: "string"
+          format: "uri"
+
+    CheckoutStatusDto:
+      type: "object"
+      description: "Current order and payment status for polling."
+      required:
+        - orderId
+        - orderStatus
+      properties:
+        orderId:
+          type: "string"
+          format: "uuid"
+        orderStatus:
+          $ref: "order-openapi.yaml#/components/schemas/OrderStatus"
+        paymentStatus:
+          type: "string"
+          description: "Payment provider status (from Payment entity)."
+          enum:
+            - CREATED
+            - STRIPE_SESSION_CREATED
+            - AWAITING_ASYNC_CONFIRMATION
+            - PAID
+            - FAILED
+            - EXPIRED
+            - REFUNDED
+            - RECONCILIATION_FAILED
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

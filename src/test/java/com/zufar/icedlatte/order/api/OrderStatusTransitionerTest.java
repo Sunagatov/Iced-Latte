@@ -44,7 +44,11 @@ class OrderStatusTransitionerTest {
             "PAID, CANCEL, CANCELLED",
             "PAID, REQUEST_REFUND, REFUND_REQUESTED",
             "SHIPPED, DELIVER, DELIVERED",
-            "REFUND_REQUESTED, REFUND_CONFIRMED, REFUNDED"
+            "REFUND_REQUESTED, REFUND_CONFIRMED, REFUNDED",
+            "PENDING_PAYMENT, PENDING_PAYMENT_CONFIRMED, PAID",
+            "PENDING_PAYMENT, PAYMENT_FAILED_EVENT, PAYMENT_FAILED",
+            "PENDING_PAYMENT, PAYMENT_EXPIRED_EVENT, PAYMENT_EXPIRED",
+            "PENDING_PAYMENT, CANCEL, CANCELLED"
     })
     @DisplayName("Valid transitions produce correct target status")
     void validTransitions(OrderStatus from, OrderEvent event, OrderStatus expected) {
@@ -68,7 +72,12 @@ class OrderStatusTransitionerTest {
             "SHIPPED, CANCEL",
             "DELIVERED, CANCEL",
             "CANCELLED, CANCEL",
-            "REFUNDED, CANCEL"
+            "REFUNDED, CANCEL",
+            "PENDING_PAYMENT, SHIP",
+            "PENDING_PAYMENT, DELIVER",
+            "PENDING_PAYMENT, PAYMENT_CONFIRMED",
+            "PAYMENT_FAILED, CANCEL",
+            "PAYMENT_EXPIRED, CANCEL"
     })
     @DisplayName("Invalid transitions throw InvalidOrderStateTransitionException")
     void invalidTransitions(OrderStatus from, OrderEvent event) {

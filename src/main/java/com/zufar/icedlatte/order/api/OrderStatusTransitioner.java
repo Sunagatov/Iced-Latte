@@ -29,6 +29,14 @@ import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
 public class OrderStatusTransitioner {
 
     private static final Map<OrderStatus, Map<OrderEvent, OrderStatus>> TRANSITIONS = Map.of(
+            // Stripe payment flow
+            PENDING_PAYMENT, Map.of(
+                    PENDING_PAYMENT_CONFIRMED, PAID,
+                    PAYMENT_FAILED_EVENT, PAYMENT_FAILED,
+                    PAYMENT_EXPIRED_EVENT, PAYMENT_EXPIRED,
+                    CANCEL, CANCELLED
+            ),
+            // Non-Stripe flow (stripe.enabled=false)
             CREATED, Map.of(PAYMENT_CONFIRMED, PAID, CANCEL, CANCELLED),
             PAID, Map.of(SHIP, SHIPPED, CANCEL, CANCELLED, REQUEST_REFUND, REFUND_REQUESTED),
             OrderStatus.SHIPPED, Map.of(DELIVER, DELIVERED),

@@ -1,11 +1,10 @@
 package com.zufar.icedlatte.order.api;
 
-import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.util.SessionIdMasker;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -15,10 +14,8 @@ import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +40,6 @@ public class OrderCreator {
     private final OrderDtoConverter orderDtoConverter;
     private final ShoppingCartService shoppingCartService;
     private final ShoppingCartRepository shoppingCartRepository;
-    private final SingleUserProvider singleUserProvider;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final ProductInfoRepository productInfoRepository;
 
@@ -103,25 +99,15 @@ public class OrderCreator {
         return orderDtoConverter.toResponseDto(saved);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-    public boolean createOrderAndDeleteCart(Session stripeSession) {
-        String sessionId = stripeSession.getId();
-        UUID userId = UUID.fromString(stripeSession.getMetadata().get("userId"));
-        String maskedSessionId = SessionIdMasker.mask(sessionId);
-
-        Optional<Order> existingOrder = orderDetailProvider.getOrderByUserAndSession(userId, sessionId);
-        if (existingOrder.isPresent()) {
-            log.info("order.session.already_handled: userId={}, sessionId={}", userId, maskedSessionId);
-            return false;
-        }
-
-        ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
-            throw new BadRequestException("Cannot create order: shopping cart is empty for userId=" + userId);
-        }
-
-        UserEntity user = singleUserProvider.getUserEntityById(userId);
-        Address deliveryAddress = resolveDefaultAddress(userId, user);
+    /**
+     * Creates an order with PENDING_PAYMENT status for the Stripe checkout flow.
+     * Cart items are snapshotted into order items at creation time.
+     */
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request,
+                                           ShoppingCartDto cart) {
+        Address deliveryAddress = resolveDeliveryAddress(
+                request.getDeliveryAddressId(), request.getAddress(), userId);
 
         List<OrderItem> items = cart.getItems().stream()
                 .map(orderDtoConverter::toOrderItem)
@@ -129,60 +115,44 @@ public class OrderCreator {
 
         Order order = Order.builder()
                 .userId(userId)
-                .sessionId(sessionId)
-                .status(OrderStatus.CREATED)
+                .sessionId(UUID.randomUUID().toString()) // placeholder — TODO: make nullable in follow-up
+                .status(OrderStatus.PENDING_PAYMENT)
+                .items(items)
                 .deliveryAddress(deliveryAddress)
-                .recipientName(user.getFirstName() != null ? user.getFirstName() : "")
-                .recipientSurname(user.getLastName() != null ? user.getLastName() : "")
-                .recipientPhone(user.getPhoneNumber())
+                .recipientName(request.getRecipientName())
+                .recipientSurname(request.getRecipientSurname())
+                .recipientPhone(request.getRecipientPhone())
                 .itemsQuantity(cart.getItemsQuantity())
                 .itemsTotalPrice(cart.getItemsTotalPrice())
-                .items(items)
                 .cancellationDeadline(OffsetDateTime.now().plusMinutes(cancellationWindowMinutes))
                 .build();
 
-        Order saved = orderRepository.saveAndFlush(order);
-        shoppingCartRepository.deleteByUserId(userId);
-        log.info("checkout.completed: userId={}, orderId={}, sessionId={}",
-                userId, saved.getId(), maskedSessionId);
-        return true;
+        Order saved = orderRepository.save(order);
+        log.info("order.pending_payment: orderId={}, userId={}", saved.getId(), userId);
+        return saved;
     }
 
     private Address resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
-        if (request.getDeliveryAddressId() != null) {
+        return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
+    }
+
+    private Address resolveDeliveryAddress(UUID deliveryAddressId, AddressDto inlineAddress, UUID userId) {
+        if (deliveryAddressId != null) {
             DeliveryAddressEntity saved = deliveryAddressRepository
-                    .findByIdAndUserId(request.getDeliveryAddressId(), userId)
+                    .findByIdAndUserId(deliveryAddressId, userId)
                     .orElseThrow(() -> new BadRequestException(
-                            "Delivery address not found: " + request.getDeliveryAddressId()));
+                            "Delivery address not found: " + deliveryAddressId));
             return snapshotAddress(saved);
         }
-        AddressDto addr = request.getAddress();
-        if (addr == null) {
+        if (inlineAddress == null) {
             throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
         }
         return Address.builder()
-                .country(addr.getCountry())
-                .city(addr.getCity())
-                .line(addr.getLine())
-                .postcode(addr.getPostcode())
+                .country(inlineAddress.getCountry())
+                .city(inlineAddress.getCity())
+                .line(inlineAddress.getLine())
+                .postcode(inlineAddress.getPostcode())
                 .build();
-    }
-
-    private Address resolveDefaultAddress(UUID userId, UserEntity user) {
-        List<DeliveryAddressEntity> addresses = deliveryAddressRepository.findAllByUserId(userId);
-        Optional<DeliveryAddressEntity> defaultAddr = addresses.stream()
-                .filter(DeliveryAddressEntity::isDefault)
-                .findFirst();
-        if (defaultAddr.isPresent()) {
-            return snapshotAddress(defaultAddr.get());
-        }
-        if (!addresses.isEmpty()) {
-            return snapshotAddress(addresses.getFirst());
-        }
-        if (user.getAddress() != null) {
-            return user.getAddress();
-        }
-        throw new IllegalStateException("User does not have a delivery address. Cannot create order.");
     }
 
     private static Address snapshotAddress(DeliveryAddressEntity entity) {

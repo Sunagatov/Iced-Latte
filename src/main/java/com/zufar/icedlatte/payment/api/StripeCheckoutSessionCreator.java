@@ -3,79 +3,93 @@ package com.zufar.icedlatte.payment.api;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.openapi.dto.SessionWithClientSecretDto;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
+/**
+ * Creates Stripe Hosted Checkout Sessions (test mode only — no real money).
+ * Receives a persisted Order, not an HttpServletRequest.
+ */
 @Slf4j
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
-public class StripeSessionCreator {
+public class StripeCheckoutSessionCreator {
 
-    private static final String RETURN_URI = "/orders?sessionId={CHECKOUT_SESSION_ID}";
-
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final StripeSessionLineItemListConverter lineItemConverter;
-    private final ShoppingCartService shoppingCartService;
 
     @Value("${stripe.secret-key}")
     private String stripeSecretKey;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @PostConstruct
     private void initStripe() {
         Stripe.apiKey = stripeSecretKey;
     }
 
-    public SessionWithClientSecretDto createSession(final HttpServletRequest request) {
-        log.info("payment.session.initiating");
-        UserDto user = securityPrincipalProvider.get();
-        UUID userId = user.getId();
-        ShoppingCartDto cart = shoppingCartService.getByUserId(userId);
+    /**
+     * Cart-based entry point (normal checkout). Converts cart items to Stripe
+     * line items, then delegates to {@link #createFromLineItems}.
+     */
+    public StripeSessionResult create(Order order, String customerEmail,
+                                      List<ShoppingCartItemDto> cartItems) {
+        List<SessionCreateParams.LineItem> lineItems = lineItemConverter.toLineItems(cartItems);
+        return createFromLineItems(order, customerEmail, lineItems);
+    }
+
+    /**
+     * Core method used by both normal checkout and idempotent retry.
+     * Accepts pre-built Stripe line items so the retry path can rebuild them
+     * from the persisted Order.items snapshot without needing the original cart.
+     */
+    public StripeSessionResult createFromLineItems(Order order, String customerEmail,
+                                                   List<SessionCreateParams.LineItem> lineItems) {
+        String orderId = order.getId().toString();
+        String userId = order.getUserId().toString();
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setCustomerEmail(user.getEmail())
-                .setReturnUrl(buildReturnUrl(request))
-                .addAllLineItem(lineItemConverter.toLineItems(cart.getItems()))
+                .setCustomerEmail(customerEmail)
+                .setSuccessUrl(frontendUrl + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=" + orderId)
+                .setCancelUrl(frontendUrl + "/checkout/cancel?order_id=" + orderId)
+                .setClientReferenceId(orderId)
+                .putMetadata("orderId", orderId)
+                .putMetadata("userId", userId)
+                .setPaymentIntentData(
+                        SessionCreateParams.PaymentIntentData.builder()
+                                .putMetadata("orderId", orderId)
+                                .putMetadata("userId", userId)
+                                .build())
+                .addAllLineItem(lineItems)
                 .addAllShippingOption(shippingOptions())
-                .putMetadata("userId", userId != null ? userId.toString() : "")
+                .setExpiresAt(OffsetDateTime.now().plusMinutes(31).toEpochSecond())
+                .build();
+
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setIdempotencyKey("checkout-session:" + orderId)
                 .build();
 
         try {
-            Session session = Session.create(params);
-            return new SessionWithClientSecretDto()
-                    .sessionId(session.getId())
-                    .clientSecret(session.getClientSecret());
+            Session session = Session.create(params, requestOptions);
+            return new StripeSessionResult(session.getId(), session.getUrl());
         } catch (StripeException e) {
             throw new StripeSessionCreationException(e.getMessage(), e);
         }
-    }
-
-    private String buildReturnUrl(HttpServletRequest request) {
-        return UriComponentsBuilder.newInstance()
-                .scheme(request.getScheme())
-                .host(request.getHeader(HttpHeaders.HOST))
-                .path(RETURN_URI)
-                .build()
-                .toUriString();
     }
 
     private List<SessionCreateParams.ShippingOption> shippingOptions() {
