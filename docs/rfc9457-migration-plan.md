@@ -6,49 +6,209 @@ Replace the custom `ApiErrorResponse` with Spring Boot 4's built-in `ProblemDeta
 
 ---
 
-## Why RFC 9457 — the BE/FE error contract
+## Why RFC 9457 — the golden standard for BE/FE error contract (2026)
 
-RFC 9457 "Problem Details for HTTP APIs" is the IETF standard for error responses, natively supported by Spring Boot 4's `ProblemDetail` class. Adopted by Cloudflare (2026), Stripe-like patterns, and many API-first companies.
+RFC 9457 "Problem Details for HTTP APIs" is the IETF internet standard for structured error responses. It is natively supported by Spring Boot 4's `ProblemDetail` class, adopted by Cloudflare (March 2026), and follows the same philosophy as Stripe's error design. This is the modern approach we are adopting for Iced Latte in 2026.
 
-### The core principle
+### The problem we are solving
 
-The **backend** is the source of truth for **what went wrong** — it returns a stable, machine-readable `type` URI and an HTTP status code. The **frontend** is the source of truth for **how to tell the user** — it maps `type` URIs to localized, context-aware, user-friendly messages.
+Today, the Iced Latte backend and frontend have a **tightly coupled, fragile error contract**. The backend sends human-readable text in `message`, and the frontend displays it raw to the user. This creates five problems:
 
-### What each field means
+**Problem 1: The backend doesn't know the UX context.**
 
-| Field | Audience | Purpose |
-|---|---|---|
-| `type` | Machines (frontend code) | Stable URI — the error code the frontend switches on. Never changes once published. |
-| `title` | Developers | Short label for logs and API docs. Not for end users. |
-| `status` | Both | HTTP status code repeated in the body for convenience. |
-| `detail` | Developers | Explanation of what went wrong. May change between releases. Not for end users. |
-| `instance` | Developers/support | The request path, for log correlation. |
+When `OrderNotFoundException` is thrown, the backend returns `"Order not found."` — but that message means different things on the order history page ("We couldn't find this order in your history") vs the checkout page ("Your order could not be processed"). The backend doesn't know which page the user is on. Only the frontend knows.
 
-### Why the backend should NOT own user-facing text
+**Problem 2: The backend doesn't know the user's language.**
 
-- **Localization** — the backend doesn't know the user's language. The frontend does.
-- **UX context** — "Order not found" means different things on the order history page vs the checkout page. The frontend knows which page the user is on.
-- **Decoupling** — backend team can change `detail` text without breaking UI. Frontend team can change user-facing copy without touching backend.
-- **Multiple clients** — a mobile app, admin panel, and website all need different wording for the same error.
+If Iced Latte adds Russian or German localization, the backend would need to know the user's locale to return the right message. That's the frontend's job — it already knows the browser language.
 
-### The target frontend pattern (Phase 3 follow-up)
+**Problem 3: Tight coupling between teams.**
 
-```typescript
-const ERROR_MESSAGES: Record<string, string> = {
-  'https://iced-latte.uk/errors/order-access-denied': 'You do not have permission to access this order.',
-  'https://iced-latte.uk/errors/session-expired': 'Your session expired. Please sign in again.',
-  'https://iced-latte.uk/errors/cart-not-found': 'Your cart could not be found.',
-  'https://iced-latte.uk/errors/validation-failed': 'Please check the form for errors.',
-}
+Today, if a backend developer changes an exception message from `"Order not found."` to `"The requested order does not exist."`, the user-facing text changes with no frontend review. Backend and frontend teams can't work independently on error UX.
 
-function getUserMessage(data: ErrorResponse): string {
-  return (data?.type && ERROR_MESSAGES[data.type])
-    ? ERROR_MESSAGES[data.type]
-    : data?.detail || data?.message || 'Something went wrong. Please try again.'
+**Problem 4: Multiple clients need different wording.**
+
+A mobile app, an admin panel, and the website all need different error messages for the same `OrderNotFoundException`. With the current approach, the backend would need to know which client is calling.
+
+**Problem 5: The current contract is fragile and inconsistent.**
+
+The backend currently returns **4 different JSON shapes** depending on where the error originates:
+
+```
+Shape A — @ExceptionHandler (36 handlers):
+  {"message": "Order not found.", "httpStatusCode": 404, "timestamp": "2026-05-04 20:00:00"}
+
+Shape B — JwtAuthenticationFilter:
+  {"error": "Unauthorized", "message": "Authentication failed: token expired", "status": 401, "timestamp": "2026-05-04T20:00:00Z", "requestId": "abc-123"}
+
+Shape C — RateLimitResponseWriter:
+  {"error": "Rate limit exceeded", "message": "Too many requests. Please try again later.", "status": 429, "timestamp": "2026-05-04T20:00:00Z", "retryAfter": 60}
+
+Shape D — SpringSecurityConfiguration:
+  {"error": "Unauthorized", "message": "Authentication required.", "status": 401, "timestamp": "2026-05-04T20:00:00Z", "path": "/api/v1/cart"}
+```
+
+The frontend currently survives this by accident — all 4 shapes happen to include a `message` field. But the field names, timestamp formats, and available metadata are all different. One wrong refactor and the frontend shows "An unknown error occurred" for everything.
+
+### The solution: RFC 9457 ProblemDetail
+
+One standard shape. Every error. Every source.
+
+```json
+{
+  "type": "https://iced-latte.uk/errors/order-not-found",
+  "title": "Order not found",
+  "status": 404,
+  "detail": "Order not found.",
+  "instance": "/api/v1/orders/123",
+  "timestamp": "2026-05-04T20:00:00Z",
+  "errors": []
 }
 ```
 
-During the migration, the frontend reads `detail → message → error` as a fallback chain. Once all `type` URIs are mapped, the fallback becomes a safety net only.
+### What each field means and who it's for
+
+| Field | Audience | Purpose | Stability |
+|---|---|---|---|
+| `type` | **Machines** (frontend code) | Stable URI — the error code the frontend switches on. This is the primary identifier. | **Never changes** once published |
+| `title` | Developers | Short human-readable label for logs and API docs. Not for end users. | Stable but not a contract |
+| `status` | Both | HTTP status code repeated in the body for convenience. | Matches HTTP status |
+| `detail` | Developers | Explanation of what went wrong. For logs, debugging, API consumers. **Not for end users.** | May change between releases |
+| `instance` | Developers/support | The request path, for log correlation and support tickets. | Per-request |
+| `timestamp` | Developers/support | ISO-8601, for log correlation. Extension property. | Per-request |
+| `errors` | Both | Field-level validation errors `[{field, message}]`. Extension property. | Stable structure |
+
+### The core principle
+
+> The **backend** is the source of truth for **what went wrong** — it returns `type` + `status`.
+> The **frontend** is the source of truth for **how to tell the user** — it maps `type` to user-facing copy.
+
+### How this looks in practice — real Iced Latte example
+
+**Backend** — `OrderExceptionHandler` (Phase 1 target):
+
+```java
+@ExceptionHandler(OrderNotFoundException.class)
+public ProblemDetail handleOrderNotFound(OrderNotFoundException ex) {
+    return problemDetailFactory.build(
+        "order-not-found",           // type slug → https://iced-latte.uk/errors/order-not-found
+        "Order not found",           // title (for developers)
+        HttpStatus.NOT_FOUND,        // status
+        "Order not found."           // detail (for developers/logs)
+    );
+}
+```
+
+Returns:
+```json
+{
+  "type": "https://iced-latte.uk/errors/order-not-found",
+  "title": "Order not found",
+  "status": 404,
+  "detail": "Order not found.",
+  "instance": "/api/v1/orders",
+  "timestamp": "2026-05-04T20:00:00Z",
+  "message": "Order not found.",
+  "error": "Order not found"
+}
+```
+
+(`message` and `error` are temporary backward-compat aliases — removed once frontend fully migrates.)
+
+**Frontend** — `OrderCard.tsx` (Phase 3 target):
+
+```typescript
+// BEFORE (current — tightly coupled, hardcoded, loses backend context):
+} catch {
+  setActionError('Could not cancel order.')  // backend says WHY, but we throw it away
+}
+
+// AFTER (Phase 3 — frontend owns user-facing copy, switches on type):
+} catch (err) {
+  setActionError(getUserMessage(err))
+}
+```
+
+**Frontend** — the `getUserMessage` function (Phase 3 target):
+
+```typescript
+const ERROR_MESSAGES: Record<string, string> = {
+  // Auth & Security
+  'https://iced-latte.uk/errors/invalid-credentials':    'The email or password you entered is incorrect.',
+  'https://iced-latte.uk/errors/auth-required':          'Please sign in to continue.',
+  'https://iced-latte.uk/errors/session-expired':        'Your session expired. Please sign in again.',
+  'https://iced-latte.uk/errors/account-locked':         'Your account has been locked. Please contact support.',
+  'https://iced-latte.uk/errors/access-denied':          'You do not have permission to perform this action.',
+  'https://iced-latte.uk/errors/registration-failed':    'This email is already registered. Please sign in.',
+  'https://iced-latte.uk/errors/user-not-found':         'User not found.',
+  'https://iced-latte.uk/errors/session-not-found':      'Your session could not be found. Please sign in again.',
+  'https://iced-latte.uk/errors/session-access-denied':  'You do not have access to this session.',
+
+  // Orders
+  'https://iced-latte.uk/errors/order-not-found':        'We couldn\'t find this order.',
+  'https://iced-latte.uk/errors/order-access-denied':    'You do not have permission to access this order.',
+  'https://iced-latte.uk/errors/order-state-invalid':    'This order can no longer be modified.',
+  'https://iced-latte.uk/errors/order-cancellation-expired': 'The cancellation window for this order has passed.',
+
+  // Cart
+  'https://iced-latte.uk/errors/cart-not-found':         'Your shopping cart could not be found.',
+  'https://iced-latte.uk/errors/cart-item-not-found':    'This item is no longer in your cart.',
+
+  // Products & Reviews
+  'https://iced-latte.uk/errors/product-not-found':      'This product is no longer available.',
+  'https://iced-latte.uk/errors/review-moderation-failed': 'Your review could not be published — it may contain inappropriate content.',
+
+  // Validation & Generic
+  'https://iced-latte.uk/errors/validation-failed':      'Please check the form for errors.',
+  'https://iced-latte.uk/errors/file-too-large':         'The file you selected is too large.',
+  'https://iced-latte.uk/errors/rate-limited':           'Too many requests. Please wait a moment and try again.',
+
+  // Payment
+  'https://iced-latte.uk/errors/payment-session-failed': 'We couldn\'t process your payment. Please try again.',
+
+  // Remaining catalog slugs (bad-request, not-found, unauthorized, malformed-request,
+  // missing-parameter, invalid-parameter, data-conflict, file-upload-failed, file-read-failed,
+  // invalid-avatar-type, invalid-verification-code, verification-rate-limited, etc.)
+  // are handled by the fallback chain: data.detail || data.message || 'Something went wrong.'
+}
+
+export function getUserMessage(error: unknown): string {
+  if (!axios.isAxiosError(error) || !error.response) {
+    return 'Network error. Please check your connection.'
+  }
+  const data = error.response.data as ErrorResponse
+
+  // If we have a mapped type, use our user-facing copy
+  if (data?.type && ERROR_MESSAGES[data.type]) {
+    return ERROR_MESSAGES[data.type]
+  }
+
+  // Fallback chain for unmapped types or during migration
+  return data?.detail || data?.message || data?.error || 'Something went wrong. Please try again.'
+}
+```
+
+### Why this is better than what we have today
+
+| Aspect | Current (2024 pattern) | RFC 9457 (2026 standard) |
+|---|---|---|
+| Error identity | HTTP status code only | `type` URI — stable, machine-readable, unique per error |
+| User-facing text | Backend `message` displayed raw | Frontend maps `type` → localized, context-aware copy |
+| Localization | Impossible without backend changes | Frontend-only — add a new locale file |
+| Multiple clients | All clients show same text | Each client has its own `ERROR_MESSAGES` map |
+| Field-level validation | `errors[]` exists but frontend ignores it | Frontend maps `errors[]` to inline field messages |
+| Coupling | Backend text change = UI change | Backend and frontend teams work independently |
+| Consistency | 4 different JSON shapes | One shape everywhere — handlers, filters, security |
+| Standard compliance | Custom `ApiErrorResponse` record | IETF RFC 9457, Spring Boot 4 native `ProblemDetail` |
+
+### Migration rollout (how we get there safely)
+
+| Phase | What changes | Backward compatible? |
+|---|---|---|
+| **Phase 0** ✅ Done | Frontend reads `detail → message → error` fallback chain. Proxy accepts `application/problem+json`. | Yes — works with current backend |
+| **Phase 1** (next) | Backend returns `ProblemDetail` with `type` URIs. Includes temporary `message`/`error` aliases. | Yes — frontend already reads both shapes |
+| **Phase 3** (follow-up) | Frontend introduces `ERROR_MESSAGES` map keyed by `type` URI. Falls back to `detail`/`message` for unmapped types. | Yes — fallback handles any unmapped type |
+| **Future** | Remove `message`/`error` backward-compat aliases. Frontend fully owns user-facing copy. | Breaking — only after all types are mapped |
 
 ---
 
@@ -707,7 +867,7 @@ Files:
 - `SignInExceptionHandlerTest.java` (31 refs)
 - `JwtTokenExceptionsHandlerTest.java` (13 refs)
 - `UserExceptionHandlerTest.java` (13 refs)
-- `CommonExceptionHandlerTest.java` (7 refs)
+- `CommonExceptionHandlerTest.java` (11 refs)
 - `OrderExceptionHandlerTest.java` (6 refs)
 
 #### Step 2.3: Update integration tests
@@ -796,7 +956,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 
 | Risk | Impact | Mitigation | Status |
 |---|---|---|---|
-| **Proxy blocks `application/problem+json`** | Every error becomes "An unknown error occurred" | **Phase 0.2**: fix proxy content-type check BEFORE backend migration. Also: use `application/json` content type on handlers as defense-in-depth | **✅ MITIGATED** |
+| **Proxy blocks `application/problem+json`** | Every error becomes "An unknown error occurred" | **Phase 0.2**: fix proxy content-type check BEFORE backend migration. Now supports both content types. | **✅ MITIGATED** |
 | Frontend reads `data.message` | Every error shows fallback if `message` missing | Include `message` as extension property (duplicating `detail`) — **P0** | Design decision for Phase 1 |
 | Frontend reads `data.error` as fallback | Fallback breaks if `error` missing | Include `error` as extension property (duplicating `title`) — **P0** | Design decision for Phase 1 |
 | No frontend error boundaries | Parsing failure during migration crashes most pages | Deploy frontend changes (Phase 0.3) BEFORE backend migration | **✅ MITIGATED** (frontend already handles both shapes) |
@@ -820,7 +980,8 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 3. **Backend PR 1** (Phase 1 + 2): Full ProblemDetail migration — handlers, filters, tests, OpenAPI. **Deploy next** — frontend already handles new shape.
 4. **Frontend PR 1** (Phase 3.2, 3.5): Fix unrendered `errorMessage` components, render cart `lastError`. **Deploy after backend PR 1.**
 5. **Frontend PR 2** (Phase 3.4, 3.6, follow-up): Validation `errors[]` display, activate toast for non-form errors.
-6. **Future**: Remove `message`/`error` backward-compat aliases once frontend is fully migrated.
+6. **Frontend PR 3** (Phase 3 follow-up): Introduce `ERROR_MESSAGES` map — frontend maps `type` URIs to user-facing copy. This is the real BE/FE contract.
+7. **Future**: Remove `message`/`error` backward-compat aliases once frontend fully maps all `type` URIs.
 
 ---
 

@@ -58,14 +58,13 @@ export $(cat .env | xargs) && mvn spring-boot:run
 
 🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html` when `SPRING_PROFILES_ACTIVE=dev`
 
-> 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for IDE run configuration, Docker-only setup, and troubleshooting.
+> 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for all four local run modes, IDE run configuration, Docker-only setup, and troubleshooting.
 
-> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Option C in [Getting Started](docs/getting-started.md):
+> 🎞️ **Want to run the frontend too?** Clone the frontend repo as a sibling and use Options 1-4 in [Getting Started](docs/getting-started.md):
 > ```bash
 > git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git  # sibling of Iced-Latte/
-> docker compose --profile backend --profile frontend up -d --build
 > ```
-> Frontend at http://localhost:3000 — built from source every time.
+> Frontend can run either locally or in Docker, depending on the mode you pick.
 >
 > ⚠️ The same `.env` profile note applies to Docker too: with the default `.env.example`, the backend container also starts in `prod`.
 
@@ -135,7 +134,7 @@ Iced Latte has earned recognition from the broader tech community.
 
 ## 📚 Guides & Features
 
-- 📄 [Getting Started](docs/getting-started.md) — IDE setup, Docker-only mode, troubleshooting
+- 📄 [Getting Started](docs/getting-started.md) — all four local run modes, IDE setup, Docker-only mode, troubleshooting
 - 📄 [Infrastructure](docs/infrastructure.md) — how the database, object storage, and Redis cache are wired together, with free-tier provider options and env vars explained
 - 📄 [Architecture: Feature Packaging](docs/architecture/feature-packaging.md) — modular-monolith rule: keep business code inside its owning feature package
 - 📄 [Contributing](.github/CONTRIBUTING.md) — how to contribute, PR guidelines, branching

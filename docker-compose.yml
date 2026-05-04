@@ -152,19 +152,19 @@ services:
       context: ../Iced-Latte-Frontend
       dockerfile: Dockerfile
       args:
-        # Inside the Docker network the frontend should talk to the backend service name,
-        # not localhost.
-        NEXT_PUBLIC_API_URL: http://iced-latte-backend:8083/api/v1
+        # Default to the backend container when both app tiers run in Docker.
+        # Override to `http://host.docker.internal:8083/api/v1` when the backend runs locally.
+        NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL:-http://iced-latte-backend:8083/api/v1}
     container_name: iced-latte-frontend
     profiles: [frontend]
     init: true
     restart: unless-stopped
     ports:
       - '3000:3000'
-    depends_on:
-      # Startup order only; the frontend can still tolerate backend warmup via its own retries.
-      backend:
-        condition: service_started
+    extra_hosts:
+      # Lets the frontend container reach a locally running backend via host.docker.internal
+      # on Docker Desktop and modern Linux Docker with host-gateway support.
+      - "host.docker.internal:host-gateway"
     networks:
       - iced-latte-network
 

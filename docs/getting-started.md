@@ -4,9 +4,10 @@ Pick the setup that fits you:
 
 | Option | What runs where | Best for |
 |--------|----------------|----------|
-| **A** | Backend in IDE + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Active development, debugging |
-| **B** | Backend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Quick smoke test, no IDE needed |
-| **C** | Backend + Frontend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Testing the UI against the backend (requires both repos cloned side by side) |
+| **1** | Frontend + Backend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Full Docker run, quick smoke test |
+| **2** | Frontend + Backend locally, Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Active development on both repos |
+| **3** | Frontend locally, Backend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Backend isolated in Docker, frontend local |
+| **4** | Backend locally, Frontend + Infrastructure (PostgreSQL database, Redis cache, MinIO file storage) in Docker | Backend debugging in IntelliJ, frontend isolated in Docker |
 
 ---
 
@@ -14,10 +15,10 @@ Pick the setup that fits you:
 
 | Tool | Version | Download |
 |------|---------|----------|
-| Java JDK | 25 | https://adoptium.net/ (Option A only) |
-| Maven | 3.9+ | https://maven.apache.org/download.cgi (Option A only) |
+| Java JDK | 25 | https://adoptium.net/ (backend-local modes only) |
+| Maven | 3.9+ | https://maven.apache.org/download.cgi (backend-local modes only) |
 | Docker Desktop | latest | https://www.docker.com/products/docker-desktop/ |
-| IntelliJ IDEA | any edition | https://www.jetbrains.com/idea/download/ (Option A only) |
+| IntelliJ IDEA | any edition | https://www.jetbrains.com/idea/download/ (backend-local modes only) |
 
 Verify your setup:
 ```bash
@@ -28,11 +29,9 @@ docker --version    # Docker version...
 
 ---
 
-## Option A — Backend in IntelliJ, Infrastructure (database, cache, file storage) in Docker
+## Before you start
 
-> Best for: active development and debugging. You run the backend in your IDE and get hot reload, breakpoints, and full debugger support.
-
-### Step 1 — Clone the repository
+### Clone the backend repository
 
 ```bash
 git clone https://github.com/Sunagatov/Iced-Latte.git
@@ -41,7 +40,19 @@ cd Iced-Latte
 
 ✅ You should see a new `Iced-Latte/` folder created locally.
 
-### Step 2 — Start the infrastructure
+### Copy the env file
+
+```bash
+cp .env.example .env
+```
+
+> 🔒 `.env` is gitignored — your local copy stays private. Never commit real secrets to git. Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI).
+>
+> ⚠️ `.env.example` currently defaults to `SPRING_PROFILES_ACTIVE=prod`. That profile is safe for local runs, but it disables Swagger UI and keeps Liquibase from wiping and re-seeding the database on every restart. Switch to `SPRING_PROFILES_ACTIVE=dev` if you want the classic local-dev flow.
+
+### Start the shared infrastructure
+
+All four modes use the same infrastructure containers:
 
 ```bash
 docker compose up -d postgres redis minio minio-init
@@ -56,177 +67,167 @@ Verify all containers are running:
 ```bash
 docker ps
 ```
+
 ✅ You should see 3 containers with status `Up`: `iced-latte-postgresdb`, `iced-latte-redis`, `iced-latte-minio`.
 
-### Step 3 — Configure environment
+### What "backend locally" means
 
-The repo includes `.env.example` with all local development values and safe placeholders. Copy it to `.env` before running the app:
+You can run the backend locally in either of these ways:
 
-```bash
-cp .env.example .env
-```
-
-> 🔒 `.env` is gitignored — your local copy stays private. Never commit real secrets to git. Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI).
->
-> ⚠️ `.env.example` currently defaults to `SPRING_PROFILES_ACTIVE=prod`. That profile is safe for local runs, but it disables Swagger UI and keeps Liquibase from wiping and re-seeding the database on every restart. Switch to `SPRING_PROFILES_ACTIVE=dev` if you want the classic local-dev flow.
-
-> 🪟 **Windows users:** use the IntelliJ EnvFile plugin (Step 4) to load `.env` — the `export` command only works on Linux/macOS/Git Bash.
-
-✅ No output expected — just confirm `.env` exists in the project root.
-
-### Step 4 — Load `.env` into IntelliJ
-
-IntelliJ needs the environment variables from `.env` when it runs the app.
-
-**Option 1 — EnvFile plugin (recommended)**
+**Option 1 — IntelliJ green run button**
 1. Settings → Plugins → search "EnvFile" → Install
 2. Edit Configurations → `IcedLatteApplication` → check **Enable EnvFile** → add `.env`
+3. Click ▶ next to `IcedLatteApplication`
 
-**Option 2 — Manual**
-1. Edit Configurations → `IcedLatteApplication` (create as Spring Boot if missing)
-2. **Environment variables** field → click the folder icon → paste the contents of `.env`
-
-✅ The run configuration should now show the `.env` file or the env vars listed.
-
-### Step 5 — Run the backend
-
-Click ▶ next to `IcedLatteApplication` or press **Shift+F10**.
-
-✅ When you see `Tomcat started on port 8083` in the console, the app is ready.
-
-### Step 6 — Verify the app is running
-
+**Option 2 — Terminal**
 ```bash
-curl "http://localhost:8083/api/v1/products?page=0&size=3"
+export $(cat .env | xargs) && mvn spring-boot:run
 ```
 
-✅ You should get a JSON response with a list of coffee products.
+> 🪟 **Windows users:** the `export` command only works on Linux/macOS/Git Bash. On Windows, use IntelliJ EnvFile for backend-local modes.
 
-📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+✅ When you see `Tomcat started on port 8083`, the backend is ready.
 
-### Step 7 — Log in with a test user
+### What "frontend locally" means
 
-```bash
-curl -X POST http://localhost:8083/api/v1/auth/authenticate \
-  -H "Content-Type: application/json" \
-  -d '{"email": "olivia@example.com", "password": "p@ss1logic11"}'
-```
-
-✅ You should get a JSON response containing `accessToken` and `refreshToken`.
-
-> All 15 seed users share the password `p@ss1logic11`.
-
----
-
-## Option B — Backend + Infrastructure (database, cache, file storage) in Docker, no frontend
-
-> Best for: quick smoke test or if you don't want to set up an IDE. Everything runs in Docker — no Java or Maven installation needed.
-
-### Step 1 — Clone the repository
+Clone the frontend repo as a sibling:
 
 ```bash
-git clone https://github.com/Sunagatov/Iced-Latte.git
-cd Iced-Latte
-```
-
-✅ You should see a new `Iced-Latte/` folder created locally.
-
-### Step 2 — Start everything
-
-Copy the sample env file first:
-
-```bash
-cp .env.example .env
-```
-
-Then start the full backend stack:
-
-```bash
-docker compose --profile backend up -d --build
-```
-
-This builds the backend image and starts:
-- `iced-latte-postgresdb` — PostgreSQL on port `5432`
-- `iced-latte-redis` — Redis on port `6379`
-- `iced-latte-minio` — MinIO file storage on port `9000`
-- `iced-latte-backend` — Spring Boot app on port `8083`
-
-> ⏳ The first build takes a few minutes (Maven downloads dependencies). Subsequent builds are faster.
-
-✅ When the build finishes, all 4 containers should be running. You can verify with `docker ps`.
-
-### Step 3 — Verify the app is running
-
-```bash
-curl "http://localhost:8083/api/v1/products?page=0&size=3"
-```
-
-✅ You should get a JSON response with a list of coffee products.
-
-📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
-
-### 🛠️ Useful Docker commands
-
-```bash
-# Live logs
-docker compose logs -f backend
-
-# Stop (keeps data)
-docker compose --profile backend down
-
-# Stop and wipe all data (fresh start)
-docker compose --profile backend down -v
-
-# Rebuild after code changes
-docker compose --profile backend up -d --build
-```
-
----
-
-## Option C — Backend + Frontend + Infrastructure (database, cache, file storage) in Docker
-
-> Best for: testing the UI against the backend. Builds the React frontend from source — no Node.js installation needed, but the first build takes several extra minutes.
-
-### Step 1 — Clone both repositories (side by side)
-
-```bash
-git clone https://github.com/Sunagatov/Iced-Latte.git
 git clone https://github.com/Sunagatov/Iced-Latte-Frontend.git
-cd Iced-Latte
 ```
 
-✅ Both folders must sit next to each other: `Iced-Latte/` and `Iced-Latte-Frontend/`.
+✅ Both folders should sit next to each other: `Iced-Latte/` and `Iced-Latte-Frontend/`.
 
-### Step 2 — Start everything including the frontend
+For local frontend startup, use the frontend repo's normal local-dev flow.
 
-Copy the sample env file first:
+---
 
-```bash
-cp .env.example .env
-```
+## Option 1 — Frontend + Backend + Infrastructure in Docker
 
-Then start the backend, frontend, and infrastructure:
+> Best for: full Docker run, quick smoke test, and checking that both app tiers work together without local IDE setup.
+
+### Step 1 — Start everything
 
 ```bash
 docker compose --profile backend --profile frontend up -d --build
 ```
 
-This builds and starts everything from Option B plus:
-- `iced-latte-frontend` — React app on port `3000`
+This builds and starts:
+- `iced-latte-postgresdb`
+- `iced-latte-redis`
+- `iced-latte-minio`
+- `iced-latte-backend`
+- `iced-latte-frontend`
 
-> ⏳ The first build takes several minutes (Maven + npm). Subsequent builds are faster.
+> ⏳ The first build takes several minutes (Maven + frontend build). Subsequent builds are faster.
 
-✅ When the build finishes, all 5 containers should be running. You can verify with `docker ps`.
+### Step 2 — Verify everything is running
+
+- 🌐 Frontend: http://localhost:3000
+- 🔌 Backend API: http://localhost:8083
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 🪣 MinIO console: http://localhost:9001
+
+> ⚠️ With the default `.env.example`, the backend container also starts in `prod`.
+
+---
+
+## Option 2 — Frontend + Backend locally, Infrastructure in Docker
+
+> Best for: active development on both repositories.
+
+### Step 1 — Run the backend locally
+
+Use IntelliJ + `.env` or:
+
+```bash
+export $(cat .env | xargs) && mvn spring-boot:run
+```
+
+### Step 2 — Run the frontend locally
+
+Run the frontend from the sibling `Iced-Latte-Frontend/` repo using its normal local-dev flow.
 
 ### Step 3 — Verify everything is running
 
-- 🌐 Frontend: http://localhost:3000 — you should see the Iced Latte shop UI
-- 🔌 Backend API: http://localhost:8083 — Swagger UI at http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
-- 🪣 MinIO console: http://localhost:9001 — login with `minioadmin` / `minioadmin`
+- 🌐 Frontend: usually http://localhost:3000
+- 🔌 Backend API: http://localhost:8083
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
 
-### Google OAuth callback note
+---
 
-The backend now returns OAuth tokens in the URL fragment, not the query string.
+## Option 3 — Frontend locally, Backend + Infrastructure in Docker
+
+> Best for: keeping backend runtime identical to Docker while editing the frontend locally.
+
+### Step 1 — Start the backend in Docker
+
+```bash
+docker compose --profile backend up -d --build
+```
+
+This starts:
+- `iced-latte-postgresdb`
+- `iced-latte-redis`
+- `iced-latte-minio`
+- `iced-latte-backend`
+
+### Step 2 — Run the frontend locally
+
+Run the frontend from the sibling `Iced-Latte-Frontend/` repo and point it to:
+
+```text
+http://localhost:8083/api/v1
+```
+
+### Step 3 — Verify everything is running
+
+- 🌐 Frontend: usually http://localhost:3000
+- 🔌 Backend API: http://localhost:8083
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+
+> ⚠️ With the default `.env.example`, the backend container starts in `prod`.
+
+---
+
+## Option 4 — Backend locally, Frontend + Infrastructure in Docker
+
+> Best for: debugging the backend in IntelliJ while still running the frontend in a container.
+
+### Step 1 — Run the backend locally
+
+Use IntelliJ + `.env` or:
+
+```bash
+export $(cat .env | xargs) && mvn spring-boot:run
+```
+
+### Step 2 — Build the frontend container against the local backend
+
+```bash
+FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 \
+docker compose --profile frontend up -d --build
+```
+
+This starts:
+- `iced-latte-postgresdb`
+- `iced-latte-redis`
+- `iced-latte-minio`
+- `iced-latte-frontend`
+
+The frontend container uses `host.docker.internal` to reach the backend running on your machine.
+
+### Step 3 — Verify everything is running
+
+- 🌐 Frontend: http://localhost:3000
+- 🔌 Backend API: http://localhost:8083
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+
+---
+
+## Google OAuth callback note
+
+The backend returns OAuth tokens in the URL fragment, not the query string.
 
 If the frontend callback page reads tokens after Google sign-in, parse:
 
@@ -246,21 +247,22 @@ Example callback URL:
 http://localhost:3000/auth/google/callback#token=...&refreshToken=...
 ```
 
-### 🛠️ Useful Docker commands
+---
+
+## 🛠️ Useful Docker commands
 
 ```bash
-# Live logs
-docker compose logs -f frontend
+# Backend logs
 docker compose logs -f backend
 
-# Stop (keeps data)
+# Frontend logs
+docker compose logs -f frontend
+
+# Stop everything but keep data
 docker compose --profile backend --profile frontend down
 
-# Stop and wipe all data (fresh start)
+# Stop everything and wipe all data
 docker compose --profile backend --profile frontend down -v
-
-# Rebuild after code changes
-docker compose --profile backend --profile frontend up -d --build
 ```
 
 ---
@@ -339,8 +341,11 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 **❌ Port 8083 already in use**
 → Stop the conflicting process or change `APP_SERVER_PORT` in `.env`.
 
+**❌ Frontend container cannot reach local backend**
+→ Rebuild with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 docker compose --profile frontend up -d --build`.
+
 **❌ Windows: `export` command not found**
-→ The `export $(cat .env | xargs)` command only works on Linux/macOS/Git Bash. On Windows, use the IntelliJ EnvFile plugin (Step 4) or run the full Docker stack with `docker compose --profile backend up -d --build` (Option B) — no manual env loading needed.
+→ The `export $(cat .env | xargs)` command only works on Linux/macOS/Git Bash. On Windows, use the IntelliJ EnvFile plugin for backend-local modes.
 
 **❌ Tests fail with "Connection refused"**
 → Docker Desktop must be running — Testcontainers needs it.
