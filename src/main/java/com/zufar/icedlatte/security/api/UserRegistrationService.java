@@ -48,7 +48,7 @@ public class UserRegistrationService {
             return sessionTokenService.issueForNewSession(userEntity, httpRequest);
         } catch (DataIntegrityViolationException e) {
             log.warn("auth.registration.failed: reason=email_already_registered");
-            throw new UserRegistrationException("Registration failed.", e);
+            throw new UserRegistrationException("This email is already registered. Please sign in or use a different email.", e);
         }
     }
 }

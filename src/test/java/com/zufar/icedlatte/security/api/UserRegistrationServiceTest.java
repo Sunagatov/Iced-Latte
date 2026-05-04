@@ -101,7 +101,7 @@ class UserRegistrationServiceTest {
 
         assertThatThrownBy(() -> service.register(registrationRequest, request))
                 .isInstanceOf(UserRegistrationException.class)
-                .hasMessage("Registration failed.");
+                .hasMessage("This email is already registered. Please sign in or use a different email.");
 
         verifyNoInteractions(sessionTokenService);
     }
