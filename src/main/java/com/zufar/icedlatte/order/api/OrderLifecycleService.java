@@ -18,6 +18,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service; methods are called from controllers.
 public class OrderLifecycleService {
 
     private final OrderRepository orderRepository;

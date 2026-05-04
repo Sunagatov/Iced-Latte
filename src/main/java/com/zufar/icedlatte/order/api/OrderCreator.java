@@ -33,6 +33,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service; entry points are called indirectly.
 public class OrderCreator {
 
     private final OrderRepository orderRepository;
@@ -101,7 +102,7 @@ public class OrderCreator {
 
     /**
      * Creates an order with PENDING_PAYMENT status for the Stripe checkout flow.
-     * Cart items are snapshotted into order items at creation time.
+     * Cart items are snapshot into order items at creation time.
      */
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request,

@@ -30,6 +30,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this bean; webhook flow enters through framework-managed calls.
 public class StripeWebhookBusinessProcessor {
 
     private final OrderStatusTransitioner orderStatusTransitioner;
@@ -39,14 +40,23 @@ public class StripeWebhookBusinessProcessor {
 
     @Transactional
     public void process(Event event) {
-        switch (event.getType()) {
-            case "checkout.session.completed" -> handleSessionCompleted(event, requireSession(event));
+        String eventType = event.getType();
+        if (isSessionCompletedEvent(eventType)) {
+            handleSessionCompleted(event, requireSession(event));
+            return;
+        }
+
+        switch (eventType) {
             case "checkout.session.expired" -> handleExpired(requireSession(event));
-            case "checkout.session.async_payment_succeeded" -> handleSessionCompleted(event, requireSession(event));
             case "checkout.session.async_payment_failed" -> handleAsyncPaymentFailed(requireSession(event));
             case "charge.refunded" -> handleChargeRefunded(event);
-            default -> log.debug("payment.webhook.unhandled: eventType={}", event.getType());
+            default -> log.debug("payment.webhook.unhandled: eventType={}", eventType);
         }
+    }
+
+    private boolean isSessionCompletedEvent(String eventType) {
+        return "checkout.session.completed".equals(eventType)
+                || "checkout.session.async_payment_succeeded".equals(eventType);
     }
 
     private void handleSessionCompleted(Event event, Session stripeSession) {

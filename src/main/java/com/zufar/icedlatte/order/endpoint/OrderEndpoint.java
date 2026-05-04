@@ -41,6 +41,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping(OrderEndpoint.ORDERS_URL)
+@SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
 public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.OrdersApi {
 
     public static final String ORDERS_URL = ApiPaths.ORDERS;

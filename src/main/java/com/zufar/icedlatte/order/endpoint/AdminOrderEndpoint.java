@@ -33,6 +33,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(AdminOrderEndpoint.ADMIN_ORDERS_URL)
+@SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
 public class AdminOrderEndpoint {
 
     public static final String ADMIN_ORDERS_URL = "/api/v1/admin/orders";

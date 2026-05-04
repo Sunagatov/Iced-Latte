@@ -19,6 +19,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service and controllers call it indirectly.
 public class PaymentStatusService {
 
     private final OrderRepository orderRepository;

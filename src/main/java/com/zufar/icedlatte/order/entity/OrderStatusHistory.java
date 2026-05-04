@@ -25,6 +25,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "order_status_history")
+@SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
 public class OrderStatusHistory {
 
     @Id

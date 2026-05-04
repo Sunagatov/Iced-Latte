@@ -26,6 +26,7 @@ import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service; methods are entry points for workflow transitions.
 public class OrderStatusTransitioner {
 
     private static final Map<OrderStatus, Map<OrderEvent, OrderStatus>> TRANSITIONS = Map.of(

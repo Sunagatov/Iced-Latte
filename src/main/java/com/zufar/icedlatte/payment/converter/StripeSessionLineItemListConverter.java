@@ -14,6 +14,7 @@ import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         imports = BigDecimal.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@SuppressWarnings("unused") // MapStruct generates and calls the implementation.
 public interface StripeSessionLineItemListConverter {
 
     List<SessionCreateParams.LineItem> toLineItems(List<ShoppingCartItemDto> shoppingCartItems);

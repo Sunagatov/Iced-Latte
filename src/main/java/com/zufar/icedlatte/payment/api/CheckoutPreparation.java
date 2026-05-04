@@ -8,9 +8,9 @@ import java.util.List;
 
 /**
  * Result of {@link CheckoutPaymentTransactionService#prepareCheckout}.
- * If {@code existing} is true, this is an idempotent hit — do not read the live cart.
+ * If {@code existing} is true, this is an idempotent hit. Do not read the live cart.
  */
-record CheckoutPreparation(
+public record CheckoutPreparation(
         Order order,
         Payment payment,
         List<ShoppingCartItemDto> cartItems,

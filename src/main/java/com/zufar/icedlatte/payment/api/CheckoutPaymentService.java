@@ -33,6 +33,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@SuppressWarnings("unused") // Spring injects this service and calls it from web entry points.
 public class CheckoutPaymentService {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;

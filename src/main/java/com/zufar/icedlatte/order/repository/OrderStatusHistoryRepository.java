@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
+@SuppressWarnings("unused") // Spring Data generates implementations for repository methods.
 public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusHistory, UUID> {
 
     List<OrderStatusHistory> findByOrderIdOrderByChangedAtAsc(UUID orderId);

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@SuppressWarnings("unused") // Spring injects this service and configuration fields are framework-managed.
 public class StripeWebhookService {
 
     private final StripeWebhookEventRecorder webhookEventRecorder;

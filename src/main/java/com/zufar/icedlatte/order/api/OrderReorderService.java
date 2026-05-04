@@ -24,6 +24,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service; methods are called from controllers.
 public class OrderReorderService {
 
     private final OrderRepository orderRepository;

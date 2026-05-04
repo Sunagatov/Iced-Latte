@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused") // Spring Data generates implementations for repository methods.
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     Optional<Payment> findByOrderId(UUID orderId);

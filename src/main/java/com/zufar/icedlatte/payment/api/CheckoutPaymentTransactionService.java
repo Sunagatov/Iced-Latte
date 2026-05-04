@@ -4,7 +4,6 @@ import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.repository.OrderRepository;
@@ -22,7 +21,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -32,6 +30,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this bean; transactional entry points are framework-managed.
 public class CheckoutPaymentTransactionService {
 
     private final PaymentRepository paymentRepository;
@@ -44,13 +43,14 @@ public class CheckoutPaymentTransactionService {
                                                CreateCheckoutRequestDto request,
                                                String idempotencyKey) {
         // Application-level idempotency: same user + same key → return existing
-        Optional<Payment> existing = paymentRepository
-                .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId);
-        if (existing.isPresent()) {
+        Payment existing = paymentRepository
+                .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId)
+                .orElse(null);
+        if (existing != null) {
             // Do NOT read the live cart — it may be deleted after successful payment.
-            Order order = orderRepository.findById(existing.get().getOrderId()).orElseThrow();
+            Order order = orderRepository.findById(existing.getOrderId()).orElseThrow();
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
-            return new CheckoutPreparation(order, existing.get(), List.of(), true);
+            return new CheckoutPreparation(order, existing, List.of(), true);
         }
 
         ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);

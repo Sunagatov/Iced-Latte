@@ -17,6 +17,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Scheduled methods are invoked by Spring, not direct callers.
 public class OrderMaintenanceJob {
 
     private final OrderRepository orderRepository;

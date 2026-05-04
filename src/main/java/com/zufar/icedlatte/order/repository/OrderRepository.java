@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
+@SuppressWarnings("unused") // Spring Data generates implementations for repository methods.
 public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecificationExecutor<Order> {
 
     Optional<Order> findByUserIdAndSessionId(UUID userId, String sessionId);

@@ -27,6 +27,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@SuppressWarnings("unused") // Spring manages bean lifecycle and injects configuration fields.
 public class StripeCheckoutSessionCreator {
 
     private final StripeSessionLineItemListConverter lineItemConverter;

@@ -17,6 +17,7 @@ import java.time.OffsetDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service and transaction boundaries are framework-managed.
 public class StripeWebhookEventRecorder {
 
     private final StripeWebhookEventRepository repository;

@@ -21,6 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service and some methods are endpoint-only.
 public class OrderDetailProvider {
 
     private static final Set<OrderStatus> CANCELLABLE = Set.of(OrderStatus.CREATED, OrderStatus.PAID);

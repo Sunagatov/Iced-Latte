@@ -17,6 +17,7 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         injectionStrategy = InjectionStrategy.FIELD,
         uses = {OrderStatus.class})
+@SuppressWarnings("unused") // MapStruct generates and calls the implementation.
 public interface OrderDtoConverter {
 
     OrderDto toResponseDto(final Order orderEntity);

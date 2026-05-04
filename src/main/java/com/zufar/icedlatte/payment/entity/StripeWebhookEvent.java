@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "stripe_webhook_events")
+@SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
 public class StripeWebhookEvent {
 
     @Id

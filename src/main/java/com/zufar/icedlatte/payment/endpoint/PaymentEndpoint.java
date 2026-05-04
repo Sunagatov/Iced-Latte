@@ -30,6 +30,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping(ApiPaths.PAYMENT)
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
 public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
 
     private final CheckoutPaymentService checkoutPaymentService;

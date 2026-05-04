@@ -23,6 +23,7 @@ import java.util.Arrays;
 @RestControllerAdvice(basePackages = {"com.zufar.icedlatte.order.endpoint"})
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring exception handling invokes these methods reflectively.
 public class OrderExceptionHandler {
 
     private final ApiErrorResponseCreator apiErrorResponseCreator;

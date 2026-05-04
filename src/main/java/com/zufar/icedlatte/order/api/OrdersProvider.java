@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this service and endpoint flow uses it indirectly.
 public class OrdersProvider {
 
     private final OrderRepository orderRepository;

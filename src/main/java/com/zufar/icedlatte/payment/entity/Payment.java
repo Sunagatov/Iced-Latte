@@ -28,6 +28,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "payments")
+@SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
 public class Payment extends AuditableEntity {
 
     @Id
