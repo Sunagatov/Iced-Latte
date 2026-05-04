@@ -1,10 +1,16 @@
 package com.zufar.icedlatte.order.exception;
 
-import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
+@ResponseStatus(HttpStatus.NOT_FOUND)
 public class OrderNotFoundException extends RuntimeException {
 
-    public OrderNotFoundException(UUID orderId) {
-        super(String.format("Order with id '%s' was not found.", orderId));
+    public OrderNotFoundException() {
+        super("Order not found.");
+    }
+
+    public OrderNotFoundException(Object orderId) {
+        super("Order not found: " + orderId);
     }
 }

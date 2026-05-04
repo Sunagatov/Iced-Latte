@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.auth.api;
 
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -45,7 +46,7 @@ public class GoogleTokenExchanger {
                 .execute();
         GoogleIdToken idToken = verifier.verify((String) tokenResponse.get("id_token"));
         if (idToken == null) {
-            throw new IllegalStateException("Google ID token verification failed");
+            throw new UnauthorizedException("Google authentication failed.");
         }
         return idToken.getPayload();
     }

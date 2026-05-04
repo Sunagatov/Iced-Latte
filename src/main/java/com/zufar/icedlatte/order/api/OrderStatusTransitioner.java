@@ -88,7 +88,7 @@ public class OrderStatusTransitioner {
             throw new OrderCancellationWindowExpiredException(order.getId());
         }
         if (event == OrderEvent.REQUEST_REFUND && !order.getUserId().equals(actorId)) {
-            throw new OrderAccessDeniedException(order.getId());
+            throw new OrderAccessDeniedException();
         }
     }
 }

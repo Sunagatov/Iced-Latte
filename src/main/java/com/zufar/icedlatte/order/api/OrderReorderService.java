@@ -37,7 +37,7 @@ public class OrderReorderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
+            throw new OrderAccessDeniedException();
         }
 
         Set<NewShoppingCartItemDto> itemsToAdd = new LinkedHashSet<>();

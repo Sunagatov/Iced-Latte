@@ -52,7 +52,7 @@ public class PaymentStatusService {
 
         UserDto currentUser = securityPrincipalProvider.get();
         if (!order.getUserId().equals(currentUser.getId())) {
-            throw new OrderAccessDeniedException(orderId);
+            throw new OrderAccessDeniedException();
         }
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);

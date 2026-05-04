@@ -66,10 +66,11 @@ public class AuthEndpoint {
     }
 
     @GetMapping("/google")
-    public ResponseEntity<Void> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
+    public ResponseEntity<?> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
         if (googleAuthCallbackHandler == null) {
             log.warn("auth.google.disabled");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(java.util.Map.of("message", "Google authentication is not available.", "status", 503));
         }
         log.info("auth.google.initiate");
         String callbackBase = resolveCallbackBase(redirectUrl);

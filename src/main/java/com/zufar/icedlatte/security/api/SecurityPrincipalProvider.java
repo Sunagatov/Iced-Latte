@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -26,7 +27,7 @@ public class SecurityPrincipalProvider {
     private UserEntity getAuthenticatedUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof UserEntity userEntity)) {
-            throw new IllegalStateException("No authenticated UserEntity in security context");
+            throw new UnauthorizedException("Authentication required.");
         }
         return userEntity;
     }

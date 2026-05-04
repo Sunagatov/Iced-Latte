@@ -60,7 +60,7 @@ public class OrderLifecycleService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
+            throw new OrderAccessDeniedException();
         }
         return order;
     }

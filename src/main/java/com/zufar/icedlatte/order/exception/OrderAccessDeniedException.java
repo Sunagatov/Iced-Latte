@@ -1,10 +1,12 @@
 package com.zufar.icedlatte.order.exception;
 
-import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
+@ResponseStatus(HttpStatus.FORBIDDEN)
 public class OrderAccessDeniedException extends RuntimeException {
 
-    public OrderAccessDeniedException(UUID orderId) {
-        super(String.format("Access denied to order '%s'.", orderId));
+    public OrderAccessDeniedException() {
+        super("Access denied.");
     }
 }

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -61,8 +62,8 @@ class SecurityPrincipalProviderTest {
             SecurityContextHolder.clearContext();
 
             assertThatThrownBy(() -> provider.get())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("No authenticated UserEntity in security context");
+                    .isInstanceOf(UnauthorizedException.class)
+                    .hasMessage("Authentication required.");
         }
     }
 
@@ -88,8 +89,8 @@ class SecurityPrincipalProviderTest {
                     .setAuthentication(new UsernamePasswordAuthenticationToken("not-a-user", null));
 
             assertThatThrownBy(() -> provider.getUserId())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("No authenticated UserEntity in security context");
+                    .isInstanceOf(UnauthorizedException.class)
+                    .hasMessage("Authentication required.");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.filestorage.aws;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.filestorage.ObjectStorage;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
@@ -81,7 +82,7 @@ public class AwsObjectStorage implements ObjectStorage {
         Path normalizedPath = Paths.get(directoryPath).normalize();
         if (!normalizedPath.toFile().getCanonicalPath()
                 .startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
-            throw new SecurityException("Invalid directory path");
+            throw new BadRequestException("Invalid directory path.");
         }
 
         try (var pathStream = Files.walk(normalizedPath)) {

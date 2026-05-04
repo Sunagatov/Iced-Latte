@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.review.converter;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
@@ -20,8 +21,6 @@ import java.util.List;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
-
-   ProductReviewDto EMPTY_PRODUCT_REVIEW_RESPONSE = new ProductReviewDto();
 
     @Mapping(target = "productReviewId", source = "id")
     @Mapping(target = "userName", source = "user", qualifiedByName = "toUserName")
@@ -58,7 +57,7 @@ public interface ProductReviewDtoConverter {
                 case 3 -> productRatingMap.setStar3(count);
                 case 2 -> productRatingMap.setStar2(count);
                 case 1 -> productRatingMap.setStar1(count);
-                default -> throw new IllegalArgumentException("Unexpected product's rating value: " + rating);
+                default -> throw new BadRequestException("Invalid product rating value.");
             }
         }
         return productRatingMap;

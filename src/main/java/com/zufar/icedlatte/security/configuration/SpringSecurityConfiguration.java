@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
@@ -9,6 +11,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -32,12 +35,15 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Duration;
+import java.time.Instant;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -85,8 +91,12 @@ public class SpringSecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((_, response, _) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        .authenticationEntryPoint((request, response, _) ->
+                                writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
+                                        "Authentication required.", request.getRequestURI()))
+                        .accessDeniedHandler((request, response, _) ->
+                                writeErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                                        "Access denied.", request.getRequestURI()))
                 )
                 .addFilterBefore(correlationFilter, DisableEncodeUrlFilter.class)
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
@@ -139,5 +149,21 @@ public class SpringSecurityConfiguration {
             throw new IllegalArgumentException("security.argon2.iterations must be at least 1, got: " + iterations);
         }
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
+    }
+
+    private static void writeErrorResponse(HttpServletResponse response, int status,
+                                            String message, String path) throws java.io.IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+                .put("error", status == 401 ? "Unauthorized" : "Forbidden")
+                .put("message", message)
+                .put("status", status)
+                .put("timestamp", Instant.now().toString())
+                .put("path", path);
+        byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
+        response.setContentLength(bytes.length);
+        response.getOutputStream().write(bytes);
     }
 }

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.auth.api;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.api.SessionTokenService;
@@ -120,8 +121,8 @@ class GoogleAuthCallbackHandlerTest {
         when(googleTokenExchanger.exchange("auth-code")).thenReturn(payload);
 
         assertThatThrownBy(() -> handler.handle("auth-code", request))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Google account has no email");
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Google account has no email.");
 
         verifyNoInteractions(userRepository, sessionTokenService);
     }

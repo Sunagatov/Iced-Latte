@@ -36,7 +36,7 @@ public class OrderDetailProvider {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
+            throw new OrderAccessDeniedException();
         }
 
         OrderDto dto = orderDtoConverter.toResponseDto(order);
@@ -56,7 +56,7 @@ public class OrderDetailProvider {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException(orderId);
+            throw new OrderAccessDeniedException();
         }
         return orderStatusHistoryRepository.findByOrderIdOrderByChangedAtAsc(orderId).stream()
                 .map(h -> new OrderStatusHistoryDto()
