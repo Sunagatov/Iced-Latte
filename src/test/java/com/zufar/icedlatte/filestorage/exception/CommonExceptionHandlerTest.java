@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,19 @@ class CommonExceptionHandlerTest {
         FileUploadException ex = new FileUploadException("file.txt", new RuntimeException("upload failed"));
         ApiErrorResponse expected = new ApiErrorResponse("upload failed", 500, LocalDateTime.now());
         when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR)).thenReturn(expected);
-        assertThat(handler.handleFileUploadException(ex)).isEqualTo(expected);
+        ResponseEntity<ApiErrorResponse> result = handler.handleFileUploadException(ex);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(result.getBody()).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("handleFileUploadException returns SERVICE_UNAVAILABLE when cause is IllegalStateException")
+    void handleFileUploadExceptionStorageUnavailable() {
+        FileUploadException ex = new FileUploadException("file.txt", new IllegalStateException("storage down"));
+        ApiErrorResponse expected = new ApiErrorResponse("File storage is not available", 503, LocalDateTime.now());
+        when(apiErrorResponseCreator.buildResponse("File storage is not available", HttpStatus.SERVICE_UNAVAILABLE)).thenReturn(expected);
+        ResponseEntity<ApiErrorResponse> result = handler.handleFileUploadException(ex);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(result.getBody()).isEqualTo(expected);
     }
 }
