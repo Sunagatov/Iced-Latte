@@ -157,6 +157,9 @@ services:
     profiles: [frontend]
     init: true
     restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL:-http://iced-latte-backend:8083/api/v1}
+      NEXT_PUBLIC_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - '${FRONTEND_HOST_PORT:-3000}:3000'
     extra_hosts:

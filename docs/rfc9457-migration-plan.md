@@ -8,7 +8,7 @@ Replace the custom `ApiErrorResponse` with Spring Boot 4's built-in `ProblemDeta
 
 ## Why RFC 9457 — the golden standard for BE/FE error contract (2026)
 
-RFC 9457 "Problem Details for HTTP APIs" is the IETF internet standard for structured error responses. It is natively supported by Spring Boot 4's `ProblemDetail` class, adopted by Cloudflare (March 2026), and follows the same philosophy as Stripe's error design. This is the modern approach we are adopting for Iced Latte in 2026.
+RFC 9457 "Problem Details for HTTP APIs" is the IETF internet standard for structured error responses. It is natively supported by Spring Framework's `org.springframework.http.ProblemDetail` class, available in our Spring Boot 4 stack. It follows the same philosophy as Stripe's error design. This is the modern approach we are adopting for Iced Latte in 2026.
 
 ### The problem we are solving
 
@@ -73,7 +73,7 @@ One standard shape. Every error. Every source.
 | `type` | **Machines** (frontend code) | Stable URI — the error code the frontend switches on. This is the primary identifier. | **Never changes** once published |
 | `title` | Developers | Short human-readable label for logs and API docs. Not for end users. | Stable but not a contract |
 | `status` | Both | HTTP status code repeated in the body for convenience. | Matches HTTP status |
-| `detail` | Developers | Explanation of what went wrong. For logs, debugging, API consumers. **Not for end users.** | May change between releases |
+| `detail` | Developers | Human-readable diagnostic text for API consumers and developers. May be displayed as a fallback during migration, but it is not the stable frontend UX contract. | May change between releases |
 | `instance` | Developers/support | The request path, for log correlation and support tickets. | Per-request |
 | `timestamp` | Developers/support | ISO-8601, for log correlation. Extension property. | Per-request |
 | `errors` | Both | Field-level validation errors `[{field, message}]`. Extension property. | Stable structure |
@@ -334,7 +334,7 @@ export const handleAxiosError = (error: unknown): string => {
 ```
 
 **Fields read at runtime:** `response.status`, `data.detail` (RFC 9457 ready), `data.message`, `data.error` (fallback).
-**Fields declared in `ErrorResponse` type but never read:** `type`, `title`, `instance`, `httpStatusCode`, `timestamp`, `errors[]`.
+**Fields declared in `ErrorResponse` type but not yet used for UX decisions:** `type`, `title`, `status`, `instance`, `timestamp`, `errors[]`.
 
 ### Frontend: Next.js proxy layer — ✅ FIXED
 
@@ -555,6 +555,7 @@ Every error response from the backend — whether from `@ExceptionHandler`, secu
   "instance": "/api/v1/cart",
   "timestamp": "2026-05-04T20:00:00Z",
   "message": "Shopping cart not found.",
+  "error": "Shopping cart not found",
   "errors": [{"field": "email", "message": "must not be blank"}]
 }
 ```

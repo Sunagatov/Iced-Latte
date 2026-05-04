@@ -108,6 +108,13 @@ For local frontend startup, use the frontend repo's normal local-dev flow.
 docker compose --env-file .env.example --profile backend --profile frontend up -d --build
 ```
 
+If `3000` or `8083` is already in use on your machine, override the Docker host ports:
+
+```bash
+FRONTEND_HOST_PORT=3001 BACKEND_HOST_PORT=8084 \
+docker compose --env-file .env.example --profile backend --profile frontend up -d --build
+```
+
 This builds and starts:
 - `iced-latte-postgresdb`
 - `iced-latte-redis`
@@ -332,6 +339,9 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 
 **❌ Port 8083 already in use**
 → Stop the conflicting process or override the Docker host port with `BACKEND_HOST_PORT=8084 docker compose --env-file .env.example --profile backend up -d --build`.
+
+**❌ Port 3000 already in use**
+→ Stop the conflicting process or override the Docker host port with `FRONTEND_HOST_PORT=3001 docker compose --env-file .env.example --profile frontend up -d --build`.
 
 **❌ Frontend container cannot reach local backend**
 → Rebuild with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 docker compose --env-file .env.example --profile frontend up -d --build`.
