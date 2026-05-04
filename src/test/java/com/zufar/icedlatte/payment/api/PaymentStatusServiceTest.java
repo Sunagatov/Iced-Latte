@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.payment.api;
 
+import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
@@ -31,6 +33,8 @@ class PaymentStatusServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private PaymentRepository paymentRepository;
+    @Mock private OrderStatusTransitioner orderStatusTransitioner;
+    @Mock private ShoppingCartRepository shoppingCartRepository;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @InjectMocks private PaymentStatusService service;
 
@@ -55,12 +59,13 @@ class PaymentStatusServiceTest {
     }
 
     @Test
-    @DisplayName("Returns PENDING_PAYMENT status for in-progress order")
-    void getStatus_pending_returnsPendingStatus() {
+    @DisplayName("Returns PENDING_PAYMENT status for in-progress order without session ID (no Stripe sync)")
+    void getStatus_pending_noSessionId_returnsPendingStatus() {
         Order order = Order.builder().id(ORDER_ID).userId(USER_ID)
                 .status(OrderStatus.PENDING_PAYMENT).build();
         Payment payment = Payment.builder().orderId(ORDER_ID)
-                .status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+                .providerSessionId(null)
+                .status(PaymentStatus.CREATED).build();
 
         when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
@@ -69,8 +74,7 @@ class PaymentStatusServiceTest {
         CheckoutStatusDto result = service.getStatus(ORDER_ID);
 
         assertThat(result.getOrderStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);
-        assertThat(result.getPaymentStatus())
-                .isEqualTo(CheckoutStatusDto.PaymentStatusEnum.STRIPE_SESSION_CREATED);
+        assertThat(result.getPaymentStatus()).isEqualTo(CheckoutStatusDto.PaymentStatusEnum.CREATED);
     }
 
     @Test
