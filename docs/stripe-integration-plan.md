@@ -19,7 +19,7 @@ This design gives the project real senior-level backend engineering: domain mode
 
 ### Project Context
 
-Iced Latte is a **non-commercial, open-source pet project** created for learning, education, and gaining senior software engineering experience. This Stripe integration uses **Stripe test mode / sandbox only** — no real cards, no real money. Stripe Hosted Checkout in test mode handles all card UI; Iced Latte never sees or stores card details.
+Iced Latte is a **non-commercial, source-available pet project** created for learning and gaining senior software engineering experience. This Stripe integration uses **Stripe test mode / sandbox only** — no real cards, no real money. Stripe Hosted Checkout in test mode handles all card UI; Iced Latte never sees or stores card details.
 
 ### Test / Sandbox Payment Rules
 

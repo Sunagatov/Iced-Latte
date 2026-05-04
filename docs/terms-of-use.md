@@ -1,9 +1,9 @@
 # Terms of Use
 
 **Effective date:** May 3, 2026
-**Last updated:** May 3, 2026
+**Last updated:** May 4, 2026
 
-Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), an open-source specialty coffee marketplace. By accessing or using the platform you agree to these Terms of Use. If you do not agree, please do not use the platform.
+Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), a source-available specialty coffee marketplace project. By accessing or using the platform you agree to these Terms of Use. If you do not agree, please do not use the platform.
 
 ---
 
@@ -11,34 +11,22 @@ Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), an o
 
 Iced Latte is a non-profit, community-driven project created and maintained by **Zufar Sunagatov**. It serves as a learning sandbox for engineers and as a live demonstration of modern software engineering practices. The platform is not a real commercial store — no real coffee is sold, and no real payments are processed in the demo environment.
 
-## 2. License & Prohibited Use
+## 2. Repository License & Restricted Use
 
-The source code is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** license.
+The repository source code and related repository material are licensed under the **Iced Latte Personal Evaluation License 2026** in the repository `LICENSE` file.
 
-You are free to:
+That license grants only limited personal local evaluation rights. In summary, you may inspect the code, clone it, run it locally, and make private local modifications for your own learning and evaluation.
 
-- **Share** — copy and redistribute the material in any medium or format.
-- **Adapt** — remix, transform, and build upon the material.
+Without the author's prior written permission, you may **not**:
 
-Under the following conditions:
-
-- **Attribution** — You must give appropriate credit to the original author (Zufar Sunagatov), provide a link to the license, and indicate if changes were made.
-- **NonCommercial** — You may not use the material for commercial purposes.
-
-### Strictly Prohibited Without Prior Written Permission
-
-The following uses are **expressly prohibited** without explicit written authorization from the author (Zufar Sunagatov):
-
-- **Commercial use** of any kind, including but not limited to selling, licensing, sublicensing, or monetizing the software or any derivative works.
-- **Use in educational courses, bootcamps, workshops, tutorials, or training programs** — whether free or paid — including using the project as course material, homework, assignment template, or teaching example.
-- **Use by companies, organizations, or individuals** as a foundation, template, or reference implementation for commercial products or services.
-- **Redistribution** under a different license or without proper attribution.
-
-**Any unauthorized use constitutes a violation of the CC BY-NC 4.0 license and applicable copyright law.** The author reserves the right to pursue all available legal remedies, including but not limited to injunctive relief, statutory damages, and recovery of legal fees.
+- use the repository material for commercial purposes;
+- deploy, host, publish, or run the project on any remote or network-accessible server;
+- redistribute the repository, public forks, mirrors, builds, images, or derivatives;
+- use the project in courses, bootcamps, workshops, tutorials, classrooms, or training materials;
+- use or present the project in articles, blog posts, newsletters, videos, livestreams, podcasts, talks, case studies, or similar public content;
+- use the project as a template, reference implementation, architecture showcase, or code-style showcase beyond your own private local evaluation.
 
 To request permission for any of the above uses, contact: **zufar.sunagatov@gmail.com**
-
-Full license text: [https://creativecommons.org/licenses/by-nc/4.0/legalcode](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
 
 ## 3. User Accounts
 
@@ -107,10 +95,10 @@ To the maximum extent permitted by applicable law, Zufar Sunagatov and the Iced 
 By submitting a pull request or other contribution to the Iced Latte repositories, you agree that:
 
 - Your contribution is your original work or you have the right to submit it.
-- Your contribution is licensed under the same CC BY-NC 4.0 license as the project.
-- You grant the project maintainers the right to use, modify, and distribute your contribution.
+- If accepted, your contribution may be incorporated under the same repository license or another license chosen by the maintainer.
+- You grant the project maintainer the right to use, modify, reject, relicense, and distribute your contribution.
 
-See the full [Contributing Guide](https://github.com/Sunagatov/Iced-Latte/blob/development/.github/CONTRIBUTING.md) for details.
+See the full [Contributing Guide](../.github/CONTRIBUTING.md) for details.
 
 ## 11. Changes to These Terms
 

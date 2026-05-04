@@ -28,7 +28,7 @@
 5. **SERIALIZABLE on read-only method** — `OrderProvider.getOrderEntityByUserAndSession()` uses SERIALIZABLE isolation for a simple lookup.
 6. **No FK on `orders.user_id`** — no referential integrity to `user_details` table.
 7. **`OrderItemRepository` unused** — items are cascaded through `Order` entity; the repository has no custom methods.
-8. **License mismatch** — `order-openapi.yaml` says MIT; project uses CC BY-NC 4.0.
+8. **License mismatch** — `order-openapi.yaml` says MIT; project now uses a custom repository license.
 9. **`OrderEndpoint` doesn't implement generated API interface** — every other endpoint in the project (CartEndpoint, ProductsEndpoint, UserEndpoint, PaymentEndpoint, etc.) implements its generated OpenAPI interface (e.g., `implements ShoppingCartApi`). OrderEndpoint does not, which means it bypasses the OpenAPI-generated validation and contract enforcement.
 10. **Stripe payment flow is dormant** — The backend has a full Stripe Checkout flow (`POST /api/v1/payment` creates a session, webhook creates order on completion), but the frontend never calls it. The frontend's checkout flow calls `POST /api/v1/orders` directly without any payment step. The frontend's `/orders/success` page (which handles Stripe redirect) exists but is unreachable from the current checkout. This means there are two parallel order creation paths — one active (REST, no payment) and one dormant (Stripe webhook) — with different behaviors (see bugs #2, #3, #4).
 11. **Frontend clears cart client-side only** — `useCheckoutForm` calls `resetCart()` (Zustand store + localStorage) on order creation success, but the backend `POST /orders` does NOT clear the server-side cart (bug #2). If the user logs in on another device, the old cart items are still there.
@@ -155,7 +155,7 @@ order_status_history (NEW)
 - Fix `OrderCreator.createOrderAndDeleteCart()` to set `recipientName`/`recipientSurname` from user profile
 - Change `OrderProvider.getOrderEntityByUserAndSession()` isolation from SERIALIZABLE to READ_COMMITTED
 - Remove unused `OrderItemRepository` (or add custom queries if needed later)
-- Fix license in `order-openapi.yaml` from MIT to CC BY-NC 4.0
+- Fix license in `order-openapi.yaml` from MIT to the repository's current license notice
 - Delete duplicated `maskSessionId()` utility — extract to a shared helper
 - Make `OrderEndpoint` implement the generated OpenAPI interface (e.g., `implements OrdersApi`) — align with all other endpoints in the project
 

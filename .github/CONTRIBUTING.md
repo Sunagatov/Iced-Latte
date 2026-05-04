@@ -2,6 +2,8 @@
 
 Thanks for your interest in contributing! Here's everything you need to get started.
 
+> **Intellectual property notice:** By submitting any contribution, you irrevocably assign all rights to the author (Zufar Sunagatov). Contributors have no ownership, copyright, or other IP claim over the Iced Latte project or any related repository. These terms have been in effect since the project's creation in 2022. See [`LICENSE`](../LICENSE) Section 7–8 for full details.
+
 ## How to get involved
 
 | Situation | Action |

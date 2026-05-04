@@ -13,7 +13,7 @@
   [![CI Status](https://github.com/Sunagatov/Iced-Latte/actions/workflows/ci.yml/badge.svg)](https://github.com/Sunagatov/Iced-Latte/actions)
   [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Sunagatov_Iced-Latte&metric=alert_status)](https://sonarcloud.io/project/overview?id=Sunagatov_Iced-Latte)
   [![codecov](https://codecov.io/github/Sunagatov/Iced-Latte/branch/development/graph/badge.svg?token=515f0ca9-2c4d-4458-ba0b-baf1de67635e)](https://app.codecov.io/github/Sunagatov/Iced-Latte)
-  [![License: CC BY-NC 4.0](https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
+  [![License: Evaluation Only](https://img.shields.io/badge/license-evaluation--only-lightgrey.svg)](LICENSE)
 
   [![GitHub Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte)](https://github.com/Sunagatov/Iced-Latte/stargazers)
   [![GitHub Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=social)](https://github.com/Sunagatov/Iced-Latte/network/members)
@@ -88,7 +88,7 @@ mvn test
 
 ## 🤔 What is this?
 
-Iced Latte is a non-profit sandbox project started in 2022 as a private pet project. It was later opened to the community to give junior engineers, students, and mentees practical experience in a real tech project with processes similar to those in actual tech teams. The first participants were students, Telegram channel subscribers, and mentees from ADPList and Women In Tech. The project has since grown and earned recognition from both the open-source community and the wider tech community.
+Iced Latte is a non-profit sandbox project started in 2022 as a private pet project. It was later opened to the community to give junior engineers, students, and mentees practical experience in a real tech project with processes similar to those in actual tech teams. The first participants were students, Telegram channel subscribers, and mentees from ADPList and Women In Tech. The project has since grown and earned recognition from the wider developer community.
 
 > ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
 
@@ -104,15 +104,15 @@ Iced Latte has earned recognition from the broader tech community.
 
 **🥉 KaiCode 2024 Finalist 🥉** 
 
-  - Iced Latte made it to the finals of [KaiCode](https://www.kaicode.org/2024.html#jury) — an annual open-source festival launched by Huawei, which positions itself as an incubator of open-source technologies and rewards the most promising projects. Iced Latte was selected among **412 applications** and placed in the third group of 26 finalist repositories considered for the prize. Jury members are not allowed to assess their own projects, so the selection was fully independent.
+  - Iced Latte made it to the finals of [KaiCode](https://www.kaicode.org/2024.html#jury) — an annual developer festival launched by Huawei, which positions itself as an incubator of collaborative technologies and rewards promising projects. Iced Latte was selected among **412 applications** and placed in the third group of 26 finalist repositories considered for the prize. Jury members are not allowed to assess their own projects, so the selection was fully independent.
 
 **🛠️JetBrains Open Source License 🛠**
 
-  - Iced Latte was recognized by [JetBrains](https://www.jetbrains.com/community/opensource/) — a leading software company specializing in intelligent development tools. As an active participant in the open-source community, JetBrains supports recognized global open-source projects by providing complimentary licenses for non-commercial development. JetBrains granted Iced Latte **8 free All Products Pack licenses** (February 2024, License Reference No. D379769990).
+  - Iced Latte was recognized by [JetBrains](https://www.jetbrains.com/community/opensource/) — a leading software company specializing in intelligent development tools. JetBrains granted Iced Latte **8 free All Products Pack licenses** (February 2024, License Reference No. D379769990).
 
 **👨💻 Recommended by a GitHub Star 👨**
 
-  - Iced Latte was [recommended in this LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) by a well-known open-source creator and [GitHub Star](https://stars.github.com/), who called it a great example of a Java open-source project. Many Iced Latte contributors shared their positive experience in the comments.
+  - Iced Latte was [recommended in this LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) by a well-known creator and [GitHub Star](https://stars.github.com/), who called it a great example of a Java project. Many Iced Latte contributors shared their positive experience in the comments.
 
 ---
 
@@ -141,7 +141,7 @@ Iced Latte has earned recognition from the broader tech community.
 - 📄 [Contributing](.github/CONTRIBUTING.md) — how to contribute, PR guidelines, branching
 - 📄 [Security Policy](.github/SECURITY.md) — security policy and vulnerability reporting
 - 📄 [Code of Conduct](.github/CODE_OF_CONDUCT.md) — community standards and expected behavior
-- 📄 [LICENSE](LICENSE) — CC BY-NC 4.0, free for educational use; commercial use requires permission
+- 📄 [LICENSE](LICENSE) — personal local evaluation only; public/educational/commercial use requires permission
 
 ---
 
@@ -212,7 +212,7 @@ src/main/java/com/zufar/icedlatte/
 
 ## 📄 License
 
-📜 [CC BY-NC 4.0](LICENSE) — free for educational and personal use with author attribution. Commercial use requires explicit written permission from the author ([zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com)).
+📜 [Iced Latte Personal Evaluation License 2026](LICENSE) — personal local evaluation only. Public, educational, remote-hosted, and commercial use require explicit written permission from the author ([zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com)).
 
 ---
 
