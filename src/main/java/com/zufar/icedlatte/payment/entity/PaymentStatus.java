@@ -13,5 +13,17 @@ public enum PaymentStatus {
     FAILED,
     EXPIRED,
     REFUNDED,
-    RECONCILIATION_FAILED
+    RECONCILIATION_FAILED;
+
+    /**
+     * Terminal statuses must not be overwritten by later webhook events.
+     * For example, a delayed "expired" webhook must not overwrite a PAID payment.
+     */
+    public boolean isTerminal() {
+        return this == PAID
+                || this == REFUNDED
+                || this == RECONCILIATION_FAILED
+                || this == FAILED
+                || this == EXPIRED;
+    }
 }

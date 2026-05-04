@@ -63,7 +63,7 @@ public class StripeWebhookBusinessProcessor {
         if (!"paid".equals(stripeSession.getPaymentStatus())) {
             UUID orderId = extractOrderId(stripeSession);
             Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
-            if (payment == null || isTerminal(payment.getStatus())) {
+            if (payment == null || payment.getStatus().isTerminal()) {
                 log.info("payment.awaiting_async.skipped: orderId={}, status={}",
                         orderId, payment != null ? payment.getStatus() : "missing");
                 return;
@@ -132,7 +132,7 @@ public class StripeWebhookBusinessProcessor {
         UUID orderId = extractOrderId(stripeSession);
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
-        if (payment == null || isTerminal(payment.getStatus())) {
+        if (payment == null || payment.getStatus().isTerminal()) {
             log.info("payment.expired.skipped: orderId={}, status={}",
                     orderId, payment != null ? payment.getStatus() : "missing");
             return;
@@ -153,7 +153,7 @@ public class StripeWebhookBusinessProcessor {
         UUID orderId = extractOrderId(stripeSession);
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
-        if (payment == null || isTerminal(payment.getStatus())) {
+        if (payment == null || payment.getStatus().isTerminal()) {
             log.info("payment.async_failed.skipped: orderId={}, status={}",
                     orderId, payment != null ? payment.getStatus() : "missing");
             return;
@@ -170,13 +170,6 @@ public class StripeWebhookBusinessProcessor {
         }
     }
 
-    private static boolean isTerminal(PaymentStatus status) {
-        return status == PaymentStatus.PAID
-                || status == PaymentStatus.REFUNDED
-                || status == PaymentStatus.RECONCILIATION_FAILED
-                || status == PaymentStatus.FAILED
-                || status == PaymentStatus.EXPIRED;
-    }
 
     private void handleChargeRefunded(Event event) {
         var charge = event.getDataObjectDeserializer()

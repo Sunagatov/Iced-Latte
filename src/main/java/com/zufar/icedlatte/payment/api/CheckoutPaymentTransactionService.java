@@ -13,13 +13,11 @@ import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,7 +66,6 @@ public class CheckoutPaymentTransactionService {
                 .amountMinor(toMinorUnits(order.getItemsTotalPrice()))
                 .currency("usd")
                 .checkoutIdempotencyKey(idempotencyKey)
-                .checkoutRequestHash(computeCheckoutSnapshotHash(request, cart))
                 .build();
         payment = paymentRepository.save(payment);
 
@@ -89,27 +86,4 @@ public class CheckoutPaymentTransactionService {
                 .longValueExact();
     }
 
-    /**
-     * SHA-256 hash of the full checkout snapshot: recipient fields, address,
-     * cart item IDs/quantities/prices, currency, and total amount.
-     * Used to detect Idempotency-Key reuse with different checkout parameters.
-     */
-    private String computeCheckoutSnapshotHash(CreateCheckoutRequestDto request,
-                                               ShoppingCartDto cart) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(request.getRecipientName()).append('|');
-        sb.append(request.getRecipientSurname()).append('|');
-        sb.append(request.getRecipientPhone()).append('|');
-        sb.append(request.getDeliveryAddressId()).append('|');
-        cart.getItems().stream()
-                .sorted(Comparator.comparing(i -> i.getProductInfo().getId()))
-                .forEach(item -> {
-                    sb.append(item.getProductInfo().getId()).append(':');
-                    sb.append(item.getProductQuantity()).append(':');
-                    sb.append(item.getProductInfo().getPrice()).append('|');
-                });
-        sb.append("usd").append('|');
-        sb.append(toMinorUnits(cart.getItemsTotalPrice()));
-        return DigestUtils.sha256Hex(sb.toString());
-    }
 }

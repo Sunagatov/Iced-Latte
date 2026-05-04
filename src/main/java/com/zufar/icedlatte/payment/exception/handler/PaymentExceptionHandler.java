@@ -4,7 +4,6 @@ import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
-import com.zufar.icedlatte.payment.exception.StripeSessionIsNotComplete;
 import com.stripe.exception.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +40,5 @@ public class PaymentExceptionHandler {
             log.warn("payment.session.failed: exceptionClass={}, status=502", e.getClass().getSimpleName());
         }
         return response;
-    }
-
-    @ExceptionHandler(StripeSessionIsNotComplete.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @SuppressWarnings("unused")
-    public ApiErrorResponse handleStripeSessionIsNotComplete(final StripeSessionIsNotComplete e) {
-        return apiErrorResponseCreator.buildResponse(e, HttpStatus.BAD_REQUEST);
     }
 }
