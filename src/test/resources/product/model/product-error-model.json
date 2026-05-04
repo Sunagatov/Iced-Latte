@@ -1,7 +1,9 @@
 {
-  "message": [
-    "Product not found"
-  ],
-  "httpStatusCode": 404,
-  "timestamp": "2023-10-15T18:30:00Z"
+  "type": "https://iced-latte.uk/errors/product-not-found",
+  "title": "Product not found",
+  "status": 404,
+  "detail": "Product not found",
+  "timestamp": "2023-10-15T18:30:00Z",
+  "message": "Product not found",
+  "error": "Product not found"
 }

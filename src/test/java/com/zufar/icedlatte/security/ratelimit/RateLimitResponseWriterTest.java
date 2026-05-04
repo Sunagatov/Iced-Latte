@@ -44,7 +44,7 @@ class RateLimitResponseWriterTest {
         assertThat(response.getHeader("Retry-After")).isNotBlank();
 
         var json = OBJECT_MAPPER.readTree(response.getContentAsByteArray());
-        assertThat(json.get("error").asText()).isEqualTo("Rate limit exceeded");
+        assertThat(json.get("error").asText()).isEqualTo("Too many requests");
         assertThat(json.get("message").asText()).isEqualTo("Too many requests. Please try again later.");
         assertThat(json.get("status").asInt()).isEqualTo(429);
         assertThat(json.get("retryAfter").asLong()).isGreaterThanOrEqualTo(1L);

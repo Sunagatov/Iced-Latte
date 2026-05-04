@@ -90,12 +90,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
-            case InvalidCredentialsException _ -> new ErrorInfo("Authentication failed: invalid credentials", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
-            case JwtTokenBlacklistedException _ -> new ErrorInfo("Authentication failed: token revoked", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
-            case ExpiredJwtException _ -> new ErrorInfo("Authentication failed: token expired", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo("Authentication failed: invalid token format", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
-            case UsernameNotFoundException _ -> new ErrorInfo("Authentication failed: user not found", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
-            default -> new ErrorInfo("Authentication failed: internal error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
+            case InvalidCredentialsException _ -> new ErrorInfo("invalid-credentials", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
+            case JwtTokenBlacklistedException _ -> new ErrorInfo("session-expired", "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
+            case ExpiredJwtException _ -> new ErrorInfo("session-expired", "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
+            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo("auth-failed", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
+            case UsernameNotFoundException _ -> new ErrorInfo("auth-failed", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
+            default -> new ErrorInfo("internal-error", "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
         };
 
         if (errorInfo.statusCode() >= 500) {
@@ -115,10 +115,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("error", "Unauthorized")
-                .put("message", errorInfo.message())
-                .put("timestamp", java.time.Instant.now().toString())
+                .put("type", "https://iced-latte.uk/errors/" + errorInfo.typeSlug())
+                .put("title", errorInfo.title())
                 .put("status", errorInfo.statusCode())
+                .put("detail", errorInfo.detail())
+                .put("instance", path)
+                .put("timestamp", java.time.Instant.now().toString())
+                .put("message", errorInfo.detail())
+                .put("error", errorInfo.title())
                 .put("requestId", requestId);
         byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
         httpResponse.setContentLength(responseBytes.length);
@@ -126,6 +130,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
     
     // Record for error information - Java 21 feature
-    private record ErrorInfo(String message, int statusCode, String reasonCode) {}
+    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) {}
 
 }

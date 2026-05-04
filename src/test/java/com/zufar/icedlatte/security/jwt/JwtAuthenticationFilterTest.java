@@ -160,8 +160,8 @@ class JwtAuthenticationFilterTest {
             assertThat(response.getCharacterEncoding()).isEqualTo("UTF-8");
             assertThat(response.getHeader("X-Content-Type-Options")).isEqualTo("nosniff");
             assertThat(response.getContentAsString())
-                    .contains("\"error\":\"Unauthorized\"")
-                    .contains("\"message\":\"Authentication failed: invalid credentials\"")
+                    .contains("\"error\":\"Authentication failed\"")
+                    .contains("\"message\":\"Authentication failed.\"")
                     .contains("\"status\":401");
         }
     }

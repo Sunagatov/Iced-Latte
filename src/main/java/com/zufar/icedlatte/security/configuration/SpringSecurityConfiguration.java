@@ -22,7 +22,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.beans.factory.annotation.Value;
+
 import static org.springframework.security.config.Customizer.withDefaults;
+
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
@@ -151,17 +153,24 @@ public class SpringSecurityConfiguration {
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 
-    private static void writeErrorResponse(HttpServletResponse response, int status,
-                                            String message, String path) throws java.io.IOException {
+    private static void writeErrorResponse(HttpServletResponse response,
+                                           int status,
+                                           String message,
+                                           String path) throws java.io.IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
+        String typeSlug = status == 401 ? "auth-required" : "access-denied";
+        String title = status == 401 ? "Authentication required" : "Access denied";
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("error", status == 401 ? "Unauthorized" : "Forbidden")
-                .put("message", message)
+                .put("type", "https://iced-latte.uk/errors/" + typeSlug)
+                .put("title", title)
                 .put("status", status)
+                .put("detail", message)
+                .put("instance", path)
                 .put("timestamp", Instant.now().toString())
-                .put("path", path);
+                .put("message", message)
+                .put("error", title);
         byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(bytes.length);
         response.getOutputStream().write(bytes);

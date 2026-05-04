@@ -1,17 +1,16 @@
 package com.zufar.icedlatte.security.exception.handler;
 
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +27,7 @@ import java.util.UUID;
 class SignInExceptionHandlerTest {
 
     @Mock
-    private ApiErrorResponseCreator apiErrorResponseCreator;
+    private ProblemDetailFactory problemDetailFactory;
 
     @Mock
     private HttpServletRequest request;
@@ -37,112 +35,65 @@ class SignInExceptionHandlerTest {
     @InjectMocks
     private SignInExceptionHandler signInExceptionHandler;
 
+    private static final ProblemDetail STUB_401 = ProblemDetail.forStatus(401);
+
     @Test
-    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UserNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserNotFoundExceptionThrown() {
-        UUID userId = UUID.randomUUID();
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        UserNotFoundException exception = new UserNotFoundException(userId);
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "User with id = " + userId + " is not found.",
-                HttpStatus.UNAUTHORIZED.value(),
-                currentDateTime
-        );
+    @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when UserNotFoundException is thrown")
+    void shouldReturnUnauthorizedWhenUserNotFoundExceptionThrown() {
+        UserNotFoundException exception = new UserNotFoundException(UUID.randomUUID());
+        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        ProblemDetail result = signInExceptionHandler.handleUserNotFoundException(exception, request);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserNotFoundException(exception, request);
-
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
-
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        assertThat(result).isEqualTo(STUB_401);
     }
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UsernameNotFoundException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUsernameNotFoundExceptionThrown() {
+    @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when UsernameNotFoundException is thrown")
+    void shouldReturnUnauthorizedWhenUsernameNotFoundExceptionThrown() {
         UsernameNotFoundException exception = new UsernameNotFoundException("Username not found");
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Username not found",
-                HttpStatus.UNAUTHORIZED.value(),
-                currentDateTime
-        );
+        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        ProblemDetail result = signInExceptionHandler.handleUsernameNotFoundException(exception, request);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUsernameNotFoundException(exception, request);
-
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
-
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        assertThat(result).isEqualTo(STUB_401);
     }
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when UserAccountLockedException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenUserAccountLockedExceptionThrown() {
-        int userAccountLockoutDurationMinutes = 30;
-        UserAccountLockedException exception = new UserAccountLockedException(userAccountLockoutDurationMinutes);
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                String.format("Account temporarily locked due to too many failed login attempts. Try again in %d minutes or reset your password.", userAccountLockoutDurationMinutes),
-                HttpStatus.UNAUTHORIZED.value(),
-                currentDateTime
-        );
+    @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when UserAccountLockedException is thrown")
+    void shouldReturnUnauthorizedWhenUserAccountLockedExceptionThrown() {
+        UserAccountLockedException exception = new UserAccountLockedException(30);
+        when(problemDetailFactory.build("account-locked", "Account locked",
+                HttpStatus.UNAUTHORIZED, "User account is locked.")).thenReturn(STUB_401);
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        ProblemDetail result = signInExceptionHandler.handleUserAccountLockedException(exception, request);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleUserAccountLockedException(exception, request);
-
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
-
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        assertThat(result).isEqualTo(STUB_401);
     }
 
     @Test
-    @DisplayName("Should return ApiErrorResponse with UNAUTHORIZED status when BadCredentialsException is thrown")
-    void shouldReturnApiErrorResponseWithUnauthorizedStatusWhenBadCredentialsExceptionThrown() {
+    @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when BadCredentialsException is thrown")
+    void shouldReturnUnauthorizedWhenBadCredentialsExceptionThrown() {
         BadCredentialsException exception = new BadCredentialsException("Bad credentials.");
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Bad credentials.",
-                HttpStatus.UNAUTHORIZED.value(),
-                currentDateTime
-        );
+        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        ProblemDetail result = signInExceptionHandler.handleBadCredentialsException(exception, request);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleBadCredentialsException(exception, request);
-
-        assertEquals(expectedResponse.httpStatusCode(), actualResponse.httpStatusCode());
-        assertEquals(expectedResponse.message(), actualResponse.message());
-        assertEquals(expectedResponse.timestamp(), actualResponse.timestamp());
-
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        assertThat(result).isEqualTo(STUB_401);
     }
 
     @Test
     @DisplayName("Should return 401 when AbsentBearerHeaderException is thrown")
     void shouldReturnUnauthorizedWhenAbsentBearerHeaderExceptionThrown() {
         AbsentBearerHeaderException exception = new AbsentBearerHeaderException();
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        ApiErrorResponse expectedResponse = new ApiErrorResponse(
-                "Bearer authentication header is absent",
-                HttpStatus.UNAUTHORIZED.value(),
-                currentDateTime
-        );
+        when(problemDetailFactory.build("auth-required", "Authentication required",
+                HttpStatus.UNAUTHORIZED, "Authentication required.")).thenReturn(STUB_401);
 
-        when(apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED)).thenReturn(expectedResponse);
+        ProblemDetail result = signInExceptionHandler.handleAbsentBearerHeaderException(exception, request);
 
-        ApiErrorResponse actualResponse = signInExceptionHandler.handleAbsentBearerHeaderException(exception, request);
-
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), actualResponse.httpStatusCode());
-        verify(apiErrorResponseCreator).buildResponse(exception, HttpStatus.UNAUTHORIZED);
+        assertThat(result).isEqualTo(STUB_401);
     }
 }

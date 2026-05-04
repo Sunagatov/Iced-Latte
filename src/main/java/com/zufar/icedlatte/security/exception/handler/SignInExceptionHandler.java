@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
@@ -15,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,93 +28,96 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @SuppressWarnings("unused")
 public class SignInExceptionHandler {
 
-    private final ApiErrorResponseCreator apiErrorResponseCreator;
+    private final ProblemDetailFactory problemDetailFactory;
 
     @ExceptionHandler(AbsentBearerHeaderException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
-                                                              HttpServletRequest request) {
-        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
-        String method = request.getMethod();
-        String path = sanitize(request.getRequestURI());
-
-        if (!AuthPaths.REFRESH.equals(path)) {
-            log.debug("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
-                    exception.getClass().getSimpleName(), method, path);
+    public ProblemDetail handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
+                                                           HttpServletRequest request) {
+        if (!AuthPaths.REFRESH.equals(request.getRequestURI())) {
+            log.debug("auth.sign_in.failed: reason_code=AbsentBearerHeaderException, status=401, method={}, path={}",
+                    request.getMethod(), sanitize(request.getRequestURI()));
         }
-
-        return response;
+        return problemDetailFactory.build("auth-required", "Authentication required",
+                HttpStatus.UNAUTHORIZED, "Authentication required.");
     }
 
     @ExceptionHandler(UserRegistrationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleUserRegistrationException(final UserRegistrationException exception,
-                                                            HttpServletRequest request) {
-        return handle(exception, HttpStatus.BAD_REQUEST, request);
+    public ProblemDetail handleUserRegistrationException(final UserRegistrationException exception,
+                                                         HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.BAD_REQUEST, request);
+        return problemDetailFactory.build("registration-failed", "Registration failed",
+                HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleInvalidCredentialsException(final InvalidCredentialsException exception,
-                                                              HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleInvalidCredentialsException(final InvalidCredentialsException exception,
+                                                           HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
     @ExceptionHandler({UserNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception,
-                                                        HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleUserNotFoundException(final UserNotFoundException exception,
+                                                     HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
     @ExceptionHandler({UsernameNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    // amazonq-ignore-next-line
-    public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception,
-                                                            HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleUsernameNotFoundException(final UsernameNotFoundException exception,
+                                                         HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
     @ExceptionHandler(UserAccountLockedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleUserAccountLockedException(final UserAccountLockedException exception,
-                                                             HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleUserAccountLockedException(final UserAccountLockedException exception,
+                                                          HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+        return problemDetailFactory.build("account-locked", "Account locked",
+                HttpStatus.UNAUTHORIZED, "User account is locked.");
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleBadCredentialsException(final BadCredentialsException exception,
-                                                          HttpServletRequest request) {
-        return handle(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleBadCredentialsException(final BadCredentialsException exception,
+                                                       HttpServletRequest request) {
+        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
     @ExceptionHandler(SessionNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleSessionNotFoundException(final SessionNotFoundException exception,
-                                                           HttpServletRequest request) {
+    public ProblemDetail handleSessionNotFoundException(final SessionNotFoundException exception,
+                                                        HttpServletRequest request) {
         log.debug("auth.session.not_found: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return apiErrorResponseCreator.buildResponse("Session not found", HttpStatus.NOT_FOUND);
+        return problemDetailFactory.build("session-not-found", "Session not found",
+                HttpStatus.NOT_FOUND, "Session not found.");
     }
 
     @ExceptionHandler(SessionOwnershipException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ApiErrorResponse handleSessionOwnershipException(final SessionOwnershipException exception,
-                                                            HttpServletRequest request) {
+    public ProblemDetail handleSessionOwnershipException(final SessionOwnershipException exception,
+                                                         HttpServletRequest request) {
         log.debug("auth.session.forbidden: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return apiErrorResponseCreator.buildResponse("Access denied", HttpStatus.FORBIDDEN);
+        return problemDetailFactory.build("session-access-denied", "Access denied",
+                HttpStatus.FORBIDDEN, "Access denied.");
     }
 
-    private ApiErrorResponse handle(Exception exception,
-                                    HttpStatus status,
-                                    HttpServletRequest request) {
-        ApiErrorResponse response = apiErrorResponseCreator.buildResponse(exception, status);
+    private void logAuthFailure(Exception exception, HttpStatus status, HttpServletRequest request) {
         log.debug("auth.sign_in.failed: reason_code={}, status={}, method={}, path={}",
-                exception.getClass().getSimpleName(),
-                status.value(),
-                request.getMethod(),
-                sanitize(request.getRequestURI()));
-        return response;
+                exception.getClass().getSimpleName(), status.value(),
+                request.getMethod(), sanitize(request.getRequestURI()));
     }
 
     private static String sanitize(String value) {

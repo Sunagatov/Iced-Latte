@@ -35,10 +35,13 @@ public class RateLimitResponseWriter {
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("error", "Rate limit exceeded")
-                .put("message", "Too many requests. Please try again later.")
+                .put("type", "https://iced-latte.uk/errors/rate-limited")
+                .put("title", "Too many requests")
                 .put("status", HttpStatus.TOO_MANY_REQUESTS.value())
+                .put("detail", "Too many requests. Please try again later.")
                 .put("timestamp", Instant.now().toString())
+                .put("message", "Too many requests. Please try again later.")
+                .put("error", "Too many requests")
                 .put("retryAfter", retryAfterSeconds);
         byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(bytes.length);

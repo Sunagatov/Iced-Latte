@@ -74,7 +74,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .body("message", notNullValue())
-                .body("httpStatusCode", equalTo(400));
+                .body("status", equalTo(400));
     }
 
     @Test

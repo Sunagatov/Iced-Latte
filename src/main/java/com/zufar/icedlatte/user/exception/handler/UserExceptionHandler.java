@@ -1,13 +1,13 @@
 package com.zufar.icedlatte.user.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,26 +19,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RequiredArgsConstructor
 public class UserExceptionHandler {
 
-    private static final String INVALID_AVATAR_FILE_TYPE_MESSAGE = "Invalid file type. Allowed types: JPEG, PNG, WebP";
-    private static final String USERNAME_NOT_FOUND_MESSAGE = "User not found";
-
-    private final ApiErrorResponseCreator apiErrorResponseCreator;
+    private final ProblemDetailFactory problemDetailFactory;
 
     @ExceptionHandler(InvalidAvatarFileTypeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleInvalidAvatarFileTypeException(final InvalidAvatarFileTypeException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                INVALID_AVATAR_FILE_TYPE_MESSAGE, HttpStatus.BAD_REQUEST);
+    public ProblemDetail handleInvalidAvatarFileTypeException(final InvalidAvatarFileTypeException exception) {
         log.debug("exception.avatar.invalid_type: exceptionClass={}, status=400", exception.getClass().getSimpleName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("invalid-avatar-type", "Invalid file type",
+                HttpStatus.BAD_REQUEST, "Invalid file type. Allowed types: JPEG, PNG, WebP");
     }
 
     @ExceptionHandler({UsernameNotFoundException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleUsernameNotFoundException(final UsernameNotFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(USERNAME_NOT_FOUND_MESSAGE, HttpStatus.UNAUTHORIZED);
+    public ProblemDetail handleUsernameNotFoundException(final UsernameNotFoundException exception) {
         log.debug("exception.user.username_not_found: exceptionClass={}, status=401", exception.getClass().getSimpleName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("auth-failed", "Authentication failed",
+                HttpStatus.UNAUTHORIZED, "User not found.");
     }
-
 }

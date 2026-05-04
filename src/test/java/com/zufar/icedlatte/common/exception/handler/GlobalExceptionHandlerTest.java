@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -16,6 +15,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
@@ -29,13 +29,12 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,10 +42,14 @@ import static org.mockito.Mockito.when;
 class GlobalExceptionHandlerTest {
 
     @Mock
-    private ApiErrorResponseCreator apiErrorResponseCreator;
+    private ProblemDetailFactory problemDetailFactory;
 
     @InjectMocks
     private GlobalExceptionHandler handler;
+
+    private static ProblemDetail stub(int status) {
+        return ProblemDetail.forStatus(status);
+    }
 
     @Nested
     @DisplayName("generic exceptions")
@@ -56,43 +59,43 @@ class GlobalExceptionHandlerTest {
         @DisplayName("returns 404 for missing static resource")
         void returns404ForMissingStaticResource() {
             NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/missing", "classpath:/static/");
-            when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(stub(404));
+            ProblemDetail expected = stub(404);
+            when(problemDetailFactory.build(eq("resource-not-found"), eq("Resource not found"),
+                    eq(HttpStatus.NOT_FOUND), any(String.class))).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleNoResourceFoundException(ex);
+            ProblemDetail result = handler.handleNoResourceFoundException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(404);
-            verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
-            verifyNoMoreInteractions(apiErrorResponseCreator);
+            assertThat(result).isEqualTo(expected);
+            verify(problemDetailFactory).build(eq("resource-not-found"), eq("Resource not found"),
+                    eq(HttpStatus.NOT_FOUND), any(String.class));
         }
 
         @Test
         @DisplayName("returns 500 for unhandled exception")
         void returns500ForUnhandledException() {
             Exception ex = new RuntimeException("boom");
-            when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR)).thenReturn(stub(500));
+            ProblemDetail expected = stub(500);
+            when(problemDetailFactory.build("internal-error", "Internal server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR, "boom")).thenReturn(expected);
 
-            ResponseEntity<ApiErrorResponse> result = handler.handleUnhandledException(ex);
-            ApiErrorResponse body = Objects.requireNonNull(result.getBody());
+            ResponseEntity<ProblemDetail> result = handler.handleUnhandledException(ex);
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(body.httpStatusCode()).isEqualTo(500);
-            verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
-            verifyNoMoreInteractions(apiErrorResponseCreator);
+            assertThat(result.getBody()).isEqualTo(expected);
         }
 
         @Test
         @DisplayName("returns annotated status for domain exceptions")
         void returnsAnnotatedStatusForDomainExceptions() {
             UserNotFoundException ex = new UserNotFoundException("mail@example.com");
-            when(apiErrorResponseCreator.buildResponse(ex, HttpStatus.NOT_FOUND)).thenReturn(stub(404));
+            ProblemDetail expected = stub(404);
+            when(problemDetailFactory.build(eq("about:blank"), eq("Not Found"),
+                    eq(HttpStatus.NOT_FOUND), any(String.class))).thenReturn(expected);
 
-            ResponseEntity<ApiErrorResponse> result = handler.handleUnhandledException(ex);
-            ApiErrorResponse body = Objects.requireNonNull(result.getBody());
+            ResponseEntity<ProblemDetail> result = handler.handleUnhandledException(ex);
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(body.httpStatusCode()).isEqualTo(404);
-            verify(apiErrorResponseCreator).buildResponse(ex, HttpStatus.NOT_FOUND);
-            verifyNoMoreInteractions(apiErrorResponseCreator);
+            assertThat(result.getBody()).isEqualTo(expected);
         }
     }
 
@@ -105,17 +108,13 @@ class GlobalExceptionHandlerTest {
         void returnsValidationResponseForConstraintViolations() {
             ConstraintViolation<?> violation = pageSizeViolation();
             ConstraintViolationException ex = new ConstraintViolationException("violation", Set.of(violation));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build(eq("validation-failed"), eq("Validation failed"),
+                    eq(HttpStatus.BAD_REQUEST), eq("Validation failed."), any())).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleConstraintViolationException(ex);
+            ProblemDetail result = handler.handleConstraintViolationException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            assertThat(result.message()).isEqualTo("Validation failed");
-            assertThat(result.errors())
-                    .singleElement()
-                    .satisfies(error -> {
-                        assertThat(error.field()).isEqualTo("pageSize");
-                        assertThat(error.message()).isEqualTo("must be greater than 0");
-                    });
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
@@ -125,13 +124,13 @@ class GlobalExceptionHandlerTest {
             MethodParameter parameter = new MethodParameter(method, -1);
             MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
                     "p1", String.class, "id", parameter, new RuntimeException());
-            when(apiErrorResponseCreator.buildResponse("Invalid value for parameter 'id'", HttpStatus.BAD_REQUEST))
-                    .thenReturn(stub(400));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build("invalid-parameter", "Invalid parameter",
+                    HttpStatus.BAD_REQUEST, "Invalid value for parameter 'id'.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleMethodArgumentTypeMismatchException(ex);
+            ProblemDetail result = handler.handleMethodArgumentTypeMismatchException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            verify(apiErrorResponseCreator).buildResponse("Invalid value for parameter 'id'", HttpStatus.BAD_REQUEST);
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
@@ -139,13 +138,13 @@ class GlobalExceptionHandlerTest {
         void returns400ForUnreadableRequestBody() {
             HttpMessageNotReadableException ex =
                     new HttpMessageNotReadableException("bad body", new MockHttpInputMessage(new byte[0]));
-            when(apiErrorResponseCreator.buildResponse("Malformed or unreadable request body", HttpStatus.BAD_REQUEST))
-                    .thenReturn(stub(400));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build("malformed-request", "Malformed request",
+                    HttpStatus.BAD_REQUEST, "Malformed or unreadable request body.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleHttpMessageNotReadableException(ex);
+            ProblemDetail result = handler.handleHttpMessageNotReadableException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            verify(apiErrorResponseCreator).buildResponse("Malformed or unreadable request body", HttpStatus.BAD_REQUEST);
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
@@ -153,26 +152,26 @@ class GlobalExceptionHandlerTest {
         void returns400ForMissingRequestParameter() {
             MissingServletRequestParameterException ex =
                     new MissingServletRequestParameterException("page", "Integer");
-            when(apiErrorResponseCreator.buildResponse("Required parameter 'page' is missing", HttpStatus.BAD_REQUEST))
-                    .thenReturn(stub(400));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build("missing-parameter", "Missing parameter",
+                    HttpStatus.BAD_REQUEST, "Required parameter 'page' is missing.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleMissingServletRequestParameterException(ex);
+            ProblemDetail result = handler.handleMissingServletRequestParameterException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            verify(apiErrorResponseCreator).buildResponse("Required parameter 'page' is missing", HttpStatus.BAD_REQUEST);
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
         @DisplayName("returns 400 for data integrity violations")
         void returns400ForDataIntegrityViolations() {
             DataIntegrityViolationException ex = new DataIntegrityViolationException("duplicate key");
-            when(apiErrorResponseCreator.buildResponse("Request conflicts with existing data.", HttpStatus.BAD_REQUEST))
-                    .thenReturn(stub(400));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build("data-conflict", "Data conflict",
+                    HttpStatus.BAD_REQUEST, "Request conflicts with existing data.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleDataIntegrityViolationException(ex);
+            ProblemDetail result = handler.handleDataIntegrityViolationException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            verify(apiErrorResponseCreator).buildResponse("Request conflicts with existing data.", HttpStatus.BAD_REQUEST);
+            assertThat(result).isEqualTo(expected);
         }
     }
 
@@ -184,46 +183,54 @@ class GlobalExceptionHandlerTest {
         @DisplayName("returns 413 for oversized upload")
         void returns413ForOversizedUpload() {
             MaxUploadSizeExceededException ex = new MaxUploadSizeExceededException(1024);
-            when(apiErrorResponseCreator.buildResponse("Uploaded file is too large", HttpStatus.CONTENT_TOO_LARGE))
-                    .thenReturn(stub(413));
+            ProblemDetail expected = stub(413);
+            when(problemDetailFactory.build("file-too-large", "File too large",
+                    HttpStatus.CONTENT_TOO_LARGE, "Uploaded file is too large.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleMaxUploadSizeExceededException(ex);
+            ProblemDetail result = handler.handleMaxUploadSizeExceededException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(413);
-            verify(apiErrorResponseCreator).buildResponse("Uploaded file is too large", HttpStatus.CONTENT_TOO_LARGE);
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
         @DisplayName("returns 400 for malformed multipart request")
         void returns400ForMalformedMultipartRequest() {
             MultipartException ex = new MultipartException("broken multipart");
-            when(apiErrorResponseCreator.buildResponse("Malformed multipart request", HttpStatus.BAD_REQUEST))
-                    .thenReturn(stub(400));
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build("malformed-multipart", "Malformed request",
+                    HttpStatus.BAD_REQUEST, "Malformed multipart request.")).thenReturn(expected);
 
-            ApiErrorResponse result = handler.handleMultipartException(ex);
+            ProblemDetail result = handler.handleMultipartException(ex);
 
-            assertThat(result.httpStatusCode()).isEqualTo(400);
-            verify(apiErrorResponseCreator).buildResponse("Malformed multipart request", HttpStatus.BAD_REQUEST);
+            assertThat(result).isEqualTo(expected);
         }
 
         @Test
-        @DisplayName("returns 406 without body for not acceptable")
-        void returns406WithoutBodyForNotAcceptable() {
-            ResponseEntity<Void> result =
+        @DisplayName("returns 406 for not acceptable")
+        void returns406ForNotAcceptable() {
+            ProblemDetail expected = stub(406);
+            when(problemDetailFactory.build("about:blank", "Not Acceptable",
+                    HttpStatus.NOT_ACCEPTABLE, "The requested media type is not supported.")).thenReturn(expected);
+
+            ResponseEntity<ProblemDetail> result =
                     handler.handleHttpMediaTypeNotAcceptableException(new HttpMediaTypeNotAcceptableException("nope"));
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
-            assertThat(result.getBody()).isNull();
+            assertThat(result.getBody()).isEqualTo(expected);
         }
 
         @Test
-        @DisplayName("returns 405 without body for unsupported method")
-        void returns405WithoutBodyForUnsupportedMethod() {
-            ResponseEntity<Void> result =
+        @DisplayName("returns 405 for unsupported method")
+        void returns405ForUnsupportedMethod() {
+            ProblemDetail expected = stub(405);
+            when(problemDetailFactory.build(eq("about:blank"), eq("Method Not Allowed"),
+                    eq(HttpStatus.METHOD_NOT_ALLOWED), any(String.class))).thenReturn(expected);
+
+            ResponseEntity<ProblemDetail> result =
                     handler.handleHttpRequestMethodNotSupportedException(new HttpRequestMethodNotSupportedException("GET"));
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
-            assertThat(result.getBody()).isNull();
+            assertThat(result.getBody()).isEqualTo(expected);
         }
 
         @Test
@@ -231,10 +238,6 @@ class GlobalExceptionHandlerTest {
         void suppressesAsyncClientDisconnectException() {
             handler.handleAsyncRequestNotUsableException(new AsyncRequestNotUsableException("broken pipe"));
         }
-    }
-
-    private static ApiErrorResponse stub(int status) {
-        return new ApiErrorResponse("msg", status, LocalDateTime.now());
     }
 
     @SuppressWarnings("unchecked")

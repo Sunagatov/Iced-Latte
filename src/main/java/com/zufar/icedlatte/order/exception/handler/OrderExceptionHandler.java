@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.order.exception.handler;
 
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
@@ -12,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,44 +23,48 @@ import java.util.Arrays;
 @RestControllerAdvice(basePackages = {"com.zufar.icedlatte.order.endpoint"})
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring exception handling invokes these methods reflectively.
+@SuppressWarnings("unused")
 public class OrderExceptionHandler {
 
-    private final ApiErrorResponseCreator apiErrorResponseCreator;
+    private final ProblemDetailFactory problemDetailFactory;
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleTypeMismatch(final MethodArgumentTypeMismatchException ignored) {
-        String message = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
+    public ProblemDetail handleTypeMismatch(final MethodArgumentTypeMismatchException ignored) {
         log.debug("exception.order.type_mismatch: status=400");
-        return apiErrorResponseCreator.buildResponse(message, HttpStatus.BAD_REQUEST);
+        return problemDetailFactory.build("invalid-parameter", "Invalid parameter",
+                HttpStatus.BAD_REQUEST, "Incorrect status value. Supported: " + Arrays.toString(OrderStatus.values()));
     }
 
     @ExceptionHandler(OrderNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleOrderNotFound(final OrderNotFoundException ex) {
-        log.debug("exception.order.not_found: message={}", ex.getMessage());
-        return apiErrorResponseCreator.buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
+    public ProblemDetail handleOrderNotFound(final OrderNotFoundException ex) {
+        log.debug("exception.order.not_found: status=404");
+        return problemDetailFactory.build("order-not-found", "Order not found",
+                HttpStatus.NOT_FOUND, "Order not found.");
     }
 
     @ExceptionHandler(OrderAccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ApiErrorResponse handleAccessDenied(final OrderAccessDeniedException ex) {
-        log.debug("exception.order.access_denied: message={}", ex.getMessage());
-        return apiErrorResponseCreator.buildResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
+    public ProblemDetail handleAccessDenied(final OrderAccessDeniedException ex) {
+        log.debug("exception.order.access_denied: status=403");
+        return problemDetailFactory.build("order-access-denied", "Access denied",
+                HttpStatus.FORBIDDEN, "Access denied.");
     }
 
     @ExceptionHandler(InvalidOrderStateTransitionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleInvalidTransition(final InvalidOrderStateTransitionException ex) {
-        log.debug("exception.order.invalid_transition: message={}", ex.getMessage());
-        return apiErrorResponseCreator.buildResponse(ex.getMessage(), HttpStatus.CONFLICT);
+    public ProblemDetail handleInvalidTransition(final InvalidOrderStateTransitionException ex) {
+        log.debug("exception.order.invalid_transition: status=409");
+        return problemDetailFactory.build("order-state-invalid", "Invalid order state",
+                HttpStatus.CONFLICT, "This order can no longer be modified.");
     }
 
     @ExceptionHandler(OrderCancellationWindowExpiredException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleCancellationExpired(final OrderCancellationWindowExpiredException ex) {
-        log.debug("exception.order.cancellation_expired: message={}", ex.getMessage());
-        return apiErrorResponseCreator.buildResponse(ex.getMessage(), HttpStatus.CONFLICT);
+    public ProblemDetail handleCancellationExpired(final OrderCancellationWindowExpiredException ex) {
+        log.debug("exception.order.cancellation_expired: status=409");
+        return problemDetailFactory.build("order-cancellation-expired", "Cancellation window expired",
+                HttpStatus.CONFLICT, "Order cannot be cancelled: cancellation window has expired.");
     }
 }

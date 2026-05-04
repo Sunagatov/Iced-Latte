@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -8,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,154 +30,138 @@ public class GlobalExceptionHandler {
 
     private static final String DATA_INTEGRITY_MESSAGE = "Request conflicts with existing data.";
 
-    private final ApiErrorResponseCreator apiErrorResponseCreator;
+    private final ProblemDetailFactory problemDetailFactory;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @SuppressWarnings("unused")
-    public ApiErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
-        List<ApiErrorResponse.FieldError> fieldErrors = exception.getBindingResult().getFieldErrors().stream()
-                .map(fe -> new ApiErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
+    public ProblemDetail handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
+        List<ProblemDetailFactory.FieldError> fieldErrors = exception.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ProblemDetailFactory.FieldError(fe.getField(), fe.getDefaultMessage()))
                 .toList();
         String fieldNames = fieldErrors.stream()
-                .map(ApiErrorResponse.FieldError::field)
+                .map(ProblemDetailFactory.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
         log.debug("exception.validation: errorCount={}, fields={}, status=400",
                 exception.getBindingResult().getErrorCount(), fieldNames);
-        return ApiErrorResponse.builder()
-                .message("Validation failed")
-                .httpStatusCode(HttpStatus.BAD_REQUEST.value())
-                .timestamp(java.time.LocalDateTime.now())
-                .errors(fieldErrors)
-                .build();
+        return problemDetailFactory.build("validation-failed", "Validation failed",
+                HttpStatus.BAD_REQUEST, "Validation failed.", fieldErrors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleConstraintViolationException(final ConstraintViolationException exception) {
-        List<ApiErrorResponse.FieldError> fieldErrors = exception.getConstraintViolations().stream()
-                .map(v -> new ApiErrorResponse.FieldError(
+    public ProblemDetail handleConstraintViolationException(final ConstraintViolationException exception) {
+        List<ProblemDetailFactory.FieldError> fieldErrors = exception.getConstraintViolations().stream()
+                .map(v -> new ProblemDetailFactory.FieldError(
                         v.getPropertyPath().toString(), v.getMessage()))
                 .toList();
         String fieldNames = fieldErrors.stream()
-                .map(ApiErrorResponse.FieldError::field)
+                .map(ProblemDetailFactory.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
         log.debug("exception.constraint_violation: errorCount={}, fields={}, status=400",
                 exception.getConstraintViolations().size(), fieldNames);
-        return ApiErrorResponse.builder()
-                .message("Validation failed")
-                .httpStatusCode(HttpStatus.BAD_REQUEST.value())
-                .timestamp(java.time.LocalDateTime.now())
-                .errors(fieldErrors)
-                .build();
+        return problemDetailFactory.build("validation-failed", "Validation failed",
+                HttpStatus.BAD_REQUEST, "Validation failed.", fieldErrors);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleNoResourceFoundException(final NoResourceFoundException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+    public ProblemDetail handleNoResourceFoundException(final NoResourceFoundException exception) {
         String path = normalizePath(sanitize(exception.getResourcePath()));
         String method = exception.getHttpMethod().name();
-
         if (isPublicInternetNoise(path)) {
             log.debug("exception.resource_not_found.scan: method={}, path={}", method, path);
         } else {
             log.debug("exception.resource_not_found: method={}, path={}", method, path);
         }
-
-        return apiErrorResponse;
+        return problemDetailFactory.build("resource-not-found", "Resource not found",
+                HttpStatus.NOT_FOUND, "No resource found for " + method + " " + path);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
-    public ApiErrorResponse handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Uploaded file is too large",
-                HttpStatus.CONTENT_TOO_LARGE
-        );
+    public ProblemDetail handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
         log.debug("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
                 exception.getClass().getSimpleName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("file-too-large", "File too large",
+                HttpStatus.CONTENT_TOO_LARGE, "Uploaded file is too large.");
     }
 
     @ExceptionHandler(MultipartException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleMultipartException(final MultipartException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Malformed multipart request",
-                HttpStatus.BAD_REQUEST
-        );
+    public ProblemDetail handleMultipartException(final MultipartException exception) {
         log.debug("exception.multipart.invalid_request: exceptionClass={}, status=400",
                 exception.getClass().getSimpleName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("malformed-multipart", "Malformed request",
+                HttpStatus.BAD_REQUEST, "Malformed multipart request.");
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Invalid value for parameter '" + exception.getName() + "'", HttpStatus.BAD_REQUEST);
-        log.debug("exception.type_mismatch: param={}, status=400",
-                exception.getName());
-        return apiErrorResponse;
+    public ProblemDetail handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException exception) {
+        log.debug("exception.type_mismatch: param={}, status=400", exception.getName());
+        return problemDetailFactory.build("invalid-parameter", "Invalid parameter",
+                HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + exception.getName() + "'.");
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleHttpMessageNotReadableException(final HttpMessageNotReadableException ignored) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Malformed or unreadable request body", HttpStatus.BAD_REQUEST);
+    public ProblemDetail handleHttpMessageNotReadableException(final HttpMessageNotReadableException ignored) {
         log.debug("exception.message_not_readable: status=400");
-        return apiErrorResponse;
+        return problemDetailFactory.build("malformed-request", "Malformed request",
+                HttpStatus.BAD_REQUEST, "Malformed or unreadable request body.");
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleMissingServletRequestParameterException(final MissingServletRequestParameterException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                "Required parameter '" + exception.getParameterName() + "' is missing", HttpStatus.BAD_REQUEST);
+    public ProblemDetail handleMissingServletRequestParameterException(final MissingServletRequestParameterException exception) {
         log.debug("exception.missing_param: param={}, status=400", exception.getParameterName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("missing-parameter", "Missing parameter",
+                HttpStatus.BAD_REQUEST, "Required parameter '" + exception.getParameterName() + "' is missing.");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(
-                DATA_INTEGRITY_MESSAGE, HttpStatus.BAD_REQUEST);
+    public ProblemDetail handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
         log.debug("exception.data_integrity: exceptionClass={}, status=400",
                 exception.getClass().getSimpleName());
-        return apiErrorResponse;
+        return problemDetailFactory.build("data-conflict", "Data conflict",
+                HttpStatus.BAD_REQUEST, DATA_INTEGRITY_MESSAGE);
     }
 
     @ExceptionHandler(AsyncRequestNotUsableException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public void handleAsyncRequestNotUsableException(final AsyncRequestNotUsableException exception) {
-        // Client disconnected before response was flushed (broken pipe). Not a server error — suppress Sentry noise.
         log.debug("exception.client_disconnect: cause={}", exception.getMessage());
     }
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    public ResponseEntity<Void> handleHttpMediaTypeNotAcceptableException(
+    public ResponseEntity<ProblemDetail> handleHttpMediaTypeNotAcceptableException(
             final HttpMediaTypeNotAcceptableException exception) {
         log.debug("exception.not_acceptable: status=406, message={}", sanitize(exception.getMessage()));
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+        ProblemDetail pd = problemDetailFactory.build("about:blank", "Not Acceptable",
+                HttpStatus.NOT_ACCEPTABLE, "The requested media type is not supported.");
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(pd);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<Void> handleHttpRequestMethodNotSupportedException(
+    public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
             final HttpRequestMethodNotSupportedException exception) {
-        log.debug("exception.method_not_supported: method={}, status=405",
-                sanitize(exception.getMethod()));
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
+        log.debug("exception.method_not_supported: method={}, status=405", sanitize(exception.getMethod()));
+        ProblemDetail pd = problemDetailFactory.build("about:blank", "Method Not Allowed",
+                HttpStatus.METHOD_NOT_ALLOWED, "HTTP method '" + sanitize(exception.getMethod()) + "' is not supported.");
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(pd);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleUnhandledException(final Exception exception) {
+    public ResponseEntity<ProblemDetail> handleUnhandledException(final Exception exception) {
         HttpStatus status = resolveHttpStatus(exception);
-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, status);
+        String typeSlug = status.is5xxServerError() ? "internal-error" : "about:blank";
+        String title = status.is5xxServerError() ? "Internal server error" : status.getReasonPhrase();
+
+        ProblemDetail pd = problemDetailFactory.build(typeSlug, title, status, exception.getMessage());
 
         if (status.is5xxServerError()) {
             log.error("exception.unhandled: exceptionClass={}, status={}", exception.getClass().getName(), status.value(), exception);
@@ -186,7 +170,7 @@ public class GlobalExceptionHandler {
                     exception.getClass().getSimpleName(), status.value());
         }
 
-        return ResponseEntity.status(status).body(apiErrorResponse);
+        return ResponseEntity.status(status).body(pd);
     }
 
     private static boolean isPublicInternetNoise(String path) {

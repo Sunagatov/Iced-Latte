@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.order.exception.handler;
 
-import com.zufar.icedlatte.common.exception.dto.ApiErrorResponse;
-import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,17 +8,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,7 +24,8 @@ import static org.mockito.Mockito.when;
 class OrderExceptionHandlerTest {
 
     @Mock
-    private ApiErrorResponseCreator apiErrorResponseCreator;
+    private ProblemDetailFactory problemDetailFactory;
+
     @InjectMocks
     private OrderExceptionHandler handler;
 
@@ -38,13 +36,12 @@ class OrderExceptionHandlerTest {
         MethodParameter mp = new MethodParameter(method, -1);
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
                 "INVALID", OrderStatus.class, "status", mp, new RuntimeException());
-        String expectedMsg = "Incorrect status value. Supported status: " + Arrays.toString(OrderStatus.values());
-        ApiErrorResponse expected = new ApiErrorResponse(expectedMsg, 400, LocalDateTime.now());
+        String expectedDetail = "Incorrect status value. Supported: " + Arrays.toString(OrderStatus.values());
+        ProblemDetail expected = ProblemDetail.forStatus(400);
+        when(problemDetailFactory.build("invalid-parameter", "Invalid parameter",
+                HttpStatus.BAD_REQUEST, expectedDetail)).thenReturn(expected);
 
-        when(apiErrorResponseCreator.buildResponse(contains("Incorrect status value"), eq(HttpStatus.BAD_REQUEST)))
-                .thenReturn(expected);
-
-        ApiErrorResponse result = handler.handleTypeMismatch(ex);
+        ProblemDetail result = handler.handleTypeMismatch(ex);
 
         assertThat(result).isEqualTo(expected);
     }

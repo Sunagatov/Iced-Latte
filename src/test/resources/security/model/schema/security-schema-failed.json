@@ -2,19 +2,34 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
+    "type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
     "message": {
       "type": "string"
     },
-    "httpStatusCode": {
-      "type": "integer"
-    },
-    "timestamp": {
+    "error": {
       "type": "string"
     }
   },
   "required": [
-    "message",
-    "httpStatusCode",
-    "timestamp"
+    "type",
+    "title",
+    "status",
+    "detail",
+    "timestamp",
+    "message"
   ]
 }
