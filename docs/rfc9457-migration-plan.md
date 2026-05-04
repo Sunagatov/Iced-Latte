@@ -6,6 +6,52 @@ Replace the custom `ApiErrorResponse` with Spring Boot 4's built-in `ProblemDeta
 
 ---
 
+## Why RFC 9457 — the BE/FE error contract
+
+RFC 9457 "Problem Details for HTTP APIs" is the IETF standard for error responses, natively supported by Spring Boot 4's `ProblemDetail` class. Adopted by Cloudflare (2026), Stripe-like patterns, and many API-first companies.
+
+### The core principle
+
+The **backend** is the source of truth for **what went wrong** — it returns a stable, machine-readable `type` URI and an HTTP status code. The **frontend** is the source of truth for **how to tell the user** — it maps `type` URIs to localized, context-aware, user-friendly messages.
+
+### What each field means
+
+| Field | Audience | Purpose |
+|---|---|---|
+| `type` | Machines (frontend code) | Stable URI — the error code the frontend switches on. Never changes once published. |
+| `title` | Developers | Short label for logs and API docs. Not for end users. |
+| `status` | Both | HTTP status code repeated in the body for convenience. |
+| `detail` | Developers | Explanation of what went wrong. May change between releases. Not for end users. |
+| `instance` | Developers/support | The request path, for log correlation. |
+
+### Why the backend should NOT own user-facing text
+
+- **Localization** — the backend doesn't know the user's language. The frontend does.
+- **UX context** — "Order not found" means different things on the order history page vs the checkout page. The frontend knows which page the user is on.
+- **Decoupling** — backend team can change `detail` text without breaking UI. Frontend team can change user-facing copy without touching backend.
+- **Multiple clients** — a mobile app, admin panel, and website all need different wording for the same error.
+
+### The target frontend pattern (Phase 3 follow-up)
+
+```typescript
+const ERROR_MESSAGES: Record<string, string> = {
+  'https://iced-latte.uk/errors/order-access-denied': 'You do not have permission to access this order.',
+  'https://iced-latte.uk/errors/session-expired': 'Your session expired. Please sign in again.',
+  'https://iced-latte.uk/errors/cart-not-found': 'Your cart could not be found.',
+  'https://iced-latte.uk/errors/validation-failed': 'Please check the form for errors.',
+}
+
+function getUserMessage(data: ErrorResponse): string {
+  return (data?.type && ERROR_MESSAGES[data.type])
+    ? ERROR_MESSAGES[data.type]
+    : data?.detail || data?.message || 'Something went wrong. Please try again.'
+}
+```
+
+During the migration, the frontend reads `detail → message → error` as a fallback chain. Once all `type` URIs are mapped, the fallback becomes a safety net only.
+
+---
+
 ## Current state audit
 
 ### Backend: 4 distinct error response shapes
