@@ -41,22 +41,19 @@
 # 1. 📥 Clone
 git clone https://github.com/Sunagatov/Iced-Latte.git && cd Iced-Latte
 
-# 2. 🔑 Copy env file
-cp .env.example .env
+# 2. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
+docker compose --env-file .env.example up -d postgres redis minio minio-init
 
-# 3. 🐳 Start infrastructure (PostgreSQL, Redis, MinIO)
-docker compose up -d postgres redis minio minio-init
-
-# 4. ▶️ Run
+# 3. ▶️ Run
 # Linux / macOS / Git Bash on Windows:
-export $(cat .env | xargs) && mvn spring-boot:run
+set -a && source .env.example && set +a && mvn spring-boot:run
 ```
 
-> 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [Getting Started](docs/getting-started.md).
+> 🪟 **Windows (PowerShell / CMD):** the shell command above won't work as written. Use IntelliJ with `.env.example` loaded in the run configuration, or use the full Docker path instead — see [Getting Started](docs/getting-started.md).
 
-> ⚠️ **Important:** `.env.example` currently sets `SPRING_PROFILES_ACTIVE=prod`. With that default, the app still runs locally on `http://localhost:8083`, but local Swagger UI is disabled and Liquibase does **not** wipe or reseed the database on every restart. If you want the classic local-dev behaviour with Swagger UI and automatic reseeding, change it to `SPRING_PROFILES_ACTIVE=dev` before running.
+> ⚠️ **Important:** `.env.example` is intentionally tuned for contributors: `SPRING_PROFILES_ACTIVE=dev`, optional integrations such as Stripe stay disabled, and local HTTP access logs run at `DEBUG`.
 
-🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html` when `SPRING_PROFILES_ACTIVE=dev`
+🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
 
 > 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for all four local run modes, IDE run configuration, Docker-only setup, and troubleshooting.
 
@@ -66,7 +63,7 @@ export $(cat .env | xargs) && mvn spring-boot:run
 > ```
 > Frontend can run either locally or in Docker, depending on the mode you pick.
 >
-> ⚠️ The same `.env` profile note applies to Docker too: with the default `.env.example`, the backend container also starts in `prod`.
+> ⚠️ Docker commands should also use `.env.example`, so the backend container starts in the same local `dev` profile unless you explicitly override it.
 
 **🧪 Run the tests:**
 ```bash

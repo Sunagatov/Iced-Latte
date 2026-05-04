@@ -72,8 +72,8 @@ services:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_KEY:-minioadmin}
     ports:
-      - '9000:9000'   # S3 API
-      - '9001:9001'   # Web console  →  http://localhost:9001
+      - '${MINIO_API_PORT:-9000}:9000'         # S3 API
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'     # Web console
     volumes:
       - minio-data:/data
     networks:
@@ -124,10 +124,8 @@ services:
     init: true
     restart: unless-stopped
     env_file:
-      # Optional for local iteration: `docker compose config` should still work even if
-      # the developer has not created a private `.env` yet.
-      - path: ${ICED_LATTE_ENV_FILE:-.env}
-        required: false
+      - path: ${ICED_LATTE_ENV_FILE:-.env.example}
+        required: true
     environment:
       DATASOURCE_HOST: postgres
       REDIS_HOST: redis
@@ -135,7 +133,7 @@ services:
       AWS_ENABLED: "true"
       MIGRATION_UPLOAD_ENABLED: "false"
     ports:
-      - '8083:8083'
+      - '${BACKEND_HOST_PORT:-8083}:8083'
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,7 +158,7 @@ services:
     init: true
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '${FRONTEND_HOST_PORT:-3000}:3000'
     extra_hosts:
       # Lets the frontend container reach a locally running backend via host.docker.internal
       # on Docker Desktop and modern Linux Docker with host-gateway support.
@@ -180,7 +178,7 @@ services:
     restart: unless-stopped
     hostname: iced-latte-local
     environment:
-      - DD_API_KEY=${DD_API_KEY}
+      - DD_API_KEY=${DD_API_KEY:-}
       - DD_SITE=datadoghq.eu
       - DD_HOSTNAME=iced-latte-local
       - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318

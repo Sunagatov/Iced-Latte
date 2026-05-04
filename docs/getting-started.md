@@ -40,22 +40,18 @@ cd Iced-Latte
 
 ✅ You should see a new `Iced-Latte/` folder created locally.
 
-### Copy the env file
+### Use the shared local env file
 
-```bash
-cp .env.example .env
-```
+All contributor commands in this guide use `.env.example` directly.
 
-> 🔒 `.env` is gitignored — your local copy stays private. Never commit real secrets to git. Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI).
->
-> ⚠️ `.env.example` currently defaults to `SPRING_PROFILES_ACTIVE=prod`. That profile is safe for local runs, but it disables Swagger UI and keeps Liquibase from wiping and re-seeding the database on every restart. Switch to `SPRING_PROFILES_ACTIVE=dev` if you want the classic local-dev flow.
+> ⚠️ `.env.example` is intentionally tuned for contributors: `SPRING_PROFILES_ACTIVE=dev`, Swagger UI stays on locally, Liquibase re-seeds on restart, optional integrations such as Stripe stay disabled, and HTTP access logs run at `DEBUG`.
 
 ### Start the shared infrastructure
 
 All four modes use the same infrastructure containers:
 
 ```bash
-docker compose up -d postgres redis minio minio-init
+docker compose --env-file .env.example up -d postgres redis minio minio-init
 ```
 
 This starts:
@@ -75,16 +71,16 @@ docker ps
 You can run the backend locally in either of these ways:
 
 **Option 1 — IntelliJ green run button**
-1. Settings → Plugins → search "EnvFile" → Install
-2. Edit Configurations → `IcedLatteApplication` → check **Enable EnvFile** → add `.env`
+1. Edit Configurations → `IcedLatteApplication`
+2. In **Environment variables**, load `.env.example`
 3. Click ▶ next to `IcedLatteApplication`
 
 **Option 2 — Terminal**
 ```bash
-export $(cat .env | xargs) && mvn spring-boot:run
+set -a && source .env.example && set +a && mvn spring-boot:run
 ```
 
-> 🪟 **Windows users:** the `export` command only works on Linux/macOS/Git Bash. On Windows, use IntelliJ EnvFile for backend-local modes.
+> 🪟 **Windows users:** the shell command above is for Linux/macOS/Git Bash. On Windows, use IntelliJ with `.env.example` loaded in the run configuration.
 
 ✅ When you see `Tomcat started on port 8083`, the backend is ready.
 
@@ -109,7 +105,7 @@ For local frontend startup, use the frontend repo's normal local-dev flow.
 ### Step 1 — Start everything
 
 ```bash
-docker compose --profile backend --profile frontend up -d --build
+docker compose --env-file .env.example --profile backend --profile frontend up -d --build
 ```
 
 This builds and starts:
@@ -125,10 +121,8 @@ This builds and starts:
 
 - 🌐 Frontend: http://localhost:3000
 - 🔌 Backend API: http://localhost:8083
-- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
 - 🪣 MinIO console: http://localhost:9001
-
-> ⚠️ With the default `.env.example`, the backend container also starts in `prod`.
 
 ---
 
@@ -138,10 +132,10 @@ This builds and starts:
 
 ### Step 1 — Run the backend locally
 
-Use IntelliJ + `.env` or:
+Use IntelliJ + `.env.example` or:
 
 ```bash
-export $(cat .env | xargs) && mvn spring-boot:run
+set -a && source .env.example && set +a && mvn spring-boot:run
 ```
 
 ### Step 2 — Run the frontend locally
@@ -152,7 +146,7 @@ Run the frontend from the sibling `Iced-Latte-Frontend/` repo using its normal l
 
 - 🌐 Frontend: usually http://localhost:3000
 - 🔌 Backend API: http://localhost:8083
-- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
 
 ---
 
@@ -163,7 +157,7 @@ Run the frontend from the sibling `Iced-Latte-Frontend/` repo using its normal l
 ### Step 1 — Start the backend in Docker
 
 ```bash
-docker compose --profile backend up -d --build
+docker compose --env-file .env.example --profile backend up -d --build
 ```
 
 This starts:
@@ -184,9 +178,7 @@ http://localhost:8083/api/v1
 
 - 🌐 Frontend: usually http://localhost:3000
 - 🔌 Backend API: http://localhost:8083
-- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
-
-> ⚠️ With the default `.env.example`, the backend container starts in `prod`.
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
 
 ---
 
@@ -196,17 +188,17 @@ http://localhost:8083/api/v1
 
 ### Step 1 — Run the backend locally
 
-Use IntelliJ + `.env` or:
+Use IntelliJ + `.env.example` or:
 
 ```bash
-export $(cat .env | xargs) && mvn spring-boot:run
+set -a && source .env.example && set +a && mvn spring-boot:run
 ```
 
 ### Step 2 — Build the frontend container against the local backend
 
 ```bash
 FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 \
-docker compose --profile frontend up -d --build
+docker compose --env-file .env.example --profile frontend up -d --build
 ```
 
 This starts:
@@ -221,7 +213,7 @@ The frontend container uses `host.docker.internal` to reach the backend running 
 
 - 🌐 Frontend: http://localhost:3000
 - 🔌 Backend API: http://localhost:8083
-- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
 
 ---
 
@@ -310,7 +302,7 @@ Tests use Testcontainers — they spin up their own temporary containers. Docker
 
 **Community edition**: Install the free "Database Navigator" plugin (Settings → Plugins).
 
-> ⚠️ Liquibase behavior depends on the active profile. With `SPRING_PROFILES_ACTIVE=dev`, startup uses `drop-first: true`, so the database is wiped and re-seeded every time the app restarts. With the default `.env.example` profile (`prod`), startup uses `drop-first: false`, so your data is preserved across restarts.
+> ⚠️ Liquibase behavior depends on the active profile. The contributor default in `.env.example` is `SPRING_PROFILES_ACTIVE=dev`, so startup uses `drop-first: true` and re-seeds the database on every restart. If you intentionally switch away from `dev`, that behavior changes.
 
 ---
 
@@ -318,7 +310,7 @@ Tests use Testcontainers — they spin up their own temporary containers. Docker
 
 Open http://localhost:9001 in your browser.
 
-Login: `minioadmin` / `minioadmin` (matches the defaults in `.env`).
+Login: `minioadmin` / `minioadmin` (matches the defaults in `.env.example`).
 
 Two buckets are created automatically on first start: `iced-latte-products` and `iced-latte-users`.
 
@@ -327,25 +319,25 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 ## 🔧 Troubleshooting
 
 **❌ "Connection refused" on port 5432**
-→ PostgreSQL is not running. Run: `docker compose up -d postgres`
+→ PostgreSQL is not running. Run: `docker compose --env-file .env.example up -d postgres`
 
 **❌ "Connection refused" on port 6379**
-→ Redis is not running. Run: `docker compose up -d redis`
+→ Redis is not running. Run: `docker compose --env-file .env.example up -d redis`
 
 **❌ "Could not resolve placeholder"**
-→ A required env var is missing. Check the console output for the variable name and add it to `.env`.
+→ A required env var is missing. Check the console output for the variable name and add it to `.env.example` or pass it explicitly in your shell.
 
 **❌ Login returns 401**
 → Use password `p@ss1logic11` and an email from the seed data (e.g. `olivia@example.com`).
 
 **❌ Port 8083 already in use**
-→ Stop the conflicting process or change `APP_SERVER_PORT` in `.env`.
+→ Stop the conflicting process or override the Docker host port with `BACKEND_HOST_PORT=8084 docker compose --env-file .env.example --profile backend up -d --build`.
 
 **❌ Frontend container cannot reach local backend**
-→ Rebuild with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 docker compose --profile frontend up -d --build`.
+→ Rebuild with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1 docker compose --env-file .env.example --profile frontend up -d --build`.
 
 **❌ Windows: `export` command not found**
-→ The `export $(cat .env | xargs)` command only works on Linux/macOS/Git Bash. On Windows, use the IntelliJ EnvFile plugin for backend-local modes.
+→ The shell command in this guide only works on Linux/macOS/Git Bash. On Windows, use IntelliJ with `.env.example` loaded in the run configuration.
 
 **❌ Tests fail with "Connection refused"**
 → Docker Desktop must be running — Testcontainers needs it.
@@ -374,7 +366,7 @@ src/
 ```
 
 API docs:
-- 🖥️ Local Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 🖥️ Local Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
 - 📄 Repo-local OpenAPI specs: `src/main/resources/api-specs/`
 
 ---
