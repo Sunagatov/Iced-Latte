@@ -15,16 +15,17 @@ Replace the custom `ApiErrorResponse` with Spring Boot 4's built-in `ProblemDeta
 | **A** — `ApiErrorResponse` | 7 `@RestControllerAdvice` classes (36 handlers) | `application/json` | `message`, `httpStatusCode`, `timestamp`, `errors[]` | `GlobalExceptionHandler`, `SignInExceptionHandler`, `JwtTokenExceptionsHandler`, `OrderExceptionHandler`, `PaymentExceptionHandler`, `CommonExceptionHandler`, `UserExceptionHandler` |
 | **B** — `JwtAuthenticationFilter` JSON | Filter-level, bypasses `@ExceptionHandler` | `application/json` | `error`, `message`, `status`, `timestamp` (ISO), `requestId` | `JwtAuthenticationFilter.java:84-130` |
 | **C** — `RateLimitResponseWriter` JSON | Filter-level, bypasses `@ExceptionHandler` | `application/json` | `error`, `message`, `status`, `timestamp` (ISO), `retryAfter` | `RateLimitResponseWriter.java:29-45` |
-| **D** — Spring default `sendError` | `authenticationEntryPoint` lambda | `application/json` | `timestamp`, `status`, `error`, `path` — **no `message`** | `SpringSecurityConfiguration.java:89` |
+| **D** — Spring Security custom JSON | `authenticationEntryPoint` / `accessDeniedHandler` in `SpringSecurityConfiguration` | `application/json` | `error`, `message`, `status`, `timestamp`, `path` | `SpringSecurityConfiguration.java` |
 
-No `AccessDeniedHandler` is configured — 403 responses use Spring's default shape (same as D).
+**✅ FIXED (Phase 0):** `AccessDeniedHandler` now configured. Both entry point and access denied handler write proper JSON with `message` field.
 
-Additionally, 5 locations return `ResponseEntity` with **no body at all**:
+Additionally, 4 locations return `ResponseEntity` with **no body at all**:
 - `UserEndpoint.java:82` — 404 (no avatar)
-- `AuthEndpoint.java:72` — 503 (Google auth disabled)
 - `GlobalExceptionHandler.java:166` — 406 (Not Acceptable)
 - `GlobalExceptionHandler.java:174` — 405 (Method Not Allowed)
 - `GlobalExceptionHandler` — `AsyncRequestNotUsableException` → 503 (void return, client disconnected)
+
+**✅ FIXED (Phase 0):** `AuthEndpoint.java:72` — 503 (Google auth disabled) now returns `{message, status}` body.
 
 ### Backend: 29 custom exception classes + common base exceptions
 
@@ -39,24 +40,28 @@ The 4 common base exceptions have `@ResponseStatus` and are used heavily (26 thr
 ### Backend: unhandled JDK exceptions (hit catch-all → 500)
 
 14 `throw new IllegalStateException/IllegalArgumentException/SecurityException` sites have **no dedicated handler and no `@ResponseStatus`**, so they hit the catch-all and return 500:
-- `SecurityPrincipalProvider.java:29` — `"No authenticated UserEntity in security context"` (should be 401)
-- `GoogleAuthCallbackHandler.java:39` — `"Google account has no email"` (should be 400)
-- `GoogleTokenExchanger.java:48` — `"Google ID token verification failed"` (should be 401)
-- `AwsObjectStorage.java:84` — `SecurityException("Invalid directory path")` (should be 400)
-- `ProductReviewDtoConverter.java:61` — `"Unexpected product's rating value: X"` (should be 400)
-- `EmailVerificationService.java:104,112` — serialization failures (true 500)
-- `StripeWebhookBusinessProcessor.java:229` — `"No orderId in Stripe session metadata"` (true 500)
-- `SpringSecurityConfiguration.java:127,136,139` — startup config errors (not runtime)
-- `RateLimitingFilter.java:63,67` — startup config errors (not runtime)
-- `JwtBlacklistStore.java:62` — `"SHA-256 not available"` (true 500)
+- ~~`SecurityPrincipalProvider.java:29` — `"No authenticated UserEntity in security context"` (should be 401)~~ **✅ FIXED → throws `UnauthorizedException`**
+- ~~`GoogleAuthCallbackHandler.java:39` — `"Google account has no email"` (should be 400)~~ **✅ FIXED → throws `BadRequestException`**
+- ~~`GoogleTokenExchanger.java:48` — `"Google ID token verification failed"` (should be 401)~~ **✅ FIXED → throws `UnauthorizedException`**
+- ~~`AwsObjectStorage.java:84` — `SecurityException("Invalid directory path")` (should be 400)~~ **✅ FIXED → throws `BadRequestException`**
+- ~~`ProductReviewDtoConverter.java:61` — `"Unexpected product's rating value: X"` (should be 400)~~ **✅ FIXED → throws `BadRequestException`**
+- `EmailVerificationService.java:104,112` — serialization failures (true 500, leave as-is)
+- `StripeWebhookBusinessProcessor.java:229` — `"No orderId in Stripe session metadata"` (true 500, leave as-is)
+- `SpringSecurityConfiguration.java:127,136,139` — startup config errors (not runtime, leave as-is)
+- `RateLimitingFilter.java:63,67` — startup config errors (not runtime, leave as-is)
+- `JwtBlacklistStore.java:62` — `"SHA-256 not available"` (true 500, leave as-is)
 
-### Backend: `OrderExceptionHandler` scoping bug
+### Backend: `OrderExceptionHandler` scoping bug — ✅ FIXED
 
-`OrderExceptionHandler` is scoped to `basePackages = {"com.zufar.icedlatte.order.endpoint"}`. But `PaymentStatusService.java` (in the `payment` package) throws `OrderNotFoundException` and `OrderAccessDeniedException`. These bypass `OrderExceptionHandler` and hit the catch-all → **500 instead of 404/403**. These exceptions have no `@ResponseStatus`.
+`OrderExceptionHandler` is scoped to `basePackages = {"com.zufar.icedlatte.order.endpoint"}`. But `PaymentStatusService.java` (in the `payment` package) throws `OrderNotFoundException` and `OrderAccessDeniedException`. These bypass `OrderExceptionHandler` and hit the catch-all.
 
-### Backend: `ReviewModerationException` never reaches a controller
+**Fix applied:** Added `@ResponseStatus(NOT_FOUND)` to `OrderNotFoundException` and `@ResponseStatus(FORBIDDEN)` to `OrderAccessDeniedException`. The `GlobalExceptionHandler` catch-all resolves `@ResponseStatus` via `AnnotatedElementUtils.findMergedAnnotation()`, so these now return correct status codes regardless of which package throws them.
 
-`ReviewModerationException` is only thrown in the async `@TransactionalEventListener` path (`AsyncReviewProcessingService`), where it's caught and handled (review deleted). It **never propagates to a controller**. The frontend's hardcoded 422 message is dead code — no 422 is ever returned for review moderation. The first-pass finding H6 was incorrect.
+### Backend: `ReviewModerationException` never reaches a controller — ✅ DEFENSIVE FIX APPLIED
+
+`ReviewModerationException` is only thrown in the async `@TransactionalEventListener` path (`AsyncReviewProcessingService`), where it's caught and handled (review deleted). It **never propagates to a controller**. The frontend's hardcoded 422 message was dead code — no 422 is ever returned for review moderation.
+
+**Fix applied:** Added `@ResponseStatus(UNPROCESSABLE_ENTITY)` defensively. If this exception ever reaches a controller in the future, it will return 422 instead of 500.
 
 ### Backend: `UserNotFoundException` dual-status ambiguity
 
@@ -82,29 +87,39 @@ ErrorResponse:
 
 All 9 OpenAPI specs reference this same schema (some inline, all `$ref` to `common-schemas.yaml`).
 
-### Frontend: error handling (`apiError.ts`)
+### Frontend: error handling (`apiError.ts`) — ✅ FIXED
 
 ```typescript
-// src/shared/utils/apiError.ts — THE critical function
-if (status === 401 || status === 403) return 'Incorrect email or password'  // WRONG for 403
-if (status === 422) return 'Your review was rejected...'                     // WRONG; 422 never returned
-return data.message || data.error || 'An unknown error occurred'
+// src/shared/utils/apiError.ts — THE critical function (CURRENT STATE after Phase 0 fixes)
+export const handleAxiosError = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<ErrorResponse>
+    if (axiosError.response) {
+      const { status, data } = axiosError.response
+      if (status === 401) return data?.detail || data?.message || 'Please sign in to continue.'
+      if (status === 403) return data?.detail || data?.message || 'You do not have permission to perform this action.'
+      return data?.detail || data?.message || data?.error || 'An unknown error occurred'
+    }
+    return 'Network error. Please check your connection.'
+  }
+  return 'An unknown error occurred'
+}
 ```
 
-**Fields actually read at runtime:** `response.status`, `data.message`, `data.error` (fallback).
-**Fields declared but never read:** `httpStatusCode`, `timestamp`, `errors[]`.
+**Fields read at runtime:** `response.status`, `data.detail` (RFC 9457 ready), `data.message`, `data.error` (fallback).
+**Fields declared in `ErrorResponse` type but never read:** `type`, `title`, `instance`, `httpStatusCode`, `timestamp`, `errors[]`.
 
-### Frontend: Next.js proxy layer — CRITICAL for migration
+### Frontend: Next.js proxy layer — ✅ FIXED
 
-The proxy at `src/app/api/proxy/[...path]/route.ts` (line 174) parses backend responses:
+The proxy at `src/app/api/proxy/[...path]/route.ts` (line 175) now parses both content types:
 ```typescript
-contentType.includes('application/json') && rawBody
+(contentType.includes('application/json') || contentType.includes('application/problem+json')) && rawBody
   ? JSON.parse(rawBody) : rawBody
 ```
 
-**This will NOT match `application/problem+json`.** ProblemDetail responses would be treated as raw text strings, not parsed as JSON objects. The frontend would receive a string instead of an object, and `data.message` would be `undefined`.
+This is backward-compatible and ready for ProblemDetail responses.
 
-The proxy also emits synthetic errors with shape `{ error: 'API unavailable' }` (503) and `{ error: 'Invalid path' }` (400) for proxy-level failures — these are not ProblemDetail and must continue to work.
+The proxy also emits synthetic errors with shape `{ error: 'API unavailable' }` (503) and `{ error: 'Invalid path' }` (400) for proxy-level failures — these are not ProblemDetail and will continue to work (frontend reads `data.error` as fallback).
 
 ### Frontend: no error boundaries, no error logging
 
@@ -119,11 +134,53 @@ The proxy also emits synthetic errors with shape `{ error: 'API unavailable' }` 
 | Pattern | Where | Behavior |
 |---|---|---|
 | `handleError()` → `errorMessage` state → rendered | `LoginForm`, `RegistrationForm`, `VerifyEmailCodeForm`, `ForgotPassForm`, `AuthResetPassForm`, `GuestResetPassForm`, `FormProfile`, `ReviewForm` | ✅ Works — shows `errorMessage` inline |
-| `handleError()` → `errorMessage` state → **never rendered** | `ReviewsList`, `ImageUpload`, `UserBar`, `ProductWithReviews`, `ReviewsSection` | ❌ Error swallowed — user sees nothing |
-| Hardcoded error strings | `OrderCard.tsx` (`'Could not cancel order.'`, etc.) | Backend message discarded |
-| `.catch(() => {})` — silently swallowed | `cart.mutations.ts`, `cartStore.ts`, `useSearchBar.ts`, `ProfileScreen.tsx`, `session.ts`, `favorites.mutations.ts`, `favorites.sync.ts`, `useCheckoutForm.ts`, `addresses/store.ts`, `useLogout.ts` | ❌ Error invisible |
-| `lastError` set in store, never rendered | `cartStore.ts` | ❌ Error invisible |
-| `AuthInterceptor` → refresh → redirect | 401 handling | ✅ Functional but message always wrong |
+| `handleError()` → `errorMessage` state → rendered | `ImageUpload` | ✅ FIXED — now renders error below avatar |
+| `handleError()` → `errorMessage` state → **never rendered** | `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` | ❌ Error swallowed — user sees nothing (fix in Phase 3.2) |
+| Hardcoded error strings | `OrderCard.tsx` (`'Could not cancel order.'`, etc.) | Backend message discarded (UX choice, not a bug) |
+| `setCartError()` → `lastError` in store | `cart.mutations.ts`, `cart.sync.ts` | ✅ FIXED — now reads backend `data.message` via `handleAxiosError` |
+| `error` state in address store | `addresses/store.ts` | ✅ FIXED — all mutations now have try/catch with `handleAxiosError` |
+| `.catch(() => {})` — silently swallowed | `useSearchBar.ts`, `ProfileScreen.tsx`, `session.ts`, `favorites.mutations.ts`, `favorites.sync.ts`, `useLogout.ts` | ⚠️ Intentional for most (optimistic rollback, logout, session bootstrap) |
+| `setError(getCheckoutUnavailableMessage())` | `useCheckoutForm.ts` | Hardcoded checkout error (intentional — don't expose Stripe internals) |
+| `AuthInterceptor` → refresh → redirect | 401 handling | ✅ Functional — only checks status code, never reads body |
+
+### Frontend: `ErrorResponse` TypeScript type — ✅ UPDATED
+
+```typescript
+// src/shared/types/ErrorResponse.ts (CURRENT STATE)
+export type ErrorResponse = {
+  // RFC 9457 ProblemDetail fields
+  type?: string
+  title?: string
+  status?: number
+  detail?: string
+  instance?: string
+  // Current backend fields
+  message?: string
+  error?: string
+  // Extensions
+  timestamp?: string
+  errors?: Array<{ field: string; message: string }>
+}
+```
+
+All fields optional — safe for both current `ApiErrorResponse` and future `ProblemDetail` shapes.
+
+### Frontend: cart error handling — ✅ FIXED
+
+```typescript
+// src/features/cart/utils/cartStoreHelpers.ts (CURRENT STATE)
+export function setCartError(set: StoreSet, fallbackMessage: string, err: unknown): void {
+  const message = handleAxiosError(err)
+  set({
+    lastError: message === 'An unknown error occurred' ? fallbackMessage : message,
+    status: 'error',
+  })
+}
+```
+
+Previously read `err.message` (Axios's "Request failed with status code 400"). Now extracts the backend's actual message via `handleAxiosError`.
+
+**Note:** `lastError` is set in the cart store but **never rendered in any component**. This is a remaining gap (G6 in the audit) — the cart store has error state but no UI displays it. Fix in Phase 3 or via toast notifications.
 
 ---
 
@@ -131,41 +188,124 @@ The proxy also emits synthetic errors with shape `{ error: 'API unavailable' }` 
 
 ### Critical (will break things or already broken)
 
-| # | Issue | Backend | Frontend | Impact |
+| # | Issue | Backend | Frontend | Status |
 |---|---|---|---|---|
-| **C1** | 403 shows "Incorrect email or password" | `OrderAccessDeniedException` → 403, `SessionOwnershipException` → 403 | `apiError.ts:16` hardcodes auth message for all 403 | User told wrong password when they lack permission |
-| **C2** | 422 hardcoded to review rejection | `ReviewModerationException` is async-only — 422 is **never returned** to the client | `apiError.ts:18` hardcodes review message for all 422 | Dead code today, but will show wrong message for any future 422 |
-| **C3** | No `AccessDeniedHandler` | Spring default 403 body has no `message` field | Falls to hardcoded "Incorrect email or password" anyway, but if fixed, `data.message` → `undefined` | |
-| **C4** | OpenAPI `ErrorResponse` ≠ actual `ApiErrorResponse` | `httpStatusCode` vs `status`, `errors[{field,message}]` vs `details[string]`, timestamp format mismatch, `path` never sent | Any generated client would break | API docs lie to consumers |
-| **C5** | **Proxy blocks `application/problem+json`** | ProblemDetail responses use `application/problem+json` content type | Proxy line 174: `contentType.includes('application/json')` won't match `+json` — response treated as raw text | **Every error becomes "An unknown error occurred"** |
-| **C6** | `OrderExceptionHandler` scoping bug | `OrderNotFoundException`/`OrderAccessDeniedException` thrown from `payment` package bypass scoped handler → catch-all returns **500** | Frontend sees 500 instead of 404/403 | Pre-existing bug, must fix during migration |
+| **C1** | ~~403 shows "Incorrect email or password"~~ | `OrderAccessDeniedException` → 403, `SessionOwnershipException` → 403 | `apiError.ts` now returns `data?.message` for 403 | **✅ FIXED** |
+| **C2** | ~~422 hardcoded to review rejection~~ | `ReviewModerationException` is async-only — 422 is **never returned** to the client | Hardcoded 422 message removed | **✅ FIXED** |
+| **C3** | ~~No `AccessDeniedHandler`~~ | Added `accessDeniedHandler` in `SpringSecurityConfiguration` | Frontend reads `data?.message` | **✅ FIXED** |
+| **C4** | OpenAPI `ErrorResponse` ≠ actual `ApiErrorResponse` | `httpStatusCode` vs `status`, `errors[{field,message}]` vs `details[string]`, timestamp format mismatch, `path` never sent | Any generated client would break | ⏳ Fix in Phase 1.7 |
+| **C5** | ~~Proxy blocks `application/problem+json`~~ | ProblemDetail responses use `application/problem+json` content type | Proxy now matches both `application/json` and `application/problem+json` | **✅ FIXED** |
+| **C6** | ~~`OrderExceptionHandler` scoping bug~~ | Added `@ResponseStatus` to both exceptions | Frontend now sees correct 404/403 | **✅ FIXED** |
 
 ### High (information leakage or lost functionality)
 
-| # | Issue | Details |
-|---|---|---|
-| **H1** | `errors[]` validation array never read by frontend | Backend sends `[{field: "email", message: "must not be blank"}]` — user sees only "Validation failed" with no field details |
-| **H2** | `retryAfter` from rate limiter ignored | No countdown/backoff UI |
-| **H3** | `requestId` from JWT filter ignored | No log correlation for support |
-| **H4** | 5 components call `handleError()` but never render `errorMessage` | `ReviewsList`, `ImageUpload`, `UserBar`, `ProductWithReviews`, `ReviewsSection` |
-| **H5** | Cart errors silently swallowed | `.catch(() => {})` in `cart.mutations.ts`, `cartStore.ts` |
-| **H6** | 14 JDK exception throw sites → 500 | `IllegalStateException`/`IllegalArgumentException`/`SecurityException` with no handler — several should be 400/401 |
-| **H7** | Empty-body error responses | 5 locations return `ResponseEntity` with no body — clients expecting ProblemDetail get nothing |
-| **H8** | No frontend error boundaries | Only `/product/[id]` has an error boundary — parsing failures during migration crash pages with no recovery |
-| **H9** | No frontend error logging | No Sentry/DataDog — cannot detect if new response shape causes silent failures in production |
-| **H10** | `UserNotFoundException` dual-status | Handled as 401 everywhere, but semantically wrong for non-auth contexts (admin lookup → should be 404) |
+| # | Issue | Details | Status |
+|---|---|---|---|
+| **H1** | `errors[]` validation array never read by frontend | Backend sends `[{field: "email", message: "must not be blank"}]` — user sees only "Validation failed" with no field details | ⏳ Phase 3.4 |
+| **H2** | `retryAfter` from rate limiter ignored | No countdown/backoff UI | ⏳ Out of scope |
+| **H3** | `requestId` from JWT filter ignored | No log correlation for support | ⏳ Out of scope |
+| **H4** | ~~5 components call `handleError()` but never render `errorMessage`~~ | `ImageUpload` fixed. Remaining: `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` | **1/5 FIXED**, rest ⏳ Phase 3.2 |
+| **H5** | ~~Cart errors silently swallowed~~ | `setCartError` now extracts backend message via `handleAxiosError` | **✅ FIXED** (but `lastError` still not rendered in UI) |
+| **H6** | ~~14 JDK exception throw sites → 500~~ | 5 runtime throw sites fixed (replaced with proper exceptions). 9 remaining are startup-only or true 500s. | **✅ FIXED** |
+| **H7** | ~~Empty-body error response (AuthEndpoint 503)~~ | Now returns `{message, status}` body | **✅ FIXED** |
+| **H8** | No frontend error boundaries | Only `/product/[id]` has an error boundary — parsing failures during migration crash pages with no recovery | ⏳ Out of scope |
+| **H9** | No frontend error logging | No Sentry/DataDog — cannot detect if new response shape causes silent failures in production | ⏳ Out of scope |
+| **H10** | `UserNotFoundException` dual-status | Handled as 401 everywhere, but semantically wrong for non-auth contexts (admin lookup → should be 404) | ⏳ Phase 1 decision |
 
 ### Medium (inconsistency, not broken)
 
-| # | Issue | Details |
-|---|---|---|
-| **M1** | 4 different JSON shapes from backend | Handlers (shape A), JWT filter (shape B), rate limiter (shape C), Spring default (shape D) |
-| **M2** | Timestamp format inconsistency | Handlers: `"yyyy-MM-dd HH:mm:ss"`, Filters: ISO-8601, OpenAPI: `date-time` |
-| **M3** | Status field name inconsistency | Handlers: `httpStatusCode`, Filters: `status`, OpenAPI: `status` |
-| **M4** | `OrderCard.tsx` discards backend error messages | Uses hardcoded strings like "Could not cancel order." — loses context like "Cancellation window expired" |
-| **M5** | Handler ordering fragility | `CommonExceptionHandler` and `GlobalExceptionHandler` both have no `@Order` — ambiguous resolution |
-| **M6** | `react-toastify` installed but never used | `<ToastContainer />` mounted in `layout.tsx`, `toast()` never called — dead code, missed opportunity for non-form errors |
-| **M7** | `ReviewModerationException` has no `@ResponseStatus` | Currently irrelevant (async-only), but if ever thrown synchronously, would hit catch-all → 500 |
+| # | Issue | Details | Status |
+|---|---|---|---|
+| **M1** | 4 different JSON shapes from backend | Handlers (shape A), JWT filter (shape B), rate limiter (shape C), Spring Security (shape D) — all include `message` field now | ⏳ Unify in Phase 1 |
+| **M2** | Timestamp format inconsistency | Handlers: `"yyyy-MM-dd HH:mm:ss"`, Filters: ISO-8601, OpenAPI: `date-time` | ⏳ Standardize in Phase 1 |
+| **M3** | Status field name inconsistency | Handlers: `httpStatusCode`, Filters: `status`, OpenAPI: `status` | ⏳ Standardize in Phase 1 |
+| **M4** | `OrderCard.tsx` discards backend error messages | Uses hardcoded strings like "Could not cancel order." — loses context like "Cancellation window expired" | ⏳ UX decision (Phase 3) |
+| **M5** | Handler ordering fragility | `CommonExceptionHandler` and `GlobalExceptionHandler` both have no `@Order` — ambiguous resolution | ⏳ Phase 1 |
+| **M6** | `react-toastify` installed but never used | `<ToastContainer />` mounted in `layout.tsx`, `toast()` never called — dead code, missed opportunity for non-form errors | ⏳ Out of scope |
+| **M7** | ~~`ReviewModerationException` has no `@ResponseStatus`~~ | Added `@ResponseStatus(UNPROCESSABLE_ENTITY)` defensively | **✅ FIXED** |
+| **M8** | `FileUploadException` handler HTTP status/body mismatch | `@ResponseStatus(500)` but 503 branch in body — HTTP status and body `httpStatusCode` disagreed | **✅ FIXED** — now uses `ResponseEntity` |
+
+---
+
+## End-to-end error flow reference (current state after Phase 0)
+
+This section documents the exact path each error takes from backend to user, for implementation reference.
+
+### Error pipeline architecture
+
+```
+Backend Exception
+  → @ExceptionHandler (or filter-level writer)
+    → HTTP Response {status, Content-Type: application/json, body: JSON}
+      → Next.js Proxy (src/app/api/proxy/[...path]/route.ts)
+        → Preserves status code, parses JSON body, forwards to client
+          → Axios response interceptor (AuthInterceptor.tsx)
+            → If 401: attempt refresh, redirect on failure
+            → Otherwise: pass through to component
+              → Component catch block
+                → handleAxiosError(err) extracts message
+                  → Displayed to user (or swallowed)
+```
+
+### Backend handler → response body mapping
+
+| Handler class | Exception | HTTP Status | Body `message` field value |
+|---|---|---|---|
+| `SignInExceptionHandler` | `BadCredentialsException` | 401 | "The login credentials are invalid." |
+| `SignInExceptionHandler` | `UserNotFoundException` | 401 | "The user with email '{email}' is not found." |
+| `SignInExceptionHandler` | `UserRegistrationException` | 400 | "User with email '{email}' already exists." |
+| `SignInExceptionHandler` | `UserAccountLockedException` | 401 | "User account is locked." |
+| `UserExceptionHandler` | `UserNotFoundException` | 401 | "The user with id '{id}' is not found." |
+| `UserExceptionHandler` | `InvalidAvatarFileTypeException` | 400 | "Invalid avatar file type: {type}. Allowed: {types}" |
+| `OrderExceptionHandler` | `OrderNotFoundException` | 404 | "Order not found." |
+| `OrderExceptionHandler` | `OrderAccessDeniedException` | 403 | "Access denied." |
+| `OrderExceptionHandler` | `InvalidOrderStateTransitionException` | 409 | "Cannot transition order from {from} to {to}." |
+| `OrderExceptionHandler` | `OrderCancellationWindowExpiredException` | 409 | "Order cannot be cancelled: cancellation window has expired." |
+| `PaymentExceptionHandler` | `StripeSessionCreationException` | 502 | "Failed to create Stripe checkout session." |
+| `PaymentExceptionHandler` | `PaymentEventProcessingException` | 400 | varies |
+| `CommonExceptionHandler` | `FileReadException` | 400 | "Failed to read file: {name}" |
+| `CommonExceptionHandler` | `FileUploadException` | 500/503 | "Failed to upload file: {name}" / "File storage is not available" |
+| `GlobalExceptionHandler` | `MethodArgumentNotValidException` | 400 | "Validation failed" + `errors[]` array |
+| `GlobalExceptionHandler` | `ConstraintViolationException` | 400 | "Validation failed" + `errors[]` array |
+| `GlobalExceptionHandler` | `MaxUploadSizeExceededException` | 413 | "Maximum upload size exceeded" |
+| `GlobalExceptionHandler` | `NoResourceFoundException` | 404 | "No resource found for {method} {path}" |
+| `GlobalExceptionHandler` | Catch-all (with `@ResponseStatus`) | varies | exception message |
+| `GlobalExceptionHandler` | Catch-all (without `@ResponseStatus`) | 500 | "An internal server error occurred." |
+
+### Filter-level → response body mapping
+
+| Source | HTTP Status | Body shape | Key fields |
+|---|---|---|---|
+| `JwtAuthenticationFilter` | 401/500 | `{error, message, status, timestamp, requestId}` | `message`: "Authentication failed: {reason}" |
+| `RateLimitResponseWriter` | 429 | `{error, message, status, timestamp, retryAfter}` | `message`: "Too many requests. Please try again later." |
+| `SpringSecurityConfiguration` entryPoint | 401 | `{error, message, status, timestamp, path}` | `message`: "Unauthorized" |
+| `SpringSecurityConfiguration` accessDenied | 403 | `{error, message, status, timestamp, path}` | `message`: "Access denied" |
+
+### Frontend component → error display mapping
+
+| Component | Error source | Uses `handleAxiosError`? | Displays to user? | What user sees |
+|---|---|---|---|---|
+| `LoginForm` | `/auth/authenticate` 401 | Yes | Yes (inline) | "The login credentials are invalid." |
+| `RegistrationForm` | `/auth/register` 400/409 | Yes | Yes (inline) | Backend message |
+| `FormProfile` | `/users` 400 | Yes | Yes (inline) | "Validation failed" (no field details) |
+| `ReviewForm` | `/reviews` 400 | Yes | Yes (inline) | Backend message |
+| `OrderCard` | `/orders/*` 403/404/409 | **No** | Yes (hardcoded) | "Could not cancel order." etc. |
+| `ImageUpload` | `/users/avatar` 400/413/500 | Yes | **Yes (fixed)** | Backend message |
+| `CartPage` (via store) | `/cart/*` 400/404 | Yes (via `setCartError`) | **No** (`lastError` not rendered) | Nothing visible |
+| `AddressForm` (via store) | `/users/addresses` 400 | Yes | Yes (via store `error`) | Backend message |
+| `CheckoutForm` | `/payment/checkout` 502 | **No** | Yes (hardcoded) | Config message |
+| `ProductPage` | `/products/{id}` 404 | **No** (checks status) | Yes (Next.js 404) | Not Found page |
+| `AuthInterceptor` | Any 401 | **No** (only checks status) | Redirect to `/signin` | Sign-in page |
+
+### Key implementation notes for Phase 1
+
+1. **`message` field MUST be present** in every ProblemDetail response — it's the primary field the frontend reads. Set it equal to `detail`.
+2. **`error` field SHOULD be present** — it's the fallback for Spring Boot's `BasicErrorController` responses and proxy-level errors. Set it equal to `title`.
+3. **Content-Type should remain `application/json`** for handlers — the proxy handles `application/problem+json` too, but `application/json` is safer for defense-in-depth.
+4. **`errors[]` array must keep shape `[{field, message}]`** — even though frontend doesn't render it yet, the type is declared and Phase 3.4 will use it.
+5. **Filter-level responses** (JWT, rate limiter, security config) should adopt the same ProblemDetail shape but can keep `application/json` content type since they write directly to `HttpServletResponse`.
+6. **The `httpStatusCode` field can be dropped** — no frontend code reads it (verified by grep). Replace with `status` (ProblemDetail standard).
+7. **Timestamp format should standardize to ISO-8601** — filters already use it, handlers use `"yyyy-MM-dd HH:mm:ss"`. No frontend code parses timestamps.
 
 ---
 
@@ -315,41 +455,64 @@ Fields dropped: `httpStatusCode` (use `status`), old timestamp format.
 
 ## Implementation steps
 
-### Phase 0: Pre-migration fixes (backend + frontend, separate PRs)
+### Phase 0: Pre-migration fixes (backend + frontend, separate PRs) — ✅ COMPLETED
 
-These fix pre-existing bugs and prepare the ground. Deploy before the ProblemDetail migration.
+All Phase 0 fixes have been implemented and verified (backend: 650 tests pass, frontend: 160 tests pass).
 
-#### Step 0.1: Fix `OrderExceptionHandler` scoping bug
+#### Step 0.1: Fix `OrderExceptionHandler` scoping bug — ✅ DONE
 
-Either remove `basePackages` scope from `OrderExceptionHandler` (make it global), or add `@ResponseStatus(NOT_FOUND)` to `OrderNotFoundException` and `@ResponseStatus(FORBIDDEN)` to `OrderAccessDeniedException`. The latter is safer — it fixes the bug without changing handler routing.
+Added `@ResponseStatus(NOT_FOUND)` to `OrderNotFoundException` and `@ResponseStatus(FORBIDDEN)` to `OrderAccessDeniedException`. Also changed exception messages to not leak UUIDs.
 
-#### Step 0.2: Fix frontend proxy content-type check
+#### Step 0.2: Fix frontend proxy content-type check — ✅ DONE
 
-In `src/app/api/proxy/[...path]/route.ts` line 174, change:
-```typescript
-contentType.includes('application/json') && rawBody
-```
-to:
+In `src/app/api/proxy/[...path]/route.ts` line 175:
 ```typescript
 (contentType.includes('application/json') || contentType.includes('application/problem+json')) && rawBody
 ```
 
-This is backward-compatible — deploy it before the backend migration.
+Test added to verify `application/problem+json` parsing.
 
-#### Step 0.3: Deploy frontend `apiError.ts` fix FIRST
+#### Step 0.3: Deploy frontend `apiError.ts` fix — ✅ DONE
 
-The updated `handleAxiosError` (see Phase 3, Step 3.1) reads `data.detail || data.message` — this is backward-compatible with the current backend. Deploy it before the backend ProblemDetail migration to eliminate the window where the frontend can't parse new responses.
+The updated `handleAxiosError` reads `data?.detail || data?.message` — backward-compatible with current backend, forward-compatible with ProblemDetail.
 
-#### Step 0.4: Add `@ResponseStatus` to unhandled exceptions
+Additional fixes applied:
+- **Network error message:** Axios errors without response now return "Network error. Please check your connection." instead of "An unknown error occurred"
+- **Cart error helper:** `setCartError` now uses `handleAxiosError` to extract backend message instead of Axios's generic `Error.message`
+- **Address store:** Added try/catch to `add/update/remove/setDefault` — errors extracted via `handleAxiosError` and stored in `error` state
+- **ImageUpload:** Now renders `errorMessage` so upload failures are visible
 
-Add `@ResponseStatus` to exceptions that currently hit the catch-all with wrong status:
-- `OrderNotFoundException` → `@ResponseStatus(NOT_FOUND)` (if not done in 0.1)
-- `OrderAccessDeniedException` → `@ResponseStatus(FORBIDDEN)` (if not done in 0.1)
-- `ReviewModerationException` → `@ResponseStatus(UNPROCESSABLE_ENTITY)` (defensive, even though async-only)
+#### Step 0.4: Add `@ResponseStatus` to unhandled exceptions — ✅ DONE
 
-#### Step 0.5: Add temporary `console.error` logging in frontend
+- `OrderNotFoundException` → `@ResponseStatus(NOT_FOUND)`
+- `OrderAccessDeniedException` → `@ResponseStatus(FORBIDDEN)`
+- `ReviewModerationException` → `@ResponseStatus(UNPROCESSABLE_ENTITY)` (defensive)
 
-Add `console.error('[API Error]', status, data)` in `handleAxiosError` during the migration window. Remove after confirming stable. This compensates for the lack of Sentry.
+#### Step 0.5: Fix JDK exception throw sites — ✅ DONE
+
+Replaced 5 runtime `IllegalStateException`/`IllegalArgumentException`/`SecurityException` throws with proper typed exceptions:
+- `SecurityPrincipalProvider` → `UnauthorizedException("Authentication required.")`
+- `GoogleAuthCallbackHandler` → `BadRequestException("Google account has no email.")`
+- `GoogleTokenExchanger` → `UnauthorizedException("Google authentication failed.")`
+- `AwsObjectStorage` → `BadRequestException("Invalid directory path.")`
+- `ProductReviewDtoConverter` → `BadRequestException("Invalid product rating value.")`
+
+#### Step 0.6: Fix Spring Security error responses — ✅ DONE
+
+- `authenticationEntryPoint` now writes proper JSON `{error, message, status, timestamp, path}` (was `sendError` with no body)
+- Added `accessDeniedHandler` writing same shape for 403
+
+#### Step 0.7: Fix empty-body 503 response — ✅ DONE
+
+`AuthEndpoint.initiateGoogleAuth()` now returns `{message: "Google authentication is not available.", status: 503}` instead of empty body.
+
+#### Step 0.8: Fix `FileUploadException` handler status mismatch — ✅ DONE
+
+Changed from `@ResponseStatus(INTERNAL_SERVER_ERROR)` with conditional 503 body to `ResponseEntity` return type so each branch sets its own correct HTTP status (500 for generic failure, 503 for storage unavailable).
+
+#### Step 0.9: Add temporary `console.error` logging in frontend — ⏳ TODO (optional)
+
+Add `console.error('[API Error]', status, data)` in `handleAxiosError` during the migration window. Remove after confirming stable.
 
 ### Phase 1: Backend — unified ProblemDetail responses
 
@@ -390,24 +553,18 @@ Migration order (lowest risk first):
 
 **`RateLimitResponseWriter.writeTooManyRequests()`**: Same — produce ProblemDetail-shaped JSON. Keep `retryAfter` as extension property (redundant with `Retry-After` header, but removing it is a breaking change). Keep `Retry-After` header.
 
-**`SpringSecurityConfiguration` `authenticationEntryPoint`**: Replace `response.sendError()` lambda with a custom `AuthenticationEntryPoint` bean that writes ProblemDetail JSON. This fixes the missing `message` field in 401 responses.
-
-**Add `AccessDeniedHandler`**: New bean in `SpringSecurityConfiguration` that writes ProblemDetail JSON with type `access-denied`, status 403. This fixes C3.
+**`SpringSecurityConfiguration` `authenticationEntryPoint` and `accessDeniedHandler`**: Already write proper JSON with `{error, message, status, timestamp, path}` (Phase 0.6). During Phase 1, update the shape to include ProblemDetail fields (`type`, `title`, `detail`, `instance`). The `message` field is already present — just add the new fields alongside it.
 
 #### Step 1.4: Convert empty-body `ResponseEntity` returns
 
 - `UserEndpoint.java:82` — return ProblemDetail body with type `about:blank`, detail "User has no avatar"
-- `AuthEndpoint.java:72` — return ProblemDetail body with detail "Google authentication is not available"
+- ~~`AuthEndpoint.java:72`~~ — **✅ ALREADY FIXED** (Phase 0.7) — returns `{message, status}`. During Phase 1, upgrade to full ProblemDetail shape.
 - `GlobalExceptionHandler` 405/406 — return ProblemDetail body instead of `ResponseEntity<Void>`
 - `AsyncRequestNotUsableException` — leave as void (client already disconnected)
 
-#### Step 1.5: Add handlers for JDK exceptions that should not be 500
+#### Step 1.5: ~~Add handlers for JDK exceptions that should not be 500~~ — ✅ ALREADY DONE (Phase 0.5)
 
-Add to `GlobalExceptionHandler`:
-- `SecurityException` → 400
-- `IllegalArgumentException` from known throw sites → 400
-
-Or better: replace the throw sites in `SecurityPrincipalProvider`, `GoogleAuthCallbackHandler`, `GoogleTokenExchanger`, `AwsObjectStorage`, `ProductReviewDtoConverter` with custom exceptions that have `@ResponseStatus`.
+The 5 runtime throw sites have been replaced with proper typed exceptions (`UnauthorizedException`, `BadRequestException`). No further action needed.
 
 #### Step 1.6: Delete old classes
 
@@ -487,65 +644,54 @@ Any REST Assured / MockMvc tests asserting on `message` / `httpStatusCode` → a
 
 ### Phase 3: Frontend fixes (separate PR, can be done in parallel)
 
-#### Step 3.1: Fix `apiError.ts` — the critical function
+#### Step 3.1: Fix `apiError.ts` — ✅ ALREADY DONE (Phase 0.3)
 
+Current state:
 ```typescript
 export const handleAxiosError = (error: unknown): string => {
-  if (!axios.isAxiosError(error) || !error.response) {
-    return 'An unknown error occurred'
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<ErrorResponse>
+    if (axiosError.response) {
+      const { status, data } = axiosError.response
+      if (status === 401) return data?.detail || data?.message || 'Please sign in to continue.'
+      if (status === 403) return data?.detail || data?.message || 'You do not have permission to perform this action.'
+      return data?.detail || data?.message || data?.error || 'An unknown error occurred'
+    }
+    return 'Network error. Please check your connection.'
   }
-
-  const { status, data } = error.response
-
-  // Auth failures — redirect handled by AuthInterceptor,
-  // this is the fallback message
-  if (status === 401) {
-    return data?.detail || data?.message || 'Please sign in to continue.'
-  }
-
-  // Authorization failures — NOT auth failures
-  if (status === 403) {
-    return data?.detail || data?.message || 'You do not have permission to perform this action.'
-  }
-
-  // Use backend message (detail for ProblemDetail, message for legacy)
-  return data?.detail || data?.message || data?.title || data?.error || 'An unknown error occurred'
+  return 'An unknown error occurred'
 }
 ```
 
-This fixes: C1 (403 message), C2 (422 hardcoding removed), and works with both old and new response shapes during rolling deployment.
+This reads `detail` first (ProblemDetail), falls back to `message` (current format), then `error` (Spring defaults). Works with both old and new response shapes during rolling deployment.
 
 #### Step 3.2: Fix components that call `handleError()` but never render `errorMessage`
 
-Add `{errorMessage && <p className="text-negative text-sm">{errorMessage}</p>}` to:
+Add `{errorMessage && <p className="text-negative text-sm" role="alert">{errorMessage}</p>}` to:
+- ~~`ImageUpload.tsx`~~ **✅ DONE**
 - `ReviewsList.tsx`
-- `ImageUpload.tsx`
 - `UserBar.tsx`
 - `ProductWithReviews.tsx`
 - `ReviewsSection.tsx`
 
-#### Step 3.3: Update `ErrorResponse` type
+#### Step 3.3: Update `ErrorResponse` type — ✅ ALREADY DONE (Phase 0.3)
 
-```typescript
-export type ErrorResponse = {
-  // RFC 9457 ProblemDetail fields
-  type?: string
-  title?: string
-  status?: number
-  detail?: string
-  instance?: string
-  // Backward-compatible aliases
-  message?: string
-  error?: string
-  // Extensions
-  timestamp?: string
-  errors?: Array<{ field: string; message: string }>
-}
-```
+Current state includes all RFC 9457 fields plus backward-compatible aliases, all optional.
 
 #### Step 3.4: (Optional) Read `errors[]` for validation
 
-In form components (`LoginForm`, `RegistrationForm`, etc.), map server-side `errors[]` to field-level error display. This is a larger UX improvement — can be a follow-up.
+In form components (`LoginForm`, `RegistrationForm`, `FormProfile`), map server-side `errors[]` to field-level error display. This is a larger UX improvement — can be a follow-up.
+
+#### Step 3.5: (Optional) Render cart `lastError` in UI
+
+The cart store's `lastError` is now correctly populated with backend messages, but no component renders it. Options:
+- Add inline error display in cart page
+- Use `react-toastify` `toast.error(lastError)` when it changes
+- Both
+
+#### Step 3.6: (Optional) Activate `react-toastify` for non-form errors
+
+`<ToastContainer />` is already mounted in `layout.tsx`. Components that handle errors in background (favorites sync, cart sync, address operations) could call `toast.error(message)` instead of/in addition to setting state.
 
 ---
 
@@ -572,31 +718,75 @@ In form components (`LoginForm`, `RegistrationForm`, etc.), map server-side `err
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| **Proxy blocks `application/problem+json`** | Every error becomes "An unknown error occurred" | **Phase 0.2**: fix proxy content-type check BEFORE backend migration. Also: use `application/json` content type on handlers as defense-in-depth |
-| Frontend reads `data.message` | Every error shows fallback if `message` missing | Include `message` as extension property (duplicating `detail`) — **P0** |
-| Frontend reads `data.error` as fallback | Fallback breaks if `error` missing | Include `error` as extension property (duplicating `title`) — **P0** |
-| No frontend error boundaries | Parsing failure during migration crashes most pages | Deploy frontend changes (Phase 0.3) BEFORE backend migration |
-| No frontend error logging | Cannot detect silent failures in production | Add temporary `console.error` logging (Phase 0.5) |
-| `OrderExceptionHandler` scoping bug | 500 instead of 404/403 for payment-thrown order exceptions | Fix in Phase 0.1 before migration |
-| JDK exceptions → 500 | `IllegalStateException` etc. leak internal messages | Add handlers or replace with custom exceptions (Step 1.5) |
-| Filter-level responses not migrated | 4 different JSON shapes persist | Migrate filters in same PR — Step 1.3 |
-| Rolling deployment window | Some backend instances serve old format, some new | Frontend reads `data.detail \|\| data.message` — works with both |
-| External QA repo integration tests | May assert on old field names | `message` alias ensures backward compat. Coordinate with QA. |
-| `spring.mvc.problemdetails.enabled=true` | Changes actuator error responses, may break monitoring | Do NOT enable this flag. Handle ProblemDetail manually in handlers. |
-| OpenAPI-generated clients | Currently broken anyway (field name mismatches) | Fix is net positive |
+| Risk | Impact | Mitigation | Status |
+|---|---|---|---|
+| **Proxy blocks `application/problem+json`** | Every error becomes "An unknown error occurred" | **Phase 0.2**: fix proxy content-type check BEFORE backend migration. Also: use `application/json` content type on handlers as defense-in-depth | **✅ MITIGATED** |
+| Frontend reads `data.message` | Every error shows fallback if `message` missing | Include `message` as extension property (duplicating `detail`) — **P0** | Design decision for Phase 1 |
+| Frontend reads `data.error` as fallback | Fallback breaks if `error` missing | Include `error` as extension property (duplicating `title`) — **P0** | Design decision for Phase 1 |
+| No frontend error boundaries | Parsing failure during migration crashes most pages | Deploy frontend changes (Phase 0.3) BEFORE backend migration | **✅ MITIGATED** (frontend already handles both shapes) |
+| No frontend error logging | Cannot detect silent failures in production | Add temporary `console.error` logging (Phase 0.9) | ⏳ Optional |
+| `OrderExceptionHandler` scoping bug | 500 instead of 404/403 for payment-thrown order exceptions | Fix in Phase 0.1 before migration | **✅ MITIGATED** |
+| JDK exceptions → 500 | `IllegalStateException` etc. leak internal messages | Add handlers or replace with custom exceptions (Step 0.5) | **✅ MITIGATED** |
+| Filter-level responses not migrated | 4 different JSON shapes persist | Migrate filters in same PR — Step 1.3 | ⏳ Phase 1 |
+| Rolling deployment window | Some backend instances serve old format, some new | Frontend reads `data.detail \|\| data.message` — works with both | **✅ MITIGATED** |
+| External QA repo integration tests | May assert on old field names | `message` alias ensures backward compat. Coordinate with QA. | ⏳ Phase 1 |
+| `spring.mvc.problemdetails.enabled=true` | Changes actuator error responses, may break monitoring | Do NOT enable this flag. Handle ProblemDetail manually in handlers. | Design decision |
+| OpenAPI-generated clients | Currently broken anyway (field name mismatches) | Fix is net positive | ⏳ Phase 1.7 |
+| Cart `lastError` never rendered | Users get no feedback on cart operation failures | `setCartError` now extracts correct message; rendering is Phase 3.5 | **Partially mitigated** |
+| Address store unhandled rejections | Crash risk, no user feedback | Added try/catch with `handleAxiosError` | **✅ MITIGATED** |
 
 ---
 
 ## Sequencing (deploy order matters)
 
-1. **Frontend PR 0** (Phase 0.2, 0.3, 0.5): Fix proxy content-type check, update `apiError.ts` to read `detail || message`, add temp logging. **Deploy first** — backward-compatible with current backend.
-2. **Backend PR 0** (Phase 0.1, 0.4): Fix `OrderExceptionHandler` scoping, add `@ResponseStatus` to unhandled exceptions. **Deploy second** — fixes pre-existing bugs.
-3. **Backend PR 1** (Phase 1 + 2): Full ProblemDetail migration — handlers, filters, tests, OpenAPI. **Deploy third** — frontend already handles new shape.
-4. **Frontend PR 1** (Phase 3.2, 3.3): Fix unrendered `errorMessage` components, update `ErrorResponse` type. **Deploy fourth** — polish.
-5. **Frontend PR 2** (Phase 3.4, follow-up): Validation `errors[]` display, activate toast for non-form errors.
+1. ~~**Frontend PR 0** (Phase 0.2, 0.3): Fix proxy content-type check, update `apiError.ts` to read `detail || message`.~~ **✅ DONE & VERIFIED**
+2. ~~**Backend PR 0** (Phase 0.1, 0.4, 0.5, 0.6, 0.7, 0.8): Fix `OrderExceptionHandler` scoping, add `@ResponseStatus`, fix JDK exceptions, fix security handlers, fix empty-body 503, fix FileUploadException status mismatch.~~ **✅ DONE & VERIFIED**
+3. **Backend PR 1** (Phase 1 + 2): Full ProblemDetail migration — handlers, filters, tests, OpenAPI. **Deploy next** — frontend already handles new shape.
+4. **Frontend PR 1** (Phase 3.2, 3.5): Fix unrendered `errorMessage` components, render cart `lastError`. **Deploy after backend PR 1.**
+5. **Frontend PR 2** (Phase 3.4, 3.6, follow-up): Validation `errors[]` display, activate toast for non-form errors.
 6. **Future**: Remove `message`/`error` backward-compat aliases once frontend is fully migrated.
+
+---
+
+## Phase 0 — files modified (for reference)
+
+### Backend (`/Users/zufar/IdeaProjects/Iced-Latte`)
+
+| File | Change |
+|---|---|
+| `src/main/java/.../order/exception/OrderNotFoundException.java` | Added `@ResponseStatus(NOT_FOUND)`, safe message |
+| `src/main/java/.../order/exception/OrderAccessDeniedException.java` | Added `@ResponseStatus(FORBIDDEN)`, safe message |
+| `src/main/java/.../security/configuration/SpringSecurityConfiguration.java` | Rewrote `authenticationEntryPoint` + added `accessDeniedHandler` with proper JSON |
+| `src/main/java/.../security/api/SecurityPrincipalProvider.java` | `IllegalStateException` → `UnauthorizedException` |
+| `src/main/java/.../auth/api/GoogleAuthCallbackHandler.java` | `IllegalStateException` → `BadRequestException` |
+| `src/main/java/.../auth/api/GoogleTokenExchanger.java` | `IllegalStateException` → `UnauthorizedException` |
+| `src/main/java/.../filestorage/aws/AwsObjectStorage.java` | `SecurityException` → `BadRequestException` |
+| `src/main/java/.../review/converter/ProductReviewDtoConverter.java` | `IllegalArgumentException` → `BadRequestException` |
+| `src/main/java/.../auth/endpoint/AuthEndpoint.java` | 503 now returns `{message, status}` body |
+| `src/main/java/.../review/ai/ReviewModerationException.java` | Added `@ResponseStatus(UNPROCESSABLE_ENTITY)` |
+| `src/main/java/.../filestorage/exception/CommonExceptionHandler.java` | Changed to `ResponseEntity` return for correct status per branch |
+| `src/test/java/.../security/api/SecurityPrincipalProviderTest.java` | Updated assertions |
+| `src/test/java/.../auth/api/GoogleAuthCallbackHandlerTest.java` | Updated assertions |
+| `src/test/java/.../auth/api/GoogleTokenExchangerTest.java` | Updated assertions |
+| `src/test/java/.../filestorage/exception/CommonExceptionHandlerTest.java` | Updated for `ResponseEntity` + added 503 test |
+
+### Frontend (`/Users/zufar/IdeaProjects/Iced-Latte-Frontend`)
+
+| File | Change |
+|---|---|
+| `src/app/api/proxy/[...path]/route.ts` | Added `application/problem+json` to content-type check |
+| `src/app/api/proxy/[...path]/route.test.ts` | Added test for `application/problem+json` parsing |
+| `src/shared/utils/apiError.ts` | Complete rewrite: reads `detail` first, proper 401/403 messages, network error message |
+| `src/shared/utils/apiError.test.ts` | 9 tests covering all branches |
+| `src/shared/types/ErrorResponse.ts` | All fields optional, added RFC 9457 fields |
+| `src/features/addresses/store.ts` | Added try/catch to all mutations with `handleAxiosError` |
+| `src/features/user/components/ImageUpload.tsx` | Now renders `errorMessage` |
+| `src/features/cart/utils/cartStoreHelpers.ts` | `setCartError` uses `handleAxiosError` instead of `err.message` |
+
+### Test results after Phase 0
+
+- **Backend:** 650 tests, 0 failures, 0 errors
+- **Frontend:** 32 suites, 160 tests, all passing
 
 ---
 
@@ -605,11 +795,16 @@ In form components (`LoginForm`, `RegistrationForm`, etc.), map server-side `err
 - Error type URI documentation pages (each `type` URI resolving to a docs page)
 - i18n / localization
 - Frontend `errors[]` field-level validation display (Phase 3.4 — follow-up)
-- `retryAfter` countdown UI for 429
-- Cart error rendering (`lastError` in store)
-- Activating `react-toastify` for non-form errors (follow-up)
+- `retryAfter` countdown UI for 429 (G1)
+- Cart `lastError` rendering in UI (Phase 3.5 — follow-up)
+- Activating `react-toastify` for non-form errors (Phase 3.6 — follow-up)
 - Adding `global-error.tsx` / root `error.tsx` error boundaries (follow-up)
 - Adding Sentry/error tracking to frontend (follow-up)
 - Consolidating 7 handler classes into 2–3 (nice-to-have, reduces ordering fragility)
 - Splitting `UserNotFoundException` into auth vs non-auth variants (nice-to-have)
 - `spring.mvc.problemdetails.enabled=true` (too broad — affects actuator, `/error` endpoint)
+- `OrderCard.tsx` using backend messages instead of hardcoded strings (UX decision)
+- Google OAuth callback error display (G4 — `src/app/auth/google/callback/page.tsx`)
+- Rendering errors in `ReviewsList`, `UserBar`, `ProductWithReviews`, `ReviewsSection` (Phase 3.2)
+- HTTP 409 Conflict specific UX (G2)
+- HTTP 502 Bad Gateway specific UX (G3)
