@@ -5,6 +5,7 @@ import com.zufar.icedlatte.common.exception.handler.ApiErrorResponseCreator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,18 +28,17 @@ public class CommonExceptionHandler {
     }
 
     @ExceptionHandler(FileUploadException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiErrorResponse handleFileUploadException(final FileUploadException exception) {
+    public ResponseEntity<ApiErrorResponse> handleFileUploadException(final FileUploadException exception) {
         if (exception.getCause() instanceof IllegalStateException) {
             ApiErrorResponse apiErrorResponse =
                     apiErrorResponseCreator.buildResponse("File storage is not available", HttpStatus.SERVICE_UNAVAILABLE);
             log.warn("exception.file.storage_unavailable: status=503");
-            return apiErrorResponse;
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(apiErrorResponse);
         }
         ApiErrorResponse apiErrorResponse =
                 apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
         log.error("exception.file.upload_failed: exceptionClass={}, status=500",
                 exception.getClass().getSimpleName(), exception);
-        return apiErrorResponse;
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiErrorResponse);
     }
 }
