@@ -276,7 +276,8 @@ Backend Exception
 | `SignInExceptionHandler` | `UserNotFoundException` | 401 | "The user with email '{email}' is not found." |
 | `SignInExceptionHandler` | `UserRegistrationException` | 400 | "User with email '{email}' already exists." |
 | `SignInExceptionHandler` | `UserAccountLockedException` | 401 | "User account is locked." |
-| `UserExceptionHandler` | `UserNotFoundException` | 401 | "The user with id '{id}' is not found." |
+| `UserExceptionHandler` | `UsernameNotFoundException` | 401 | "User not found" |
+| `SignInExceptionHandler` | `UserNotFoundException` (auth flows) | 401 | `exception.getMessage()` — **⚠️ leaks UUID/email until Phase 1 sanitization** |
 | `UserExceptionHandler` | `InvalidAvatarFileTypeException` | 400 | "Invalid avatar file type: {type}. Allowed: {types}" |
 | `OrderExceptionHandler` | `OrderNotFoundException` | 404 | "Order not found." (safe) or "Order not found: {orderId}" — **⚠️ `Object orderId` constructor still leaks orderId in all 6 call sites; remove or sanitize before Phase 1** |
 | `OrderExceptionHandler` | `OrderAccessDeniedException` | 403 | "Access denied." |
@@ -728,7 +729,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 
 | Action | Files | Count |
 |---|---|---|
-| **Create** | `ProblemDetailFactory.java`, `ProblemDetailFactoryTest.java`, `AccessDeniedHandler` bean, `AuthenticationEntryPoint` bean | 4 |
+| **Create** | `ProblemDetailFactory.java`, `ProblemDetailFactoryTest.java` | 2 |
 | **Modify** | 7 exception handler classes | 7 |
 | **Modify** | `JwtAuthenticationFilter.java`, `RateLimitResponseWriter.java`, `SpringSecurityConfiguration.java` | 3 |
 | **Modify** | Exception classes needing `@ResponseStatus` (`OrderNotFoundException`, `OrderAccessDeniedException`, `ReviewModerationException`) | 3 |
@@ -783,7 +784,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 
 | File | Change |
 |---|---|
-| `src/main/java/.../order/exception/OrderNotFoundException.java` | Added `@ResponseStatus(NOT_FOUND)`, safe message |
+| `src/main/java/.../order/exception/OrderNotFoundException.java` | Added `@ResponseStatus(NOT_FOUND)`; no-arg message is safe; `Object orderId` constructor still leaks and must be sanitized in Phase 1 |
 | `src/main/java/.../order/exception/OrderAccessDeniedException.java` | Added `@ResponseStatus(FORBIDDEN)`, safe message |
 | `src/main/java/.../security/configuration/SpringSecurityConfiguration.java` | Rewrote `authenticationEntryPoint` + added `accessDeniedHandler` with proper JSON |
 | `src/main/java/.../security/api/SecurityPrincipalProvider.java` | `IllegalStateException` → `UnauthorizedException` |
