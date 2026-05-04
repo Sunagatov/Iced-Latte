@@ -70,9 +70,6 @@ public class Payment extends AuditableEntity {
     @Column(name = "checkout_idempotency_key", length = 100)
     private String checkoutIdempotencyKey;
 
-    @Column(name = "checkout_request_hash", length = 64)
-    private String checkoutRequestHash;
-
     @Override
     public String toString() {
         return "Payment{id=" + id + ", orderId=" + orderId + ", status=" + status + '}';
