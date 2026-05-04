@@ -126,7 +126,7 @@ services:
     env_file:
       # Optional for local iteration: `docker compose config` should still work even if
       # the developer has not created a private `.env` yet.
-      - path: .env
+      - path: ${ICED_LATTE_ENV_FILE:-.env}
         required: false
     environment:
       DATASOURCE_HOST: postgres

@@ -67,6 +67,8 @@ cp .env.example .env
 ```
 
 > 🔒 `.env` is gitignored — your local copy stays private. Never commit real secrets to git. Review `.env` before enabling real third-party integrations (email, OAuth, Stripe, AI).
+>
+> ⚠️ `.env.example` currently defaults to `SPRING_PROFILES_ACTIVE=prod`. That profile is safe for local runs, but it disables Swagger UI and keeps Liquibase from wiping and re-seeding the database on every restart. Switch to `SPRING_PROFILES_ACTIVE=dev` if you want the classic local-dev flow.
 
 > 🪟 **Windows users:** use the IntelliJ EnvFile plugin (Step 4) to load `.env` — the `export` command only works on Linux/macOS/Git Bash.
 
@@ -100,7 +102,7 @@ curl "http://localhost:8083/api/v1/products?page=0&size=3"
 
 ✅ You should get a JSON response with a list of coffee products.
 
-📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
+📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
 
 ### Step 7 — Log in with a test user
 
@@ -131,6 +133,14 @@ cd Iced-Latte
 
 ### Step 2 — Start everything
 
+Copy the sample env file first:
+
+```bash
+cp .env.example .env
+```
+
+Then start the full backend stack:
+
 ```bash
 docker compose --profile backend up -d --build
 ```
@@ -153,7 +163,7 @@ curl "http://localhost:8083/api/v1/products?page=0&size=3"
 
 ✅ You should get a JSON response with a list of coffee products.
 
-📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html
+📚 Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
 
 ### 🛠️ Useful Docker commands
 
@@ -189,6 +199,14 @@ cd Iced-Latte
 
 ### Step 2 — Start everything including the frontend
 
+Copy the sample env file first:
+
+```bash
+cp .env.example .env
+```
+
+Then start the backend, frontend, and infrastructure:
+
 ```bash
 docker compose --profile backend --profile frontend up -d --build
 ```
@@ -203,7 +221,7 @@ This builds and starts everything from Option B plus:
 ### Step 3 — Verify everything is running
 
 - 🌐 Frontend: http://localhost:3000 — you should see the Iced Latte shop UI
-- 🔌 Backend API: http://localhost:8083 — Swagger UI at http://localhost:8083/api/docs/swagger-ui/index.html
+- 🔌 Backend API: http://localhost:8083 — Swagger UI at http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
 - 🪣 MinIO console: http://localhost:9001 — login with `minioadmin` / `minioadmin`
 
 ### Google OAuth callback note
@@ -219,7 +237,7 @@ window.location.hash
 instead of:
 
 ```text
-window.location.hash
+window.location.search
 ```
 
 Example callback URL:
@@ -261,8 +279,9 @@ The repo contains optional observability and logging playground pieces:
 To explore them, check the existing config files:
 
 - `docker-compose.yml`
-- `ops/observability/docker-compose.yml`
 - `src/main/resources/application.yaml`
+- `src/main/resources/application-prod.yaml`
+- `src/main/resources/application-dev.yaml`
 - `src/main/resources/logback-spring.xml`
 
 ---
@@ -279,19 +298,17 @@ Tests use Testcontainers — they spin up their own temporary containers. Docker
 
 ## 🗄️ Connecting to the database
 
-| Field | Value |
-|-------|-------|
-| Host | `localhost` |
-| Port | `5432` |
-| Database | `postgres` |
-| Username | `postgres` |
-| Password | `postgres` |
+- Host: `localhost`
+- Port: `5432`
+- Database: `postgres`
+- Username: `postgres`
+- Password: `postgres`
 
 **IntelliJ Ultimate**: View → Tool Windows → Database → `+` → PostgreSQL
 
 **Community edition**: Install the free "Database Navigator" plugin (Settings → Plugins).
 
-> ⚠️ Liquibase runs with `drop-first: true` on every startup — the database is wiped and re-seeded each time the app restarts. Any manual DB changes will be lost.
+> ⚠️ Liquibase behavior depends on the active profile. With `SPRING_PROFILES_ACTIVE=dev`, startup uses `drop-first: true`, so the database is wiped and re-seeded every time the app restarts. With the default `.env.example` profile (`prod`), startup uses `drop-first: false`, so your data is preserved across restarts.
 
 ---
 
@@ -335,32 +352,31 @@ Two buckets are created automatically on first start: `iced-latte-products` and 
 ```
 src/
 ├── main/java/com/zufar/icedlatte/
-│   ├── security/       # JWT auth, Google OAuth2, registration, login
+│   ├── security/       # JWT auth, Google OAuth2, registration, login, sessions, rate limiting
 │   ├── auth/           # Google OAuth2 callback, auth redirects
-│   ├── user/           # User profile management
-│   ├── product/        # Product catalog
+│   ├── user/           # User profile, addresses, avatars
+│   ├── product/        # Product catalog, filters, images
 │   ├── cart/           # Shopping cart
-│   ├── order/          # Orders
-│   ├── payment/        # Stripe webhook & session handling
+│   ├── order/          # Orders, order lifecycle, order history
+│   ├── payment/        # Stripe payment, checkout, webhooks
 │   ├── review/         # Product reviews, ratings, AI moderation
 │   ├── favorite/       # Favorites list
 │   ├── email/          # Email verification & notifications
-│   ├── filestorage/    # AWS S3 file upload/download
-│   ├── observability/  # Telemetry, Sentry integration
-│   ├── common/         # Shared utilities, validation, monitoring
-│   └── astartup/       # Startup data migration
+│   ├── filestorage/    # AWS S3 / MinIO file upload/download
+│   ├── common/         # Shared utilities, validation, monitoring, HTTP helpers
+│   └── astartup/       # Startup data migration and bootstrap tasks
 └── test/               # Unit and integration tests
 ```
 
 API docs:
-- 🖥️ Local: http://localhost:8083/api/docs/swagger-ui/index.html
-- 🌐 Production: https://iced-latte.uk/backend/api/docs/swagger-ui/index.html
+- 🖥️ Local Swagger UI: http://localhost:8083/api/docs/swagger-ui/index.html when `SPRING_PROFILES_ACTIVE=dev`
+- 📄 Repo-local OpenAPI specs: `src/main/resources/api-specs/`
 
 ---
 
 ## 📞 Contact
 
-- 💬 **Telegram community:** [Zufar Explained IT](https://t.me/zufarexplained)
+- 💬 **Telegram community:** [Project community](https://t.me/zufarexplained)
 - 👤 **Personal Telegram:** [@lucky_1uck](https://web.telegram.org/k/#@lucky_1uck)
 - 📧 **Email:** [zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com)
 - 🐛 **Issues:** [GitHub Issues](https://github.com/Sunagatov/Iced-Latte/issues)

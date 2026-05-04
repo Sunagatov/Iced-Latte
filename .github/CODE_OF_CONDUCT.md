@@ -6,14 +6,14 @@ We as members, contributors, and maintainers pledge to make participation in Ice
 
 ## Our Standards
 
-Examples of behaviour that contributes to a positive environment:
+Examples of behavior that contributes to a positive environment:
 
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints and experience
 - Gracefully accepting constructive criticism
 - Focusing on what is best for the community
 
-Examples of unacceptable behaviour:
+Examples of unacceptable behavior:
 
 - Harassment, insults, or derogatory comments
 - Personal or political attacks
@@ -22,7 +22,7 @@ Examples of unacceptable behaviour:
 
 ## Enforcement
 
-Instances of unacceptable behaviour may be reported to [zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com). All complaints will be reviewed and investigated promptly and fairly.
+Instances of unacceptable behavior may be reported to [zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com). All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

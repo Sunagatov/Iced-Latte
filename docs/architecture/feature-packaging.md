@@ -9,7 +9,7 @@ If a class belongs to one business feature, it stays inside that feature package
 Examples:
 
 - `order/exception/OrderNotFoundException`
-- `payment/service/PaymentService`
+- `payment/api/PaymentStatusService`
 - `user/repository/UserRepository`
 - `review/validator/ProductReviewValidator`
 

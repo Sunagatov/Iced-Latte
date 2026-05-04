@@ -5,7 +5,7 @@
   <p><strong>A production-grade Java coffee marketplace — built in the open, for engineers who want real experience.</strong></p>
   <p>
     <a href="https://iced-latte.uk/">🌐 Live Demo</a> ·
-    <a href="https://iced-latte.uk/backend/api/docs/swagger-ui/index.html">📖 API Docs</a> ·
+    <a href="src/main/resources/api-specs/">📖 API Specs</a> ·
     <a href="https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22">🟢 Good First Issues</a> ·
     <a href="https://t.me/zufarexplained">💬 Community</a>
   </p>
@@ -25,11 +25,9 @@
 
 **📊 Key stats across all three repositories:**
 
-| Repository | ⭐ Stars | 🍴 Forks |
-| --- | --- | --- |
-| [🔧 Backend](https://github.com/Sunagatov/Iced-Latte) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat) |
-| [🎨 Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat) |
-| [🧪 QA](https://github.com/Sunagatov/Iced-Latte-QA) | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) | ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat) |
+- 🔧 [Backend](https://github.com/Sunagatov/Iced-Latte) — ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat) · ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat)
+- 🎨 [Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) — ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat) · ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat)
+- 🧪 [QA](https://github.com/Sunagatov/Iced-Latte-QA) — ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat) · ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat)
 
 > ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
 
@@ -56,7 +54,9 @@ export $(cat .env | xargs) && mvn spring-boot:run
 
 > 🪟 **Windows (PowerShell / CMD):** the `export` command above won't work. Use the IntelliJ EnvFile plugin or the full Docker path instead — see [Getting Started](docs/getting-started.md).
 
-🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html`
+> ⚠️ **Important:** `.env.example` currently sets `SPRING_PROFILES_ACTIVE=prod`. With that default, the app still runs locally on `http://localhost:8083`, but local Swagger UI is disabled and Liquibase does **not** wipe or reseed the database on every restart. If you want the classic local-dev behaviour with Swagger UI and automatic reseeding, change it to `SPRING_PROFILES_ACTIVE=dev` before running.
+
+🌐 App runs at `http://localhost:8083` · 📚 Swagger UI at `http://localhost:8083/api/docs/swagger-ui/index.html` when `SPRING_PROFILES_ACTIVE=dev`
 
 > 💡 Using IntelliJ? See [Getting Started](docs/getting-started.md) for IDE run configuration, Docker-only setup, and troubleshooting.
 
@@ -66,6 +66,8 @@ export $(cat .env | xargs) && mvn spring-boot:run
 > docker compose --profile backend --profile frontend up -d --build
 > ```
 > Frontend at http://localhost:3000 — built from source every time.
+>
+> ⚠️ The same `.env` profile note applies to Docker too: with the default `.env.example`, the backend container also starts in `prod`.
 
 **🧪 Run the tests:**
 ```bash
@@ -86,7 +88,7 @@ mvn test
 
 ## 🤔 What is this?
 
-Iced Latte is a non-profit sandbox project started in 2022 as a private pet project, then opened to the community to give junior engineers, students, and mentees practical experience in a real tech project with processes similar to those in actual tech teams. The first participants were students, Telegram channel subscribers, and mentees from ADPList and Women In Tech. The project has since grown and earned recognition from both the open-source community and the wider tech community.
+Iced Latte is a non-profit sandbox project started in 2022 as a private pet project. It was later opened to the community to give junior engineers, students, and mentees practical experience in a real tech project with processes similar to those in actual tech teams. The first participants were students, Telegram channel subscribers, and mentees from ADPList and Women In Tech. The project has since grown and earned recognition from both the open-source community and the wider tech community.
 
 > ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
 
@@ -108,42 +110,38 @@ Iced Latte has earned recognition from the broader tech community.
 
   - Iced Latte was recognized by [JetBrains](https://www.jetbrains.com/community/opensource/) — a leading software company specializing in intelligent development tools. As an active participant in the open-source community, JetBrains supports recognized global open-source projects by providing complimentary licenses for non-commercial development. JetBrains granted Iced Latte **8 free All Products Pack licenses** (February 2024, License Reference No. D379769990).
 
-**👨💻 Recommended by Eddie Jaoude 👨**
+**👨💻 Recommended by a GitHub Star 👨**
 
-  - Iced Latte was [recommended by Eddie Jaoude](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) — one of the most influential open-source experts, a [GitHub Star](https://stars.github.com/) with 174K followers on X and 17.6K on LinkedIn — who called it a great example of a Java open-source project. Many Iced Latte contributors shared their positive experience in the comments.
+  - Iced Latte was [recommended in this LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) by a well-known open-source creator and [GitHub Star](https://stars.github.com/), who called it a great example of a Java open-source project. Many Iced Latte contributors shared their positive experience in the comments.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| 📂 Category | 🔧 Technology |
-| --- | --- |
-| 💻 Language | Java 25 |
-| 🏗️ Framework | Spring Boot 4.0, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
-| 🗄️ Database | PostgreSQL, Liquibase |
-| ⚡ Cache | Redis, Caffeine |
-| 🔒 Security | JWT (JJWT 0.13), Google OAuth2, Argon2 |
-| ☁️ Cloud | AWS S3 SDK 2.x, CloudFront |
-| 💳 Payment | Stripe |
-| 🤖 AI | LangChain4j, OpenAI |
-| 📊 Observability | Micrometer, Prometheus, OpenTelemetry, Sentry, Loki |
-| 🧪 Testing | JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco |
-| 📋 API | OpenAPI 3, SpringDoc 3.0, OpenAPI Generator 7 |
-| 🔄 Mapping | MapStruct 1.6, Lombok |
+- 💻 **Language:** Java 25
+- 🏗️ **Framework:** Spring Boot 4.0.5, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator
+- 🗄️ **Database:** PostgreSQL, Liquibase
+- ⚡ **Cache:** Redis, Caffeine
+- 🔒 **Security:** JWT (JJWT 0.13), Google OAuth2, Argon2
+- ☁️ **Cloud:** AWS S3 SDK 2.x, CloudFront, MinIO
+- 💳 **Payment:** Stripe
+- 🤖 **AI:** LangChain4j, OpenAI-compatible APIs
+- 📊 **Observability:** Micrometer, Prometheus, OpenTelemetry, Sentry, Loki, Datadog
+- 🧪 **Testing:** JUnit 5, Testcontainers, REST Assured, Instancio, Jacoco
+- 📋 **API:** OpenAPI 3, SpringDoc 3.0, OpenAPI Generator 7
+- 🔄 **Mapping:** MapStruct 1.6, Lombok
 
 ---
 
 ## 📚 Guides & Features
 
-| 📄 Document | 📝 Description |
-| --- | --- |
-| [Getting Started](docs/getting-started.md) | IDE setup, Docker-only mode, troubleshooting |
-| [Infrastructure](docs/infrastructure.md) | How the database, object storage, and Redis cache are wired together — with free-tier provider options (Supabase, Upstash) and all env vars explained |
-| [Architecture: Feature Packaging](docs/architecture/feature-packaging.md) | Modular-monolith rule: keep business code inside its owning feature package |
-| [Contributing](.github/CONTRIBUTING.md) | How to contribute, PR guidelines, branching |
-| [Security Policy](.github/SECURITY.md) | Security policy and vulnerability reporting |
-| [Code of Conduct](.github/CODE_OF_CONDUCT.md) | Community standards and expected behaviour |
-| [LICENSE](LICENSE) | CC BY-NC 4.0 — free for educational use, commercial use requires permission |
+- 📄 [Getting Started](docs/getting-started.md) — IDE setup, Docker-only mode, troubleshooting
+- 📄 [Infrastructure](docs/infrastructure.md) — how the database, object storage, and Redis cache are wired together, with free-tier provider options and env vars explained
+- 📄 [Architecture: Feature Packaging](docs/architecture/feature-packaging.md) — modular-monolith rule: keep business code inside its owning feature package
+- 📄 [Contributing](.github/CONTRIBUTING.md) — how to contribute, PR guidelines, branching
+- 📄 [Security Policy](.github/SECURITY.md) — security policy and vulnerability reporting
+- 📄 [Code of Conduct](.github/CODE_OF_CONDUCT.md) — community standards and expected behavior
+- 📄 [LICENSE](LICENSE) — CC BY-NC 4.0, free for educational use; commercial use requires permission
 
 ---
 
@@ -151,19 +149,18 @@ Iced Latte has earned recognition from the broader tech community.
 
 ```
 src/main/java/com/zufar/icedlatte/
-├── 🔒 security/       # JWT auth, Google OAuth2, registration, login
+├── 🔒 security/       # JWT auth, Google OAuth2, registration, login, sessions, rate limiting
 ├── 🔑 auth/           # Google OAuth2 callback, auth redirects
-├── 👤 user/           # User profile management
-├── 📦 product/        # Product catalog
+├── 👤 user/           # User profile, addresses, avatars
+├── 📦 product/        # Product catalog, filters, images
 ├── 🛒 cart/           # Shopping cart
-├── 📋 order/          # Orders
-├── 💳 payment/        # Stripe payment, webhooks
+├── 📋 order/          # Orders, order lifecycle, order history
+├── 💳 payment/        # Stripe payment, checkout, webhooks
 ├── ⭐ review/         # Product reviews, ratings, AI moderation
 ├── ❤️ favorite/       # Favorites list
 ├── 📧 email/          # Email verification & notifications
-├── 📁 filestorage/    # AWS S3 file upload/download
-├── 📊 observability/  # Telemetry, Sentry integration
-├── 🔧 common/         # Shared utilities, validation, monitoring
+├── 📁 filestorage/    # AWS S3 / MinIO file upload/download
+├── 🔧 common/         # Shared utilities, validation, monitoring, HTTP helpers
 └── 🚀 astartup/       # Startup data migration and bootstrap tasks
 ```
 
@@ -173,32 +170,28 @@ src/main/java/com/zufar/icedlatte/
 
 🎉 Contributions are welcome. Here's how to get involved:
 
-| 🎯 Situation | 🚀 Action |
-| --- | --- |
-| 🐛 Found a bug | [Open an issue](https://github.com/Sunagatov/Iced-Latte/issues/new) with the `bug` label |
-| 💡 Want a feature | Start a [Discussion](https://github.com/Sunagatov/Iced-Latte/discussions) first |
-| 👨💻 Ready to code | Pick a [`good first issue`](https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22), comment "I'm on it" |
-| 🔧 Big change | Comment on the issue before writing code — many tickets have hidden constraints |
+- 🐛 **Found a bug:** [Open an issue](https://github.com/Sunagatov/Iced-Latte/issues/new) with the `bug` label
+- 💡 **Want a feature:** start a [Discussion](https://github.com/Sunagatov/Iced-Latte/discussions) first
+- 👨💻 **Ready to code:** pick a [`good first issue`](https://github.com/Sunagatov/Iced-Latte/issues?q=is%3Aopen+label%3A%22good+first+issue%22), then comment "I'm on it"
+- 🔧 **Big change:** comment on the issue before writing code — many tickets have hidden constraints
 
 ---
 
 ### 🏷️ Issue labels
 
-| 🏷️ Label | 📝 Meaning |
-| --- | --- |
-| 🟢 `good first issue` | Simple, well-scoped — great for first-timers |
-| 🔴 `bug` | Something is broken |
-| 🔵 `high priority` | Do this first |
-| 🟡 `enhancement` | Accepted improvement to an existing module |
-| 🟠 `new feature` | New functionality — discuss before starting |
-| ⚪ `idea` | Needs design discussion — don't implement yet |
+- 🟢 `good first issue` — simple, well-scoped, and great for first-timers
+- 🔴 `bug` — something is broken
+- 🔵 `high priority` — do this first
+- 🟡 `enhancement` — accepted improvement to an existing module
+- 🟠 `new feature` — new functionality; discuss before starting
+- ⚪ `idea` — needs design discussion; don't implement yet
 
 ---
 
 ### 🐛 Bug reports
 
 - 🔍 Search existing issues before opening a new one
-- 📝 Clearly describe **observed** vs **expected** behaviour
+- 📝 Clearly describe **observed** vs **expected** behavior
 - 🚀 For minor fixes, just open a PR directly
 
 ---
@@ -225,7 +218,7 @@ src/main/java/com/zufar/icedlatte/
 
 ## 📞 Contact
 
-- 💬 **Telegram community:** [Zufar Explained IT](https://t.me/zufarexplained)
+- 💬 **Telegram community:** [Project community](https://t.me/zufarexplained)
 - 👤 **Personal Telegram:** [@lucky_1uck](https://web.telegram.org/k/#@lucky_1uck)
 - 📱 **WhatsApp:** [Message me](https://wa.me/447405503609)
 - 📧 **Email:** [zufar.sunagatov@gmail.com](mailto:zufar.sunagatov@gmail.com)

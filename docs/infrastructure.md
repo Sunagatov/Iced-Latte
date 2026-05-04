@@ -1,13 +1,13 @@
 # Infrastructure & Integrations
 
-> **Production deployment** — environment files, server configuration, and production operations are managed in a separate private Vault repository. This repository owns source code and local development workflows only. Do not add production deployment logic here.
+> **Production deployment** — production environment files, server configuration, and operations are managed outside this repository. This repository owns source code and local development workflows only. Do not add production deployment logic here.
 
 This document covers the infrastructure and optional integrations that power Iced Latte. Each section explains what the component does, how it is configured, and which free-tier providers work out of the box — so you can run the full stack without spending anything.
 
 ## Table of Contents
 
 - [PostgreSQL](#postgresql)
-- [Object Storage (AWS S3 / Supabase)](#object-storage-aws-s3--supabase)
+- [Object Storage (MinIO / AWS S3 / Supabase)](#object-storage-minio--aws-s3--supabase)
 - [Redis Cache](#redis-cache)
 
 ---
@@ -18,7 +18,10 @@ The app uses PostgreSQL as its primary database, managed via Liquibase migration
 
 ### Schema
 
-All tables are created and seeded automatically on startup via Liquibase (`drop-first: true` — the schema is recreated fresh on every start, which is intentional for this open-source project).
+All tables are managed through Liquibase migrations, but startup behavior depends on the active Spring profile:
+
+- `dev` uses `drop-first: true`, so the schema is recreated and re-seeded on every startup.
+- `prod` uses `drop-first: false`, so the schema is preserved across restarts.
 
 | Table | Purpose |
 |---|---|
@@ -43,22 +46,24 @@ Configured via environment variables (see `.env`):
 ```
 DATASOURCE_HOST=localhost
 DATASOURCE_PORT=5432
-DATASOURCE_NAME=iced-latte
+DATASOURCE_NAME=postgres
 DATASOURCE_USERNAME=postgres
 DATASOURCE_PASSWORD=postgres
 ```
 
-Connection pool: HikariCP, min 2 / max 10 connections. SSL required in production (`sslmode=require` in the JDBC URL).
+Connection pool: HikariCP, minimum idle `1`, maximum pool size `5`. SSL is controlled through the JDBC URL's `sslmode` parameter.
 
 ### Seed data
 
-15 users are seeded on every startup. All share the password `p@ss1logic11`. Test login: `olivia@example.com`.
+The seed dataset is loaded through Liquibase. On a fresh database you get 15 users, all sharing the password `p@ss1logic11`. Test login: `olivia@example.com`.
+
+With the `dev` profile, that data is recreated on every startup because the schema is dropped first. With the `prod` profile, it is loaded only when the database is empty or the relevant changesets have not run yet.
 
 ---
 
-## Object Storage (AWS S3 / Supabase)
+## Object Storage (MinIO / AWS S3 / Supabase)
 
-The app uses AWS S3 SDK v2 for file storage. Any S3-compatible provider works — including [Supabase Storage](https://supabase.com/docs/guides/storage), which is free-tier and S3-compatible.
+The app uses AWS S3 SDK v2 for file storage. The local Docker stack uses MinIO, and any S3-compatible provider works for hosted environments — including AWS S3 and [Supabase Storage](https://supabase.com/docs/guides/storage).
 
 ### What is stored
 
@@ -68,6 +73,24 @@ The app uses AWS S3 SDK v2 for file storage. Any S3-compatible provider works �
 | `AWS_USER_BUCKET` | User avatar images |
 
 Presigned URLs are generated per request with a 1-hour expiry and cached in Redis (or Caffeine) for 50 minutes.
+
+### Local Docker defaults (MinIO)
+
+When you start `minio` and `minio-init` through `docker compose`, the app uses:
+
+```
+AWS_ENABLED=true
+AWS_ENDPOINT_URL=http://localhost:9000
+AWS_PUBLIC_URL_BASE=http://localhost:9000/iced-latte-products
+AWS_ACCESS_KEY=minioadmin
+AWS_SECRET_KEY=minioadmin
+AWS_REGION=us-east-1
+AWS_PRODUCT_BUCKET=iced-latte-products
+AWS_USER_BUCKET=iced-latte-users
+AWS_DEFAULT_PRODUCT_IMAGES_PATH=./seed/products
+```
+
+MinIO console: http://localhost:9001
 
 ### How to configure (Supabase)
 
@@ -125,7 +148,7 @@ REDIS_PASSWORD=your-password   # leave empty if no auth
 REDIS_SSL_ENABLED=false        # set true for TLS (e.g. Upstash)
 ```
 
-When `REDIS_HOST` is not set, the app starts normally with in-memory caches — no configuration needed for local development.
+When Redis is unavailable or disabled, the app falls back to in-memory caches for the supported cache types. For the default local setup, `.env.example` points Redis to `localhost:6379`, which matches the `redis` Docker service.
 
 ### Upstash (free managed Redis)
 

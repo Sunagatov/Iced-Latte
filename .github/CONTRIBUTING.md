@@ -25,13 +25,13 @@ Thanks for your interest in contributing! Here's everything you need to get star
 ## Pull requests
 
 - Keep PRs focused — one concern per PR
-- Run `mvn test` locally before pushing — all 154 tests must pass
+- Run `mvn test` locally before pushing
 - Reference the issue number in your PR description
 
 ## Bug reports
 
 - Search existing issues before opening a new one
-- Clearly describe **observed** vs **expected** behaviour
+- Clearly describe **observed** vs **expected** behavior
 - For minor fixes, just open a PR directly
 
 ## Local setup
@@ -40,6 +40,7 @@ See [Getting Started](../docs/getting-started.md) for full setup instructions.
 
 Quick version:
 ```bash
+cp .env.example .env
 docker compose up -d postgres redis minio minio-init
 export $(cat .env | xargs) && mvn spring-boot:run
 ```
