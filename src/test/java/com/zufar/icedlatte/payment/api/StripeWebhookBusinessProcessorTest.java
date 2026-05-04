@@ -190,6 +190,54 @@ class StripeWebhookBusinessProcessorTest {
         verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
     }
 
+    @Test
+    @DisplayName("checkout.session.expired does not overwrite FAILED payment")
+    void handleExpired_failedPayment_skipped() {
+        Event event = mockEvent("checkout.session.expired", "evt_9");
+        Session session = mockSession(null, null, null, null);
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.FAILED).build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("checkout.session.async_payment_failed does not overwrite EXPIRED payment")
+    void handleAsyncPaymentFailed_expiredPayment_skipped() {
+        Event event = mockEvent("checkout.session.async_payment_failed", "evt_10");
+        Session session = mockSession(null, null, null, null);
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.EXPIRED).build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("checkout.session.completed awaiting-async skips RECONCILIATION_FAILED payment")
+    void handleSessionCompleted_unpaid_reconciliationFailed_skipped() {
+        Event event = mockEvent("checkout.session.completed", "evt_11");
+        Session session = mockSession("unpaid", null, null, null);
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.RECONCILIATION_FAILED).build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
+        verify(paymentRepository, never()).save(any());
+    }
+
     // --- Helpers ---
 
     private Event mockEvent(String type, String eventId) {

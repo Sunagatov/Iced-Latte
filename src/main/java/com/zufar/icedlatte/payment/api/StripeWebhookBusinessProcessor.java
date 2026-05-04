@@ -173,7 +173,9 @@ public class StripeWebhookBusinessProcessor {
     private static boolean isTerminal(PaymentStatus status) {
         return status == PaymentStatus.PAID
                 || status == PaymentStatus.REFUNDED
-                || status == PaymentStatus.RECONCILIATION_FAILED;
+                || status == PaymentStatus.RECONCILIATION_FAILED
+                || status == PaymentStatus.FAILED
+                || status == PaymentStatus.EXPIRED;
     }
 
     private void handleChargeRefunded(Event event) {
