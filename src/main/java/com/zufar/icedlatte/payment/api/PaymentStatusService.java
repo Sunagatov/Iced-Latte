@@ -18,7 +18,7 @@ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.UUID;
 
@@ -44,6 +44,7 @@ public class PaymentStatusService {
     private final OrderStatusTransitioner orderStatusTransitioner;
     private final ShoppingCartRepository shoppingCartRepository;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final TransactionTemplate transactionTemplate;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -60,7 +61,7 @@ public class PaymentStatusService {
         if (payment != null && !payment.getStatus().isTerminal()
                 && payment.getProviderSessionId() != null) {
             trySyncFromStripe(payment);
-            // Re-read order after potential update
+            // Re-read after potential update
             order = orderRepository.findById(orderId).orElseThrow();
             payment = paymentRepository.findByOrderId(orderId).orElse(payment);
         }
@@ -85,7 +86,7 @@ public class PaymentStatusService {
         try {
             Session session = Session.retrieve(payment.getProviderSessionId());
             if ("paid".equals(session.getPaymentStatus())) {
-                syncPaidStatus(payment, session);
+                syncPaidStatus(payment.getOrderId(), session);
             }
         } catch (StripeException e) {
             log.warn("payment.sync.stripe_error: orderId={}, error={}",
@@ -93,42 +94,47 @@ public class PaymentStatusService {
         }
     }
 
-    @Transactional
-    protected void syncPaidStatus(Payment payment, Session session) {
-        // Re-read with lock to prevent race with webhook
-        Payment locked = paymentRepository.findByOrderIdForUpdate(payment.getOrderId())
-                .orElse(null);
-        if (locked == null || locked.getStatus().isTerminal()) {
-            return;
-        }
-
-        // Reconciliation guard: verify amount/currency
-        Long stripeAmount = session.getAmountTotal();
-        String stripeCurrency = session.getCurrency();
-        if (stripeAmount != null && stripeCurrency != null) {
-            if (!stripeAmount.equals(locked.getAmountMinor())
-                    || !stripeCurrency.equalsIgnoreCase(locked.getCurrency())) {
-                log.error("payment.sync.amount_mismatch: orderId={}", locked.getOrderId());
-                locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
-                paymentRepository.save(locked);
+    /**
+     * Updates payment/order to PAID inside a programmatic transaction.
+     * Uses TransactionTemplate instead of @Transactional to avoid the
+     * Spring self-invocation trap (calling a @Transactional method from
+     * within the same class bypasses the proxy).
+     */
+    private void syncPaidStatus(UUID orderId, Session session) {
+        transactionTemplate.executeWithoutResult(status -> {
+            Payment locked = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
+            if (locked == null || locked.getStatus().isTerminal()) {
                 return;
             }
-        }
 
-        locked.setProviderPaymentIntentId(session.getPaymentIntent());
-        locked.setStatus(PaymentStatus.PAID);
-        locked.setLatestEventType("sync.session.retrieve");
-        paymentRepository.save(locked);
+            // Reconciliation guard: verify amount/currency
+            Long stripeAmount = session.getAmountTotal();
+            String stripeCurrency = session.getCurrency();
+            if (stripeAmount != null && stripeCurrency != null) {
+                if (!stripeAmount.equals(locked.getAmountMinor())
+                        || !stripeCurrency.equalsIgnoreCase(locked.getCurrency())) {
+                    log.error("payment.sync.amount_mismatch: orderId={}", orderId);
+                    locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
+                    paymentRepository.save(locked);
+                    return;
+                }
+            }
 
-        Order order = orderStatusTransitioner.transition(
-                locked.getOrderId(), OrderEvent.PENDING_PAYMENT_CONFIRMED,
-                null, "Stripe payment confirmed (sync fallback)");
-        order.setStripePaymentIntentId(session.getPaymentIntent());
-        orderRepository.save(order);
+            locked.setProviderPaymentIntentId(session.getPaymentIntent());
+            locked.setStatus(PaymentStatus.PAID);
+            locked.setLatestEventType("sync.session.retrieve");
+            paymentRepository.save(locked);
 
-        shoppingCartRepository.deleteByUserId(order.getUserId());
+            Order order = orderStatusTransitioner.transition(
+                    orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED,
+                    null, "Stripe payment confirmed (sync fallback)");
+            order.setStripePaymentIntentId(session.getPaymentIntent());
+            orderRepository.save(order);
 
-        log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}",
-                locked.getOrderId(), session.getPaymentIntent());
+            shoppingCartRepository.deleteByUserId(order.getUserId());
+
+            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}",
+                    orderId, session.getPaymentIntent());
+        });
     }
 }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +37,7 @@ class PaymentStatusServiceTest {
     @Mock private OrderStatusTransitioner orderStatusTransitioner;
     @Mock private ShoppingCartRepository shoppingCartRepository;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
+    @Mock private TransactionTemplate transactionTemplate;
     @InjectMocks private PaymentStatusService service;
 
     private static final UUID ORDER_ID = UUID.randomUUID();
