@@ -1143,7 +1143,7 @@ The checkout is a 3-stage saga: TX A → Stripe API → TX B. If the app crashes
 
 ```bash
 # Stripe (TEST MODE ONLY — no real money is charged)
-STRIPE_ENABLED=true
+STRIPE_ENABLED=false
 STRIPE_SECRET_KEY=sk_test_...your_key...
 STRIPE_WEBHOOK_SECRET=whsec_...your_key...
 
@@ -1152,6 +1152,8 @@ FRONTEND_URL=http://localhost:3000
 ```
 
 - `STRIPE_ENABLED=false` → no payment beans registered, endpoints don't exist
+- Contributors should keep `STRIPE_ENABLED=false` unless they are explicitly testing checkout with Stripe test keys.
+- Production sets `STRIPE_ENABLED=true` through Vault-managed runtime env.
 - `STRIPE_SECRET_KEY` → server-side secret from Stripe Dashboard → API keys
 - `STRIPE_WEBHOOK_SECRET` → signing secret for webhook signature verification
 - Never use `sk_live_...` keys. Only `sk_test_...`.
@@ -1159,12 +1161,14 @@ FRONTEND_URL=http://localhost:3000
 ### Frontend (.env.local)
 
 ```bash
-NEXT_PUBLIC_STRIPE_ENABLED=true
+NEXT_PUBLIC_STRIPE_ENABLED=false
 NEXT_PUBLIC_API_URL=http://localhost:8083/api/v1
 NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 ```
 
 - `NEXT_PUBLIC_STRIPE_ENABLED=true` → enables checkout button. Missing or `false` → disabled.
+- Contributors should keep `NEXT_PUBLIC_STRIPE_ENABLED=false` unless their local backend has Stripe enabled.
+- Production sets `NEXT_PUBLIC_STRIPE_ENABLED=true` through Vault-managed build env.
 - No Stripe publishable key needed — the frontend never loads Stripe.js.
 
 ---
