@@ -66,7 +66,7 @@ class ProductsEndpointTest extends IntegrationTestBase {
         given(specification).get("/{productId}", UUID.randomUUID().toString())
                 .then()
                 .statusCode(HttpStatus.NOT_FOUND.value())
-                .body("message", notNullValue());
+                .body("detail", notNullValue());
     }
 
     @Test
@@ -134,7 +134,7 @@ class ProductsEndpointTest extends IntegrationTestBase {
         given(specification).queryParams(params).get()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", notNullValue());
+                .body("detail", notNullValue());
     }
 
     @Test

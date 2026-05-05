@@ -35,8 +35,6 @@ public class ProblemDetailFactory {
         pd.setTitle(title);
         pd.setInstance(resolveInstance());
         pd.setProperty("timestamp", Instant.now().toString());
-        pd.setProperty("message", safeDetail);
-        pd.setProperty("error", title);
         if (errors != null && !errors.isEmpty()) {
             pd.setProperty("errors", errors);
         }

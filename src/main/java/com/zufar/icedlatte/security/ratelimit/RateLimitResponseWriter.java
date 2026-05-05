@@ -40,8 +40,6 @@ public class RateLimitResponseWriter {
                 .put("status", HttpStatus.TOO_MANY_REQUESTS.value())
                 .put("detail", "Too many requests. Please try again later.")
                 .put("timestamp", Instant.now().toString())
-                .put("message", "Too many requests. Please try again later.")
-                .put("error", "Too many requests")
                 .put("retryAfter", retryAfterSeconds);
         byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(bytes.length);

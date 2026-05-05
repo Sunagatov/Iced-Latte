@@ -40,12 +40,6 @@ components:
           type: "string"
           description: "Request path"
           example: "/api/v1/cart"
-        message:
-          type: "string"
-          description: "Backward-compatible alias for detail (temporary)"
-        error:
-          type: "string"
-          description: "Backward-compatible alias for title (temporary)"
         timestamp:
           type: "string"
           format: "date-time"

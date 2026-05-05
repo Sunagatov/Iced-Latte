@@ -73,7 +73,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(getRequestBody(SECURITY_REGISTRATION_WITHOUT_NAME)).post("/register")
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", notNullValue())
+                .body("detail", notNullValue())
                 .body("status", equalTo(400));
     }
 
@@ -83,7 +83,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(getRequestBody(SECURITY_REGISTRATION_LENGTH_NAME_LESS_TWO_WORD)).post("/register")
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", notNullValue());
+                .body("detail", notNullValue());
     }
 
     @Test
@@ -133,7 +133,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail + "\",\"password\":\"!h2h3kKl\"}";
 
         given(specification).body(body).post("/register").then().statusCode(HttpStatus.OK.value());
-        given(specification).body(body).post("/register").then().statusCode(425).body("message", notNullValue());
+        given(specification).body(body).post("/register").then().statusCode(425).body("detail", notNullValue());
     }
 
     @Test
@@ -202,7 +202,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(getRequestBody(SECURITY_AUTHENTICATE_USER_NOT_FOUND)).post("/authenticate")
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
-                .body("message", notNullValue());
+                .body("detail", notNullValue());
     }
 
     @Test
@@ -211,6 +211,6 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body("{\"email\":\"olivia@example.com\",\"password\":\"wrongpassword1\"}").post("/authenticate")
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
-                .body("message", notNullValue());
+                .body("detail", notNullValue());
     }
 }

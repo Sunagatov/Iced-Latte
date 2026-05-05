@@ -168,9 +168,7 @@ public class SpringSecurityConfiguration {
                 .put("status", status)
                 .put("detail", message)
                 .put("instance", path)
-                .put("timestamp", Instant.now().toString())
-                .put("message", message)
-                .put("error", title);
+                .put("timestamp", Instant.now().toString());
         byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
         response.setContentLength(bytes.length);
         response.getOutputStream().write(bytes);

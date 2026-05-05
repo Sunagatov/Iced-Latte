@@ -68,7 +68,7 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
                 .get()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", not(nullValue()));
+                .body("detail", not(nullValue()));
     }
 
     @Test
@@ -79,7 +79,7 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
                 .get()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", not(nullValue()));
+                .body("detail", not(nullValue()));
     }
 
     @Test
@@ -90,6 +90,6 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
                 .get()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", not(nullValue()));
+                .body("detail", not(nullValue()));
     }
 }

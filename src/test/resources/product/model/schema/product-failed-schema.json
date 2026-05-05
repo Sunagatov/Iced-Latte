@@ -16,12 +16,6 @@
     },
     "timestamp": {
       "type": "string"
-    },
-    "message": {
-      "type": "string"
-    },
-    "error": {
-      "type": "string"
     }
   },
   "required": [
@@ -29,7 +23,6 @@
     "title",
     "status",
     "detail",
-    "timestamp",
-    "message"
+    "timestamp"
   ]
 }

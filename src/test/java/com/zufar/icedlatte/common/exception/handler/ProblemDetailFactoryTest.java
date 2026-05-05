@@ -41,14 +41,12 @@ class ProblemDetailFactoryTest {
     }
 
     @Test
-    @DisplayName("build() sets extension properties: timestamp, message, error")
+    @DisplayName("build() sets extension property: timestamp")
     void setsExtensionProperties() {
         ProblemDetail pd = factory.build("test", "Title", HttpStatus.BAD_REQUEST, "some detail");
         Map<String, Object> props = Objects.requireNonNull(pd.getProperties());
         assertThat(props).containsKey("timestamp");
         assertThat(props.get("timestamp")).isNotNull();
-        assertThat(props.get("message")).isEqualTo("some detail");
-        assertThat(props.get("error")).isEqualTo("Title");
     }
 
     @Test
@@ -67,7 +65,5 @@ class ProblemDetailFactoryTest {
         ProblemDetail pd = factory.build("internal-error", "Internal server error",
                 HttpStatus.INTERNAL_SERVER_ERROR, "secret stack trace");
         assertThat(pd.getDetail()).isEqualTo("An internal server error occurred.");
-        Map<String, Object> props = Objects.requireNonNull(pd.getProperties());
-        assertThat(props.get("message")).isEqualTo("An internal server error occurred.");
     }
 }

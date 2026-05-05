@@ -121,8 +121,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .put("detail", errorInfo.detail())
                 .put("instance", path)
                 .put("timestamp", java.time.Instant.now().toString())
-                .put("message", errorInfo.detail())
-                .put("error", errorInfo.title())
                 .put("requestId", requestId);
         byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
         httpResponse.setContentLength(responseBytes.length);
