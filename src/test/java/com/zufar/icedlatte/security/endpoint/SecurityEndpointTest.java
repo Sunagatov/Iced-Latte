@@ -137,6 +137,24 @@ class SecurityEndpointTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Should fail registration immediately when confirmed email already exists")
+    void shouldFailRegistrationImmediatelyWhenConfirmedEmailAlreadyExists() {
+        String uniqueEmail = "confirmed.duplicate." + System.currentTimeMillis() + "@gmail.com";
+        UserRegistrationRequest pending = new UserRegistrationRequest("Jon", "Smith", uniqueEmail, "!h2h3kKl");
+        String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail + "\",\"password\":\"!h2h3kKl\"}";
+
+        given(specification).body("{\"token\":\"" + token + "\"}").post("/confirm")
+                .then().statusCode(HttpStatus.CREATED.value());
+
+        given(specification).body(body).post("/register")
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value())
+                .body("type", equalTo("https://iced-latte.uk/errors/registration-failed"))
+                .body("detail", equalTo("This email is already registered. Please sign in or use a different email."));
+    }
+
+    @Test
     @DisplayName("Should registration new user Failed empty password")
     void shouldRegistrationNewUserFailedPasswordEmpty() {
         assertRestApiBadRequestResponse(

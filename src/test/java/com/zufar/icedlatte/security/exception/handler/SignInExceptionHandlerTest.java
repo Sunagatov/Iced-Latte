@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.exception.handler;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,19 @@ class SignInExceptionHandlerTest {
     private SignInExceptionHandler signInExceptionHandler;
 
     private static final ProblemDetail STUB_401 = ProblemDetail.forStatus(401);
+
+    @Test
+    @DisplayName("Should return CONFLICT status when UserRegistrationException is thrown")
+    void shouldReturnConflictWhenUserRegistrationExceptionThrown() {
+        UserRegistrationException exception = new UserRegistrationException("This email is already registered.");
+        ProblemDetail stub409 = ProblemDetail.forStatus(409);
+        when(problemDetailFactory.build("registration-failed", "Registration failed",
+                HttpStatus.CONFLICT, "This email is already registered.")).thenReturn(stub409);
+
+        ProblemDetail result = signInExceptionHandler.handleUserRegistrationException(exception, request);
+
+        assertThat(result).isEqualTo(stub409);
+    }
 
     @Test
     @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when UserNotFoundException is thrown")

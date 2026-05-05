@@ -88,6 +88,20 @@ class UserRegistrationServiceTest {
     }
 
     @Test
+    @DisplayName("ensureEmailAvailable rejects existing normalized email")
+    void ensureEmailAvailableRejectsExistingNormalizedEmail() {
+        UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
+        registrationRequest.setEmail("  Duplicate@Example.COM ");
+        when(userRepository.existsByEmail("duplicate@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.ensureEmailAvailable(registrationRequest))
+                .isInstanceOf(UserRegistrationException.class)
+                .hasMessage("This email is already registered. Please sign in or use a different email.");
+
+        verify(userRepository).existsByEmail("duplicate@example.com");
+    }
+
+    @Test
     @DisplayName("register translates duplicate-email persistence failures")
     void registerTranslatesDuplicateEmailPersistenceFailures() {
         UserRegistrationRequest registrationRequest = new UserRegistrationRequest();

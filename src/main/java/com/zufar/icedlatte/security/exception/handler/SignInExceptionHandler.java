@@ -43,12 +43,12 @@ public class SignInExceptionHandler {
     }
 
     @ExceptionHandler(UserRegistrationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleUserRegistrationException(final UserRegistrationException exception,
                                                          HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.BAD_REQUEST, request);
+        logAuthFailure(exception, HttpStatus.CONFLICT, request);
         return problemDetailFactory.build("registration-failed", "Registration failed",
-                HttpStatus.BAD_REQUEST, exception.getMessage());
+                HttpStatus.CONFLICT, exception.getMessage());
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

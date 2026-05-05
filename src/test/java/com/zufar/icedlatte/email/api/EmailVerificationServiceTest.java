@@ -8,6 +8,7 @@ import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.api.UserProfileService;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -27,7 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,7 +70,22 @@ class EmailVerificationServiceTest {
 
             service.sendEmailVerificationCode(request);
 
+            verify(userRegistrationService).ensureEmailAvailable(request);
             verify(emailConfirmation).sendTemporaryCode(eq("john@example.com"), argThat(token -> token.matches("\\d{9}")));
+        }
+
+        @Test
+        @DisplayName("does not send token when email is already registered")
+        void doesNotSendTokenWhenEmailIsAlreadyRegistered() {
+            UserRegistrationRequest request =
+                    new UserRegistrationRequest("John", "Doe", "john@example.com", "pass123!");
+            doThrow(new UserRegistrationException("duplicate"))
+                    .when(userRegistrationService).ensureEmailAvailable(request);
+
+            assertThatThrownBy(() -> service.sendEmailVerificationCode(request))
+                    .isInstanceOf(UserRegistrationException.class);
+
+            verifyNoInteractions(emailConfirmation);
         }
     }
 

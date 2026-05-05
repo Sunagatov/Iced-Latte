@@ -20,6 +20,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      */
     Optional<UserEntity> findByEmail(String email);
 
+    boolean existsByEmail(String email);
+
     /**
      * Updates the locked status of a user based on the given email.
      *
