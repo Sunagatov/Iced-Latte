@@ -1,7 +1,9 @@
 # Order Module — Comprehensive Implementation Plan
 
 > **Project:** Iced Latte · **Module:** `com.zufar.icedlatte.order`
-> **Date:** 2026-05-03 · **Status:** Draft
+> **Date:** 2026-05-03 · **Status:** Historical design archive
+
+> ⚠️ **Archive notice:** this document is a planning/design reference, not the current source of truth for implemented behavior. Before using it for development, verify the current code, OpenAPI specs, Liquibase migrations, tests, and frontend behavior. If this document conflicts with the codebase, the codebase wins.
 
 ---
 
@@ -384,15 +386,19 @@ public class OrderSpecifications {
 
 The `CreateNewOrderRequestDto` will accept **either** a `deliveryAddressId` (reference to saved address) **or** an inline `address` object (for one-time addresses). At least one must be provided.
 
+Option A — use a saved address:
+
 ```json
-// Option A: use saved address
 {
   "deliveryAddressId": "550e8400-e29b-41d4-a716-446655440000",
   "recipientName": "John",
   "recipientSurname": "Doe"
 }
+```
 
-// Option B: inline address (current behavior)
+Option B — use an inline address:
+
+```json
 {
   "address": { "line": "123 Main St", "city": "London", "country": "UK", "postcode": "SW1A 1AA" },
   "recipientName": "John",

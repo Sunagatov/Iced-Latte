@@ -1,7 +1,7 @@
 # Terms of Use
 
 **Effective date:** May 3, 2026
-**Last updated:** May 4, 2026
+**Last updated:** May 6, 2026
 
 Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), a source-available specialty coffee marketplace project. By accessing or using the platform you agree to these Terms of Use. If you do not agree, please do not use the platform.
 
@@ -92,13 +92,18 @@ To the maximum extent permitted by applicable law, Zufar Sunagatov and the Iced 
 
 ## 10. Contributing
 
-By submitting a pull request or other contribution to the Iced Latte repositories, you agree that:
+By submitting a pull request, issue patch, code suggestion, documentation change, design, test, or any other contribution to the Iced Latte repositories, you agree that:
 
 - Your contribution is your original work or you have the right to submit it.
-- If accepted, your contribution may be incorporated under the same repository license or another license chosen by the maintainer.
-- You grant the project maintainer the right to use, modify, reject, relicense, and distribute your contribution.
+- Contributions are accepted only under the project's license and contribution terms.
+- You irrevocably assign all rights in the contribution to **Zufar Sunagatov**.
+- You do not receive ownership, copyright, trademark, commercial, publication, hosting, sublicensing, redistribution, or other rights in the project or related repositories.
+- The maintainer may use, modify, reject, relicense, publish, distribute, or remove your contribution at their discretion.
+- You must not submit code, text, images, designs, assets, test data, or other material that you do not have the right to contribute.
 
 See the full [Contributing Guide](../.github/CONTRIBUTING.md) for details.
+
+If you do not agree with these contribution terms, do not submit a contribution.
 
 ## 11. Changes to These Terms
 

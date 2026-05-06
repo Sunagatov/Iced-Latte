@@ -4,6 +4,9 @@
 **Scope:** Backend (Java 25 / Spring Boot 4) + Frontend (Next.js 16)
 **Stripe Mode:** Hosted Checkout Sessions (redirect-based)
 **Architecture:** Backend-owned order-first — Iced Latte owns the order lifecycle; Stripe only handles payment collection.
+**Status:** Historical design archive
+
+> ⚠️ **Archive notice:** this document records the Stripe implementation plan and design reasoning. It is not guaranteed to match the current implementation line by line. Before changing payment code, verify the current `payment/`, `order/`, OpenAPI specs, Liquibase migrations, frontend checkout flow, tests, and [Stripe Payment Integration — System Design Guide](stripe-payment-guide.md).
 
 ---
 
@@ -781,9 +784,9 @@ public class CheckoutPaymentTransactionService {
     private final ShoppingCartService shoppingCartService;
 
     @Transactional
-    public CheckoutPreparation prepareCheckout(UUID userId,
-                                                CreateCheckoutRequestDto request,
-                                                String idempotencyKey) {
+    CheckoutPreparation prepareCheckout(UUID userId,
+                                        CreateCheckoutRequestDto request,
+                                        String idempotencyKey) {
         // Application-level idempotency: same user + same key → return existing
         Optional<Payment> existing = paymentRepository
                 .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId);
@@ -1293,7 +1296,6 @@ public class StripeWebhookEventRecorder {
     /**
      * REQUIRES_NEW: committed independently so the PROCESSING marker
      * persists even if business processing rolls back.
-     *
      * If the event already exists with RETRYABLE_FAILED status (transient failure
      * on previous attempt), re-acquire it by resetting to PROCESSING.
      * If PROCESSING or PROCESSED, return false.

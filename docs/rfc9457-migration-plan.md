@@ -1,5 +1,9 @@
 # RFC 9457 ProblemDetail Migration Plan
 
+> **Status:** Migration planning archive / current-state reference
+>
+> ⚠️ **Read before implementing:** this document mixes completed findings, migration notes, and remaining ideas. Before starting work, verify the current backend exception handlers, security filters, OpenAPI error schemas, and frontend error handling. If this document conflicts with current code, the codebase wins.
+
 ## Goal
 
 Replace the custom `ApiErrorResponse` with Spring Boot 4's built-in `ProblemDetail` (RFC 9457) so every error response — from `@ExceptionHandler` methods AND security filters — follows the internet standard. Align the OpenAPI specs and fix the frontend's broken error handling at the same time.
@@ -117,7 +121,7 @@ Returns:
 
 **Frontend** — `OrderCard.tsx` (Phase 3 target):
 
-```typescript
+```text
 // BEFORE (current — tightly coupled, hardcoded, loses backend context):
 } catch {
   setActionError('Could not cancel order.')  // backend says WHY, but we throw it away
