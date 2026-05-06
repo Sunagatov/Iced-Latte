@@ -1,6 +1,16 @@
-#
-# Server Properties
-#
+# =============================================================================
+#                    ICED LATTE — TEST PROFILE OVERRIDES
+# =============================================================================
+# Activated by: tests (src/test/resources)
+# Purpose: Fast, isolated, deterministic. All external integrations disabled,
+#          rate limits removed, Argon2 weakened for speed, Testcontainers
+#          provides PostgreSQL and Redis.
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SERVER
+# ─────────────────────────────────────────────────────────────────────────────
 server:
   port: 8083
   error:
@@ -9,9 +19,10 @@ server:
     include-binding-errors: never
     include-exception: false
 
-#
-# Management Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACTUATOR
+# ─────────────────────────────────────────────────────────────────────────────
 management:
   server:
     port: 8083
@@ -19,10 +30,11 @@ management:
     mail:
       enabled: false
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SPRING CORE — DATABASE (Testcontainers provides the actual instance)
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
-  #
-  # Database Properties
-  #
   datasource:
     url: jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC
     username: postgres
@@ -34,14 +46,13 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        # Allow metadata access in tests for schema validation.
         allow_jdbc_metadata_access: true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
 
-  #
-  # Aws Properties
-  #
+  # --- AWS / Object Storage — disabled in tests ---
   aws:
     enabled: false
     account-id: test-account-id
@@ -59,92 +70,51 @@ spring:
     default-image-directory:
       products: ./products
 
-  #
-  # Redis (used by RedisJwtBlacklistService in tests via Testcontainers)
-  #
+  # --- Redis (Testcontainers provides the instance) ---
   data:
     redis:
       host: localhost
       port: 6379
 
+  # --- Email — disabled, placeholder values ---
   mail:
     host: smtp.gmail.com
     port: 587
     username: youricedlatteshop@gmail.com
     password: test_mail_password_placeholder
 
-#
-# Temporary Cache
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EMAIL & VERIFICATION TOKENS
+# ─────────────────────────────────────────────────────────────────────────────
 temporary-cache:
   time:
     token: 5
 
-#
-# JWT Security Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECURITY — weakened for test speed, rate limits effectively disabled
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Test-only JWT secrets (base64-encoded dummy keys — never use in production).
 jwt:
   header: Authorization
-  # Dummy base64 secrets - test-only, not used in production
   secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=
   expiration: PT30M
   refresh-secret: NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA0MDRFNTM1MjY2NTU2QTU4NkUzMjcyMzU3NTM4NzgyRjQxM0E0NDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==
   refresh-expiration: PT168H
   issuer: iced-latte
   audience: iced-latte-users
-  # Test user fixture credentials - not a production secret
+  # Test user fixture credentials — used by integration tests to authenticate.
   email: olivia@example.com
   password: p@ss1logic11
 
-#
-# AI Properties
-#
-ai:
-  api-key: "sk-test-placeholder"
-  base-url: "https://models.example.test"
-  model-name: gpt-4o-mini
-
-problem:
-  type-base-url: "https://errors.example.test/problems"
-
-#
-# Google Auth Properties
-#
-google:
-  auth:
-    server:
-      url: "https://accounts.google.com/o/oauth2/v2/auth"
-  scope: "https://www.googleapis.com/auth/userinfo.profile"
-  client-id: "sk-api-client"
-  client-secret: "sk-api-secret"
-  authenticate-uri: "http://localhost:8083/auth/login"
-  redirect-uri: "http://localhost:8083"
-
-aws:
-  account-id: test-account-id
-
-stripe:
-  secret-key: "sk_test_placeholder"
-  webhook-secret: "whsec_test_placeholder"
-
-#
-# Monitoring Properties
-#
-monitoring:
-  slow-query-threshold-ms: 200
-
-logging:
-  level:
-    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
-    org.springframework.boot.hibernate.autoconfigure.HibernateJpaConfiguration: ERROR
-
-#
-# Rate Limiting Properties (disabled for tests)
-#
 security:
   argon2:
-    memory: 1024     # minimum required by Argon2
-    iterations: 1    # reduced from 2 to speed up tests
+    # Minimum values to make password hashing fast in tests.
+    memory: 1024
+    iterations: 1
+  # All rate limits set to 100k — effectively disabled so tests don't get throttled.
   rate-limit:
     global:
       max-requests: 100000
@@ -164,3 +134,45 @@ security:
     payment:
       max-requests: 100000
       window-duration: PT1M
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTEGRATIONS — all disabled with safe placeholder values
+# ─────────────────────────────────────────────────────────────────────────────
+ai:
+  api-key: "sk-test-placeholder"
+  base-url: "https://models.example.test"
+  model-name: gpt-4o-mini
+
+google:
+  auth:
+    server:
+      url: "https://accounts.google.com/o/oauth2/v2/auth"
+  scope: "https://www.googleapis.com/auth/userinfo.profile"
+  client-id: "sk-api-client"
+  client-secret: "sk-api-secret"
+  authenticate-uri: "http://localhost:8083/auth/login"
+  redirect-uri: "http://localhost:8083"
+
+aws:
+  account-id: test-account-id
+
+stripe:
+  secret-key: "sk_test_placeholder"
+  webhook-secret: "whsec_test_placeholder"
+
+problem:
+  type-base-url: "https://errors.example.test/problems"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OBSERVABILITY — minimal, suppress noisy framework logs
+# ─────────────────────────────────────────────────────────────────────────────
+monitoring:
+  slow-query-threshold-ms: 200
+
+logging:
+  level:
+    # Suppress noisy Spring Security auto-config warnings during tests.
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    org.springframework.boot.hibernate.autoconfigure.HibernateJpaConfiguration: ERROR

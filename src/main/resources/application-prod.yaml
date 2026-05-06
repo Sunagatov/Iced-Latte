@@ -1,31 +1,70 @@
+# =============================================================================
+#                    ICED LATTE — PROD PROFILE OVERRIDES
+# =============================================================================
+# Activated by: SPRING_PROFILES_ACTIVE=prod
+# Purpose: Hardened for production — no error leaks, no Swagger, full
+#          observability pipeline via OpenTelemetry Collector.
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SERVER — never expose internals
+# ─────────────────────────────────────────────────────────────────────────────
 server:
   error:
     include-stacktrace: never
     include-message: never
     include-binding-errors: never
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SPRING CORE
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
   output:
     ansi:
+      # No ANSI colors — logs go to aggregators, not terminals.
       enabled: never
   liquibase:
+    # Never drop tables in production.
     drop-first: false
 
-# Production Sentry Configuration
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTEGRATIONS
+# ─────────────────────────────────────────────────────────────────────────────
+stripe:
+  enabled: ${STRIPE_ENABLED:false}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API DOCUMENTATION — disabled in production (not publicly accessible)
+# ─────────────────────────────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OBSERVABILITY — Sentry + OpenTelemetry + Pyroscope
+# ─────────────────────────────────────────────────────────────────────────────
 sentry:
-  # Capture all errors in production
   sample-rate: 1.0
-  # For low-traffic open-source project, trace all transactions
+  # For low-traffic open-source project, trace all transactions.
   traces-sample-rate: 1.0
-  # Profile a subset of traced transactions
+  # Profile 25% of traced transactions (CPU flame graphs).
   profiles-sample-rate: 0.25
 
 management:
   endpoint:
     health:
+      # Only authenticated users see full health details.
       show-details: when-authorized
   tracing:
     sampling:
+      # Trace 100% of requests (low-traffic project, full visibility).
       probability: 1.0
     export:
       otlp:
@@ -38,9 +77,11 @@ management:
     metrics:
       export:
         enabled: ${OTEL_EXPORTER_ENABLED:false}
+        # URL of the OpenTelemetry Collector metrics endpoint.
         url: ${OTEL_COLLECTOR_BASE_URL}/v1/metrics
+        # How often metrics are pushed to the collector.
         step: 1m
-  # Spring Boot 4.x OTel properties — routes all signals through local OTel Collector
+  # Spring Boot 4.x OTel properties — routes all signals through local OTel Collector.
   opentelemetry:
     resource-attributes:
       service.name: ${OTEL_SERVICE_NAME:iced-latte-backend}
@@ -58,27 +99,18 @@ management:
           endpoint: ${OTEL_COLLECTOR_BASE_URL}/v1/logs
           transport: http
 
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
-
-stripe:
-  enabled: ${STRIPE_ENABLED:false}
-
-logging:
-  level:
-    http.access: ${HTTP_ACCESS_LOG_LEVEL:WARN}
-
-# Pyroscope continuous profiling
+# Pyroscope continuous profiling — production-specific settings.
 pyroscope:
-  application-name: iced-latte-backend
-  server-address: ${PYROSCOPE_SERVER_ADDRESS:}
-  basic-auth-user: ${PYROSCOPE_BASIC_AUTH_USER:}
-  basic-auth-password: ${PYROSCOPE_BASIC_AUTH_PASSWORD:}
   profiling-interval: 10ms
   upload-interval: 15s
   labels:
     environment: production
     region: eu-west-2
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LOGGING — quieter in production, only warn on slow requests
+# ─────────────────────────────────────────────────────────────────────────────
+logging:
+  level:
+    http.access: ${HTTP_ACCESS_LOG_LEVEL:WARN}

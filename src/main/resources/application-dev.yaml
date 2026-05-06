@@ -1,37 +1,62 @@
+# =============================================================================
+#                    ICED LATTE — DEV PROFILE OVERRIDES
+# =============================================================================
+# Activated by: SPRING_PROFILES_ACTIVE=dev
+# Purpose: Full developer experience — verbose errors, SQL logging, DB reseeding,
+#          100% tracing, and DEBUG-level app logs.
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SERVER — expose full error details for debugging
+# ─────────────────────────────────────────────────────────────────────────────
 server:
   error:
     include-stacktrace: always
     include-message: always
     include-binding-errors: always
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SPRING CORE
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
   output:
     ansi:
+      # Colored console output for local terminal readability.
       enabled: always
   liquibase:
+    # Drop and recreate all tables on every restart — fresh seed data each time.
     drop-first: true
   jpa:
+    # Print SQL statements to console for debugging queries.
     show-sql: true
 
-# Development Sentry Configuration
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OBSERVABILITY — maximum visibility for local debugging
+# ─────────────────────────────────────────────────────────────────────────────
 sentry:
-  # Capture all errors in development
   sample-rate: 1.0
-  # Trace 100% of transactions for debugging
   traces-sample-rate: 1.0
-  # Profile 100% of traced transactions for debugging
   profiles-sample-rate: 1.0
-  # Enable debug mode
+  # Prints Sentry SDK internals to console (useful when debugging Sentry integration itself).
   debug: true
 
 management:
   endpoint:
     health:
+      # Show full health check details without authentication in dev.
       show-details: always
   tracing:
     sampling:
+      # Trace 100% of requests locally for full visibility.
       probability: 1.0
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LOGGING — verbose output for development
+# ─────────────────────────────────────────────────────────────────────────────
 logging:
   level:
     com.zufar: DEBUG
