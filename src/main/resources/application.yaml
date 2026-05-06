@@ -1,6 +1,15 @@
-#
-# Server Properties
-#
+# =============================================================================
+#                         ICED LATTE — APPLICATION CONFIG
+# =============================================================================
+# Single-file configuration organized by concern.
+# Profile overrides: application-dev.yaml, application-prod.yaml, etc.
+# Environment variables: see .env.example for all supported vars.
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ① SERVER
+# ─────────────────────────────────────────────────────────────────────────────
 server:
   port: ${PORT:${APP_SERVER_PORT}}
   tomcat:
@@ -17,11 +26,11 @@ server:
     include-exception: false
     whitelabel:
       enabled: false
-    # dev profile overrides these to always
 
-#
-# Spring Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ② SPRING CORE
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
   application:
     name: Iced Latte Application
@@ -40,10 +49,14 @@ spring:
   output:
     ansi:
       enabled: never
+  messages:
+    basename: messages/messages
+  config:
+    import: optional:stripe.yaml
 
-  #
-  # Database Properties
-  #
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-A  DATABASE (PostgreSQL + Hikari + JPA + Liquibase)
+  # ───────────────────────────────────────────────────────────────────────────
   datasource:
     url: jdbc:postgresql://${DATASOURCE_HOST}:${DATASOURCE_PORT}/${DATASOURCE_NAME}?serverTimezone=UTC&sslmode=${DATASOURCE_SSL_MODE:disable}&prepareThreshold=0
     username: ${DATASOURCE_USERNAME}
@@ -53,7 +66,7 @@ spring:
       maximum-pool-size: 5
       connection-timeout: 20000
       idle-timeout: 0            # pool never shrinks (minimum-idle=1), disable idle eviction
-      max-lifetime: 240000   # 4 min — must be < DB/proxy idle timeout (typically 5 min)
+      max-lifetime: 240000       # 4 min — must be < DB/proxy idle timeout (typically 5 min)
       keepalive-time: 30000
   jpa:
     hibernate:
@@ -66,9 +79,20 @@ spring:
     enabled: true
     change-log: classpath:db/changelog-master.yaml
 
-  #
-  # AWS Properties
-  #
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-B  REDIS
+  # ───────────────────────────────────────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-C  OBJECT STORAGE (AWS S3 / MinIO)
+  # ───────────────────────────────────────────────────────────────────────────
   aws:
     enabled: ${AWS_ENABLED:false}
     account-id: ${AWS_ACCOUNT_ID:}
@@ -89,20 +113,9 @@ spring:
     default-image-directory:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
-  #
-  # Redis Properties
-  #
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD:}
-      ssl:
-        enabled: ${REDIS_SSL_ENABLED:false}
-
-  #
-  # Email Properties
-  #
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-D  EMAIL (SMTP)
+  # ───────────────────────────────────────────────────────────────────────────
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -120,14 +133,9 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-  messages:
-    basename: messages/messages
-
-  config:
-    import: optional:stripe.yaml
-
-  # Avatar Upload Properties
-  #
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-E  FILE UPLOAD (Multipart)
+  # ───────────────────────────────────────────────────────────────────────────
   servlet:
     multipart:
       enabled: true
@@ -135,61 +143,68 @@ spring:
       max-request-size: 10MB
       file-size-threshold: 2KB
 
-#
-# Pagination Properties
-#
-pagination:
-  default-page-number: 0
-  products:
-    default-page-size: 50
-    default-sort-attribute: "name"
-    default-sort-direction: "desc"
-  reviews:
-    default-page-size: 10
-    default-sort-attribute: "createdAt"
-    default-sort-direction: "desc"
 
-#
-# Cache Properties
-#
-cache:
-  default-ttl: PT10M
-  product-ttl: PT10M
-  brands-ttl: PT24H
-  sellers-ttl: PT24H
-  image-url-ttl: PT50M
-  image-urls-ttl: PT24H
-  caffeine:
-    rate-limit-warn-size: 1000
-    rate-limit-filter-size: 5000
-    rate-limit-window-size: 10000
-    redis-error-log-size: 1000
-    temporary-store-size: 10000
+# ─────────────────────────────────────────────────────────────────────────────
+# ③ SECURITY (JWT + CORS + Rate Limiting + OAuth + Login Attempts)
+# ─────────────────────────────────────────────────────────────────────────────
+jwt:
+  header: Authorization
+  secret: ${APP_JWT_SECRET}
+  expiration: PT15M
+  refresh-secret: ${APP_JWT_REFRESH_SECRET}
+  refresh-expiration: PT24H
+  issuer: ${APP_JWT_ISSUER:iced-latte}
+  audience: ${APP_JWT_AUDIENCE:iced-latte-client}
 
-#
-# Temporary Cache
-#
-temporary-cache:
-  time:
-    token: 5
-  get-token-enabled: true
+cors:
+  allowed-origins: ${ALLOWED_ORIGINS}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+  allowed-headers: "*"
+  exposed-headers: Authorization,Content-Type,X-Request-ID
+  allow-credentials: true
+  max-age: 3600
 
-#
-# Product Properties
-#
-product:
-  placeholder-image-url: "/assets/images/product-placeholder.png"
+security:
+  rate-limit:
+    global:
+      max-requests: 60
+      window-duration: PT1M
+    auth:
+      max-requests: 10
+      window-duration: PT1M
+    search:
+      max-requests: 30
+      window-duration: PT1M
+    telemetry:
+      max-requests: 120
+      window-duration: PT1M
+    pre-auth:
+      max-requests: 200
+      window-duration: PT1M
+    payment:
+      max-requests: 20
+      window-duration: PT1M
+  # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
+  # Leave empty when the app is directly reachable (safe default).
+  trusted-proxies:
+  # NOTE: /actuator/health, /actuator/info, /actuator/prometheus are permitAll and
+  # skipped by rate-limiting filters. Protect them at the network/reverse-proxy layer.
 
-#
-# Migration Properties
-#
-migration:
-  timeout-minutes: 5
+oauth:
+  state-ttl-minutes: 10
 
-#
-# Feature Flags
-# Set to true only when you have real credentials for that service.
-#
+login-attempts:
+  max-attempts: 5
+  lockout-duration-minutes: 60
+
+unlock-account-scheduler-cron: '0 0/5 * * * *'
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ④ INTEGRATIONS & FEATURE FLAGS
+# ─────────────────────────────────────────────────────────────────────────────
+# Set enabled: true only when you have real credentials for that service.
+
 google:
   enabled: ${GOOGLE_ENABLED:false}
   auth:
@@ -228,18 +243,60 @@ stripe:
       min-days: 1
       max-days: 1
 
-#
-# Frontend Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑤ CACHING (TTLs + Caffeine sizing)
+# ─────────────────────────────────────────────────────────────────────────────
+cache:
+  default-ttl: PT10M
+  product-ttl: PT10M
+  brands-ttl: PT24H
+  sellers-ttl: PT24H
+  image-url-ttl: PT50M
+  image-urls-ttl: PT24H
+  caffeine:
+    rate-limit-warn-size: 1000
+    rate-limit-filter-size: 5000
+    rate-limit-window-size: 10000
+    redis-error-log-size: 1000
+    temporary-store-size: 10000
+
+temporary-cache:
+  time:
+    token: 5
+  get-token-enabled: true
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑥ BUSINESS LOGIC (Pagination, Product defaults, Migration)
+# ─────────────────────────────────────────────────────────────────────────────
+pagination:
+  default-page-number: 0
+  products:
+    default-page-size: 50
+    default-sort-attribute: "name"
+    default-sort-direction: "desc"
+  reviews:
+    default-page-size: 10
+    default-sort-attribute: "createdAt"
+    default-sort-direction: "desc"
+
+product:
+  placeholder-image-url: "/assets/images/product-placeholder.png"
+
+migration:
+  timeout-minutes: 5
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑦ API & DOCUMENTATION
+# ─────────────────────────────────────────────────────────────────────────────
 frontend:
   url: ${FRONTEND_URL}
 
 problem:
   type-base-url: ${PROBLEM_TYPE_BASE_URL}
 
-#
-# Spring Doc Properties
-#
 springdoc:
   api-docs:
     path: /api/docs/schema
@@ -250,53 +307,33 @@ springdoc:
   pre-loading-enabled: false
   default-produces-media-type: application/json
 
-#
-# Observability Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑧ OBSERVABILITY (Sentry + Actuator/Metrics + Tracing)
+# ─────────────────────────────────────────────────────────────────────────────
 sentry:
   enabled: ${SENTRY_ENABLED:false}
   dsn: ${SENTRY_DSN:}
   environment: ${SENTRY_ENVIRONMENT:local}
-  
-  # Error Sampling - capture all errors in production
   sample-rate: 1.0
-  
-  # Performance Monitoring - trace 10% of transactions
   traces-sample-rate: 0.1
-  
-  # Profiling - profile 10% of traced transactions
   profiles-sample-rate: 0.1
-  
-  # Privacy & Security
   send-default-pii: false
   attach-stacktrace: true
   attach-threads: true
-  
-  # Performance Monitoring
   enable-tracing: true
   enable-profiling: true
-  
-  # Logging Integration
   logging:
     minimum-event-level: error
     minimum-breadcrumb-level: info
-  
-  # Performance Thresholds (in milliseconds)
   tracing:
     origins:
       - ".*"
-  
-  # Ignore specific exceptions (optional)
   ignored-exceptions-for-type:
     - java.lang.IllegalArgumentException
-  
-  # In-App Packages (auto-configured by Spring Boot)
   in-app-packages:
     - com.zufar.icedlatte
 
-#
-# Management Properties
-#
 management:
   server:
     port: ${server.port}
@@ -312,7 +349,6 @@ management:
     web:
       exposure:
         include: health, info, metrics, prometheus
-        # metrics and prometheus are internal; restrict to authorized access only via show-details: when-authorized
       base-path: /actuator
   prometheus:
     metrics:
@@ -341,84 +377,13 @@ management:
     key-values:
       application: ${spring.application.name}
 
-#
-# JWT Security Properties
-#
-jwt:
-  header: Authorization
-  secret: ${APP_JWT_SECRET}
-  expiration: PT15M # 15 minutes
-  refresh-secret: ${APP_JWT_REFRESH_SECRET}
-  refresh-expiration: PT24H # 1 day
-  issuer: ${APP_JWT_ISSUER:iced-latte}
-  audience: ${APP_JWT_AUDIENCE:iced-latte-client}
-
-#
-# CORS Properties
-#
-cors:
-  allowed-origins: ${ALLOWED_ORIGINS}
-  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
-  allowed-headers: "*"
-  exposed-headers: Authorization,Content-Type,X-Request-ID
-  allow-credentials: true
-  max-age: 3600
-
-#
-# Rate Limiting Properties
-#
-security:
-  rate-limit:
-    global:
-      max-requests: 60
-      window-duration: PT1M
-    auth:
-      max-requests: 10
-      window-duration: PT1M
-    search:
-      max-requests: 30
-      window-duration: PT1M
-    telemetry:
-      max-requests: 120
-      window-duration: PT1M
-    pre-auth:
-      max-requests: 200
-      window-duration: PT1M
-    payment:
-      # Stripe session creation + webhook: tighter than global to limit abuse surface.
-      # Webhook endpoint is permitAll (Stripe calls it server-side) so pre-auth limiter
-      # is the only guard when stripe.enabled=false or the JWT is absent.
-      max-requests: 20
-      window-duration: PT1M
-  # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
-  # Leave empty when the app is directly reachable (safe default).
-  trusted-proxies:
-  # NOTE: /actuator/health, /actuator/info, /actuator/prometheus are permitAll and skipped
-  # by both rate-limiting filters. They MUST be protected at the network/reverse-proxy layer
-  # (e.g. restrict /actuator/prometheus to the Prometheus scraper IP). Do not expose them
-  # to the public internet without that protection.
-
-oauth:
-  state-ttl-minutes: 10
-
-#
-# Login Attempts Properties
-#
-login-attempts:
-  max-attempts: 5
-  lockout-duration-minutes: 60
-
-unlock-account-scheduler-cron: '0 0/5 * * * *' # every 5 minutes
-
-#
-# Monitoring Properties
-#
 monitoring:
   slow-query-threshold-ms: 200
 
-#
-# Logging Properties
-#
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⑨ LOGGING
+# ─────────────────────────────────────────────────────────────────────────────
 logging:
   pattern:
     file: iced-latte-backend-%d{yyyy-MM-dd}.%i.log
@@ -426,22 +391,13 @@ logging:
   level:
     http.access: ${HTTP_ACCESS_LOG_LEVEL:INFO}
     io.opentelemetry.exporter: WARN
-  
-  # Grafana Loki Configuration
   loki:
     enabled: ${LOKI_ENABLED:false}
     url: ${LOKI_URL:}
-  
-  # Elasticsearch/Logstash Configuration
   logstash:
     enabled: ${LOGSTASH_ENABLED:false}
     host: ${LOGSTASH_HOST:}
     port: ${LOGSTASH_PORT:}
-  
-  # Datadog Configuration
   datadog:
     enabled: ${DATADOG_ENABLED:false}
-
-  # Access log slow-request threshold (ms). Requests at or above this value are logged at WARN.
-  # Override per environment: logging.slow-request-threshold-ms=500
   slow-request-threshold-ms: ${LOGGING_SLOW_REQUEST_THRESHOLD_MS:500}
