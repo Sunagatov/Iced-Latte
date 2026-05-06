@@ -22,6 +22,9 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     @Value("${migration.ratings.enabled:false}")
     private boolean enabled;
 
+    @Value("${migration.timeout-minutes:5}")
+    private int timeoutMinutes;
+
     private final ProductReviewProductGateway productReviewProductGateway;
     private final ProductReviewRepository productReviewRepository;
     private final TransactionTemplate transactionTemplate;
@@ -42,7 +45,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
                     productReviewRepository.updateAllDislikesCounts();
                     log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
                 }), executor)
-            .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+            .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
             .whenComplete((_, e) -> {
                 executor.close();
                 if (e != null) log.error("migration.ratings.error: message={}", e.getMessage(), e);

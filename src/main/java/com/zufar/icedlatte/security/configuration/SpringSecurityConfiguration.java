@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
@@ -163,7 +164,7 @@ public class SpringSecurityConfiguration {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        String typeSlug = status == 401 ? "auth-required" : "access-denied";
+        String typeSlug = status == 401 ? ProblemType.AUTH_REQUIRED : ProblemType.ACCESS_DENIED;
         String title = status == 401 ? "Authentication required" : "Access denied";
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
                 .put("type", problemTypeUriFactory.build(typeSlug))

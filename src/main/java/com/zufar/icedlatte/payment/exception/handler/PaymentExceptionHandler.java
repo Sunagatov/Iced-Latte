@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.payment.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.stripe.exception.AuthenticationException;
@@ -25,7 +26,7 @@ public class PaymentExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @SuppressWarnings("unused")
     public ProblemDetail handlePaymentEventProcessingException(final PaymentEventProcessingException e) {
-        return problemDetailFactory.build("payment-event-failed", "Payment event failed",
+        return problemDetailFactory.build(ProblemType.PAYMENT_EVENT_FAILED, "Payment event failed",
                 HttpStatus.BAD_REQUEST, "Payment event could not be verified.");
     }
 
@@ -39,7 +40,7 @@ public class PaymentExceptionHandler {
         } else {
             log.warn("payment.session.failed: exceptionClass={}, status=502", e.getClass().getSimpleName());
         }
-        return problemDetailFactory.build("payment-session-failed", "Payment session failed",
+        return problemDetailFactory.build(ProblemType.PAYMENT_SESSION_FAILED, "Payment session failed",
                 HttpStatus.BAD_GATEWAY, "Payment session could not be created.");
     }
 }

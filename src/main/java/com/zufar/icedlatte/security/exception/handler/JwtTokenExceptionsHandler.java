@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
 import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
@@ -32,7 +33,7 @@ public class JwtTokenExceptionsHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleJwtTokenBlacklistedException(final JwtTokenBlacklistedException exception) {
         log.debug("auth.refresh.rejected: reason=token_invalidated, status=401");
-        return problemDetailFactory.build("session-expired", "Session expired",
+        return problemDetailFactory.build(ProblemType.SESSION_EXPIRED, "Session expired",
                 HttpStatus.UNAUTHORIZED, "Session expired. Please sign in again.");
     }
 

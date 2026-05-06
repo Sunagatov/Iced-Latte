@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
@@ -32,7 +33,7 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleTypeMismatch(final MethodArgumentTypeMismatchException ignored) {
         log.debug("exception.order.type_mismatch: status=400");
-        return problemDetailFactory.build("invalid-parameter", "Invalid parameter",
+        return problemDetailFactory.build(ProblemType.INVALID_PARAMETER, "Invalid parameter",
                 HttpStatus.BAD_REQUEST, "Incorrect status value. Supported: " + Arrays.toString(OrderStatus.values()));
     }
 
@@ -40,7 +41,7 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ProblemDetail handleOrderNotFound(final OrderNotFoundException ex) {
         log.debug("exception.order.not_found: status=404");
-        return problemDetailFactory.build("order-not-found", "Order not found",
+        return problemDetailFactory.build(ProblemType.ORDER_NOT_FOUND, "Order not found",
                 HttpStatus.NOT_FOUND, "Order not found.");
     }
 
@@ -48,7 +49,7 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ProblemDetail handleAccessDenied(final OrderAccessDeniedException ex) {
         log.debug("exception.order.access_denied: status=403");
-        return problemDetailFactory.build("order-access-denied", "Access denied",
+        return problemDetailFactory.build(ProblemType.ORDER_ACCESS_DENIED, "Access denied",
                 HttpStatus.FORBIDDEN, "Access denied.");
     }
 
@@ -56,7 +57,7 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleInvalidTransition(final InvalidOrderStateTransitionException ex) {
         log.debug("exception.order.invalid_transition: status=409");
-        return problemDetailFactory.build("order-state-invalid", "Invalid order state",
+        return problemDetailFactory.build(ProblemType.ORDER_STATE_INVALID, "Invalid order state",
                 HttpStatus.CONFLICT, "This order can no longer be modified.");
     }
 
@@ -64,7 +65,7 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleCancellationExpired(final OrderCancellationWindowExpiredException ex) {
         log.debug("exception.order.cancellation_expired: status=409");
-        return problemDetailFactory.build("order-cancellation-expired", "Cancellation window expired",
+        return problemDetailFactory.build(ProblemType.ORDER_CANCELLATION_EXPIRED, "Cancellation window expired",
                 HttpStatus.CONFLICT, "Order cannot be cancelled: cancellation window has expired.");
     }
 }

@@ -29,6 +29,9 @@ public class ApplicationMigration implements ApplicationRunner {
     @Value("${migration.upload.enabled:false}")
     private boolean uploadEnabled;
 
+    @Value("${migration.timeout-minutes:5}")
+    private int timeoutMinutes;
+
     private final FileStorageService fileStorageService;
 
     @Override
@@ -40,7 +43,7 @@ public class ApplicationMigration implements ApplicationRunner {
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         CompletableFuture.runAsync(uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled"), executor)
                 .thenRunAsync(this::refreshMetadataIndex, executor)
-                .orTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+                .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((_, e) -> {
                     executor.close();
                     if (e != null) {

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
@@ -92,12 +93,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
-            case InvalidCredentialsException _ -> new ErrorInfo("invalid-credentials", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
-            case JwtTokenBlacklistedException _ -> new ErrorInfo("session-expired", "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
-            case ExpiredJwtException _ -> new ErrorInfo("session-expired", "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo("auth-failed", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
-            case UsernameNotFoundException _ -> new ErrorInfo("auth-failed", "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
-            default -> new ErrorInfo("internal-error", "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
+            case InvalidCredentialsException _ -> new ErrorInfo(ProblemType.INVALID_CREDENTIALS, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
+            case JwtTokenBlacklistedException _ -> new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
+            case ExpiredJwtException _ -> new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
+            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
+            case UsernameNotFoundException _ -> new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
+            default -> new ErrorInfo(ProblemType.INTERNAL_ERROR, "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
         };
 
         if (errorInfo.statusCode() >= 500) {

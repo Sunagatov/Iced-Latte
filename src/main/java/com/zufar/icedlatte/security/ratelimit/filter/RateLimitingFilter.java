@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.ratelimit.filter;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
@@ -141,7 +142,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
             logExceeded(request, category, result, key, identityType, clientIp);
-            RateLimitResponseWriter.writeTooManyRequests(response, result, problemTypeUriFactory.build("rate-limited"));
+            RateLimitResponseWriter.writeTooManyRequests(response, result, problemTypeUriFactory.build(ProblemType.RATE_LIMITED));
             return true;
         }
 

@@ -56,6 +56,7 @@ class EmailVerificationServiceTest {
                 userProfileService
         );
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
+        ReflectionTestUtils.setField(service, "tokenLength", 9);
     }
 
     @Nested

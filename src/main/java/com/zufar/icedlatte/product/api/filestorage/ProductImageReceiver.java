@@ -3,8 +3,10 @@ package com.zufar.icedlatte.product.api.filestorage;
 import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,25 +21,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductImageReceiver {
 
-    private static final String DEFAULT_FILE_URL = "/assets/images/product-placeholder.png";
+    @Getter
+    @Value("${product.placeholder-image-url}")
+    private String placeholderImageUrl;
 
     private final FileStorageService fileStorageService;
     private final ProductImageRepository productImageRepository;
 
     @Cacheable(cacheNames = "productImageUrl",
             key = "#productId",
-            unless = "#result.startsWith('/assets/')")
+            unless = "#result == @productImageReceiver.getPlaceholderImageUrl()")
     public String getProductFileUrl(final UUID productId) {
         try {
             return fileStorageService.findFileUrl(productId)
                     .orElseGet(() -> {
                         log.debug("product.image.not_found: productId={}", productId);
-                        return DEFAULT_FILE_URL;
+                        return placeholderImageUrl;
                     });
         } catch (RuntimeException ex) {
             log.error("product.image.error: productId={}, exceptionClass={}",
                     productId, ex.getClass().getSimpleName(), ex);
-            return DEFAULT_FILE_URL;
+            return placeholderImageUrl;
         }
     }
 
@@ -71,6 +75,6 @@ public class ProductImageReceiver {
         }
         final Map<UUID, String> resolved = fileUrls;
         return productIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> resolved.getOrDefault(id, DEFAULT_FILE_URL)));
+                .collect(Collectors.toMap(id -> id, id -> resolved.getOrDefault(id, placeholderImageUrl)));
     }
 }

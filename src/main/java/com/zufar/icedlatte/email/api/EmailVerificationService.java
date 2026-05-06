@@ -28,7 +28,6 @@ public class EmailVerificationService {
 
     private static final String TOKEN_KEY_PREFIX = "email:token:";
     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
-    private static final int TOKEN_LENGTH = 9;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ExpiringKeyValueStore temporaryStore;
@@ -37,6 +36,9 @@ public class EmailVerificationService {
     private final UserRegistrationService userRegistrationService;
     private final SingleUserProvider singleUserProvider;
     private final UserProfileService userProfileService;
+
+    @Value("${email.verification-token-length}")
+    private int tokenLength;
 
     @Value("${temporary-cache.time.token}")
     private int expireTimeMinutes;
@@ -114,13 +116,13 @@ public class EmailVerificationService {
         }
     }
 
-    private static String nextToken() {
-        return String.format("%0" + TOKEN_LENGTH + "d", RANDOM.nextInt((int) Math.pow(10, TOKEN_LENGTH)));
+    private String nextToken() {
+        return String.format("%0" + tokenLength + "d", RANDOM.nextInt((int) Math.pow(10, tokenLength)));
     }
 
-    private static void validateTokenFormat(String token) {
-        if (token == null || token.length() != TOKEN_LENGTH || !token.chars().allMatch(Character::isDigit)) {
-            throw new BadRequestException("Incorrect token format, token must be " + "#".repeat(TOKEN_LENGTH));
+    private void validateTokenFormat(String token) {
+        if (token == null || token.length() != tokenLength || !token.chars().allMatch(Character::isDigit)) {
+            throw new BadRequestException("Incorrect token format, token must be " + "#".repeat(tokenLength));
         }
     }
 

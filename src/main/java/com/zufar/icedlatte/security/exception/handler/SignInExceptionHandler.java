@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
@@ -38,7 +39,7 @@ public class SignInExceptionHandler {
             log.debug("auth.sign_in.failed: reason_code=AbsentBearerHeaderException, status=401, method={}, path={}",
                     request.getMethod(), sanitize(request.getRequestURI()));
         }
-        return problemDetailFactory.build("auth-required", "Authentication required",
+        return problemDetailFactory.build(ProblemType.AUTH_REQUIRED, "Authentication required",
                 HttpStatus.UNAUTHORIZED, "Authentication required.");
     }
 
@@ -47,7 +48,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleUserRegistrationException(final UserRegistrationException exception,
                                                          HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.CONFLICT, request);
-        return problemDetailFactory.build("registration-failed", "Registration failed",
+        return problemDetailFactory.build(ProblemType.REGISTRATION_FAILED, "Registration failed",
                 HttpStatus.CONFLICT, exception.getMessage());
     }
 
@@ -56,7 +57,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleInvalidCredentialsException(final InvalidCredentialsException exception,
                                                            HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
@@ -65,7 +66,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleUserNotFoundException(final UserNotFoundException exception,
                                                      HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
@@ -74,7 +75,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleUsernameNotFoundException(final UsernameNotFoundException exception,
                                                          HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
@@ -83,7 +84,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleUserAccountLockedException(final UserAccountLockedException exception,
                                                           HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build("account-locked", "Account locked",
+        return problemDetailFactory.build(ProblemType.ACCOUNT_LOCKED, "Account locked",
                 HttpStatus.UNAUTHORIZED, "User account is locked.");
     }
 
@@ -92,7 +93,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleBadCredentialsException(final BadCredentialsException exception,
                                                        HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build("invalid-credentials", "Invalid credentials",
+        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
@@ -101,7 +102,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleSessionNotFoundException(final SessionNotFoundException exception,
                                                         HttpServletRequest request) {
         log.debug("auth.session.not_found: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return problemDetailFactory.build("session-not-found", "Session not found",
+        return problemDetailFactory.build(ProblemType.SESSION_NOT_FOUND, "Session not found",
                 HttpStatus.NOT_FOUND, "Session not found.");
     }
 
@@ -110,7 +111,7 @@ public class SignInExceptionHandler {
     public ProblemDetail handleSessionOwnershipException(final SessionOwnershipException exception,
                                                          HttpServletRequest request) {
         log.debug("auth.session.forbidden: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return problemDetailFactory.build("session-access-denied", "Access denied",
+        return problemDetailFactory.build(ProblemType.SESSION_ACCESS_DENIED, "Access denied",
                 HttpStatus.FORBIDDEN, "Access denied.");
     }
 

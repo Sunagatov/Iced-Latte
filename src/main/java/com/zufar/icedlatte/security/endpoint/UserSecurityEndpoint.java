@@ -16,12 +16,14 @@ import com.zufar.icedlatte.security.api.RefreshTokenService;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
+import com.zufar.icedlatte.security.api.UserRegistrationService;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -54,13 +56,22 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final LogoutService logoutService;
     private final PasswordResetService passwordResetService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final UserRegistrationService userRegistrationService;
     private final HttpServletRequest httpRequest;
+
+    @Value("${email.enabled:false}")
+    private boolean emailEnabled;
 
     @Override
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid final UserRegistrationRequest request) {
+    public ResponseEntity<UserAuthenticationResponse> register(@RequestBody @Valid final UserRegistrationRequest request) {
+        if (!emailEnabled) {
+            userRegistrationService.ensureEmailAvailable(request);
+            var response = userRegistrationService.register(request, httpRequest);
+            return ResponseEntity.ok(response);
+        }
         emailVerificationService.sendEmailVerificationCode(request);
-        return ResponseEntity.ok("Email verification token sent");
+        return ResponseEntity.ok().build();
     }
 
     @Override

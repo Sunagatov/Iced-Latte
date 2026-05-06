@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.exception.handler;
 
+import com.zufar.icedlatte.common.exception.ProblemType;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -45,7 +46,7 @@ public class GlobalExceptionHandler {
                 .collect(java.util.stream.Collectors.joining(","));
         log.debug("exception.validation: errorCount={}, fields={}, status=400",
                 exception.getBindingResult().getErrorCount(), fieldNames);
-        return problemDetailFactory.build("validation-failed", "Validation failed",
+        return problemDetailFactory.build(ProblemType.VALIDATION_FAILED, "Validation failed",
                 HttpStatus.BAD_REQUEST, "Validation failed.", fieldErrors);
     }
 
@@ -62,7 +63,7 @@ public class GlobalExceptionHandler {
                 .collect(java.util.stream.Collectors.joining(","));
         log.debug("exception.constraint_violation: errorCount={}, fields={}, status=400",
                 exception.getConstraintViolations().size(), fieldNames);
-        return problemDetailFactory.build("validation-failed", "Validation failed",
+        return problemDetailFactory.build(ProblemType.VALIDATION_FAILED, "Validation failed",
                 HttpStatus.BAD_REQUEST, "Validation failed.", fieldErrors);
     }
 
@@ -85,7 +86,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
         log.debug("exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
                 exception.getClass().getSimpleName());
-        return problemDetailFactory.build("file-too-large", "File too large",
+        return problemDetailFactory.build(ProblemType.FILE_TOO_LARGE, "File too large",
                 HttpStatus.CONTENT_TOO_LARGE, "Uploaded file is too large.");
     }
 

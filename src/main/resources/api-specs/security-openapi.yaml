@@ -38,11 +38,11 @@ paths:
               $ref: "#/components/schemas/UserRegistrationRequest"
       responses:
         "200":
-          description: "Registration successful, email verification token sent"
+          description: "Registration successful. Returns tokens when email verification is disabled, or empty body when verification email was sent."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RegistrationMessageResponse"
+                $ref: "#/components/schemas/UserAuthenticationResponse"
         "400":
           description: "Bad request"
           content:
@@ -474,10 +474,6 @@ components:
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
-
-    RegistrationMessageResponse:
-      type: "string"
-      example: "Email verification token sent"
 
     SessionInfo:
       type: "object"

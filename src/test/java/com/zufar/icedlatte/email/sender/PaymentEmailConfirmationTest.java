@@ -3,6 +3,8 @@ package com.zufar.icedlatte.email.sender;
 import com.stripe.model.checkout.Session;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -19,6 +21,13 @@ class PaymentEmailConfirmationTest {
     private final JavaMailSender javaMailSender = mock(JavaMailSender.class);
     private final SimpleMailMessage mailMessage = new SimpleMailMessage();
 
+    private static MessageSource testMessageSource() {
+        ResourceBundleMessageSource ms = new ResourceBundleMessageSource();
+        ms.setBasename("messages/messages");
+        ms.setDefaultEncoding("UTF-8");
+        return ms;
+    }
+
     @Test
     @DisplayName("sends formatted payment confirmation email from stripe session")
     void sendsFormattedPaymentConfirmation() {
@@ -28,7 +37,7 @@ class PaymentEmailConfirmationTest {
         when(stripeSession.getCustomerEmail()).thenReturn("buyer@example.com");
 
         PaymentEmailConfirmation confirmation =
-                new PaymentEmailConfirmation(javaMailSender, mailMessage, List.of());
+                new PaymentEmailConfirmation(javaMailSender, mailMessage, List.of(), testMessageSource());
 
         confirmation.send(stripeSession);
 

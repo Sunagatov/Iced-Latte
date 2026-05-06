@@ -104,8 +104,8 @@ spring:
   # Email Properties
   #
   mail:
-    host: smtp.gmail.com
-    port: 587
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     subject:
@@ -175,6 +175,18 @@ temporary-cache:
   get-token-enabled: true
 
 #
+# Product Properties
+#
+product:
+  placeholder-image-url: "/assets/images/product-placeholder.png"
+
+#
+# Migration Properties
+#
+migration:
+  timeout-minutes: 5
+
+#
 # Feature Flags
 # Set to true only when you have real credentials for that service.
 #
@@ -199,6 +211,7 @@ ai:
 
 email:
   enabled: ${EMAIL_ENABLED:false}
+  verification-token-length: 9
 
 stripe:
   enabled: ${STRIPE_ENABLED:false}
