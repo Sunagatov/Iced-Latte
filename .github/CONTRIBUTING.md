@@ -101,6 +101,58 @@ Before submitting:
 
 ---
 
+## 🌿 Branches & PR Titles
+
+Use short, descriptive branch names:
+
+- `fix/cart-total-rounding`
+- `feature/order-history-filter`
+- `docs/getting-started-windows`
+- `test/product-review-validation`
+
+Good PR titles explain the change directly:
+
+- `Fix cart total rounding for discounted products`
+- `Add order history date filter`
+- `Clarify Windows setup in Getting Started`
+- `Add validation tests for product reviews`
+
+---
+
+## 📦 PR Size
+
+Small PRs are easier to review and merge.
+
+Prefer:
+
+- one bug fix
+- one feature slice
+- one documentation improvement
+- one test improvement
+
+Avoid:
+
+- mixing refactors with behavior changes
+- formatting unrelated files
+- changing backend, frontend, and QA repositories in one PR unless the issue requires it
+- adding abstractions that are not needed for the current change
+
+---
+
+## ✅ Definition of Done
+
+A contribution is ready for review when:
+
+- the code builds
+- `mvn test` passes
+- relevant docs are updated
+- API changes update OpenAPI specs
+- database changes include Liquibase migrations
+- security-sensitive changes mention the security impact
+- behavior is explained in the PR description
+
+---
+
 ## 🧩 Code Expectations
 
 - Follow the existing package structure and naming style.
@@ -162,6 +214,16 @@ Reviewers will usually check:
 - whether the PR stays focused
 
 Expect review comments. That is normal project work, not a rejection.
+
+---
+
+## 💬 Questions
+
+If you are stuck:
+
+- ask in the issue thread if your question is about a specific ticket
+- start a [Discussion](https://github.com/Sunagatov/Iced-Latte/discussions) for design or feature questions
+- use the [Telegram community](https://t.me/zufarexplained) for general help
 
 ---
 
