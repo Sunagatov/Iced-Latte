@@ -512,6 +512,15 @@ management:
 monitoring:
   slow-query-threshold-ms: 200
 
+# --- Pyroscope (continuous CPU/memory profiling) ---
+# Disabled by default. Enable and set server-address for production profiling.
+pyroscope:
+  enabled: ${PYROSCOPE_ENABLED:false}
+  application-name: iced-latte-backend
+  server-address: ${PYROSCOPE_SERVER_ADDRESS:}
+  basic-auth-user: ${PYROSCOPE_BASIC_AUTH_USER:}
+  basic-auth-password: ${PYROSCOPE_BASIC_AUTH_PASSWORD:}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ⑨ LOGGING

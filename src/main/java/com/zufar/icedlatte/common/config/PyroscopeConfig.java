@@ -3,11 +3,13 @@ package com.zufar.icedlatte.common.config;
 import io.pyroscope.javaagent.PyroscopeAgent;
 import io.pyroscope.javaagent.config.Config;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 
 @Configuration
+@ConditionalOnProperty(name = "pyroscope.enabled", havingValue = "true")
 public class PyroscopeConfig {
 
     @Value("${pyroscope.server-address:}")
