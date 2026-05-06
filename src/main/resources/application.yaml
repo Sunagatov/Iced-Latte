@@ -168,12 +168,6 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-# Email feature flag & verification settings (SMTP config is above under spring.mail).
-email:
-  enabled: ${EMAIL_ENABLED:false}
-  # Length of the numeric code sent to the user's email for verification.
-  verification-token-length: 9
-
   # ───────────────────────────────────────────────────────────────────────────
   # ②-E  FILE UPLOAD (Multipart)
   #       Controls avatar/image upload size limits at the servlet container level.
@@ -188,9 +182,23 @@ email:
       # Files smaller than this are kept in memory; larger ones are written to a temp file.
       file-size-threshold: 2KB
 
+# Email feature flag & verification settings (SMTP config is above under spring.mail).
+email:
+  enabled: ${EMAIL_ENABLED:false}
+  # Length of the numeric code sent to the user's email for verification.
+  verification-token-length: 9
+
+# Short-lived in-memory store for email verification tokens.
+temporary-cache:
+  time:
+    # Token validity in minutes.
+    token: 5
+  # When true, exposes a GET endpoint to retrieve the token (useful for dev/testing).
+  get-token-enabled: true
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# ③ SECURITY (JWT + CORS + Rate Limiting + OAuth + Login Attempts)
+# ③ SECURITY (JWT + CORS + Rate Limiting + Login Attempts)
 # ─────────────────────────────────────────────────────────────────────────────
 
 # --- JWT (JSON Web Tokens) ---
@@ -252,11 +260,6 @@ security:
   # NOTE: /actuator endpoints are permitAll and skipped by rate-limiting filters.
   # Protect them at the network/reverse-proxy layer (e.g. restrict by IP).
 
-# --- OAuth State ---
-oauth:
-  # How long the OAuth "state" parameter remains valid (prevents CSRF in OAuth flow).
-  state-ttl-minutes: 10
-
 # --- Brute-Force Protection ---
 login-attempts:
   # Lock account after this many consecutive failed login attempts.
@@ -285,6 +288,10 @@ google:
   client-id: ${GOOGLE_AUTH_CLIENT_ID:local}
   client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:local}
   redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
+
+# How long the OAuth "state" parameter remains valid (prevents CSRF in OAuth flow).
+oauth:
+  state-ttl-minutes: 10
 
 # --- AI (OpenAI-compatible API for review moderation & summaries) ---
 ai:
@@ -338,14 +345,6 @@ cache:
     rate-limit-window-size: 10000
     redis-error-log-size: 1000
     temporary-store-size: 10000
-
-# Short-lived in-memory store for tokens (e.g. email verification codes).
-temporary-cache:
-  time:
-    # Token validity in minutes.
-    token: 5
-  # When true, exposes a GET endpoint to retrieve the token (useful for dev/testing).
-  get-token-enabled: true
 
 
 # ─────────────────────────────────────────────────────────────────────────────
