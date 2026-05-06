@@ -34,24 +34,10 @@
 
 ---
 
-## 📊 Repository Ecosystem
-
-Iced Latte is split into three focused repositories so contributors can work on backend, frontend, or QA independently.
-
-| Repository | What it contains | Best for | Stats |
-|---|---|---|---|
-| 🔧 [Backend](https://github.com/Sunagatov/Iced-Latte) | Java 25, Spring Boot 4, PostgreSQL, Redis, MinIO, Stripe, OpenAPI | Backend engineers, Java learners, API contributors | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat-square) |
-| 🎨 [Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | Customer-facing marketplace web application | Frontend engineers, UI contributors, React learners | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat-square) |
-| 🧪 [QA](https://github.com/Sunagatov/Iced-Latte-QA) | Test automation, quality workflows, end-to-end coverage | QA engineers, test automation learners, release-quality contributors | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat-square) |
-
-> ⭐ If this project helps you learn or inspires you, please give it a star — it helps more contributors discover the ecosystem.
-
----
-
 ## 📸 Preview
 
 <div style="text-align: center;">
-  <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page">
+  <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="825">
   <p><em>Live application interface</em></p>
 </div>
 
@@ -63,10 +49,10 @@ Iced Latte is not just a demo repository. It has been noticed by developers, con
 
 | Recognition | Why it matters | Proof |
 |---|---|---|
-| 🔥 **GitHub Trending**<br><br><sub>May 22, 2024</sub><br><img alt="GitHub Trending" src="https://img.shields.io/badge/status-trending-orange?style=flat-square&logo=github"> | The backend repository reached GitHub Trending and gained **85 stars in one day** with **27 active contributors**. | [Archive](https://archive.ph/DRsD8) |
-| 🥉 **KaiCode 2024 Finalist**<br><br><sub>Developer festival selection</sub><br><img alt="KaiCode 2024 Finalist" src="https://img.shields.io/badge/status-finalist-blue?style=flat-square"> | Selected among **412 applications** for a developer festival backed by Huawei. | [KaiCode 2024](https://www.kaicode.org/2024.html#jury) |
-| 🛠️ **JetBrains Open Source License**<br><br><sub>Contributor tooling support</sub><br><img alt="JetBrains OSS Supported" src="https://img.shields.io/badge/status-supported-black?style=flat-square&logo=jetbrains"> | JetBrains granted **8 All Products Pack licenses** to support contributors. | [JetBrains OSS](https://www.jetbrains.com/community/opensource/) |
-| 👨‍💻 **Recommended by a GitHub Star**<br><br><sub>Community endorsement</sub><br><img alt="GitHub Star Recommended" src="https://img.shields.io/badge/status-recommended-yellow?style=flat-square&logo=github"> | Publicly recommended as a strong Java project example, with contributors sharing their experience. | [LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) |
+| **1. 🔥 GitHub Trending**<br><sub>May 22, 2024</sub> | The backend repository reached GitHub Trending and gained **85 stars in one day** with **27 active contributors**. | [Archive](https://archive.ph/DRsD8) |
+| **2. 🥉 KaiCode 2024 Finalist**<br><sub>Developer festival selection</sub> | Selected among **412 applications** for a developer festival backed by Huawei. | [KaiCode 2024](https://www.kaicode.org/2024.html#jury) |
+| **3. 🛠️ JetBrains Open Source License**<br><sub>Contributor tooling support</sub> | JetBrains granted **8 All Products Pack licenses** to support contributors. | [JetBrains OSS](https://www.jetbrains.com/community/opensource/) |
+| **4. 👨‍💻 Recommended by a GitHub Star**<br><sub>Community endorsement</sub> | Publicly recommended as a strong Java project example, with contributors sharing their experience. | [LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7195685359710617602/) |
 
 > ⭐ These milestones show that Iced Latte is a real collaborative engineering project, not a toy example.
 
@@ -77,6 +63,20 @@ Iced Latte is not just a demo repository. It has been noticed by developers, con
 Iced Latte is a non-profit sandbox project started in 2022 as a private pet project. It was later opened to the community to give junior engineers, students, and mentees practical experience in a real tech project with processes similar to those in actual tech teams. The first participants were students, Telegram channel subscribers, and mentees from ADPList and Women In Tech. The project has since grown and earned recognition from the wider developer community.
 
 > ⭐ If this project helps you learn or inspires you, please give it a star — it means a lot to the community!
+
+---
+
+## 📊 Repository Ecosystem
+
+Iced Latte is split into three focused repositories so contributors can work on backend, frontend, or QA independently.
+
+| Repository | What it contains | Best for | Stats |
+|---|---|---|---|
+| 🔧 [Backend](https://github.com/Sunagatov/Iced-Latte) | Java 25, Spring Boot 4, PostgreSQL, Redis, MinIO, Stripe, OpenAPI | Backend engineers, Java learners, API contributors | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte?style=flat-square) |
+| 🎨 [Frontend](https://github.com/Sunagatov/Iced-Latte-Frontend) | Customer-facing marketplace web application | Frontend engineers, UI contributors, React learners | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-Frontend?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-Frontend?style=flat-square) |
+| 🧪 [QA](https://github.com/Sunagatov/Iced-Latte-QA) | Test automation, quality workflows, end-to-end coverage | QA engineers, test automation learners, release-quality contributors | ![Stars](https://img.shields.io/github/stars/Sunagatov/Iced-Latte-QA?style=flat-square) ![Forks](https://img.shields.io/github/forks/Sunagatov/Iced-Latte-QA?style=flat-square) |
+
+> ⭐ If this project helps you learn or inspires you, please give it a star — it helps more contributors discover the ecosystem.
 
 ---
 
