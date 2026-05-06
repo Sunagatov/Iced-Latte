@@ -2,39 +2,25 @@
 #                    ICED LATTE — PROD PROFILE OVERRIDES
 # =============================================================================
 # Activated by: SPRING_PROFILES_ACTIVE=prod
-# Purpose: Hardened for production — no error leaks, no Swagger, full
-#          observability pipeline via OpenTelemetry Collector.
+# Purpose: Hardened for production — no error leaks, no Swagger, eager bean
+#          validation, full observability pipeline via OpenTelemetry Collector.
 # =============================================================================
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SERVER — never expose internals
-# ─────────────────────────────────────────────────────────────────────────────
-server:
-  error:
-    include-stacktrace: never
-    include-message: never
-    include-binding-errors: never
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# SPRING CORE
+# SPRING CORE — production hardening
 # ─────────────────────────────────────────────────────────────────────────────
 spring:
-  output:
-    ansi:
-      # No ANSI colors — logs go to aggregators, not terminals.
-      enabled: never
+  main:
+    # Disable lazy init in prod — all beans are created at startup so
+    # misconfigurations fail fast during deployment, not on first request.
+    lazy-initialization: false
   liquibase:
     # Never drop tables in production.
     drop-first: false
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# INTEGRATIONS
-# ─────────────────────────────────────────────────────────────────────────────
-stripe:
-  enabled: ${STRIPE_ENABLED:false}
+  jpa:
+    # Never print SQL in production logs (noise + potential data leak).
+    show-sql: false
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -58,10 +44,6 @@ sentry:
   profiles-sample-rate: 0.25
 
 management:
-  endpoint:
-    health:
-      # Only authenticated users see full health details.
-      show-details: when-authorized
   tracing:
     sampling:
       # Trace 100% of requests (low-traffic project, full visibility).

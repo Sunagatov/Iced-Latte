@@ -60,3 +60,5 @@ management:
 logging:
   level:
     com.zufar: DEBUG
+    # Log every HTTP request/response at DEBUG level for full visibility.
+    http.access: DEBUG
