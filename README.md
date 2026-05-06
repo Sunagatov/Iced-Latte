@@ -37,7 +37,7 @@
 ## 📸 Preview
 
 <div style="text-align: center;">
-  <img src="docs/assets/Iced-Latte-Main-Page-Screenshot.png" alt="Iced Latte Main Page" width="825">
+  <img src="docs/assets/img.png" alt="Iced Latte Main Page" width="825">
   <p><em>Live application interface</em></p>
 </div>
 
