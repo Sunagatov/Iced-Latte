@@ -102,7 +102,11 @@ jwt:
 #
 ai:
   api-key: "sk-test-placeholder"
+  base-url: "https://models.example.test"
   model-name: gpt-4o-mini
+
+problem:
+  type-base-url: "https://errors.example.test/problems"
 
 #
 # Google Auth Properties
@@ -161,4 +165,3 @@ security:
     payment:
       max-requests: 100000
       window-duration: PT1M
-

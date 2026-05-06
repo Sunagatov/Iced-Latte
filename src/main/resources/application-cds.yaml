@@ -63,6 +63,17 @@ google:
 ai:
   enabled: false
   api-key: cds-training
+  base-url: https://models.example.test
+  model-name: cds-training
+
+frontend:
+  url: http://localhost:8083
+
+cors:
+  allowed-origins: http://localhost:8083
+
+problem:
+  type-base-url: http://localhost:8083/errors
 
 email:
   enabled: false
