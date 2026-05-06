@@ -241,7 +241,7 @@ security:
       max-requests: 60
       window-duration: PT1M
     auth:
-      # Tighter limit on login/register to prevent credential stuffing.
+      # Tighter limit on login/register/password-reset to prevent credential stuffing.
       max-requests: 10
       window-duration: PT1M
     search:
@@ -258,6 +258,17 @@ security:
       # Tight limit on payment endpoints to prevent abuse.
       max-requests: 20
       window-duration: PT1M
+    write:
+      # Mutating operations (POST/PUT/DELETE) that don't match a more specific category.
+      max-requests: 20
+      window-duration: PT1M
+    file-upload:
+      # File uploads are expensive (S3/MinIO writes) — keep tight.
+      max-requests: 5
+      window-duration: PT1M
+    # Repeat-offender ban: after this many blocks within ban-duration, short-circuit 429.
+    ban-threshold: 10
+    ban-duration: PT5M
   # Comma-separated list of trusted reverse-proxy IPs that may set X-Forwarded-For.
   # Leave empty when the app is directly reachable (safe default).
   trusted-proxies:
@@ -344,6 +355,12 @@ cache:
   caffeine:
     # Caffeine = in-process (JVM heap) cache. These control max entries per cache instance.
     # Used for rate-limiting counters and short-lived data that doesn't need Redis.
+    #
+    # TRADE-OFF: rate-limit-window-size caps how many unique IPs/users can be tracked
+    # simultaneously. If exceeded, the least-recently-accessed entry is evicted and its
+    # counter resets — effectively granting a fresh rate-limit window. For iced-latte.uk
+    # traffic (low volume), 10 000 is more than sufficient. Increase only if you observe
+    # frequent evictions in metrics (rate_limit.requests.allowed growing unexpectedly).
     rate-limit-warn-size: 1000
     rate-limit-filter-size: 5000
     rate-limit-window-size: 10000

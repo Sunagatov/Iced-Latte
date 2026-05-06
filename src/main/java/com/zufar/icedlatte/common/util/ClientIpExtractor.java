@@ -24,6 +24,12 @@ public class ClientIpExtractor {
     @Value("${security.rate-limit.trusted-proxies:${security.trusted-proxies:}}")
     private List<String> trustedProxies;
 
+    @Value("${server.port:8080}")
+    private int serverPort;
+
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
     @PostConstruct
     void logConfig() {
         trustedProxies = trustedProxies == null
@@ -35,6 +41,11 @@ public class ClientIpExtractor {
 
         if (trustedProxies.isEmpty()) {
             log.info("rate_limit.trusted_proxies: none configured — X-Forwarded-For will be ignored");
+            if (!activeProfiles.contains("dev") && (serverPort == 8083 || serverPort == 8080)) {
+                log.warn("rate_limit.proxy_hint: If this app runs behind a reverse proxy or load balancer, "
+                        + "set security.rate-limit.trusted-proxies to the proxy IP(s). "
+                        + "Without it, all users share a single rate-limit counter (the proxy's IP).");
+            }
         } else {
             log.info("rate_limit.trusted_proxies: count={}, values={}", trustedProxies.size(), trustedProxies);
         }

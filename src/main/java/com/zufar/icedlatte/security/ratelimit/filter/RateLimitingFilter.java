@@ -31,11 +31,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
+
+    private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
     private final RateLimiter openRateLimiter;
     private final RateLimiter closedRateLimiter;
@@ -49,6 +53,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final Cache<String, Boolean> warnedKeys;
 
+    /** Tracks how many times an IP has been blocked within the ban window. */
+    private final Cache<String, AtomicInteger> blockCounts;
+
     @PostConstruct
     void validate() {
         assertPositive("pre-auth", properties.getPreAuth());
@@ -57,6 +64,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         assertPositive("search", properties.getSearch());
         assertPositive("telemetry", properties.getTelemetry());
         assertPositive("payment", properties.getPayment());
+        assertPositive("write", properties.getWrite());
+        assertPositive("file-upload", properties.getFileUpload());
     }
 
     private static void assertPositive(String bucketName, Bucket bucket) {
@@ -93,6 +102,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 .maximumSize(caffeineSizeProperties.getRateLimitFilterSize())
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
+        this.blockCounts = Caffeine.newBuilder()
+                .maximumSize(caffeineSizeProperties.getRateLimitFilterSize())
+                .expireAfterWrite(properties.getBanDuration())
+                .build();
     }
 
     @Override
@@ -110,22 +123,43 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String ip = clientIpExtractor.extract(request);
 
+        // #7: Short-circuit ban for repeat offenders
+        if (isBanned(ip)) {
+            meterRegistry.counter("rate_limit.requests.banned").increment();
+            RateLimitResult banResult = new RateLimitResult(false, 0, 0,
+                    System.currentTimeMillis() + properties.getBanDuration().toMillis());
+            RateLimitResponseWriter.writeTooManyRequests(response, banResult, problemTypeUriFactory.build(ProblemType.RATE_LIMITED));
+            return;
+        }
+
         if (isStrictPreAuthPath(request.getRequestURI())
                 && isBlocked(request, response, "auth:ip:" + ip, RateLimitCategory.AUTH_PRE, properties.getAuth(), closedRateLimiter, "ip", ip)) {
+            recordBlock(ip);
             return;
         }
 
         if (isBlocked(request, response, "pre-auth:ip:" + ip, RateLimitCategory.PRE_AUTH, properties.getPreAuth(), openRateLimiter, "ip", ip)) {
+            recordBlock(ip);
             return;
         }
 
         RateLimitCategory category = resolvePrimaryCategory(request);
         Identity identity = resolveIdentity(request, ip);
         if (isBlocked(request, response, identity.key(category), category, bucketFor(category), openRateLimiter, identity.type(), ip)) {
+            recordBlock(ip);
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isBanned(String ip) {
+        AtomicInteger count = blockCounts.getIfPresent(ip);
+        return count != null && count.get() >= properties.getBanThreshold();
+    }
+
+    private void recordBlock(String ip) {
+        blockCounts.get(ip, _ -> new AtomicInteger(0)).incrementAndGet();
     }
 
     private boolean isBlocked(HttpServletRequest request,
@@ -156,6 +190,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             case SEARCH -> properties.getSearch();
             case TELEMETRY -> properties.getTelemetry();
             case PAYMENT -> properties.getPayment();
+            case WRITE -> properties.getWrite();
+            case FILE_UPLOAD -> properties.getFileUpload();
             case PRE_AUTH -> properties.getPreAuth();
             default -> properties.getGlobal();
         };
@@ -169,6 +205,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path.startsWith(AuthPaths.ROOT_PREFIX)) {
             return RateLimitCategory.AUTH;
         }
+        // #2: Password reset uses the strict AUTH bucket
+        if (path.startsWith(ApiPaths.USERS_PASSWORD_RESET)) {
+            return RateLimitCategory.AUTH;
+        }
         if (path.equals(ApiPaths.PAYMENT) || path.startsWith(ApiPaths.PAYMENT + "/")) {
             return RateLimitCategory.PAYMENT;
         }
@@ -178,11 +218,29 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/v1/telemetry/")) {
             return RateLimitCategory.TELEMETRY;
         }
+        // #6: File upload endpoints
+        if (isFileUploadRequest(request, path)) {
+            return RateLimitCategory.FILE_UPLOAD;
+        }
+        // #3: Mutating operations get a tighter write bucket
+        if (!READ_METHODS.contains(request.getMethod())) {
+            return RateLimitCategory.WRITE;
+        }
         return RateLimitCategory.GLOBAL;
     }
 
+    private boolean isFileUploadRequest(HttpServletRequest request, String path) {
+        String contentType = request.getContentType();
+        return contentType != null
+                && contentType.startsWith("multipart/")
+                && (path.endsWith("/avatar") || path.contains("/images"));
+    }
+
+    // #2: Password reset is now a strict pre-auth path
     private boolean isStrictPreAuthPath(String path) {
-        return path.equals(AuthPaths.AUTHENTICATE) || path.equals(AuthPaths.ROOT + "/register");
+        return path.equals(AuthPaths.AUTHENTICATE)
+                || path.equals(AuthPaths.ROOT + "/register")
+                || path.startsWith(ApiPaths.USERS_PASSWORD_RESET);
     }
 
     private boolean isGlobalAuthPath(String path) {

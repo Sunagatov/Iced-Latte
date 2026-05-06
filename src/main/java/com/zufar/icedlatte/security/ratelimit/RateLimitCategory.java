@@ -6,6 +6,8 @@ public enum RateLimitCategory {
     SEARCH("search"),
     TELEMETRY("telemetry"),
     PAYMENT("payment"),
+    WRITE("write"),
+    FILE_UPLOAD("file-upload"),
     PRE_AUTH("pre-auth"),
     AUTH_PRE("auth-pre");
 
