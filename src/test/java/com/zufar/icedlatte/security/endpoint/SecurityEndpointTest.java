@@ -64,7 +64,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(getRequestBody(SECURITY_REGISTRATION)).post("/register")
                 .then()
                 .statusCode(HttpStatus.OK.value())
-                .body(containsString("Email verification token sent"));
+                .body("token", notNullValue());
     }
 
     @Test
@@ -133,7 +133,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail + "\",\"password\":\"!h2h3kKl\"}";
 
         given(specification).body(body).post("/register").then().statusCode(HttpStatus.OK.value());
-        given(specification).body(body).post("/register").then().statusCode(425).body("detail", notNullValue());
+        given(specification).body(body).post("/register").then().statusCode(HttpStatus.CONFLICT.value()).body("detail", notNullValue());
     }
 
     @Test
@@ -150,7 +150,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
         given(specification).body(body).post("/register")
                 .then()
                 .statusCode(HttpStatus.CONFLICT.value())
-                .body("type", equalTo("https://iced-latte.uk/errors/registration-failed"))
+                .body("type", equalTo("https://errors.example.test/problems/registration-failed"))
                 .body("detail", equalTo("This email is already registered. Please sign in or use a different email."));
     }
 

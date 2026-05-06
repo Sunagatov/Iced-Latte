@@ -2,15 +2,16 @@ package com.zufar.icedlatte.review.ai;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,7 +36,18 @@ class ProductReviewSummaryDebouncerTest {
     @Mock private ScheduledFuture<Object> future;
     @Mock private ScheduledFuture<Object> existingFuture;
 
-    @InjectMocks private ProductReviewSummaryDebouncer debouncer;
+    private ProductReviewSummaryDebouncer debouncer;
+
+    @BeforeEach
+    void setUp() {
+        debouncer = new ProductReviewSummaryDebouncer(
+                Duration.ofMinutes(2),
+                Duration.ofMinutes(10),
+                productSummaryService,
+                productReviewProductGateway,
+                applicationContext
+        );
+    }
 
     @AfterEach
     void shutdown() {

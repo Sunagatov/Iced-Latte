@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.api.filestorage;
 import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,11 @@ class ProductImageReceiverTest {
 
     @InjectMocks
     private ProductImageReceiver receiver;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(receiver, "placeholderImageUrl", PLACEHOLDER);
+    }
 
     @Nested
     @DisplayName("getProductFileUrl")

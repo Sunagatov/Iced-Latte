@@ -38,6 +38,7 @@ class ApplicationMigrationTest {
         ReflectionTestUtils.setField(migration, "productPictureBucket", "products-bucket");
         ReflectionTestUtils.setField(migration, "directoryPath", "/seed/products");
         ReflectionTestUtils.setField(migration, "uploadEnabled", true);
+        ReflectionTestUtils.setField(migration, "timeoutMinutes", 5);
     }
 
     @Nested

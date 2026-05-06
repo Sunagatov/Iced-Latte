@@ -43,6 +43,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         updater = new ProductsReviewsAndRatingInfoUpdater(
                 productReviewProductGateway, productReviewRepository, transactionTemplate);
         ReflectionTestUtils.setField(updater, "enabled", true);
+        ReflectionTestUtils.setField(updater, "timeoutMinutes", 5);
     }
 
     @Nested
