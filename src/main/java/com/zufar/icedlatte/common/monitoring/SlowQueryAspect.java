@@ -5,11 +5,13 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Aspect
 @Component
+@ConditionalOnProperty(name = "monitoring.slow-query.enabled", havingValue = "true", matchIfMissing = true)
 public class SlowQueryAspect {
 
     @Value("${monitoring.slow-query-threshold-ms:200}")

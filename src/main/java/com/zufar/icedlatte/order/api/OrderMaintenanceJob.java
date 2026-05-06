@@ -6,6 +6,7 @@ import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.specification.OrderSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "order.maintenance.enabled", havingValue = "true", matchIfMissing = true)
 @SuppressWarnings("unused") // Scheduled methods are invoked by Spring, not direct callers.
 public class OrderMaintenanceJob {
 
