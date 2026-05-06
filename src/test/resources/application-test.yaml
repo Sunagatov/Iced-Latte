@@ -164,6 +164,9 @@ stripe:
 problem:
   type-base-url: "https://errors.example.test/problems"
 
+cors:
+  allowed-origins: http://localhost:3000
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OBSERVABILITY — minimal, suppress noisy framework logs
