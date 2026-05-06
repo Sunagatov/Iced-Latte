@@ -193,8 +193,6 @@ temporary-cache:
   time:
     # Token validity in minutes.
     token: 5
-  # When true, exposes a GET endpoint to retrieve the token (useful for dev/testing).
-  get-token-enabled: true
 
 
 # ─────────────────────────────────────────────────────────────────────────────
