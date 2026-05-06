@@ -27,7 +27,8 @@ public class RateLimitResponseWriter {
     }
 
     public static void writeTooManyRequests(HttpServletResponse response,
-                                            RateLimitResult result) throws IOException {
+                                            RateLimitResult result,
+                                            String type) throws IOException {
         long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         writeRateLimitHeaders(response, result);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -35,7 +36,7 @@ public class RateLimitResponseWriter {
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("type", "https://iced-latte.uk/errors/rate-limited")
+                .put("type", type)
                 .put("title", "Too many requests")
                 .put("status", HttpStatus.TOO_MANY_REQUESTS.value())
                 .put("detail", "Too many requests. Please try again later.")

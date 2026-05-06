@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
@@ -191,7 +192,8 @@ class JwtAuthenticationFilterTest {
                                                 JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor,
                                                 ClientIpExtractor clientIpExtractor) {
             super(jwtAuthenticationProvider, securityPrincipalProvider, jwtClaimExtractor,
-                    jwtTokenFromAuthHeaderExtractor, clientIpExtractor);
+                    jwtTokenFromAuthHeaderExtractor, clientIpExtractor,
+                    new ProblemTypeUriFactory("https://errors.example.test/problems"));
         }
 
         private boolean shouldSkip(MockHttpServletRequest request) {

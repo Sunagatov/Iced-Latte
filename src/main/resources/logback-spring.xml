@@ -75,7 +75,7 @@
     <!-- GRAFANA LOKI APPENDER                     -->
     <!-- ========================================== -->
     <springProperty scope="context" name="loki_enabled" source="logging.loki.enabled" defaultValue="false"/>
-    <springProperty scope="context" name="loki_url" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+    <springProperty scope="context" name="loki_url" source="logging.loki.url" defaultValue=""/>
     <springProperty scope="context" name="application_label" source="spring.application.label" defaultValue="iced-latte-application"/>
 
     <if>
@@ -103,8 +103,8 @@
     <!-- ELASTICSEARCH/LOGSTASH APPENDER           -->
     <!-- ========================================== -->
     <springProperty scope="context" name="logstash_enabled" source="logging.logstash.enabled" defaultValue="false"/>
-    <springProperty scope="context" name="logstash_host" source="logging.logstash.host" defaultValue="localhost"/>
-    <springProperty scope="context" name="logstash_port" source="logging.logstash.port" defaultValue="5000"/>
+    <springProperty scope="context" name="logstash_host" source="logging.logstash.host" defaultValue=""/>
+    <springProperty scope="context" name="logstash_port" source="logging.logstash.port" defaultValue=""/>
 
     <if>
         <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">

@@ -4,7 +4,7 @@
     <springProperty scope="context" name="application_label" source="spring.application.label" defaultValue="iced-latte-application"/>
     <springProperty scope="context" name="application_version" source="spring.application.version" defaultValue="unknown"/>
     <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
-    <springProperty scope="context" name="loki_url" source="LOKI_URL" defaultValue="https://logs-prod-012.grafana.net/loki/api/v1/push"/>
+    <springProperty scope="context" name="loki_url" source="LOKI_URL" defaultValue=""/>
     <springProperty scope="context" name="loki_username" source="LOKI_USERNAME" defaultValue=""/>
     <springProperty scope="context" name="loki_password" source="LOKI_PASSWORD" defaultValue=""/>
 

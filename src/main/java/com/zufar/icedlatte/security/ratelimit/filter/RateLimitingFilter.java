@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
@@ -42,6 +43,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final JwtClaimExtractor jwtClaimExtractor;
     private final JwtBlacklistValidator jwtBlacklistValidator;
     private final RateLimitProperties properties;
+    private final ProblemTypeUriFactory problemTypeUriFactory;
 
     private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
             .maximumSize(5_000)
@@ -76,7 +78,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                               JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor,
                               JwtClaimExtractor jwtClaimExtractor,
                               JwtBlacklistValidator jwtBlacklistValidator,
-                              RateLimitProperties properties) {
+                              RateLimitProperties properties,
+                              ProblemTypeUriFactory problemTypeUriFactory) {
         this.openRateLimiter = openRateLimiter;
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
@@ -85,6 +88,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.jwtClaimExtractor = jwtClaimExtractor;
         this.jwtBlacklistValidator = jwtBlacklistValidator;
         this.properties = properties;
+        this.problemTypeUriFactory = problemTypeUriFactory;
     }
 
     @Override
@@ -134,7 +138,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (!result.allowed()) {
             meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
             logExceeded(request, category, result, key, identityType, clientIp);
-            RateLimitResponseWriter.writeTooManyRequests(response, result);
+            RateLimitResponseWriter.writeTooManyRequests(response, result, problemTypeUriFactory.build("rate-limited"));
             return true;
         }
 

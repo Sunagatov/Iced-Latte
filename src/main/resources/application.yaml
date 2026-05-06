@@ -70,7 +70,7 @@ spring:
   # AWS Properties
   #
   aws:
-    enabled: ${AWS_ENABLED:true}
+    enabled: ${AWS_ENABLED:false}
     account-id: ${AWS_ACCOUNT_ID:}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
@@ -176,17 +176,17 @@ google:
   enabled: ${GOOGLE_ENABLED:false}
   auth:
     server:
-      url: "https://accounts.google.com/o/oauth2/v2/auth"
-  scope: "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
+      url: ${GOOGLE_AUTH_SERVER_URL}
+  scope: ${GOOGLE_AUTH_SCOPE}
   client-id: ${GOOGLE_AUTH_CLIENT_ID:local}
   client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:local}
-  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI:http://localhost:8083/api/v1/auth/google/callback}
+  redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
 
 ai:
   enabled: ${AI_ENABLED:false}
   api-key: ${SPRING_AI_OPENAI_API_KEY:local}
-  base-url: https://models.inference.ai.azure.com
-  model-name: gpt-4o-mini
+  base-url: ${AI_BASE_URL}
+  model-name: ${AI_MODEL_NAME}
 
 email:
   enabled: ${EMAIL_ENABLED:false}
@@ -200,7 +200,10 @@ stripe:
 # Frontend Properties
 #
 frontend:
-  url: ${FRONTEND_URL:http://localhost:3000}
+  url: ${FRONTEND_URL}
+
+problem:
+  type-base-url: ${PROBLEM_TYPE_BASE_URL}
 
 #
 # Spring Doc Properties
@@ -322,7 +325,7 @@ jwt:
 # CORS Properties
 #
 cors:
-  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  allowed-origins: ${ALLOWED_ORIGINS}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
   allowed-headers: "*"
   exposed-headers: Authorization,Content-Type,X-Request-ID
@@ -395,13 +398,13 @@ logging:
   # Grafana Loki Configuration
   loki:
     enabled: ${LOKI_ENABLED:false}
-    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    url: ${LOKI_URL:}
   
   # Elasticsearch/Logstash Configuration
   logstash:
     enabled: ${LOGSTASH_ENABLED:false}
-    host: ${LOGSTASH_HOST:localhost}
-    port: ${LOGSTASH_PORT:5000}
+    host: ${LOGSTASH_HOST:}
+    port: ${LOGSTASH_PORT:}
   
   # Datadog Configuration
   datadog:

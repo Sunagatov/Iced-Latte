@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("SpringSecurityConfiguration")
 class SpringSecurityConfigurationTest {
 
-    private final SpringSecurityConfiguration configuration = new SpringSecurityConfiguration();
+    private final SpringSecurityConfiguration configuration =
+            new SpringSecurityConfiguration(new ProblemTypeUriFactory("https://errors.example.test/problems"));
 
     @Test
     @DisplayName("disables duplicate servlet registration for correlation filter")

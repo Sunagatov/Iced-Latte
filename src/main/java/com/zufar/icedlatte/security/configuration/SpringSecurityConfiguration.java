@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
@@ -46,6 +47,8 @@ import java.time.Instant;
 public class SpringSecurityConfiguration {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private final ProblemTypeUriFactory problemTypeUriFactory;
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
@@ -153,17 +156,17 @@ public class SpringSecurityConfiguration {
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 
-    private static void writeErrorResponse(HttpServletResponse response,
-                                           int status,
-                                           String message,
-                                           String path) throws java.io.IOException {
+    private void writeErrorResponse(HttpServletResponse response,
+                                    int status,
+                                    String message,
+                                    String path) throws java.io.IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         String typeSlug = status == 401 ? "auth-required" : "access-denied";
         String title = status == 401 ? "Authentication required" : "Access denied";
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("type", "https://iced-latte.uk/errors/" + typeSlug)
+                .put("type", problemTypeUriFactory.build(typeSlug))
                 .put("title", title)
                 .put("status", status)
                 .put("detail", message)

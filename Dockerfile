@@ -70,9 +70,20 @@ WORKDIR /app
 
 # Runtime defaults
 # Keep runtime defaults here so operators can still override them with env vars.
-# `SPRING_PROFILES_ACTIVE=prod` matches the intended container profile.
+# Default to the local/dev profile; production deployment env overrides this to `prod`.
+# External/prod integrations stay disabled unless runtime env explicitly enables them.
 # `JAVA_TOOL_OPTIONS` is the least intrusive way to pass container-aware JVM flags.
-ENV SPRING_PROFILES_ACTIVE=prod \
+ENV SPRING_PROFILES_ACTIVE=dev \
+    AWS_ENABLED=false \
+    GOOGLE_ENABLED=false \
+    EMAIL_ENABLED=false \
+    STRIPE_ENABLED=false \
+    AI_ENABLED=false \
+    SENTRY_ENABLED=false \
+    DATADOG_ENABLED=false \
+    LOKI_ENABLED=false \
+    LOGSTASH_ENABLED=false \
+    OTEL_EXPORTER_ENABLED=false \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
 
 # Application layers
@@ -84,9 +95,6 @@ COPY --link --from=extract --chown=app:app /app/app/application/ ./
 
 # Runtime identity
 USER app
-
-# Network contract
-EXPOSE 8083
 
 # Startup command
 # JarLauncher starts the extracted layered application without needing the original jar.

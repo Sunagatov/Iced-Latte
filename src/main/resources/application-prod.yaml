@@ -29,16 +29,16 @@ management:
       probability: 1.0
     export:
       otlp:
-        enabled: ${OTEL_EXPORTER_ENABLED:true}
+        enabled: ${OTEL_EXPORTER_ENABLED:false}
   logging:
     export:
       otlp:
-        enabled: ${OTEL_EXPORTER_ENABLED:true}
+        enabled: ${OTEL_EXPORTER_ENABLED:false}
   otlp:
     metrics:
       export:
-        enabled: ${OTEL_EXPORTER_ENABLED:true}
-        url: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/metrics
+        enabled: ${OTEL_EXPORTER_ENABLED:false}
+        url: ${OTEL_COLLECTOR_BASE_URL}/v1/metrics
         step: 1m
   # Spring Boot 4.x OTel properties — routes all signals through local OTel Collector
   opentelemetry:
@@ -50,12 +50,12 @@ management:
     tracing:
       export:
         otlp:
-          endpoint: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/traces
+          endpoint: ${OTEL_COLLECTOR_BASE_URL}/v1/traces
           transport: http
     logging:
       export:
         otlp:
-          endpoint: ${OTEL_COLLECTOR_BASE_URL:http://localhost:4318}/v1/logs
+          endpoint: ${OTEL_COLLECTOR_BASE_URL}/v1/logs
           transport: http
 
 springdoc:
@@ -63,6 +63,9 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+stripe:
+  enabled: ${STRIPE_ENABLED:false}
 
 logging:
   level:

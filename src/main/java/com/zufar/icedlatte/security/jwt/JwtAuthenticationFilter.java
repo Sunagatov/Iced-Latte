@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
@@ -39,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtClaimExtractor jwtClaimExtractor;
     private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
     private final ClientIpExtractor clientIpExtractor;
+    private final ProblemTypeUriFactory problemTypeUriFactory;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -115,7 +117,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
         ObjectNode json = OBJECT_MAPPER.createObjectNode()
-                .put("type", "https://iced-latte.uk/errors/" + errorInfo.typeSlug())
+                .put("type", problemTypeUriFactory.build(errorInfo.typeSlug()))
                 .put("title", errorInfo.title())
                 .put("status", errorInfo.statusCode())
                 .put("detail", errorInfo.detail())

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.exception.handler;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
@@ -11,10 +12,12 @@ import java.time.Instant;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProblemDetailFactory {
 
-    private static final String TYPE_BASE = "https://iced-latte.uk/errors/";
     private static final String SAFE_5XX_MESSAGE = "An internal server error occurred.";
+
+    private final ProblemTypeUriFactory problemTypeUriFactory;
 
     public ProblemDetail build(String typeSlug,
                                String title,
@@ -31,7 +34,7 @@ public class ProblemDetailFactory {
         String safeDetail = status.is5xxServerError() ? SAFE_5XX_MESSAGE : detail;
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, safeDetail);
-        pd.setType(typeSlug.contains(":") ? URI.create(typeSlug) : URI.create(TYPE_BASE + typeSlug));
+        pd.setType(problemTypeUriFactory.buildUri(typeSlug));
         pd.setTitle(title);
         pd.setInstance(resolveInstance());
         pd.setProperty("timestamp", Instant.now().toString());

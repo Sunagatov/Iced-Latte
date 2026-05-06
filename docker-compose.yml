@@ -67,20 +67,20 @@ services:
     container_name: iced-latte-minio
     pull_policy: missing
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    command: server /data --console-address ":${MINIO_CONSOLE_CONTAINER_PORT}"
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_KEY:-minioadmin}
     ports:
-      - '${MINIO_API_PORT:-9000}:9000'         # S3 API
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'     # Web console
+      - '${MINIO_API_PORT}:${MINIO_API_CONTAINER_PORT}'         # S3 API
+      - '${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_CONTAINER_PORT}' # Web console
     volumes:
       - minio-data:/data
     networks:
       - iced-latte-network
     healthcheck:
       # Prefer MinIO's built-in HTTP liveness endpoint over shelling out to admin commands.
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null"]
+      test: ["CMD-SHELL", "curl -fsS ${MINIO_HEALTH_URL}/minio/health/live >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -97,7 +97,7 @@ services:
       - iced-latte-network
     entrypoint: >
       /bin/sh -c "
-        mc alias set local http://minio:9000 ${AWS_ACCESS_KEY:-minioadmin} ${AWS_SECRET_KEY:-minioadmin};
+        mc alias set local ${AWS_DOCKER_ENDPOINT_URL} ${AWS_ACCESS_KEY:-minioadmin} ${AWS_SECRET_KEY:-minioadmin};
         mc mb --ignore-existing local/${AWS_PRODUCT_BUCKET:-iced-latte-products};
         mc mb --ignore-existing local/${AWS_USER_BUCKET:-iced-latte-users};
         mc anonymous set public local/${AWS_PRODUCT_BUCKET:-iced-latte-products};
@@ -129,11 +129,11 @@ services:
     environment:
       DATASOURCE_HOST: postgres
       REDIS_HOST: redis
-      AWS_ENDPOINT_URL: http://minio:9000
+      AWS_ENDPOINT_URL: ${AWS_DOCKER_ENDPOINT_URL}
       AWS_ENABLED: "true"
       MIGRATION_UPLOAD_ENABLED: "false"
     ports:
-      - '${BACKEND_HOST_PORT:-8083}:8083'
+      - '${BACKEND_HOST_PORT}:${APP_SERVER_PORT}'
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,18 +150,22 @@ services:
       context: ../Iced-Latte-Frontend
       dockerfile: Dockerfile
       args:
-        # Default to the backend container when both app tiers run in Docker.
-        # Override to `http://host.docker.internal:8083/api/v1` when the backend runs locally.
-        NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL:-http://iced-latte-backend:8083/api/v1}
+        NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL}
+        NEXT_PUBLIC_FRONTEND_URL: ${FRONTEND_URL}
+        NEXT_IMAGE_REMOTE_SOURCES: ${NEXT_IMAGE_REMOTE_SOURCES}
+        NEXT_PUBLIC_STRIPE_ENABLED: ${NEXT_PUBLIC_STRIPE_ENABLED:-false}
     container_name: iced-latte-frontend
     profiles: [frontend]
     init: true
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL:-http://iced-latte-backend:8083/api/v1}
-      NEXT_PUBLIC_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_URL: ${FRONTEND_DOCKER_API_URL}
+      NEXT_PUBLIC_FRONTEND_URL: ${FRONTEND_URL}
+      NEXT_IMAGE_REMOTE_SOURCES: ${NEXT_IMAGE_REMOTE_SOURCES}
+      NEXT_PUBLIC_STRIPE_ENABLED: ${NEXT_PUBLIC_STRIPE_ENABLED:-false}
+      PORT: ${FRONTEND_CONTAINER_PORT}
     ports:
-      - '${FRONTEND_HOST_PORT:-3000}:3000'
+      - '${FRONTEND_HOST_PORT}:${FRONTEND_CONTAINER_PORT}'
     extra_hosts:
       # Lets the frontend container reach a locally running backend via host.docker.internal
       # on Docker Desktop and modern Linux Docker with host-gateway support.

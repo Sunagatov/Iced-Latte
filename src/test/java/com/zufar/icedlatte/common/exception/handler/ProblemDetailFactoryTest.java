@@ -15,13 +15,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("ProblemDetailFactory unit tests")
 class ProblemDetailFactoryTest {
 
-    private final ProblemDetailFactory factory = new ProblemDetailFactory();
+    private final ProblemDetailFactory factory = new ProblemDetailFactory(
+            new ProblemTypeUriFactory("https://errors.example.test/problems"));
 
     @Test
     @DisplayName("build() sets type URI correctly")
     void setsTypeUri() {
         ProblemDetail pd = factory.build("validation-failed", "Validation failed", HttpStatus.BAD_REQUEST, "detail");
-        assertThat(pd.getType()).isEqualTo(URI.create("https://iced-latte.uk/errors/validation-failed"));
+        assertThat(pd.getType()).isEqualTo(URI.create("https://errors.example.test/problems/validation-failed"));
     }
 
     @Test

@@ -34,7 +34,7 @@ class RateLimitResponseWriterTest {
         long resetTimeMillis = System.currentTimeMillis() + 3_000;
         RateLimitResult result = new RateLimitResult(false, 10, 0, resetTimeMillis);
 
-        RateLimitResponseWriter.writeTooManyRequests(response, result);
+        RateLimitResponseWriter.writeTooManyRequests(response, result, "https://errors.example.test/problems/rate-limited");
 
         assertThat(response.getStatus()).isEqualTo(429);
         assertThat(response.getContentType()).startsWith("application/json");
@@ -44,6 +44,7 @@ class RateLimitResponseWriterTest {
         assertThat(response.getHeader("Retry-After")).isNotBlank();
 
         var json = OBJECT_MAPPER.readTree(response.getContentAsByteArray());
+        assertThat(json.get("type").asText()).isEqualTo("https://errors.example.test/problems/rate-limited");
         assertThat(json.get("title").asText()).isEqualTo("Too many requests");
         assertThat(json.get("detail").asText()).isEqualTo("Too many requests. Please try again later.");
         assertThat(json.get("status").asInt()).isEqualTo(429);

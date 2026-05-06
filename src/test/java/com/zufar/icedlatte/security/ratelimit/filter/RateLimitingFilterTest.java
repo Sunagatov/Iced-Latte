@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
 import com.zufar.icedlatte.security.jwt.JwtClaimExtractor;
@@ -48,6 +49,8 @@ class RateLimitingFilterTest {
     @Mock private JwtBlacklistValidator jwtBlacklistValidator;
 
     private RateLimitingFilter filter;
+    private final ProblemTypeUriFactory problemTypeUriFactory =
+            new ProblemTypeUriFactory("https://errors.example.test/problems");
 
     private static final long RESET_MILLIS = System.currentTimeMillis() + 60_000;
 
@@ -61,7 +64,8 @@ class RateLimitingFilterTest {
                 jwtTokenFromAuthHeaderExtractor,
                 jwtClaimExtractor,
                 jwtBlacklistValidator,
-                properties()
+                properties(),
+                problemTypeUriFactory
         );
     }
 
@@ -274,7 +278,8 @@ class RateLimitingFilterTest {
         properties.getAuth().setMaxRequests(0);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties);
+                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
+                problemTypeUriFactory);
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
@@ -288,7 +293,8 @@ class RateLimitingFilterTest {
         properties.getSearch().setWindowDuration(Duration.ZERO);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties);
+                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
+                problemTypeUriFactory);
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
