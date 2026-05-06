@@ -37,8 +37,9 @@ spring:
 # OBSERVABILITY — maximum visibility for local debugging
 # ─────────────────────────────────────────────────────────────────────────────
 sentry:
-  sample-rate: 1.0
+  # Trace 100% of transactions for full debugging visibility.
   traces-sample-rate: 1.0
+  # Profile 100% of traced transactions for debugging.
   profiles-sample-rate: 1.0
   # Prints Sentry SDK internals to console (useful when debugging Sentry integration itself).
   debug: true
