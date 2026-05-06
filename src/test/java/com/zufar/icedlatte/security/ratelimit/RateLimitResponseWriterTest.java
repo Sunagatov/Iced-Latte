@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,13 +19,19 @@ class RateLimitResponseWriterTest {
     @DisplayName("writes normalized rate-limit headers")
     void writesRateLimitHeaders() {
         MockHttpServletResponse response = new MockHttpServletResponse();
-        RateLimitResult result = new RateLimitResult(true, 60, -5, 123_000L);
+        long resetTimeMillis = System.currentTimeMillis() + 30_000;
+        RateLimitResult result = new RateLimitResult(true, 60, -5, resetTimeMillis);
 
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         assertThat(response.getHeader("X-RateLimit-Limit")).isEqualTo("60");
         assertThat(response.getHeader("X-RateLimit-Remaining")).isEqualTo("0");
-        assertThat(response.getHeader("X-RateLimit-Reset")).isEqualTo("123");
+        // delay-seconds: ~30s remaining
+        long resetSeconds = Long.parseLong(Objects.requireNonNull(response.getHeader("X-RateLimit-Reset")));
+        assertThat(resetSeconds).isBetween(28L, 31L);
+        // IETF structured fields
+        assertThat(response.getHeader("RateLimit-Policy")).startsWith("\"default\";q=60;w=");
+        assertThat(response.getHeader("RateLimit")).startsWith("\"default\";r=0;t=");
     }
 
     @Test

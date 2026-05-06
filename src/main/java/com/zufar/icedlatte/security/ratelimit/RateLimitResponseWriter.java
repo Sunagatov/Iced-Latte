@@ -20,10 +20,16 @@ public class RateLimitResponseWriter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static void writeRateLimitHeaders(HttpServletResponse response, RateLimitResult result) {
+    public static void writeRateLimitHeaders(HttpServletResponse response,
+                                             RateLimitResult result) {
+        long resetSeconds = Math.max(0, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+        // Legacy X- headers (widely supported by clients)
         response.setHeader("X-RateLimit-Limit", String.valueOf(result.limit()));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, result.remaining())));
-        response.setHeader("X-RateLimit-Reset", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis())));
+        response.setHeader("X-RateLimit-Reset", String.valueOf(resetSeconds));
+        // IETF draft-ietf-httpapi-ratelimit-headers-08 structured fields
+        response.setHeader("RateLimit-Policy", "\"default\";q=" + result.limit() + ";w=" + Math.max(1, resetSeconds));
+        response.setHeader("RateLimit", "\"default\";r=" + Math.max(0, result.remaining()) + ";t=" + resetSeconds);
     }
 
     public static void writeTooManyRequests(HttpServletResponse response,
