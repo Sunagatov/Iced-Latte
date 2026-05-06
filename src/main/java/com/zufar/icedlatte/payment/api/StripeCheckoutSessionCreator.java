@@ -7,6 +7,7 @@ import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import jakarta.annotation.PostConstruct;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -27,10 +29,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@EnableConfigurationProperties(StripeProperties.class)
 @SuppressWarnings("unused") // Spring manages bean lifecycle and injects configuration fields.
 public class StripeCheckoutSessionCreator {
 
     private final StripeSessionLineItemListConverter lineItemConverter;
+    private final StripeProperties stripeProperties;
 
     @Value("${stripe.secret-key}")
     private String stripeSecretKey;
@@ -94,10 +98,9 @@ public class StripeCheckoutSessionCreator {
     }
 
     private List<SessionCreateParams.ShippingOption> shippingOptions() {
-        return List.of(
-                buildShippingOption("Free shipping", 0L, 5L, 7L),
-                buildShippingOption("Next day air", 1500L, 1L, 1L)
-        );
+        return stripeProperties.getShippingOptions().stream()
+                .map(opt -> buildShippingOption(opt.getName(), opt.getAmountCents(), opt.getMinDays(), opt.getMaxDays()))
+                .toList();
     }
 
     private SessionCreateParams.ShippingOption buildShippingOption(String name,
@@ -110,7 +113,7 @@ public class StripeCheckoutSessionCreator {
                                 .setType(SessionCreateParams.ShippingOption.ShippingRateData.Type.FIXED_AMOUNT)
                                 .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
                                         .setAmount(amountCents)
-                                        .setCurrency("usd")
+                                        .setCurrency(stripeProperties.getCurrency())
                                         .build())
                                 .setDisplayName(name)
                                 .setDeliveryEstimate(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.builder()

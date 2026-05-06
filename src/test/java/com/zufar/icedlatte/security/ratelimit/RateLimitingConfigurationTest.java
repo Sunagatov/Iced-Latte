@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 
 import java.time.Duration;
 import java.util.List;
@@ -84,7 +85,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth flood fallback uses open policy semantics")
         void preAuthFloodFallbackUsesOpenPolicy() {
-            RateLimiter limiter = configuration.openCaffeineRateLimiter();
+            RateLimiter limiter = configuration.openCaffeineRateLimiter(new CaffeineSizeProperties());
 
             var first = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
             var second = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
@@ -96,7 +97,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth auth fallback uses closed-policy limiter behavior")
         void preAuthAuthFallbackCreatesClosedPolicyLimiter() {
-            RateLimiter limiter = configuration.closedCaffeineRateLimiter();
+            RateLimiter limiter = configuration.closedCaffeineRateLimiter(new CaffeineSizeProperties());
 
             var result = limiter.tryConsume("auth:ip:1.2.3.4", 2, Duration.ofMinutes(1));
 

@@ -3,9 +3,11 @@ package com.zufar.icedlatte.common.temporarycache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -15,17 +17,18 @@ import java.util.Optional;
 @Slf4j
 @Component
 @ConditionalOnMissingBean(ExpiringKeyValueStore.class)
+@EnableConfigurationProperties(CaffeineSizeProperties.class)
 public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
 
     private static final long MIN_TTL_NANOS = 1L;
-    private static final long MAX_ENTRIES = 10_000L;
 
-    private final Cache<String, CacheValue> cache = Caffeine.newBuilder()
-            .maximumSize(MAX_ENTRIES)
-            .expireAfter(new CacheValueExpiry())
-            .build();
+    private final Cache<String, CacheValue> cache;
 
-    public InMemoryExpiringKeyValueStore() {
+    public InMemoryExpiringKeyValueStore(CaffeineSizeProperties caffeineSizeProperties) {
+        this.cache = Caffeine.newBuilder()
+                .maximumSize(caffeineSizeProperties.getTemporaryStoreSize())
+                .expireAfter(new CacheValueExpiry())
+                .build();
         log.info("temporary_cache.mode: in-memory");
     }
 

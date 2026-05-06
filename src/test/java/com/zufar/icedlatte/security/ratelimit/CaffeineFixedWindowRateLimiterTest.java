@@ -22,7 +22,7 @@ class CaffeineFixedWindowRateLimiterTest {
         @Test
         @DisplayName("allows requests up to the configured limit and then blocks")
         void allowsUpToLimitThenBlocks() {
-            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
 
             RateLimitResult first = limiter.tryConsume("checkout", 3, WINDOW);
             RateLimitResult second = limiter.tryConsume("checkout", 3, WINDOW);
@@ -43,7 +43,7 @@ class CaffeineFixedWindowRateLimiterTest {
         @Test
         @DisplayName("keeps counters isolated per key")
         void keepsCountersPerKey() {
-            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
 
             limiter.tryConsume("cart:user:alice", 1, WINDOW);
             RateLimitResult blockedAlice = limiter.tryConsume("cart:user:alice", 1, WINDOW);
@@ -57,7 +57,7 @@ class CaffeineFixedWindowRateLimiterTest {
         @Test
         @DisplayName("resets the window after expiry")
         void resetsWindowAfterExpiry() throws InterruptedException {
-            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
             Duration shortWindow = Duration.ofMillis(50);
 
             limiter.tryConsume("search", 2, shortWindow);
@@ -76,7 +76,7 @@ class CaffeineFixedWindowRateLimiterTest {
         @Test
         @DisplayName("keeps reset time inside the active window")
         void keepsResetTimeInsideActiveWindow() {
-            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
             long before = System.currentTimeMillis();
 
             RateLimitResult result = limiter.tryConsume("products", 5, WINDOW);
@@ -88,7 +88,7 @@ class CaffeineFixedWindowRateLimiterTest {
         @Test
         @DisplayName("closed policy behaves normally when the cache is healthy")
         void closedPolicyStillAllowsHealthyRequests() {
-            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED, 10_000);
 
             RateLimitResult result = limiter.tryConsume("auth", 10, WINDOW);
 

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.payment.api;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ class CheckoutPaymentServiceTest {
     @Mock @SuppressWarnings("unused") private SecurityPrincipalProvider securityPrincipalProvider;
     @Mock @SuppressWarnings("unused") private CheckoutPaymentTransactionService txService;
     @Mock @SuppressWarnings("unused") private StripeCheckoutSessionCreator stripeSessionCreator;
+    @Mock @SuppressWarnings("unused") private StripeProperties stripeProperties;
     @InjectMocks private CheckoutPaymentService service;
 
     private final CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()

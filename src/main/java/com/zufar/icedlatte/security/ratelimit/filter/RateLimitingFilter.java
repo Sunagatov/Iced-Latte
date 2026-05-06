@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
@@ -45,10 +46,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimitProperties properties;
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
-    private final Cache<String, Boolean> warnedKeys = Caffeine.newBuilder()
-            .maximumSize(5_000)
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .build();
+    private final Cache<String, Boolean> warnedKeys;
 
     @PostConstruct
     void validate() {
@@ -79,7 +77,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                               JwtClaimExtractor jwtClaimExtractor,
                               JwtBlacklistValidator jwtBlacklistValidator,
                               RateLimitProperties properties,
-                              ProblemTypeUriFactory problemTypeUriFactory) {
+                              ProblemTypeUriFactory problemTypeUriFactory,
+                              CaffeineSizeProperties caffeineSizeProperties) {
         this.openRateLimiter = openRateLimiter;
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
@@ -89,6 +88,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.jwtBlacklistValidator = jwtBlacklistValidator;
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
+        this.warnedKeys = Caffeine.newBuilder()
+                .maximumSize(caffeineSizeProperties.getRateLimitFilterSize())
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .build();
     }
 
     @Override

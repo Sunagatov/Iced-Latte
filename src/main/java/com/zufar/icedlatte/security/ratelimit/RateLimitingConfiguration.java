@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(RateLimitProperties.class)
+@EnableConfigurationProperties({RateLimitProperties.class, com.zufar.icedlatte.common.config.CaffeineSizeProperties.class})
 public class RateLimitingConfiguration {
 
     private static final Cache<String, Boolean> LOGGED_LIMITER_ERRORS = Caffeine.newBuilder()
@@ -46,9 +46,9 @@ public class RateLimitingConfiguration {
 
     @Bean("openRateLimiter")
     @ConditionalOnMissingBean(name = "openRateLimiter")
-    public RateLimiter openCaffeineRateLimiter() {
+    public RateLimiter openCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.open: in-memory Caffeine");
-        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN);
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, caffeineSizeProperties.getRateLimitWindowSize());
     }
 
     @Bean("closedRateLimiter")
@@ -60,9 +60,9 @@ public class RateLimitingConfiguration {
 
     @Bean("closedRateLimiter")
     @ConditionalOnMissingBean(name = "closedRateLimiter")
-    public RateLimiter closedCaffeineRateLimiter() {
+    public RateLimiter closedCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.closed: in-memory Caffeine");
-        return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED);
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED, caffeineSizeProperties.getRateLimitWindowSize());
     }
 
     private RateLimiter redisRateLimiterWithPolicy(RedisTemplate<String, String> redisTemplate, FailPolicy policy) {
@@ -91,13 +91,14 @@ public class RateLimitingConfiguration {
     // Fixed-window counter — same algorithm as the Redis Lua script so local and prod behave identically.
     static class CaffeineFixedWindowRateLimiter implements RateLimiter {
         private final FailPolicy failPolicy;
-        private final Cache<String, FixedWindow> windows = Caffeine.newBuilder()
-                .maximumSize(10_000)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build();
+        private final Cache<String, FixedWindow> windows;
 
-        CaffeineFixedWindowRateLimiter(FailPolicy failPolicy) {
+        CaffeineFixedWindowRateLimiter(FailPolicy failPolicy, int windowSize) {
             this.failPolicy = failPolicy;
+            this.windows = Caffeine.newBuilder()
+                    .maximumSize(windowSize)
+                    .expireAfterAccess(10, TimeUnit.MINUTES)
+                    .build();
         }
 
         public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {

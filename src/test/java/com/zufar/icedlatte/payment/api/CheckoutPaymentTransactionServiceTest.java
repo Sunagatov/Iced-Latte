@@ -7,6 +7,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
@@ -37,6 +38,7 @@ class CheckoutPaymentTransactionServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private OrderCreator orderCreator;
     @Mock private ShoppingCartService shoppingCartService;
+    @Mock private StripeProperties stripeProperties;
     @InjectMocks private CheckoutPaymentTransactionService service;
 
     private static final UUID USER_ID = UUID.randomUUID();
@@ -64,6 +66,7 @@ class CheckoutPaymentTransactionServiceTest {
         when(orderCreator.createPendingPaymentOrder(eq(USER_ID), eq(request), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(stripeProperties.getCurrency()).thenReturn("usd");
 
         CheckoutPreparation result = service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
 

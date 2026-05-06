@@ -48,7 +48,7 @@ class EmailVerificationServiceTest {
     @BeforeEach
     void setUp() {
         service = new EmailVerificationService(
-                new InMemoryExpiringKeyValueStore(),
+                new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties()),
                 new ObjectMapper(),
                 emailConfirmation,
                 userRegistrationService,

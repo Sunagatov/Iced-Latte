@@ -7,6 +7,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
@@ -35,6 +36,7 @@ public class CheckoutPaymentTransactionService {
     private final OrderRepository orderRepository;
     private final OrderCreator orderCreator;
     private final ShoppingCartService shoppingCartService;
+    private final StripeProperties stripeProperties;
 
     @Transactional
     public CheckoutPreparation prepareCheckout(UUID userId,
@@ -68,7 +70,7 @@ public class CheckoutPaymentTransactionService {
                 .provider(PaymentProvider.STRIPE)
                 .status(PaymentStatus.CREATED)
                 .amountMinor(toMinorUnits(order.getItemsTotalPrice()))
-                .currency("usd")
+                .currency(stripeProperties.getCurrency())
                 .checkoutIdempotencyKey(idempotencyKey)
                 .build();
         payment = paymentRepository.save(payment);

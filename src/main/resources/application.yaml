@@ -159,6 +159,12 @@ cache:
   sellers-ttl: PT24H
   image-url-ttl: PT50M
   image-urls-ttl: PT24H
+  caffeine:
+    rate-limit-warn-size: 1000
+    rate-limit-filter-size: 5000
+    rate-limit-window-size: 10000
+    redis-error-log-size: 1000
+    temporary-store-size: 10000
 
 #
 # Temporary Cache
@@ -187,6 +193,9 @@ ai:
   api-key: ${SPRING_AI_OPENAI_API_KEY:local}
   base-url: ${AI_BASE_URL}
   model-name: ${AI_MODEL_NAME}
+  review-summary:
+    debounce-delay: PT2M
+    max-wait: PT10M
 
 email:
   enabled: ${EMAIL_ENABLED:false}
@@ -195,6 +204,16 @@ stripe:
   enabled: ${STRIPE_ENABLED:false}
   secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  currency: ${STRIPE_CURRENCY:usd}
+  shipping-options:
+    - name: "Free shipping"
+      amount-cents: 0
+      min-days: 5
+      max-days: 7
+    - name: "Next day air"
+      amount-cents: 1500
+      min-days: 1
+      max-days: 1
 
 #
 # Frontend Properties

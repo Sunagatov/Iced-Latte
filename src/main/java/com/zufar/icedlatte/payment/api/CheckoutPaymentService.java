@@ -10,6 +10,7 @@ import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.payment.entity.Payment;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class CheckoutPaymentService {
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final CheckoutPaymentTransactionService txService;
+    private final StripeProperties stripeProperties;
     private final StripeCheckoutSessionCreator stripeSessionCreator;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
@@ -122,7 +124,7 @@ public class CheckoutPaymentService {
         return SessionCreateParams.LineItem.builder()
                 .setQuantity((long) item.getProductsQuantity())
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                        .setCurrency("usd")
+                        .setCurrency(stripeProperties.getCurrency())
                         .setUnitAmount(item.getProductPrice()
                                 .multiply(BigDecimal.valueOf(100))
                                 .setScale(0, RoundingMode.UNNECESSARY)

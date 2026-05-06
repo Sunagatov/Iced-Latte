@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.ratelimit.filter;
 
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
@@ -65,7 +66,8 @@ class RateLimitingFilterTest {
                 jwtClaimExtractor,
                 jwtBlacklistValidator,
                 properties(),
-                problemTypeUriFactory
+                problemTypeUriFactory,
+                new CaffeineSizeProperties()
         );
     }
 
@@ -279,7 +281,8 @@ class RateLimitingFilterTest {
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
                 jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
-                problemTypeUriFactory);
+                problemTypeUriFactory,
+                new CaffeineSizeProperties());
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
@@ -294,7 +297,8 @@ class RateLimitingFilterTest {
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
                 jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
-                problemTypeUriFactory);
+                problemTypeUriFactory,
+                new CaffeineSizeProperties());
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
