@@ -232,6 +232,12 @@ cors:
 # Protects against brute-force attacks and abuse. Each bucket defines
 # max-requests allowed within window-duration per client IP.
 security:
+  # Argon2 password hashing parameters (higher = more secure but slower).
+  argon2:
+    # Memory cost in KiB (16 MiB default). Lower in tests for speed.
+    memory: 16384
+    # Number of hash iterations.
+    iterations: 2
   rate-limit:
     global:
       max-requests: 60
@@ -369,6 +375,20 @@ product:
 migration:
   # Max time allowed for startup data migration tasks before they are cancelled.
   timeout-minutes: 5
+  # Whether to upload seed product images to S3/MinIO on startup.
+  upload:
+    enabled: false
+  # Whether to recalculate product ratings/review counts on startup.
+  ratings:
+    enabled: false
+
+order:
+  # How long (minutes) after creation a customer can cancel their order.
+  cancellation-window-minutes: 30
+  # How often (ms) to check for unpaid orders older than 24h and mark them cancelled.
+  expiration-check-interval-ms: 3600000
+  # How often (ms) to check for refunds stuck in REFUND_REQUESTED state > 4h.
+  refund-monitor-interval-ms: 3600000
 
 
 # ─────────────────────────────────────────────────────────────────────────────
