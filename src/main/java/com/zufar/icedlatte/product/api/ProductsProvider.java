@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
@@ -27,7 +26,7 @@ public class ProductsProvider {
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductInfoDto> getProducts(final List<UUID> uuids) {
         if (uuids == null || uuids.isEmpty()) {
-            throw new BadRequestException("GetProductsRequest parameters are incorrect. Error messages are [ productIds must not be empty ].");
+            return List.of();
         }
 
         List<ProductInfoDto> products = productInfoRepository.findAllById(uuids).stream()

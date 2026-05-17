@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
@@ -36,18 +35,18 @@ class ProductsProviderTest {
     private ProductsProvider provider;
 
     @Test
-    @DisplayName("Rejects null input without hitting repository")
-    void getProducts_nullInput_throwsBadRequest() {
-        assertThatThrownBy(() -> provider.getProducts(null))
-                .isInstanceOf(BadRequestException.class);
+    @DisplayName("Returns empty list for null input without hitting repository")
+    void getProducts_nullInput_returnsEmpty() {
+        List<ProductInfoDto> result = provider.getProducts(null);
+        assertThat(result).isEmpty();
         verifyNoInteractions(productInfoRepository);
     }
 
     @Test
-    @DisplayName("Rejects empty input without hitting repository")
-    void getProducts_emptyInput_throwsBadRequest() {
-        assertThatThrownBy(() -> provider.getProducts(List.of()))
-                .isInstanceOf(BadRequestException.class);
+    @DisplayName("Returns empty list for empty input without hitting repository")
+    void getProducts_emptyInput_returnsEmpty() {
+        List<ProductInfoDto> result = provider.getProducts(List.of());
+        assertThat(result).isEmpty();
         verifyNoInteractions(productInfoRepository);
     }
 

@@ -403,6 +403,7 @@ components:
       properties:
         productIds:
           type: "array"
+          minItems: 1
           items:
             type: "string"
             format: "uuid"
