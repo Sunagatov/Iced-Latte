@@ -9,6 +9,7 @@ import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -89,6 +90,25 @@ class FavoriteListProviderTest {
         assertEquals(userId, result.getUserId());
         assertTrue(result.getFavoriteItems().isEmpty());
         assertTrue(beforeLaunchTime.isBefore(result.getUpdatedAt()));
+    }
+
+    @Test
+    @DisplayName("Should return existing favorite list when concurrent creation wins")
+    void shouldReturnExistingFavoriteListWhenConcurrentCreationWins() {
+        UUID userId = UUID.randomUUID();
+        FavoriteListEntity expectedFavoriteList = new FavoriteListEntity();
+        expectedFavoriteList.setUserId(userId);
+
+        when(favoriteRepository.findByUserId(userId))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(expectedFavoriteList));
+        when(favoriteRepository.save(any()))
+                .thenThrow(new DataIntegrityViolationException("uq_favorite_list_user_id"));
+
+        FavoriteListEntity result = favoriteListProvider.getFavoriteListEntity(userId);
+
+        assertThat(result).isSameAs(expectedFavoriteList);
+        verify(favoriteRepository).save(any());
     }
 
     @Test

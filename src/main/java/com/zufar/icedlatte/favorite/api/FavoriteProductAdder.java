@@ -13,6 +13,8 @@ import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,6 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FavoriteProductAdder {
@@ -45,11 +48,32 @@ public class FavoriteProductAdder {
         Set<FavoriteItemEntity> newFavoriteItems = createFavoriteItems(newFavoriteItemIds, favoriteListEntity);
         favoriteListEntity.getFavoriteItems().addAll(newFavoriteItems);
 
-        FavoriteListEntity updatedFavoriteListEntity = favoriteRepository.save(favoriteListEntity);
+        FavoriteListEntity updatedFavoriteListEntity = saveWithConcurrentInsertRecovery(
+                favoriteListEntity, newFavoriteItemIds, userId);
         FavoriteListDto dto = favoriteListDtoConverter.toDto(updatedFavoriteListEntity);
         ListOfFavoriteProductsDto response = listOfFavoriteProductsDtoConverter.toListProductDto(dto);
         productPictureLinkUpdater.updateBatch(response.getProducts());
         return response;
+    }
+
+    private FavoriteListEntity saveWithConcurrentInsertRecovery(FavoriteListEntity favoriteListEntity,
+                                                                Set<UUID> newFavoriteItemIds,
+                                                                UUID userId) {
+        try {
+            return favoriteRepository.save(favoriteListEntity);
+        } catch (DataIntegrityViolationException ex) {
+            if (!isFavoriteItemUniqueConstraintViolation(ex)) {
+                throw ex;
+            }
+            log.warn("favourites.add.concurrent_conflict: userId={}", userId);
+            FavoriteListEntity freshFavoriteList = favoriteListProvider.getFavoriteListEntity(userId);
+            Set<UUID> existingFavoriteProductIds = extractFavoriteProductIds(freshFavoriteList);
+            Set<UUID> stillMissingIds = newFavoriteItemIds.stream()
+                    .filter(productId -> !existingFavoriteProductIds.contains(productId))
+                    .collect(Collectors.toSet());
+            freshFavoriteList.getFavoriteItems().addAll(createFavoriteItems(stillMissingIds, freshFavoriteList));
+            return favoriteRepository.save(freshFavoriteList);
+        }
     }
 
     private Set<UUID> extractFavoriteProductIds(FavoriteListEntity favoriteListEntity) {
@@ -83,5 +107,10 @@ public class FavoriteProductAdder {
                         .productInfo(productInfo)
                         .build())
                 .collect(Collectors.toSet());
+    }
+
+    private static boolean isFavoriteItemUniqueConstraintViolation(DataIntegrityViolationException ex) {
+        String msg = ex.getMessage();
+        return msg != null && msg.contains("uq_favorite_item_list_product");
     }
 }

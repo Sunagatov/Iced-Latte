@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -104,5 +105,53 @@ class FavoriteProductAdderTest {
         verify(productInfoRepository).findAllById(any());
         verify(favoriteRepository).save(favoriteList);
         verify(favoriteListDtoConverter).toDto(favoriteList);
+    }
+
+    @Test
+    @DisplayName("Should recover when concurrent favorite insert creates the same item")
+    void shouldRecoverWhenConcurrentFavoriteInsertCreatesSameItem() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        ProductInfo productInfo = new ProductInfo();
+        productInfo.setId(productId);
+
+        ProductInfoDto productInfoDto = new ProductInfoDto();
+        productInfoDto.setId(productId);
+
+        FavoriteListEntity staleFavoriteList = new FavoriteListEntity();
+        staleFavoriteList.setFavoriteItems(new HashSet<>());
+
+        FavoriteItemEntity existingFavoriteItem = new FavoriteItemEntity();
+        existingFavoriteItem.setProductInfo(productInfo);
+
+        FavoriteListEntity freshFavoriteList = new FavoriteListEntity();
+        freshFavoriteList.setFavoriteItems(new HashSet<>(Set.of(existingFavoriteItem)));
+
+        FavoriteListDto dto = new FavoriteListDto(
+                UUID.randomUUID(),
+                userId,
+                Set.of(new FavoriteItemDto(UUID.randomUUID(), productInfoDto)),
+                OffsetDateTime.now());
+        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
+        response.setProducts(List.of(productInfoDto));
+
+        listOfFavoriteProducts.setProductIds(List.of(productId));
+
+        when(favoriteListProvider.getFavoriteListEntity(userId))
+                .thenReturn(staleFavoriteList)
+                .thenReturn(freshFavoriteList);
+        when(productInfoRepository.findAllById(any())).thenReturn(List.of(productInfo));
+        when(favoriteRepository.save(staleFavoriteList))
+                .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"));
+        when(favoriteRepository.save(freshFavoriteList)).thenReturn(freshFavoriteList);
+        when(favoriteListDtoConverter.toDto(freshFavoriteList)).thenReturn(dto);
+        when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
+
+        ListOfFavoriteProductsDto result = favoriteProductAdder.add(listOfFavoriteProducts, userId);
+
+        assertEquals(response, result);
+        verify(favoriteRepository).save(staleFavoriteList);
+        verify(favoriteRepository).save(freshFavoriteList);
     }
 }

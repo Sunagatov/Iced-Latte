@@ -52,6 +52,22 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
     }
 
     @Test
+    @DisplayName("Should reject empty favorites request")
+    void shouldRejectEmptyFavoritesRequest() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
+                .body("""
+                        {
+                          "productIds": []
+                        }
+                        """)
+                .post()
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
     @DisplayName("Should keep favorite lists isolated between users")
     void shouldKeepFavoriteListsIsolatedBetweenUsers() {
         AuthenticatedUser firstUser = registerAndAuthenticateUser();
