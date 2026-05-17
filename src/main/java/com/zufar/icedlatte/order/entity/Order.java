@@ -45,11 +45,11 @@ public class Order extends AuditableEntity {
     @Column(name = "user_id", updatable = false, nullable = false)
     private UUID userId;
 
-    @Column(name = "session_id", updatable = false, nullable = false)
+    @Column(name = "session_id", updatable = false, nullable = false, length = 255)
     private String sessionId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 55)
     private OrderStatus status;
 
     @Version
@@ -66,13 +66,13 @@ public class Order extends AuditableEntity {
     @JoinColumn(name = "address_id", referencedColumnName = "id", nullable = false)
     private Address deliveryAddress;
 
-    @Column(name = "recipient_name", nullable = false)
+    @Column(name = "recipient_name", nullable = false, length = 128)
     private String recipientName;
 
-    @Column(name = "recipient_surname", nullable = false)
+    @Column(name = "recipient_surname", nullable = false, length = 128)
     private String recipientSurname;
 
-    @Column(name = "recipient_phone")
+    @Column(name = "recipient_phone", length = 32)
     private String recipientPhone;
 
     @Column(name = "items_quantity", nullable = false)
@@ -84,7 +84,7 @@ public class Order extends AuditableEntity {
     @Column(name = "cancellation_deadline")
     private OffsetDateTime cancellationDeadline;
 
-    @Column(name = "stripe_payment_intent_id")
+    @Column(name = "stripe_payment_intent_id", length = 255)
     private String stripePaymentIntentId;
 
     @Column(name = "refund_reason", length = 500)

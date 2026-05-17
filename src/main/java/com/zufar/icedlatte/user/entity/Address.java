@@ -29,16 +29,16 @@ public class Address implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID addressId;
 
-    @Column(name = "country", nullable = false)
+    @Column(name = "country", nullable = false, length = 55)
     private String country;
 
-    @Column(name = "city", nullable = false)
+    @Column(name = "city", nullable = false, length = 55)
     private String city;
 
-    @Column(name = "line", nullable = false)
+    @Column(name = "line", nullable = false, length = 55)
     private String line;
 
-    @Column(name = "postcode", nullable = false)
+    @Column(name = "postcode", nullable = false, length = 55)
     private String postcode;
 
     @Override

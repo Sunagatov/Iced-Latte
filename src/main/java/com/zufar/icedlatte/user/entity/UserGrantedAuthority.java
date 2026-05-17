@@ -40,7 +40,7 @@ public class UserGrantedAuthority implements GrantedAuthority {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "authority", nullable = false)
+    @Column(name = "authority", nullable = false, length = 32)
     private Authority authority;
 
     public String getAuthority() {

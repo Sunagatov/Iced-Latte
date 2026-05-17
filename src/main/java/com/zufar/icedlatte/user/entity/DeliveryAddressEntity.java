@@ -25,19 +25,19 @@ public class DeliveryAddressEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(name = "label", nullable = false)
+    @Column(name = "label", nullable = false, length = 64)
     private String label;
 
-    @Column(name = "line", nullable = false)
+    @Column(name = "line", nullable = false, length = 256)
     private String line;
 
-    @Column(name = "city", nullable = false)
+    @Column(name = "city", nullable = false, length = 128)
     private String city;
 
-    @Column(name = "country", nullable = false)
+    @Column(name = "country", nullable = false, length = 128)
     private String country;
 
-    @Column(name = "postcode", nullable = false)
+    @Column(name = "postcode", nullable = false, length = 16)
     private String postcode;
 
     @Column(name = "is_default", nullable = false)

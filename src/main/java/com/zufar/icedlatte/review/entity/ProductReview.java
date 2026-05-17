@@ -45,7 +45,7 @@ public class ProductReview {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "text", nullable = false)
+    @Column(name = "text", nullable = false, length = 1500)
     private String text;
 
     @Column(name = "rating", nullable = false)
@@ -57,7 +57,7 @@ public class ProductReview {
     @Column(name = "dislikes_count", nullable = false)
     private Integer dislikesCount;
 
-    @Column(name = "ai_summary")
+    @Column(name = "ai_summary", columnDefinition = "TEXT")
     private String aiSummary;
 
     @Override

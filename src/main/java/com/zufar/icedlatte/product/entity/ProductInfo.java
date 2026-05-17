@@ -48,7 +48,7 @@ public class ProductInfo extends AuditableEntity {
     @Column(name = "version")
     private long version;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 64)
     private String name;
 
     @Column(name = "description", nullable = false, length = 4000)
@@ -69,10 +69,10 @@ public class ProductInfo extends AuditableEntity {
     @Column(name = "reviews_count")
     private Integer reviewsCount;
 
-    @Column(name = "brand_name", nullable = false)
+    @Column(name = "brand_name", nullable = false, length = 64)
     private String brandName;
 
-    @Column(name = "seller_name", nullable = false)
+    @Column(name = "seller_name", nullable = false, length = 64)
     private String sellerName;
 
     @Column(name = "origin_country", nullable = false, length = 128)

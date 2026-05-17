@@ -42,17 +42,17 @@ public class Payment extends AuditableEntity {
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false)
+    @Column(name = "provider", nullable = false, length = 20)
     private PaymentProvider provider;
 
-    @Column(name = "provider_session_id", unique = true)
+    @Column(name = "provider_session_id", unique = true, length = 255)
     private String providerSessionId;
 
-    @Column(name = "provider_payment_intent_id")
+    @Column(name = "provider_payment_intent_id", length = 255)
     private String providerPaymentIntentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 30)
     private PaymentStatus status;
 
     @Column(name = "amount_minor", nullable = false)
@@ -61,10 +61,10 @@ public class Payment extends AuditableEntity {
     @Column(name = "currency", nullable = false, length = 3)
     private String currency;
 
-    @Column(name = "raw_event_id")
+    @Column(name = "raw_event_id", length = 255)
     private String rawEventId;
 
-    @Column(name = "latest_event_type")
+    @Column(name = "latest_event_type", length = 100)
     private String latestEventType;
 
     @Column(name = "checkout_idempotency_key", length = 100)

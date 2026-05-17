@@ -49,20 +49,20 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", length = 25)
     private String phoneNumber;
 
     @Column(name = "email", nullable = false, unique = true, length = 254)
     private String email;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;
 
-    @Column(name = "stripe_customer_token", unique = true)
+    @Column(name = "stripe_customer_token", unique = true, length = 64)
     private String stripeCustomerToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)

@@ -27,14 +27,14 @@ import java.time.OffsetDateTime;
 public class StripeWebhookEvent {
 
     @Id
-    @Column(name = "stripe_event_id", nullable = false)
+    @Column(name = "stripe_event_id", nullable = false, length = 255)
     private String stripeEventId;
 
-    @Column(name = "event_type", nullable = false)
+    @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 20)
     private WebhookEventStatus status;
 
     @Column(name = "received_at", nullable = false)
@@ -43,6 +43,6 @@ public class StripeWebhookEvent {
     @Column(name = "processed_at")
     private OffsetDateTime processedAt;
 
-    @Column(name = "failure_reason")
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
 }
