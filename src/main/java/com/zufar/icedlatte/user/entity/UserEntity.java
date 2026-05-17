@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jspecify.annotations.NonNull;
@@ -31,6 +32,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "user_details")
 public class UserEntity extends AuditableEntity implements UserDetails {
@@ -38,6 +40,7 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "first_name", nullable = false, length = 128)
@@ -114,12 +117,5 @@ public class UserEntity extends AuditableEntity implements UserDetails {
         return new HashCodeBuilder(17, 37)
                 .append(id)
                 .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "userId='" + id + '\'' +
-                '}';
     }
 }

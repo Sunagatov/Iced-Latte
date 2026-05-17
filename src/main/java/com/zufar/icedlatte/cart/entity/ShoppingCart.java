@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Formula;
 
@@ -27,12 +28,14 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "shopping_cart")
 public class ShoppingCart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "user_id", nullable = false)
@@ -60,7 +63,6 @@ public class ShoppingCart {
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
 
-
     @Override
     public boolean equals(Object object) {
         if (this == object)
@@ -74,12 +76,5 @@ public class ShoppingCart {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "ShoppingCart {" +
-                "id = " + id +
-                '}';
     }
 }

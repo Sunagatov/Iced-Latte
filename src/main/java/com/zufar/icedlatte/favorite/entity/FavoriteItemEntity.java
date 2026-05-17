@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Objects;
@@ -25,12 +26,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "favorite_item")
 public class FavoriteItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Version
@@ -61,13 +64,5 @@ public class FavoriteItemEntity {
                 .append(favoriteListEntity)
                 .append(productInfo)
                 .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "FavoriteItem{" +
-                "id=" + id +
-                ", productInfo=" + productInfo +
-                '}';
     }
 }

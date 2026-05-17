@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.UUID;
 
@@ -19,12 +20,14 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "product_reviews_likes")
 public class ProductReviewLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "review_id", nullable = false)
@@ -38,11 +41,4 @@ public class ProductReviewLike {
 
     @Column(name = "is_like", nullable = false)
     private Boolean isLike;
-
-    @Override
-    public String toString() {
-        return "Product Review Like {" +
-                "id=" + id +
-                '}';
-    }
 }

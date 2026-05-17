@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "order_status_history")
 @SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
@@ -30,9 +32,11 @@ public class OrderStatusHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "order_id", nullable = false)
+    @ToString.Include
     private UUID orderId;
 
     @Enumerated(EnumType.STRING)
@@ -51,9 +55,4 @@ public class OrderStatusHistory {
 
     @Column(name = "changed_at", nullable = false)
     private OffsetDateTime changedAt;
-
-    @Override
-    public String toString() {
-        return "OrderStatusHistory{id=" + id + ", orderId=" + orderId + '}';
-    }
 }

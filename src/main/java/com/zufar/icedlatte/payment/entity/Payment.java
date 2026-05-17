@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "payments")
 @SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
@@ -33,9 +35,11 @@ public class Payment extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "order_id", nullable = false, unique = true)
+    @ToString.Include
     private UUID orderId;
 
     @Column(name = "user_id", nullable = false)
@@ -53,6 +57,7 @@ public class Payment extends AuditableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
+    @ToString.Include
     private PaymentStatus status;
 
     @Column(name = "amount_minor", nullable = false)
@@ -69,9 +74,4 @@ public class Payment extends AuditableEntity {
 
     @Column(name = "checkout_idempotency_key", length = 100)
     private String checkoutIdempotencyKey;
-
-    @Override
-    public String toString() {
-        return "Payment{id=" + id + ", orderId=" + orderId + ", status=" + status + '}';
-    }
 }

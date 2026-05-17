@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Version;
@@ -26,12 +27,14 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "shopping_cart_item")
 public class ShoppingCartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Version
@@ -80,12 +83,5 @@ public class ShoppingCartItem {
                 .append(id)
                 .append(productInfo)
                 .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ShoppingCartItem {" +
-                "id = " + id +
-                '}';
     }
 }

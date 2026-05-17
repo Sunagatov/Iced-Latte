@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
@@ -27,11 +28,13 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "product_reviews")
 public class ProductReview {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,11 +62,4 @@ public class ProductReview {
 
     @Column(name = "ai_summary", columnDefinition = "TEXT")
     private String aiSummary;
-
-    @Override
-    public String toString() {
-        return "Product Review {" +
-                "id=" + id +
-                '}';
-    }
 }

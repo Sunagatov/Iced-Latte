@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "order_item")
 @SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
@@ -27,6 +29,7 @@ public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "order_id", nullable = false)
@@ -43,11 +46,4 @@ public class OrderItem {
 
     @Column(name = "products_quantity", nullable = false)
     private Integer productsQuantity;
-
-    @Override
-    public String toString() {
-        return "OrderItem {" +
-                "id = " + id +
-                '}';
-    }
 }

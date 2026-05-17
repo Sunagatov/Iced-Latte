@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -33,6 +34,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "orders")
 @SuppressWarnings("unused") // JPA reads and writes entity fields reflectively.
@@ -40,6 +42,7 @@ public class Order extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID id;
 
     @Column(name = "user_id", updatable = false, nullable = false)
@@ -98,12 +101,5 @@ public class Order extends AuditableEntity {
         for (OrderItem orderItem : items) {
             orderItem.setOrderId(this.id);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Order {" +
-                "id=" + id +
-                '}';
     }
 }

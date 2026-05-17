@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "address")
 public class Address implements Serializable {
@@ -27,6 +29,7 @@ public class Address implements Serializable {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
+    @ToString.Include
     private UUID addressId;
 
     @Column(name = "country", nullable = false, length = 55)
@@ -58,12 +61,5 @@ public class Address implements Serializable {
         return new HashCodeBuilder(17, 37)
                 .append(addressId)
                 .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Address{" +
-                "id=" + addressId +
-                '}';
     }
 }

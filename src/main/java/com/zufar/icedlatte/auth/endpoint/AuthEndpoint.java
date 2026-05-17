@@ -5,6 +5,7 @@ import com.zufar.icedlatte.auth.api.OAuthProvider;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +20,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(AuthPaths.ROOT)
+@RequiredArgsConstructor
 public class AuthEndpoint {
 
     private final OAuthFlowService oAuthFlowService;
-
-    public AuthEndpoint(OAuthFlowService oAuthFlowService) {
-        this.oAuthFlowService = oAuthFlowService;
-    }
 
     @GetMapping("/google")
     public ResponseEntity<?> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
