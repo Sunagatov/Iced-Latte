@@ -18,11 +18,9 @@ import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
-import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +37,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Validated
 @RestController
 @RequestMapping(UserSecurityEndpoint.USER_SECURITY_API_URL)
@@ -65,13 +62,12 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/register")
     public ResponseEntity<UserAuthenticationResponse> register(@RequestBody @Valid final UserRegistrationRequest request) {
-        if (!emailEnabled) {
-            userRegistrationService.ensureEmailAvailable(request);
-            var response = userRegistrationService.register(request, httpRequest);
-            return ResponseEntity.ok(response);
+        if (emailEnabled) {
+            emailVerificationService.sendEmailVerificationCode(request);
+            return ResponseEntity.ok().build();
         }
-        emailVerificationService.sendEmailVerificationCode(request);
-        return ResponseEntity.ok().build();
+        userRegistrationService.ensureEmailAvailable(request);
+        return ResponseEntity.ok(userRegistrationService.register(request, httpRequest));
     }
 
     @Override
@@ -112,9 +108,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionInfo>> getSessions() {
-        return ResponseEntity.ok(authSessionService.listActiveSessions(securityPrincipalProvider.getUserId()).stream()
-                .map(this::toSessionInfo)
-                .toList());
+        return ResponseEntity.ok(authSessionService.listActiveSessionInfos(securityPrincipalProvider.getUserId()));
     }
 
     @Override
@@ -137,15 +131,5 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
         passwordResetService.confirmReset(request.getCode(), request.getPassword());
         return ResponseEntity.ok().build();
-    }
-
-    private SessionInfo toSessionInfo(AuthSessionEntity session) {
-        return new SessionInfo()
-                .sessionId(session.getId())
-                .createdAt(session.getCreatedAt())
-                .expiresAt(session.getExpiresAt())
-                .lastUsedAt(session.getLastUsedAt())
-                .userAgent(session.getUserAgent())
-                .ipAddress(session.getIpAddress());
     }
 }

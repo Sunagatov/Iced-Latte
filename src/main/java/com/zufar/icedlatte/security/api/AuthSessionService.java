@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.api;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.openapi.dto.SessionInfo;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
@@ -104,6 +105,12 @@ public class AuthSessionService {
         return sessionRepository.findActiveSessions(userId, now());
     }
 
+    public List<SessionInfo> listActiveSessionInfos(UUID userId) {
+        return listActiveSessions(userId).stream()
+                .map(this::toSessionInfo)
+                .toList();
+    }
+
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
         sessionRepository.findByPreviousTokenHash(refreshTokenHash)
@@ -171,5 +178,15 @@ public class AuthSessionService {
         }
         String value = sessionId.toString();
         return StringUtils.left(StringUtils.overlay(value, "****", 6, value.length()), 10);
+    }
+
+    private SessionInfo toSessionInfo(AuthSessionEntity session) {
+        return new SessionInfo()
+                .sessionId(session.getId())
+                .createdAt(session.getCreatedAt())
+                .expiresAt(session.getExpiresAt())
+                .lastUsedAt(session.getLastUsedAt())
+                .userAgent(session.getUserAgent())
+                .ipAddress(session.getIpAddress());
     }
 }

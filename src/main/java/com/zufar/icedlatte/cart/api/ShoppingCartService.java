@@ -59,7 +59,8 @@ public class ShoppingCartService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto addItems(final UUID userId, final Set<NewShoppingCartItemDto> itemsToAdd) {
+    public ShoppingCartDto addItems(final UUID userId,
+                                    final Set<NewShoppingCartItemDto> itemsToAdd) {
         ShoppingCart shoppingCart = getOrCreateCart(userId);
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
         mergeIntoCart(shoppingCart, productsWithQuantity);
@@ -93,7 +94,8 @@ public class ShoppingCartService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto deleteItems(final DeleteItemsFromShoppingCartRequest request, final UUID userId) {
+    public ShoppingCartDto deleteItems(final DeleteItemsFromShoppingCartRequest request,
+                                       final UUID userId) {
         List<UUID> itemIds = request.getShoppingCartItemIds();
         shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
         log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
@@ -117,8 +119,7 @@ public class ShoppingCartService {
         } catch (DataIntegrityViolationException ex) {
             log.warn("cart.create.concurrent_conflict: userId={}", userId);
             return shoppingCartRepository.findShoppingCartByUserId(userId)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Cart not found after uniqueness conflict for userId=" + userId, ex));
+                    .orElseThrow(() -> new IllegalStateException("Cart not found after uniqueness conflict for userId=" + userId, ex));
         }
     }
 

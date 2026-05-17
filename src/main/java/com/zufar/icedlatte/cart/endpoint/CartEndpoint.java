@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.cart.endpoint;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
@@ -36,10 +35,6 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @Override
     @PostMapping("/items")
     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new BadRequestException("Cart items list must not be empty");
-        }
-        log.debug("cart.items.adding: count={}", request.getItems().size());
         var userId = securityPrincipalProvider.getUserId();
         var shoppingCart = shoppingCartService.addItems(userId, request.getItems());
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
@@ -69,11 +64,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     @Override
     @DeleteMapping("/items")
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
-        if (request.getShoppingCartItemIds().isEmpty()) {
-            throw new BadRequestException("Cart items list must not be empty");
-        }
         var userId = securityPrincipalProvider.getUserId();
-        log.debug("cart.items.deleting: count={}", request.getShoppingCartItemIds().size());
         var shoppingCart = shoppingCartService.deleteItems(request, userId);
         log.debug("cart.items.deleted");
         return ResponseEntity.ok(shoppingCart);

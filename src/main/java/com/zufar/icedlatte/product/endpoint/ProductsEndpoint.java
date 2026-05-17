@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.BrandsDto;
 import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
@@ -82,10 +81,6 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @PostMapping("/ids")
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
         var ids = productIdsDto.getProductIds();
-        if (ids == null || ids.isEmpty()) {
-            throw new BadRequestException("GetProductsRequest parameters are incorrect. Error messages are [ productIds must not be empty ].");
-        }
-        log.debug("product.ids.fetching: count={}", ids.size());
         var products = productsProvider.getProducts(ids);
         log.debug("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);

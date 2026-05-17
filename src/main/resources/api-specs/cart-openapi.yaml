@@ -198,6 +198,7 @@ components:
       properties:
         items:
           type: "array"
+          minItems: 1
           uniqueItems: true
           items:
             $ref: "#/components/schemas/NewShoppingCartItemDto"
@@ -276,6 +277,7 @@ components:
       properties:
         shoppingCartItemIds:
           type: "array"
+          minItems: 1
           items:
             type: "string"
             format: "uuid"
