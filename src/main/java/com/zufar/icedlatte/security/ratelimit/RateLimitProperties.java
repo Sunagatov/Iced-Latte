@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.security.ratelimit;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -27,17 +29,10 @@ public class RateLimitProperties {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Bucket {
         private int maxRequests;
         private Duration windowDuration;
-
-        public Bucket() {
-        }
-
-        public Bucket(int maxRequests, Duration windowDuration) {
-            this.maxRequests = maxRequests;
-            this.windowDuration = windowDuration;
-        }
-
     }
 }
