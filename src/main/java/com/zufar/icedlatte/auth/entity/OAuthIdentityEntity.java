@@ -47,6 +47,6 @@ public class OAuthIdentityEntity extends AuditableEntity {
     @Column(name = "provider_subject", nullable = false)
     private String providerSubject;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, length = 254)
     private String email;
 }

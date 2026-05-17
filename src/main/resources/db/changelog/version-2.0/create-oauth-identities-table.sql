@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS oauth_identities
     user_id          UUID         NOT NULL REFERENCES user_details (id) ON DELETE CASCADE,
     provider         VARCHAR(32)  NOT NULL,
     provider_subject VARCHAR(255) NOT NULL,
-    email            VARCHAR(128) NOT NULL,
+    email            VARCHAR(254) NOT NULL,
     created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     created_by       UUID,

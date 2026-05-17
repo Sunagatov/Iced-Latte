@@ -114,6 +114,32 @@ class OAuthLoginServiceTest {
     }
 
     @Test
+    @DisplayName("normalizes provider subject and email before lookup and identity save")
+    void normalizesProviderSubjectAndEmailBeforeLookupAndIdentitySave() {
+        UserEntity existingUser = UserEntity.builder()
+                .id(UUID.randomUUID())
+                .email("existing@example.com")
+                .password("secret")
+                .build();
+
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("  google-subject  ", " Existing@Example.com ", true, "Alice", "Existing"));
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-subject"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("existing@example.com")).thenReturn(Optional.of(existingUser));
+        when(sessionTokenService.issueForNewSession(existingUser, request)).thenReturn(tokenPair());
+
+        service.handle(OAuthProvider.GOOGLE, "auth-code", request);
+
+        ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
+        verify(oAuthIdentityRepository).save(savedIdentities.capture());
+        OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
+        assertThat(savedIdentity.getProviderSubject()).isEqualTo("google-subject");
+        assertThat(savedIdentity.getEmail()).isEqualTo("existing@example.com");
+    }
+
+    @Test
     @DisplayName("creates a new OAuth user when the email does not exist")
     void createsNewOauthUserWhenEmailDoesNotExist() {
         when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
@@ -205,6 +231,56 @@ class OAuthLoginServiceTest {
         verify(userRepository).save(savedUsers.capture());
         assertThat(savedUsers.getValue().getFirstName()).isEqualTo("OAuth");
         assertThat(savedUsers.getValue().getLastName()).isEqualTo("User");
+    }
+
+    @Test
+    @DisplayName("trims and caps provider names before creating a local user")
+    void trimsAndCapsProviderNamesBeforeCreatingLocalUser() {
+        String longName = "x".repeat(140);
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("google-subject", "new@example.com", true, "  Ada  ", longName));
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-subject"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request))).thenReturn(tokenPair());
+
+        service.handle(OAuthProvider.GOOGLE, "auth-code", request);
+
+        ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
+        verify(userRepository).save(savedUsers.capture());
+        assertThat(savedUsers.getValue().getFirstName()).isEqualTo("Ada");
+        assertThat(savedUsers.getValue().getLastName()).hasSize(128);
+    }
+
+    @Test
+    @DisplayName("rejects provider accounts with too long subject")
+    void rejectsProviderAccountsWithTooLongSubject() {
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("s".repeat(256), "email@example.com", true, "Long", "Subject"));
+
+        assertThatThrownBy(() -> service.handle(OAuthProvider.GOOGLE, "auth-code", request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("google account subject is too long.");
+
+        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
+    }
+
+    @Test
+    @DisplayName("rejects provider accounts with too long email")
+    void rejectsProviderAccountsWithTooLongEmail() {
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("google-subject", "a".repeat(245) + "@example.com", true, "Long", "Email"));
+
+        assertThatThrownBy(() -> service.handle(OAuthProvider.GOOGLE, "auth-code", request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("google account email is too long.");
+
+        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
     }
 
     @Test

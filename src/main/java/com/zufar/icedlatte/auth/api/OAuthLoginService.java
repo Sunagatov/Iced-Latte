@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class OAuthLoginService {
+
+    private static final int MAX_EMAIL_LENGTH = 254;
+    private static final int MAX_PROVIDER_SUBJECT_LENGTH = 255;
+    private static final int MAX_NAME_LENGTH = 128;
 
     private final List<OAuthProviderClient> providerClients;
     private final OAuthIdentityRepository oAuthIdentityRepository;
@@ -45,14 +50,20 @@ public class OAuthLoginService {
                 .orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);
 
-        String providerSubject = profile.providerSubject();
+        String providerSubject = normalizeRequired(profile.providerSubject());
         if (providerSubject == null || providerSubject.isBlank()) {
             throw new BadRequestException(provider.id() + " account has no subject.");
         }
+        if (providerSubject.length() > MAX_PROVIDER_SUBJECT_LENGTH) {
+            throw new BadRequestException(provider.id() + " account subject is too long.");
+        }
 
-        String email = profile.email();
+        String email = normalizeEmail(profile.email());
         if (email == null || email.isBlank()) {
             throw new BadRequestException(provider.id() + " account has no email.");
+        }
+        if (email.length() > MAX_EMAIL_LENGTH) {
+            throw new BadRequestException(provider.id() + " account email is too long.");
         }
 
         Optional<OAuthIdentityEntity> existingIdentity =
@@ -107,6 +118,19 @@ public class OAuthLoginService {
 
     private String defaultName(String value,
                                String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+        String normalized = normalizeRequired(value);
+        if (normalized == null || normalized.isBlank()) {
+            return fallback;
+        }
+        return normalized.length() > MAX_NAME_LENGTH ? normalized.substring(0, MAX_NAME_LENGTH) : normalized;
+    }
+
+    private String normalizeEmail(String email) {
+        String value = normalizeRequired(email);
+        return value == null ? null : value.toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeRequired(String value) {
+        return value == null ? null : value.trim();
     }
 }

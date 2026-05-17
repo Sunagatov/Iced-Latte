@@ -12,7 +12,6 @@ import java.time.Duration;
 public class OAuthStateStore {
 
     private static final String KEY_PREFIX = "oauth:state:";
-    private static final String VALUE_SEPARATOR = "\n";
 
     private final ExpiringKeyValueStore temporaryStore;
 
@@ -22,18 +21,16 @@ public class OAuthStateStore {
     public void store(OAuthProvider provider,
                       String nonce,
                       String callbackBase) {
-        temporaryStore.put(namespacedKey(nonce), provider.id() + VALUE_SEPARATOR + callbackBase, Duration.ofMinutes(ttlMinutes));
+        temporaryStore.put(namespacedKey(provider, nonce), callbackBase, Duration.ofMinutes(ttlMinutes));
     }
 
     public String consume(OAuthProvider provider,
                           String nonce) {
-        return temporaryStore.take(namespacedKey(nonce))
-                .filter(value -> value.startsWith(provider.id() + VALUE_SEPARATOR))
-                .map(value -> value.substring(provider.id().length() + VALUE_SEPARATOR.length()))
-                .orElse(null);
+        return temporaryStore.take(namespacedKey(provider, nonce)).orElse(null);
     }
 
-    private String namespacedKey(String nonce) {
-        return KEY_PREFIX + nonce;
+    private String namespacedKey(OAuthProvider provider,
+                                 String nonce) {
+        return KEY_PREFIX + provider.id() + ":" + nonce;
     }
 }

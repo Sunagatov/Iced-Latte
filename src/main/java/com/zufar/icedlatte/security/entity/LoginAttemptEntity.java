@@ -30,7 +30,7 @@ public class LoginAttemptEntity {
     private UUID id;
 // amazonq-ignore-next-line
 
-    @Column(name = "user_email", nullable = false, unique = true)
+    @Column(name = "user_email", nullable = false, unique = true, length = 254)
     private String userEmail;
 
     @Column(name = "attempts", nullable = false)
