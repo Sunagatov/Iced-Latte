@@ -112,6 +112,21 @@ class GoogleTokenExchangerTest {
                 .hasMessage("Google authentication failed.");
     }
 
+    @Test
+    @DisplayName("exchange rejects token responses without an ID token")
+    void exchangeRejectsTokenResponsesWithoutIdToken() throws IOException {
+        GoogleTokenExchanger exchanger = exchangerWithMocks();
+
+        when(flow.newTokenRequest("auth-code")).thenReturn(tokenRequest);
+        when(tokenRequest.setRedirectUri("https://app.example.com/callback")).thenReturn(tokenRequest);
+        when(tokenRequest.execute()).thenReturn(tokenResponse);
+        when(tokenResponse.get("id_token")).thenReturn(" ");
+
+        assertThatThrownBy(() -> exchanger.exchange("auth-code"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Google authentication failed.");
+    }
+
     private GoogleTokenExchanger exchangerWithMocks() {
         GoogleTokenExchanger exchanger = new GoogleTokenExchanger(
                 "client-id",

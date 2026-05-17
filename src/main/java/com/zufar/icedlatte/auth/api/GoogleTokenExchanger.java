@@ -87,7 +87,11 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
         var tokenResponse = flow.newTokenRequest(authorizationCode)
                 .setRedirectUri(redirectUri)
                 .execute();
-        GoogleIdToken idToken = verifier.verify((String) tokenResponse.get("id_token"));
+        Object rawIdToken = tokenResponse.get("id_token");
+        if (!(rawIdToken instanceof String idTokenValue) || idTokenValue.isBlank()) {
+            throw new UnauthorizedException("Google authentication failed.");
+        }
+        GoogleIdToken idToken = verifier.verify(idTokenValue);
         if (idToken == null) {
             throw new UnauthorizedException("Google authentication failed.");
         }

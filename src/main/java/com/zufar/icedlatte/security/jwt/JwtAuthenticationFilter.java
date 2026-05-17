@@ -48,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         return AuthPaths.REFRESH.equals(uri)
                 || AuthPaths.GOOGLE.equals(uri)
-                || AuthPaths.GOOGLE_CALLBACK.equals(uri);
+                || AuthPaths.GOOGLE_CALLBACK.equals(uri)
+                || uri.startsWith(AuthPaths.OAUTH + "/");
     }
 
     @Override
