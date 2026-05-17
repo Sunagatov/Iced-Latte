@@ -93,7 +93,7 @@ class FavoriteProductAdderTest {
         when(favoriteListProvider.getFavoriteListEntity(userId)).thenReturn(favoriteList);
         when(productInfoRepository.findAllById(any())).thenReturn(List.of(productInfo));
         when(favoriteRepository.save(favoriteList)).thenReturn(addedFavoriteList);
-        when(favoriteListDtoConverter.toDto(favoriteList)).thenReturn(expectedFavoriteListDto);
+        when(favoriteListDtoConverter.toDto(addedFavoriteList)).thenReturn(expectedFavoriteListDto);
         ListOfFavoriteProductsDto expectedResponse = new ListOfFavoriteProductsDto();
         when(listOfFavoriteProductsDtoConverter.toListProductDto(expectedFavoriteListDto)).thenReturn(expectedResponse);
 
@@ -104,7 +104,7 @@ class FavoriteProductAdderTest {
         verify(favoriteListProvider).getFavoriteListEntity(userId);
         verify(productInfoRepository).findAllById(any());
         verify(favoriteRepository).save(favoriteList);
-        verify(favoriteListDtoConverter).toDto(favoriteList);
+        verify(favoriteListDtoConverter).toDto(addedFavoriteList);
     }
 
     @Test
@@ -120,12 +120,14 @@ class FavoriteProductAdderTest {
         productInfoDto.setId(productId);
 
         FavoriteListEntity staleFavoriteList = new FavoriteListEntity();
+        staleFavoriteList.setId(UUID.randomUUID());
         staleFavoriteList.setFavoriteItems(new HashSet<>());
 
         FavoriteItemEntity existingFavoriteItem = new FavoriteItemEntity();
         existingFavoriteItem.setProductInfo(productInfo);
 
         FavoriteListEntity freshFavoriteList = new FavoriteListEntity();
+        freshFavoriteList.setId(UUID.randomUUID());
         freshFavoriteList.setFavoriteItems(new HashSet<>(Set.of(existingFavoriteItem)));
 
         FavoriteListDto dto = new FavoriteListDto(
