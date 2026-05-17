@@ -414,7 +414,9 @@ components:
         email:
           type: "string"
           format: "email"
+          maxLength: 254
           description: "User's email address."
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         password:
           type: "string"
           description: "User's password. No pattern validation on login — legacy passwords may not match current rules."
@@ -441,6 +443,9 @@ components:
       properties:
         token:
           type: "string"
+          minLength: 9
+          maxLength: 9
+          pattern: "^\\d{9}$"
           description: "Token for confirming the email address."
 
     ForgotPasswordRequest:
@@ -451,6 +456,8 @@ components:
         email:
           type: "string"
           format: "email"
+          maxLength: 254
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
           description: "Email address of the user requesting a password reset."
 
     ChangePasswordRequest:
@@ -461,6 +468,9 @@ components:
       properties:
         code:
           type: "string"
+          minLength: 9
+          maxLength: 9
+          pattern: "^\\d{9}$"
           description: "Verification code sent to the user's email."
         password:
           $ref: "#/components/schemas/PasswordField"
