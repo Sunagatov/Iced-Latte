@@ -169,13 +169,14 @@ class OAuthLoginServiceTest {
     }
 
     @Test
-    @DisplayName("creates a new user instead of email-linking when provider email is not verified")
-    void createsNewUserInsteadOfEmailLinkingWhenProviderEmailIsNotVerified() {
+    @DisplayName("creates a new user when provider email is not verified and no local user has that email")
+    void createsNewUserWhenUnverifiedProviderEmailDoesNotExistLocally() {
         when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
         when(providerClient.exchangeCode("auth-code"))
                 .thenReturn(profile("google-subject", "new@example.com", false, "New", "User"));
         when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-subject"))
                 .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request))).thenReturn(tokenPair());
@@ -183,6 +184,43 @@ class OAuthLoginServiceTest {
         service.handle(OAuthProvider.GOOGLE, "auth-code", request);
 
         verify(userRepository).save(any(UserEntity.class));
+    }
+
+    @Test
+    @DisplayName("uses safe fallback names when provider profile has no first or last name")
+    void usesSafeFallbackNamesWhenProviderProfileHasNoFirstOrLastName() {
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("google-subject", "new@example.com", true, " ", null));
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-subject"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request))).thenReturn(tokenPair());
+
+        service.handle(OAuthProvider.GOOGLE, "auth-code", request);
+
+        ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
+        verify(userRepository).save(savedUsers.capture());
+        assertThat(savedUsers.getValue().getFirstName()).isEqualTo("OAuth");
+        assertThat(savedUsers.getValue().getLastName()).isEqualTo("User");
+    }
+
+    @Test
+    @DisplayName("rejects linking when provider email is not verified and local user has that email")
+    void rejectsLinkingWhenUnverifiedProviderEmailExistsLocally() {
+        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
+        when(providerClient.exchangeCode("auth-code"))
+                .thenReturn(profile("google-subject", "existing@example.com", false, "New", "User"));
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-subject"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("existing@example.com"))
+                .thenReturn(Optional.of(UserEntity.builder().email("existing@example.com").build()));
+
+        assertThatThrownBy(() -> service.handle(OAuthProvider.GOOGLE, "auth-code", request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("google account email is not verified.");
     }
 
     @Test

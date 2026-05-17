@@ -68,7 +68,11 @@ public class OAuthLoginService {
                                                    OAuthProfile profile,
                                                    String providerSubject,
                                                    String email) {
-        UserEntity user = findLinkableUser(profile, email)
+        Optional<UserEntity> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent() && !profile.emailVerified()) {
+            throw new BadRequestException(provider.id() + " account email is not verified.");
+        }
+        UserEntity user = existingUser
                 .orElseGet(() -> createUser(provider, profile, email));
         oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
                 .provider(provider)
@@ -79,20 +83,12 @@ public class OAuthLoginService {
         return user;
     }
 
-    private Optional<UserEntity> findLinkableUser(OAuthProfile profile,
-                                                  String email) {
-        if (!profile.emailVerified()) {
-            return Optional.empty();
-        }
-        return userRepository.findByEmail(email);
-    }
-
     private UserEntity createUser(OAuthProvider provider,
                                   OAuthProfile profile,
                                   String email) {
         UserEntity user = UserEntity.builder()
-                .firstName(profile.firstName())
-                .lastName(profile.lastName())
+                .firstName(defaultName(profile.firstName(), "OAuth"))
+                .lastName(defaultName(profile.lastName(), "User"))
                 .email(email)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .oauthUser(true)
@@ -107,5 +103,10 @@ public class OAuthLoginService {
         UserEntity saved = userRepository.save(user);
         log.info("user.registered.oauth: provider={}, userId={}", provider.id(), saved.getId());
         return saved;
+    }
+
+    private String defaultName(String value,
+                               String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 }

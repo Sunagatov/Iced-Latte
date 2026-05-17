@@ -73,7 +73,7 @@ public class AuthEndpoint {
         log.info("auth.oauth.initiate: provider={}", oAuthProvider.id());
         String callbackBase = resolveCallbackBase(oAuthProvider, redirectUrl);
         String nonce = generateStateNonce();
-        oAuthStateCache.store(nonce, callbackBase);
+        oAuthStateCache.store(oAuthProvider, nonce, callbackBase);
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(client.get().buildAuthorizationUri(nonce))
                 .build();
@@ -139,7 +139,7 @@ public class AuthEndpoint {
             redirectToSignInError(response, INVALID_STATE_ERROR);
             return;
         }
-        String stored = oAuthStateCache.consume(state);
+        String stored = oAuthStateCache.consume(oAuthProvider, state);
         if (stored == null) {
             log.info("auth.oauth.callback.invalid-state: provider={}", oAuthProvider.id());
             redirectToSignInError(response, INVALID_STATE_ERROR);

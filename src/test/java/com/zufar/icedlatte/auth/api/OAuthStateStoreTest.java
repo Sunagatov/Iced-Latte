@@ -33,18 +33,27 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("store writes the callback under a namespaced key")
     void storeWritesTheCallbackUnderNamespacedKey() {
-        cache.store("nonce-1", "https://example.com/callback");
+        cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback");
 
-        verify(temporaryStore).put("oauth:state:nonce-1", "https://example.com/callback", Duration.ofMinutes(10));
+        verify(temporaryStore).put("oauth:state:nonce-1", "google\nhttps://example.com/callback", Duration.ofMinutes(10));
     }
 
     @Test
     @DisplayName("consume returns the stored callback")
     void consumeReturnsStoredCallback() {
         when(temporaryStore.take("oauth:state:nonce-1"))
-                .thenReturn(Optional.of("https://example.com/callback"));
+                .thenReturn(Optional.of("google\nhttps://example.com/callback"));
 
-        assertThat(cache.consume("nonce-1")).isEqualTo("https://example.com/callback");
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isEqualTo("https://example.com/callback");
+    }
+
+    @Test
+    @DisplayName("consume returns null when the stored state belongs to a different provider")
+    void consumeReturnsNullWhenStateBelongsToDifferentProvider() {
+        when(temporaryStore.take("oauth:state:nonce-1"))
+                .thenReturn(Optional.of("apple\nhttps://example.com/callback"));
+
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isNull();
     }
 
     @Test
@@ -52,6 +61,6 @@ class OAuthStateStoreTest {
     void consumeReturnsNullWhenNonceIsAbsent() {
         when(temporaryStore.take("oauth:state:missing")).thenReturn(Optional.empty());
 
-        assertThat(cache.consume("missing")).isNull();
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "missing")).isNull();
     }
 }
