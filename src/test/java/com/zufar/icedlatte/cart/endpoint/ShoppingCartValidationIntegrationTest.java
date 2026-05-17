@@ -32,6 +32,27 @@ class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegration
     }
 
     @Test
+    @DisplayName("Should return bad request when adding an item above the quantity limit")
+    void shouldReturnBadRequestWhenAddingItemAboveQuantityLimit() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .body("""
+                        {
+                          "items": [
+                            {
+                              "productId": "%s",
+                              "productQuantity": 100
+                            }
+                          ]
+                        }
+                        """.formatted(PRODUCT_ID))
+                .post("/items")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
     @DisplayName("Should return bad request when deleting empty item id list")
     void shouldReturnBadRequestWhenDeletingEmptyItemIdList() {
         AuthenticatedUser user = registerAndAuthenticateUser();
@@ -65,6 +86,23 @@ class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegration
                           "productQuantityChange": 0
                         }
                         """.formatted(shoppingCartItemId))
+                .patch("/items")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Should return bad request when quantity change is above the limit")
+    void shouldReturnBadRequestWhenQuantityChangeIsAboveLimit() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .body("""
+                        {
+                          "shoppingCartItemId": "418499f3-d951-40bf-9414-5cb90ab21ecb",
+                          "productQuantityChange": 100
+                        }
+                        """)
                 .patch("/items")
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value());

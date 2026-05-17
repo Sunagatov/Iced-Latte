@@ -190,6 +190,7 @@ components:
           type: "integer"
           format: "int32"
           minimum: 1
+          maximum: 99
       required:
         - productId
         - productQuantity
@@ -252,6 +253,7 @@ components:
           type: "integer"
           format: "int32"
           minimum: 1
+          maximum: 99
       required:
         - id
         - productInfo
@@ -265,8 +267,8 @@ components:
         productQuantityChange:
           type: "integer"
           format: "int32"
-          minimum: -100
-          maximum: 100
+          minimum: -99
+          maximum: 99
           not:
             enum: [0]
       required:

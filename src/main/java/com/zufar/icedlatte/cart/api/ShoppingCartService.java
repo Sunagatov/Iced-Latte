@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ShoppingCartService {
 
+    private static final int MAX_ITEM_PRODUCT_QUANTITY = 99;
+
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ProductInfoRepository productInfoRepository;
@@ -158,7 +160,9 @@ public class ShoppingCartService {
             Integer quantityToAdd = productsWithQuantity.get(productId);
 
             if (quantityToAdd != null) {
-                item.setProductQuantity(item.getProductQuantity() + quantityToAdd);
+                int newQuantity = item.getProductQuantity() + quantityToAdd;
+                validateProductQuantity(newQuantity);
+                item.setProductQuantity(newQuantity);
             }
         });
     }
@@ -184,27 +188,32 @@ public class ShoppingCartService {
         }
 
         return foundProducts.stream()
-                .map(productInfo ->
-                        ShoppingCartItem.builder()
-                                .shoppingCart(shoppingCart)
-                                .productQuantity(productsWithQuantity.get(productInfo.getId()))
-                                .productInfo(productInfo)
-                                .build()
-                )
+                .map(productInfo -> {
+                    Integer productQuantity = productsWithQuantity.get(productInfo.getId());
+                    validateProductQuantity(productQuantity);
+                    return ShoppingCartItem.builder()
+                            .shoppingCart(shoppingCart)
+                            .productQuantity(productQuantity)
+                            .productInfo(productInfo)
+                            .build();
+                })
                 .toList();
     }
 
     private void validateQuantityChange(final UUID shoppingCartItemId,
                                         int productQuantityChange,
                                         ShoppingCartItem item) {
-        int newQuantity = item.getProductQuantity() + productQuantityChange;
-        if (newQuantity < 1) {
-            log.debug("cart.item.quantity.invalid: itemId={}, quantity={}", shoppingCartItemId, newQuantity);
-            throw new InvalidItemProductQuantityException(newQuantity);
-        }
         if (productQuantityChange == 0) {
             log.debug("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
-            throw new InvalidItemProductQuantityException(newQuantity);
+            throw new InvalidItemProductQuantityException("Product quantity change must not be zero.");
+        }
+        int newQuantity = item.getProductQuantity() + productQuantityChange;
+        validateProductQuantity(newQuantity);
+    }
+
+    private static void validateProductQuantity(int productQuantity) {
+        if (productQuantity < 1 || productQuantity > MAX_ITEM_PRODUCT_QUANTITY) {
+            throw new InvalidItemProductQuantityException(productQuantity, MAX_ITEM_PRODUCT_QUANTITY);
         }
     }
 }

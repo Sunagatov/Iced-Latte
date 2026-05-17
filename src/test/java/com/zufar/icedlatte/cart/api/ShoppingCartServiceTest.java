@@ -223,6 +223,53 @@ class ShoppingCartServiceTest {
     }
 
     @Test
+    @DisplayName("addItems rejects new item quantities above the cart item limit")
+    void addItemsRejectsNewItemQuantityAboveLimit() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ShoppingCart cart = new ShoppingCart();
+        cart.setId(UUID.randomUUID());
+        cart.setItems(new HashSet<>());
+
+        NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
+        itemToAdd.setProductId(productId);
+        itemToAdd.setProductQuantity(100);
+
+        ProductInfo product = product(productId, "Coffee", BigDecimal.valueOf(2.5));
+
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
+        when(productInfoRepository.findAllById(Set.of(productId))).thenReturn(List.of(product));
+
+        assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
+                .isInstanceOf(InvalidItemProductQuantityException.class);
+
+        verify(shoppingCartRepository, never()).save(any(ShoppingCart.class));
+    }
+
+    @Test
+    @DisplayName("addItems rejects merged quantities above the cart item limit")
+    void addItemsRejectsMergedQuantityAboveLimit() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ShoppingCart shoppingCart = new ShoppingCart();
+        shoppingCart.setId(UUID.randomUUID());
+        ProductInfo product = product(productId, "Coffee", BigDecimal.valueOf(2.5));
+        ShoppingCartItem existingItem = new ShoppingCartItem(UUID.randomUUID(), shoppingCart, product, 98);
+        shoppingCart.setItems(new HashSet<>(Set.of(existingItem)));
+
+        NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
+        itemToAdd.setProductId(productId);
+        itemToAdd.setProductQuantity(2);
+
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
+
+        assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
+                .isInstanceOf(InvalidItemProductQuantityException.class);
+
+        verify(shoppingCartRepository, never()).save(any(ShoppingCart.class));
+    }
+
+    @Test
     @DisplayName("updateItemQuantity returns the refreshed cart for a valid change")
     void updateItemQuantityReturnsRefreshedCart() {
         int productQuantityChange = 5;
@@ -253,6 +300,22 @@ class ShoppingCartServiceTest {
                 .thenReturn(Optional.of(shoppingCartItem));
 
         assertThatThrownBy(() -> shoppingCartService.updateItemQuantity(shoppingCartItem.getId(), userId, 0))
+                .isInstanceOf(InvalidItemProductQuantityException.class);
+
+        verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
+        verifyNoInteractions(shoppingCartRepository, shoppingCartDtoConverter);
+    }
+
+    @Test
+    @DisplayName("updateItemQuantity rejects resulting quantities above the cart item limit")
+    void updateItemQuantityRejectsQuantityAboveLimit() {
+        ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
+        UUID userId = UUID.randomUUID();
+
+        when(shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItem.getId(), userId))
+                .thenReturn(Optional.of(shoppingCartItem));
+
+        assertThatThrownBy(() -> shoppingCartService.updateItemQuantity(shoppingCartItem.getId(), userId, 95))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
         verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
