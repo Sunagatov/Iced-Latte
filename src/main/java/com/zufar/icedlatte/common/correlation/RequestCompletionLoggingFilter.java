@@ -9,9 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
@@ -25,11 +24,8 @@ import java.io.IOException;
 @Component
 @Order(2)
 @RequiredArgsConstructor
+@Slf4j(topic = "http.access")
 public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
-
-    // Dedicated category so operators can tune access-log verbosity independently
-    // e.g. logging.level.http.access=WARN suppresses all 2xx lines in prod
-    private static final Logger ACCESS_LOG = LoggerFactory.getLogger("http.access");
 
     public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
             "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
@@ -77,19 +73,19 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
             Object[] args = {method, path, status, durationMs, clientIp, authenticated, outcome};
 
             if (status >= 500) {
-                ACCESS_LOG.error(OUTCOME, args);
+                log.error(OUTCOME, args);
             } else if (status == 404 && isPublicInternetNoise(path)) {
-                ACCESS_LOG.debug(OUTCOME, args);
+                log.debug(OUTCOME, args);
             } else if (!authenticated && status == HttpServletResponse.SC_UNAUTHORIZED && isExpectedAnonymousAuthProbe(path)) {
-                ACCESS_LOG.debug(OUTCOME, args);
+                log.debug(OUTCOME, args);
             } else if (slow) {
-                ACCESS_LOG.warn(OUTCOME, args);
+                log.warn(OUTCOME, args);
             } else if (status >= 400) {
-                ACCESS_LOG.debug(OUTCOME, args);
+                log.debug(OUTCOME, args);
             } else if (isPollingEndpoint(path)) {
-                ACCESS_LOG.debug(OUTCOME, args);
+                log.debug(OUTCOME, args);
             } else {
-                ACCESS_LOG.info(OUTCOME, args);
+                log.info(OUTCOME, args);
             }
         }
     }
