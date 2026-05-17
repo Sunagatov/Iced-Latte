@@ -3,6 +3,7 @@ package com.zufar.icedlatte.auth.api;
 import com.zufar.icedlatte.auth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.auth.repository.OAuthIdentityRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
@@ -71,6 +72,7 @@ public class OAuthLoginService {
         UserEntity user = existingIdentity
                 .map(OAuthIdentityEntity::getUser)
                 .orElseGet(() -> findOrCreateUserAndIdentity(provider, profile, providerSubject, email));
+        ensureUserCanSignIn(user);
 
         return sessionTokenService.issueForNewSession(user, httpRequest);
     }
@@ -114,6 +116,15 @@ public class OAuthLoginService {
         UserEntity saved = userRepository.save(user);
         log.info("user.registered.oauth: provider={}, userId={}", provider.id(), saved.getId());
         return saved;
+    }
+
+    private void ensureUserCanSignIn(UserEntity user) {
+        if (!user.isEnabled()
+                || !user.isAccountNonLocked()
+                || !user.isAccountNonExpired()
+                || !user.isCredentialsNonExpired()) {
+            throw new UnauthorizedException("OAuth account is not available.");
+        }
     }
 
     private String defaultName(String value,
