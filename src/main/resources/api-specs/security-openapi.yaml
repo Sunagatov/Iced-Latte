@@ -394,6 +394,7 @@ components:
         email:
           type: "string"
           format: "email"
+          minLength: 1
           maxLength: 254
           description: "User's email address."
         password:
@@ -413,6 +414,7 @@ components:
         email:
           type: "string"
           format: "email"
+          minLength: 1
           maxLength: 254
           description: "User's email address."
         password:

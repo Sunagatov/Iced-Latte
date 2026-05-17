@@ -26,6 +26,12 @@ server:
 management:
   server:
     port: 8083
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    enabled: false
   health:
     mail:
       enabled: false
@@ -42,7 +48,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     open-in-view: false
     properties:
       hibernate:
@@ -132,6 +138,12 @@ security:
       max-requests: 100000
       window-duration: PT1M
     payment:
+      max-requests: 100000
+      window-duration: PT1M
+    write:
+      max-requests: 100000
+      window-duration: PT1M
+    file-upload:
       max-requests: 100000
       window-duration: PT1M
 

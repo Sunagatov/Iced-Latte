@@ -450,6 +450,7 @@ paths:
           content:
             application/json:
               schema:
+                title: UserAvatarLink
                 type: "string"
         "404":
           description: "User has no avatar."
@@ -498,11 +499,13 @@ components:
 
   schemas:
     UploadUserAvatarRequest:
+      title: UploadUserAvatarRequest
       type: "object"
       required:
         - file
       properties:
         file:
+          title: UserAvatarFile
           type: "string"
           format: "binary"
 
