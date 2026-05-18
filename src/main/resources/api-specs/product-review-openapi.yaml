@@ -72,8 +72,8 @@ paths:
             example2:
               description: "Display only 15 reviews per page in the product's review list."
               value: 15
-        - name: "sortAttribute"
-          description: "The field name of the product's review by which the results should be sorted. Possible allowed values: 1) sortAttribute=createdAt or 2) sortAttribute=productRating."
+        - name: "sort_attribute"
+          description: "The field name of the product's review by which the results should be sorted. Possible allowed values: 1) sort_attribute=createdAt or 2) sort_attribute=productRating."
           in: "query"
           required: false
           schema:
@@ -89,8 +89,8 @@ paths:
               summary: "Sort by product rating"
               description: "Display the product's review list sorted by the provided sort attribute 'productRating' (the product's review rating)."
               value: "productRating"
-        - name: "sortDirection"
-          description: "The direction of sorting. Possible allowed values: 1) sortDirection=asc or 2) sortDirection=desc."
+        - name: "sort_direction"
+          description: "The direction of sorting. Possible allowed values: 1) sort_direction=asc or 2) sort_direction=desc."
           in: "query"
           required: false
           schema:

@@ -66,15 +66,15 @@ class GetProductsRequestValidatorTest {
         @DisplayName("rejects unsupported minimum average rating")
         void rejectsUnsupportedMinimumAverageRating() {
             assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc",
-                    null, null, 5, null, null))
+                    null, null, 6, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("minimumAverageRating");
         }
 
         @Test
-        @DisplayName("accepts valid minimum average rating values 1 through 4")
+        @DisplayName("accepts valid minimum average rating values 1 through 5")
         void acceptsValidMinimumAverageRatingValues() {
-            for (int rating = 1; rating <= 4; rating++) {
+            for (int rating = 1; rating <= 5; rating++) {
                 final int current = rating;
                 assertThatCode(() -> validator.validate(0, 10, "name", "asc",
                         null, null, current, null, null))
@@ -130,7 +130,7 @@ class GetProductsRequestValidatorTest {
         @DisplayName("aggregates independent validation errors into one exception")
         void aggregatesIndependentValidationErrorsIntoOneException() {
             assertThatThrownBy(() -> validator.validate(-1, 0, "unknown", "asc",
-                    BigDecimal.valueOf(-1), BigDecimal.valueOf(-2), 5, List.of(""), List.of("Seller", "Seller")))
+                    BigDecimal.valueOf(-1), BigDecimal.valueOf(-2), 6, List.of(""), List.of("Seller", "Seller")))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("PageNumber")
                     .hasMessageContaining("PageSize")

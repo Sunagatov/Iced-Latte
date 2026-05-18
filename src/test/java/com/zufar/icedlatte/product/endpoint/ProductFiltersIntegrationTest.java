@@ -86,7 +86,7 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
     @DisplayName("Should return bad request for unsupported minimum average rating")
     void shouldReturnBadRequestForUnsupportedMinimumAverageRating() {
         given(specification)
-                .queryParam("minimum_average_rating", 5)
+                .queryParam("minimum_average_rating", 6)
                 .get()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())

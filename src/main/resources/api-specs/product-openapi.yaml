@@ -153,14 +153,14 @@ paths:
             type: "number"
             minimum: 0
         - name: "minimum_average_rating"
-          description: "Minimum average rating filter (1–4)."
+          description: "Minimum average rating filter (1–5)."
           in: "query"
           required: false
           schema:
             type: "integer"
             format: "int32"
             minimum: 1
-            maximum: 4
+            maximum: 5
         - name: "brand_names"
           description: "Filter by brand names."
           in: "query"

@@ -17,7 +17,7 @@ public class GetProductsRequestValidator {
 
     private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES =
             Set.of("name", "price", "quantity", "averageRating", "reviewsCount", "brandName", "sellerName");
-    private static final Set<Integer> ALLOWED_MINIMUM_AVERAGE_RATING_VALUES = Set.of(1, 2, 3, 4);
+    private static final Set<Integer> ALLOWED_MINIMUM_AVERAGE_RATING_VALUES = Set.of(1, 2, 3, 4, 5);
 
     private final PaginationParametersValidator paginationParametersValidator;
 
