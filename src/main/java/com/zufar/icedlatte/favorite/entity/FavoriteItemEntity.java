@@ -16,7 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -40,9 +39,7 @@ public class FavoriteItemEntity {
     private Integer version;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "favorite_id",
-            nullable = false,
-            referencedColumnName = "id")
+    @JoinColumn(name = "favorite_id", nullable = false, referencedColumnName = "id")
     private FavoriteListEntity favoriteListEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -60,9 +57,6 @@ public class FavoriteItemEntity {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(favoriteListEntity)
-                .append(productInfo)
-                .toHashCode();
+        return Objects.hash(favoriteListEntity, productInfo);
     }
 }

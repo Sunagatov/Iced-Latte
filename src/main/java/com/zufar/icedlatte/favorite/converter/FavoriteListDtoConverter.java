@@ -19,27 +19,21 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = FavoriteItemDtoConverter.class,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface FavoriteListDtoConverter {
-    @Mapping(target = "favoriteItems",
-            source = "favoriteItems",
-            qualifiedByName = "mapFavoriteItems")
+
+    @Mapping(target = "favoriteItems", source = "favoriteItems", qualifiedByName = "mapFavoriteItems")
     FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity);
 
-    @Mapping(target = "dateAdded",
-            source = "dateAdded",
-            qualifiedByName = "localToOffsetDate")
+    @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
     ProductInfoDto convertProductInfoDto(ProductInfo productInfo);
 
     @Named("mapFavoriteItems")
     default FavoriteItemDto toFavoriteItemDto(FavoriteItemEntity itemEntity) {
         UUID favoriteItemEntityId = itemEntity.getId();
         ProductInfo productInfo = itemEntity.getProductInfo();
-
         ProductInfoDto productInfoDto = convertProductInfoDto(productInfo);
-
         return new FavoriteItemDto(favoriteItemEntityId, productInfoDto);
     }
 
@@ -50,5 +44,4 @@ public interface FavoriteListDtoConverter {
         }
         return OffsetDateTime.of(value, ZoneOffset.UTC);
     }
-
 }
