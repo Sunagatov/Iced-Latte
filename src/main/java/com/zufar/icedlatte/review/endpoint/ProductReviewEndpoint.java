@@ -11,7 +11,6 @@ import com.zufar.icedlatte.review.api.ProductReviewDeleter;
 import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
 import com.zufar.icedlatte.review.api.ProductReviewsProvider;
 import com.zufar.icedlatte.review.api.ProductReviewsStatisticsProvider;
-import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +43,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewsProvider productReviewsProvider;
     private final ProductReviewsStatisticsProvider productReviewsStatisticsProvider;
     private final ProductReviewLikesUpdater productReviewLikesUpdater;
-    private final GetReviewsRequestValidator getReviewsRequestValidator;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
@@ -76,7 +74,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
             @RequestParam(name = "sort_attribute", required = false) final String sortAttribute,
             @RequestParam(name = "sort_direction", required = false) final String sortDirection,
             @RequestParam(name = "productRatings", required = false) List<Integer> productRatings) {
-        getReviewsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
         return ResponseEntity.ok(productReviewsProvider.getProductReviews(
                 productId, pageNumber, pageSize, sortAttribute, sortDirection, productRatings));
     }
