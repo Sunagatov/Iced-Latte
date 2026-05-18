@@ -7,6 +7,7 @@ import com.zufar.icedlatte.openapi.dto.AdminOrderStatusUpdateDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderPageDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.openapi.order.api.AdminOrdersApi;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.api.OrdersProvider;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
@@ -35,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping(ApiPaths.ADMIN_ORDERS)
 @SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
-public class AdminOrderEndpoint {
+public class AdminOrderEndpoint implements AdminOrdersApi {
 
     private final OrdersProvider ordersProvider;
     private final OrderStatusTransitioner statusTransitioner;
@@ -44,11 +45,12 @@ public class AdminOrderEndpoint {
     private final PaginationConfig paginationConfig;
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Override
     @GetMapping
-    public ResponseEntity<OrderPageDto> getAllOrders(@RequestParam(required = false) final List<OrderStatus> status,
-                                                     @RequestParam(required = false) final UUID userId,
-                                                     @RequestParam(required = false) final Integer page,
+    public ResponseEntity<OrderPageDto> getAllOrders(@RequestParam(required = false) final Integer page,
                                                      @RequestParam(required = false) final Integer size,
+                                                     @RequestParam(required = false) final List<OrderStatus> status,
+                                                     @RequestParam(required = false) final UUID userId,
                                                      @RequestParam(required = false) final String sortBy,
                                                      @RequestParam(required = false) final String sortDirection,
                                                      @RequestParam(required = false) final Integer year,
@@ -65,6 +67,7 @@ public class AdminOrderEndpoint {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Override
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<OrderDto> updateOrderStatus(@PathVariable final UUID orderId,
                                                       @Valid @RequestBody final AdminOrderStatusUpdateDto request) {

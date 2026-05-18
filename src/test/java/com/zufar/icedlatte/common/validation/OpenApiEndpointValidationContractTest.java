@@ -1,8 +1,10 @@
-package com.zufar.icedlatte.payment.endpoint;
+package com.zufar.icedlatte.common.validation;
 
 import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
 import com.zufar.icedlatte.favorite.endpoint.FavoritesEndpoint;
+import com.zufar.icedlatte.order.endpoint.AdminOrderEndpoint;
 import com.zufar.icedlatte.order.endpoint.OrderEndpoint;
+import com.zufar.icedlatte.payment.endpoint.PaymentEndpoint;
 import com.zufar.icedlatte.product.endpoint.ProductsEndpoint;
 import com.zufar.icedlatte.review.endpoint.ProductReviewEndpoint;
 import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
@@ -23,11 +25,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 
 @DisplayName("OpenAPI endpoint validation contract tests")
-class PaymentEndpointValidationContractTest {
+class OpenApiEndpointValidationContractTest {
 
     private static final List<Class<?>> GENERATED_API_ENDPOINTS = List.of(
             CartEndpoint.class,
             FavoritesEndpoint.class,
+            AdminOrderEndpoint.class,
             OrderEndpoint.class,
             PaymentEndpoint.class,
             ProductsEndpoint.class,
@@ -45,7 +48,7 @@ class PaymentEndpointValidationContractTest {
                 for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
                     Object endpoint = instantiateWithMocks(endpointClass);
                     for (Method method : endpointClass.getMethods()) {
-                        if (overridesGeneratedOpenApiMethod(endpointClass, method)) {
+                        if (isGeneratedOpenApiMethod(endpointClass, method)) {
                             executableValidator.validateParameters(endpoint, method, dummyArguments(method));
                         }
                     }
@@ -54,7 +57,7 @@ class PaymentEndpointValidationContractTest {
         }).doesNotThrowAnyException();
     }
 
-    private static boolean overridesGeneratedOpenApiMethod(Class<?> endpointClass, Method method) {
+    private static boolean isGeneratedOpenApiMethod(Class<?> endpointClass, Method method) {
         for (Class<?> apiInterface : endpointClass.getInterfaces()) {
             if (!apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.")) {
                 continue;
@@ -63,7 +66,7 @@ class PaymentEndpointValidationContractTest {
                 apiInterface.getMethod(method.getName(), method.getParameterTypes());
                 return true;
             } catch (NoSuchMethodException ignored) {
-                // Not an OpenAPI operation override.
+                // Not an OpenAPI operation method.
             }
         }
         return false;

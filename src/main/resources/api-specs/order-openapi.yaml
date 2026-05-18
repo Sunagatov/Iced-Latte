@@ -411,12 +411,15 @@ paths:
           schema:
             type: "integer"
             default: 0
+            minimum: 0
         - name: "size"
           in: "query"
           required: false
           schema:
             type: "integer"
             default: 10
+            minimum: 1
+            maximum: 50
         - name: "status"
           in: "query"
           required: false
@@ -430,6 +433,35 @@ paths:
           schema:
             type: "string"
             format: "uuid"
+        - name: "sortBy"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "createdAt"
+        - name: "sortDirection"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "DESC"
+        - name: "year"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+        - name: "dateFrom"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "dateTo"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
       responses:
         "200":
           description: "Paginated order list."
