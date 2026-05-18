@@ -254,7 +254,7 @@ Key details:
 ## Docker Network Architecture
 
 ```yaml
-# From Vault/apps/iced-latte/backend/docker-compose.yml
+# From the production backend docker-compose.yml
 services:
   backend:
     image: zufarexplainedit/iced-latte-backend:latest
@@ -283,7 +283,7 @@ docker exec iced-latte-backend wget -qO- 'http://localhost:8083/api/v1/products?
 
 1. ✅ Ensure exactly **one file per product folder** in S3.
 2. ✅ Folder names follow `<Name>_<UUID>` pattern.
-3. ✅ Restart backend: `cd Vault && task release:restart:app APP=iced-latte`
+3. ✅ Restart backend through the private deployment repository.
 4. ✅ Wait ~30-60s, then verify logs show `migration.metadata.refreshed: bucket=iced-latte-products`.
 5. ✅ Test a direct public URL returns HTTP 200.
 6. ✅ Test the API returns the new URL (not placeholder).

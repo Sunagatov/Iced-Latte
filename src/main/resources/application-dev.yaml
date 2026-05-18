@@ -63,3 +63,10 @@ logging:
     com.zufar: DEBUG
     # Log every HTTP request/response at DEBUG level for full visibility.
     http.access: DEBUG
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KAFKA — disabled for local contributor development
+# ─────────────────────────────────────────────────────────────────────────────
+kafka:
+  enabled: false

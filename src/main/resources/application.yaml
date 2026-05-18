@@ -116,7 +116,31 @@ spring:
         enabled: ${REDIS_SSL_ENABLED:false}
 
   # ───────────────────────────────────────────────────────────────────────────
-  # ②-C  OBJECT STORAGE (AWS S3 / MinIO)
+  # ②-C  KAFKA (optional event streaming)
+  #       Disabled by default and in local/test profiles.
+  #       Production deployments can opt in with KAFKA_ENABLED=true.
+  # ───────────────────────────────────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:19092}
+    client-id: ${KAFKA_CLIENT_ID:iced-latte}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        "[spring.json.add.type.headers]": false
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        "[spring.json.trusted.packages]": com.zufar.icedlatte.review.kafka
+        "[spring.json.value.default.type]": com.zufar.icedlatte.review.kafka.ReviewCreatedKafkaEvent
+    listener:
+      ack-mode: record
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # ②-D  OBJECT STORAGE (AWS S3 / MinIO)
   #       Stores product images and user avatars. MinIO is used locally as an
   #       S3-compatible replacement so you don't need a real AWS account.
   # ───────────────────────────────────────────────────────────────────────────
@@ -147,7 +171,7 @@ spring:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
   # ───────────────────────────────────────────────────────────────────────────
-  # ②-D  EMAIL (SMTP + verification)
+  # ②-E  EMAIL (SMTP + verification)
   # ───────────────────────────────────────────────────────────────────────────
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
@@ -169,7 +193,7 @@ spring:
           writetimeout: 5000
 
   # ───────────────────────────────────────────────────────────────────────────
-  # ②-E  FILE UPLOAD (Multipart)
+  # ②-F  FILE UPLOAD (Multipart)
   #       Controls avatar/image upload size limits at the servlet container level.
   # ───────────────────────────────────────────────────────────────────────────
   servlet:
@@ -193,6 +217,14 @@ temporary-cache:
   time:
     # Token validity in minutes.
     token: 5
+
+# Kafka feature flag and app-owned topic/group names.
+kafka:
+  enabled: ${KAFKA_ENABLED:false}
+  topics:
+    review-created: ${KAFKA_TOPIC_REVIEW_CREATED:iced-latte.review.created.v1}
+  consumer-groups:
+    review-ai: ${KAFKA_CONSUMER_GROUP_REVIEW_AI:iced-latte-review-ai}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

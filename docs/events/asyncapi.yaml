@@ -1,0 +1,95 @@
+asyncapi: 3.0.0
+info:
+  title: Iced Latte Events
+  version: 0.1.0
+  description: App-owned Kafka event contracts for Iced Latte.
+defaultContentType: application/json
+servers:
+  production-kafka:
+    host: kafka:19092
+    protocol: kafka
+    description: Production/server-only Kafka broker. Local contributor Compose does not run Kafka.
+channels:
+  iced-latte.review.created.v1:
+    address: iced-latte.review.created.v1
+    messages:
+      ReviewCreated:
+        $ref: '#/components/messages/ReviewCreated'
+operations:
+  publishReviewCreated:
+    action: send
+    channel:
+      $ref: '#/channels/iced-latte.review.created.v1'
+    messages:
+      - $ref: '#/channels/iced-latte.review.created.v1/messages/ReviewCreated'
+components:
+  messages:
+    ReviewCreated:
+      name: ReviewCreated
+      title: Review created
+      summary: A product review was created and is ready for asynchronous processing.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/ProductKeyed'
+      payload:
+        $ref: '#/components/schemas/ReviewCreatedEvent'
+  messageTraits:
+    ProductKeyed:
+      headers:
+        type: object
+        additionalProperties: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Product UUID. This keeps review processing ordered per product.
+  schemas:
+    ReviewCreatedEvent:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - eventVersion
+        - sourceApp
+        - occurredAt
+        - payload
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          const: review.created
+        eventVersion:
+          type: integer
+          const: 1
+        sourceApp:
+          type: string
+          const: iced-latte
+        occurredAt:
+          type: string
+          format: date-time
+        correlationId:
+          type:
+            - string
+            - 'null'
+        actorId:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        payload:
+          type: object
+          required:
+            - reviewId
+            - productId
+            - text
+          properties:
+            reviewId:
+              type: string
+              format: uuid
+            productId:
+              type: string
+              format: uuid
+            text:
+              type: string

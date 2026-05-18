@@ -89,6 +89,13 @@ spring:
     username: youricedlatteshop@gmail.com
     password: test_mail_password_placeholder
 
+kafka:
+  enabled: false
+  topics:
+    review-created: iced-latte.review.created.v1
+  consumer-groups:
+    review-ai: iced-latte-review-ai
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # EMAIL & VERIFICATION TOKENS

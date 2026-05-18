@@ -131,6 +131,7 @@ services:
       REDIS_HOST: redis
       AWS_ENDPOINT_URL: ${AWS_DOCKER_ENDPOINT_URL}
       AWS_ENABLED: "true"
+      KAFKA_ENABLED: "false"
       MIGRATION_UPLOAD_ENABLED: "false"
     ports:
       - '${BACKEND_HOST_PORT}:${APP_SERVER_PORT}'

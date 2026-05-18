@@ -5,12 +5,9 @@ import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.UUID;
 
@@ -24,8 +21,6 @@ public class AsyncReviewProcessingService {
     private final ProductReviewProductGateway productReviewProductGateway;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
 
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void process(ReviewCreatedEvent event) {
         try {

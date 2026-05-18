@@ -12,7 +12,7 @@ How to upload, list, delete, and troubleshoot files in the Supabase Storage buck
 | S3 endpoint | `https://fzvwwpzdudxrdzwbucaw.storage.supabase.co/storage/v1/s3` |
 | Public URL base | `https://fzvwwpzdudxrdzwbucaw.supabase.co/storage/v1/object/public/iced-latte-products` |
 | Region | `eu-west-2` |
-| Credentials | Stored in `Vault/apps/iced-latte/backend/.env.prod` (SOPS-encrypted) |
+| Credentials | Stored in the private deployment repository (SOPS-encrypted) |
 | Prod server | `root@116.203.197.65` (SSH key auth) |
 | Container name | `iced-latte-backend` |
 | Docker image | `zufarexplainedit/iced-latte-backend:latest` |
@@ -124,17 +124,17 @@ The prod `.env` is SOPS-encrypted with age:
 ```bash
 SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
   sops --input-type dotenv --output-type dotenv -d \
-  Vault/apps/iced-latte/backend/.env.prod
+  /path/to/private/deployment/env/.env.prod
 ```
 
 ---
 
-## Vault Task Commands (Deployment)
+## Task Commands (Deployment)
 
-All deployment operations are run from the `Vault` repo root using [Task](https://taskfile.dev/):
+Deployment operations are run from the private deployment repository using [Task](https://taskfile.dev/):
 
 ```bash
-cd /path/to/Vault
+cd /path/to/private/deployment/repo
 
 # Restart container without pulling new image (uses existing image on server)
 task release:restart:app APP=iced-latte
@@ -152,7 +152,7 @@ task release:push:app APP=iced-latte
 task release:health:app APP=iced-latte
 ```
 
-> **Note:** The APP name is `iced-latte` (not `iced-latte-backend`). The Vault manifest maps this to the correct container.
+> **Note:** The APP name is `iced-latte` (not `iced-latte-backend`). The deployment manifest maps this to the correct container.
 
 ---
 
@@ -221,7 +221,7 @@ Always pass `--no-verify-ssl`. Supabase S3 endpoint uses a cert chain that AWS C
 1. **Check for duplicate files** — if a product folder has >1 file, the backend crashes with `Duplicate key` in `ProductImageReceiver`. Delete old files first.
 2. **Restart the backend** — the metadata index is built at startup only:
    ```bash
-   cd Vault && task release:restart:app APP=iced-latte
+   cd /path/to/private/deployment/repo && task release:restart:app APP=iced-latte
    ```
 3. **Check Redis cache** — `@Cacheable(cacheNames = "productImageUrl")` may serve stale URLs. A restart clears the cache.
 

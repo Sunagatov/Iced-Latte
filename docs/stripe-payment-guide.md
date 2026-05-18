@@ -1153,7 +1153,7 @@ FRONTEND_URL=http://localhost:3000
 
 - `STRIPE_ENABLED=false` → no payment beans registered, endpoints don't exist
 - Contributors should keep `STRIPE_ENABLED=false` unless they are explicitly testing checkout with Stripe test keys.
-- Production sets `STRIPE_ENABLED=true` through Vault-managed runtime env.
+- Production sets `STRIPE_ENABLED=true` through the private deployment runtime env.
 - `STRIPE_SECRET_KEY` → server-side secret from Stripe Dashboard → API keys
 - `STRIPE_WEBHOOK_SECRET` → signing secret for webhook signature verification
 - Never use `sk_live_...` keys. Only `sk_test_...`.
@@ -1168,7 +1168,7 @@ NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 
 - `NEXT_PUBLIC_STRIPE_ENABLED=true` → enables checkout button. Missing or `false` → disabled.
 - Contributors should keep `NEXT_PUBLIC_STRIPE_ENABLED=false` unless their local backend has Stripe enabled.
-- Production sets `NEXT_PUBLIC_STRIPE_ENABLED=true` through Vault-managed build env.
+- Production sets `NEXT_PUBLIC_STRIPE_ENABLED=true` through the private deployment build env.
 - No Stripe publishable key needed — the frontend never loads Stripe.js.
 
 ---
