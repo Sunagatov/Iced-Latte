@@ -337,8 +337,8 @@ google:
     server:
       url: ${GOOGLE_AUTH_SERVER_URL}
   scope: ${GOOGLE_AUTH_SCOPE}
-  client-id: ${GOOGLE_AUTH_CLIENT_ID:local}
-  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:local}
+  client-id: ${GOOGLE_AUTH_CLIENT_ID:}
+  client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:}
   redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
 
 # How long the OAuth "state" parameter remains valid (prevents CSRF in OAuth flow).
@@ -348,7 +348,7 @@ oauth:
 # --- AI (OpenAI-compatible API for review moderation & summaries) ---
 ai:
   enabled: ${AI_ENABLED:false}
-  api-key: ${SPRING_AI_OPENAI_API_KEY:local}
+  api-key: ${SPRING_AI_OPENAI_API_KEY:}
   base-url: ${AI_BASE_URL}
   model-name: ${AI_MODEL_NAME}
   review-summary:
@@ -360,9 +360,9 @@ ai:
 # --- Stripe (payment processing) ---
 stripe:
   enabled: ${STRIPE_ENABLED:false}
-  secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+  secret-key: ${STRIPE_SECRET_KEY:}
   # Webhook secret verifies that incoming webhook calls actually come from Stripe.
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   currency: ${STRIPE_CURRENCY:usd}
   # Shipping options shown to the customer during Stripe Checkout.
   shipping-options:
