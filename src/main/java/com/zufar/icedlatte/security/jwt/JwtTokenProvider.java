@@ -26,10 +26,6 @@ public class JwtTokenProvider {
     private final JwtSignKeyProvider jwtSignKeyProvider;
     private final JwtProperties jwtProperties;
 
-    public String generateToken(final UserDetails userDetails) {
-        return generateToken(Map.of(), userDetails, null);
-    }
-
     public String generateToken(final UserDetails userDetails, UUID sessionId) {
         return generateToken(Map.of(), userDetails, sessionId);
     }
@@ -42,10 +38,6 @@ public class JwtTokenProvider {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
         return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
-    }
-
-    public String generateRefreshToken(final UserDetails userDetails) {
-        return buildToken(Map.of(JwtClaimNames.JWT_ID, UUID.randomUUID().toString()), userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
     }
 
     public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {

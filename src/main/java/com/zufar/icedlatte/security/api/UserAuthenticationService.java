@@ -7,7 +7,6 @@ import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -66,19 +65,11 @@ public class UserAuthenticationService {
     public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails,
                                                      UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
-        log.info("auth.sign_in.succeeded: sessionId={}", maskSessionId(sessionId));
+        log.info("auth.sign_in.succeeded: sessionId={}", AuthSessionService.maskSessionId(sessionId));
         loginAttemptService.resetAfterSuccessfulAuthentication(userDetails.getUsername());
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);
         return response;
-    }
-
-    private static String maskSessionId(UUID sessionId) {
-        if (sessionId == null) {
-            return "unknown";
-        }
-        String value = sessionId.toString();
-        return StringUtils.left(StringUtils.overlay(value, "****", 6, value.length()), 10);
     }
 }

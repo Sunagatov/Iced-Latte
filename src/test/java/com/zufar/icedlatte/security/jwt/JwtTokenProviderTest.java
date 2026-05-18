@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -52,7 +53,7 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("Generated access token contains correct subject")
     void generateTokenContainsCorrectSubject() {
-        String token = tokenProvider.generateToken(user("alice@example.com"));
+        String token = tokenProvider.generateToken(user("alice@example.com"), UUID.randomUUID());
 
         Claims claims = Jwts.parser().verifyWith(signingKey).build()
                 .parseSignedClaims(token).getPayload();
@@ -62,7 +63,7 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("Generated access token is non-blank")
     void generateTokenReturnsNonBlankToken() {
-        String token = tokenProvider.generateToken(user("bob@example.com"));
+        String token = tokenProvider.generateToken(user("bob@example.com"), UUID.randomUUID());
         assertThat(token).isNotBlank();
     }
 
@@ -70,8 +71,9 @@ class JwtTokenProviderTest {
     @DisplayName("Generated refresh token is different from access token")
     void generateRefreshTokenIsDifferentFromAccessToken() {
         UserDetails userDetails = user("carol@example.com");
-        String accessToken = tokenProvider.generateToken(userDetails);
-        String refreshToken = tokenProvider.generateRefreshToken(userDetails);
+        UUID sessionId = UUID.randomUUID();
+        String accessToken = tokenProvider.generateToken(userDetails, sessionId);
+        String refreshToken = tokenProvider.generateRefreshToken(userDetails, sessionId);
 
         assertThat(refreshToken).isNotEqualTo(accessToken);
     }

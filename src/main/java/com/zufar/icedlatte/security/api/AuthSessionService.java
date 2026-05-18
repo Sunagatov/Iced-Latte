@@ -172,7 +172,7 @@ public class AuthSessionService {
         return OffsetDateTime.now();
     }
 
-    private static String maskSessionId(UUID sessionId) {
+    static String maskSessionId(UUID sessionId) {
         if (sessionId == null) {
             return "unknown";
         }
