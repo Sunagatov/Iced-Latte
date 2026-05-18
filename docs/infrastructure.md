@@ -104,11 +104,9 @@ Profile behavior:
 | `dev` | local contributor mode; schema is recreated and seed data is loaded on restart |
 | `prod` | schema is preserved; production operations are managed outside this repo |
 
-Seed login:
-
-```text
-olivia@example.com / p@ss1logic11
-```
+Do not rely on a preconfigured account for manual checks. Create your own
+account through Google authentication when it is configured, or sign up with an
+email address and complete the email confirmation flow.
 
 ### Main tables
 

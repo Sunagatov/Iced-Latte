@@ -116,11 +116,9 @@ Verify:
 | 📚 Swagger UI | http://localhost:8083/api/docs/swagger-ui/index.html |
 | 🪣 MinIO console | http://localhost:9001 |
 
-Login with seed data:
-
-```text
-olivia@example.com / p@ss1logic11
-```
+Create your own account before testing authenticated flows. Use Google
+authentication when it is configured, or sign up with an email address and
+complete the email confirmation flow.
 
 ---
 
@@ -254,11 +252,9 @@ Use this checklist after starting any option:
 | http://localhost:3000 | Frontend opens if you started it |
 | http://localhost:9001 | MinIO console opens |
 
-Seed login:
-
-```text
-olivia@example.com / p@ss1logic11
-```
+For authenticated checks, create your own account through Google authentication
+when it is configured, or sign up with an email address and complete the email
+confirmation flow.
 
 ---
 
@@ -403,7 +399,7 @@ window.location.search
 | Backend port `8083` already in use | Stop the process using the port, or run Docker with `BACKEND_HOST_PORT=8084` |
 | Frontend port `3000` already in use | Stop the process using the port, or run Docker with `FRONTEND_HOST_PORT=3001` |
 | `Could not resolve placeholder` | An env var is missing. Check the variable name in the error and compare with `.env.example` |
-| Login returns `401` | Use seed login `olivia@example.com / p@ss1logic11` |
+| Login returns `401` | Create a fresh account through Google authentication or email sign-up with email confirmation, then sign in with that account |
 | Frontend container cannot reach local backend | Rebuild frontend with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1` |
 | Windows says `export` or `source` not found | Use IntelliJ with `.env.example`, or run the command in Git Bash |
 | Tests fail before starting | Make sure Docker Desktop is running |

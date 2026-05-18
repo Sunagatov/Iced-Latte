@@ -184,7 +184,7 @@ VALUES ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1c1', '11111111-1111-1111-1111-1111111
 ON CONFLICT DO NOTHING;
 ```
 
-**Note:** This gives the first test user (`11111111-...`) both USER and ADMIN roles. Required for admin endpoint integration tests. In production, admin users would be provisioned through a separate process.
+**Note:** This gives the seeded integration-test account id (`11111111-...`) both USER and ADMIN roles. Required for admin endpoint integration tests. In production, admin users would be provisioned through a separate process.
 
 ---
 
