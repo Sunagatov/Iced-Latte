@@ -1,15 +1,13 @@
 package com.zufar.icedlatte.user.api;
 
-import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.user.converter.AddressDtoConverter;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import com.zufar.icedlatte.user.validator.PutUsersRequestValidator;
@@ -30,7 +28,6 @@ public class UserProfileService {
     private final SingleUserProvider singleUserProvider;
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
-    private final AddressDtoConverter addressDtoConverter;
     private final PutUsersRequestValidator putUsersRequestValidator;
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
@@ -44,11 +41,16 @@ public class UserProfileService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateProfile(UUID userId, UpdateUserAccountRequest request) {
         AddressDto addressDto = request.getAddress();
-        validateProfileUpdate(request, addressDto);
+        putUsersRequestValidator.validate(
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPhoneNumber(),
+                request.getBirthDate(),
+                addressDto
+        );
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
-        applyProfileUpdate(userEntity, request, toAddress(addressDto));
-        UserEntity savedUser = userRepository.save(userEntity);
-        return toProfileDto(savedUser);
+        userDtoConverter.updateEntity(userEntity, request);
+        return toProfileDto(userRepository.save(userEntity));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -85,43 +87,5 @@ public class UserProfileService {
         UserDto userDto = userDtoConverter.toDto(userEntity);
         userDto.setAvatarLink(findAvatarLink(userEntity.getId()).orElse(null));
         return userDto;
-    }
-
-    private void validateProfileUpdate(UpdateUserAccountRequest request, AddressDto addressDto) {
-        putUsersRequestValidator.validate(
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPhoneNumber(),
-                request.getBirthDate(),
-                addressDto
-        );
-    }
-
-    private Address toAddress(AddressDto addressDto) {
-        return isAddressEmpty(addressDto) ? null : addressDtoConverter.toEntity(addressDto);
-    }
-
-    private void applyProfileUpdate(UserEntity userEntity,
-                                    UpdateUserAccountRequest request,
-                                    Address address) {
-        userEntity.setFirstName(request.getFirstName());
-        userEntity.setLastName(request.getLastName());
-        userEntity.setBirthDate(request.getBirthDate());
-        userEntity.setPhoneNumber(request.getPhoneNumber());
-        userEntity.setAddress(address);
-    }
-
-    private boolean isAddressEmpty(AddressDto addressDto) {
-        if (addressDto == null) {
-            return true;
-        }
-        return isBlank(addressDto.getCountry())
-                && isBlank(addressDto.getCity())
-                && isBlank(addressDto.getLine())
-                && isBlank(addressDto.getPostcode());
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

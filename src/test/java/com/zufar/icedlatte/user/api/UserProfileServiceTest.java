@@ -1,15 +1,13 @@
 package com.zufar.icedlatte.user.api;
 
-import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.security.api.AuthSessionService;
-import com.zufar.icedlatte.user.converter.AddressDtoConverter;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import com.zufar.icedlatte.user.validator.PutUsersRequestValidator;
@@ -26,13 +24,11 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.inOrder;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,8 +41,6 @@ class UserProfileServiceTest {
     private UserRepository userRepository;
     @Mock
     private UserDtoConverter userDtoConverter;
-    @Mock
-    private AddressDtoConverter addressDtoConverter;
     @Mock
     @SuppressWarnings("unused")
     private PutUsersRequestValidator putUsersRequestValidator;
@@ -87,12 +81,11 @@ class UserProfileServiceTest {
     class UpdateProfile {
 
         @Test
-        @DisplayName("updates user fields and returns dto")
+        @DisplayName("validates, delegates mapping to converter, and returns dto")
         void updateUser_validRequest_updatesAndReturnsDto() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder().id(userId).build();
             UserDto expectedDto = new UserDto();
-            Address address = new Address();
             LocalDate birthDate = LocalDate.of(1990, 5, 20);
 
             AddressDto addressDto = new AddressDto();
@@ -109,7 +102,6 @@ class UserProfileServiceTest {
             request.setAddress(addressDto);
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(addressDtoConverter.toEntity(addressDto)).thenReturn(address);
             when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(expectedDto);
             when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
@@ -118,24 +110,14 @@ class UserProfileServiceTest {
 
             assertThat(result).isEqualTo(expectedDto);
             assertThat(result.getAvatarLink()).isEqualTo("https://cdn.example.com/avatar.jpg");
-            assertThat(userEntity.getFirstName()).isEqualTo("Alice");
-            assertThat(userEntity.getLastName()).isEqualTo("Smith");
-            assertThat(userEntity.getPhoneNumber()).isEqualTo("+1234567890");
-            assertThat(userEntity.getBirthDate()).isEqualTo(birthDate);
-            assertThat(userEntity.getAddress()).isEqualTo(address);
             verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
-            var inOrder = inOrder(putUsersRequestValidator, singleUserProvider, addressDtoConverter, userRepository, userDtoConverter, fileStorageService);
-            inOrder.verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
-            inOrder.verify(singleUserProvider).getUserEntityById(userId);
-            inOrder.verify(addressDtoConverter).toEntity(addressDto);
-            inOrder.verify(userRepository).save(userEntity);
-            inOrder.verify(userDtoConverter).toDto(userEntity);
-            inOrder.verify(fileStorageService).findFileUrl(userId);
+            verify(userDtoConverter).updateEntity(userEntity, request);
+            verify(userRepository).save(userEntity);
         }
 
         @Test
-        @DisplayName("handles null address without conversion")
-        void updateUser_nullAddress_setsNullAddress() {
+        @DisplayName("handles null address without error")
+        void updateUser_nullAddress_delegatesToConverter() {
             UUID userId = UUID.randomUUID();
             UserEntity userEntity = UserEntity.builder().id(userId).build();
 
@@ -151,69 +133,8 @@ class UserProfileServiceTest {
 
             userProfileService.updateProfile(userId, request);
 
-            assertThat(userEntity.getAddress()).isNull();
-            verify(addressDtoConverter, never()).toEntity(org.mockito.ArgumentMatchers.any());
             verify(putUsersRequestValidator).validate("Bob", "Jones", null, null, null);
-        }
-
-        @Test
-        @DisplayName("treats blank address payload as absent")
-        void updateUser_blankAddressPayload_skipsAddressConversion() {
-            UUID userId = UUID.randomUUID();
-            UserEntity userEntity = UserEntity.builder()
-                    .id(userId)
-                    .address(new Address())
-                    .build();
-
-            AddressDto blankAddress = new AddressDto();
-            blankAddress.setCountry(" ");
-            blankAddress.setCity(null);
-            blankAddress.setLine("");
-            blankAddress.setPostcode("  ");
-
-            UpdateUserAccountRequest request = new UpdateUserAccountRequest();
-            request.setFirstName("Carol");
-            request.setLastName("Jones");
-            request.setPhoneNumber("+447700900000");
-            request.setAddress(blankAddress);
-
-            when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(userRepository.save(userEntity)).thenReturn(userEntity);
-            when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
-            when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.empty());
-
-            userProfileService.updateProfile(userId, request);
-
-            assertThat(userEntity.getAddress()).isNull();
-            verify(addressDtoConverter, never()).toEntity(blankAddress);
-            verify(putUsersRequestValidator).validate("Carol", "Jones", "+447700900000", null, blankAddress);
-        }
-
-        @Test
-        @DisplayName("converts partially filled address payloads")
-        void updateUser_partialAddressPayload_convertsAddress() {
-            UUID userId = UUID.randomUUID();
-            UserEntity userEntity = UserEntity.builder().id(userId).build();
-            AddressDto partialAddress = new AddressDto();
-            partialAddress.setCity("London");
-            Address mappedAddress = new Address();
-
-            UpdateUserAccountRequest request = new UpdateUserAccountRequest();
-            request.setFirstName("Dana");
-            request.setLastName("Smith");
-            request.setAddress(partialAddress);
-
-            when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
-            when(addressDtoConverter.toEntity(partialAddress)).thenReturn(mappedAddress);
-            when(userRepository.save(userEntity)).thenReturn(userEntity);
-            when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
-            when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.empty());
-
-            userProfileService.updateProfile(userId, request);
-
-            assertThat(userEntity.getAddress()).isSameAs(mappedAddress);
-            verify(addressDtoConverter).toEntity(partialAddress);
-            verifyNoMoreInteractions(addressDtoConverter);
+            verify(userDtoConverter).updateEntity(userEntity, request);
         }
     }
 

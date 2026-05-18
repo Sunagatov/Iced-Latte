@@ -8,14 +8,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID> {
-
-    @Query("SELECT f FROM FileMetadata f WHERE f.relatedObjectId = :relatedObjectId")
-    Optional<FileMetadata> findAvatarInfoByRelatedObjectId(@Param("relatedObjectId")  UUID relatedObjectId);
 
     @Query("SELECT f FROM FileMetadata f WHERE f.relatedObjectId IN :relatedObjectIds")
     List<FileMetadata> findAvatarInfoByRelatedObjectIds(@Param("relatedObjectIds") List<UUID> relatedObjectIds);

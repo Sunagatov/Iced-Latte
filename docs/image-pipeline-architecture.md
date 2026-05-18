@@ -198,7 +198,7 @@ The product name in the folder is purely for human readability. The backend only
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| 500 on `/api/v1/products` with `Duplicate key` | Multiple files in one product folder | Delete extras from S3, restart |
+| 500 on `/api/v1/products` with `Duplicate key` | Multiple files in one product folder | Backend now selects one preferred file; remove obsolete S3 files only as cleanup |
 | Images show placeholder | `file_metadata` empty or stale | Restart backend (triggers `refreshBucketIndex`) |
 | Images show placeholder after restart | S3 unreachable or bucket empty | Check S3 credentials and bucket contents |
 | Old images still showing | Redis cache serving stale URLs | Restart backend (clears cache) |
@@ -218,9 +218,9 @@ java.lang.IllegalStateException: Duplicate key fc88cd5d-5049-4b00-8d88-df1d9b4a3
     FileMetadataDto[relatedObjectId=fc88cd5d-..., fileName=Vanilla Latte_fc88cd5d-.../card_logo.png])
 ```
 
-**Root cause:** `getProductFileUrls()` calls `findFileUrls()` which uses `Collectors.toMap()` — this throws on duplicate keys. The `file_metadata` table had two rows for the same product UUID because `refreshBucketIndex()` indexed both files in the folder.
+**Root cause:** `getProductFileUrls()` called `findFileUrls()` which used `Collectors.toMap()` without a merge function — this threw on duplicate keys. The `file_metadata` table had two rows for the same product UUID because `refreshBucketIndex()` indexed both files in the folder.
 
-**Fix:** Delete all old files from S3 so each folder has exactly one file, then restart.
+**Fix:** `FileStorageService` now deduplicates metadata by `relatedObjectId` when reading existing rows and when refreshing the bucket index. It prefers `card_logo.webp`, then `card_logo.png`, then JPEG card logos, followed by other WEBP/PNG/JPEG files. Old files can still be deleted from S3 to reduce noise, but duplicate files should no longer take down product listing.
 
 ---
 

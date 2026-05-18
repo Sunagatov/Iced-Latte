@@ -71,8 +71,9 @@ public class FileStorageServiceTest {
         void returnsGeneratedUrl() {
             UUID relatedObjectId = UUID.randomUUID();
             FileMetadata entity = new FileMetadata();
+            entity.setRelatedObjectId(relatedObjectId);
             FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-            when(fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)).thenReturn(Optional.of(entity));
+            when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of(entity));
             when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
             when(objectStorage.getUrl(metadata)).thenReturn(Optional.of("https://cdn.example.com/key"));
 
@@ -83,7 +84,7 @@ public class FileStorageServiceTest {
         @DisplayName("returns empty when metadata is missing")
         void returnsEmptyWhenMetadataMissing() {
             UUID relatedObjectId = UUID.randomUUID();
-            when(fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)).thenReturn(Optional.empty());
+            when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of());
 
             assertThat(fileStorageService.findFileUrl(relatedObjectId)).isEmpty();
             verifyNoInteractions(objectStorage);
@@ -112,12 +113,33 @@ public class FileStorageServiceTest {
     }
 
     @Test
+    @DisplayName("findFileUrls resolves duplicate metadata using preferred image")
+    void findFileUrlsResolvesDuplicateMetadataUsingPreferredImage() {
+        UUID id = UUID.randomUUID();
+        FileMetadata pngEntity = fileMetadataEntity(id);
+        FileMetadata webpEntity = fileMetadataEntity(id);
+        FileMetadataDto pngMetadata = new FileMetadataDto(id, "bucket", "Product_" + id + "/card_logo.png");
+        FileMetadataDto webpMetadata = new FileMetadataDto(id, "bucket", "Product_" + id + "/card_logo.webp");
+        when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(id))).thenReturn(List.of(pngEntity, webpEntity));
+        when(fileMetadataDtoConverter.toDto(pngEntity)).thenReturn(pngMetadata);
+        when(fileMetadataDtoConverter.toDto(webpEntity)).thenReturn(webpMetadata);
+        when(objectStorage.getUrl(webpMetadata)).thenReturn(Optional.of("https://cdn.example.com/card_logo.webp"));
+
+        Map<UUID, String> result = fileStorageService.findFileUrls(List.of(id));
+
+        assertThat(result).containsEntry(id, "https://cdn.example.com/card_logo.webp");
+        verify(objectStorage).getUrl(webpMetadata);
+        verify(objectStorage, never()).getUrl(pngMetadata);
+    }
+
+    @Test
     @DisplayName("deleteFile removes object and metadata when metadata exists")
     void deleteFileRemovesObjectAndMetadata() {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadata entity = new FileMetadata();
+        entity.setRelatedObjectId(relatedObjectId);
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-        when(fileMetadataRepository.findAvatarInfoByRelatedObjectId(relatedObjectId)).thenReturn(Optional.of(entity));
+        when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of(entity));
         when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
 
         fileStorageService.deleteFile(relatedObjectId);
@@ -166,6 +188,29 @@ public class FileStorageServiceTest {
         ArgumentCaptor<List<FileMetadataDto>> captor = ArgumentCaptor.forClass(List.class);
         verify(fileMetadataDtoConverter).toEntityList(captor.capture());
         assertThat(captor.getValue()).containsExactlyElementsOf(metadata);
+    }
+
+    @Test
+    @DisplayName("refreshBucketIndex saves one preferred metadata row per related object")
+    @SuppressWarnings("unchecked")
+    void refreshBucketIndexSavesOnePreferredMetadataRowPerRelatedObject() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadataDto preferred = new FileMetadataDto(
+                relatedObjectId,
+                "bucket",
+                "product_" + relatedObjectId + "/card_logo.webp"
+        );
+        when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of(
+                "product_" + relatedObjectId + "/card_logo.png",
+                "product_" + relatedObjectId + "/card_logo.webp"
+        ));
+        when(fileMetadataDtoConverter.toEntityList(List.of(preferred))).thenReturn(List.of(new FileMetadata()));
+
+        fileStorageService.refreshBucketIndex("bucket");
+
+        ArgumentCaptor<List<FileMetadataDto>> captor = ArgumentCaptor.forClass(List.class);
+        verify(fileMetadataDtoConverter).toEntityList(captor.capture());
+        assertThat(captor.getValue()).containsExactly(preferred);
     }
 
     @Test
