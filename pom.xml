@@ -91,7 +91,6 @@
         <sentry.version>8.37.1</sentry.version>
         <pyroscope.version>2.1.2</pyroscope.version>
 
-        <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <guava.version>33.5.0-jre</guava.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
@@ -337,11 +336,6 @@
         </dependency>
 
         <!-- ========== UTILITIES ========== -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${apache-commons-lang3.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

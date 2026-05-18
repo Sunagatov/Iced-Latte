@@ -3,7 +3,6 @@ package com.zufar.icedlatte.product.validator;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -63,7 +62,7 @@ public class GetProductsRequestValidator {
 
     private static List<String> validateNameList(List<String> names, String fieldName) {
         List<String> errors = new ArrayList<>();
-        if (names != null && names.stream().anyMatch(StringUtils::isBlank)) {
+        if (names != null && names.stream().anyMatch(n -> n == null || n.isBlank())) {
             errors.add(error("Some values of '%s' are blank. Values must be non-blank.".formatted(fieldName)));
         }
         if (names != null && names.stream().distinct().count() < names.size()) {

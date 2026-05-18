@@ -11,7 +11,6 @@ import com.zufar.icedlatte.security.repository.AuthSessionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -177,7 +176,8 @@ public class AuthSessionService {
             return "unknown";
         }
         String value = sessionId.toString();
-        return StringUtils.left(StringUtils.overlay(value, "****", 6, value.length()), 10);
+        String masked = value.substring(0, Math.min(6, value.length())) + "****";
+        return masked.substring(0, Math.min(10, masked.length()));
     }
 
     private SessionInfo toSessionInfo(AuthSessionEntity session) {

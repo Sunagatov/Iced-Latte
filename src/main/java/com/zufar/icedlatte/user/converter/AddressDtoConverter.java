@@ -2,7 +2,6 @@ package com.zufar.icedlatte.user.converter;
 
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.entity.Address;
-import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
@@ -20,10 +19,10 @@ public interface AddressDtoConverter {
         if (dto == null) {
             return null;
         }
-        boolean allBlank = StringUtils.isBlank(dto.getCountry())
-                && StringUtils.isBlank(dto.getCity())
-                && StringUtils.isBlank(dto.getLine())
-                && StringUtils.isBlank(dto.getPostcode());
+        boolean allBlank = isBlank(dto.getCountry())
+                && isBlank(dto.getCity())
+                && isBlank(dto.getLine())
+                && isBlank(dto.getPostcode());
         if (allBlank) {
             return null;
         }
@@ -33,5 +32,9 @@ public interface AddressDtoConverter {
                 .line(dto.getLine())
                 .postcode(dto.getPostcode())
                 .build();
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }
