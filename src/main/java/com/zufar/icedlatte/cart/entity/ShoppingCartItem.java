@@ -17,8 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import java.util.Objects;
 
 import java.util.UUID;
 
@@ -64,25 +63,14 @@ public class ShoppingCartItem {
 
     @Override
     public boolean equals(Object object) {
-        if (this == object)
-            return true;
-
-        if (object == null || getClass() != object.getClass())
-            return false;
-
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
         ShoppingCartItem that = (ShoppingCartItem) object;
-
-        return new EqualsBuilder()
-                .append(id, that.id)
-                .append(productInfo, that.productInfo)
-                .isEquals();
+        return Objects.equals(id, that.id) && Objects.equals(productInfo, that.productInfo);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(productInfo)
-                .toHashCode();
+        return Objects.hash(id, productInfo);
     }
 }

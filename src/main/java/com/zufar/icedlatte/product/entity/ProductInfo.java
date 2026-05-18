@@ -14,8 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import java.util.Objects;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -110,21 +111,13 @@ public class ProductInfo extends AuditableEntity {
 
     @Override
     public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (!(object instanceof ProductInfo productInfo)) {
-            return false;
-        }
-        return new EqualsBuilder()
-                .append(id, productInfo.id)
-                .isEquals();
+        if (this == object) return true;
+        if (!(object instanceof ProductInfo productInfo)) return false;
+        return Objects.equals(id, productInfo.id);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-                .append(id)
-                .toHashCode();
+        return Objects.hash(id);
     }
 }

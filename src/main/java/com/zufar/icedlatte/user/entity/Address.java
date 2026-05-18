@@ -11,8 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import java.util.Objects;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -46,20 +45,14 @@ public class Address implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         Address address = (Address) o;
-        return new EqualsBuilder()
-                .append(addressId, address.addressId)
-                .isEquals();
+        return Objects.equals(addressId, address.addressId);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(addressId)
-                .toHashCode();
+        return Objects.hash(addressId);
     }
 }
