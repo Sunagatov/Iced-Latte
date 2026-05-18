@@ -208,7 +208,7 @@ public class StripeWebhookBusinessProcessor {
         }
     }
 
-    Session requireSession(Event event) {
+    private Session requireSession(Event event) {
         return event.getDataObjectDeserializer()
                 .getObject()
                 .filter(Session.class::isInstance)
