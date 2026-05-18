@@ -401,6 +401,10 @@ components:
           $ref: "#/components/schemas/PasswordField"
         addressDto:
           $ref: "./user-openapi.yaml#/components/schemas/AddressDto"
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required in production."
 
     UserRegistrationResponse:
       $ref: "#/components/schemas/UserAuthenticationResponse"
@@ -422,6 +426,10 @@ components:
           description: "User's password. No pattern validation on login — legacy passwords may not match current rules."
           minLength: 1
           maxLength: 128
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required in production."
 
     UserAuthenticationResponse:
       type: "object"

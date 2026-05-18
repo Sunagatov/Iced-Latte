@@ -317,6 +317,11 @@ login-attempts:
 # Cron expression: check for accounts to unlock every 5 minutes.
 unlock-account-scheduler-cron: '0 0/5 * * * *'
 
+# --- Cloudflare Turnstile ---
+# Bot protection for login/register. Disabled when secret-key is blank.
+turnstile:
+  secret-key: ${TURNSTILE_SECRET_KEY:}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ④ INTEGRATIONS & FEATURE FLAGS

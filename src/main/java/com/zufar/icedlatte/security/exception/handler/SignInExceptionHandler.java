@@ -9,6 +9,7 @@ import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.exception.SessionNotFoundException;
 import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -113,6 +114,15 @@ public class SignInExceptionHandler {
         log.debug("auth.session.forbidden: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
         return problemDetailFactory.build(ProblemType.SESSION_ACCESS_DENIED, "Access denied",
                 HttpStatus.FORBIDDEN, "Access denied.");
+    }
+
+    @ExceptionHandler(TurnstileVerificationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleTurnstileVerificationException(final TurnstileVerificationException exception,
+                                                              HttpServletRequest request) {
+        log.info("auth.turnstile.failed: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
+        return problemDetailFactory.build(ProblemType.TURNSTILE_FAILED, "Verification failed",
+                HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     private void logAuthFailure(Exception exception, HttpStatus status, HttpServletRequest request) {

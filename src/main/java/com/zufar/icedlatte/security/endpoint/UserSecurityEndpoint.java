@@ -18,6 +18,7 @@ import com.zufar.icedlatte.security.api.SessionTokenService;
 import com.zufar.icedlatte.security.api.UserAuthenticationService;
 import com.zufar.icedlatte.security.api.UserRegistrationService;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.turnstile.TurnstileVerifier;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final PasswordResetService passwordResetService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserRegistrationService userRegistrationService;
+    private final TurnstileVerifier turnstileVerifier;
     private final HttpServletRequest httpRequest;
 
     @Value("${email.enabled:false}")
@@ -62,6 +64,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/register")
     public ResponseEntity<UserAuthenticationResponse> register(@RequestBody @Valid final UserRegistrationRequest request) {
+        turnstileVerifier.verify(request.getTurnstileToken());
         if (emailEnabled) {
             emailVerificationService.sendEmailVerificationCode(request);
             return ResponseEntity.ok().build();
@@ -80,6 +83,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(@Valid @RequestBody final UserAuthenticationRequest request) {
+        turnstileVerifier.verify(request.getTurnstileToken());
         var userDetails = userAuthenticationService.verifyCredentials(request);
         return ResponseEntity.ok(sessionTokenService.issueForNewSession(userDetails, httpRequest));
     }

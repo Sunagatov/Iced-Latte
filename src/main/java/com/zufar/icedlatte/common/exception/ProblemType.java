@@ -20,6 +20,7 @@ public final class ProblemType {
     public static final String SESSION_ACCESS_DENIED = "session-access-denied";
     public static final String INTERNAL_ERROR = "internal-error";
     public static final String RATE_LIMITED = "rate-limited";
+    public static final String TURNSTILE_FAILED = "turnstile-failed";
 
     // Orders
     public static final String ORDER_NOT_FOUND = "order-not-found";
