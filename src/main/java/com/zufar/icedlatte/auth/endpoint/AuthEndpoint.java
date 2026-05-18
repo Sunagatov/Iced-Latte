@@ -25,11 +25,6 @@ public class AuthEndpoint {
 
     private final OAuthFlowService oAuthFlowService;
 
-    @GetMapping("/google")
-    public ResponseEntity<?> initiateGoogleAuth(@RequestParam(required = false) String redirectUrl) {
-        return initiateOAuth("google", redirectUrl);
-    }
-
     @GetMapping("/oauth/{provider}")
     public ResponseEntity<?> initiateOAuth(@PathVariable String provider,
                                            @RequestParam(required = false) String redirectUrl) {
@@ -38,14 +33,6 @@ public class AuthEndpoint {
                 .map(authUri -> ResponseEntity.status(HttpStatus.FOUND).location(authUri).build())
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(Map.of("message", "OAuth provider is not available.", "status", 503)));
-    }
-
-    @GetMapping("/google/callback")
-    public void googleCallback(@RequestParam(required = false) String code,
-                               @RequestParam(required = false) String state,
-                               HttpServletRequest request,
-                               HttpServletResponse response) throws IOException {
-        oAuthCallback("google", code, state, request, response);
     }
 
     @GetMapping("/oauth/{provider}/callback")
@@ -60,7 +47,6 @@ public class AuthEndpoint {
 
     private OAuthProvider parseProvider(String provider) {
         return OAuthProvider.fromId(provider)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "OAuth provider is not supported."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth provider is not supported."));
     }
 }

@@ -244,8 +244,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private boolean isGlobalAuthPath(String path) {
-        return path.startsWith(AuthPaths.GOOGLE)
-                || path.startsWith(AuthPaths.OAUTH + "/")
+        return path.startsWith(AuthPaths.OAUTH + "/")
                 || path.equals(AuthPaths.AUTHENTICATE)
                 || path.equals(AuthPaths.ROOT + "/register");
     }

@@ -1,16 +1,19 @@
 package com.zufar.icedlatte.order.api;
 
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.specification.OrderSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,11 +25,26 @@ import java.util.List;
 @SuppressWarnings("unused") // Scheduled methods are invoked by Spring, not direct callers.
 public class OrderMaintenanceJob {
 
+    private static final String EXPIRATION_MONITOR_SLUG = "order-expiration-job";
+    private static final String REFUND_MONITOR_SLUG = "order-refund-monitor-job";
+
     private final OrderRepository orderRepository;
+    private final SentryJobMonitor sentryJobMonitor;
+    private final PlatformTransactionManager transactionManager;
+
+    @Value("${order.expiration-check-interval-ms:3600000}")
+    private long expirationCheckIntervalMs;
+
+    @Value("${order.refund-monitor-interval-ms:3600000}")
+    private long refundMonitorIntervalMs;
 
     @Scheduled(fixedDelayString = "${order.expiration-check-interval-ms:3600000}")
-    @Transactional
     public void expireUnpaidOrders() {
+        sentryJobMonitor.run(EXPIRATION_MONITOR_SLUG, sentryJobMonitor.fixedDelayConfig(expirationCheckIntervalMs),
+                () -> transactionTemplate(false).executeWithoutResult(_ -> expireUnpaidOrdersInternal()));
+    }
+
+    private void expireUnpaidOrdersInternal() {
         OffsetDateTime cutoff = OffsetDateTime.now().minusHours(24);
         Specification<Order> spec = Specification
                 .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.CREATED)))
@@ -44,8 +62,12 @@ public class OrderMaintenanceJob {
     }
 
     @Scheduled(fixedDelayString = "${order.refund-monitor-interval-ms:3600000}")
-    @Transactional(readOnly = true)
     public void checkStuckRefunds() {
+        sentryJobMonitor.run(REFUND_MONITOR_SLUG, sentryJobMonitor.fixedDelayConfig(refundMonitorIntervalMs),
+                () -> transactionTemplate(true).executeWithoutResult(_ -> checkStuckRefundsInternal()));
+    }
+
+    private void checkStuckRefundsInternal() {
         OffsetDateTime cutoff = OffsetDateTime.now().minusHours(4);
         Specification<Order> spec = Specification
                 .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.REFUND_REQUESTED)))
@@ -59,5 +81,11 @@ public class OrderMaintenanceJob {
         if (!stuck.isEmpty()) {
             log.warn("order.refund.stuck.total: count={}", stuck.size());
         }
+    }
+
+    private TransactionTemplate transactionTemplate(boolean readOnly) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setReadOnly(readOnly);
+        return transactionTemplate;
     }
 }

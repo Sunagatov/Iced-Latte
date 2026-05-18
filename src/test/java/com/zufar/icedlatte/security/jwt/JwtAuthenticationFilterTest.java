@@ -58,13 +58,11 @@ class JwtAuthenticationFilterTest {
     class ShouldNotFilter {
 
         @Test
-        @DisplayName("skips refresh and google auth endpoints")
-        void skipsRefreshAndGoogleAuthEndpoints() {
+        @DisplayName("skips refresh and oauth endpoints")
+        void skipsRefreshAndOAuthEndpoints() {
             TestableJwtAuthenticationFilter filter = filter();
 
             assertThat(filter.shouldSkip(request("/api/v1/auth/refresh"))).isTrue();
-            assertThat(filter.shouldSkip(request("/api/v1/auth/google"))).isTrue();
-            assertThat(filter.shouldSkip(request("/api/v1/auth/google/callback"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google/callback"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/products"))).isFalse();

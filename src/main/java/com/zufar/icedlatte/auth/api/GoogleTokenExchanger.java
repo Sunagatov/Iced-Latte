@@ -83,7 +83,7 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
         }
     }
 
-    public GoogleIdToken.Payload exchange(String authorizationCode) throws GeneralSecurityException, IOException {
+    GoogleIdToken.Payload exchange(String authorizationCode) throws GeneralSecurityException, IOException {
         var tokenResponse = flow.newTokenRequest(authorizationCode)
                 .setRedirectUri(redirectUri)
                 .execute();

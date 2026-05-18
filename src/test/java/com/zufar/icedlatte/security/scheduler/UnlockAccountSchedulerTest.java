@@ -4,9 +4,9 @@ import com.zufar.icedlatte.security.api.LoginAttemptService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.Mockito.verify;
 
@@ -17,12 +17,13 @@ class UnlockAccountSchedulerTest {
     @Mock
     private LoginAttemptService loginAttemptService;
 
-    @InjectMocks
-    private UnlockAccountScheduler unlockAccountScheduler;
-
     @Test
     @DisplayName("Should execute scheduled task to unlock accounts")
     void shouldExecuteScheduledTaskToUnlockAccounts() {
+        UnlockAccountScheduler unlockAccountScheduler = new UnlockAccountScheduler(loginAttemptService,
+                new com.zufar.icedlatte.common.monitoring.SentryJobMonitor());
+        ReflectionTestUtils.setField(unlockAccountScheduler, "cron", "0 0/5 * * * *");
+
         unlockAccountScheduler.unlockLockoutExpiredAccounts();
 
         verify(loginAttemptService).unlockExpiredAccounts();

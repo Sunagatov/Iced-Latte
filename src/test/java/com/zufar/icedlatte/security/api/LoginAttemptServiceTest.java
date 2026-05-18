@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -193,6 +195,18 @@ class LoginAttemptServiceTest {
 
         verify(loginAttemptRepository).resetLockedAccounts();
         verify(userRepository).unlockUsers();
+        verifyNoMoreInteractions(loginAttemptRepository, userRepository);
+    }
+
+    @Test
+    @DisplayName("unlockExpiredAccounts propagates database failures for scheduler monitoring")
+    void unlockExpiredAccountsPropagatesDatabaseFailures() {
+        DataAccessResourceFailureException exception = new DataAccessResourceFailureException("database unavailable");
+        when(loginAttemptRepository.resetLockedAccounts()).thenThrow(exception);
+
+        assertThatThrownBy(service::unlockExpiredAccounts).isSameAs(exception);
+
+        verify(loginAttemptRepository).resetLockedAccounts();
         verifyNoMoreInteractions(loginAttemptRepository, userRepository);
     }
 }

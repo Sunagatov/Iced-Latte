@@ -483,6 +483,8 @@ sentry:
   # DSN = Data Source Name — unique URL that tells the SDK where to send events.
   dsn: ${SENTRY_DSN:}
   environment: ${SENTRY_ENVIRONMENT:local}
+  # Release connects Sentry issues to the exact deployed image/Git SHA.
+  release: ${SENTRY_RELEASE:iced-latte-backend@${APP_VERSION:1}}
   # Fraction of errors to capture (1.0 = 100%).
   sample-rate: 1.0
   # Fraction of requests to trace for performance monitoring (0.1 = 10%).
