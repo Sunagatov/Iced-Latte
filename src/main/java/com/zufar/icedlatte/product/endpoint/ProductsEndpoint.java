@@ -6,11 +6,7 @@ import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.openapi.dto.SellersDto;
-import com.zufar.icedlatte.product.api.PageableProductsProvider;
-import com.zufar.icedlatte.product.api.ProductFilterOptionsProvider;
-import com.zufar.icedlatte.product.api.ProductsProvider;
-import com.zufar.icedlatte.product.api.SingleProductProvider;
-import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
+import com.zufar.icedlatte.product.api.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,22 +33,18 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
 
     public static final String PRODUCTS_URL = ApiPaths.PRODUCTS;
 
-    private final ProductsProvider productsProvider;
-    private final PageableProductsProvider pageableProductsProvider;
-    private final GetProductsRequestValidator getProductsRequestValidator;
-    private final SingleProductProvider singleProductProvider;
-    private final ProductFilterOptionsProvider productFilterOptionsProvider;
+    private final ProductService productService;
 
     @Override
     @GetMapping("/sellers")
     public ResponseEntity<SellersDto> getAllSellers() {
-        return ResponseEntity.ok(new SellersDto(productFilterOptionsProvider.getSellerNames()));
+        return ResponseEntity.ok(new SellersDto(productService.getSellerNames()));
     }
 
     @Override
     @GetMapping("/brands")
     public ResponseEntity<BrandsDto> getAllBrands() {
-        return ResponseEntity.ok(new BrandsDto(productFilterOptionsProvider.getBrandNames()));
+        return ResponseEntity.ok(new BrandsDto(productService.getBrandNames()));
     }
 
     @Override
@@ -69,10 +61,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
             @RequestParam(name = "seller_names", required = false) List<String> sellerNames,
             @RequestParam(name = "keyword", required = false) String keyword) {
 
-        getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
-                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
-
-        return ResponseEntity.ok(pageableProductsProvider.getProducts(
+        return ResponseEntity.ok(productService.getProducts(
                 pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
     }
@@ -80,8 +69,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @Override
     @PostMapping("/ids")
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
-        var ids = productIdsDto.getProductIds();
-        var products = productsProvider.getProducts(ids);
+        var products = productService.getProductsByIds(productIdsDto.getProductIds());
         log.debug("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);
     }
@@ -90,6 +78,6 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.debug("product.get: productId={}", productId);
-        return ResponseEntity.ok(singleProductProvider.getProductById(productId));
+        return ResponseEntity.ok(productService.getProductById(productId));
     }
 }
