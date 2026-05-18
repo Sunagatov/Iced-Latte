@@ -65,7 +65,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
+    public ResponseEntity<Void> uploadUserAvatar(@RequestPart("file") MultipartFile file) {
         var userId = securityPrincipalProvider.getUserId();
         userAvatarUploader.uploadUserAvatar(userId, file);
         log.info("user.avatar.uploaded: userId={}", userId);

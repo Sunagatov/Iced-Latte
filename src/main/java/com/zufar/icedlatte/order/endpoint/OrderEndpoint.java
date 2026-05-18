@@ -105,7 +105,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @PostMapping("/{orderId}/refund")
     public ResponseEntity<OrderDto> requestRefund(
             @PathVariable final UUID orderId,
-            @RequestBody(required = false) final RefundRequestDto request) {
+            @Valid @RequestBody(required = false) final RefundRequestDto request) {
         var userId = securityPrincipalProvider.getUserId();
         String reason = request != null ? request.getReason() : null;
         log.info("orders.refund: userId={}, orderId={}", userId, orderId);

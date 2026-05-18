@@ -39,7 +39,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Validated @Valid @RequestBody final ListOfFavoriteProducts request) {
+    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Valid @RequestBody final ListOfFavoriteProducts request) {
         var userId = securityPrincipalProvider.getUserId();
         var response = favoriteProductAdderHelper.add(request, userId);
         log.info("favourites.added: count={}", request.getProductIds().size());

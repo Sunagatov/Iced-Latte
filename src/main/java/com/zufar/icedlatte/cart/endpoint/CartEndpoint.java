@@ -51,7 +51,7 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @PatchMapping("/items")
-    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Validated @Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
+    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
         var itemId = request.getShoppingCartItemId();
         var quantityChange = request.getProductQuantityChange();
         var userId = securityPrincipalProvider.getUserId();

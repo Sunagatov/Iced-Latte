@@ -13,7 +13,6 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -41,23 +40,15 @@ public class AWSConfig {
     @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true")
     public S3Client s3Client() {
         try {
-            AwsBasicCredentials awsCredentials;
-            String sessionToken = System.getenv(AWS_SESSION_TOKEN);
-            if (StringUtils.hasText(sessionToken)) {
-                AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
-                var builder = S3Client.builder()
-                        .credentialsProvider(StaticCredentialsProvider.create(sessionCredentials))
-                        .region(Region.of(region));
-                applyEndpointOverride(builder);
-                return builder.build();
-            } else {
-                awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
-                var builder = S3Client.builder()
-                        .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
-                        .region(Region.of(region));
-                applyEndpointOverride(builder);
+            var builder = S3Client.builder()
+                    .credentialsProvider(buildCredentials())
+                    .region(Region.of(region));
+            if (!StringUtils.hasText(endpointUrl)) {
                 return builder.build();
             }
+            return builder.endpointOverride(URI.create(endpointUrl))
+                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                    .build();
         } catch (SdkClientException ace) {
             log.error("aws.s3.client.init_error: region={}, endpointOverrideConfigured={}, exceptionClass={}",
                     region, StringUtils.hasText(endpointUrl), ace.getClass().getSimpleName(), ace);
@@ -68,19 +59,9 @@ public class AWSConfig {
     @Bean
     @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true")
     public S3Presigner s3Presigner() {
-        String sessionToken = System.getenv(AWS_SESSION_TOKEN);
-        S3Presigner.Builder builder;
-        if (StringUtils.hasText(sessionToken)) {
-            builder = S3Presigner.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(
-                            AwsSessionCredentials.create(accessKey, secretKey, sessionToken)))
-                    .region(Region.of(region));
-        } else {
-            builder = S3Presigner.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(
-                            AwsBasicCredentials.create(accessKey, secretKey)))
-                    .region(Region.of(region));
-        }
+        S3Presigner.Builder builder = S3Presigner.builder()
+                .credentialsProvider(buildCredentials())
+                .region(Region.of(region));
         if (StringUtils.hasText(endpointUrl)) {
             builder.endpointOverride(URI.create(endpointUrl));
         }
@@ -90,21 +71,17 @@ public class AWSConfig {
     @Bean
     @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true")
     public CloudFrontClient cloudFrontClient() {
-        String sessionToken = System.getenv(AWS_SESSION_TOKEN);
-        StaticCredentialsProvider credentials = StringUtils.hasText(sessionToken)
-                ? StaticCredentialsProvider.create(AwsSessionCredentials.create(accessKey, secretKey, sessionToken))
-                : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
         return CloudFrontClient.builder()
-                .credentialsProvider(credentials)
+                .credentialsProvider(buildCredentials())
                 .region(Region.AWS_GLOBAL)
                 .build();
     }
 
-    private void applyEndpointOverride(S3ClientBuilder builder) {
-        if (StringUtils.hasText(endpointUrl)) {
-            builder.endpointOverride(URI.create(endpointUrl))
-                    .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
-        }
+    private StaticCredentialsProvider buildCredentials() {
+        String sessionToken = System.getenv(AWS_SESSION_TOKEN);
+        return StringUtils.hasText(sessionToken)
+                ? StaticCredentialsProvider.create(AwsSessionCredentials.create(accessKey, secretKey, sessionToken))
+                : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
     }
 
 }

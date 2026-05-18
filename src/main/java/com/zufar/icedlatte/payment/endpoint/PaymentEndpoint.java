@@ -7,6 +7,7 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.payment.api.CheckoutPaymentService;
 import com.zufar.icedlatte.payment.api.PaymentStatusService;
 import com.zufar.icedlatte.payment.api.StripeWebhookService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -40,7 +41,7 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @PostMapping("/checkout")
     public ResponseEntity<CheckoutResponseDto> createCheckout(
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @RequestBody CreateCheckoutRequestDto request) {
+            @Valid @RequestBody CreateCheckoutRequestDto request) {
         CheckoutResponseDto response = checkoutPaymentService.checkout(request, idempotencyKey);
         return ResponseEntity.ok(response);
     }
