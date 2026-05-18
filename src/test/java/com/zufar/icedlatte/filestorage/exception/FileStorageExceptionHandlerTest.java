@@ -15,14 +15,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CommonExceptionHandler unit tests")
-class CommonExceptionHandlerTest {
+@DisplayName("FileStorageExceptionHandler unit tests")
+class FileStorageExceptionHandlerTest {
 
     @Mock
     private ProblemDetailFactory problemDetailFactory;
 
     @InjectMocks
-    private CommonExceptionHandler handler;
+    private FileStorageExceptionHandler handler;
 
     @Test
     @DisplayName("handleFileReadException returns BAD_REQUEST")

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
-public class CommonExceptionHandler {
+public class FileStorageExceptionHandler {
 
     private final ProblemDetailFactory problemDetailFactory;
 
