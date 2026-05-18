@@ -73,7 +73,7 @@ public class FileStorageServiceTest {
             FileMetadata entity = new FileMetadata();
             entity.setRelatedObjectId(relatedObjectId);
             FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-            when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of(entity));
+            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of(entity));
             when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
             when(objectStorage.getUrl(metadata)).thenReturn(Optional.of("https://cdn.example.com/key"));
 
@@ -84,7 +84,7 @@ public class FileStorageServiceTest {
         @DisplayName("returns empty when metadata is missing")
         void returnsEmptyWhenMetadataMissing() {
             UUID relatedObjectId = UUID.randomUUID();
-            when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of());
+            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of());
 
             assertThat(fileStorageService.findFileUrl(relatedObjectId)).isEmpty();
             verifyNoInteractions(objectStorage);
@@ -100,7 +100,7 @@ public class FileStorageServiceTest {
         FileMetadata entity2 = fileMetadataEntity(id2);
         FileMetadataDto metadata1 = new FileMetadataDto(id1, "bucket", "key-1");
         FileMetadataDto metadata2 = new FileMetadataDto(id2, "bucket", "key-2");
-        when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(id1, id2))).thenReturn(List.of(entity1, entity2));
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(id1, id2))).thenReturn(List.of(entity1, entity2));
         when(fileMetadataDtoConverter.toDto(entity1)).thenReturn(metadata1);
         when(fileMetadataDtoConverter.toDto(entity2)).thenReturn(metadata2);
         when(objectStorage.getUrl(metadata1)).thenReturn(Optional.of("https://cdn.example.com/key-1"));
@@ -120,7 +120,7 @@ public class FileStorageServiceTest {
         FileMetadata webpEntity = fileMetadataEntity(id);
         FileMetadataDto pngMetadata = new FileMetadataDto(id, "bucket", "Product_" + id + "/card_logo.png");
         FileMetadataDto webpMetadata = new FileMetadataDto(id, "bucket", "Product_" + id + "/card_logo.webp");
-        when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(id))).thenReturn(List.of(pngEntity, webpEntity));
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(id))).thenReturn(List.of(pngEntity, webpEntity));
         when(fileMetadataDtoConverter.toDto(pngEntity)).thenReturn(pngMetadata);
         when(fileMetadataDtoConverter.toDto(webpEntity)).thenReturn(webpMetadata);
         when(objectStorage.getUrl(webpMetadata)).thenReturn(Optional.of("https://cdn.example.com/card_logo.webp"));
@@ -139,7 +139,7 @@ public class FileStorageServiceTest {
         FileMetadata entity = new FileMetadata();
         entity.setRelatedObjectId(relatedObjectId);
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-        when(fileMetadataRepository.findAvatarInfoByRelatedObjectIds(List.of(relatedObjectId))).thenReturn(List.of(entity));
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of(entity));
         when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
 
         fileStorageService.deleteFile(relatedObjectId);

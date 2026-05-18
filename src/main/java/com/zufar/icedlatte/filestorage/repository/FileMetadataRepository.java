@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID> {
 
     @Query("SELECT f FROM FileMetadata f WHERE f.relatedObjectId IN :relatedObjectIds")
-    List<FileMetadata> findAvatarInfoByRelatedObjectIds(@Param("relatedObjectIds") List<UUID> relatedObjectIds);
+    List<FileMetadata> findByRelatedObjectIdIn(@Param("relatedObjectIds") List<UUID> relatedObjectIds);
 
     @Modifying
     @Query("DELETE FROM FileMetadata f WHERE f.relatedObjectId = :relatedObjectId")

@@ -94,7 +94,7 @@ public class FileStorageService {
     }
 
     private Map<UUID, FileMetadataDto> findMetadata(List<UUID> relatedObjectIds) {
-        return fileMetadataRepository.findAvatarInfoByRelatedObjectIds(relatedObjectIds)
+        return fileMetadataRepository.findByRelatedObjectIdIn(relatedObjectIds)
                 .stream()
                 .map(fileMetadataDtoConverter::toDto)
                 .collect(Collectors.toMap(
