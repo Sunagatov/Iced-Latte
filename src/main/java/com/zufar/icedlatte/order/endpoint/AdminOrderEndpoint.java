@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.endpoint;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.AdminOrderStatusUpdateDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
@@ -32,11 +33,9 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(AdminOrderEndpoint.ADMIN_ORDERS_URL)
+@RequestMapping(ApiPaths.ADMIN_ORDERS)
 @SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
 public class AdminOrderEndpoint {
-
-    public static final String ADMIN_ORDERS_URL = "/api/v1/admin/orders";
 
     private final OrdersProvider ordersProvider;
     private final OrderStatusTransitioner statusTransitioner;
@@ -46,32 +45,29 @@ public class AdminOrderEndpoint {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<OrderPageDto> getAllOrders(
-            @RequestParam(required = false) final List<OrderStatus> status,
-            @RequestParam(required = false) final UUID userId,
-            @RequestParam(required = false) final Integer page,
-            @RequestParam(required = false) final Integer size,
-            @RequestParam(required = false) final String sortBy,
-            @RequestParam(required = false) final String sortDirection,
-            @RequestParam(required = false) final Integer year,
-            @RequestParam(required = false) final LocalDate dateFrom,
-            @RequestParam(required = false) final LocalDate dateTo) {
-        var defaults = paginationConfig.getOrders();
+    public ResponseEntity<OrderPageDto> getAllOrders(@RequestParam(required = false) final List<OrderStatus> status,
+                                                     @RequestParam(required = false) final UUID userId,
+                                                     @RequestParam(required = false) final Integer page,
+                                                     @RequestParam(required = false) final Integer size,
+                                                     @RequestParam(required = false) final String sortBy,
+                                                     @RequestParam(required = false) final String sortDirection,
+                                                     @RequestParam(required = false) final Integer year,
+                                                     @RequestParam(required = false) final LocalDate dateFrom,
+                                                     @RequestParam(required = false) final LocalDate dateTo) {
+        PaginationConfig.Orders defaults = paginationConfig.getOrders();
         Pageable pageable = PageRequestFactory.of(
                 page != null ? page : paginationConfig.getDefaultPageNumber(),
                 size != null ? Math.min(size, defaults.getMaxPageSize()) : defaults.getDefaultPageSize(),
                 sortBy != null ? sortBy : defaults.getDefaultSortAttribute(),
                 sortDirection != null ? sortDirection : defaults.getDefaultSortDirection()
         );
-        var result = ordersProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ordersProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{orderId}/status")
-    public ResponseEntity<OrderDto> updateOrderStatus(
-            @PathVariable final UUID orderId,
-            @Valid @RequestBody final AdminOrderStatusUpdateDto request) {
+    public ResponseEntity<OrderDto> updateOrderStatus(@PathVariable final UUID orderId,
+                                                      @Valid @RequestBody final AdminOrderStatusUpdateDto request) {
         var adminId = securityPrincipalProvider.getUserId();
         log.info("admin.order.status.update: orderId={}, event={}, admin={}", orderId, request.getEvent(), adminId);
         Order updated = statusTransitioner.transition(orderId, request.getEvent(), adminId, request.getReason());

@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,11 +43,6 @@ public class OrderDetailProvider {
         dto.setCanRefund(order.getStatus() == OrderStatus.PAID);
         dto.setCancellationDeadline(order.getCancellationDeadline());
         return dto;
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Order> getOrderByUserAndSession(UUID userId, String sessionId) {
-        return orderRepository.findByUserIdAndSessionId(userId, sessionId);
     }
 
     @Transactional(readOnly = true)

@@ -16,8 +16,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
     @Query("select o from Order o left join fetch o.items where o.id = :id")
     Optional<Order> findByIdWithItems(UUID id);
 
-    Optional<Order> findByUserIdAndSessionId(UUID userId, String sessionId);
-
     Optional<Order> findByIdempotencyKeyAndUserId(String idempotencyKey, UUID userId);
 
     Optional<Order> findByStripePaymentIntentId(String stripePaymentIntentId);
