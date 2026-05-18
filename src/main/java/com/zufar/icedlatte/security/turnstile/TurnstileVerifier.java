@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -35,11 +36,14 @@ public class TurnstileVerifier {
             throw new TurnstileVerificationException("Turnstile verification required");
         }
         try {
-            String body = "secret=" + secretKey + "&response=" + token;
+            LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("secret", secretKey);
+            form.add("response", token);
+
             TurnstileResponse result = restClient.post()
                     .uri(VERIFY_URL)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(body)
+                    .body(form)
                     .retrieve()
                     .body(TurnstileResponse.class);
             if (result == null || !result.success()) {
@@ -55,6 +59,5 @@ public class TurnstileVerifier {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record TurnstileResponse(@JsonProperty("success") boolean success) {
-    }
+    private record TurnstileResponse(@JsonProperty("success") boolean success) {}
 }
