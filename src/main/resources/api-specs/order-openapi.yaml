@@ -117,6 +117,13 @@ paths:
       summary: "Place a new order for the authorized user"
       description: "Creates a new order from the authenticated user's shopping cart."
       operationId: "createOrder"
+      parameters:
+        - name: "Idempotency-Key"
+          in: "header"
+          required: false
+          schema:
+            type: "string"
+          description: "Client-generated key used to safely retry order creation requests."
       requestBody:
         required: true
         content:

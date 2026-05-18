@@ -54,13 +54,14 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     private final OrderReorderService orderReorderService;
     private final PaginationConfig paginationConfig;
 
+    @Override
     @GetMapping
     public ResponseEntity<OrderPageDto> getOrders(
-            @RequestParam(required = false) final List<OrderStatus> status,
             @RequestParam(required = false) final Integer page,
             @RequestParam(required = false) final Integer size,
             @RequestParam(required = false) final String sortBy,
             @RequestParam(required = false) final String sortDirection,
+            @RequestParam(required = false) final List<OrderStatus> status,
             @RequestParam(required = false) final Integer year,
             @RequestParam(required = false) final LocalDate dateFrom,
             @RequestParam(required = false) final LocalDate dateTo) {
@@ -76,6 +77,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.ok(result);
     }
 
+    @Override
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
@@ -83,6 +85,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.ok(order);
     }
 
+    @Override
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(
             @Valid @RequestBody final CreateNewOrderRequestDto request,
@@ -94,6 +97,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
+    @Override
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
@@ -102,6 +106,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.ok(order);
     }
 
+    @Override
     @PostMapping("/{orderId}/refund")
     public ResponseEntity<OrderDto> requestRefund(
             @PathVariable final UUID orderId,
@@ -113,6 +118,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.ok(order);
     }
 
+    @Override
     @PostMapping("/{orderId}/reorder")
     public ResponseEntity<ReorderResponseDto> reorder(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
@@ -121,6 +127,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         return ResponseEntity.ok(result);
     }
 
+    @Override
     @GetMapping("/{orderId}/history")
     public ResponseEntity<List<OrderStatusHistoryDto>> getOrderHistory(@PathVariable final UUID orderId) {
         var userId = securityPrincipalProvider.getUserId();
