@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.order.api;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -40,7 +39,6 @@ public class OrderCreator {
     private final OrderDetailProvider orderDetailProvider;
     private final OrderDtoConverter orderDtoConverter;
     private final ShoppingCartService shoppingCartService;
-    private final ShoppingCartRepository shoppingCartRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final ProductService productService;
 
@@ -89,7 +87,7 @@ public class OrderCreator {
                 .build();
 
         Order saved = orderRepository.save(order);
-        shoppingCartRepository.deleteByUserId(userId);
+        shoppingCartService.deleteCartForUser(userId);
         log.info("order.created: orderId={}, userId={}", saved.getId(), userId);
         return orderDtoConverter.toResponseDto(saved);
     }

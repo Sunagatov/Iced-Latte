@@ -3,7 +3,7 @@ package com.zufar.icedlatte.payment.api;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
@@ -37,7 +37,7 @@ class StripeWebhookBusinessProcessorTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private OrderDetailProvider orderDetailProvider;
     @Mock private OrderLifecycleService orderLifecycleService;
-    @Mock private ShoppingCartRepository shoppingCartRepository;
+    @Mock private ShoppingCartService shoppingCartService;
     @InjectMocks private StripeWebhookBusinessProcessor processor;
 
     private static final UUID ORDER_ID = UUID.randomUUID();
@@ -66,7 +66,7 @@ class StripeWebhookBusinessProcessorTest {
         assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test_123");
         verify(orderStatusTransitioner).transition(eq(ORDER_ID), eq(OrderEvent.PENDING_PAYMENT_CONFIRMED),
                 any(), eq("Stripe payment confirmed"));
-        verify(shoppingCartRepository).deleteByUserId(USER_ID);
+        verify(shoppingCartService).deleteCartForUser(USER_ID);
     }
 
     @Test
@@ -100,7 +100,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
-        verify(shoppingCartRepository, never()).deleteByUserId(any());
+        verify(shoppingCartService, never()).deleteCartForUser(any());
     }
 
     @Test

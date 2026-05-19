@@ -2,7 +2,7 @@ package com.zufar.icedlatte.payment.api;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.UserDto;
@@ -43,7 +43,7 @@ public class PaymentStatusService {
     private final OrderLifecycleService orderLifecycleService;
     private final PaymentRepository paymentRepository;
     private final OrderStatusTransitioner orderStatusTransitioner;
-    private final ShoppingCartRepository shoppingCartRepository;
+    private final ShoppingCartService shoppingCartService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final TransactionTemplate transactionTemplate;
 
@@ -130,7 +130,7 @@ public class PaymentStatusService {
                     null, "Stripe payment confirmed (sync fallback)");
             orderLifecycleService.assignPaymentIntent(orderId, session.getPaymentIntent());
 
-            shoppingCartRepository.deleteByUserId(order.getUserId());
+            shoppingCartService.deleteCartForUser(order.getUserId());
 
             log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}",
                     orderId, session.getPaymentIntent());

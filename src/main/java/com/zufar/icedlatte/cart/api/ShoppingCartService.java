@@ -177,6 +177,7 @@ public class ShoppingCartService {
                 .collect(Collectors.toSet());
 
         List<ProductInfo> foundProducts = productService.findAllById(newProductIds);
+
         Set<UUID> foundIds = foundProducts.stream()
                 .map(ProductInfo::getId)
                 .collect(Collectors.toSet());
@@ -215,5 +216,10 @@ public class ShoppingCartService {
         if (productQuantity < 1 || productQuantity > MAX_ITEM_PRODUCT_QUANTITY) {
             throw new InvalidItemProductQuantityException(productQuantity, MAX_ITEM_PRODUCT_QUANTITY);
         }
+    }
+
+    @Transactional
+    public void deleteCartForUser(final UUID userId) {
+        shoppingCartRepository.deleteByUserId(userId);
     }
 }

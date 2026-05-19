@@ -72,4 +72,10 @@ public class ProductReviewLikesUpdater {
                     "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].");
         }
     }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void refreshAllCounts() {
+        productReviewRepository.updateAllLikesCounts();
+        productReviewRepository.updateAllDislikesCounts();
+    }
 }

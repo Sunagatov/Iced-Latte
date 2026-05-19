@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.order.api;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -46,8 +45,7 @@ class OrderCreatorTest {
     @Mock private OrderRepository orderRepository;
     @Mock private OrderDtoConverter orderDtoConverter;
     @Mock private ShoppingCartService shoppingCartService;
-    @Mock private ShoppingCartRepository shoppingCartRepository;
-    @Mock private DeliveryAddressRepository deliveryAddressRepository;
+        @Mock private DeliveryAddressRepository deliveryAddressRepository;
     @Mock private ProductService productService;
     @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;
     @Mock @SuppressWarnings("unused") private SingleUserProvider singleUserProvider;
@@ -94,7 +92,7 @@ class OrderCreatorTest {
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(captor.capture());
         assertThat(captor.getValue().getDeliveryAddress().getCountry()).isEqualTo("UK");
-        verify(shoppingCartRepository).deleteByUserId(userId);
+        verify(shoppingCartService).deleteCartForUser(userId);
     }
 
     @Test

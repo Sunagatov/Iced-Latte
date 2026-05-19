@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.payment.api;
 
-import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.UserDto;
@@ -37,7 +37,7 @@ class PaymentStatusServiceTest {
     @Mock private OrderLifecycleService orderLifecycleService;
     @Mock private PaymentRepository paymentRepository;
     @Mock private OrderStatusTransitioner orderStatusTransitioner;
-    @Mock private ShoppingCartRepository shoppingCartRepository;
+    @Mock private ShoppingCartService shoppingCartService;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @Mock private TransactionTemplate transactionTemplate;
     @InjectMocks private PaymentStatusService service;
