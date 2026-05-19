@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.endpoint;
 
+import com.zufar.icedlatte.auth.api.OAuthFlowService;
+import com.zufar.icedlatte.auth.api.OAuthProvider;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
@@ -33,8 +35,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,9 +62,31 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final UserRegistrationService userRegistrationService;
     private final TurnstileVerifier turnstileVerifier;
     private final HttpServletRequest httpRequest;
+    private final OAuthFlowService oAuthFlowService;
 
     @Value("${email.enabled:false}")
     private boolean emailEnabled;
+
+    @Override
+    @GetMapping("/oauth/{provider}")
+    public ResponseEntity<Void> initiateOAuth(@PathVariable String provider,
+                                              @Valid @RequestParam(required = false) URI redirectUrl) {
+        OAuthProvider oAuthProvider = parseProvider(provider);
+        return oAuthFlowService.initiate(oAuthProvider, redirectUrl == null ? null : redirectUrl.toString())
+                .map(authUri -> ResponseEntity.status(HttpStatus.FOUND).location(authUri).<Void>build())
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());
+    }
+
+    @Override
+    @GetMapping("/oauth/{provider}/callback")
+    public ResponseEntity<Void> completeOAuthCallback(@PathVariable String provider,
+                                                      @Valid @RequestParam(required = false) String code,
+                                                      @Valid @RequestParam(required = false) String state) {
+        OAuthProvider oAuthProvider = parseProvider(provider);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(oAuthFlowService.completeCallback(oAuthProvider, code, state, httpRequest))
+                .build();
+    }
 
     @Override
     @PostMapping("/register")
@@ -135,5 +162,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
         passwordResetService.confirmReset(request.getCode(), request.getPassword());
         return ResponseEntity.ok().build();
+    }
+
+    private OAuthProvider parseProvider(String provider) {
+        return OAuthProvider.fromId(provider)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth provider is not supported."));
     }
 }

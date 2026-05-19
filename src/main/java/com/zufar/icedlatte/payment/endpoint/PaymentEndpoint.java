@@ -41,7 +41,7 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @Override
     @PostMapping("/checkout")
     public ResponseEntity<CheckoutResponseDto> createCheckout(
-            @NotNull @RequestHeader(value = "Idempotency-Key") String idempotencyKey,
+            @NotNull @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateCheckoutRequestDto request) {
         CheckoutResponseDto response = checkoutPaymentService.checkout(request, idempotencyKey);
         return ResponseEntity.ok(response);
@@ -53,11 +53,12 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
         return ResponseEntity.ok(paymentStatusService.getStatus(orderId));
     }
 
+    @Override
     @PostMapping("/stripe/webhook")
     public ResponseEntity<Void> processStripeWebhook(
-            @RequestHeader("Stripe-Signature") String stripeSignature,
-            @RequestBody String payload) {
-        stripeWebhookService.processWebhook(payload, stripeSignature);
+            @NotNull @RequestHeader("Stripe-Signature") String stripeSignature,
+            @Valid @RequestBody String body) {
+        stripeWebhookService.processWebhook(body, stripeSignature);
         return ResponseEntity.ok().build();
     }
 }

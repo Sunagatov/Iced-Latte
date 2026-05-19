@@ -23,6 +23,77 @@ tags:
     description: "API for user registration, authentication, and password management"
 
 paths:
+  /api/v1/auth/oauth/{provider}:
+    get:
+      tags:
+        - "Security"
+      summary: "Start OAuth sign-in"
+      operationId: "initiateOAuth"
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "OAuth provider identifier, for example google."
+        - name: redirectUrl
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+          description: "Frontend callback URL to return to after OAuth completes."
+      responses:
+        "302":
+          description: "Redirect to the OAuth provider authorization URL."
+        "404":
+          description: "OAuth provider is not supported."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "OAuth provider is not available."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - "Security"
+      summary: "Complete OAuth sign-in"
+      operationId: "completeOAuthCallback"
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "OAuth provider identifier, for example google."
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "OAuth authorization code returned by the provider."
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "State token created during OAuth initiation."
+      responses:
+        "302":
+          description: "Redirect to the frontend callback or sign-in error URL."
+        "404":
+          description: "OAuth provider is not supported."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/auth/register:
     post:
       tags:

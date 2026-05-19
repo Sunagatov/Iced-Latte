@@ -41,5 +41,6 @@ public abstract class IntegrationTestBase {
         registry.add("spring.liquibase.password", POSTGRES::getPassword);
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379).toString());
+        registry.add("frontend.url", () -> "http://localhost:3000");
     }
 }

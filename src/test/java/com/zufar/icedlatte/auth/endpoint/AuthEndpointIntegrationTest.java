@@ -33,7 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@DisplayName("AuthEndpoint integration tests")
+@DisplayName("OAuth security endpoint integration tests")
 class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
     private static final String BASE_PATH = "/api/v1/auth";
@@ -73,7 +73,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         Response initiateResponse = given(specification)
                 .redirects().follow(false)
                 .queryParam("redirectUrl", callbackBase)
-                .get("/google");
+                .get("/oauth/google");
 
         initiateResponse.then()
                 .statusCode(HttpStatus.FOUND.value())
@@ -90,7 +90,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
@@ -141,7 +141,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         Response initiateResponse = given(specification)
                 .redirects().follow(false)
                 .queryParam("redirectUrl", callbackBase)
-                .get("/google");
+                .get("/oauth/google");
 
         String state = extractState(initiateResponse);
         assertNotNull(state);
@@ -150,7 +150,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "first-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value());
 
@@ -158,7 +158,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "second-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
@@ -176,7 +176,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         Response initiateResponse = given(specification)
                 .redirects().follow(false)
                 .queryParam("redirectUrl", "https://evil.example.com/callback")
-                .get("/google");
+                .get("/oauth/google");
 
         String state = extractState(initiateResponse);
         assertNotNull(state);
@@ -185,7 +185,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
@@ -205,7 +205,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         Response initiateResponse = given(specification)
                 .redirects().follow(false)
                 .queryParam("redirectUrl", frontendUrl + "/profile")
-                .get("/google");
+                .get("/oauth/google");
 
         String state = extractState(initiateResponse);
         assertNotNull(state);
@@ -214,7 +214,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", allOf(
@@ -230,7 +230,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         given(specification)
                 .redirects().follow(false)
                 .queryParam("state", "any-state")
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=missing_code"));
@@ -244,7 +244,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         given(specification)
                 .redirects().follow(false)
                 .queryParam("code", "valid-code")
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
@@ -263,7 +263,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         Response initiateResponse = given(specification)
                 .redirects().follow(false)
                 .queryParam("redirectUrl", callbackBase)
-                .get("/google");
+                .get("/oauth/google");
 
         String state = extractState(initiateResponse);
         assertNotNull(state);
@@ -272,7 +272,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .redirects().follow(false)
                 .queryParam("code", "broken-code")
                 .queryParam("state", state)
-                .get("/google/callback")
+                .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=auth_failed&next=/checkout"));
@@ -299,7 +299,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         return UriComponentsBuilder.fromUriString("https://accounts.google.com/o/oauth2/v2/auth")
                 .queryParam("state", state)
                 .queryParam("client_id", "client-id")
-                .queryParam("redirect_uri", "http://localhost:" + port + BASE_PATH + "/google/callback")
+                .queryParam("redirect_uri", "http://localhost:" + port + BASE_PATH + "/oauth/google/callback")
                 .build()
                 .toUri();
     }

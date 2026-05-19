@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,7 +32,6 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
 public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.product.review.api.ProductReviewApi {
 
     public static final String PRODUCT_REVIEW_URL = ApiPaths.PRODUCTS;
@@ -46,7 +44,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
     @Override
-    @PostMapping("/{productId}/reviews")
+    @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -56,7 +54,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @DeleteMapping("/{productId}/reviews/{productReviewId}")
+    @DeleteMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
         UUID userId = securityPrincipalProvider.getUserId();
@@ -66,7 +64,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @GetMapping("/{productId}/reviews")
+    @GetMapping(ApiPaths.PRODUCTS + "/{productId}/reviews")
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getProductReviewsAndRatings(
             @PathVariable final UUID productId,
             @RequestParam(name = "page", required = false, defaultValue = "0") final Integer pageNumber,
@@ -79,19 +77,19 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     }
 
     @Override
-    @GetMapping("/{productId}/review")
+    @GetMapping(ApiPaths.PRODUCTS + "/{productId}/review")
     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {
         return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId, securityPrincipalProvider.getUserId()));
     }
 
     @Override
-    @GetMapping("/{productId}/reviews/statistics")
+    @GetMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/statistics")
     public ResponseEntity<ProductReviewRatingStats> getRatingAndReviewStat(@PathVariable final UUID productId) {
         return ResponseEntity.ok(productReviewsStatisticsProvider.get(productId));
     }
 
     @Override
-    @PostMapping("/{productId}/reviews/{productReviewId}/likes")
+    @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/{productReviewId}/likes")
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {
@@ -99,5 +97,16 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, userId, request.getIsLike());
         log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
+    }
+
+    @Override
+    @GetMapping(ApiPaths.USERS + "/reviews")
+    public ResponseEntity<ProductReviewsAndRatingsWithPagination> getUserReviews(
+            @RequestParam(name = "page", required = false, defaultValue = "0") final Integer pageNumber,
+            @RequestParam(name = "size", required = false, defaultValue = "50") final Integer pageSize,
+            @RequestParam(name = "sort_attribute", required = false, defaultValue = "createdAt") final String sortAttribute,
+            @RequestParam(name = "sort_direction", required = false, defaultValue = "asc") final String sortDirection) {
+        return ResponseEntity.ok(productReviewsProvider.getUserReviews(
+                securityPrincipalProvider.getUserId(), pageNumber, pageSize, sortAttribute, sortDirection));
     }
 }

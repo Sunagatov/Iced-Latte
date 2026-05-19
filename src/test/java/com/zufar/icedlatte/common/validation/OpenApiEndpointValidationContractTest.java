@@ -12,15 +12,20 @@ import com.zufar.icedlatte.user.endpoint.UserEndpoint;
 import jakarta.validation.Validation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 
@@ -40,6 +45,20 @@ class OpenApiEndpointValidationContractTest {
     );
 
     @Test
+    @DisplayName("every generated OpenAPI operation is explicitly overridden by its endpoint")
+    void everyGeneratedOpenApiOperationHasConcreteEndpointOverride() {
+        for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
+            generatedOpenApiOperationMethods(endpointClass).forEach(apiMethod -> assertThatCode(() -> {
+                        Method endpointMethod = endpointClass.getDeclaredMethod(apiMethod.getName(), apiMethod.getParameterTypes());
+                        assertThat(endpointMethod).isNotNull();
+                    })
+                    .as("%s must override generated OpenAPI operation %s",
+                            endpointClass.getSimpleName(), apiMethod.getName())
+                    .doesNotThrowAnyException());
+        }
+    }
+
+    @Test
     @DisplayName("endpoint validation metadata matches implemented generated OpenAPI interfaces")
     void endpointValidationMetadataMatchesGeneratedApiInterfaces() {
         assertThatCode(() -> {
@@ -47,29 +66,28 @@ class OpenApiEndpointValidationContractTest {
                 var executableValidator = validatorFactory.getValidator().forExecutables();
                 for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
                     Object endpoint = instantiateWithMocks(endpointClass);
-                    for (Method method : endpointClass.getMethods()) {
-                        if (isGeneratedOpenApiMethod(endpointClass, method)) {
-                            executableValidator.validateParameters(endpoint, method, dummyArguments(method));
-                        }
+                    for (Method apiMethod : generatedOpenApiOperationMethods(endpointClass).toList()) {
+                        Method endpointMethod = endpointClass.getMethod(apiMethod.getName(), apiMethod.getParameterTypes());
+                        executableValidator.validateParameters(endpoint, endpointMethod, dummyArguments(endpointMethod));
                     }
                 }
             }
         }).doesNotThrowAnyException();
     }
 
-    private static boolean isGeneratedOpenApiMethod(Class<?> endpointClass, Method method) {
-        for (Class<?> apiInterface : endpointClass.getInterfaces()) {
-            if (!apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.")) {
-                continue;
-            }
-            try {
-                apiInterface.getMethod(method.getName(), method.getParameterTypes());
-                return true;
-            } catch (NoSuchMethodException ignored) {
-                // Not an OpenAPI operation method.
-            }
-        }
-        return false;
+    private static Stream<Method> generatedOpenApiOperationMethods(Class<?> endpointClass) {
+        return Arrays.stream(endpointClass.getInterfaces())
+                .filter(OpenApiEndpointValidationContractTest::isGeneratedOpenApiInterface)
+                .flatMap(apiInterface -> Arrays.stream(apiInterface.getMethods()))
+                .filter(Method::isDefault)
+                .filter(method -> ResponseEntity.class.isAssignableFrom(method.getReturnType()))
+                .peek(method -> assertThat(method.getDeclaringClass().getPackageName())
+                        .startsWith("com.zufar.icedlatte.openapi."));
+    }
+
+    private static boolean isGeneratedOpenApiInterface(Class<?> apiInterface) {
+        return apiInterface.isInterface()
+                && apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.");
     }
 
     private static Object instantiateWithMocks(Class<?> endpointClass) throws ReflectiveOperationException {
@@ -100,6 +118,9 @@ class OpenApiEndpointValidationContractTest {
         }
         if (parameterType == UUID.class) {
             return UUID.randomUUID();
+        }
+        if (parameterType == URI.class) {
+            return URI.create("https://example.com/callback");
         }
         if (parameterType == BigDecimal.class) {
             return BigDecimal.ONE;

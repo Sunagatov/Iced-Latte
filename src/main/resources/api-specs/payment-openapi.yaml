@@ -114,6 +114,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/payment/stripe/webhook:
+    post:
+      tags:
+        - "Payment"
+      summary: "Process Stripe webhook"
+      description: >
+        Stripe calls this endpoint to deliver checkout and refund events.
+        The Stripe-Signature header is required for webhook verification.
+      operationId: "processStripeWebhook"
+      security: []
+      parameters:
+        - name: "Stripe-Signature"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+          description: "Stripe webhook signature header."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "string"
+      responses:
+        "200":
+          description: "Webhook accepted"
+        "400":
+          description: "Invalid webhook payload or signature"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:

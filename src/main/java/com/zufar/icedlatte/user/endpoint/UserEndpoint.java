@@ -8,11 +8,15 @@ import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.UUID;
 
 
 @Slf4j
@@ -27,6 +31,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserProfileService userProfileService;
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
+    private final DeliveryAddressService deliveryAddressService;
+    private final PasswordResetService passwordResetService;
 
     @Override
     @GetMapping
@@ -89,5 +95,64 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         userProfileService.deleteAvatar(userId);
         log.info("user.avatar.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @PostMapping("/password/reset")
+    public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest request) {
+        passwordResetService.requestReset(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @PostMapping("/password/reset/confirm")
+    public ResponseEntity<Void> confirmResetUserPassword(@Valid @RequestBody ConfirmPasswordResetRequest request) {
+        passwordResetService.confirmReset(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    @GetMapping("/addresses")
+    public ResponseEntity<List<DeliveryAddressDto>> getDeliveryAddresses() {
+        var userId = securityPrincipalProvider.getUserId();
+        log.debug("delivery_address.list_requested: userId={}", userId);
+        return ResponseEntity.ok(deliveryAddressService.getAll(userId));
+    }
+
+    @Override
+    @PostMapping("/addresses")
+    public ResponseEntity<DeliveryAddressDto> addDeliveryAddress(@Valid @RequestBody DeliveryAddressRequest request) {
+        var userId = securityPrincipalProvider.getUserId();
+        DeliveryAddressDto created = deliveryAddressService.create(userId, request);
+        log.info("delivery_address.created: userId={}, addressId={}", userId, created.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @Override
+    @PutMapping("/addresses/{addressId}")
+    public ResponseEntity<DeliveryAddressDto> updateDeliveryAddress(@PathVariable UUID addressId,
+                                                                    @Valid @RequestBody DeliveryAddressRequest request) {
+        var userId = securityPrincipalProvider.getUserId();
+        DeliveryAddressDto updated = deliveryAddressService.update(userId, addressId, request);
+        log.info("delivery_address.updated: userId={}, addressId={}", userId, updated.getId());
+        return ResponseEntity.ok(updated);
+    }
+
+    @Override
+    @DeleteMapping("/addresses/{addressId}")
+    public ResponseEntity<Void> deleteDeliveryAddress(@PathVariable UUID addressId) {
+        var userId = securityPrincipalProvider.getUserId();
+        deliveryAddressService.delete(userId, addressId);
+        log.info("delivery_address.deleted: userId={}, addressId={}", userId, addressId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @PatchMapping("/addresses/{addressId}/default")
+    public ResponseEntity<DeliveryAddressDto> setDefaultDeliveryAddress(@PathVariable UUID addressId) {
+        var userId = securityPrincipalProvider.getUserId();
+        DeliveryAddressDto updated = deliveryAddressService.setDefault(userId, addressId);
+        log.info("delivery_address.default_changed: userId={}, addressId={}", userId, updated.getId());
+        return ResponseEntity.ok(updated);
     }
 }
