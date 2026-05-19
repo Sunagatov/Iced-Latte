@@ -193,7 +193,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             case WRITE -> properties.getWrite();
             case FILE_UPLOAD -> properties.getFileUpload();
             case PRE_AUTH -> properties.getPreAuth();
-            default -> properties.getGlobal();
+            case GLOBAL -> properties.getGlobal();
         };
     }
 
