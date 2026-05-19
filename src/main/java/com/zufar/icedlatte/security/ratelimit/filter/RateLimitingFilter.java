@@ -199,37 +199,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private RateLimitCategory resolvePrimaryCategory(HttpServletRequest request) {
         String path = request.getRequestURI();
-        if (isGlobalAuthPath(path)) {
-            return RateLimitCategory.GLOBAL;
-        }
-        if (path.startsWith(AuthPaths.ROOT_PREFIX)) {
-            return RateLimitCategory.AUTH;
-        }
-        // #2: Password reset uses the strict AUTH bucket
-        if (path.startsWith(ApiPaths.USERS_PASSWORD_RESET)) {
-            return RateLimitCategory.AUTH;
-        }
-        if (path.equals(ApiPaths.PAYMENT) || path.startsWith(ApiPaths.PAYMENT + "/")) {
-            return RateLimitCategory.PAYMENT;
-        }
-        if (path.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null) {
-            return RateLimitCategory.SEARCH;
-        }
-        if (path.startsWith("/api/v1/telemetry/")) {
-            return RateLimitCategory.TELEMETRY;
-        }
-        // #6: File upload endpoints
-        if (isFileUploadRequest(request, path)) {
-            return RateLimitCategory.FILE_UPLOAD;
-        }
-        // #3: Mutating operations get a tighter write bucket
-        if (!READ_METHODS.contains(request.getMethod())) {
-            return RateLimitCategory.WRITE;
-        }
-        return RateLimitCategory.GLOBAL;
+        return switch (path) {
+            case String uri when uri.startsWith(AuthPaths.ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
+            case String uri when uri.startsWith(ApiPaths.USERS_PASSWORD_RESET) -> RateLimitCategory.AUTH;
+            case String uri when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
+            case String uri when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
+            case String uri when uri.startsWith("/api/v1/telemetry/") -> RateLimitCategory.TELEMETRY;
+            case String uri when isFileUploadRequest(request, uri) -> RateLimitCategory.FILE_UPLOAD;
+            case String _ when !READ_METHODS.contains(request.getMethod()) -> RateLimitCategory.WRITE;
+            default -> RateLimitCategory.GLOBAL;
+        };
     }
 
-    private boolean isFileUploadRequest(HttpServletRequest request, String path) {
+    private boolean isFileUploadRequest(HttpServletRequest request,
+                                        String path) {
         String contentType = request.getContentType();
         return contentType != null
                 && contentType.startsWith("multipart/")
@@ -271,7 +254,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                              String rateLimitKey,
                              String identityType,
                              String clientIp) {
-        long retryAfterSeconds = Math.max(1, java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis());
+        long retryAfterSeconds = Math.max(1, seconds);
 
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
         if (firstBlock) {

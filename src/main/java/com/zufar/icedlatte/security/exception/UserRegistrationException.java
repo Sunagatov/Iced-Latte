@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-public class UserRegistrationException extends RuntimeException {
+public final class UserRegistrationException extends AuthException {
 
     public UserRegistrationException(final String message) {
         super(message);

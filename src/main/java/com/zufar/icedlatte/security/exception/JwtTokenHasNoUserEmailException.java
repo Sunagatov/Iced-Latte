@@ -1,14 +1,12 @@
 package com.zufar.icedlatte.security.exception;
 
-import org.springframework.security.core.AuthenticationException;
+public final class JwtTokenHasNoUserEmailException extends JwtAuthException {
 
-public class JwtTokenHasNoUserEmailException extends AuthenticationException {
+    public JwtTokenHasNoUserEmailException(String message) {
+        super(message);
+    }
 
-	public JwtTokenHasNoUserEmailException(String message) {
-		super(message);
-	}
-
-	public JwtTokenHasNoUserEmailException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public JwtTokenHasNoUserEmailException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

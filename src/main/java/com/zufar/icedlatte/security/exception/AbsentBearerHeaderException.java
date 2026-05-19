@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-public class AbsentBearerHeaderException extends RuntimeException {
+public final class AbsentBearerHeaderException extends AuthException {
 
     private static final String DEFAULT_MESSAGE = "Bearer authentication header is absent";
 

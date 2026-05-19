@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-public class InvalidCredentialsException extends RuntimeException {
+public final class InvalidCredentialsException extends AuthException {
 
     public InvalidCredentialsException() {
         super("Invalid credentials");

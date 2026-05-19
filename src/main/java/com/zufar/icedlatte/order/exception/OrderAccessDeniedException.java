@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class OrderAccessDeniedException extends RuntimeException {
+public final class OrderAccessDeniedException extends OrderException {
 
     public OrderAccessDeniedException() {
         super("Access denied.");
