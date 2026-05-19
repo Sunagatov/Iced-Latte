@@ -165,7 +165,7 @@ public class OAuthFlowService {
                 redirectBuilder.queryParam(NEXT_QUERY_PARAM, next);
             }
             return URI.create(redirectBuilder.build(true).toUriString());
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException _) {
             return buildSignInErrorRedirect(AUTH_FAILED_ERROR);
         }
     }

@@ -138,7 +138,7 @@ public class ClientIpExtractor {
 
             int mask = (-1) << (8 - remainingBits);
             return (ipBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             return false;
         }
     }

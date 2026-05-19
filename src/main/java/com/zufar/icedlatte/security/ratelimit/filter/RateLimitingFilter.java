@@ -243,7 +243,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             String token = jwtTokenFromAuthHeaderExtractor.extract(request);
             jwtBlacklistValidator.validate(token);
             return Optional.of(jwtClaimExtractor.extractEmail(token));
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             return Optional.empty();
         }
     }

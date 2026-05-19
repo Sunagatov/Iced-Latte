@@ -18,7 +18,7 @@ public class StripeWebhookEventRecorder {
     public boolean tryAcquire(String eventId, String eventType) {
         try {
             return txService.tryInsertNewEvent(eventId, eventType);
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException _) {
             return txService.tryReacquireRetryableEvent(eventId);
         }
     }

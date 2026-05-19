@@ -60,7 +60,7 @@ public class StripeWebhookService {
     private Event parseEvent(String payload, String signature) {
         try {
             return Webhook.constructEvent(payload, signature, webhookSecret);
-        } catch (SignatureVerificationException e) {
+        } catch (SignatureVerificationException _) {
             log.warn("payment.webhook.signature_invalid");
             throw new PaymentEventProcessingException();
         }

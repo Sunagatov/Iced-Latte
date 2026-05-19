@@ -63,10 +63,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String rawToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
                 jwtClaimExtractor.extractSessionId(rawToken)
                         .ifPresent(sid -> MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sid.toString()));
-            } catch (Exception ignored) {
+            } catch (Exception _) {
                 // sid is best-effort; never block the request
             }
-        } catch (AbsentBearerHeaderException ex) {
+        } catch (AbsentBearerHeaderException _) {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
             handleAuthenticationException(httpRequest, httpResponse, ex);

@@ -74,7 +74,7 @@ public class RateLimitingConfiguration {
                         List.of("rate:" + key),
                         String.valueOf(windowDuration.toMillis())
                 );
-                long count = ((Number) result.get(0)).longValue();
+                long count = ((Number) result.getFirst()).longValue();
                 long pttl = ((Number) result.get(1)).longValue();
                 long resetTimeMillis = System.currentTimeMillis() + Math.max(0, pttl);
                 int remaining = (int) Math.max(0, maxTokens - count);

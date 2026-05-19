@@ -78,7 +78,7 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
                     (String) payload.get("given_name"),
                     (String) payload.get("family_name")
             );
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException | IOException _) {
             throw new UnauthorizedException("Google authentication failed.");
         }
     }

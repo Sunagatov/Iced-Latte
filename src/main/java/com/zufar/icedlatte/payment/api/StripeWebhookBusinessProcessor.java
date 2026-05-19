@@ -144,7 +144,7 @@ public class StripeWebhookBusinessProcessor {
         try {
             orderStatusTransitioner.transition(
                     orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, null, "Stripe session expired");
-        } catch (InvalidOrderStateTransitionException e) {
+        } catch (InvalidOrderStateTransitionException _) {
             log.warn("order.expire.transition_failed: orderId={}", orderId);
         }
     }
@@ -165,7 +165,7 @@ public class StripeWebhookBusinessProcessor {
         try {
             orderStatusTransitioner.transition(
                     orderId, OrderEvent.PAYMENT_FAILED_EVENT, null, "Stripe async payment failed");
-        } catch (InvalidOrderStateTransitionException e) {
+        } catch (InvalidOrderStateTransitionException _) {
             log.warn("order.payment_failed.transition_failed: orderId={}", orderId);
         }
     }
@@ -198,7 +198,7 @@ public class StripeWebhookBusinessProcessor {
                         order.getId(), OrderEvent.REFUND_CONFIRMED, null, "Stripe refund confirmed");
                 log.info("order.refund.confirmed: orderId={}, paymentIntentId={}",
                         order.getId(), paymentIntentId);
-            } catch (InvalidOrderStateTransitionException e) {
+            } catch (InvalidOrderStateTransitionException _) {
                 log.warn("order.refund.transition_failed: orderId={}, status={}",
                         order.getId(), order.getStatus());
             }
