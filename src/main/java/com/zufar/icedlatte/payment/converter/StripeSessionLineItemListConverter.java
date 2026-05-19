@@ -25,7 +25,7 @@ public abstract class StripeSessionLineItemListConverter {
     public abstract List<SessionCreateParams.LineItem> toLineItems(List<ShoppingCartItemDto> shoppingCartItems);
 
     @Mapping(target = "priceData.unitAmount", source = "productInfo.price", qualifiedByName = "toStripeUnitAmount")
-    @Mapping(target = "priceData.currency", expression = "java(stripeProperties.getCurrency())")
+    @Mapping(target = "priceData.currency", expression = "java(stripeProperties.currency())")
     @Mapping(target = "priceData.productData.name", source = "productInfo.name")
     @Mapping(target = "quantity", source = "productQuantity")
     public abstract SessionCreateParams.LineItem toLineItem(ShoppingCartItemDto shoppingCartItem);

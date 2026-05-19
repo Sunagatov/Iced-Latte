@@ -171,18 +171,15 @@ class ProductServiceTest {
         @Test
         @DisplayName("uses pagination defaults when request values are null")
         void usesDefaults() {
-            PaginationConfig.Products products = new PaginationConfig.Products();
-            products.setDefaultPageSize(50);
-            products.setDefaultSortAttribute("name");
-            products.setDefaultSortDirection("desc");
+            PaginationConfig.Products products = new PaginationConfig.Products(50, "name", "desc");
             ProductInfo product = new ProductInfo();
             ProductInfoDto dto = new ProductInfoDto();
             ProductListWithPaginationInfoDto paginationDto = new ProductListWithPaginationInfoDto();
             Page<ProductInfo> page = new PageImpl<>(List.of(product));
             ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-            when(paginationConfig.getDefaultPageNumber()).thenReturn(0);
-            when(paginationConfig.getProducts()).thenReturn(products);
+            when(paginationConfig.defaultPageNumber()).thenReturn(0);
+            when(paginationConfig.products()).thenReturn(products);
             when(productInfoRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
             when(productInfoDtoConverter.toDto(product)).thenReturn(dto);
             when(productPictureLinkUpdater.updateBatch(List.of(dto))).thenReturn(List.of(dto));

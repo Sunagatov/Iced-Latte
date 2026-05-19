@@ -72,10 +72,10 @@ public class ProductReviewsProvider {
                                                                                       String sortAttribute,
                                                                                       String sortDirection,
                                                                                       List<Integer> productRatings) {
-        int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
-        int size = pageSize != null ? pageSize : paginationConfig.getReviews().getDefaultPageSize();
-        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getReviews().getDefaultSortAttribute();
-        String sortDir = sortDirection != null ? sortDirection : paginationConfig.getReviews().getDefaultSortDirection();
+        int page = pageNumber != null ? pageNumber : paginationConfig.defaultPageNumber();
+        int size = pageSize != null ? pageSize : paginationConfig.reviews().defaultPageSize();
+        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.reviews().defaultSortAttribute();
+        String sortDir = sortDirection != null ? sortDirection : paginationConfig.reviews().defaultSortDirection();
         getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, productRatings);
         return PageRequestFactory.of(page, size, sortAttr, sortDir);
     }

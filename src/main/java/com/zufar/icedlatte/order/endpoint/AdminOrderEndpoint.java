@@ -56,12 +56,12 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
                                                      @RequestParam(required = false) final Integer year,
                                                      @RequestParam(required = false) final LocalDate dateFrom,
                                                      @RequestParam(required = false) final LocalDate dateTo) {
-        PaginationConfig.Orders defaults = paginationConfig.getOrders();
+        PaginationConfig.Orders defaults = paginationConfig.orders();
         Pageable pageable = PageRequestFactory.of(
-                page != null ? page : paginationConfig.getDefaultPageNumber(),
-                size != null ? Math.min(size, defaults.getMaxPageSize()) : defaults.getDefaultPageSize(),
-                sortBy != null ? sortBy : defaults.getDefaultSortAttribute(),
-                sortDirection != null ? sortDirection : defaults.getDefaultSortDirection()
+                page != null ? page : paginationConfig.defaultPageNumber(),
+                size != null ? Math.min(size, defaults.maxPageSize()) : defaults.defaultPageSize(),
+                sortBy != null ? sortBy : defaults.defaultSortAttribute(),
+                sortDirection != null ? sortDirection : defaults.defaultSortDirection()
         );
         return ResponseEntity.ok(ordersProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
     }

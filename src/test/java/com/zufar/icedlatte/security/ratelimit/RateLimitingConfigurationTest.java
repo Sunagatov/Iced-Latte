@@ -85,7 +85,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth flood fallback uses open policy semantics")
         void preAuthFloodFallbackUsesOpenPolicy() {
-            RateLimiter limiter = configuration.openCaffeineRateLimiter(new CaffeineSizeProperties());
+            RateLimiter limiter = configuration.openCaffeineRateLimiter(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
             var first = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
             var second = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
@@ -97,7 +97,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth auth fallback uses closed-policy limiter behavior")
         void preAuthAuthFallbackCreatesClosedPolicyLimiter() {
-            RateLimiter limiter = configuration.closedCaffeineRateLimiter(new CaffeineSizeProperties());
+            RateLimiter limiter = configuration.closedCaffeineRateLimiter(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
             var result = limiter.tryConsume("auth:ip:1.2.3.4", 2, Duration.ofMinutes(1));
 

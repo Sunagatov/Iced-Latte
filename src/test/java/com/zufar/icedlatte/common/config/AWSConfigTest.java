@@ -69,11 +69,6 @@ class AWSConfigTest {
     }
 
     private static AWSConfig configured(String endpointUrl) {
-        AWSConfig config = new AWSConfig();
-        ReflectionTestUtils.setField(config, "accessKey", "access-key");
-        ReflectionTestUtils.setField(config, "secretKey", "secret-key");
-        ReflectionTestUtils.setField(config, "region", "eu-west-2");
-        ReflectionTestUtils.setField(config, "endpointUrl", endpointUrl);
-        return config;
+        return new AWSConfig(new AwsProperties("access-key", "secret-key", "eu-west-2", endpointUrl));
     }
 }

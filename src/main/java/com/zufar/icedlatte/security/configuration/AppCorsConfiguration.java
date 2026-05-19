@@ -1,14 +1,12 @@
 package com.zufar.icedlatte.security.configuration;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 /**
  * CORS configuration for enhanced security.
@@ -16,45 +14,30 @@ import java.util.List;
  */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class AppCorsConfiguration {
 
-    @Value("${cors.allowed-origins}")
-    private List<String> allowedOrigins;
-
-    @Value("${cors.allowed-methods:GET,POST,PUT,DELETE,OPTIONS}")
-    private List<String> allowedMethods;
-
-    @Value("${cors.allowed-headers:*}")
-    private List<String> allowedHeaders;
-
-    @Value("${cors.exposed-headers:Authorization,Content-Type,X-Request-ID,X-Correlation-ID,X-Session-ID,X-Trace-ID}")
-    private List<String> exposedHeaders;
-
-    @Value("${cors.allow-credentials:true}")
-    private boolean allowCredentials;
-
-    @Value("${cors.max-age:3600}")
-    private long maxAge;
+    private final CorsProperties corsProperties;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(allowedOrigins);
-        configuration.setAllowedMethods(allowedMethods);
+        configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
+        configuration.setAllowedMethods(corsProperties.allowedMethods());
 
-        if (allowedHeaders.size() == 1 && "*".equals(allowedHeaders.getFirst())) {
+        if (corsProperties.allowedHeaders().size() == 1 && "*".equals(corsProperties.allowedHeaders().getFirst())) {
             configuration.addAllowedHeader("*");
         } else {
-            configuration.setAllowedHeaders(allowedHeaders);
+            configuration.setAllowedHeaders(corsProperties.allowedHeaders());
         }
 
-        configuration.setExposedHeaders(exposedHeaders);
-        configuration.setAllowCredentials(allowCredentials);
-        configuration.setMaxAge(maxAge);
+        configuration.setExposedHeaders(corsProperties.exposedHeaders());
+        configuration.setAllowCredentials(corsProperties.allowCredentials());
+        configuration.setMaxAge(corsProperties.maxAge());
 
         log.debug("cors.config.initialized: origins={}, methods={}, allowCredentials={}",
-                allowedOrigins, allowedMethods, allowCredentials);
+                corsProperties.allowedOrigins(), corsProperties.allowedMethods(), corsProperties.allowCredentials());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);

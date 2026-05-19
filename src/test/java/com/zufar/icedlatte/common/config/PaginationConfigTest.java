@@ -11,36 +11,34 @@ class PaginationConfigTest {
     @Test
     @DisplayName("exposes the documented default pagination values")
     void exposesDefaultValues() {
-        PaginationConfig config = new PaginationConfig();
+        var config = new PaginationConfig(0,
+                new PaginationConfig.Products(50, "name", "desc"),
+                new PaginationConfig.Reviews(10, "createdAt", "desc"),
+                new PaginationConfig.Orders(10, 50, "createdAt", "desc"));
 
-        assertThat(config.getDefaultPageNumber()).isZero();
-        assertThat(config.getProducts().getDefaultPageSize()).isEqualTo(50);
-        assertThat(config.getProducts().getDefaultSortAttribute()).isEqualTo("name");
-        assertThat(config.getProducts().getDefaultSortDirection()).isEqualTo("desc");
-        assertThat(config.getReviews().getDefaultPageSize()).isEqualTo(10);
-        assertThat(config.getReviews().getDefaultSortAttribute()).isEqualTo("createdAt");
-        assertThat(config.getReviews().getDefaultSortDirection()).isEqualTo("desc");
+        assertThat(config.defaultPageNumber()).isZero();
+        assertThat(config.products().defaultPageSize()).isEqualTo(50);
+        assertThat(config.products().defaultSortAttribute()).isEqualTo("name");
+        assertThat(config.products().defaultSortDirection()).isEqualTo("desc");
+        assertThat(config.reviews().defaultPageSize()).isEqualTo(10);
+        assertThat(config.reviews().defaultSortAttribute()).isEqualTo("createdAt");
+        assertThat(config.reviews().defaultSortDirection()).isEqualTo("desc");
     }
 
     @Test
-    @DisplayName("allows overriding nested product and review defaults")
-    void allowsOverridingNestedDefaults() {
-        PaginationConfig config = new PaginationConfig();
+    @DisplayName("supports custom pagination values")
+    void supportsCustomValues() {
+        var config = new PaginationConfig(2,
+                new PaginationConfig.Products(24, "price", "asc"),
+                new PaginationConfig.Reviews(5, "likesCount", "asc"),
+                new PaginationConfig.Orders(20, 100, "updatedAt", "asc"));
 
-        config.setDefaultPageNumber(2);
-        config.getProducts().setDefaultPageSize(24);
-        config.getProducts().setDefaultSortAttribute("price");
-        config.getProducts().setDefaultSortDirection("asc");
-        config.getReviews().setDefaultPageSize(5);
-        config.getReviews().setDefaultSortAttribute("likesCount");
-        config.getReviews().setDefaultSortDirection("asc");
-
-        assertThat(config.getDefaultPageNumber()).isEqualTo(2);
-        assertThat(config.getProducts().getDefaultPageSize()).isEqualTo(24);
-        assertThat(config.getProducts().getDefaultSortAttribute()).isEqualTo("price");
-        assertThat(config.getProducts().getDefaultSortDirection()).isEqualTo("asc");
-        assertThat(config.getReviews().getDefaultPageSize()).isEqualTo(5);
-        assertThat(config.getReviews().getDefaultSortAttribute()).isEqualTo("likesCount");
-        assertThat(config.getReviews().getDefaultSortDirection()).isEqualTo("asc");
+        assertThat(config.defaultPageNumber()).isEqualTo(2);
+        assertThat(config.products().defaultPageSize()).isEqualTo(24);
+        assertThat(config.products().defaultSortAttribute()).isEqualTo("price");
+        assertThat(config.products().defaultSortDirection()).isEqualTo("asc");
+        assertThat(config.reviews().defaultPageSize()).isEqualTo(5);
+        assertThat(config.reviews().defaultSortAttribute()).isEqualTo("likesCount");
+        assertThat(config.reviews().defaultSortDirection()).isEqualTo("asc");
     }
 }

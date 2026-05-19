@@ -128,12 +128,14 @@ class GoogleTokenExchangerTest {
     }
 
     private GoogleTokenExchanger exchangerWithMocks() {
-        GoogleTokenExchanger exchanger = new GoogleTokenExchanger(
+        var auth = new GoogleOAuthProperties.Auth(new GoogleOAuthProperties.Auth.Server("https://accounts.google.com/o/oauth2/v2/auth"));
+        var properties = new GoogleOAuthProperties(
                 "client-id",
                 "client-secret",
                 "https://app.example.com/callback",
-                "https://accounts.google.com/o/oauth2/v2/auth",
-                "openid email profile");
+                "openid email profile",
+                auth);
+        GoogleTokenExchanger exchanger = new GoogleTokenExchanger(properties);
         ReflectionTestUtils.setField(exchanger, "flow", flow);
         ReflectionTestUtils.setField(exchanger, "verifier", verifier);
         return exchanger;

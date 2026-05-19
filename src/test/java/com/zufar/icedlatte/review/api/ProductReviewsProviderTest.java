@@ -45,7 +45,10 @@ class ProductReviewsProviderTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        var paginationConfig = new PaginationConfig();
+        var paginationConfig = new PaginationConfig(0,
+                new PaginationConfig.Products(50, "name", "desc"),
+                new PaginationConfig.Reviews(10, "createdAt", "desc"),
+                new PaginationConfig.Orders(10, 50, "createdAt", "desc"));
         productId = UUID.randomUUID();
         userId = UUID.randomUUID();
 

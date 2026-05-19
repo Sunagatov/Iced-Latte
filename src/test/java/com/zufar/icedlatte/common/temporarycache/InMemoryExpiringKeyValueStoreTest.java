@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("InMemoryExpiringKeyValueStore unit tests")
 class InMemoryExpiringKeyValueStoreTest {
 
-    private final InMemoryExpiringKeyValueStore store = new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties());
+    private final InMemoryExpiringKeyValueStore store = new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
     @Test
     @DisplayName("put and get return the stored value")

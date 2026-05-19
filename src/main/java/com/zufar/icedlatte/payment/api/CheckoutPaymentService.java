@@ -124,7 +124,7 @@ public class CheckoutPaymentService {
         return SessionCreateParams.LineItem.builder()
                 .setQuantity((long) item.getProductsQuantity())
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                        .setCurrency(stripeProperties.getCurrency())
+                        .setCurrency(stripeProperties.currency())
                         .setUnitAmount(item.getProductPrice()
                                 .multiply(BigDecimal.valueOf(100))
                                 .setScale(0, RoundingMode.UNNECESSARY)

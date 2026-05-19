@@ -79,10 +79,10 @@ public class ProductService {
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
 
-        int page = pageNumber != null ? pageNumber : paginationConfig.getDefaultPageNumber();
-        int size = pageSize != null ? pageSize : paginationConfig.getProducts().getDefaultPageSize();
-        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.getProducts().getDefaultSortAttribute();
-        String sortDir = sortDirection != null ? sortDirection : paginationConfig.getProducts().getDefaultSortDirection();
+        int page = pageNumber != null ? pageNumber : paginationConfig.defaultPageNumber();
+        int size = pageSize != null ? pageSize : paginationConfig.products().defaultPageSize();
+        String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.products().defaultSortAttribute();
+        String sortDir = sortDirection != null ? sortDirection : paginationConfig.products().defaultSortDirection();
 
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 

@@ -198,3 +198,10 @@ logging:
     # Suppress noisy Spring Security auto-config warnings during tests.
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
     org.springframework.boot.hibernate.autoconfigure.HibernateJpaConfiguration: ERROR
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FRONTEND
+# ─────────────────────────────────────────────────────────────────────────────
+frontend:
+  url: http://localhost:3000

@@ -1,44 +1,31 @@
 package com.zufar.icedlatte.common.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Component
 @ConfigurationProperties(prefix = "pagination")
-@Getter
-@Setter
-public class PaginationConfig {
+public record PaginationConfig(
+        @DefaultValue("0") int defaultPageNumber,
+        @DefaultValue Products products,
+        @DefaultValue Reviews reviews,
+        @DefaultValue Orders orders
+) {
+    public record Products(
+            @DefaultValue("50") int defaultPageSize,
+            @DefaultValue("name") String defaultSortAttribute,
+            @DefaultValue("desc") String defaultSortDirection
+    ) {}
 
-    private int defaultPageNumber = 0;
-    
-    private Products products = new Products();
-    private Reviews reviews = new Reviews();
-    private Orders orders = new Orders();
+    public record Reviews(
+            @DefaultValue("10") int defaultPageSize,
+            @DefaultValue("createdAt") String defaultSortAttribute,
+            @DefaultValue("desc") String defaultSortDirection
+    ) {}
 
-    @Getter
-    @Setter
-    public static class Products {
-        private int defaultPageSize = 50;
-        private String defaultSortAttribute = "name";
-        private String defaultSortDirection = "desc";
-    }
-
-    @Getter
-    @Setter
-    public static class Reviews {
-        private int defaultPageSize = 10;
-        private String defaultSortAttribute = "createdAt";
-        private String defaultSortDirection = "desc";
-    }
-
-    @Getter
-    @Setter
-    public static class Orders {
-        private int defaultPageSize = 10;
-        private int maxPageSize = 50;
-        private String defaultSortAttribute = "createdAt";
-        private String defaultSortDirection = "desc";
-    }
+    public record Orders(
+            @DefaultValue("10") int defaultPageSize,
+            @DefaultValue("50") int maxPageSize,
+            @DefaultValue("createdAt") String defaultSortAttribute,
+            @DefaultValue("desc") String defaultSortDirection
+    ) {}
 }

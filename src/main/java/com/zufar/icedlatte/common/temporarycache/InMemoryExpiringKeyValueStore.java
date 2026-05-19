@@ -26,7 +26,7 @@ public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
 
     public InMemoryExpiringKeyValueStore(CaffeineSizeProperties caffeineSizeProperties) {
         this.cache = Caffeine.newBuilder()
-                .maximumSize(caffeineSizeProperties.getTemporaryStoreSize())
+                .maximumSize(caffeineSizeProperties.temporaryStoreSize())
                 .expireAfter(new CacheValueExpiry())
                 .build();
         log.info("temporary_cache.mode: in-memory");

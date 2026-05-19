@@ -66,7 +66,7 @@ class CheckoutPaymentTransactionServiceTest {
         when(orderCreator.createPendingPaymentOrder(eq(USER_ID), eq(request), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(stripeProperties.getCurrency()).thenReturn("usd");
+        when(stripeProperties.currency()).thenReturn("usd");
 
         CheckoutPreparation result = service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
 

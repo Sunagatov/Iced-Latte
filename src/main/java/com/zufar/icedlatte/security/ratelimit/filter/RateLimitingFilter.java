@@ -99,11 +99,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
         this.warnedKeys = Caffeine.newBuilder()
-                .maximumSize(caffeineSizeProperties.getRateLimitFilterSize())
+                .maximumSize(caffeineSizeProperties.rateLimitFilterSize())
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
         this.blockCounts = Caffeine.newBuilder()
-                .maximumSize(caffeineSizeProperties.getRateLimitFilterSize())
+                .maximumSize(caffeineSizeProperties.rateLimitFilterSize())
                 .expireAfterWrite(properties.getBanDuration())
                 .build();
     }

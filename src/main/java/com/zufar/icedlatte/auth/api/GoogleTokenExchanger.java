@@ -7,7 +7,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,21 +29,17 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
     private final GoogleIdTokenVerifier verifier;
     private final GoogleAuthorizationCodeFlow flow;
 
-    public GoogleTokenExchanger(@Value("${google.client-id}") String clientId,
-                                @Value("${google.client-secret}") String clientSecret,
-                                @Value("${google.redirect-uri}") String redirectUri,
-                                @Value("${google.auth.server.url}") String authServerUrl,
-                                @Value("${google.scope}") String scope) {
-        this.authServerUrl = authServerUrl;
-        this.clientId = clientId;
-        this.redirectUri = redirectUri;
-        this.scope = scope;
+    public GoogleTokenExchanger(GoogleOAuthProperties properties) {
+        this.authServerUrl = properties.auth().server().url();
+        this.clientId = properties.clientId();
+        this.redirectUri = properties.redirectUri();
+        this.scope = properties.scope();
         var transport = new NetHttpTransport.Builder().build();
         var json = GsonFactory.getDefaultInstance();
         this.verifier = new GoogleIdTokenVerifier.Builder(transport, json)
                 .setAudience(Collections.singletonList(clientId))
                 .build();
-        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, clientSecret, List.of(scope.split("\\s+")))
+        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, properties.clientSecret(), List.of(scope.split("\\s+")))
                 .setAccessType("offline")
                 .build();
     }

@@ -1,17 +1,13 @@
 package com.zufar.icedlatte.common.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Getter
-@Setter
 @ConfigurationProperties(prefix = "cache.caffeine")
-public class CaffeineSizeProperties {
-
-    private int rateLimitWarnSize = 1_000;
-    private int rateLimitFilterSize = 5_000;
-    private int rateLimitWindowSize = 10_000;
-    private int redisErrorLogSize = 1_000;
-    private int temporaryStoreSize = 10_000;
-}
+public record CaffeineSizeProperties(
+        @DefaultValue("1000") int rateLimitWarnSize,
+        @DefaultValue("5000") int rateLimitFilterSize,
+        @DefaultValue("10000") int rateLimitWindowSize,
+        @DefaultValue("1000") int redisErrorLogSize,
+        @DefaultValue("10000") int temporaryStoreSize
+) {}

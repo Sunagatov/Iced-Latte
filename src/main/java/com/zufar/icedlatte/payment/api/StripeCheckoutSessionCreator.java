@@ -98,8 +98,8 @@ public class StripeCheckoutSessionCreator {
     }
 
     private List<SessionCreateParams.ShippingOption> shippingOptions() {
-        return stripeProperties.getShippingOptions().stream()
-                .map(opt -> buildShippingOption(opt.getName(), opt.getAmountCents(), opt.getMinDays(), opt.getMaxDays()))
+        return stripeProperties.shippingOptions().stream()
+                .map(opt -> buildShippingOption(opt.name(), opt.amountCents(), opt.minDays(), opt.maxDays()))
                 .toList();
     }
 
@@ -113,7 +113,7 @@ public class StripeCheckoutSessionCreator {
                                 .setType(SessionCreateParams.ShippingOption.ShippingRateData.Type.FIXED_AMOUNT)
                                 .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
                                         .setAmount(amountCents)
-                                        .setCurrency(stripeProperties.getCurrency())
+                                        .setCurrency(stripeProperties.currency())
                                         .build())
                                 .setDisplayName(name)
                                 .setDeliveryEstimate(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.builder()

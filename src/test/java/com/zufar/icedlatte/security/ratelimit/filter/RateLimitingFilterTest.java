@@ -67,7 +67,7 @@ class RateLimitingFilterTest {
                 jwtBlacklistValidator,
                 properties(),
                 problemTypeUriFactory,
-                new CaffeineSizeProperties()
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)
         );
     }
 
@@ -283,7 +283,7 @@ class RateLimitingFilterTest {
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
                 jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
                 problemTypeUriFactory,
-                new CaffeineSizeProperties());
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
@@ -299,7 +299,7 @@ class RateLimitingFilterTest {
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
                 jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
                 problemTypeUriFactory,
-                new CaffeineSizeProperties());
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         assertThatThrownBy(filter::validate)
                 .isInstanceOf(IllegalStateException.class)
@@ -381,7 +381,7 @@ class RateLimitingFilterTest {
         RateLimitingFilter banFilter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
                 jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, props,
-                problemTypeUriFactory, new CaffeineSizeProperties());
+                problemTypeUriFactory, new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
 

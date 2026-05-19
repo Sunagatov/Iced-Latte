@@ -48,7 +48,7 @@ public class RateLimitingConfiguration {
     @ConditionalOnMissingBean(name = "openRateLimiter")
     public RateLimiter openCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.open: in-memory Caffeine");
-        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, caffeineSizeProperties.getRateLimitWindowSize());
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, caffeineSizeProperties.rateLimitWindowSize());
     }
 
     @Bean("closedRateLimiter")
@@ -62,7 +62,7 @@ public class RateLimitingConfiguration {
     @ConditionalOnMissingBean(name = "closedRateLimiter")
     public RateLimiter closedCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.closed: in-memory Caffeine");
-        return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED, caffeineSizeProperties.getRateLimitWindowSize());
+        return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED, caffeineSizeProperties.rateLimitWindowSize());
     }
 
     private RateLimiter redisRateLimiterWithPolicy(RedisTemplate<String, String> redisTemplate, FailPolicy policy) {

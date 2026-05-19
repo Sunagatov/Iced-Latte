@@ -1,25 +1,19 @@
 package com.zufar.icedlatte.payment.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.util.List;
 
-@Getter
-@Setter
 @ConfigurationProperties(prefix = "stripe")
-public class StripeProperties {
-
-    private String currency = "usd";
-    private List<ShippingOption> shippingOptions = List.of();
-
-    @Getter
-    @Setter
-    public static class ShippingOption {
-        private String name;
-        private long amountCents;
-        private long minDays;
-        private long maxDays;
-    }
+public record StripeProperties(
+        @DefaultValue("usd") String currency,
+        @DefaultValue List<ShippingOption> shippingOptions
+) {
+    public record ShippingOption(
+            String name,
+            long amountCents,
+            long minDays,
+            long maxDays
+    ) {}
 }

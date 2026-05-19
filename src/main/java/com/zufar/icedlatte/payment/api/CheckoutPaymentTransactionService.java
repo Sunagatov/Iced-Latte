@@ -70,7 +70,7 @@ public class CheckoutPaymentTransactionService {
                 .provider(PaymentProvider.STRIPE)
                 .status(PaymentStatus.CREATED)
                 .amountMinor(toMinorUnits(order.getItemsTotalPrice()))
-                .currency(stripeProperties.getCurrency())
+                .currency(stripeProperties.currency())
                 .checkoutIdempotencyKey(idempotencyKey)
                 .build();
         payment = paymentRepository.save(payment);
