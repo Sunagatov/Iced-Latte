@@ -19,10 +19,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +47,14 @@ class OpenApiEndpointValidationContractTest {
             UserEndpoint.class,
             UserSecurityEndpoint.class
     );
+
+    @Test
+    @DisplayName("every production endpoint is covered by generated OpenAPI contract checks")
+    void everyProductionEndpointIsCoveredByGeneratedOpenApiContractChecks() throws Exception {
+        assertThat(GENERATED_API_ENDPOINTS)
+                .extracting(Class::getSimpleName)
+                .containsExactlyInAnyOrderElementsOf(endpointSourceClassNames());
+    }
 
     @Test
     @DisplayName("every generated OpenAPI operation is explicitly overridden by its endpoint")
@@ -88,6 +100,15 @@ class OpenApiEndpointValidationContractTest {
     private static boolean isGeneratedOpenApiInterface(Class<?> apiInterface) {
         return apiInterface.isInterface()
                 && apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.");
+    }
+
+    private static Set<String> endpointSourceClassNames() throws Exception {
+        try (Stream<Path> sourceFiles = Files.walk(Path.of("src/main/java/com/zufar/icedlatte"))) {
+            return sourceFiles
+                    .filter(path -> path.getFileName().toString().endsWith("Endpoint.java"))
+                    .map(path -> path.getFileName().toString().replace(".java", ""))
+                    .collect(Collectors.toSet());
+        }
     }
 
     private static Object instantiateWithMocks(Class<?> endpointClass) throws ReflectiveOperationException {
