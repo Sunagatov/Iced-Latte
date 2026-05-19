@@ -9,9 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -26,8 +26,9 @@ import static org.mockito.Mockito.*;
 class UserAvatarUploaderTest {
 
     @Mock private FileStorageService fileStorageService;
+    @Mock private ObjectProvider<com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator> cloudfrontInvalidatorProvider;
     @Mock private MultipartFile file;
-    @InjectMocks private UserAvatarUploader uploader;
+    private UserAvatarUploader uploader;
 
     private static final String BUCKET = "test-bucket";
 
@@ -38,6 +39,7 @@ class UserAvatarUploaderTest {
 
     @BeforeEach
     void injectBucket() throws Exception {
+        uploader = new UserAvatarUploader(fileStorageService, cloudfrontInvalidatorProvider);
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
         field.setAccessible(true);
         field.set(uploader, BUCKET);

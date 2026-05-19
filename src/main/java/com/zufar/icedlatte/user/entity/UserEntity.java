@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.entity;
 
 import com.zufar.icedlatte.common.audit.AuditableEntity;
+import com.zufar.icedlatte.common.audit.Identifiable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +35,7 @@ import java.util.UUID;
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "user_details")
-public class UserEntity extends AuditableEntity implements UserDetails {
+public class UserEntity extends AuditableEntity implements UserDetails, Identifiable {
 
     @Id
     @Column(name = "id", nullable = false)

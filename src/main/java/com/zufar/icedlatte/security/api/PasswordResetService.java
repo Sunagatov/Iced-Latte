@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.email.api.EmailVerificationService;
 import com.zufar.icedlatte.email.exception.TimeTokenException;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.user.api.SingleUserProvider;

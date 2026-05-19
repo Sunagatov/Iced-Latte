@@ -22,8 +22,8 @@ class ShoppingCartItemDtoConverterTest {
 
     @Configuration
     public static class Config {
-        @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter() { return Mappers.getMapper(ShoppingCartItemDtoConverter.class); }
         @Bean public ProductInfoDtoConverter productInfoDtoConverter() { return Mappers.getMapper(ProductInfoDtoConverter.class); }
+        @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter(ProductInfoDtoConverter productInfoDtoConverter) { return new ShoppingCartItemDtoConverterImpl(productInfoDtoConverter); }
     }
 
     @Autowired

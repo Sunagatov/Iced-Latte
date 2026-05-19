@@ -28,8 +28,8 @@ public class AuditConfig {
             }
 
             Object principal = authentication.getPrincipal();
-            if (principal instanceof com.zufar.icedlatte.user.entity.UserEntity user) {
-                return Optional.of(user.getId());
+            if (principal instanceof Identifiable identifiable) {
+                return Optional.of(identifiable.getId());
             }
 
             return Optional.empty();

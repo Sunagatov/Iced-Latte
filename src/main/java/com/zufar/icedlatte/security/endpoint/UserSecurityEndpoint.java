@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.auth.api.OAuthFlowService;
-import com.zufar.icedlatte.auth.api.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.api.OAuthFlowService;
+import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
@@ -10,7 +10,7 @@ import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
-import com.zufar.icedlatte.email.api.EmailVerificationService;
+import com.zufar.icedlatte.security.api.EmailVerificationService;
 import com.zufar.icedlatte.security.api.AuthSessionService;
 import com.zufar.icedlatte.security.api.LogoutService;
 import com.zufar.icedlatte.security.api.PasswordResetService;

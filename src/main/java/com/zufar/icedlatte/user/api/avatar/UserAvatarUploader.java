@@ -5,9 +5,8 @@ import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -22,21 +21,24 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserAvatarUploader {
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp"
     );
 
+    private final FileStorageService fileStorageService;
+    private final ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator;
+
+    public UserAvatarUploader(FileStorageService fileStorageService,
+                              ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator) {
+        this.fileStorageService = fileStorageService;
+        this.cloudfrontInvalidator = cloudfrontInvalidator;
+    }
+
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
-
-    private final FileStorageService fileStorageService;
-
-    @Autowired(required = false)
-    private AwsCloudFrontInvalidator cloudfrontInvalidator;
 
     @Transactional(propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED)
@@ -84,9 +86,7 @@ public class UserAvatarUploader {
     }
 
     private void invalidateAvatarCache(String fileName) {
-        if (cloudfrontInvalidator != null) {
-            cloudfrontInvalidator.invalidate(fileName);
-        }
+        cloudfrontInvalidator.ifAvailable(invalidator -> invalidator.invalidate(fileName));
     }
 
     private static boolean hasValidImageSignature(MultipartFile file) {
