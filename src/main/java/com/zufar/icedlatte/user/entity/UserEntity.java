@@ -57,7 +57,7 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(name = "email", nullable = false, unique = true, length = 254)
     private String email;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Column(name = "password", nullable = false)
     private String password;
 
     @OneToOne(cascade = CascadeType.ALL)
@@ -102,8 +102,7 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserEntity user = (UserEntity) o;
+        if (!(o instanceof UserEntity user)) return false;
         return Objects.equals(id, user.id);
     }
 

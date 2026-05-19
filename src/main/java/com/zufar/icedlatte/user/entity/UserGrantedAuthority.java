@@ -49,11 +49,8 @@ public class UserGrantedAuthority implements GrantedAuthority {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        UserGrantedAuthority that = (UserGrantedAuthority) o;
+        if (this == o) return true;
+        if (!(o instanceof UserGrantedAuthority that)) return false;
         return authority == that.authority;
     }
 

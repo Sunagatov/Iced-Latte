@@ -49,8 +49,7 @@ public class FavoriteItemEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FavoriteItemEntity that = (FavoriteItemEntity) o;
+        if (!(o instanceof FavoriteItemEntity that)) return false;
         return Objects.equals(favoriteListEntity, that.favoriteListEntity) &&
                 Objects.equals(productInfo, that.productInfo);
     }

@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.common.pagination;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-public final class PageRequestFactory {
-
-    private PageRequestFactory() {}
+@UtilityClass
+public class PageRequestFactory {
 
     public static Pageable of(final int page,
                               final int size,

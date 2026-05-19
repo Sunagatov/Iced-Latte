@@ -65,11 +65,8 @@ public class ShoppingCart {
 
     @Override
     public boolean equals(Object object) {
-        if (this == object)
-            return true;
-        if (object == null || getClass() != object.getClass())
-            return false;
-        ShoppingCart that = (ShoppingCart) object;
+        if (this == object) return true;
+        if (!(object instanceof ShoppingCart that)) return false;
         return Objects.equals(id, that.id);
     }
 

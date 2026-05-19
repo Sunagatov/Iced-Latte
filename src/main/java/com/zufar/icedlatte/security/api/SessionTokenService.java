@@ -53,10 +53,13 @@ public class SessionTokenService {
     private SessionAuthentication createManagedSession(UserDetails userDetails,
                                                        UUID sessionId,
                                                        HttpServletRequest request) {
+        if (!(userDetails instanceof UserEntity user)) {
+            throw new IllegalArgumentException("Expected UserEntity but got: " + userDetails.getClass().getName());
+        }
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(
                 sessionId,
-                ((UserEntity) userDetails).getId(),
+                user.getId(),
                 jwtBlacklistService.sha256(refreshToken),
                 request
         );

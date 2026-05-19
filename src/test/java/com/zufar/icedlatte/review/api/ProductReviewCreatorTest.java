@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,11 +71,15 @@ class ProductReviewCreatorTest {
         ProductReviewRequest request = new ProductReviewRequest();
         request.setText("  Great coffee!  ");
         request.setRating(5);
-        ProductReview saved = ProductReview.builder().id(UUID.randomUUID()).build();
         ProductReviewDto expectedDto = new ProductReviewDto();
 
         when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
-        when(reviewRepository.saveAndFlush(any(ProductReview.class))).thenReturn(saved);
+        UUID generatedId = UUID.randomUUID();
+        doAnswer(invocation -> {
+            ProductReview review = invocation.getArgument(0);
+            review.setId(generatedId);
+            return review;
+        }).when(reviewRepository).saveAndFlush(any(ProductReview.class));
         when(productReviewDtoConverter.toProductReviewDto(any())).thenReturn(expectedDto);
 
         ProductReviewDto result = creator.create(productId, userId, request);

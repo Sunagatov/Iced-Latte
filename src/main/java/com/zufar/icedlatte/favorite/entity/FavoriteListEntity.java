@@ -54,8 +54,7 @@ public class FavoriteListEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FavoriteListEntity that = (FavoriteListEntity) o;
+        if (!(o instanceof FavoriteListEntity that)) return false;
         return Objects.equals(id, that.id);
     }
 

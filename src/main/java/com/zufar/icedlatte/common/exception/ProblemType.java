@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.common.exception;
 
+import lombok.experimental.UtilityClass;
+
 /**
  * Centralized RFC 9457 problem-detail type slugs.
  * Each slug is appended to the configured problem.type-base-url.
  */
-public final class ProblemType {
-
-    private ProblemType() {}
+@UtilityClass
+public class ProblemType {
 
     // Auth & Security
     public static final String AUTH_REQUIRED = "auth-required";
