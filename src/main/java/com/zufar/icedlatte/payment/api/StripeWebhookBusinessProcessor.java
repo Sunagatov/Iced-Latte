@@ -5,10 +5,11 @@ import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
-import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -35,7 +36,8 @@ public class StripeWebhookBusinessProcessor {
 
     private final OrderStatusTransitioner orderStatusTransitioner;
     private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
+    private final OrderDetailProvider orderDetailProvider;
+    private final OrderLifecycleService orderLifecycleService;
     private final ShoppingCartRepository shoppingCartRepository;
 
     @Transactional
@@ -119,8 +121,7 @@ public class StripeWebhookBusinessProcessor {
                 orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, null, "Stripe payment confirmed");
 
         // Store stripePaymentIntentId on Order for refund lookup
-        order.setStripePaymentIntentId(stripeSession.getPaymentIntent());
-        orderRepository.save(order);
+        orderLifecycleService.assignPaymentIntent(orderId, stripeSession.getPaymentIntent());
 
         shoppingCartRepository.deleteByUserId(order.getUserId());
 
@@ -184,7 +185,7 @@ public class StripeWebhookBusinessProcessor {
         }
 
         String paymentIntentId = charge.getPaymentIntent();
-        Optional<Order> orderOpt = orderRepository.findByStripePaymentIntentId(paymentIntentId);
+        Optional<Order> orderOpt = orderDetailProvider.findByStripePaymentIntentId(paymentIntentId);
 
         if (orderOpt.isEmpty()) {
             log.warn("payment.webhook.order_not_found: paymentIntentId={}", paymentIntentId);

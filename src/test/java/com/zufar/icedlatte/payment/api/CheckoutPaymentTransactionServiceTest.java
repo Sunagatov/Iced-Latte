@@ -6,7 +6,7 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 class CheckoutPaymentTransactionServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderRepository orderRepository;
+    @Mock private OrderDetailProvider orderDetailProvider;
     @Mock private OrderCreator orderCreator;
     @Mock private ShoppingCartService shoppingCartService;
     @Mock private StripeProperties stripeProperties;
@@ -91,7 +91,7 @@ class CheckoutPaymentTransactionServiceTest {
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(existingOrder));
+        when(orderDetailProvider.findById(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
@@ -114,15 +114,15 @@ class CheckoutPaymentTransactionServiceTest {
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderRepository.findByIdWithItems(orderId)).thenReturn(Optional.of(existingOrder));
+        when(orderDetailProvider.findByIdWithItems(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
                 IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isTrue();
-        verify(orderRepository).findByIdWithItems(orderId);
-        verify(orderRepository, never()).findById(orderId);
+        verify(orderDetailProvider).findByIdWithItems(orderId);
+        verify(orderDetailProvider, never()).findById(orderId);
     }
 
     @Test

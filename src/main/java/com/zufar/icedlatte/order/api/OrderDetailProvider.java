@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +29,23 @@ public class OrderDetailProvider {
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
+
+    @Transactional(readOnly = true)
+    public Order findById(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    @Transactional(readOnly = true)
+    public Order findByIdWithItems(UUID orderId) {
+        return orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Order> findByStripePaymentIntentId(String paymentIntentId) {
+        return orderRepository.findByStripePaymentIntentId(paymentIntentId);
+    }
 
     @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId, UUID userId) {

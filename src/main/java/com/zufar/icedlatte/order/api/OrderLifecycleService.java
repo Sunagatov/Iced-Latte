@@ -41,6 +41,14 @@ public class OrderLifecycleService {
     }
 
     @Transactional
+    public void assignPaymentIntent(UUID orderId, String stripePaymentIntentId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        order.setStripePaymentIntentId(stripePaymentIntentId);
+        orderRepository.save(order);
+    }
+
+    @Transactional
     public OrderDto requestRefund(UUID orderId, UUID userId, String reason) {
         findOwnedOrder(orderId, userId);
 

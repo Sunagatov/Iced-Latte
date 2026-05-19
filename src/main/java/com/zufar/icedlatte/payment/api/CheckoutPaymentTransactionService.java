@@ -5,8 +5,8 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
@@ -33,7 +33,7 @@ import java.util.UUID;
 public class CheckoutPaymentTransactionService {
 
     private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
+    private final OrderDetailProvider orderDetailProvider;
     private final OrderCreator orderCreator;
     private final ShoppingCartService shoppingCartService;
     private final StripeProperties stripeProperties;
@@ -50,9 +50,9 @@ public class CheckoutPaymentTransactionService {
             // Do NOT read the live cart — it may be deleted after successful payment.
             // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
             Order order = (existing.getProviderSessionId() == null
-                    ? orderRepository.findByIdWithItems(existing.getOrderId())
-                    : orderRepository.findById(existing.getOrderId())
-            ).orElseThrow();
+                    ? orderDetailProvider.findByIdWithItems(existing.getOrderId())
+                    : orderDetailProvider.findById(existing.getOrderId())
+            );
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
             return new CheckoutPreparation(order, existing, List.of(), true);
         }

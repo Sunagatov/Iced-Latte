@@ -8,7 +8,8 @@ import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -34,7 +35,8 @@ class StripeWebhookBusinessProcessorTest {
 
     @Mock private OrderStatusTransitioner orderStatusTransitioner;
     @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderRepository orderRepository;
+    @Mock private OrderDetailProvider orderDetailProvider;
+    @Mock private OrderLifecycleService orderLifecycleService;
     @Mock private ShoppingCartRepository shoppingCartRepository;
     @InjectMocks private StripeWebhookBusinessProcessor processor;
 
@@ -56,7 +58,7 @@ class StripeWebhookBusinessProcessorTest {
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(orderStatusTransitioner.transition(eq(ORDER_ID), eq(OrderEvent.PENDING_PAYMENT_CONFIRMED),
                 any(), any())).thenReturn(order);
-        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(orderLifecycleService).assignPaymentIntent(any(), any());
 
         processor.process(event);
 

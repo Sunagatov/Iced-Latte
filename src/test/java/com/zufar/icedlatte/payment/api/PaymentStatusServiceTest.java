@@ -8,7 +8,8 @@ import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
-import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -32,7 +33,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("PaymentStatusService unit tests")
 class PaymentStatusServiceTest {
 
-    @Mock private OrderRepository orderRepository;
+    @Mock private OrderDetailProvider orderDetailProvider;
+    @Mock private OrderLifecycleService orderLifecycleService;
     @Mock private PaymentRepository paymentRepository;
     @Mock private OrderStatusTransitioner orderStatusTransitioner;
     @Mock private ShoppingCartRepository shoppingCartRepository;
@@ -49,7 +51,7 @@ class PaymentStatusServiceTest {
         Order order = Order.builder().id(ORDER_ID).userId(USER_ID).status(OrderStatus.PAID).build();
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
 
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
+        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -69,7 +71,7 @@ class PaymentStatusServiceTest {
                 .providerSessionId(null)
                 .status(PaymentStatus.CREATED).build();
 
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
+        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -82,7 +84,7 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Throws OrderNotFoundException for unknown order")
     void getStatus_unknownOrder_throws() {
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.empty());
+        when(orderDetailProvider.findById(ORDER_ID)).thenThrow(new com.zufar.icedlatte.order.exception.OrderNotFoundException(ORDER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
                 .isInstanceOf(OrderNotFoundException.class);
@@ -94,7 +96,7 @@ class PaymentStatusServiceTest {
         UUID otherUserId = UUID.randomUUID();
         Order order = Order.builder().id(ORDER_ID).userId(otherUserId).status(OrderStatus.PAID).build();
 
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
+        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
@@ -107,7 +109,7 @@ class PaymentStatusServiceTest {
         Order order = Order.builder().id(ORDER_ID).userId(USER_ID)
                 .status(OrderStatus.PENDING_PAYMENT).build();
 
-        when(orderRepository.findById(ORDER_ID)).thenReturn(Optional.of(order));
+        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.empty());
 

@@ -9,8 +9,8 @@ import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
-import com.zufar.icedlatte.order.exception.OrderNotFoundException;
-import com.zufar.icedlatte.order.repository.OrderRepository;
+import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -39,7 +39,8 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 public class PaymentStatusService {
 
-    private final OrderRepository orderRepository;
+    private final OrderDetailProvider orderDetailProvider;
+    private final OrderLifecycleService orderLifecycleService;
     private final PaymentRepository paymentRepository;
     private final OrderStatusTransitioner orderStatusTransitioner;
     private final ShoppingCartRepository shoppingCartRepository;
@@ -47,8 +48,7 @@ public class PaymentStatusService {
     private final TransactionTemplate transactionTemplate;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        Order order = orderDetailProvider.findById(orderId);
 
         UserDto currentUser = securityPrincipalProvider.get();
         if (!order.getUserId().equals(currentUser.getId())) {
@@ -62,7 +62,7 @@ public class PaymentStatusService {
                 && payment.getProviderSessionId() != null) {
             trySyncFromStripe(payment);
             // Re-read after potential update
-            order = orderRepository.findById(orderId).orElseThrow();
+            order = orderDetailProvider.findById(orderId);
             payment = paymentRepository.findByOrderId(orderId).orElse(payment);
         }
 
@@ -128,8 +128,7 @@ public class PaymentStatusService {
             Order order = orderStatusTransitioner.transition(
                     orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED,
                     null, "Stripe payment confirmed (sync fallback)");
-            order.setStripePaymentIntentId(session.getPaymentIntent());
-            orderRepository.save(order);
+            orderLifecycleService.assignPaymentIntent(orderId, session.getPaymentIntent());
 
             shoppingCartRepository.deleteByUserId(order.getUserId());
 
