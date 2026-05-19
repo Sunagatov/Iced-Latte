@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -30,6 +30,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,7 +88,7 @@ class GlobalExceptionHandlerTest {
         @Test
         @DisplayName("returns annotated status for domain exceptions")
         void returnsAnnotatedStatusForDomainExceptions() {
-            UserNotFoundException ex = new UserNotFoundException("mail@example.com");
+            ProductNotFoundException ex = new ProductNotFoundException(UUID.randomUUID());
             ProblemDetail expected = stub(404);
             when(problemDetailFactory.build(eq("about:blank"), eq("Not Found"),
                     eq(HttpStatus.NOT_FOUND), any(String.class))).thenReturn(expected);

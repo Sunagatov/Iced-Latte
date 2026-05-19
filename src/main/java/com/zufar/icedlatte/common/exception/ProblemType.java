@@ -29,6 +29,11 @@ public final class ProblemType {
     public static final String ORDER_CANCELLATION_EXPIRED = "order-cancellation-expired";
     public static final String INVALID_PARAMETER = "invalid-parameter";
 
+    // Cart
+    public static final String CART_NOT_FOUND = "cart-not-found";
+    public static final String CART_ITEM_NOT_FOUND = "cart-item-not-found";
+    public static final String CART_INVALID_QUANTITY = "cart-invalid-quantity";
+
     // Products & Reviews
 
     // Validation & Files

@@ -2,7 +2,7 @@ package com.zufar.icedlatte.user.exception;
 
 import java.util.Collection;
 
-public class InvalidAvatarFileTypeException extends RuntimeException {
+public final class InvalidAvatarFileTypeException extends UserException {
 
     public InvalidAvatarFileTypeException(String contentType,
                                           Collection<String> allowedContentTypes) {
