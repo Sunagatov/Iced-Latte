@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.filestorage.exception;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,41 +26,42 @@ class FileStorageExceptionHandlerTest {
     private FileStorageExceptionHandler handler;
 
     @Test
-    @DisplayName("handleFileReadException returns BAD_REQUEST")
+    @DisplayName("handleFileStorageException returns BAD_REQUEST for FileReadException")
     void handleFileReadException() {
         FileReadException ex = new FileReadException("file.txt", new RuntimeException("read failed"));
         ProblemDetail expected = ProblemDetail.forStatus(400);
-        when(problemDetailFactory.build("file-read-failed", "File read failed",
+        when(problemDetailFactory.build(ProblemType.FILE_READ_FAILED, "File read failed",
                 HttpStatus.BAD_REQUEST, ex.getMessage())).thenReturn(expected);
 
-        ProblemDetail result = handler.handleFileReadException(ex);
+        ResponseEntity<ProblemDetail> result = handler.handleFileStorageException(ex);
 
-        assertThat(result).isEqualTo(expected);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(result.getBody()).isEqualTo(expected);
     }
 
     @Test
-    @DisplayName("handleFileUploadException returns INTERNAL_SERVER_ERROR")
+    @DisplayName("handleFileStorageException returns INTERNAL_SERVER_ERROR for FileUploadException")
     void handleFileUploadException() {
         FileUploadException ex = new FileUploadException("file.txt", new RuntimeException("upload failed"));
         ProblemDetail expected = ProblemDetail.forStatus(500);
-        when(problemDetailFactory.build("file-upload-failed", "File upload failed",
+        when(problemDetailFactory.build(ProblemType.FILE_UPLOAD_FAILED, "File upload failed",
                 HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage())).thenReturn(expected);
 
-        ResponseEntity<ProblemDetail> result = handler.handleFileUploadException(ex);
+        ResponseEntity<ProblemDetail> result = handler.handleFileStorageException(ex);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(result.getBody()).isEqualTo(expected);
     }
 
     @Test
-    @DisplayName("handleFileUploadException returns SERVICE_UNAVAILABLE when cause is IllegalStateException")
+    @DisplayName("handleFileStorageException returns SERVICE_UNAVAILABLE when cause is IllegalStateException")
     void handleFileUploadExceptionStorageUnavailable() {
         FileUploadException ex = new FileUploadException("file.txt", new IllegalStateException("storage down"));
         ProblemDetail expected = ProblemDetail.forStatus(503);
-        when(problemDetailFactory.build("file-upload-failed", "File upload failed",
+        when(problemDetailFactory.build(ProblemType.FILE_UPLOAD_FAILED, "File upload failed",
                 HttpStatus.SERVICE_UNAVAILABLE, "File storage is not available.")).thenReturn(expected);
 
-        ResponseEntity<ProblemDetail> result = handler.handleFileUploadException(ex);
+        ResponseEntity<ProblemDetail> result = handler.handleFileStorageException(ex);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
         assertThat(result.getBody()).isEqualTo(expected);

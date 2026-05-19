@@ -6,6 +6,7 @@ import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderCancellationWindowExpiredException;
+import com.zufar.icedlatte.order.exception.OrderException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,35 +39,23 @@ public class OrderExceptionHandler {
                 HttpStatus.BAD_REQUEST, "Incorrect status value. Supported: " + Arrays.toString(OrderStatus.values()));
     }
 
-    @ExceptionHandler(OrderNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ProblemDetail handleOrderNotFound(final OrderNotFoundException ex) {
-        log.debug("exception.order.not_found: status=404");
-        return problemDetailFactory.build(ProblemType.ORDER_NOT_FOUND, "Order not found",
-                HttpStatus.NOT_FOUND, "Order not found.");
-    }
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ProblemDetail> handleOrderException(final OrderException ex) {
+        record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
 
-    @ExceptionHandler(OrderAccessDeniedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ProblemDetail handleAccessDenied(final OrderAccessDeniedException ex) {
-        log.debug("exception.order.access_denied: status=403");
-        return problemDetailFactory.build(ProblemType.ORDER_ACCESS_DENIED, "Access denied",
-                HttpStatus.FORBIDDEN, "Access denied.");
-    }
+        var mapping = switch (ex) {
+            case OrderNotFoundException _ ->
+                    new ErrorMapping("exception.order.not_found", ProblemType.ORDER_NOT_FOUND, "Order not found", HttpStatus.NOT_FOUND, "Order not found.");
+            case OrderAccessDeniedException _ ->
+                    new ErrorMapping("exception.order.access_denied", ProblemType.ORDER_ACCESS_DENIED, "Access denied", HttpStatus.FORBIDDEN, "Access denied.");
+            case InvalidOrderStateTransitionException _ ->
+                    new ErrorMapping("exception.order.invalid_transition", ProblemType.ORDER_STATE_INVALID, "Invalid order state", HttpStatus.CONFLICT, "This order can no longer be modified.");
+            case OrderCancellationWindowExpiredException _ ->
+                    new ErrorMapping("exception.order.cancellation_expired", ProblemType.ORDER_CANCELLATION_EXPIRED, "Cancellation window expired", HttpStatus.CONFLICT, "Order cannot be cancelled: cancellation window has expired.");
+        };
 
-    @ExceptionHandler(InvalidOrderStateTransitionException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ProblemDetail handleInvalidTransition(final InvalidOrderStateTransitionException ex) {
-        log.debug("exception.order.invalid_transition: status=409");
-        return problemDetailFactory.build(ProblemType.ORDER_STATE_INVALID, "Invalid order state",
-                HttpStatus.CONFLICT, "This order can no longer be modified.");
-    }
-
-    @ExceptionHandler(OrderCancellationWindowExpiredException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ProblemDetail handleCancellationExpired(final OrderCancellationWindowExpiredException ex) {
-        log.debug("exception.order.cancellation_expired: status=409");
-        return problemDetailFactory.build(ProblemType.ORDER_CANCELLATION_EXPIRED, "Cancellation window expired",
-                HttpStatus.CONFLICT, "Order cannot be cancelled: cancellation window has expired.");
+        log.debug("{}: status={}", mapping.logTag(), mapping.status().value());
+        ProblemDetail pd = problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail());
+        return ResponseEntity.status(mapping.status()).body(pd);
     }
 }
