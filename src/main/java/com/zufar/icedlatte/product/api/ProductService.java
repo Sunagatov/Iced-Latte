@@ -66,15 +66,11 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public ProductListWithPaginationInfoDto getProducts(final Integer pageNumber,
-                                                        final Integer pageSize,
-                                                        final String sortAttribute,
-                                                        final String sortDirection,
-                                                        final BigDecimal minPrice,
-                                                        final BigDecimal maxPrice,
+    public ProductListWithPaginationInfoDto getProducts(final Integer pageNumber, final Integer pageSize,
+                                                        final String sortAttribute, final String sortDirection,
+                                                        final BigDecimal minPrice, final BigDecimal maxPrice,
                                                         final Integer minimumAverageRating,
-                                                        final List<String> brandNames,
-                                                        final List<String> sellerNames,
+                                                        final List<String> brandNames, final List<String> sellerNames,
                                                         final String keyword) {
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
@@ -87,12 +83,8 @@ public class ProductService {
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 
         Specification<ProductInfo> spec = Specification.allOf(
-                minPriceSpec(minPrice),
-                maxPriceSpec(maxPrice),
-                minRatingSpec(minAvg),
-                brandNamesSpec(brandNames),
-                sellerNamesSpec(sellerNames),
-                nameContainsSpec(keyword)
+                minPriceSpec(minPrice), maxPriceSpec(maxPrice), minRatingSpec(minAvg),
+                brandNamesSpec(brandNames), sellerNamesSpec(sellerNames), nameContainsSpec(keyword)
         );
 
         Page<ProductInfo> rawPage = productInfoRepository
@@ -103,8 +95,7 @@ public class ProductService {
                 .toList();
         List<ProductInfoDto> productsWithImages = productPictureLinkUpdater.updateBatch(products);
 
-        Page<ProductInfoDto> result = new PageImpl<>(
-                productsWithImages, rawPage.getPageable(), rawPage.getTotalElements());
+        Page<ProductInfoDto> result = new PageImpl<>(productsWithImages, rawPage.getPageable(), rawPage.getTotalElements());
 
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
@@ -119,5 +110,15 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<String> getBrandNames() {
         return productInfoRepository.findDistinctBrandNames();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsById(final UUID productId) {
+        return productInfoRepository.existsById(productId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductInfo> findAllById(final Iterable<UUID> ids) {
+        return productInfoRepository.findAllById(ids);
     }
 }

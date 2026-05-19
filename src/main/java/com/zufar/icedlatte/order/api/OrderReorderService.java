@@ -9,7 +9,7 @@ import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ import java.util.UUID;
 public class OrderReorderService {
 
     private final OrderRepository orderRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductService productService;
     private final ShoppingCartService shoppingCartService;
 
     @Transactional
@@ -44,7 +44,7 @@ public class OrderReorderService {
         List<UnavailableItemDto> unavailable = new ArrayList<>();
 
         for (OrderItem item : order.getItems()) {
-            if (productInfoRepository.existsById(item.getProductId())) {
+            if (productService.existsById(item.getProductId())) {
                 var cartItem = new NewShoppingCartItemDto();
                 cartItem.setProductId(item.getProductId());
                 cartItem.setProductQuantity(item.getProductsQuantity());

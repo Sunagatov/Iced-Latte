@@ -15,7 +15,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,7 +44,7 @@ public class ShoppingCartService {
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartItemRepository shoppingCartItemRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductService productService;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
@@ -176,7 +176,7 @@ public class ShoppingCartService {
                 .filter(productId -> !existingItemsByProductId.containsKey(productId))
                 .collect(Collectors.toSet());
 
-        List<ProductInfo> foundProducts = productInfoRepository.findAllById(newProductIds);
+        List<ProductInfo> foundProducts = productService.findAllById(newProductIds);
         Set<UUID> foundIds = foundProducts.stream()
                 .map(ProductInfo::getId)
                 .collect(Collectors.toSet());

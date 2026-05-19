@@ -11,7 +11,7 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class FavoriteProductAdder {
 
     private final FavoriteRepository favoriteRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductService productService;
     private final FavoriteListDtoConverter favoriteListDtoConverter;
     private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
@@ -91,7 +91,7 @@ public class FavoriteProductAdder {
 
     private Set<FavoriteItemEntity> createFavoriteItems(Set<UUID> productIds,
                                                         FavoriteListEntity favoriteListEntity) {
-        List<ProductInfo> foundProducts = productInfoRepository.findAllById(productIds);
+        List<ProductInfo> foundProducts = productService.findAllById(productIds);
         Set<UUID> foundIds = foundProducts.stream()
                 .map(ProductInfo::getId)
                 .collect(Collectors.toSet());

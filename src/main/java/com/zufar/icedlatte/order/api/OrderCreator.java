@@ -13,7 +13,7 @@ import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
@@ -42,7 +42,7 @@ public class OrderCreator {
     private final ShoppingCartService shoppingCartService;
     private final ShoppingCartRepository shoppingCartRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductService productService;
 
     @Value("${order.cancellation-window-minutes:30}")
     private int cancellationWindowMinutes;
@@ -133,7 +133,7 @@ public class OrderCreator {
 
     private void validateProductAvailability(List<OrderItem> items) {
         List<String> unavailable = items.stream()
-                .filter(item -> !productInfoRepository.existsById(item.getProductId()))
+                .filter(item -> !productService.existsById(item.getProductId()))
                 .map(OrderItem::getProductName)
                 .toList();
         if (!unavailable.isEmpty()) {

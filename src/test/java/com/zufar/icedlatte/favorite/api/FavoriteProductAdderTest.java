@@ -12,7 +12,7 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +45,7 @@ class FavoriteProductAdderTest {
     private FavoriteRepository favoriteRepository;
 
     @Mock
-    private ProductInfoRepository productInfoRepository;
+    private ProductService productService;
 
     @Mock
     private FavoriteListDtoConverter favoriteListDtoConverter;
@@ -91,7 +91,7 @@ class FavoriteProductAdderTest {
         listOfFavoriteProducts.setProductIds(List.of(productId));
 
         when(favoriteListProvider.getFavoriteListEntity(userId)).thenReturn(favoriteList);
-        when(productInfoRepository.findAllById(any())).thenReturn(List.of(productInfo));
+        when(productService.findAllById(any())).thenReturn(List.of(productInfo));
         when(favoriteRepository.save(favoriteList)).thenReturn(addedFavoriteList);
         when(favoriteListDtoConverter.toDto(addedFavoriteList)).thenReturn(expectedFavoriteListDto);
         ListOfFavoriteProductsDto expectedResponse = new ListOfFavoriteProductsDto();
@@ -102,7 +102,7 @@ class FavoriteProductAdderTest {
         assertEquals(expectedResponse, result);
 
         verify(favoriteListProvider).getFavoriteListEntity(userId);
-        verify(productInfoRepository).findAllById(any());
+        verify(productService).findAllById(any());
         verify(favoriteRepository).save(favoriteList);
         verify(favoriteListDtoConverter).toDto(addedFavoriteList);
     }
@@ -143,7 +143,7 @@ class FavoriteProductAdderTest {
         when(favoriteListProvider.getFavoriteListEntity(userId))
                 .thenReturn(staleFavoriteList)
                 .thenReturn(freshFavoriteList);
-        when(productInfoRepository.findAllById(any())).thenReturn(List.of(productInfo));
+        when(productService.findAllById(any())).thenReturn(List.of(productInfo));
         when(favoriteRepository.save(staleFavoriteList))
                 .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"));
         when(favoriteRepository.save(freshFavoriteList)).thenReturn(freshFavoriteList);

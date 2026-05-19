@@ -7,7 +7,7 @@ import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 class OrderReorderServiceTest {
 
     @Mock private OrderRepository orderRepository;
-    @Mock private ProductInfoRepository productInfoRepository;
+    @Mock private ProductService productService;
     @Mock private ShoppingCartService shoppingCartService;
     @InjectMocks private OrderReorderService reorderService;
 
@@ -51,8 +51,8 @@ class OrderReorderServiceTest {
         Order order = Order.builder().id(orderId).userId(userId).items(List.of(available, unavailable)).build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(productInfoRepository.existsById(availableProductId)).thenReturn(true);
-        when(productInfoRepository.existsById(unavailableProductId)).thenReturn(false);
+        when(productService.existsById(availableProductId)).thenReturn(true);
+        when(productService.existsById(unavailableProductId)).thenReturn(false);
 
         ShoppingCartDto cart = new ShoppingCartDto();
         cart.setId(UUID.randomUUID());

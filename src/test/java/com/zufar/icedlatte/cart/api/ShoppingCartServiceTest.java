@@ -15,7 +15,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import com.zufar.icedlatte.product.api.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +50,7 @@ class ShoppingCartServiceTest {
 
     @Mock private ShoppingCartRepository shoppingCartRepository;
     @Mock private ShoppingCartItemRepository shoppingCartItemRepository;
-    @Mock private ProductInfoRepository productInfoRepository;
+    @Mock private ProductService productService;
     @Mock private ShoppingCartDtoConverter shoppingCartDtoConverter;
     @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
 
@@ -153,7 +153,7 @@ class ShoppingCartServiceTest {
         ShoppingCartDto expectedDto = new ShoppingCartDto();
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
-        when(productInfoRepository.findAllById(Set.of(newProductId))).thenReturn(List.of(newProduct));
+        when(productService.findAllById(Set.of(newProductId))).thenReturn(List.of(newProduct));
         when(shoppingCartRepository.save(shoppingCart)).thenReturn(shoppingCart);
         when(shoppingCartDtoConverter.toDto(shoppingCart)).thenReturn(expectedDto);
 
@@ -189,7 +189,7 @@ class ShoppingCartServiceTest {
         when(shoppingCartRepository.findShoppingCartByUserId(userId))
                 .thenReturn(Optional.of(firstCart))
                 .thenReturn(Optional.of(freshCart));
-        when(productInfoRepository.findAllById(any())).thenReturn(List.of(product));
+        when(productService.findAllById(any())).thenReturn(List.of(product));
         when(shoppingCartRepository.save(any(ShoppingCart.class)))
                 .thenThrow(new DataIntegrityViolationException("uq_shopping_cart_item_cart_product"))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -216,7 +216,7 @@ class ShoppingCartServiceTest {
         itemToAdd.setProductQuantity(1);
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
-        when(productInfoRepository.findAllById(Set.of(missingProductId))).thenReturn(List.of());
+        when(productService.findAllById(Set.of(missingProductId))).thenReturn(List.of());
 
         assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(ProductNotFoundException.class);
@@ -238,7 +238,7 @@ class ShoppingCartServiceTest {
         ProductInfo product = product(productId, "Coffee", BigDecimal.valueOf(2.5));
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
-        when(productInfoRepository.findAllById(Set.of(productId))).thenReturn(List.of(product));
+        when(productService.findAllById(Set.of(productId))).thenReturn(List.of(product));
 
         assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
