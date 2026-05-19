@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -28,14 +29,13 @@ public class UserExceptionHandler {
 
         var mapping = switch (ex) {
             case UserNotFoundException _ ->
-                    new ErrorMapping("exception.user.not_found", "user-not-found", "User not found", HttpStatus.NOT_FOUND, ex.getMessage());
+                    new ErrorMapping("exception.user.not_found", ProblemType.USER_NOT_FOUND, "User not found", HttpStatus.NOT_FOUND, ex.getMessage());
             case InvalidAvatarFileTypeException _ ->
-                    new ErrorMapping("exception.avatar.invalid_type", "invalid-avatar-type", "Invalid file type", HttpStatus.BAD_REQUEST, "Invalid file type. Allowed types: JPEG, PNG, WebP");
+                    new ErrorMapping("exception.avatar.invalid_type", ProblemType.INVALID_AVATAR_TYPE, "Invalid file type", HttpStatus.BAD_REQUEST, "Invalid file type. Allowed types: JPEG, PNG, WebP");
         };
 
-        HttpStatus httpStatus = mapping.status();
-        log.debug("{}: status={}", mapping.logTag(), httpStatus.value());
-        return ResponseEntity.status(httpStatus)
-                .body(problemDetailFactory.build(mapping.typeSlug(), mapping.title(), httpStatus, mapping.detail()));
+        log.debug("{}: status={}", mapping.logTag(), mapping.status().value());
+        return ResponseEntity.status(mapping.status())
+                .body(problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail()));
     }
 }

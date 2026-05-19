@@ -45,4 +45,8 @@ public final class ProblemType {
     // Payment
     public static final String PAYMENT_EVENT_FAILED = "payment-event-failed";
     public static final String PAYMENT_SESSION_FAILED = "payment-session-failed";
+
+    // User
+    public static final String USER_NOT_FOUND = "user-not-found";
+    public static final String INVALID_AVATAR_TYPE = "invalid-avatar-type";
 }

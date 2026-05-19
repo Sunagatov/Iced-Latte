@@ -4,7 +4,6 @@ import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -21,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SignInExceptionHandler Tests")
@@ -49,18 +47,6 @@ class SignInExceptionHandlerTest {
         ProblemDetail result = signInExceptionHandler.handleUserRegistrationException(exception, request);
 
         assertThat(result).isEqualTo(stub409);
-    }
-
-    @Test
-    @DisplayName("Should return ProblemDetail with UNAUTHORIZED status when UserNotFoundException is thrown")
-    void shouldReturnUnauthorizedWhenUserNotFoundExceptionThrown() {
-        UserNotFoundException exception = new UserNotFoundException(UUID.randomUUID());
-        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
-
-        ProblemDetail result = signInExceptionHandler.handleUserNotFoundException(exception, request);
-
-        assertThat(result).isEqualTo(STUB_401);
     }
 
     @Test

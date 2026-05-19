@@ -5,12 +5,11 @@ import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.exception.SessionNotFoundException;
 import com.zufar.icedlatte.security.exception.SessionOwnershipException;
+import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.turnstile.TurnstileVerificationException;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,15 +56,6 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleInvalidCredentialsException(final InvalidCredentialsException exception,
                                                            HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
-    }
-
-    @ExceptionHandler({UserNotFoundException.class})
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleUserNotFoundException(final UserNotFoundException exception,
-                                                     HttpServletRequest request) {
         logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
         return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
