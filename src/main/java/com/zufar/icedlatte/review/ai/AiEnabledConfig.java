@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.ai.moderation.ReviewAiService;
+
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
 import org.springframework.beans.factory.annotation.Value;

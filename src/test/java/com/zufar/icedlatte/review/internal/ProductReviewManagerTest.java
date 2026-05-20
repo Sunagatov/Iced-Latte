@@ -41,7 +41,7 @@ class ProductReviewManagerTest {
     @Mock private SingleUserProvider singleUserProvider;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private ProductReviewProductGateway productReviewProductGateway;
-    @Mock private com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer summaryDebouncer;
+    @Mock private com.zufar.icedlatte.review.ai.summary.ProductReviewSummaryDebouncer summaryDebouncer;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     private ProductReviewManager service;

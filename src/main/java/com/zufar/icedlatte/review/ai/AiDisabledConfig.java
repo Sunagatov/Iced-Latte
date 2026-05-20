@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.ai.moderation.ReviewModerationService;
+import com.zufar.icedlatte.review.ai.summary.ProductSummaryService;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;

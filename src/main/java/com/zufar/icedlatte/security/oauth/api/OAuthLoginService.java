@@ -5,7 +5,7 @@ import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.api.SessionTokenService;
+import com.zufar.icedlatte.security.api.session.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;

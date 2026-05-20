@@ -6,7 +6,7 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.api.AuthSessionService;
+import com.zufar.icedlatte.security.api.session.AuthSessionService;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;

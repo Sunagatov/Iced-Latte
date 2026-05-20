@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.order.internal;
 
+import com.zufar.icedlatte.order.internal.query.OrderDetailProvider;
+
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;

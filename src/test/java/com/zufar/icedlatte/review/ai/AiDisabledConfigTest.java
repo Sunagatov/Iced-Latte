@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.ai.moderation.ReviewModerationService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

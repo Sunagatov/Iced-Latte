@@ -3,7 +3,7 @@ package com.zufar.icedlatte.review.internal;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
-import com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;

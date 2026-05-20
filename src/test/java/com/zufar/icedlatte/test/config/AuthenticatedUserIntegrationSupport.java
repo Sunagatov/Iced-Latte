@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.test.config;
 
-import com.zufar.icedlatte.security.api.EmailVerificationService;
-import com.zufar.icedlatte.security.api.TokenPurpose;
+import com.zufar.icedlatte.security.api.registration.EmailVerificationService;
+import com.zufar.icedlatte.security.api.registration.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;

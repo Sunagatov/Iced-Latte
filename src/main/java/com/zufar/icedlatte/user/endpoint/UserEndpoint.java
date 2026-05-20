@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.endpoint;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.*;
+import com.zufar.icedlatte.security.api.registration.PasswordResetService;
 import com.zufar.icedlatte.user.api.*;
 import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
 import jakarta.validation.Valid;
