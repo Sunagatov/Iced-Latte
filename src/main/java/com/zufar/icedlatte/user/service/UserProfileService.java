@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
@@ -28,7 +28,7 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
     private final PutUsersRequestValidator putUsersRequestValidator;
-    private final FileStorageService fileStorageService;
+    private final FileStorageApi fileStorageApi;
     private final PasswordEncoder passwordEncoder;
     private final AuthSessionService authSessionService;
 
@@ -74,12 +74,12 @@ public class UserProfileService {
 
     @Transactional(readOnly = true)
     public Optional<String> findAvatarLink(UUID userId) {
-        return fileStorageService.findFileUrl(userId);
+        return fileStorageApi.findFileUrl(userId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteAvatar(UUID userId) {
-        fileStorageService.deleteFile(userId);
+        fileStorageApi.deleteFile(userId);
     }
 
     private UserDto toProfileDto(UserEntity userEntity) {

@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
@@ -27,12 +27,12 @@ public class UserAvatarUploader {
             "image/jpeg", "image/png", "image/webp"
     );
 
-    private final FileStorageService fileStorageService;
+    private final FileStorageApi fileStorageApi;
     private final ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator;
 
-    public UserAvatarUploader(FileStorageService fileStorageService,
+    public UserAvatarUploader(FileStorageApi fileStorageApi,
                               ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator) {
-        this.fileStorageService = fileStorageService;
+        this.fileStorageApi = fileStorageApi;
         this.cloudfrontInvalidator = cloudfrontInvalidator;
     }
 
@@ -76,13 +76,13 @@ public class UserAvatarUploader {
     private void uploadAvatarFile(MultipartFile file,
                                   UUID userId,
                                   String fileName) {
-        if (!fileStorageService.isEnabled()) {
+        if (!fileStorageApi.isEnabled()) {
             throw new FileUploadException(
                     fileName,
                     new IllegalStateException("File storage is not configured")
             );
         }
-        fileStorageService.store(file, new FileMetadataDto(userId, bucketName, fileName));
+        fileStorageApi.store(file, new FileMetadataDto(userId, bucketName, fileName));
     }
 
     private void invalidateAvatarCache(String fileName) {

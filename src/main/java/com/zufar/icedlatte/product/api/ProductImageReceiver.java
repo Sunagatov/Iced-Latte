@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class ProductImageReceiver {
     @Value("${product.placeholder-image-url}")
     private String placeholderImageUrl;
 
-    private final FileStorageService fileStorageService;
+    private final FileStorageApi fileStorageApi;
     private final ProductImageRepository productImageRepository;
 
     @Cacheable(cacheNames = "productImageUrl",
@@ -33,7 +33,7 @@ public class ProductImageReceiver {
             unless = "#result == @productImageReceiver.getPlaceholderImageUrl()")
     public String getProductFileUrl(final UUID productId) {
         try {
-            return fileStorageService.findFileUrl(productId)
+            return fileStorageApi.findFileUrl(productId)
                     .orElseGet(() -> {
                         log.debug("product.image.not_found: productId={}", productId);
                         return placeholderImageUrl;
@@ -67,7 +67,7 @@ public class ProductImageReceiver {
     public Map<UUID, String> getProductFileUrls(final List<UUID> productIds) {
         Map<UUID, String> fileUrls;
         try {
-            fileUrls = fileStorageService.findFileUrls(productIds);
+            fileUrls = fileStorageApi.findFileUrls(productIds);
         } catch (RuntimeException ex) {
             log.error("product.images.error: count={}, exceptionClass={}",
                     productIds.size(), ex.getClass().getSimpleName(), ex);

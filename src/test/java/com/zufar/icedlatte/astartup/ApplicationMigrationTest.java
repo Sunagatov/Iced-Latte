@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("ApplicationMigration unit tests")
 class ApplicationMigrationTest {
 
-    @Mock private FileStorageService fileStorageService;
+    @Mock private FileStorageApi fileStorageService;
     @Mock private ApplicationArguments args;
 
     private ApplicationMigration migration;

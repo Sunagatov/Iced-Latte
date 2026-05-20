@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.filestorage.service;
 
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FileStorageService {
+public class FileStorageService implements FileStorageApi {
 
     private final ObjectStorage objectStorage;
     private final FileMetadataRepository fileMetadataRepository;

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ class ProductImageReceiverTest {
 
     private static final String PLACEHOLDER = "/assets/images/product-placeholder.png";
 
-    @Mock private FileStorageService fileStorageService;
+    @Mock private FileStorageApi fileStorageService;
     @Mock private ProductImageRepository productImageRepository;
 
     @InjectMocks

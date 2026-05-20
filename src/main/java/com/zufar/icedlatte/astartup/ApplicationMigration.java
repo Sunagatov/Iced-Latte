@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class ApplicationMigration implements ApplicationRunner {
     @Value("${migration.timeout-minutes:5}")
     private int timeoutMinutes;
 
-    private final FileStorageService fileStorageService;
+    private final FileStorageApi fileStorageApi;
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
@@ -56,14 +56,14 @@ public class ApplicationMigration implements ApplicationRunner {
     private boolean isAwsConfigured() {
         return productPictureBucket != null && !productPictureBucket.isEmpty()
                 && directoryPath != null && !directoryPath.isEmpty()
-                && fileStorageService.isEnabled();
+                && fileStorageApi.isEnabled();
     }
 
     private void uploadFiles() {
         try {
             log.info("migration.upload.start: path={}", directoryPath);
             long t0 = System.currentTimeMillis();
-            fileStorageService.storeDirectory(productPictureBucket, directoryPath);
+            fileStorageApi.storeDirectory(productPictureBucket, directoryPath);
             log.info("migration.upload.finish: bucket={}, path={}, durationMs={}", productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
@@ -76,7 +76,7 @@ public class ApplicationMigration implements ApplicationRunner {
 
     private void refreshMetadataIndex() {
         try {
-            fileStorageService.refreshBucketIndex(productPictureBucket);
+            fileStorageApi.refreshBucketIndex(productPictureBucket);
             log.info("migration.metadata.refreshed: bucket={}", productPictureBucket);
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
             log.warn("migration.metadata.refresh_error: exceptionClass={}", e.getClass().getSimpleName(), e);

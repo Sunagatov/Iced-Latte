@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("UserAvatarUploader unit tests")
 class UserAvatarUploaderTest {
 
-    @Mock private FileStorageService fileStorageService;
+    @Mock private FileStorageApi fileStorageService;
     @Mock private ObjectProvider<com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator> cloudfrontInvalidatorProvider;
     @Mock private MultipartFile file;
     private UserAvatarUploader uploader;
