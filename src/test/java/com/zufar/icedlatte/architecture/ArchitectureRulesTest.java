@@ -76,6 +76,18 @@ class ArchitectureRulesTest {
                     .that().resideOutsideOfPackage("..order..")
                     .should().dependOnClassesThat().resideInAPackage("..order.service..");
 
+    @ArchTest
+    static final ArchRule non_product_modules_should_not_depend_on_product_entities =
+            noClasses()
+                    .that().resideOutsideOfPackage("..product..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..product.entity..");
+
+    @ArchTest
+    static final ArchRule non_product_modules_should_not_depend_on_product_converters =
+            noClasses()
+                    .that().resideOutsideOfPackage("..product..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..product.converter..");
+
     /**
      * Checks that core business feature modules do not form dependency cycles.
      * Infrastructure modules (security, user, common, openapi) are excluded

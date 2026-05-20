@@ -55,10 +55,10 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 | cart | CLOSED | `api/` | repository, entity, converter, endpoint, exception |
 | order | CLOSED | `api/`, `exception/` | repository, entity, endpoint, converter, event, specification |
 | payment | CLOSED | none | everything |
-| product | CLOSED | `api/`, `api/filestorage/`, `entity/`, `converter/`, `exception/` | repository, endpoint, validator |
+| product | CLOSED | `api/`, `exception/` | entity, converter, repository, endpoint, validator |
 | review | CLOSED | `api/` | everything else |
 | favorite | CLOSED | none | everything |
-| filestorage | CLOSED | top-level, `dto/`, `exception/`, `aws/` | repository, converter |
+| filestorage | CLOSED | `api/`, `dto/`, `exception/`, `aws/` | service, repository, converter |
 | email | CLOSED | `api/token/`, `exception/`, `sender/` | config |
 | common | CLOSED | all subpackages (shared infrastructure) | — |
 | astartup | CLOSED | none | everything |
@@ -80,6 +80,7 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 - Business feature modules must be free of dependency cycles.
 - `order.api` must not depend on order repositories, entities, or converters.
 - Non-order modules must not depend on `order.service`.
+- Non-product modules must not depend on `product.entity` or `product.converter`.
 
 ## Key architectural changes made
 
@@ -92,18 +93,19 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 7. **order.api contract split** — moved concrete order services to `order.service`.
    `order.api` now exposes narrow contracts: `OrderCheckoutApi`, `OrderPaymentApi`,
    and `OrderSnapshot`. Payment depends only on those contracts.
+8. **filestorage.api contract** — cross-module callers depend on `FileStorageApi`
+   instead of the concrete `FileStorageService`.
+9. **Product entity/converter exposure removed** — cart and favorite now store product IDs
+   and load catalog data through product APIs instead of depending on product JPA entities
+   or MapStruct converters.
 
 ## Known remaining coupling (acceptable)
 
-- `product.entity` exposed — cart and favorite have `@ManyToOne ProductInfo` (JPA relationship requires entity visibility; fixing requires DB schema change).
-- `product.converter` exposed — cart's MapStruct mapper uses `ProductInfoDtoConverter`.
 - `security ↔ user` cycle — inherent bidirectional coupling; both remain OPEN.
 
 ## Future work
 
 - Apply the same API-purity pattern to product, cart, review, user, and security.
-- Remove `product.entity` and `product.converter` named interfaces after replacing
-  cart/favorite JPA entity coupling with product snapshots (requires Liquibase migration).
 - Break `security ↔ user` cycle (extract `UserLookupApi` interface, close both modules).
 - Introduce domain events for async cross-module communication.
 - Tighten `common` — move module-specific types out of common into their owning modules.
