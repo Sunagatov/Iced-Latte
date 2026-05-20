@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.config;
+package com.zufar.icedlatte.security.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

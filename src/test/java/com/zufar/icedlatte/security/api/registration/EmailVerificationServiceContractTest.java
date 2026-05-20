@@ -28,7 +28,7 @@ class EmailVerificationServiceContractTest {
         service = new EmailVerificationService(
                 new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
-                mock(com.zufar.icedlatte.email.sender.AuthTokenEmailSender.class),
+                mock(com.zufar.icedlatte.security.email.AuthTokenEmailSender.class),
                 mock(UserRegistrationService.class),
                 mock(SingleUserProvider.class),
                 mock(UserProfileService.class)

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.sender;
+package com.zufar.icedlatte.security.email;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

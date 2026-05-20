@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.temporarycache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.exception.TimeTokenException;
-import com.zufar.icedlatte.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.email.AuthTokenEmailSender;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;

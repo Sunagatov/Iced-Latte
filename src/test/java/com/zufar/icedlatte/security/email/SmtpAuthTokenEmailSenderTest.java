@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.sender;
+package com.zufar.icedlatte.security.email;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

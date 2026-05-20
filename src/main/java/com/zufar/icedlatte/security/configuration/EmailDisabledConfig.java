@@ -1,6 +1,7 @@
-package com.zufar.icedlatte.email.config;
+package com.zufar.icedlatte.security.configuration;
 
-import com.zufar.icedlatte.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.email.AuthTokenEmailSender;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
