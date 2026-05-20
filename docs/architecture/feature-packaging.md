@@ -52,7 +52,7 @@ Most feature packages use a shape like this:
 ```text
 feature/
 ├── api/          # public module boundary: interfaces, records, stable DTOs
-├── internal/     # concrete application services (hidden from other modules)
+├── service/      # concrete application services (hidden from other modules)
 ├── endpoint/     # REST endpoints
 ├── entity/       # JPA entities owned by the feature
 ├── repository/   # persistence access for feature-owned entities
@@ -63,7 +63,7 @@ feature/
 
 Not every feature needs every folder. Add folders when they are useful, not just to match a template.
 
-> **Convention:** New code should place only interfaces, records, and stable boundary DTOs in `api/`. Concrete service implementations belong in `internal/` (or directly in the feature root). Legacy modules may still have concrete services in `api/` until refactored — see `order/` for the target pattern.
+> **Convention:** New code should place only interfaces, records, and stable boundary DTOs in `api/`. Concrete application services belong in `service/` (or directly in the feature root for very small features). Legacy modules may still have concrete services in `api/` until refactored — see `order/` for the target pattern.
 
 ---
 

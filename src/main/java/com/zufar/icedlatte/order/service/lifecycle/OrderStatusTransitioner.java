@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.internal.lifecycle;
+package com.zufar.icedlatte.order.service.lifecycle;
 
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;

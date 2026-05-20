@@ -79,7 +79,7 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 - No module may depend on `astartup`.
 - Business feature modules must be free of dependency cycles.
 - `order.api` must not depend on order repositories, entities, or converters.
-- Non-order modules must not depend on `order.internal`.
+- Non-order modules must not depend on `order.service`.
 
 ## Key architectural changes made
 
@@ -89,7 +89,7 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 4. **EmailVerificationService → security.api** — eliminated email↔security cycle.
 5. **Repositories made internal** — cart, order, product, review repositories are no longer accessible from other modules. Cross-module access goes through service APIs.
 6. **OrderSnapshot DTO** — payment uses a record DTO instead of Order entity directly.
-7. **order.api contract split** — moved concrete order services to `order.internal`.
+7. **order.api contract split** — moved concrete order services to `order.service`.
    `order.api` now exposes narrow contracts: `OrderCheckoutApi`, `OrderPaymentApi`,
    and `OrderSnapshot`. Payment depends only on those contracts.
 

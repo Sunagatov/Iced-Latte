@@ -59,7 +59,7 @@ class ArchitectureRulesTest {
      * TODO: extend to cart.api, product.api, review.api after their api packages are cleaned.
      */
     @ArchTest
-    static final ArchRule api_packages_should_not_depend_on_internals =
+    static final ArchRule api_packages_should_not_depend_on_feature_implementation =
             noClasses()
                     .that().resideInAPackage("..order.api..")
                     .should().dependOnClassesThat().resideInAnyPackage(
@@ -67,14 +67,14 @@ class ArchitectureRulesTest {
                     );
 
     /**
-     * Non-order modules must not depend on order.internal.
+     * Non-order modules must not depend on order implementation services.
      * Spring Modulith already enforces this, but an explicit ArchUnit rule gives clearer failure messages.
      */
     @ArchTest
-    static final ArchRule non_order_modules_should_not_depend_on_order_internal =
+    static final ArchRule non_order_modules_should_not_depend_on_order_services =
             noClasses()
                     .that().resideOutsideOfPackage("..order..")
-                    .should().dependOnClassesThat().resideInAPackage("..order.internal..");
+                    .should().dependOnClassesThat().resideInAPackage("..order.service..");
 
     /**
      * Checks that core business feature modules do not form dependency cycles.

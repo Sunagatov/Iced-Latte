@@ -1,7 +1,7 @@
-package com.zufar.icedlatte.order.internal;
+package com.zufar.icedlatte.order.service;
 
-import com.zufar.icedlatte.order.internal.lifecycle.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.internal.query.OrderDetailProvider;
+import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
+import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.review.internal;
+package com.zufar.icedlatte.review.service;
 
 import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 

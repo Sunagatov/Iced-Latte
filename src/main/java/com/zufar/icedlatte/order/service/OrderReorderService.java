@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.internal;
+package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;

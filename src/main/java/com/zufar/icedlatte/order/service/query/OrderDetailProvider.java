@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.internal.query;
+package com.zufar.icedlatte.order.service.query;
 
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
