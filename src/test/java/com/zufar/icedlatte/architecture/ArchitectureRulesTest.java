@@ -55,15 +55,49 @@ class ArchitectureRulesTest {
     /**
      * API packages (named interfaces) should not depend on repositories, entities, or converters.
      * This ensures module boundaries expose only clean contracts (interfaces, records, DTOs).
-     * Currently enforced only for order.api which has been fully refactored.
-     * TODO: extend to cart.api, product.api, review.api after their api packages are cleaned.
+     * Currently enforced for api packages that have been fully refactored.
      */
     @ArchTest
-    static final ArchRule api_packages_should_not_depend_on_feature_implementation =
+    static final ArchRule order_api_should_not_depend_on_order_implementation =
             noClasses()
                     .that().resideInAPackage("..order.api..")
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "..order.repository..", "..order.entity..", "..order.converter.."
+                    );
+
+    @ArchTest
+    static final ArchRule product_api_should_not_depend_on_product_implementation =
+            noClasses()
+                    .that().resideInAPackage("..product.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..product.repository..",
+                            "..product.entity..",
+                            "..product.converter..",
+                            "..product.specification..",
+                            "..product.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule cart_api_should_not_depend_on_cart_implementation =
+            noClasses()
+                    .that().resideInAPackage("..cart.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..cart.repository..",
+                            "..cart.entity..",
+                            "..cart.converter..",
+                            "..cart.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule review_api_should_not_depend_on_review_implementation =
+            noClasses()
+                    .that().resideInAPackage("..review.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..review.repository..",
+                            "..review.entity..",
+                            "..review.converter..",
+                            "..review.service..",
+                            "..review.ai.."
                     );
 
     /**
@@ -87,6 +121,24 @@ class ArchitectureRulesTest {
             noClasses()
                     .that().resideOutsideOfPackage("..product..")
                     .should().dependOnClassesThat().resideInAnyPackage("..product.converter..");
+
+    @ArchTest
+    static final ArchRule non_product_modules_should_not_depend_on_product_services =
+            noClasses()
+                    .that().resideOutsideOfPackage("..product..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..product.service..");
+
+    @ArchTest
+    static final ArchRule non_cart_modules_should_not_depend_on_cart_services =
+            noClasses()
+                    .that().resideOutsideOfPackage("..cart..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..cart.service..");
+
+    @ArchTest
+    static final ArchRule non_payment_modules_should_not_depend_on_payment_services =
+            noClasses()
+                    .that().resideOutsideOfPackage("..payment..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..payment.service..");
 
     /**
      * Checks that core business feature modules do not form dependency cycles.

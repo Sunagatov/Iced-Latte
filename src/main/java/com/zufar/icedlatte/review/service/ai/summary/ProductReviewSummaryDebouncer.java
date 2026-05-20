@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.service.ai.summary;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +21,7 @@ public class ProductReviewSummaryDebouncer {
     private final long debounceDelaySec;
     private final long maxWaitSec;
     private final ProductSummaryService productSummaryService;
-    private final ProductReviewProductGateway productReviewProductGateway;
+    private final ProductReviewProductApi productReviewProductApi;
     private final ApplicationContext applicationContext;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -32,12 +32,12 @@ public class ProductReviewSummaryDebouncer {
             @Value("${ai.review-summary.debounce-delay:PT2M}") Duration debounceDelay,
             @Value("${ai.review-summary.max-wait:PT10M}") Duration maxWait,
             ProductSummaryService productSummaryService,
-            ProductReviewProductGateway productReviewProductGateway,
+            ProductReviewProductApi productReviewProductApi,
             ApplicationContext applicationContext) {
         this.debounceDelaySec = debounceDelay.toSeconds();
         this.maxWaitSec = maxWait.toSeconds();
         this.productSummaryService = productSummaryService;
-        this.productReviewProductGateway = productReviewProductGateway;
+        this.productReviewProductApi = productReviewProductApi;
         this.applicationContext = applicationContext;
     }
 
@@ -71,7 +71,7 @@ public class ProductReviewSummaryDebouncer {
         firstTriggerTime.remove(productId);
         try {
             var summary = productSummaryService.summarize(productId);
-            productReviewProductGateway.updateAiSummary(productId, summary);
+            productReviewProductApi.updateAiSummary(productId, summary);
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
             log.warn("product.ai_summary.failed: productId={}, exceptionClass={}",

@@ -3,7 +3,7 @@ package com.zufar.icedlatte.review.service;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
@@ -37,7 +37,7 @@ class ProductReviewManagerTest {
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private SingleUserProvider singleUserProvider;
     @Mock private ProductReviewValidator productReviewValidator;
-    @Mock private ProductReviewProductGateway productReviewProductGateway;
+    @Mock private ProductReviewProductApi productReviewProductGateway;
     @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
     @Mock private ApplicationEventPublisher eventPublisher;
 

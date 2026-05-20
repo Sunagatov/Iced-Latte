@@ -2,7 +2,7 @@ package com.zufar.icedlatte.review.service.validator;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class ProductReviewValidator {
 
     private final ProductReviewRepository productReviewRepository;
-    private final ProductReviewProductGateway productReviewProductGateway;
+    private final ProductReviewProductApi productReviewProductApi;
 
     private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
 
@@ -31,7 +31,7 @@ public class ProductReviewValidator {
     }
 
     public void validateProductExists(final UUID productId) {
-        if (!productReviewProductGateway.exists(productId)) {
+        if (!productReviewProductApi.exists(productId)) {
             throw new NotFoundException(String.format(
                     "Product with productId = '%s' was not found. Product's review operations (update, delete, provide) are not possible.",
                     productId));
@@ -59,7 +59,7 @@ public class ProductReviewValidator {
     }
 
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
-        if (!productReviewProductGateway.exists(productId)) {
+        if (!productReviewProductApi.exists(productId)) {
             throw new NotFoundException(String.format(
                     "Product with productId = '%s' was not found. Product's review operations (update, delete, provide) are not possible.",
                     productId));

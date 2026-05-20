@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.ai.summary;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 import org.junit.jupiter.api.AfterEach;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class ProductReviewSummaryDebouncerTest {
 
     @Mock private ProductSummaryService productSummaryService;
-    @Mock private ProductReviewProductGateway productReviewProductGateway;
+    @Mock private ProductReviewProductApi productReviewProductGateway;
     @Mock private ApplicationContext applicationContext;
     @Mock private ScheduledExecutorService scheduler;
     @Mock private ScheduledFuture<Object> future;

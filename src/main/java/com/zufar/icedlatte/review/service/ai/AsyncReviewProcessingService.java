@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.service.ai;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
@@ -21,7 +21,7 @@ public class AsyncReviewProcessingService {
 
     private final ReviewModerationService moderationService;
     private final ProductReviewRepository reviewRepository;
-    private final ProductReviewProductGateway productReviewProductGateway;
+    private final ProductReviewProductApi productReviewProductApi;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -34,7 +34,7 @@ public class AsyncReviewProcessingService {
             reviewRepository.findById(reviewId).ifPresent(review -> {
                 UUID productId = review.getProductId();
                 reviewRepository.deleteById(reviewId);
-                productReviewProductGateway.refreshReviewAggregates(productId);
+                productReviewProductApi.refreshReviewAggregates(productId);
                 summaryDebouncer.schedule(productId);
                 log.info("review.moderation.rejected: reviewId={}, productId={}", reviewId, productId);
             });

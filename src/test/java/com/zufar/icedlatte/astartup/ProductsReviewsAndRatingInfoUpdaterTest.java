@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("ProductsReviewsAndRatingInfoUpdater unit tests")
 class ProductsReviewsAndRatingInfoUpdaterTest {
 
-    @Mock private ProductReviewProductGateway productReviewProductGateway;
+    @Mock private ProductReviewProductApi productReviewProductGateway;
     @Mock private ReviewMaintenanceApi reviewMaintenanceApi;
     @Mock private TransactionTemplate transactionTemplate;
     @Mock private ApplicationArguments args;

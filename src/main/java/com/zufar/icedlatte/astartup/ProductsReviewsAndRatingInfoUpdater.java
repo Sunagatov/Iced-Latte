@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
     @Value("${migration.timeout-minutes:5}")
     private int timeoutMinutes;
 
-    private final ProductReviewProductGateway productReviewProductGateway;
+    private final ProductReviewProductApi productReviewProductApi;
     private final ReviewMaintenanceApi reviewMaintenanceApi;
     private final TransactionTemplate transactionTemplate;
 
@@ -40,7 +40,7 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
                 transactionTemplate.executeWithoutResult(_ -> {
                     log.info("migration.ratings.start");
                     long t0 = System.currentTimeMillis();
-                    productReviewProductGateway.refreshAllReviewAggregates();
+                    productReviewProductApi.refreshAllReviewAggregates();
                     reviewMaintenanceApi.refreshAllCounts();
                     log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
                 }), executor)

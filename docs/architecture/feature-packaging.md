@@ -15,9 +15,9 @@ Good examples:
 | Class | Package | Why |
 |---|---|---|
 | `OrderNotFoundException` | `order/exception` | order-owned business error |
-| `PaymentStatusService` | `payment/api` | payment-owned contract exposed to other features |
+| `PaymentStatusService` | `payment/service` | payment-owned implementation hidden inside the payment module |
 | `UserRepository` | `user/repository` | persistence for user-owned entities |
-| `ProductReviewValidator` | `review/validator` | review-specific validation |
+| `ProductReviewValidator` | `review/service/validator` | review-specific validation |
 | `ProductEndpoint` | `product/endpoint` | product REST API entry point |
 | `CartItemDtoConverter` | `cart/converter` | cart-specific DTO mapping |
 
@@ -162,10 +162,11 @@ cart -> product.entity.*
 Prefer:
 
 ```text
-order -> payment.api.PaymentStatusService
-favorite -> product.api.ProductLookupService
-review -> product.api.ProductExistenceChecker
-cart -> product.api.ProductPriceProvider
+payment -> order.api.OrderPaymentApi
+order -> cart.api.CartCheckoutApi
+favorite -> product.api.ProductCatalogApi
+review -> product.api.ProductReviewProductApi
+cart -> product.api.ProductCatalogApi
 ```
 
 The `api` package is the boundary a feature intentionally exposes to other features.

@@ -2,7 +2,7 @@ package com.zufar.icedlatte.payment.dto;
 
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.payment.api.checkout.CheckoutPaymentTransactionService;
+import com.zufar.icedlatte.payment.service.checkout.CheckoutPaymentTransactionService;
 import com.zufar.icedlatte.payment.entity.Payment;
 
 import java.util.List;

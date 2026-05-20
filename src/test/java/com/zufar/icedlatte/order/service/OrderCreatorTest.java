@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.order.service;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
@@ -39,7 +39,7 @@ class OrderCreatorTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private OrderDtoConverter orderDtoConverter;
-    @Mock private ShoppingCartService shoppingCartService;
+    @Mock private CartCheckoutApi shoppingCartService;
         @Mock private DeliveryAddressRepository deliveryAddressRepository;
     @Mock private ProductCatalogApi productCatalogApi;
     @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;

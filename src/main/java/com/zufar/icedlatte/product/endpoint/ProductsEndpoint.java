@@ -2,7 +2,7 @@ package com.zufar.icedlatte.product.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.product.api.ProductService;
+import com.zufar.icedlatte.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

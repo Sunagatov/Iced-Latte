@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.ai;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
 import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
@@ -26,7 +26,7 @@ class AsyncReviewProcessingServiceTest {
 
     @Mock private ReviewModerationService moderationService;
     @Mock private ProductReviewRepository reviewRepository;
-    @Mock private ProductReviewProductGateway productReviewProductGateway;
+    @Mock private ProductReviewProductApi productReviewProductGateway;
     @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
 
     @InjectMocks private AsyncReviewProcessingService service;

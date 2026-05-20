@@ -52,10 +52,10 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 
 | Module | Type | Exposed subpackages (@NamedInterface) | Internal |
 |--------|------|---------------------------------------|----------|
-| cart | CLOSED | `api/` | repository, entity, converter, endpoint, exception |
+| cart | CLOSED | `api/` | service, repository, entity, converter, endpoint, exception |
 | order | CLOSED | `api/`, `exception/` | repository, entity, endpoint, converter, event, specification |
 | payment | CLOSED | none | everything |
-| product | CLOSED | `api/`, `exception/` | entity, converter, repository, endpoint, validator |
+| product | CLOSED | `api/`, `exception/` | service, entity, converter, repository, endpoint, validator |
 | review | CLOSED | `api/` | everything else |
 | favorite | CLOSED | none | everything |
 | filestorage | CLOSED | `api/`, `dto/`, `exception/`, `aws/` | service, repository, converter |
@@ -79,8 +79,14 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 - No module may depend on `astartup`.
 - Business feature modules must be free of dependency cycles.
 - `order.api` must not depend on order repositories, entities, or converters.
+- `product.api` must not depend on product services, repositories, entities, converters, or specifications.
+- `cart.api` must not depend on cart services, repositories, entities, or converters.
+- `review.api` must not depend on review services, repositories, entities, converters, or AI internals.
 - Non-order modules must not depend on `order.service`.
+- Non-product modules must not depend on `product.service`.
 - Non-product modules must not depend on `product.entity` or `product.converter`.
+- Non-cart modules must not depend on `cart.service`.
+- Non-payment modules must not depend on `payment.service`.
 
 ## Key architectural changes made
 
@@ -98,6 +104,14 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 9. **Product entity/converter exposure removed** — cart and favorite now store product IDs
    and load catalog data through product APIs instead of depending on product JPA entities
    or MapStruct converters.
+10. **product.api contract split** — moved concrete product services to `product.service`.
+    `product.api` now exposes `ProductCatalogApi` and `ProductReviewProductApi`.
+    Review, cart, favorite, order, and startup code depend on those contracts rather than
+    product implementation services.
+11. **cart.api contract split** — moved `ShoppingCartService` to `cart.service`.
+    `cart.api` now exposes only the checkout/reorder contract used by order and payment.
+12. **payment service package cleanup** — renamed the misleading `payment.api` implementation
+    package to `payment.service`; payment remains closed and exposes no named API.
 
 ## Known remaining coupling (acceptable)
 
@@ -105,7 +119,7 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 
 ## Future work
 
-- Apply the same API-purity pattern to product, cart, review, user, and security.
+- Apply the same API-purity pattern to user and security.
 - Break `security ↔ user` cycle (extract `UserLookupApi` interface, close both modules).
 - Introduce domain events for async cross-module communication.
 - Tighten `common` — move module-specific types out of common into their owning modules.
@@ -123,7 +137,6 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 
 ### Negative
 
-- `product.entity` remains exposed due to JPA relationship constraints.
 - `security` and `user` remain OPEN (inherent coupling).
 - `@NamedInterface` annotations add `package-info.java` files to exposed subpackages.
 

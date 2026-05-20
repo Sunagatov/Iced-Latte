@@ -10,7 +10,6 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,6 @@ public class FavoriteService {
     private final FavoriteListDtoConverter favoriteListDtoConverter;
     private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
     private final ProductCatalogApi productCatalogApi;
-    private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
@@ -86,9 +84,7 @@ public class FavoriteService {
                 .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
 
         FavoriteListDto dto = favoriteListDtoConverter.toDto(entity, productsById);
-        ListOfFavoriteProductsDto response = listOfFavoriteProductsDtoConverter.toListProductDto(dto);
-        productPictureLinkUpdater.updateBatch(response.getProducts());
-        return response;
+        return listOfFavoriteProductsDtoConverter.toListProductDto(dto);
     }
 
     private void validateProductsExist(Set<UUID> productIds) {

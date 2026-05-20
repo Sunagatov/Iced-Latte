@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.order.service;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.entity.Order;
@@ -33,7 +33,7 @@ class OrderReorderServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private ProductCatalogApi productCatalogApi;
-    @Mock private ShoppingCartService shoppingCartService;
+    @Mock private CartCheckoutApi shoppingCartService;
     @InjectMocks private OrderReorderService reorderService;
 
     @Test

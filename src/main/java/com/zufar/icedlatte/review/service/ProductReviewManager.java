@@ -2,7 +2,7 @@ package com.zufar.icedlatte.review.service;
 
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
@@ -27,7 +27,7 @@ public class ProductReviewManager {
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final SingleUserProvider singleUserProvider;
     private final ProductReviewValidator productReviewValidator;
-    private final ProductReviewProductGateway productReviewProductGateway;
+    private final ProductReviewProductApi productReviewProductApi;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -53,7 +53,7 @@ public class ProductReviewManager {
         reviewRepository.saveAndFlush(productReview);
         summaryDebouncer.schedule(productId);
 
-        productReviewProductGateway.refreshReviewAggregates(productId);
+        productReviewProductApi.refreshReviewAggregates(productId);
 
         eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productReviewText.trim(), productId));
 
@@ -69,7 +69,7 @@ public class ProductReviewManager {
 
         reviewRepository.deleteById(productReviewId);
 
-        productReviewProductGateway.refreshReviewAggregates(productId);
+        productReviewProductApi.refreshReviewAggregates(productId);
 
         summaryDebouncer.schedule(productId);
     }

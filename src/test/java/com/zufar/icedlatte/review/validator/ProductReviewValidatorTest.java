@@ -2,7 +2,7 @@ package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
@@ -28,7 +28,7 @@ class ProductReviewValidatorTest {
     @Mock
     private ProductReviewRepository productReviewRepository;
     @Mock
-    private ProductReviewProductGateway productReviewProductGateway;
+    private ProductReviewProductApi productReviewProductGateway;
     @InjectMocks
     private ProductReviewValidator validator;
 

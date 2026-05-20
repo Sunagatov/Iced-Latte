@@ -10,7 +10,6 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +38,6 @@ class FavoriteServiceTest {
     @Mock private ProductCatalogApi productCatalogApi;
     @Mock private FavoriteListDtoConverter favoriteListDtoConverter;
     @Mock private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
-    @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Test
     @DisplayName("getEnrichedFavoriteList returns enriched DTO when list exists")
