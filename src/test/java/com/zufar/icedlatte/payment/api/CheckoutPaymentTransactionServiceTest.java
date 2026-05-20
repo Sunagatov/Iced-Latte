@@ -5,7 +5,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
-import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -57,13 +57,13 @@ class CheckoutPaymentTransactionServiceTest {
         ShoppingCartDto cart = new ShoppingCartDto()
                 .items(List.of(cartItem)).itemsTotalPrice(BigDecimal.valueOf(25.00)).itemsQuantity(2);
 
-        Order order = Order.builder().id(UUID.randomUUID()).userId(USER_ID)
-                .itemsTotalPrice(BigDecimal.valueOf(25.00)).build();
+        OrderSnapshot order = new OrderSnapshot(UUID.randomUUID(), USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT
+                , java.math.BigDecimal.valueOf(25.00), null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
-        when(orderCreator.createPendingPaymentOrder(eq(USER_ID), eq(request), eq(cart)))
+        when(orderCreator.createPendingPaymentOrderSnapshot(eq(USER_ID), eq(request), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
         when(stripeProperties.currency()).thenReturn("usd");
@@ -87,11 +87,11 @@ class CheckoutPaymentTransactionServiceTest {
         UUID orderId = UUID.randomUUID();
         Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
                 .providerSessionId("cs_test_existing").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        Order existingOrder = Order.builder().id(orderId).userId(USER_ID).build();
+        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderDetailProvider.findById(orderId)).thenReturn(existingOrder);
+        when(orderDetailProvider.getSnapshot(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
@@ -110,18 +110,18 @@ class CheckoutPaymentTransactionServiceTest {
         UUID orderId = UUID.randomUUID();
         Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
                 .providerSessionId(null).status(PaymentStatus.CREATED).build();
-        Order existingOrder = Order.builder().id(orderId).userId(USER_ID).build();
+        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderDetailProvider.findByIdWithItems(orderId)).thenReturn(existingOrder);
+        when(orderDetailProvider.getSnapshotWithItems(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
                 IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isTrue();
-        verify(orderDetailProvider).findByIdWithItems(orderId);
+        verify(orderDetailProvider).getSnapshotWithItems(orderId);
         verify(orderDetailProvider, never()).findById(orderId);
     }
 

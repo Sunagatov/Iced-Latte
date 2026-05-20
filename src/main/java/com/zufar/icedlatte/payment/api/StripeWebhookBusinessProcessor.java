@@ -8,7 +8,7 @@ import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
@@ -117,13 +117,13 @@ public class StripeWebhookBusinessProcessor {
         payment.setLatestEventType(event.getType());
         paymentRepository.save(payment);
 
-        Order order = orderStatusTransitioner.transition(
+        orderStatusTransitioner.transition(
                 orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, null, "Stripe payment confirmed");
 
         // Store stripePaymentIntentId on Order for refund lookup
         orderLifecycleService.assignPaymentIntent(orderId, stripeSession.getPaymentIntent());
 
-        shoppingCartService.deleteCartForUser(order.getUserId());
+        shoppingCartService.deleteCartForUser(payment.getUserId());
 
         log.info("checkout.completed: orderId={}, paymentIntentId={}",
                 orderId, stripeSession.getPaymentIntent());
@@ -185,27 +185,27 @@ public class StripeWebhookBusinessProcessor {
         }
 
         String paymentIntentId = charge.getPaymentIntent();
-        Optional<Order> orderOpt = orderDetailProvider.findByStripePaymentIntentId(paymentIntentId);
+        Optional<OrderSnapshot> orderOpt = orderDetailProvider.findSnapshotByStripePaymentIntentId(paymentIntentId);
 
         if (orderOpt.isEmpty()) {
             log.warn("payment.webhook.order_not_found: paymentIntentId={}", paymentIntentId);
             return;
         }
 
-        Order order = orderOpt.get();
-        if (order.getStatus() == OrderStatus.REFUND_REQUESTED) {
+        OrderSnapshot order = orderOpt.get();
+        if (order.status() == OrderStatus.REFUND_REQUESTED) {
             try {
                 orderStatusTransitioner.transition(
-                        order.getId(), OrderEvent.REFUND_CONFIRMED, null, "Stripe refund confirmed");
+                        order.id(), OrderEvent.REFUND_CONFIRMED, null, "Stripe refund confirmed");
                 log.info("order.refund.confirmed: orderId={}, paymentIntentId={}",
-                        order.getId(), paymentIntentId);
+                        order.id(), paymentIntentId);
             } catch (InvalidOrderStateTransitionException _) {
                 log.warn("order.refund.transition_failed: orderId={}, status={}",
-                        order.getId(), order.getStatus());
+                        order.id(), order.status());
             }
         } else {
             log.info("order.refund.webhook_ignored: orderId={}, status={}",
-                    order.getId(), order.getStatus());
+                    order.id(), order.status());
         }
     }
 

@@ -48,6 +48,31 @@ public class OrderDetailProvider {
     }
 
     @Transactional(readOnly = true)
+    public OrderSnapshot getSnapshot(UUID orderId) {
+        return toSnapshot(findById(orderId));
+    }
+
+    @Transactional(readOnly = true)
+    public OrderSnapshot getSnapshotWithItems(UUID orderId) {
+        return toSnapshot(findByIdWithItems(orderId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<OrderSnapshot> findSnapshotByStripePaymentIntentId(String paymentIntentId) {
+        return orderRepository.findByStripePaymentIntentId(paymentIntentId).map(this::toSnapshot);
+    }
+
+    private OrderSnapshot toSnapshot(Order order) {
+        List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
+                ? List.of()
+                : order.getItems().stream()
+                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                    .toList();
+        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+    }
+
+    @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId, UUID userId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));

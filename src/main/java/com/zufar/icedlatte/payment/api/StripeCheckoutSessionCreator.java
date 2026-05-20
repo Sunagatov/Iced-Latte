@@ -6,7 +6,7 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
-import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
@@ -51,7 +51,7 @@ public class StripeCheckoutSessionCreator {
      * Cart-based entry point (normal checkout). Converts cart items to Stripe
      * line items, then delegates to {@link #createFromLineItems}.
      */
-    public StripeSessionResult create(Order order, String customerEmail,
+    public StripeSessionResult create(OrderSnapshot order, String customerEmail,
                                       List<ShoppingCartItemDto> cartItems) {
         List<SessionCreateParams.LineItem> lineItems = lineItemConverter.toLineItems(cartItems);
         return createFromLineItems(order, customerEmail, lineItems);
@@ -62,10 +62,10 @@ public class StripeCheckoutSessionCreator {
      * Accepts pre-built Stripe line items so the retry path can rebuild them
      * from the persisted Order.items snapshot without needing the original cart.
      */
-    public StripeSessionResult createFromLineItems(Order order, String customerEmail,
+    public StripeSessionResult createFromLineItems(OrderSnapshot order, String customerEmail,
                                                    List<SessionCreateParams.LineItem> lineItems) {
-        String orderId = order.getId().toString();
-        String userId = order.getUserId().toString();
+        String orderId = order.id().toString();
+        String userId = order.userId().toString();
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)

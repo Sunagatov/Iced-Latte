@@ -5,9 +5,7 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
-import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -50,14 +48,12 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        Order order = Order.builder().id(ORDER_ID).userId(USER_ID)
-                .status(OrderStatus.PENDING_PAYMENT).build();
 
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(orderStatusTransitioner.transition(eq(ORDER_ID), eq(OrderEvent.PENDING_PAYMENT_CONFIRMED),
-                any(), any())).thenReturn(order);
+                any(), any())).thenReturn(null);
         doNothing().when(orderLifecycleService).assignPaymentIntent(any(), any());
 
         processor.process(event);
@@ -93,7 +89,7 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.PAID).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -110,7 +106,7 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 9999L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -247,7 +243,7 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.FAILED).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -264,7 +260,7 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.EXPIRED).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -281,7 +277,7 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).amountMinor(2500L)
+        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
                 .currency("usd").status(PaymentStatus.RECONCILIATION_FAILED).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 

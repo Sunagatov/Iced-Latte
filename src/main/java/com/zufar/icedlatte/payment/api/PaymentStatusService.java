@@ -7,7 +7,7 @@ import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.order.api.OrderLifecycleService;
@@ -48,10 +48,10 @@ public class PaymentStatusService {
     private final TransactionTemplate transactionTemplate;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
-        Order order = orderDetailProvider.findById(orderId);
+        OrderSnapshot order = orderDetailProvider.getSnapshot(orderId);
 
         UserDto currentUser = securityPrincipalProvider.get();
-        if (!order.getUserId().equals(currentUser.getId())) {
+        if (!order.userId().equals(currentUser.getId())) {
             throw new OrderAccessDeniedException();
         }
 
@@ -62,13 +62,13 @@ public class PaymentStatusService {
                 && payment.getProviderSessionId() != null) {
             trySyncFromStripe(payment);
             // Re-read after potential update
-            order = orderDetailProvider.findById(orderId);
+            order = orderDetailProvider.getSnapshot(orderId);
             payment = paymentRepository.findByOrderId(orderId).orElse(payment);
         }
 
         CheckoutStatusDto dto = new CheckoutStatusDto()
-                .orderId(order.getId())
-                .orderStatus(order.getStatus());
+                .orderId(order.id())
+                .orderStatus(order.status());
 
         if (payment != null) {
             dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(payment.getStatus().name()));
@@ -125,12 +125,12 @@ public class PaymentStatusService {
             locked.setLatestEventType("sync.session.retrieve");
             paymentRepository.save(locked);
 
-            Order order = orderStatusTransitioner.transition(
+            orderStatusTransitioner.transition(
                     orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED,
                     null, "Stripe payment confirmed (sync fallback)");
             orderLifecycleService.assignPaymentIntent(orderId, session.getPaymentIntent());
 
-            shoppingCartService.deleteCartForUser(order.getUserId());
+            shoppingCartService.deleteCartForUser(locked.getUserId());
 
             log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}",
                     orderId, session.getPaymentIntent());

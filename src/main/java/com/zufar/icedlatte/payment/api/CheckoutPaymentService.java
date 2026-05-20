@@ -7,8 +7,8 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.entity.OrderItem;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
+
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
@@ -69,10 +69,10 @@ public class CheckoutPaymentService {
         txService.saveStripeDetails(prepared.payment().getId(), stripeResult);
 
         log.info("checkout.created: orderId={}, stripeSessionId={}",
-                prepared.order().getId(), stripeResult.sessionId());
+                prepared.order().id(), stripeResult.sessionId());
 
         return new CheckoutResponseDto()
-                .orderId(prepared.order().getId())
+                .orderId(prepared.order().id())
                 .stripeSessionId(stripeResult.sessionId())
                 .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
     }
@@ -94,7 +94,7 @@ public class CheckoutPaymentService {
                             "Previous checkout session expired. Please retry with a new Idempotency-Key.");
                 }
                 return new CheckoutResponseDto()
-                        .orderId(prepared.order().getId())
+                        .orderId(prepared.order().id())
                         .stripeSessionId(payment.getProviderSessionId())
                         .checkoutUrl(URI.create(session.getUrl()));
             } catch (StripeException e) {
@@ -104,8 +104,8 @@ public class CheckoutPaymentService {
 
         // Case B: Order+Payment created but Stripe call failed — retry.
         // Rebuild line items from persisted Order.items (NOT the live cart).
-        Order order = prepared.order();
-        List<SessionCreateParams.LineItem> lineItems = order.getItems().stream()
+        OrderSnapshot order = prepared.order();
+        List<SessionCreateParams.LineItem> lineItems = order.items().stream()
                 .map(this::toStripeLineItem)
                 .toList();
 
@@ -115,22 +115,22 @@ public class CheckoutPaymentService {
         txService.saveStripeDetails(payment.getId(), stripeResult);
 
         return new CheckoutResponseDto()
-                .orderId(order.getId())
+                .orderId(order.id())
                 .stripeSessionId(stripeResult.sessionId())
                 .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
     }
 
-    private SessionCreateParams.LineItem toStripeLineItem(OrderItem item) {
+    private SessionCreateParams.LineItem toStripeLineItem(OrderSnapshot.OrderItemSnapshot item) {
         return SessionCreateParams.LineItem.builder()
-                .setQuantity((long) item.getProductsQuantity())
+                .setQuantity((long) item.productsQuantity())
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                         .setCurrency(stripeProperties.currency())
-                        .setUnitAmount(item.getProductPrice()
+                        .setUnitAmount(item.productPrice()
                                 .multiply(BigDecimal.valueOf(100))
                                 .setScale(0, RoundingMode.UNNECESSARY)
                                 .longValueExact())
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                .setName(item.getProductName())
+                                .setName(item.productName())
                                 .build())
                         .build())
                 .build();

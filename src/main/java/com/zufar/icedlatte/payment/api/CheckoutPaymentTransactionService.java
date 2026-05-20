@@ -6,7 +6,7 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCreator;
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
-import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
@@ -49,9 +49,9 @@ public class CheckoutPaymentTransactionService {
         if (existing != null) {
             // Do NOT read the live cart — it may be deleted after successful payment.
             // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
-            Order order = (existing.getProviderSessionId() == null
-                    ? orderDetailProvider.findByIdWithItems(existing.getOrderId())
-                    : orderDetailProvider.findById(existing.getOrderId())
+            OrderSnapshot order = (existing.getProviderSessionId() == null
+                    ? orderDetailProvider.getSnapshotWithItems(existing.getOrderId())
+                    : orderDetailProvider.getSnapshot(existing.getOrderId())
             );
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
             return new CheckoutPreparation(order, existing, List.of(), true);
@@ -62,14 +62,14 @@ public class CheckoutPaymentTransactionService {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        Order order = orderCreator.createPendingPaymentOrder(userId, request, cart);
+        OrderSnapshot order = orderCreator.createPendingPaymentOrderSnapshot(userId, request, cart);
 
         Payment payment = Payment.builder()
-                .orderId(order.getId())
+                .orderId(order.id())
                 .userId(userId)
                 .provider(PaymentProvider.STRIPE)
                 .status(PaymentStatus.CREATED)
-                .amountMinor(toMinorUnits(order.getItemsTotalPrice()))
+                .amountMinor(toMinorUnits(order.itemsTotalPrice()))
                 .currency(stripeProperties.currency())
                 .checkoutIdempotencyKey(idempotencyKey)
                 .build();

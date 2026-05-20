@@ -5,9 +5,10 @@ import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
+import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
+
 import com.zufar.icedlatte.order.api.OrderDetailProvider;
 import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -48,10 +49,10 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Returns PAID status for completed payment")
     void getStatus_paid_returnsPaidStatus() {
-        Order order = Order.builder().id(ORDER_ID).userId(USER_ID).status(OrderStatus.PAID).build();
+        OrderSnapshot order = new OrderSnapshot(ORDER_ID, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PAID, java.math.BigDecimal.TEN, null, java.util.List.of());
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
 
-        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
+        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -65,13 +66,13 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Returns PENDING_PAYMENT status for in-progress order without session ID (no Stripe sync)")
     void getStatus_pending_noSessionId_returnsPendingStatus() {
-        Order order = Order.builder().id(ORDER_ID).userId(USER_ID)
-                .status(OrderStatus.PENDING_PAYMENT).build();
+        OrderSnapshot order = new OrderSnapshot(ORDER_ID, USER_ID,
+                com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
         Payment payment = Payment.builder().orderId(ORDER_ID)
                 .providerSessionId(null)
                 .status(PaymentStatus.CREATED).build();
 
-        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
+        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -84,7 +85,7 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Throws OrderNotFoundException for unknown order")
     void getStatus_unknownOrder_throws() {
-        when(orderDetailProvider.findById(ORDER_ID)).thenThrow(new com.zufar.icedlatte.order.exception.OrderNotFoundException(ORDER_ID));
+        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenThrow(new com.zufar.icedlatte.order.exception.OrderNotFoundException(ORDER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
                 .isInstanceOf(OrderNotFoundException.class);
@@ -94,9 +95,9 @@ class PaymentStatusServiceTest {
     @DisplayName("Throws OrderAccessDeniedException for other user's order")
     void getStatus_otherUser_throws() {
         UUID otherUserId = UUID.randomUUID();
-        Order order = Order.builder().id(ORDER_ID).userId(otherUserId).status(OrderStatus.PAID).build();
+        OrderSnapshot order = new OrderSnapshot(ORDER_ID, otherUserId, com.zufar.icedlatte.openapi.dto.OrderStatus.PAID, java.math.BigDecimal.TEN, null, java.util.List.of());
 
-        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
+        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
@@ -106,10 +107,10 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Returns status without paymentStatus when no Payment entity exists")
     void getStatus_noPayment_returnsOrderStatusOnly() {
-        Order order = Order.builder().id(ORDER_ID).userId(USER_ID)
-                .status(OrderStatus.PENDING_PAYMENT).build();
+        OrderSnapshot order = new OrderSnapshot(ORDER_ID, USER_ID,
+                com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
-        when(orderDetailProvider.findById(ORDER_ID)).thenReturn(order);
+        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.empty());
 

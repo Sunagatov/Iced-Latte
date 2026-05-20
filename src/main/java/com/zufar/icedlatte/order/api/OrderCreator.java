@@ -129,6 +129,17 @@ public class OrderCreator {
         return saved;
     }
 
+    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CreateCheckoutRequestDto request,
+                                                           ShoppingCartDto cart) {
+        Order order = createPendingPaymentOrder(userId, request, cart);
+        var items = order.getItems() == null ? List.<OrderSnapshot.OrderItemSnapshot>of()
+                : order.getItems().stream()
+                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                    .toList();
+        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+    }
+
     private void validateProductAvailability(List<OrderItem> items) {
         List<String> unavailable = items.stream()
                 .filter(item -> !productService.existsById(item.getProductId()))
