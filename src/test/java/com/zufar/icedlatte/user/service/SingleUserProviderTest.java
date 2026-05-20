@@ -83,8 +83,8 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserAuthenticationByEmail returns authentication snapshot")
-    void getUserAuthenticationByEmailReturnsSnapshot() {
+    @DisplayName("findUserAuthenticationByEmail returns authentication snapshot")
+    void findUserAuthenticationByEmailReturnsSnapshot() {
         UserEntity entity = UserEntity.builder()
                 .id(UUID.randomUUID())
                 .email("user@example.com")
@@ -97,17 +97,27 @@ class SingleUserProviderTest {
                 .build();
         when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
 
-        var snapshot = singleUserProvider.getUserAuthenticationByEmail("user@example.com");
+        var snapshot = singleUserProvider.findUserAuthenticationByEmail("user@example.com");
 
-        assertThat(snapshot.userId()).isEqualTo(entity.getId());
-        assertThat(snapshot.email()).isEqualTo(entity.getEmail());
-        assertThat(snapshot.password()).isEqualTo(entity.getPassword());
-        assertThat(snapshot.authorities()).containsExactly("USER");
-        assertThat(snapshot.accountNonExpired()).isTrue();
-        assertThat(snapshot.accountNonLocked()).isTrue();
-        assertThat(snapshot.credentialsNonExpired()).isTrue();
-        assertThat(snapshot.enabled()).isTrue();
+        assertThat(snapshot).isPresent();
+        assertThat(snapshot.orElseThrow().userId()).isEqualTo(entity.getId());
+        assertThat(snapshot.orElseThrow().email()).isEqualTo(entity.getEmail());
+        assertThat(snapshot.orElseThrow().password()).isEqualTo(entity.getPassword());
+        assertThat(snapshot.orElseThrow().authorities()).containsExactly("USER");
+        assertThat(snapshot.orElseThrow().accountNonExpired()).isTrue();
+        assertThat(snapshot.orElseThrow().accountNonLocked()).isTrue();
+        assertThat(snapshot.orElseThrow().credentialsNonExpired()).isTrue();
+        assertThat(snapshot.orElseThrow().enabled()).isTrue();
         verify(userCrudRepository).findByEmail("user@example.com");
+    }
+
+    @Test
+    @DisplayName("findUserAuthenticationByEmail returns empty when user is missing")
+    void findUserAuthenticationByEmailReturnsEmptyWhenMissing() {
+        when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
+
+        assertThat(singleUserProvider.findUserAuthenticationByEmail("missing@example.com")).isEmpty();
+        verify(userCrudRepository).findByEmail("missing@example.com");
     }
 
     @Test

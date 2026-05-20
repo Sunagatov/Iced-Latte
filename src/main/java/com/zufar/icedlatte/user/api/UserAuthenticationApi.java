@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.user.api;
 
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import java.util.Optional;
 
 public interface UserAuthenticationApi {
 
-    UserAuthenticationSnapshot getUserAuthenticationByEmail(String email) throws UserNotFoundException;
+    Optional<UserAuthenticationSnapshot> findUserAuthenticationByEmail(String email);
 }

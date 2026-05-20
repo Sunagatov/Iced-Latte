@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,21 +38,23 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
 
     @Override
     @Transactional(readOnly = true)
-    public UserAuthenticationSnapshot getUserAuthenticationByEmail(final String email) throws UserNotFoundException {
-        UserEntity user = getUserEntityByEmail(email);
-        List<String> authorities = user.getAuthorities().stream()
-                .map(UserGrantedAuthority::getAuthority)
-                .toList();
-        return new UserAuthenticationSnapshot(
-                user.getId(),
-                user.getEmail(),
-                user.getPassword(),
-                authorities,
-                user.isAccountNonExpired(),
-                user.isAccountNonLocked(),
-                user.isCredentialsNonExpired(),
-                user.isEnabled()
-        );
+    public Optional<UserAuthenticationSnapshot> findUserAuthenticationByEmail(final String email) {
+        return userCrudRepository.findByEmail(email)
+                .map(user -> {
+                    List<String> authorities = user.getAuthorities().stream()
+                            .map(UserGrantedAuthority::getAuthority)
+                            .toList();
+                    return new UserAuthenticationSnapshot(
+                            user.getId(),
+                            user.getEmail(),
+                            user.getPassword(),
+                            authorities,
+                            user.isAccountNonExpired(),
+                            user.isAccountNonLocked(),
+                            user.isCredentialsNonExpired(),
+                            user.isEnabled()
+                    );
+                });
     }
 
     @Transactional(readOnly = true)

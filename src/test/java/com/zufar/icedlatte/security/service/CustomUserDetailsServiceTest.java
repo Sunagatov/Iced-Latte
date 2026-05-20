@@ -4,7 +4,6 @@ import com.zufar.icedlatte.security.service.signin.SecurityUserDetails;
 import com.zufar.icedlatte.security.service.signin.CustomUserDetailsService;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +39,8 @@ class CustomUserDetailsServiceTest {
         @DisplayName("normalizes email before API lookup")
         void normalizesEmailBeforeApiLookup() {
             UserAuthenticationSnapshot user = user();
-            when(userAuthenticationApi.getUserAuthenticationByEmail("john.doe@example.com")).thenReturn(user);
+            when(userAuthenticationApi.findUserAuthenticationByEmail("john.doe@example.com"))
+                    .thenReturn(Optional.of(user));
 
             SecurityUserDetails result = (SecurityUserDetails) service.loadUserByUsername("  John.Doe@Example.com  ");
 
@@ -47,7 +48,7 @@ class CustomUserDetailsServiceTest {
             assertThat(result.getUsername()).isEqualTo(user.email());
             assertThat(result.getPassword()).isEqualTo(user.password());
             assertThat(result.getAuthorities()).extracting("authority").containsExactly("USER");
-            verify(userAuthenticationApi).getUserAuthenticationByEmail("john.doe@example.com");
+            verify(userAuthenticationApi).findUserAuthenticationByEmail("john.doe@example.com");
             verifyNoMoreInteractions(userAuthenticationApi);
         }
 
@@ -64,14 +65,14 @@ class CustomUserDetailsServiceTest {
         @Test
         @DisplayName("throws when normalized email is not found")
         void throwsWhenUserIsNotFound() {
-            when(userAuthenticationApi.getUserAuthenticationByEmail("missing@example.com"))
-                    .thenThrow(new UserNotFoundException("missing@example.com"));
+            when(userAuthenticationApi.findUserAuthenticationByEmail("missing@example.com"))
+                    .thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.loadUserByUsername("Missing@Example.com"))
                     .isInstanceOf(UsernameNotFoundException.class)
                     .hasMessage("User not found");
 
-            verify(userAuthenticationApi).getUserAuthenticationByEmail("missing@example.com");
+            verify(userAuthenticationApi).findUserAuthenticationByEmail("missing@example.com");
             verifyNoMoreInteractions(userAuthenticationApi);
         }
     }
