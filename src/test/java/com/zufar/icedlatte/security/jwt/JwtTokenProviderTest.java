@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.jwt.support.JwtSigningKeys;
+
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -41,7 +43,7 @@ class JwtTokenProviderTest {
         when(props.issuer()).thenReturn("iced-latte");
         when(props.audience()).thenReturn("iced-latte-client");
 
-        JwtSignKeyProvider keyProvider = new JwtSignKeyProvider(props);
+        JwtSigningKeys keyProvider = new JwtSigningKeys(props);
         tokenProvider = new JwtTokenProvider(keyProvider, props);
         signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
     }

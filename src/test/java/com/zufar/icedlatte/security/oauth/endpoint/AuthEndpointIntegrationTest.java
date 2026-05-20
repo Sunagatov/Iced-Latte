@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.oauth.endpoint;
 
-import com.zufar.icedlatte.security.oauth.api.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.service.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.api.OAuthProviderClient;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;

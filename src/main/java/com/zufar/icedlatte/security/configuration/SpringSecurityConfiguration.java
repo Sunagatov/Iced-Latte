@@ -6,7 +6,7 @@ import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

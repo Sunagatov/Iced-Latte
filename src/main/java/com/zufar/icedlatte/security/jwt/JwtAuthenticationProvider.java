@@ -15,18 +15,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JwtAuthenticationProvider {
 
-    private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
-    private final JwtClaimExtractor jwtClaimExtractor;
+    private final JwtBearerTokenResolver jwtBearerTokenResolver;
+    private final JwtTokenClaims jwtTokenClaims;
     private final UserDetailsService userDetailsService;
-    private final JwtBlacklistValidator jwtBlacklistValidator;
+    private final JwtTokenBlacklist jwtTokenBlacklist;
 
     public Authentication get(final HttpServletRequest httpRequest) {
-        String jwtToken = jwtTokenFromAuthHeaderExtractor.extract(httpRequest);
+        String jwtToken = jwtBearerTokenResolver.extract(httpRequest);
 
-        jwtBlacklistValidator.validate(jwtToken);
+        jwtTokenBlacklist.validateNotBlacklisted(jwtToken);
 
-        // ExpiredJwtException is thrown by jwtClaimExtractor if the token is expired
-        String userEmail = jwtClaimExtractor.extractEmail(jwtToken);
+        String userEmail = jwtTokenClaims.extractAccessTokenEmail(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -40,4 +39,3 @@ public class JwtAuthenticationProvider {
         return authenticationToken;
     }
 }
-

@@ -6,9 +6,9 @@ import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
-import com.zufar.icedlatte.security.jwt.JwtClaimExtractor;
-import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
+import com.zufar.icedlatte.security.jwt.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.JwtTokenClaims;
 import com.zufar.icedlatte.security.ratelimit.RateLimitCategory;
 import com.zufar.icedlatte.security.ratelimit.RateLimitProperties;
 import com.zufar.icedlatte.security.ratelimit.RateLimitProperties.Bucket;
@@ -45,9 +45,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
-    private final JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
-    private final JwtClaimExtractor jwtClaimExtractor;
-    private final JwtBlacklistValidator jwtBlacklistValidator;
+    private final JwtBearerTokenResolver jwtBearerTokenResolver;
+    private final JwtTokenClaims jwtTokenClaims;
+    private final JwtTokenBlacklist jwtTokenBlacklist;
     private final RateLimitProperties properties;
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
@@ -83,9 +83,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                               @Qualifier("closedRateLimiter") RateLimiter closedRateLimiter,
                               MeterRegistry meterRegistry,
                               ClientIpExtractor clientIpExtractor,
-                              JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor,
-                              JwtClaimExtractor jwtClaimExtractor,
-                              JwtBlacklistValidator jwtBlacklistValidator,
+                              JwtBearerTokenResolver jwtBearerTokenResolver,
+                              JwtTokenClaims jwtTokenClaims,
+                              JwtTokenBlacklist jwtTokenBlacklist,
                               RateLimitProperties properties,
                               ProblemTypeUriFactory problemTypeUriFactory,
                               CaffeineSizeProperties caffeineSizeProperties) {
@@ -93,9 +93,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
-        this.jwtTokenFromAuthHeaderExtractor = jwtTokenFromAuthHeaderExtractor;
-        this.jwtClaimExtractor = jwtClaimExtractor;
-        this.jwtBlacklistValidator = jwtBlacklistValidator;
+        this.jwtBearerTokenResolver = jwtBearerTokenResolver;
+        this.jwtTokenClaims = jwtTokenClaims;
+        this.jwtTokenBlacklist = jwtTokenBlacklist;
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
         this.warnedKeys = Caffeine.newBuilder()
@@ -240,9 +240,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
         try {
-            String token = jwtTokenFromAuthHeaderExtractor.extract(request);
-            jwtBlacklistValidator.validate(token);
-            return Optional.of(jwtClaimExtractor.extractEmail(token));
+            String token = jwtBearerTokenResolver.extract(request);
+            jwtTokenBlacklist.validateNotBlacklisted(token);
+            return Optional.of(jwtTokenClaims.extractAccessTokenEmail(token));
         } catch (Exception _) {
             return Optional.empty();
         }

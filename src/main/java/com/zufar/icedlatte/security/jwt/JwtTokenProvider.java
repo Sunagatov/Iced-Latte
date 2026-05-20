@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.jwt.support.JwtClaimNames;
+import com.zufar.icedlatte.security.jwt.support.JwtSigningKeys;
 import com.zufar.icedlatte.security.configuration.JwtProperties;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
 
@@ -23,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class JwtTokenProvider {
-    private final JwtSignKeyProvider jwtSignKeyProvider;
+    private final JwtSigningKeys jwtSigningKeys;
     private final JwtProperties jwtProperties;
 
     public String generateToken(final UserDetails userDetails, UUID sessionId) {
@@ -37,7 +39,7 @@ public class JwtTokenProvider {
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
-        return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSignKeyProvider.get());
+        return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSigningKeys.get());
     }
 
     public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
@@ -47,7 +49,7 @@ public class JwtTokenProvider {
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
-        return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSignKeyProvider.getRefresh());
+        return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSigningKeys.getRefresh());
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails,

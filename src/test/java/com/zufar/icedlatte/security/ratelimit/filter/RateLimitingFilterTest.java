@@ -3,9 +3,9 @@ package com.zufar.icedlatte.security.ratelimit.filter;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.jwt.JwtBlacklistValidator;
-import com.zufar.icedlatte.security.jwt.JwtClaimExtractor;
-import com.zufar.icedlatte.security.jwt.JwtTokenFromAuthHeaderExtractor;
+import com.zufar.icedlatte.security.jwt.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.JwtTokenClaims;
+import com.zufar.icedlatte.security.jwt.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.ratelimit.RateLimitProperties;
 import com.zufar.icedlatte.security.ratelimit.RateLimitResult;
 import com.zufar.icedlatte.security.ratelimit.RateLimiter;
@@ -45,9 +45,9 @@ class RateLimitingFilterTest {
     @Mock private RateLimiter openRateLimiter;
     @Mock private RateLimiter closedRateLimiter;
     @Mock private ClientIpExtractor clientIpExtractor;
-    @Mock private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
-    @Mock private JwtClaimExtractor jwtClaimExtractor;
-    @Mock private JwtBlacklistValidator jwtBlacklistValidator;
+    @Mock private JwtBearerTokenResolver jwtBearerTokenResolver;
+    @Mock private JwtTokenClaims jwtTokenClaims;
+    @Mock private JwtTokenBlacklist jwtTokenBlacklist;
 
     private RateLimitingFilter filter;
     private final ProblemTypeUriFactory problemTypeUriFactory =
@@ -62,9 +62,9 @@ class RateLimitingFilterTest {
                 closedRateLimiter,
                 new SimpleMeterRegistry(),
                 clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor,
-                jwtClaimExtractor,
-                jwtBlacklistValidator,
+                jwtBearerTokenResolver,
+                jwtTokenClaims,
+                jwtTokenBlacklist,
                 properties(),
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)
@@ -188,10 +188,10 @@ class RateLimitingFilterTest {
     @DisplayName("authenticated user key uses username only, not username+ip")
     void authenticatedUserKeyContainsUsernameOnly() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
-        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenReturn("valid-token");
+        when(jwtBearerTokenResolver.extract(any(MockHttpServletRequest.class))).thenReturn("valid-token");
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
-        when(jwtClaimExtractor.extractEmail("valid-token")).thenReturn("alice@example.com");
+        when(jwtTokenClaims.extractAccessTokenEmail("valid-token")).thenReturn("alice@example.com");
 
         filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/cart"),
                 new MockHttpServletResponse(), mock(FilterChain.class));
@@ -206,7 +206,7 @@ class RateLimitingFilterTest {
     @DisplayName("anonymous request key uses IP")
     void anonymousRequestKeyContainsIp() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
-        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenThrow(new RuntimeException("no token"));
+        when(jwtBearerTokenResolver.extract(any(MockHttpServletRequest.class))).thenThrow(new RuntimeException("no token"));
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
@@ -222,8 +222,8 @@ class RateLimitingFilterTest {
     @DisplayName("invalid token falls back to IP-based key")
     void invalidTokenStillUsesIpKey() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("7.7.7.7");
-        when(jwtTokenFromAuthHeaderExtractor.extract(any(MockHttpServletRequest.class))).thenReturn("revoked-token");
-        org.mockito.Mockito.doThrow(new RuntimeException("revoked")).when(jwtBlacklistValidator).validate("revoked-token");
+        when(jwtBearerTokenResolver.extract(any(MockHttpServletRequest.class))).thenReturn("revoked-token");
+        org.mockito.Mockito.doThrow(new RuntimeException("revoked")).when(jwtTokenBlacklist).validateNotBlacklisted("revoked-token");
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
@@ -281,7 +281,7 @@ class RateLimitingFilterTest {
         properties.getAuth().setMaxRequests(0);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
+                jwtBearerTokenResolver, jwtTokenClaims, jwtTokenBlacklist, properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -297,7 +297,7 @@ class RateLimitingFilterTest {
         properties.getSearch().setWindowDuration(Duration.ZERO);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, properties,
+                jwtBearerTokenResolver, jwtTokenClaims, jwtTokenBlacklist, properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -380,7 +380,7 @@ class RateLimitingFilterTest {
         props.setBanThreshold(3);
         RateLimitingFilter banFilter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                jwtTokenFromAuthHeaderExtractor, jwtClaimExtractor, jwtBlacklistValidator, props,
+                jwtBearerTokenResolver, jwtTokenClaims, jwtTokenBlacklist, props,
                 problemTypeUriFactory, new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");

@@ -16,7 +16,7 @@ import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.user.api.SingleUserProvider;
+import com.zufar.icedlatte.user.service.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import org.junit.jupiter.api.BeforeEach;

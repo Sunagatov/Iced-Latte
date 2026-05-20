@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.scheduler;
 
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
-import com.zufar.icedlatte.security.api.LoginAttemptService;
+import com.zufar.icedlatte.security.service.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;

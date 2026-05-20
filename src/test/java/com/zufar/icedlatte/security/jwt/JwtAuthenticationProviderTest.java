@@ -1,10 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -25,47 +23,45 @@ import static org.mockito.Mockito.when;
 class JwtAuthenticationProviderTest {
 
     @Mock
-    private JwtTokenFromAuthHeaderExtractor jwtTokenFromAuthHeaderExtractor;
+    private JwtBearerTokenResolver jwtBearerTokenResolver;
 
     @Mock
-    private JwtClaimExtractor jwtClaimExtractor;
+    private JwtTokenClaims jwtTokenClaims;
 
     @Mock
     private UserDetailsService userDetailsService;
 
     @Mock
-    private JwtBlacklistValidator jwtBlacklistValidator;
+    private JwtTokenBlacklist jwtTokenBlacklist;
 
-    @InjectMocks
-    private JwtAuthenticationProvider jwtAuthenticationProvider;
+    @Test
+    @DisplayName("successfully authenticates user and attaches request details")
+    void successfullyAuthenticatesUserAndAttachesRequestDetails() {
+        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
+                jwtBearerTokenResolver,
+                jwtTokenClaims,
+                userDetailsService,
+                jwtTokenBlacklist
+        );
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        httpRequest.setRemoteAddr("203.0.113.10");
+        UserDetails userDetails = new User("test@example.com", "password", Collections.emptyList());
+        String jwtToken = "mockJwtToken";
+        String userEmail = "test@example.com";
 
-    @Nested
-    @DisplayName("get")
-    class Get {
+        when(jwtBearerTokenResolver.extract(httpRequest)).thenReturn(jwtToken);
+        when(jwtTokenClaims.extractAccessTokenEmail(jwtToken)).thenReturn(userEmail);
+        when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
 
-        @Test
-        @DisplayName("successfully authenticates user and attaches request details")
-        void successfullyAuthenticatesUserAndAttachesRequestDetails() {
-            MockHttpServletRequest httpRequest = new MockHttpServletRequest();
-            httpRequest.setRemoteAddr("203.0.113.10");
-            UserDetails userDetails = new User("test@example.com", "password", Collections.emptyList());
-            String jwtToken = "mockJwtToken";
-            String userEmail = "test@example.com";
+        var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
 
-            when(jwtTokenFromAuthHeaderExtractor.extract(httpRequest)).thenReturn(jwtToken);
-            when(jwtClaimExtractor.extractEmail(jwtToken)).thenReturn(userEmail);
-            when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
-
-            var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
-
-            assertThat(authenticationToken.getPrincipal()).isEqualTo(userDetails);
-            assertThat(authenticationToken.getCredentials()).isNull();
-            assertThat(authenticationToken.getDetails()).isInstanceOf(WebAuthenticationDetails.class);
-            verify(jwtTokenFromAuthHeaderExtractor).extract(httpRequest);
-            verify(jwtBlacklistValidator).validate(jwtToken);
-            verify(jwtClaimExtractor).extractEmail(jwtToken);
-            verify(userDetailsService).loadUserByUsername(userEmail);
-            verifyNoMoreInteractions(jwtTokenFromAuthHeaderExtractor, jwtBlacklistValidator, jwtClaimExtractor, userDetailsService);
-        }
+        assertThat(authenticationToken.getPrincipal()).isEqualTo(userDetails);
+        assertThat(authenticationToken.getCredentials()).isNull();
+        assertThat(authenticationToken.getDetails()).isInstanceOf(WebAuthenticationDetails.class);
+        verify(jwtBearerTokenResolver).extract(httpRequest);
+        verify(jwtTokenBlacklist).validateNotBlacklisted(jwtToken);
+        verify(jwtTokenClaims).extractAccessTokenEmail(jwtToken);
+        verify(userDetailsService).loadUserByUsername(userEmail);
+        verifyNoMoreInteractions(jwtBearerTokenResolver, jwtTokenBlacklist, jwtTokenClaims, userDetailsService);
     }
 }

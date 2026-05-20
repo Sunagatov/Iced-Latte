@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.configuration;
 
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.security.jwt.JwtAuthenticationFilter;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

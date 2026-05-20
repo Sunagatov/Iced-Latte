@@ -2,10 +2,11 @@ package com.zufar.icedlatte.user.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.api.*;
-import com.zufar.icedlatte.security.api.registration.PasswordResetService;
-import com.zufar.icedlatte.user.api.*;
-import com.zufar.icedlatte.user.api.avatar.UserAvatarUploader;
+import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.service.registration.PasswordResetService;
+import com.zufar.icedlatte.user.service.DeliveryAddressService;
+import com.zufar.icedlatte.user.service.UserProfileService;
+import com.zufar.icedlatte.user.service.avatar.UserAvatarUploader;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
