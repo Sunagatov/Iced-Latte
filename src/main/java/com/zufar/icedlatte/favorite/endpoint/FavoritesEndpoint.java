@@ -1,9 +1,7 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.favorite.api.FavoriteListProvider;
-import com.zufar.icedlatte.favorite.api.FavoriteProductAdder;
-import com.zufar.icedlatte.favorite.api.FavoriteProductDeleter;
+import com.zufar.icedlatte.favorite.api.FavoriteService;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
@@ -33,15 +31,13 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     public static final String FAVORITES_URL = ApiPaths.FAVORITES;
 
     private final SecurityPrincipalProvider securityPrincipalProvider;
-    private final FavoriteProductAdder favoriteProductAdderHelper;
-    private final FavoriteListProvider favoriteListProvider;
-    private final FavoriteProductDeleter favoriteProductDeleter;
+    private final FavoriteService favoriteService;
 
     @Override
     @PostMapping
     public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Valid @RequestBody final ListOfFavoriteProducts request) {
         var userId = securityPrincipalProvider.getUserId();
-        var response = favoriteProductAdderHelper.add(request, userId);
+        var response = favoriteService.add(request, userId);
         log.info("favourites.added: count={}", request.getProductIds().size());
         return ResponseEntity.ok(response);
     }
@@ -50,7 +46,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = securityPrincipalProvider.getUserId();
-        var response = favoriteListProvider.getEnrichedFavoriteList(userId);
+        var response = favoriteService.getEnrichedFavoriteList(userId);
         log.debug("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
         return ResponseEntity.ok(response);
     }
@@ -59,7 +55,7 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
         var userId = securityPrincipalProvider.getUserId();
-        favoriteProductDeleter.delete(productId, userId);
+        favoriteService.delete(productId, userId);
         log.info("favourites.removed: productId={}", productId);
         return ResponseEntity.ok().build();
     }

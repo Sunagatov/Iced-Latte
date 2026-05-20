@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,36 +32,54 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FavoriteProductAdder {
+public class FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
-    private final ProductCatalogApi productCatalogApi;
     private final FavoriteListDtoConverter favoriteListDtoConverter;
     private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    private final ProductCatalogApi productCatalogApi;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
-    private final FavoriteListProvider favoriteListProvider;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts listOfFavoriteProducts,
-                                         final UUID userId) {
-        FavoriteListEntity favoriteListEntity = favoriteListProvider.getFavoriteListEntity(userId);
+    public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
+        FavoriteListEntity entity = favoriteRepository.findByUserId(userId)
+                .orElseGet(() -> createNewFavoriteList(userId));
+        return toEnrichedDto(entity);
+    }
 
-        Set<UUID> existingProductIds = extractFavoriteProductIds(favoriteListEntity);
-        Set<UUID> newProductIds = filterNewFavoriteProductIds(listOfFavoriteProducts, existingProductIds);
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts request, final UUID userId) {
+        FavoriteListEntity favoriteList = getOrCreateFavoriteList(userId);
+
+        Set<UUID> existingProductIds = extractProductIds(favoriteList);
+        Set<UUID> newProductIds = request.getProductIds().stream()
+                .filter(id -> !existingProductIds.contains(id))
+                .collect(Collectors.toSet());
 
         validateProductsExist(newProductIds);
 
-        Set<FavoriteItemEntity> newFavoriteItems = newProductIds.stream()
-                .map(productId -> FavoriteItemEntity.builder()
-                        .favoriteListEntity(favoriteListEntity)
+        newProductIds.forEach(productId ->
+                favoriteList.getFavoriteItems().add(FavoriteItemEntity.builder()
+                        .favoriteListEntity(favoriteList)
                         .productId(productId)
-                        .build())
-                .collect(Collectors.toSet());
-        favoriteListEntity.getFavoriteItems().addAll(newFavoriteItems);
+                        .build()));
 
-        FavoriteListEntity updatedEntity = saveWithConcurrentInsertRecovery(
-                favoriteListEntity, newProductIds, userId);
-        return toEnrichedDto(updatedEntity);
+        FavoriteListEntity saved = saveWithConcurrentInsertRecovery(favoriteList, newProductIds, userId);
+        return toEnrichedDto(saved);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void delete(final UUID productId, final UUID userId) {
+        favoriteRepository.findByUserId(userId).ifPresent(favoriteList ->
+                favoriteList.getFavoriteItems()
+                        .removeIf(item -> item.getProductId().equals(productId)));
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private FavoriteListEntity getOrCreateFavoriteList(UUID userId) {
+        return favoriteRepository.findByUserId(userId)
+                .orElseGet(() -> createAndSaveFavoriteList(userId));
     }
 
     private ListOfFavoriteProductsDto toEnrichedDto(FavoriteListEntity entity) {
@@ -85,40 +105,50 @@ public class FavoriteProductAdder {
         }
     }
 
-    private FavoriteListEntity saveWithConcurrentInsertRecovery(FavoriteListEntity favoriteListEntity,
+    private FavoriteListEntity saveWithConcurrentInsertRecovery(FavoriteListEntity favoriteList,
                                                                 Set<UUID> newProductIds,
                                                                 UUID userId) {
         try {
-            return favoriteRepository.save(favoriteListEntity);
+            return favoriteRepository.save(favoriteList);
         } catch (DataIntegrityViolationException ex) {
             if (!isFavoriteItemUniqueConstraintViolation(ex)) {
                 throw ex;
             }
             log.warn("favourites.add.concurrent_conflict: userId={}", userId);
-            FavoriteListEntity freshFavoriteList = favoriteListProvider.getFavoriteListEntity(userId);
-            Set<UUID> existingProductIds = extractFavoriteProductIds(freshFavoriteList);
-            Set<UUID> stillMissingIds = newProductIds.stream()
-                    .filter(productId -> !existingProductIds.contains(productId))
-                    .collect(Collectors.toSet());
-            stillMissingIds.forEach(productId ->
-                    freshFavoriteList.getFavoriteItems().add(FavoriteItemEntity.builder()
-                            .favoriteListEntity(freshFavoriteList)
+            FavoriteListEntity fresh = getOrCreateFavoriteList(userId);
+            Set<UUID> existingIds = extractProductIds(fresh);
+            newProductIds.stream()
+                    .filter(id -> !existingIds.contains(id))
+                    .forEach(productId -> fresh.getFavoriteItems().add(FavoriteItemEntity.builder()
+                            .favoriteListEntity(fresh)
                             .productId(productId)
                             .build()));
-            return favoriteRepository.save(freshFavoriteList);
+            return favoriteRepository.save(fresh);
         }
     }
 
-    private Set<UUID> extractFavoriteProductIds(FavoriteListEntity favoriteListEntity) {
-        return favoriteListEntity.getFavoriteItems().stream()
-                .map(FavoriteItemEntity::getProductId)
-                .collect(Collectors.toSet());
+    private FavoriteListEntity createAndSaveFavoriteList(UUID userId) {
+        try {
+            return favoriteRepository.save(createNewFavoriteList(userId));
+        } catch (DataIntegrityViolationException ex) {
+            log.warn("favourites.create.concurrent_conflict: userId={}", userId);
+            return favoriteRepository.findByUserId(userId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Favorite list not found after uniqueness conflict for userId=" + userId, ex));
+        }
     }
 
-    private Set<UUID> filterNewFavoriteProductIds(ListOfFavoriteProducts listOfFavoriteProducts,
-                                                  Set<UUID> existingIds) {
-        return listOfFavoriteProducts.getProductIds().stream()
-                .filter(productId -> !existingIds.contains(productId))
+    private FavoriteListEntity createNewFavoriteList(UUID userId) {
+        return FavoriteListEntity.builder()
+                .userId(userId)
+                .favoriteItems(new HashSet<>())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+    }
+
+    private Set<UUID> extractProductIds(FavoriteListEntity entity) {
+        return entity.getFavoriteItems().stream()
+                .map(FavoriteItemEntity::getProductId)
                 .collect(Collectors.toSet());
     }
 
