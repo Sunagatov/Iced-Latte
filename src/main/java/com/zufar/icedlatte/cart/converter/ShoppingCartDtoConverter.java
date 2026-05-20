@@ -2,34 +2,47 @@ package com.zufar.icedlatte.cart.converter;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        uses = {ShoppingCartItemDtoConverter.class})
-public interface ShoppingCartDtoConverter {
+@Component
+public class ShoppingCartDtoConverter {
 
-    @Mapping(target = "items", source = "items", qualifiedByName = {"toShoppingCartItemDto"})
-    @Mapping(target = "itemsTotalPrice", source = "items", qualifiedByName = {"toItemsTotalPrice"})
-    @Mapping(target = "itemsQuantity", expression = "java(cart.getItems() != null ? cart.getItems().size() : 0)")
-    @Mapping(target = "productsQuantity", expression = "java(cart.getItems() != null ? cart.getItems().stream().mapToInt(com.zufar.icedlatte.cart.entity.ShoppingCartItem::getProductQuantity).sum() : 0)")
-    ShoppingCartDto toDto(final ShoppingCart cart);
+    public ShoppingCartDto toDto(final ShoppingCart cart,
+                                 final Map<UUID, ProductInfoDto> productsById) {
+        List<ShoppingCartItemDto> itemDtos = cart.getItems() == null ? List.of() :
+                cart.getItems().stream()
+                        .map(item -> toItemDto(item, productsById.get(item.getProductId())))
+                        .toList();
 
-    @Named("toItemsTotalPrice")
-    default BigDecimal toItemsTotalPrice(Set<ShoppingCartItem> items) {
-        if (items == null) return BigDecimal.ZERO;
-        return items.stream()
-                .map(item -> item.getProductInfo()
-                        .getPrice()
-                        .multiply(BigDecimal.valueOf(item.getProductQuantity())))
+        BigDecimal itemsTotalPrice = itemDtos.stream()
+                .map(item -> item.getProductInfo().getPrice().multiply(BigDecimal.valueOf(item.getProductQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int itemsQuantity = itemDtos.size();
+        int productsQuantity = itemDtos.stream().mapToInt(ShoppingCartItemDto::getProductQuantity).sum();
+
+        return new ShoppingCartDto()
+                .id(cart.getId())
+                .userId(cart.getUserId())
+                .items(itemDtos)
+                .itemsTotalPrice(itemsTotalPrice)
+                .itemsQuantity(itemsQuantity)
+                .productsQuantity(productsQuantity);
+    }
+
+    private ShoppingCartItemDto toItemDto(ShoppingCartItem item,
+                                          ProductInfoDto productInfo) {
+        return new ShoppingCartItemDto()
+                .id(item.getId())
+                .productInfo(productInfo)
+                .productQuantity(item.getProductQuantity());
     }
 }

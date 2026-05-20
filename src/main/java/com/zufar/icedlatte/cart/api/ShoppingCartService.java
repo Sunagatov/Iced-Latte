@@ -10,12 +10,12 @@ import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import com.zufar.icedlatte.product.api.ProductEntityProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,7 +44,7 @@ public class ShoppingCartService implements CartCheckoutApi {
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartItemRepository shoppingCartItemRepository;
-    private final ProductEntityProvider productEntityProvider;
+    private final ProductCatalogApi productCatalogApi;
     private final ShoppingCartDtoConverter shoppingCartDtoConverter;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
 
@@ -126,7 +126,13 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     private ShoppingCartDto toCartDto(ShoppingCart shoppingCart) {
-        ShoppingCartDto cart = shoppingCartDtoConverter.toDto(shoppingCart);
+        List<UUID> productIds = shoppingCart.getItems().stream()
+                .map(ShoppingCartItem::getProductId)
+                .toList();
+        Map<UUID, ProductInfoDto> productsById = productCatalogApi.getProductsByIds(productIds).stream()
+                .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
+
+        ShoppingCartDto cart = shoppingCartDtoConverter.toDto(shoppingCart, productsById);
         if (cart.getItems() != null) {
             productPictureLinkUpdater.updateBatch(
                     cart.getItems().stream().map(ShoppingCartItemDto::getProductInfo).toList());
@@ -156,9 +162,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     private static void increaseExistingItemQuantities(ShoppingCart shoppingCart,
                                                        Map<UUID, Integer> productsWithQuantity) {
         shoppingCart.getItems().forEach(item -> {
-            UUID productId = item.getProductInfo().getId();
-            Integer quantityToAdd = productsWithQuantity.get(productId);
-
+            Integer quantityToAdd = productsWithQuantity.get(item.getProductId());
             if (quantityToAdd != null) {
                 int newQuantity = item.getProductQuantity() + quantityToAdd;
                 validateProductQuantity(newQuantity);
@@ -169,17 +173,22 @@ public class ShoppingCartService implements CartCheckoutApi {
 
     private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity,
                                                   ShoppingCart shoppingCart) {
-        Map<UUID, ShoppingCartItem> existingItemsByProductId = shoppingCart.getItems().stream()
-                .collect(Collectors.toMap(item -> item.getProductInfo().getId(), Function.identity()));
-
-        Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
-                .filter(productId -> !existingItemsByProductId.containsKey(productId))
+        Set<UUID> existingProductIds = shoppingCart.getItems().stream()
+                .map(ShoppingCartItem::getProductId)
                 .collect(Collectors.toSet());
 
-        List<ProductInfo> foundProducts = productEntityProvider.findAllById(newProductIds);
+        Set<UUID> newProductIds = productsWithQuantity.keySet().stream()
+                .filter(productId -> !existingProductIds.contains(productId))
+                .collect(Collectors.toSet());
 
+        if (newProductIds.isEmpty()) {
+            return List.of();
+        }
+
+        // Validate all new product IDs exist
+        List<ProductInfoDto> foundProducts = productCatalogApi.getProductsByIds(newProductIds.stream().toList());
         Set<UUID> foundIds = foundProducts.stream()
-                .map(ProductInfo::getId)
+                .map(ProductInfoDto::getId)
                 .collect(Collectors.toSet());
         List<UUID> missingIds = newProductIds.stream()
                 .filter(id -> !foundIds.contains(id))
@@ -188,14 +197,14 @@ public class ShoppingCartService implements CartCheckoutApi {
             throw new ProductNotFoundException(missingIds);
         }
 
-        return foundProducts.stream()
-                .map(productInfo -> {
-                    Integer productQuantity = productsWithQuantity.get(productInfo.getId());
+        return newProductIds.stream()
+                .map(productId -> {
+                    Integer productQuantity = productsWithQuantity.get(productId);
                     validateProductQuantity(productQuantity);
                     return ShoppingCartItem.builder()
                             .shoppingCart(shoppingCart)
+                            .productId(productId)
                             .productQuantity(productQuantity)
-                            .productInfo(productInfo)
                             .build();
                 })
                 .toList();

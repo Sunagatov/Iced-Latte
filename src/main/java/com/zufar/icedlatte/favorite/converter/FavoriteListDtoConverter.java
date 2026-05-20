@@ -2,46 +2,24 @@ package com.zufar.icedlatte.favorite.converter;
 
 import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
-import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        injectionStrategy = InjectionStrategy.FIELD)
-public interface FavoriteListDtoConverter {
+@Component
+public class FavoriteListDtoConverter {
 
-    @Mapping(target = "favoriteItems", source = "favoriteItems", qualifiedByName = "mapFavoriteItems")
-    FavoriteListDto toDto(final FavoriteListEntity favoriteListEntity);
+    public FavoriteListDto toDto(final FavoriteListEntity entity, final Map<UUID, ProductInfoDto> productsById) {
+        Set<FavoriteItemDto> items = entity.getFavoriteItems().stream()
+                .map(item -> new FavoriteItemDto(item.getId(), productsById.get(item.getProductId())))
+                .filter(item -> item.productInfo() != null)
+                .collect(Collectors.toSet());
 
-    @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
-    ProductInfoDto convertProductInfoDto(ProductInfo productInfo);
-
-    @Named("mapFavoriteItems")
-    default FavoriteItemDto toFavoriteItemDto(FavoriteItemEntity itemEntity) {
-        UUID favoriteItemEntityId = itemEntity.getId();
-        ProductInfo productInfo = itemEntity.getProductInfo();
-        ProductInfoDto productInfoDto = convertProductInfoDto(productInfo);
-        return new FavoriteItemDto(favoriteItemEntityId, productInfoDto);
-    }
-
-    @Named("localToOffsetDate")
-    default OffsetDateTime offsetToLocalDate(LocalDateTime value) {
-        if (value == null) {
-            return null;
-        }
-        return OffsetDateTime.of(value, ZoneOffset.UTC);
+        return new FavoriteListDto(entity.getId(), entity.getUserId(), items, entity.getUpdatedAt());
     }
 }

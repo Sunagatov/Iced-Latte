@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.cart.entity;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,8 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.util.Objects;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Builder
@@ -44,32 +43,21 @@ public class ShoppingCartItem {
     @JoinColumn(name = "shopping_cart_id", nullable = false)
     private ShoppingCart shoppingCart;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = false)
-    private ProductInfo productInfo;
+    @Column(name = "product_id", nullable = false)
+    private UUID productId;
 
     @Column(name = "products_quantity", nullable = false)
     private Integer productQuantity;
-
-    public ShoppingCartItem(UUID id,
-                            ShoppingCart shoppingCart,
-                            ProductInfo productInfo,
-                            Integer productQuantity) {
-        this.id = id;
-        this.shoppingCart = shoppingCart;
-        this.productInfo = productInfo;
-        this.productQuantity = productQuantity;
-    }
 
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
         if (!(object instanceof ShoppingCartItem that)) return false;
-        return Objects.equals(id, that.id) && Objects.equals(productInfo, that.productInfo);
+        return Objects.equals(id, that.id) && Objects.equals(productId, that.productId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, productInfo);
+        return Objects.hash(id, productId);
     }
 }

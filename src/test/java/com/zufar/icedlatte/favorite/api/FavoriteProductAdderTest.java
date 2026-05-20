@@ -10,9 +10,8 @@ import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.product.api.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +28,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,73 +38,47 @@ class FavoriteProductAdderTest {
     @InjectMocks
     private FavoriteProductAdder favoriteProductAdder;
 
-    @Mock
-    private FavoriteListProvider favoriteListProvider;
-
-    @Mock
-    private FavoriteRepository favoriteRepository;
-
-    @Mock
-    private ProductService productService;
-
-    @Mock
-    private FavoriteListDtoConverter favoriteListDtoConverter;
-    @Mock
-    private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
-    @Mock
-    private ProductPictureLinkUpdater productPictureLinkUpdater;
-
-    private final ListOfFavoriteProducts listOfFavoriteProducts = new ListOfFavoriteProducts();
+    @Mock private FavoriteListProvider favoriteListProvider;
+    @Mock private FavoriteRepository favoriteRepository;
+    @Mock private ProductCatalogApi productCatalogApi;
+    @Mock private FavoriteListDtoConverter favoriteListDtoConverter;
+    @Mock private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     @Test
     @DisplayName("Should add products to favorite list returning favorite list")
     void shouldAddProductsToFavoriteListReturningFavoriteList() {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        UUID favoriteListId = UUID.randomUUID();
-
-        ProductInfo productInfo = new ProductInfo();
-        productInfo.setId(productId);
 
         ProductInfoDto productInfoDto = new ProductInfoDto();
         productInfoDto.setId(productId);
 
-        FavoriteItemEntity favoriteItem = new FavoriteItemEntity();
-        favoriteItem.setProductInfo(productInfo);
-
-        FavoriteItemDto favoriteItemDto = new FavoriteItemDto(
-                UUID.randomUUID(),
-                productInfoDto);
-
         FavoriteListEntity favoriteList = new FavoriteListEntity();
         favoriteList.setFavoriteItems(new HashSet<>());
 
-        FavoriteListEntity addedFavoriteList = new FavoriteListEntity();
-        addedFavoriteList.setFavoriteItems(Set.of(favoriteItem));
+        FavoriteItemEntity savedItem = FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(productId).build();
+        FavoriteListEntity savedList = new FavoriteListEntity();
+        savedList.setFavoriteItems(Set.of(savedItem));
 
-        FavoriteListDto expectedFavoriteListDto = new FavoriteListDto(
-                favoriteListId,
-                userId,
-                Set.of(favoriteItemDto),
-                OffsetDateTime.now());
+        FavoriteListDto dto = new FavoriteListDto(UUID.randomUUID(), userId,
+                Set.of(new FavoriteItemDto(UUID.randomUUID(), productInfoDto)), OffsetDateTime.now());
+        ListOfFavoriteProductsDto expectedResponse = new ListOfFavoriteProductsDto();
 
-        listOfFavoriteProducts.setProductIds(List.of(productId));
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of(productId));
 
         when(favoriteListProvider.getFavoriteListEntity(userId)).thenReturn(favoriteList);
-        when(productService.findAllById(any())).thenReturn(List.of(productInfo));
-        when(favoriteRepository.save(favoriteList)).thenReturn(addedFavoriteList);
-        when(favoriteListDtoConverter.toDto(addedFavoriteList)).thenReturn(expectedFavoriteListDto);
-        ListOfFavoriteProductsDto expectedResponse = new ListOfFavoriteProductsDto();
-        when(listOfFavoriteProductsDtoConverter.toListProductDto(expectedFavoriteListDto)).thenReturn(expectedResponse);
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productInfoDto));
+        when(favoriteRepository.save(favoriteList)).thenReturn(savedList);
+        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class), anyMap())).thenReturn(dto);
+        when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(expectedResponse);
 
-        ListOfFavoriteProductsDto result = favoriteProductAdder.add(listOfFavoriteProducts, userId);
+        ListOfFavoriteProductsDto result = favoriteProductAdder.add(request, userId);
 
         assertEquals(expectedResponse, result);
-
         verify(favoriteListProvider).getFavoriteListEntity(userId);
-        verify(productService).findAllById(any());
         verify(favoriteRepository).save(favoriteList);
-        verify(favoriteListDtoConverter).toDto(addedFavoriteList);
     }
 
     @Test
@@ -113,9 +87,6 @@ class FavoriteProductAdderTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        ProductInfo productInfo = new ProductInfo();
-        productInfo.setId(productId);
-
         ProductInfoDto productInfoDto = new ProductInfoDto();
         productInfoDto.setId(productId);
 
@@ -123,34 +94,30 @@ class FavoriteProductAdderTest {
         staleFavoriteList.setId(UUID.randomUUID());
         staleFavoriteList.setFavoriteItems(new HashSet<>());
 
-        FavoriteItemEntity existingFavoriteItem = new FavoriteItemEntity();
-        existingFavoriteItem.setProductInfo(productInfo);
-
+        FavoriteItemEntity existingItem = FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(productId).build();
         FavoriteListEntity freshFavoriteList = new FavoriteListEntity();
         freshFavoriteList.setId(UUID.randomUUID());
-        freshFavoriteList.setFavoriteItems(new HashSet<>(Set.of(existingFavoriteItem)));
+        freshFavoriteList.setFavoriteItems(new HashSet<>(Set.of(existingItem)));
 
-        FavoriteListDto dto = new FavoriteListDto(
-                UUID.randomUUID(),
-                userId,
-                Set.of(new FavoriteItemDto(UUID.randomUUID(), productInfoDto)),
-                OffsetDateTime.now());
+        FavoriteListDto dto = new FavoriteListDto(UUID.randomUUID(), userId,
+                Set.of(new FavoriteItemDto(UUID.randomUUID(), productInfoDto)), OffsetDateTime.now());
         ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
         response.setProducts(List.of(productInfoDto));
 
-        listOfFavoriteProducts.setProductIds(List.of(productId));
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of(productId));
 
         when(favoriteListProvider.getFavoriteListEntity(userId))
                 .thenReturn(staleFavoriteList)
                 .thenReturn(freshFavoriteList);
-        when(productService.findAllById(any())).thenReturn(List.of(productInfo));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productInfoDto));
         when(favoriteRepository.save(staleFavoriteList))
                 .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"));
         when(favoriteRepository.save(freshFavoriteList)).thenReturn(freshFavoriteList);
-        when(favoriteListDtoConverter.toDto(freshFavoriteList)).thenReturn(dto);
+        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class), anyMap())).thenReturn(dto);
         when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
 
-        ListOfFavoriteProductsDto result = favoriteProductAdder.add(listOfFavoriteProducts, userId);
+        ListOfFavoriteProductsDto result = favoriteProductAdder.add(request, userId);
 
         assertEquals(response, result);
         verify(favoriteRepository).save(staleFavoriteList);

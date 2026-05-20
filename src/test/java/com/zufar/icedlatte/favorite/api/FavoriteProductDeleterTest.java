@@ -2,7 +2,6 @@ package com.zufar.icedlatte.favorite.api;
 
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +34,10 @@ class FavoriteProductDeleterTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        ProductInfo productInfo = new ProductInfo();
-        productInfo.setId(productId);
-
-        FavoriteItemEntity favoriteItem = new FavoriteItemEntity();
-        favoriteItem.setProductInfo(productInfo);
+        FavoriteItemEntity favoriteItem = FavoriteItemEntity.builder()
+                .id(UUID.randomUUID())
+                .productId(productId)
+                .build();
 
         FavoriteListEntity favoriteList = new FavoriteListEntity();
         favoriteList.setFavoriteItems(new HashSet<>(Set.of(favoriteItem)));

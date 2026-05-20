@@ -11,8 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 
 public interface ShoppingCartRepository extends JpaRepository<ShoppingCart, UUID> {
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
-            attributePaths = {"items", "items.productInfo"})
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"items"})
     Optional<ShoppingCart> findShoppingCartByUserId(UUID userId);
 
     @Modifying(flushAutomatically = true)

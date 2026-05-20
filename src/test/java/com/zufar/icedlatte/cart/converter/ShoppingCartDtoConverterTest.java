@@ -2,77 +2,51 @@ package com.zufar.icedlatte.cart.converter;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {ShoppingCartDtoConverterTest.Config.class})
+import static org.junit.jupiter.api.Assertions.*;
+
 class ShoppingCartDtoConverterTest {
 
-    @Configuration
-    public static class Config {
-        @Bean public ProductInfoDtoConverter productInfoDtoConverter() { return Mappers.getMapper(ProductInfoDtoConverter.class); }
-        @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter(ProductInfoDtoConverter productInfoDtoConverter) { return new ShoppingCartItemDtoConverterImpl(productInfoDtoConverter); }
-        @Bean public ShoppingCartDtoConverter shoppingCartDtoConverter(ShoppingCartItemDtoConverter itemConverter) { return new ShoppingCartDtoConverterImpl(itemConverter); }
-    }
-
-    @Autowired
-    ShoppingCartDtoConverter shoppingCartDtoConverter;
+    private final ShoppingCartDtoConverter converter = new ShoppingCartDtoConverter();
 
     @Test
     @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")
     void shouldConvertShoppingCartToShoppingCartDtoWithCompleteInformation() {
-        ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
-        
-        ShoppingCartDto result = shoppingCartDtoConverter.toDto(shoppingCart);
+        ShoppingCart cart = CartDtoTestStub.createShoppingCart();
+        Map<UUID, ProductInfoDto> productsById = CartDtoTestStub.createProductsById();
+
+        ShoppingCartDto result = converter.toDto(cart, productsById);
 
         assertNotNull(result);
-        assertEquals(shoppingCart.getId(), result.getId());
-        assertEquals(shoppingCart.getUserId(), result.getUserId());
-        assertEquals(shoppingCart.getItems().size(), result.getItems().size());
-        assertEquals(shoppingCart.getItemsQuantity(), result.getItemsQuantity());
-        assertEquals(shoppingCart.getProductsQuantity(), result.getProductsQuantity());
-        assertEquals(shoppingCart.getCreatedAt(), result.getCreatedAt());
-        assertEquals(shoppingCart.getClosedAt(), result.getClosedAt());
-        
-        assertThat(result.getItemsTotalPrice(), greaterThanOrEqualTo(BigDecimal.ZERO));
-        assertThat(result.getItems(), hasSize(shoppingCart.getItems().size()));
+        assertEquals(cart.getId(), result.getId());
+        assertEquals(cart.getUserId(), result.getUserId());
+        assertEquals(3, result.getItems().size());
+        assertEquals(3, result.getItemsQuantity());
+        assertEquals(6, result.getProductsQuantity());
+        // 1*1.1 + 2*2.2 + 3*3.3 = 1.1 + 4.4 + 9.9 = 15.4
+        assertEquals(0, new BigDecimal("15.4").compareTo(result.getItemsTotalPrice()));
     }
-    
-    @Test
-    @DisplayName("Should handle null shopping cart gracefully")
-    void shouldHandleNullShoppingCartGracefully() {
-        ShoppingCartDto result = shoppingCartDtoConverter.toDto(null);
-        
-        assertNull(result);
-    }
-    
+
     @Test
     @DisplayName("Should convert empty shopping cart correctly")
     void shouldConvertEmptyShoppingCartCorrectly() {
         ShoppingCart emptyCart = CartDtoTestStub.createEmptyShoppingCart();
-        
-        ShoppingCartDto result = shoppingCartDtoConverter.toDto(emptyCart);
-        
+        Map<UUID, ProductInfoDto> productsById = Map.of();
+
+        ShoppingCartDto result = converter.toDto(emptyCart, productsById);
+
         assertNotNull(result);
         assertEquals(emptyCart.getId(), result.getId());
         assertEquals(emptyCart.getUserId(), result.getUserId());
-        assertThat(result.getItems(), hasSize(0));
+        assertEquals(0, result.getItems().size());
         assertEquals(0, result.getItemsQuantity());
         assertEquals(0, result.getProductsQuantity());
         assertEquals(BigDecimal.ZERO, result.getItemsTotalPrice());

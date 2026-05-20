@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.favorite.entity;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -42,20 +42,19 @@ public class FavoriteItemEntity {
     @JoinColumn(name = "favorite_id", nullable = false, referencedColumnName = "id")
     private FavoriteListEntity favoriteListEntity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private ProductInfo productInfo;
+    @Column(name = "product_id", nullable = false)
+    private UUID productId;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FavoriteItemEntity that)) return false;
         return Objects.equals(favoriteListEntity, that.favoriteListEntity) &&
-                Objects.equals(productInfo, that.productInfo);
+                Objects.equals(productId, that.productId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(favoriteListEntity, productInfo);
+        return Objects.hash(favoriteListEntity, productId);
     }
 }

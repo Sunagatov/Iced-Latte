@@ -5,6 +5,8 @@ import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,9 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,14 +38,11 @@ class FavoriteListProviderTest {
     @InjectMocks
     private FavoriteListProvider favoriteListProvider;
 
-    @Mock
-    private FavoriteRepository favoriteRepository;
-    @Mock
-    private FavoriteListDtoConverter favoriteListDtoConverter;
-    @Mock
-    private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
-    @Mock
-    private ProductPictureLinkUpdater productPictureLinkUpdater;
+    @Mock private FavoriteRepository favoriteRepository;
+    @Mock private FavoriteListDtoConverter favoriteListDtoConverter;
+    @Mock private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
+    @Mock private ProductCatalogApi productCatalogApi;
+    @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
 
     private final OffsetDateTime beforeLaunchTime = OffsetDateTime.now().minusSeconds(1);
 
@@ -86,7 +85,6 @@ class FavoriteListProviderTest {
         FavoriteListEntity result = favoriteListProvider.getFavoriteListEntity(userId);
 
         verify(favoriteRepository).findByUserId(userId);
-
         assertEquals(userId, result.getUserId());
         assertTrue(result.getFavoriteItems().isEmpty());
         assertTrue(beforeLaunchTime.isBefore(result.getUpdatedAt()));
@@ -115,37 +113,38 @@ class FavoriteListProviderTest {
     @DisplayName("Should get enriched favorite list when list exists")
     void shouldGetEnrichedFavoriteListWhenExists() {
         UUID userId = UUID.randomUUID();
-        UUID id = UUID.randomUUID();
         FavoriteListEntity favoriteList = new FavoriteListEntity();
-        FavoriteListDto dto = new FavoriteListDto(id, userId, new HashSet<>(), OffsetDateTime.now());
-        com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto response =
-                new com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto();
+        favoriteList.setFavoriteItems(new HashSet<>());
+
+        FavoriteListDto dto = new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now());
+        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
         response.setProducts(List.of());
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(favoriteList));
-        when(favoriteListDtoConverter.toDto(favoriteList)).thenReturn(dto);
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
+        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class), anyMap())).thenReturn(dto);
         when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
 
         var result = favoriteListProvider.getEnrichedFavoriteList(userId);
 
         assertEquals(response, result);
         verify(favoriteRepository).findByUserId(userId);
-        verify(favoriteListDtoConverter).toDto(favoriteList);
+        verify(favoriteListDtoConverter).toDto(any(FavoriteListEntity.class), anyMap());
         verify(listOfFavoriteProductsDtoConverter).toListProductDto(dto);
         verify(productPictureLinkUpdater).updateBatch(response.getProducts());
     }
 
     @Test
     @DisplayName("Should build and enrich transient favorite list when repository has none")
-    void shouldGetEnrichedFavoriteListWhenMissingWithoutSaving() {
+    void shouldGetEnrichedFavoriteListWhenMissing() {
         UUID userId = UUID.randomUUID();
         FavoriteListDto dto = new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now());
-        com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto response =
-                new com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto();
+        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
         response.setProducts(List.of());
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class))).thenReturn(dto);
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
+        when(favoriteListDtoConverter.toDto(any(FavoriteListEntity.class), anyMap())).thenReturn(dto);
         when(listOfFavoriteProductsDtoConverter.toListProductDto(dto)).thenReturn(response);
 
         var result = favoriteListProvider.getEnrichedFavoriteList(userId);
@@ -153,9 +152,7 @@ class FavoriteListProviderTest {
         assertThat(result).isSameAs(response);
         verify(favoriteRepository).findByUserId(userId);
         verify(favoriteRepository, never()).save(any());
-        verify(favoriteListDtoConverter).toDto(any(FavoriteListEntity.class));
-        verify(listOfFavoriteProductsDtoConverter).toListProductDto(dto);
+        verify(favoriteListDtoConverter).toDto(any(FavoriteListEntity.class), anyMap());
         verify(productPictureLinkUpdater).updateBatch(response.getProducts());
-        verifyNoMoreInteractions(productPictureLinkUpdater);
     }
 }

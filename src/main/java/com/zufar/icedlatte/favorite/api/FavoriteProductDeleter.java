@@ -19,7 +19,7 @@ public class FavoriteProductDeleter {
                        final UUID userId) {
         favoriteListProvider.findFavoriteListEntity(userId).ifPresent(favoriteList ->
                 favoriteList.getFavoriteItems()
-                        .removeIf(item -> item.getProductInfo().getId().equals(productId))
+                        .removeIf(item -> item.getProductId().equals(productId))
         );
     }
 }
