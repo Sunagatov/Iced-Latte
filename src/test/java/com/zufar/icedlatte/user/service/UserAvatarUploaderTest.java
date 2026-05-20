@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.user.service.avatar;
+package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;

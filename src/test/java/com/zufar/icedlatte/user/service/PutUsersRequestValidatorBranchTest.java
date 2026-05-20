@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.user.validator;
+package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;

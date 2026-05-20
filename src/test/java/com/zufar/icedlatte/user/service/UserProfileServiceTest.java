@@ -10,7 +10,6 @@ import com.zufar.icedlatte.security.service.session.AuthSessionService;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
-import com.zufar.icedlatte.user.validator.PutUsersRequestValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

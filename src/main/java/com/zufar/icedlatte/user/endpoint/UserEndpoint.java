@@ -5,7 +5,7 @@ import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserProfileService;
-import com.zufar.icedlatte.user.service.avatar.UserAvatarUploader;
+import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
