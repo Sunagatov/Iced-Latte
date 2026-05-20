@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
+import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
@@ -10,9 +11,8 @@ import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
-import com.zufar.icedlatte.user.service.UserProfileService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.UserPasswordApi;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +37,8 @@ class EmailVerificationServiceTest {
 
     @Mock private AuthTokenEmailSender emailConfirmation;
     @Mock private UserRegistrationService userRegistrationService;
-    @Mock private SingleUserProvider singleUserProvider;
-    @Mock private UserProfileService userProfileService;
+    @Mock private UserLookupApi userLookupApi;
+    @Mock private UserPasswordApi userPasswordApi;
     @Mock private HttpServletRequest httpRequest;
 
     private EmailVerificationService service;
@@ -50,8 +50,8 @@ class EmailVerificationServiceTest {
                 new ObjectMapper(),
                 emailConfirmation,
                 userRegistrationService,
-                singleUserProvider,
-                userProfileService
+                userLookupApi,
+                userPasswordApi
         );
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(service, "tokenLength", 9);
@@ -131,14 +131,14 @@ class EmailVerificationServiceTest {
             UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
             registrationRequest.setEmail("user@example.com");
             UUID userId = UUID.randomUUID();
-            UserEntity user = UserEntity.builder().id(userId).build();
+            UserDto user = new UserDto().id(userId);
             String token = service.generateToken(registrationRequest, TokenPurpose.PASSWORD_RESET);
-            when(singleUserProvider.getUserEntityByEmail("user@example.com")).thenReturn(user);
+            when(userLookupApi.getUserByEmail("user@example.com")).thenReturn(user);
 
             service.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(token), "newPass123!");
 
-            verify(singleUserProvider).getUserEntityByEmail("user@example.com");
-            verify(userProfileService).changePassword(userId, "newPass123!");
+            verify(userLookupApi).getUserByEmail("user@example.com");
+            verify(userPasswordApi).changePassword(userId, "newPass123!");
         }
     }
 

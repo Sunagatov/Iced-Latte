@@ -3,8 +3,8 @@ package com.zufar.icedlatte.security.service;
 import com.zufar.icedlatte.security.exception.token.TimeTokenException;
 import com.zufar.icedlatte.security.service.password.PasswordResetService;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("PasswordResetService unit tests")
 class PasswordResetServiceTest {
 
-    @Mock private SingleUserProvider singleUserProvider;
+    @Mock private UserLookupApi userLookupApi;
     @Mock private EmailVerificationService emailVerificationService;
 
     @InjectMocks private PasswordResetService service;
@@ -38,7 +38,7 @@ class PasswordResetServiceTest {
 
             service.requestReset(email);
 
-            verify(singleUserProvider).getUserEntityByEmail(email);
+            verify(userLookupApi).getUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
 
@@ -47,11 +47,11 @@ class PasswordResetServiceTest {
         void swallowsUnknownEmailLookups() {
             String email = "missing@example.com";
             doThrow(new UserNotFoundException(email))
-                    .when(singleUserProvider).getUserEntityByEmail(email);
+                    .when(userLookupApi).getUserByEmail(email);
 
             service.requestReset(email);
 
-            verify(singleUserProvider).getUserEntityByEmail(email);
+            verify(userLookupApi).getUserByEmail(email);
             verifyNoInteractions(emailVerificationService);
         }
 
@@ -64,7 +64,7 @@ class PasswordResetServiceTest {
 
             service.requestReset(email);
 
-            verify(singleUserProvider).getUserEntityByEmail(email);
+            verify(userLookupApi).getUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
     }

@@ -9,8 +9,8 @@ import com.zufar.icedlatte.security.exception.token.TimeTokenException;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
-import com.zufar.icedlatte.user.service.UserProfileService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.UserPasswordApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +31,8 @@ class EmailVerificationServiceContractTest {
                 new ObjectMapper(),
                 mock(com.zufar.icedlatte.security.service.email.AuthTokenEmailSender.class),
                 mock(UserRegistrationService.class),
-                mock(SingleUserProvider.class),
-                mock(UserProfileService.class)
+                mock(UserLookupApi.class),
+                mock(UserPasswordApi.class)
         );
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 5);
         ReflectionTestUtils.setField(service, "tokenLength", 9);

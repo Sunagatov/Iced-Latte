@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.api;
 
+import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 class SecurityPrincipalProviderTest {
 
     @Mock
-    private UserDtoConverter userDtoConverter;
+    private UserLookupApi userLookupApi;
 
     @InjectMocks
     private SecurityPrincipalProvider provider;
@@ -43,15 +43,15 @@ class SecurityPrincipalProviderTest {
         @Test
         @DisplayName("returns converted dto for authenticated user")
         void returnsConvertedDtoForAuthenticatedUser() {
-            UserEntity user = authenticatedUser();
-            UserDto dto = new UserDto().id(user.getId());
-            when(userDtoConverter.toDto(user)).thenReturn(dto);
+            TestPrincipal principal = authenticatedUser();
+            UserDto dto = new UserDto().id(principal.getId());
+            when(userLookupApi.getUserById(principal.getId())).thenReturn(dto);
 
             UserDto result = provider.get();
 
             assertThat(result).isSameAs(dto);
-            verify(userDtoConverter).toDto(user);
-            verifyNoMoreInteractions(userDtoConverter);
+            verify(userLookupApi).getUserById(principal.getId());
+            verifyNoMoreInteractions(userLookupApi);
         }
 
         @Test
@@ -72,17 +72,17 @@ class SecurityPrincipalProviderTest {
         @Test
         @DisplayName("returns id for authenticated user")
         void returnsIdForAuthenticatedUser() {
-            UserEntity user = authenticatedUser();
+            TestPrincipal principal = authenticatedUser();
 
             UUID result = provider.getUserId();
 
-            assertThat(result).isEqualTo(user.getId());
-            verifyNoMoreInteractions(userDtoConverter);
+            assertThat(result).isEqualTo(principal.getId());
+            verifyNoMoreInteractions(userLookupApi);
         }
 
         @Test
-        @DisplayName("throws when principal is not a UserEntity")
-        void throwsWhenPrincipalIsNotUserEntity() {
+        @DisplayName("throws when principal is not identifiable")
+        void throwsWhenPrincipalIsNotIdentifiable() {
             SecurityContextHolder.getContext()
                     .setAuthentication(new UsernamePasswordAuthenticationToken("not-a-user", null));
 
@@ -92,10 +92,17 @@ class SecurityPrincipalProviderTest {
         }
     }
 
-    private static UserEntity authenticatedUser() {
-        UserEntity user = UserEntity.builder().id(UUID.randomUUID()).build();
+    private static TestPrincipal authenticatedUser() {
+        TestPrincipal user = new TestPrincipal(UUID.randomUUID());
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(user, null));
         return user;
+    }
+
+    private record TestPrincipal(UUID id) implements Identifiable {
+        @Override
+        public UUID getId() {
+            return id;
+        }
     }
 }

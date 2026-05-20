@@ -32,6 +32,8 @@ class ShoppingCartDtoConverterTest {
         assertEquals(3, result.getItems().size());
         assertEquals(3, result.getItemsQuantity());
         assertEquals(6, result.getProductsQuantity());
+        assertEquals(cart.getCreatedAt(), result.getCreatedAt());
+        assertEquals(cart.getClosedAt(), result.getClosedAt());
         // 1*1.1 + 2*2.2 + 3*3.3 = 1.1 + 4.4 + 9.9 = 15.4
         assertEquals(0, new BigDecimal("15.4").compareTo(result.getItemsTotalPrice()));
     }
@@ -51,5 +53,7 @@ class ShoppingCartDtoConverterTest {
         assertEquals(0, result.getItemsQuantity());
         assertEquals(0, result.getProductsQuantity());
         assertEquals(BigDecimal.ZERO, result.getItemsTotalPrice());
+        assertEquals(emptyCart.getCreatedAt(), result.getCreatedAt());
+        assertEquals(emptyCart.getClosedAt(), result.getClosedAt());
     }
 }

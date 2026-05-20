@@ -10,8 +10,8 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.exception.token.TimeTokenException;
 import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
-import com.zufar.icedlatte.user.service.UserProfileService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.UserPasswordApi;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,8 +33,8 @@ public class EmailVerificationService {
     private final ObjectMapper objectMapper;
     private final AuthTokenEmailSender emailConfirmation;
     private final UserRegistrationService userRegistrationService;
-    private final SingleUserProvider singleUserProvider;
-    private final UserProfileService userProfileService;
+    private final UserLookupApi userLookupApi;
+    private final UserPasswordApi userPasswordApi;
 
     @Value("${email.verification-token-length}")
     private int tokenLength;
@@ -64,8 +64,8 @@ public class EmailVerificationService {
     public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest,
                                                 String newPassword) {
         UserRegistrationRequest request = validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
-        var userEntity = singleUserProvider.getUserEntityByEmail(request.getEmail());
-        userProfileService.changePassword(userEntity.getId(), newPassword);
+        var user = userLookupApi.getUserByEmail(request.getEmail());
+        userPasswordApi.changePassword(user.getId(), newPassword);
     }
 
     public String generateToken(UserRegistrationRequest request, TokenPurpose purpose) {

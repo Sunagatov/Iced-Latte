@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.user.service;
 
+import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -11,9 +14,22 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class SingleUserProvider {
+public class SingleUserProvider implements UserLookupApi {
 
     private final UserRepository userCrudRepository;
+    private final UserDtoConverter userDtoConverter;
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto getUserById(final UUID userId) throws UserNotFoundException {
+        return userDtoConverter.toDto(getUserEntityById(userId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto getUserByEmail(final String email) throws UserNotFoundException {
+        return userDtoConverter.toDto(getUserEntityByEmail(email));
+    }
 
     @Transactional(readOnly = true)
     public UserEntity getUserEntityById(final UUID userId) throws UserNotFoundException {

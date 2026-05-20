@@ -46,7 +46,8 @@ class ModularityTests {
                 "filestorage :: api", "filestorage :: aws", "filestorage :: dto", "filestorage :: exception",
                 "order :: api", "order :: exception",
                 "product :: api", "product :: exception",
-                "review :: api"
+                "review :: api",
+                "user :: api"
         );
 
         assertThat(allNamedInterfaces).isEqualTo(expected);

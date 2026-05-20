@@ -35,7 +35,9 @@ public class ShoppingCartDtoConverter {
                 .items(itemDtos)
                 .itemsTotalPrice(itemsTotalPrice)
                 .itemsQuantity(itemsQuantity)
-                .productsQuantity(productsQuantity);
+                .productsQuantity(productsQuantity)
+                .createdAt(cart.getCreatedAt())
+                .closedAt(cart.getClosedAt());
     }
 
     private ShoppingCartItemDto toItemDto(ShoppingCartItem item,

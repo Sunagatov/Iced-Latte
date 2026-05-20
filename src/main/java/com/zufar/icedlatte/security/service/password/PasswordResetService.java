@@ -3,8 +3,8 @@ package com.zufar.icedlatte.security.service.password;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.exception.token.TimeTokenException;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PasswordResetService {
 
-    private final SingleUserProvider singleUserProvider;
+    private final UserLookupApi userLookupApi;
     private final EmailVerificationService emailVerificationService;
 
     public void requestReset(String email) {
         try {
-            singleUserProvider.getUserEntityByEmail(email);
+            userLookupApi.getUserByEmail(email);
             emailVerificationService.sendPasswordResetCode(email);
         } catch (UserNotFoundException _) {
             log.debug("auth.password.forgot.unknown_email");

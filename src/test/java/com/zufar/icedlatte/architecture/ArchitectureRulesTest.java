@@ -100,6 +100,28 @@ class ArchitectureRulesTest {
                             "..review.ai.."
                     );
 
+    @ArchTest
+    static final ArchRule user_api_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().resideInAPackage("..user.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..user.repository..",
+                            "..user.entity..",
+                            "..user.converter..",
+                            "..user.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule security_api_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().resideInAPackage("..security.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..user.repository..",
+                            "..user.entity..",
+                            "..user.converter..",
+                            "..user.service.."
+                    );
+
     /**
      * Non-order modules must not depend on order implementation services.
      * Spring Modulith already enforces this, but an explicit ArchUnit rule gives clearer failure messages.
@@ -109,6 +131,18 @@ class ArchitectureRulesTest {
             noClasses()
                     .that().resideOutsideOfPackage("..order..")
                     .should().dependOnClassesThat().resideInAPackage("..order.service..");
+
+    @ArchTest
+    static final ArchRule order_services_should_not_depend_on_user_repositories =
+            noClasses()
+                    .that().resideInAPackage("..order.service..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..user.repository..");
+
+    @ArchTest
+    static final ArchRule order_services_should_not_depend_on_delivery_address_entity =
+            noClasses()
+                    .that().resideInAPackage("..order.service..")
+                    .should().dependOnClassesThat().haveSimpleName("DeliveryAddressEntity");
 
     @ArchTest
     static final ArchRule non_product_modules_should_not_depend_on_product_entities =

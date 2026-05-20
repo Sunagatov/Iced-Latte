@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.user.service;
 
+import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -24,6 +26,9 @@ class SingleUserProviderTest {
     @Mock
     private UserRepository userCrudRepository;
 
+    @Mock
+    private UserDtoConverter userDtoConverter;
+
     @InjectMocks
     private SingleUserProvider singleUserProvider;
 
@@ -39,6 +44,20 @@ class SingleUserProviderTest {
     }
 
     @Test
+    @DisplayName("getUserById returns dto")
+    void getUserByIdReturnsDto() {
+        UUID userId = UUID.randomUUID();
+        UserEntity entity = UserEntity.builder().id(userId).build();
+        UserDto dto = new UserDto().id(userId);
+        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
+        when(userDtoConverter.toDto(entity)).thenReturn(dto);
+
+        assertThat(singleUserProvider.getUserById(userId)).isSameAs(dto);
+        verify(userCrudRepository).findById(userId);
+        verify(userDtoConverter).toDto(entity);
+    }
+
+    @Test
     @DisplayName("getUserEntityByEmail returns entity by email")
     void getUserEntityByEmailReturnsEntity() {
         UserEntity entity = UserEntity.builder().email("user@example.com").build();
@@ -46,6 +65,19 @@ class SingleUserProviderTest {
 
         assertThat(singleUserProvider.getUserEntityByEmail("user@example.com")).isSameAs(entity);
         verify(userCrudRepository).findByEmail("user@example.com");
+    }
+
+    @Test
+    @DisplayName("getUserByEmail returns dto")
+    void getUserByEmailReturnsDto() {
+        UserEntity entity = UserEntity.builder().email("user@example.com").build();
+        UserDto dto = new UserDto().email("user@example.com");
+        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+        when(userDtoConverter.toDto(entity)).thenReturn(dto);
+
+        assertThat(singleUserProvider.getUserByEmail("user@example.com")).isSameAs(dto);
+        verify(userCrudRepository).findByEmail("user@example.com");
+        verify(userDtoConverter).toDto(entity);
     }
 
     @Test
