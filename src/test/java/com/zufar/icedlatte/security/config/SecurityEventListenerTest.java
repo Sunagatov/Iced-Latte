@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration;
+package com.zufar.icedlatte.security.config;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

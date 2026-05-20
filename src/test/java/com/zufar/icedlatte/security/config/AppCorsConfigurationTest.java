@@ -1,7 +1,7 @@
-package com.zufar.icedlatte.security.configuration;
+package com.zufar.icedlatte.security.config;
 
-import com.zufar.icedlatte.security.configuration.cors.AppCorsConfiguration;
-import com.zufar.icedlatte.security.configuration.cors.CorsProperties;
+import com.zufar.icedlatte.security.config.cors.AppCorsConfiguration;
+import com.zufar.icedlatte.security.config.cors.CorsProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.filestorage.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 import lombok.Getter;

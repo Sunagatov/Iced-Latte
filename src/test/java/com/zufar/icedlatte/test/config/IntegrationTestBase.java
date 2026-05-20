@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.test.config;
 
-import com.zufar.icedlatte.filestorage.ObjectStorage;
+import com.zufar.icedlatte.filestorage.service.ObjectStorage;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,6 +23,7 @@ public abstract class IntegrationTestBase {
     @ServiceConnection
     protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(DockerImageName.parse("postgres:13.11-bullseye"));
 
+    @SuppressWarnings("resource")
     @ServiceConnection(name = "redis")
     protected static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 

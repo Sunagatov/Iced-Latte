@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.product.repository;
+package com.zufar.icedlatte.product.specification;
 
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.junit.jupiter.api.DisplayName;
@@ -69,6 +69,7 @@ class ProductSpecificationsTest {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
     private Object eval(Specification<ProductInfo> specification) {
         return specification.toPredicate(null, null, null);
     }

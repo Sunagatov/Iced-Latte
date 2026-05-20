@@ -7,7 +7,7 @@ import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenHasNoUserEmailException;

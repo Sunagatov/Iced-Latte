@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage;
+package com.zufar.icedlatte.filestorage.service;
 
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import lombok.extern.slf4j.Slf4j;

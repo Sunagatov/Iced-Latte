@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration.jwt;
+package com.zufar.icedlatte.security.config.jwt;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.session.SessionNotFoundException;
 import com.zufar.icedlatte.security.exception.session.SessionOwnershipException;

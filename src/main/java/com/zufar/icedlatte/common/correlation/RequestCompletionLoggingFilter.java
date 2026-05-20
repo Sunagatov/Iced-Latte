@@ -2,8 +2,8 @@ package com.zufar.icedlatte.common.correlation;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
-import com.zufar.icedlatte.security.configuration.SecurityConstants;
+import com.zufar.icedlatte.security.config.AuthPaths;
+import com.zufar.icedlatte.security.config.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

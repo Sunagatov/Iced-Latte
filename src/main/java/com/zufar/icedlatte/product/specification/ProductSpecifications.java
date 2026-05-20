@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.product.repository;
+package com.zufar.icedlatte.product.specification;
 
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import lombok.experimental.UtilityClass;

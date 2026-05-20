@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration.cors;
+package com.zufar.icedlatte.security.config.cors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

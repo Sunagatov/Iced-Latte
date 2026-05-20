@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.filestorage;
 
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.ObjectStorage;
+
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;

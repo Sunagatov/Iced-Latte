@@ -8,7 +8,6 @@ import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
-import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -25,7 +24,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
+import static com.zufar.icedlatte.product.specification.ProductSpecifications.*;
 
 @Service
 @RequiredArgsConstructor

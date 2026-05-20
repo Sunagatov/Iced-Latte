@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.filestorage.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;

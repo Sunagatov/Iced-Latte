@@ -13,7 +13,7 @@ import com.zufar.icedlatte.ratelimit.dto.RateLimitCategory;
 import com.zufar.icedlatte.ratelimit.dto.RateLimitProperties;
 import com.zufar.icedlatte.ratelimit.dto.RateLimitProperties.Bucket;
 import com.zufar.icedlatte.ratelimit.service.RateLimitResponseWriter;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;

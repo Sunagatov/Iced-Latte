@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.filestorage.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.RequiredArgsConstructor;

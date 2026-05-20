@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration.cors;
+package com.zufar.icedlatte.security.config.cors;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

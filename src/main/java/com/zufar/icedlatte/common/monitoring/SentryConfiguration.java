@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.common.monitoring;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.config.AuthPaths;
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;

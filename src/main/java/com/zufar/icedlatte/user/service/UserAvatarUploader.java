@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.filestorage.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
 import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;

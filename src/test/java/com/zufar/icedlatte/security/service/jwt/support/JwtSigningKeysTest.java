@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service.jwt.support;
 
-import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
+import com.zufar.icedlatte.security.config.jwt.JwtProperties;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.DisplayName;

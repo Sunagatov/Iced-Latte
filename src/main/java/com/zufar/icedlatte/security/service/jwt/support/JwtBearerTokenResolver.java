@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service.jwt.support;
 
-import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
+import com.zufar.icedlatte.security.config.jwt.JwtProperties;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

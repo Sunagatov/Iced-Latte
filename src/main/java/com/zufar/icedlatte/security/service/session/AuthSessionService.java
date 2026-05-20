@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.service.session;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.SessionInfo;
-import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
+import com.zufar.icedlatte.security.config.jwt.JwtProperties;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.session.SessionNotFoundException;

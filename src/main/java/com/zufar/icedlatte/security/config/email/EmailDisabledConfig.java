@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.configuration.email;
+package com.zufar.icedlatte.security.config.email;
 
 import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
 

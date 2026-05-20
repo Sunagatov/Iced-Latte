@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.endpoint;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.configuration.AuthPaths;
+import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.service.oauth.OAuthFlowService;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
 import com.zufar.icedlatte.security.service.password.PasswordResetService;
