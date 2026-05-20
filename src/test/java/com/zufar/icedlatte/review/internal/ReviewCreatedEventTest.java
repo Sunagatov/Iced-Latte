@@ -1,4 +1,6 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
+
+import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

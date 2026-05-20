@@ -1,11 +1,14 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
+import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
+import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
@@ -78,5 +81,25 @@ public class ProductReviewsProvider {
         String sortDir = sortDirection != null ? sortDirection : paginationConfig.reviews().defaultSortDirection();
         getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, productRatings);
         return PageRequestFactory.of(page, size, sortAttr, sortDir);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public ProductReviewRatingStats getStatistics(final UUID productId) {
+        productReviewValidator.validateProductExists(productId);
+
+        Double avg = reviewRepository.getAvgRatingByProductId(productId);
+        double avgRating = avg != null ? avg : 0.0;
+        return new ProductReviewRatingStats(productId,
+                Math.round(avgRating * 10.0) / 10.0,
+                reviewRepository.getReviewCountProductById(productId),
+                getProductRatingMap(productId));
+    }
+
+    private RatingMap getProductRatingMap(UUID productId) {
+        List<ProductRatingCount> productRatingCountPairs = reviewRepository.getRatingsMapByProductId(productId);
+        if (productRatingCountPairs == null) {
+            return new RatingMap();
+        }
+        return productReviewDtoConverter.convertToProductRatingMap(productRatingCountPairs);
     }
 }

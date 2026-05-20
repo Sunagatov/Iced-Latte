@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.order.internal;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -14,7 +14,7 @@ import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.api.ProductService;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
@@ -38,9 +38,9 @@ public class OrderCreator implements OrderCheckoutApi {
 
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
-    private final ShoppingCartService shoppingCartService;
+    private final CartCheckoutApi cartCheckoutApi;
     private final DeliveryAddressRepository deliveryAddressRepository;
-    private final ProductService productService;
+    private final ProductCatalogApi productCatalogApi;
 
     @Value("${order.cancellation-window-minutes:30}")
     private int cancellationWindowMinutes;
@@ -59,7 +59,7 @@ public class OrderCreator implements OrderCheckoutApi {
 
         validateAddressInput(request);
 
-        ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
+        ShoppingCartDto cart = cartCheckoutApi.getByUserIdOrThrow(userId);
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new BadRequestException("Cannot create order: shopping cart is empty for userId=" + userId);
         }
@@ -88,7 +88,7 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
 
         Order saved = orderRepository.save(order);
-        shoppingCartService.deleteCartForUser(userId);
+        cartCheckoutApi.deleteCartForUser(userId);
         log.info("order.created: orderId={}, userId={}", saved.getId(), userId);
         return orderDtoConverter.toResponseDto(saved);
     }
@@ -140,7 +140,7 @@ public class OrderCreator implements OrderCheckoutApi {
 
     private void validateProductAvailability(List<OrderItem> items) {
         List<String> unavailable = items.stream()
-                .filter(item -> !productService.existsById(item.getProductId()))
+                .filter(item -> !productCatalogApi.existsById(item.getProductId()))
                 .map(OrderItem::getProductName)
                 .toList();
         if (!unavailable.isEmpty()) {

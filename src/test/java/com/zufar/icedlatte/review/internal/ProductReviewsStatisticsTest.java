@@ -1,10 +1,12 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
 
+import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,20 +23,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProductReviewsStatisticsProvider Tests")
-class ProductReviewsStatisticsProviderTest {
+@DisplayName("ProductReviewsProvider statistics tests")
+class ProductReviewsStatisticsTest {
 
     @InjectMocks
-    ProductReviewsStatisticsProvider productReviewsStatisticsProvider;
+    ProductReviewsProvider productReviewsProvider;
 
-    @Mock
-    ProductReviewRepository reviewRepository;
-
-    @Mock
-    ProductReviewDtoConverter productReviewDtoConverter;
-
-    @Mock
-    ProductReviewValidator productReviewValidator;
+    @Mock ProductReviewRepository reviewRepository;
+    @Mock ProductReviewDtoConverter productReviewDtoConverter;
+    @Mock ProductReviewValidator productReviewValidator;
+    @Mock PaginationConfig paginationConfig;
+    @Mock GetReviewsRequestValidator getReviewsRequestValidator;
 
     @Test
     @DisplayName("Should return stats with correct avg rating and rating map")
@@ -48,7 +47,7 @@ class ProductReviewsStatisticsProviderTest {
         when(reviewRepository.getRatingsMapByProductId(productId)).thenReturn(ratingCounts);
         when(productReviewDtoConverter.convertToProductRatingMap(ratingCounts)).thenReturn(expectedRatingMap);
 
-        ProductReviewRatingStats result = productReviewsStatisticsProvider.get(productId);
+        ProductReviewRatingStats result = productReviewsProvider.getStatistics(productId);
 
         assertEquals(productId, result.getProductId());
         assertEquals(1.0, result.getAvgRating());
@@ -56,10 +55,6 @@ class ProductReviewsStatisticsProviderTest {
         assertEquals(expectedRatingMap, result.getRatingMap());
 
         verify(productReviewValidator).validateProductExists(productId);
-        verify(reviewRepository).getAvgRatingByProductId(productId);
-        verify(reviewRepository).getReviewCountProductById(productId);
-        verify(reviewRepository).getRatingsMapByProductId(productId);
-        verify(productReviewDtoConverter).convertToProductRatingMap(ratingCounts);
     }
 
     @Test
@@ -74,11 +69,10 @@ class ProductReviewsStatisticsProviderTest {
         when(reviewRepository.getRatingsMapByProductId(productId)).thenReturn(ratingCounts);
         when(productReviewDtoConverter.convertToProductRatingMap(ratingCounts)).thenReturn(emptyRatingMap);
 
-        ProductReviewRatingStats result = productReviewsStatisticsProvider.get(productId);
+        ProductReviewRatingStats result = productReviewsProvider.getStatistics(productId);
 
         assertEquals(0.0, result.getAvgRating());
         assertEquals(0, result.getReviewsCount());
-
         verify(productReviewValidator).validateProductExists(productId);
     }
 
@@ -91,7 +85,7 @@ class ProductReviewsStatisticsProviderTest {
         when(reviewRepository.getReviewCountProductById(productId)).thenReturn(0);
         when(reviewRepository.getRatingsMapByProductId(productId)).thenReturn(null);
 
-        ProductReviewRatingStats result = productReviewsStatisticsProvider.get(productId);
+        ProductReviewRatingStats result = productReviewsProvider.getStatistics(productId);
 
         assertEquals(new RatingMap(), result.getRatingMap());
         verify(productReviewValidator).validateProductExists(productId);

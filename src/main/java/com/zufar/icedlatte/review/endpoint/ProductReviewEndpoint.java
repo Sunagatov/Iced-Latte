@@ -6,11 +6,9 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewLikeDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
-import com.zufar.icedlatte.review.api.ProductReviewCreator;
-import com.zufar.icedlatte.review.api.ProductReviewDeleter;
-import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
-import com.zufar.icedlatte.review.api.ProductReviewsProvider;
-import com.zufar.icedlatte.review.api.ProductReviewsStatisticsProvider;
+import com.zufar.icedlatte.review.internal.ProductReviewManager;
+import com.zufar.icedlatte.review.internal.ProductReviewLikesUpdater;
+import com.zufar.icedlatte.review.internal.ProductReviewsProvider;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +34,8 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
 
     public static final String PRODUCT_REVIEW_URL = ApiPaths.PRODUCTS;
 
-    private final ProductReviewCreator productReviewCreator;
-    private final ProductReviewDeleter productReviewDeleter;
+    private final ProductReviewManager productReviewService;
     private final ProductReviewsProvider productReviewsProvider;
-    private final ProductReviewsStatisticsProvider productReviewsStatisticsProvider;
     private final ProductReviewLikesUpdater productReviewLikesUpdater;
     private final SecurityPrincipalProvider securityPrincipalProvider;
 
@@ -48,7 +44,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
         UUID userId = securityPrincipalProvider.getUserId();
-        var review = productReviewCreator.create(productId, userId, productReviewRequest);
+        var review = productReviewService.create(productId, userId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
     }
@@ -58,7 +54,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
         UUID userId = securityPrincipalProvider.getUserId();
-        productReviewDeleter.delete(productId, productReviewId, userId);
+        productReviewService.delete(productId, productReviewId, userId);
         log.info("review.deleted: reviewId={}", productReviewId);
         return ResponseEntity.ok().build();
     }
@@ -85,7 +81,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @GetMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/statistics")
     public ResponseEntity<ProductReviewRatingStats> getRatingAndReviewStat(@PathVariable final UUID productId) {
-        return ResponseEntity.ok(productReviewsStatisticsProvider.get(productId));
+        return ResponseEntity.ok(productReviewsProvider.getStatistics(productId));
     }
 
     @Override

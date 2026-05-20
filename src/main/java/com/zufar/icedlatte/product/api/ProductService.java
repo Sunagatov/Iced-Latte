@@ -30,7 +30,7 @@ import static com.zufar.icedlatte.product.repository.ProductSpecifications.*;
 
 @Service
 @RequiredArgsConstructor
-public class ProductService {
+public class ProductService implements ProductCatalogApi, ProductEntityProvider {
 
     private final ProductInfoRepository productInfoRepository;
     private final ProductInfoDtoConverter productInfoDtoConverter;
@@ -117,6 +117,7 @@ public class ProductService {
         return productInfoRepository.existsById(productId);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<ProductInfo> findAllById(final Iterable<UUID> ids) {
         return productInfoRepository.findAllById(ids);

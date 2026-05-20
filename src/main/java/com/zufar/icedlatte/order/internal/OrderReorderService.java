@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.order.internal;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
 import com.zufar.icedlatte.openapi.dto.UnavailableItemDto;
@@ -9,7 +9,7 @@ import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.api.ProductService;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,8 +27,8 @@ import java.util.UUID;
 public class OrderReorderService {
 
     private final OrderRepository orderRepository;
-    private final ProductService productService;
-    private final ShoppingCartService shoppingCartService;
+    private final ProductCatalogApi productCatalogApi;
+    private final CartCheckoutApi cartCheckoutApi;
 
     @Transactional
     public ReorderResponseDto reorder(UUID orderId, UUID userId) {
@@ -43,7 +43,7 @@ public class OrderReorderService {
         List<UnavailableItemDto> unavailable = new ArrayList<>();
 
         for (OrderItem item : order.getItems()) {
-            if (productService.existsById(item.getProductId())) {
+            if (productCatalogApi.existsById(item.getProductId())) {
                 var cartItem = new NewShoppingCartItemDto();
                 cartItem.setProductId(item.getProductId());
                 cartItem.setProductQuantity(item.getProductsQuantity());
@@ -57,7 +57,7 @@ public class OrderReorderService {
 
         UUID cartId = null;
         if (!itemsToAdd.isEmpty()) {
-            var cart = shoppingCartService.addItems(userId, itemsToAdd);
+            var cart = cartCheckoutApi.addItems(userId, itemsToAdd);
             cartId = cart.getId();
         }
 

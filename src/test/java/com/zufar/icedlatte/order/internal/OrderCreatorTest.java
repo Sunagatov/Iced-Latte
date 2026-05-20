@@ -13,7 +13,7 @@ import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
-import com.zufar.icedlatte.product.api.ProductService;
+import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
@@ -46,7 +46,7 @@ class OrderCreatorTest {
     @Mock private OrderDtoConverter orderDtoConverter;
     @Mock private ShoppingCartService shoppingCartService;
         @Mock private DeliveryAddressRepository deliveryAddressRepository;
-    @Mock private ProductService productService;
+    @Mock private ProductCatalogApi productCatalogApi;
     @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;
     @Mock @SuppressWarnings("unused") private SingleUserProvider singleUserProvider;
     @InjectMocks private OrderCreator orderCreator;
@@ -83,7 +83,7 @@ class OrderCreatorTest {
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
-        when(productService.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
 
@@ -111,7 +111,7 @@ class OrderCreatorTest {
         when(deliveryAddressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(savedAddr));
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
-        when(productService.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
 
@@ -135,7 +135,7 @@ class OrderCreatorTest {
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
-        when(productService.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(deliveryAddressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderCreator.create(userId, request, null))
@@ -196,7 +196,7 @@ class OrderCreatorTest {
         OrderItem orderItem = OrderItem.builder().productId(productId).productName("Deleted Coffee").build();
 
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
-        when(productService.existsById(productId)).thenReturn(false);
+        when(productCatalogApi.existsById(productId)).thenReturn(false);
 
         assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, cart))
                 .isInstanceOf(BadRequestException.class)

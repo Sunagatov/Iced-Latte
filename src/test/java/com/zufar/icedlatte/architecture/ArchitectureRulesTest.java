@@ -67,6 +67,16 @@ class ArchitectureRulesTest {
                     );
 
     /**
+     * Non-order modules must not depend on order.internal.
+     * Spring Modulith already enforces this, but an explicit ArchUnit rule gives clearer failure messages.
+     */
+    @ArchTest
+    static final ArchRule non_order_modules_should_not_depend_on_order_internal =
+            noClasses()
+                    .that().resideOutsideOfPackage("..order..")
+                    .should().dependOnClassesThat().resideInAPackage("..order.internal..");
+
+    /**
      * Checks that core business feature modules do not form dependency cycles.
      * Infrastructure modules (security, user, common, openapi) are excluded
      * because security↔user has inherent bidirectional coupling.

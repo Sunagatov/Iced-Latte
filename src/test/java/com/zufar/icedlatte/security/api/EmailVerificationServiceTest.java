@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
-import com.zufar.icedlatte.email.api.token.TokenPurpose;
 import com.zufar.icedlatte.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;

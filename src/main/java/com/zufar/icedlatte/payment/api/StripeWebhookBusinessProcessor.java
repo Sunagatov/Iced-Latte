@@ -2,7 +2,7 @@ package com.zufar.icedlatte.payment.api;
 
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
@@ -33,7 +33,7 @@ public class StripeWebhookBusinessProcessor {
 
     private final OrderPaymentApi orderPaymentApi;
     private final PaymentRepository paymentRepository;
-    private final ShoppingCartService shoppingCartService;
+    private final CartCheckoutApi cartCheckoutApi;
 
     @Transactional
     public void process(Event event) {
@@ -117,7 +117,7 @@ public class StripeWebhookBusinessProcessor {
         // Store stripePaymentIntentId on Order for refund lookup
         orderPaymentApi.assignPaymentIntent(orderId, stripeSession.getPaymentIntent());
 
-        shoppingCartService.deleteCartForUser(payment.getUserId());
+        cartCheckoutApi.deleteCartForUser(payment.getUserId());
 
         log.info("checkout.completed: orderId={}, paymentIntentId={}",
                 orderId, stripeSession.getPaymentIntent());

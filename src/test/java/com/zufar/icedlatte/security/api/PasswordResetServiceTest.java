@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.api;
 
-import com.zufar.icedlatte.email.exception.TimeTokenException;
+import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.user.api.SingleUserProvider;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;

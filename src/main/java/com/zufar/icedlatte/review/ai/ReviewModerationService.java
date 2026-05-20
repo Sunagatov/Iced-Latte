@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
+
 public interface ReviewModerationService {
 
     /**

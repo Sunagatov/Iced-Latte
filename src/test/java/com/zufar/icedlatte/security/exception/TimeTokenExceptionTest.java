@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.exception;
+package com.zufar.icedlatte.security.exception;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

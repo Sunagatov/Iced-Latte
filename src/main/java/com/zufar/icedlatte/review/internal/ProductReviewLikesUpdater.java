@@ -1,8 +1,9 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
@@ -20,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ProductReviewLikesUpdater {
+public class ProductReviewLikesUpdater implements ReviewMaintenanceApi {
 
     private final ProductReviewLikeRepository productReviewLikeRepository;
     private final ProductReviewRepository productReviewRepository;
@@ -73,6 +74,7 @@ public class ProductReviewLikesUpdater {
         }
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshAllCounts() {
         productReviewRepository.updateAllLikesCounts();

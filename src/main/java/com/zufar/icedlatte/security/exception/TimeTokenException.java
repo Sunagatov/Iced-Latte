@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.exception;
+package com.zufar.icedlatte.security.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

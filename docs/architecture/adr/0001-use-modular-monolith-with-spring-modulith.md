@@ -71,11 +71,15 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 ### Spring Modulith (ModularityTests)
 - Module structure verification passes (no illegal cross-module access).
 - No dependency cycles between modules.
+- Named interface snapshot test prevents accidental exposure of new subpackages.
 
 ### ArchUnit (ArchitectureRulesTest)
-- Endpoints must not access repositories directly.
+- REST controllers must not access repositories directly.
 - `common` must not depend on feature modules.
+- No module may depend on `astartup`.
 - Business feature modules must be free of dependency cycles.
+- `order.api` must not depend on order repositories, entities, or converters.
+- Non-order modules must not depend on `order.internal`.
 
 ## Key architectural changes made
 
@@ -85,6 +89,9 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 4. **EmailVerificationService → security.api** — eliminated email↔security cycle.
 5. **Repositories made internal** — cart, order, product, review repositories are no longer accessible from other modules. Cross-module access goes through service APIs.
 6. **OrderSnapshot DTO** — payment uses a record DTO instead of Order entity directly.
+7. **order.api contract split** — moved concrete order services to `order.internal`.
+   `order.api` now exposes narrow contracts: `OrderCheckoutApi`, `OrderPaymentApi`,
+   and `OrderSnapshot`. Payment depends only on those contracts.
 
 ## Known remaining coupling (acceptable)
 
@@ -94,10 +101,13 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 
 ## Future work
 
-- Make `product.entity` internal (requires Liquibase migration to denormalize price/name into cart_item table).
-- Break `security ↔ user` cycle (extract `UserLookup` interface into common).
+- Apply the same API-purity pattern to product, cart, review, user, and security.
+- Remove `product.entity` and `product.converter` named interfaces after replacing
+  cart/favorite JPA entity coupling with product snapshots (requires Liquibase migration).
+- Break `security ↔ user` cycle (extract `UserLookupApi` interface, close both modules).
 - Introduce domain events for async cross-module communication.
 - Tighten `common` — move module-specific types out of common into their owning modules.
+- Add explicit `@ApplicationModule(allowedDependencies = ...)` after module APIs stabilize.
 
 ## Consequences
 

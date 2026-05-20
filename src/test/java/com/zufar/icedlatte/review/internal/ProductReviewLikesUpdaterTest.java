@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;

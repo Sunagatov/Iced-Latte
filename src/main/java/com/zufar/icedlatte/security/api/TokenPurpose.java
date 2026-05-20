@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.email.api.token;
+package com.zufar.icedlatte.security.api;
 
 public enum TokenPurpose {
 

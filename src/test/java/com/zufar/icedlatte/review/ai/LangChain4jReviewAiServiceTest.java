@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
+
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import org.junit.jupiter.api.DisplayName;

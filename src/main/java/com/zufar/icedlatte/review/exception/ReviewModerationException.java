@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.review.ai;
+package com.zufar.icedlatte.review.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

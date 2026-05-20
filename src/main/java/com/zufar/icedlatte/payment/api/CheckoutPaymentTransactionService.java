@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.payment.api;
 
-import com.zufar.icedlatte.cart.api.ShoppingCartService;
+import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
@@ -35,7 +35,7 @@ public class CheckoutPaymentTransactionService {
     private final PaymentRepository paymentRepository;
     private final OrderPaymentApi orderPaymentApi;
     private final OrderCheckoutApi orderCheckoutApi;
-    private final ShoppingCartService shoppingCartService;
+    private final CartCheckoutApi cartCheckoutApi;
     private final StripeProperties stripeProperties;
 
     @Transactional
@@ -57,7 +57,7 @@ public class CheckoutPaymentTransactionService {
             return new CheckoutPreparation(order, existing, List.of(), true);
         }
 
-        ShoppingCartDto cart = shoppingCartService.getByUserIdOrThrow(userId);
+        ShoppingCartDto cart = cartCheckoutApi.getByUserIdOrThrow(userId);
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }

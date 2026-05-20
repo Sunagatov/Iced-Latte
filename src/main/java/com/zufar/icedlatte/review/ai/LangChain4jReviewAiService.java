@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
+
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

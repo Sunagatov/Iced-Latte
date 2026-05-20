@@ -1,9 +1,10 @@
-package com.zufar.icedlatte.review.api;
+package com.zufar.icedlatte.review.internal;
 
-import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.ai.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -20,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ProductReviewCreator {
+public class ProductReviewManager {
 
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
@@ -57,5 +58,19 @@ public class ProductReviewCreator {
         eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productReviewText.trim(), productId));
 
         return productReviewDtoConverter.toProductReviewDto(productReview);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void delete(final UUID productId,
+                       final UUID productReviewId,
+                       final UUID userId) {
+        productReviewValidator.validateProductReviewDeletionAllowed(productReviewId, userId);
+        productReviewValidator.validateProductIdIsValid(productId, productReviewId);
+
+        reviewRepository.deleteById(productReviewId);
+
+        productReviewProductGateway.refreshReviewAggregates(productId);
+
+        summaryDebouncer.schedule(productId);
     }
 }

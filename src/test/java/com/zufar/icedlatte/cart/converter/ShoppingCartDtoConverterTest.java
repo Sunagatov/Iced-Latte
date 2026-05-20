@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.cart.converter;
 
-import com.zufar.icedlatte.cart.api.ItemsTotalPriceCalculator;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
@@ -22,14 +21,14 @@ import static org.hamcrest.Matchers.*;
 import java.math.BigDecimal;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {ShoppingCartDtoConverterTest.Config.class, ItemsTotalPriceCalculator.class})
+@ContextConfiguration(classes = {ShoppingCartDtoConverterTest.Config.class})
 class ShoppingCartDtoConverterTest {
 
     @Configuration
     public static class Config {
         @Bean public ProductInfoDtoConverter productInfoDtoConverter() { return Mappers.getMapper(ProductInfoDtoConverter.class); }
         @Bean public ShoppingCartItemDtoConverter shoppingCartItemDtoConverter(ProductInfoDtoConverter productInfoDtoConverter) { return new ShoppingCartItemDtoConverterImpl(productInfoDtoConverter); }
-        @Bean public ShoppingCartDtoConverter shoppingCartDtoConverter(ShoppingCartItemDtoConverter itemConverter, ItemsTotalPriceCalculator calculator) { return new ShoppingCartDtoConverterImpl(itemConverter, calculator); }
+        @Bean public ShoppingCartDtoConverter shoppingCartDtoConverter(ShoppingCartItemDtoConverter itemConverter) { return new ShoppingCartDtoConverterImpl(itemConverter); }
     }
 
     @Autowired

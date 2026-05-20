@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.security.api.EmailVerificationService;
-import com.zufar.icedlatte.email.api.token.TokenPurpose;
+import com.zufar.icedlatte.security.api.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.http.ContentType;
