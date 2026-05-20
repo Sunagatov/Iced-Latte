@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.session;
+package com.zufar.icedlatte.security.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;

@@ -1,6 +1,5 @@
-package com.zufar.icedlatte.security.service.registration;
+package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.session.SessionTokenService;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;

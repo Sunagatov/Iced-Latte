@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;

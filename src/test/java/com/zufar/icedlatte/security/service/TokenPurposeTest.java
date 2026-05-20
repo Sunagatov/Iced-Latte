@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.registration;
+package com.zufar.icedlatte.security.service;
 
 
 import org.junit.jupiter.api.DisplayName;

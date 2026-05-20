@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.session;
+package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.SessionInfo;

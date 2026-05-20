@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
-import com.zufar.icedlatte.security.service.session.SessionTokenService;
 
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;

@@ -3,7 +3,7 @@ package com.zufar.icedlatte.user.endpoint;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.service.registration.PasswordResetService;
+import com.zufar.icedlatte.security.service.PasswordResetService;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserProfileService;
 import com.zufar.icedlatte.user.service.avatar.UserAvatarUploader;

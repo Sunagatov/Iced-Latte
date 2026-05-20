@@ -8,7 +8,7 @@ import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.api.OAuthProviderClient;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
-import com.zufar.icedlatte.security.service.session.SessionTokenService;
+import com.zufar.icedlatte.security.service.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;

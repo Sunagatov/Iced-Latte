@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.session;
+package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.jwt.JwtBearerTokenResolver;

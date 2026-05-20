@@ -1,6 +1,5 @@
-package com.zufar.icedlatte.security.service.session;
+package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.UserAuthenticationService;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;

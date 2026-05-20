@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.monitoring;
+package com.zufar.icedlatte.security.filter;
 
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import io.sentry.Sentry;

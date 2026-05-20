@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.registration;
+package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;

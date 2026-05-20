@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.service.registration;
+package com.zufar.icedlatte.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
