@@ -51,7 +51,7 @@ public class ProductReviewValidator {
         var review = productReviewRepository.findById(productReviewId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
-        if (!currentUserId.equals(review.getUser().getId())) {
+        if (!currentUserId.equals(review.getUserId())) {
             throw new BadRequestException(String.format(
                     "Deletion of the product's review with productReviewId = '%s' is denied for the user with userId = '%s'",
                     productReviewId, currentUserId));

@@ -4,9 +4,9 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
+import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
 
@@ -18,9 +18,18 @@ import java.util.List;
 public interface ProductReviewDtoConverter {
 
     @Mapping(target = "productReviewId", source = "id")
-    @Mapping(target = "userName", source = "user", qualifiedByName = "toUserName")
-    @Mapping(target = "userLastname", source = "user", qualifiedByName = "toUserLastName")
+    @Mapping(target = "userName", ignore = true)
+    @Mapping(target = "userLastname", ignore = true)
     ProductReviewDto toProductReviewDto(ProductReview productReview);
+
+    default ProductReviewDto toProductReviewDto(ProductReview productReview, UserDto user) {
+        ProductReviewDto dto = toProductReviewDto(productReview);
+        if (user != null) {
+            dto.setUserName(user.getFirstName());
+            dto.setUserLastname(user.getLastName());
+        }
+        return dto;
+    }
 
     @Mapping(target = "page", expression = "java(page.getNumber())")
     @Mapping(target = "size", expression = "java(page.getSize())")
@@ -28,18 +37,6 @@ public interface ProductReviewDtoConverter {
     @Mapping(target = "totalPages", expression = "java(page.getTotalPages())")
     @Mapping(target = "reviewsWithRatings", expression = "java(page.getContent())")
     ProductReviewsAndRatingsWithPagination toProductReviewsAndRatingsWithPagination(final Page<ProductReviewDto> page);
-
-    @Named("toUserName")
-    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserName"
-    default String convertToUserName(UserEntity user) {
-        return user == null ? null : user.getFirstName();
-    }
-
-    @Named("toUserLastName")
-    @SuppressWarnings("unused") // called by MapStruct via qualifiedByName = "toUserLastName"
-    default String convertToUserLastName(UserEntity user) {
-        return user == null ? null : user.getLastName();
-    }
 
     default RatingMap convertToProductRatingMap(List<ProductRatingCount> productRatingCountPairs) {
         var productRatingMap = new RatingMap();

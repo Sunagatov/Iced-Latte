@@ -2,7 +2,9 @@ package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
+import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -78,6 +80,34 @@ class SingleUserProviderTest {
         assertThat(singleUserProvider.getUserByEmail("user@example.com")).isSameAs(dto);
         verify(userCrudRepository).findByEmail("user@example.com");
         verify(userDtoConverter).toDto(entity);
+    }
+
+    @Test
+    @DisplayName("getUserAuthenticationByEmail returns authentication snapshot")
+    void getUserAuthenticationByEmailReturnsSnapshot() {
+        UserEntity entity = UserEntity.builder()
+                .id(UUID.randomUUID())
+                .email("user@example.com")
+                .password("encoded")
+                .authorities(java.util.Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .enabled(true)
+                .build();
+        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+
+        var snapshot = singleUserProvider.getUserAuthenticationByEmail("user@example.com");
+
+        assertThat(snapshot.userId()).isEqualTo(entity.getId());
+        assertThat(snapshot.email()).isEqualTo(entity.getEmail());
+        assertThat(snapshot.password()).isEqualTo(entity.getPassword());
+        assertThat(snapshot.authorities()).containsExactly("USER");
+        assertThat(snapshot.accountNonExpired()).isTrue();
+        assertThat(snapshot.accountNonLocked()).isTrue();
+        assertThat(snapshot.credentialsNonExpired()).isTrue();
+        assertThat(snapshot.enabled()).isTrue();
+        verify(userCrudRepository).findByEmail("user@example.com");
     }
 
     @Test

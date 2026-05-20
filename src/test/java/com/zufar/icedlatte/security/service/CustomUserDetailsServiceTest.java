@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.security.service;
 
+import com.zufar.icedlatte.security.service.signin.SecurityUserDetails;
 import com.zufar.icedlatte.security.service.signin.CustomUserDetailsService;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.user.api.UserAuthenticationApi;
+import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +26,7 @@ import static org.mockito.Mockito.*;
 class CustomUserDetailsServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserAuthenticationApi userAuthenticationApi;
 
     @InjectMocks
     private CustomUserDetailsService service;
@@ -34,16 +36,19 @@ class CustomUserDetailsServiceTest {
     class LoadUserByUsername {
 
         @Test
-        @DisplayName("normalizes email before repository lookup")
-        void normalizesEmailBeforeRepositoryLookup() {
-            UserEntity user = user();
-            when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
+        @DisplayName("normalizes email before API lookup")
+        void normalizesEmailBeforeApiLookup() {
+            UserAuthenticationSnapshot user = user();
+            when(userAuthenticationApi.getUserAuthenticationByEmail("john.doe@example.com")).thenReturn(user);
 
-            UserEntity result = (UserEntity) service.loadUserByUsername("  John.Doe@Example.com  ");
+            SecurityUserDetails result = (SecurityUserDetails) service.loadUserByUsername("  John.Doe@Example.com  ");
 
-            assertThat(result).isSameAs(user);
-            verify(userRepository).findByEmail("john.doe@example.com");
-            verifyNoMoreInteractions(userRepository);
+            assertThat(result.id()).isEqualTo(user.userId());
+            assertThat(result.getUsername()).isEqualTo(user.email());
+            assertThat(result.getPassword()).isEqualTo(user.password());
+            assertThat(result.getAuthorities()).extracting("authority").containsExactly("USER");
+            verify(userAuthenticationApi).getUserAuthenticationByEmail("john.doe@example.com");
+            verifyNoMoreInteractions(userAuthenticationApi);
         }
 
         @Test
@@ -53,34 +58,34 @@ class CustomUserDetailsServiceTest {
                     .isInstanceOf(UsernameNotFoundException.class)
                     .hasMessage("Email cannot be empty");
 
-            verifyNoMoreInteractions(userRepository);
+            verifyNoMoreInteractions(userAuthenticationApi);
         }
 
         @Test
         @DisplayName("throws when normalized email is not found")
         void throwsWhenUserIsNotFound() {
-            when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+            when(userAuthenticationApi.getUserAuthenticationByEmail("missing@example.com"))
+                    .thenThrow(new UserNotFoundException("missing@example.com"));
 
             assertThatThrownBy(() -> service.loadUserByUsername("Missing@Example.com"))
                     .isInstanceOf(UsernameNotFoundException.class)
                     .hasMessage("User not found");
 
-            verify(userRepository).findByEmail("missing@example.com");
-            verifyNoMoreInteractions(userRepository);
+            verify(userAuthenticationApi).getUserAuthenticationByEmail("missing@example.com");
+            verifyNoMoreInteractions(userAuthenticationApi);
         }
     }
 
-    private static UserEntity user() {
-        UserEntity user = new UserEntity();
-        user.setId(UUID.randomUUID());
-        user.setEmail("john.doe@example.com");
-        user.setPassword("password123");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setAccountNonExpired(true);
-        user.setAccountNonLocked(true);
-        user.setCredentialsNonExpired(true);
-        user.setEnabled(true);
-        return user;
+    private static UserAuthenticationSnapshot user() {
+        return new UserAuthenticationSnapshot(
+                UUID.randomUUID(),
+                "john.doe@example.com",
+                "password123",
+                List.of("USER"),
+                true,
+                true,
+                true,
+                true
+        );
     }
 }

@@ -1,13 +1,13 @@
 package com.zufar.icedlatte.security.service.token;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
+import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.service.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.service.session.AuthSessionService;
 import com.zufar.icedlatte.security.service.signin.UserAuthenticationService;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
@@ -53,8 +53,8 @@ public class SessionTokenService {
     private SessionAuthentication createManagedSession(UserDetails userDetails,
                                                        UUID sessionId,
                                                        HttpServletRequest request) {
-        if (!(userDetails instanceof UserEntity user)) {
-            throw new IllegalArgumentException("Expected UserEntity but got: " + userDetails.getClass().getName());
+        if (!(userDetails instanceof Identifiable user)) {
+            throw new IllegalArgumentException("Expected identifiable user details but got: " + userDetails.getClass().getName());
         }
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(

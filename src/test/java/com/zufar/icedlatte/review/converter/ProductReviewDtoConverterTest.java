@@ -35,21 +35,22 @@ public class ProductReviewDtoConverterTest {
 
         ProductReview expectedProductReview = ProductReview.builder()
                 .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
                 .productId(UUID.randomUUID())
                 .productRating(1)
                 .text("")
                 .createdAt(OffsetDateTime.now())
-                .user(UserDtoTestStub.createUserEntity())
                 .build();
-        ProductReviewDto actualProductReviewDto = converter.toProductReviewDto(expectedProductReview);
+        var user = UserDtoTestStub.createUserDto();
+        ProductReviewDto actualProductReviewDto = converter.toProductReviewDto(expectedProductReview, user);
 
         assertThat(actualProductReviewDto.getProductReviewId()).isEqualTo(expectedProductReview.getId());
         assertThat(actualProductReviewDto.getProductId()).isEqualTo(expectedProductReview.getProductId());
         assertThat(actualProductReviewDto.getProductRating()).isEqualTo(expectedProductReview.getProductRating());
         assertThat(actualProductReviewDto.getText()).isEqualTo(expectedProductReview.getText());
         assertThat(actualProductReviewDto.getCreatedAt()).isEqualTo(expectedProductReview.getCreatedAt());
-        assertThat(actualProductReviewDto.getUserName()).isEqualTo(Optional.of(expectedProductReview.getUser()).get().getFirstName());
-        assertThat(actualProductReviewDto.getUserLastname()).isEqualTo(Optional.of(expectedProductReview.getUser()).get().getLastName());
+        assertThat(actualProductReviewDto.getUserName()).isEqualTo(Optional.of(user).get().getFirstName());
+        assertThat(actualProductReviewDto.getUserLastname()).isEqualTo(Optional.of(user).get().getLastName());
         assertThat(actualProductReviewDto.getLikesCount()).isEqualTo(expectedProductReview.getLikesCount());
         assertThat(actualProductReviewDto.getDislikesCount()).isEqualTo(expectedProductReview.getDislikesCount());
     }

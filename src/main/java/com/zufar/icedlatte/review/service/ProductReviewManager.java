@@ -9,7 +9,7 @@ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class ProductReviewManager {
 
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
-    private final SingleUserProvider singleUserProvider;
+    private final UserLookupApi userLookupApi;
     private final ProductReviewValidator productReviewValidator;
     private final ProductReviewProductApi productReviewProductApi;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
@@ -41,8 +41,9 @@ public class ProductReviewManager {
         productReviewValidator.validateReviewText(productReviewText);
         productReviewValidator.validateReviewExistsForUser(userId, productId);
 
+        var user = userLookupApi.getUserById(userId);
         var productReview = ProductReview.builder()
-                .user(singleUserProvider.getUserEntityById(userId))
+                .userId(userId)
                 .productId(productId)
                 .text(productReviewText.trim())
                 .productRating(productReviewRequest.getRating())
@@ -57,7 +58,7 @@ public class ProductReviewManager {
 
         eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productReviewText.trim(), productId));
 
-        return productReviewDtoConverter.toProductReviewDto(productReview);
+        return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)

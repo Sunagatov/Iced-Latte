@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.service.signin;
 
-import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.user.api.UserAuthenticationApi;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +19,7 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserAuthenticationApi userAuthenticationApi;
 
     @Override
     @NonNull
@@ -28,7 +29,10 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Email cannot be empty");
         }
         String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
-        return userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        try {
+            return SecurityUserDetails.from(userAuthenticationApi.getUserAuthenticationByEmail(normalizedEmail));
+        } catch (UserNotFoundException exception) {
+            throw new UsernameNotFoundException("User not found", exception);
+        }
     }
 }

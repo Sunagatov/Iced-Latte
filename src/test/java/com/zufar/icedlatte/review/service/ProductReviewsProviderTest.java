@@ -9,6 +9,7 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ class ProductReviewsProviderTest {
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private GetReviewsRequestValidator getReviewsRequestValidator;
+    @Mock private UserLookupApi userLookupApi;
     @InjectMocks private ProductReviewsProvider provider;
 
     private UUID productId;
@@ -60,11 +62,14 @@ class ProductReviewsProviderTest {
     @Test
     @DisplayName("getProductReviews uses defaults when params are null")
     void getProductReviewsNullParamsUsesDefaults() {
-        var page = new PageImpl<>(List.of(ProductReview.builder().id(UUID.randomUUID()).build()));
+        var review = ProductReview.builder().id(UUID.randomUUID()).userId(userId).build();
+        var page = new PageImpl<>(List.of(review));
         when(reviewRepository.findAllProductReviews(eq(productId), eq(null), any(Pageable.class)))
                 .thenReturn(page);
+        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        when(userLookupApi.getUserById(userId)).thenReturn(user);
         var dto = new ProductReviewDto();
-        when(productReviewDtoConverter.toProductReviewDto(any())).thenReturn(dto);
+        when(productReviewDtoConverter.toProductReviewDto(review, user)).thenReturn(dto);
         var expected = new ProductReviewsAndRatingsWithPagination();
         when(productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(any())).thenReturn(expected);
 
@@ -90,10 +95,12 @@ class ProductReviewsProviderTest {
     @Test
     @DisplayName("getProductReviewForUser returns mapped dto when review exists")
     void getProductReviewForUserReviewExistsReturnsMappedDto() {
-        var review = ProductReview.builder().id(UUID.randomUUID()).build();
+        var review = ProductReview.builder().id(UUID.randomUUID()).userId(userId).build();
+        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
         var dto = new ProductReviewDto();
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(review));
-        when(productReviewDtoConverter.toProductReviewDto(review)).thenReturn(dto);
+        when(userLookupApi.getUserById(userId)).thenReturn(user);
+        when(productReviewDtoConverter.toProductReviewDto(review, user)).thenReturn(dto);
 
         assertThat(provider.getProductReviewForUser(productId, userId)).isEqualTo(dto);
     }

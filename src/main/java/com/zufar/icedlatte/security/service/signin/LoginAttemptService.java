@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.service.signin;
 
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.user.api.UserAccountLockApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +26,7 @@ public class LoginAttemptService {
     private int userAccountLockoutDurationMinutes;
 
     private final LoginAttemptRepository loginAttemptRepository;
-    private final UserRepository userRepository;
+    private final UserAccountLockApi userAccountLockApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void recordFailure(String userEmail) {
@@ -72,7 +72,7 @@ public class LoginAttemptService {
 
         int released = loginAttemptRepository.resetLockedAccounts();
         log.debug("scheduler.unlock.released: count={}", released);
-        userRepository.unlockUsers();
+        userAccountLockApi.unlockExpiredLockedAccounts();
 
         log.debug("scheduler.unlock.finish");
     }
@@ -80,7 +80,7 @@ public class LoginAttemptService {
     private void lockUserAccount(String userEmail) {
         Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, ChronoUnit.MINUTES);
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
-        int userRows = userRepository.setAccountLockedStatus(userEmail, false);
+        int userRows = userAccountLockApi.setAccountLockedStatus(userEmail, false);
         if (attemptRows == 0 || userRows == 0) {
             log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated",
                     attemptRows, userRows);
@@ -91,7 +91,7 @@ public class LoginAttemptService {
     }
 
     private void unlockUserAccount(String userEmail) {
-        int userRows = userRepository.setAccountLockedStatus(userEmail, true);
+        int userRows = userAccountLockApi.setAccountLockedStatus(userEmail, true);
         if (userRows == 0) {
             log.error("auth.account.unlock_failed: userRows={}, message=no rows updated", userRows);
         } else {

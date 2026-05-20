@@ -9,6 +9,7 @@ import com.zufar.icedlatte.review.entity.ProductReviewLike;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,8 @@ class ProductReviewLikesUpdaterTest {
     ProductReviewLikeRepository productReviewLikeRepository;
     @Mock
     ProductReviewDtoConverter productReviewDtoConverter;
+    @Mock
+    UserLookupApi userLookupApi;
 
     @Test
     @DisplayName("Should remove only the current user's vote when same vote is submitted again")
@@ -47,14 +50,16 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
         var productReview = ProductReview.builder()
-                .id(reviewId).productId(productId).productRating(1).text("").createdAt(OffsetDateTime.now()).build();
+                .id(reviewId).userId(userId).productId(productId).productRating(1).text("").createdAt(OffsetDateTime.now()).build();
         var existingLike = ProductReviewLike.builder()
                 .userId(userId).productId(productId).productReviewId(reviewId).isLike(true).build();
         var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(), "", "", 0, 0);
 
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(existingLike));
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
-        when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
+        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        when(userLookupApi.getUserById(userId)).thenReturn(user);
+        when(productReviewDtoConverter.toProductReviewDto(productReview, user)).thenReturn(expected);
 
         productReviewLikesUpdater.update(productId, reviewId, userId, true);
 
@@ -68,19 +73,21 @@ class ProductReviewLikesUpdaterTest {
         var reviewId = UUID.randomUUID();
         var userId = UUID.randomUUID();
         var productReview = ProductReview.builder()
-                .id(reviewId).productId(productId).productRating(1).text("").createdAt(OffsetDateTime.now()).build();
+                .id(reviewId).userId(userId).productId(productId).productRating(1).text("").createdAt(OffsetDateTime.now()).build();
         var productReviewLike = ProductReviewLike.builder()
                 .userId(userId).productId(productId).productReviewId(reviewId).isLike(true).build();
         var expected = new ProductReviewDto(reviewId, productId, 1, "", OffsetDateTime.now(), "", "", 0, 0);
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(productReviewLike));
-        when(productReviewDtoConverter.toProductReviewDto(productReview)).thenReturn(expected);
+        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        when(userLookupApi.getUserById(userId)).thenReturn(user);
+        when(productReviewDtoConverter.toProductReviewDto(productReview, user)).thenReturn(expected);
 
         assertEquals(expected, productReviewLikesUpdater.update(productId, reviewId, userId, true));
 
         verify(productReviewRepository).findById(reviewId);
-        verify(productReviewDtoConverter).toProductReviewDto(productReview);
+        verify(productReviewDtoConverter).toProductReviewDto(productReview, user);
         verify(productReviewRepository).updateLikesCount(reviewId);
         verify(productReviewRepository).updateDislikesCount(reviewId);
     }

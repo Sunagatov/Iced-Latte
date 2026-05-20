@@ -10,8 +10,7 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +34,7 @@ class ProductReviewManagerTest {
 
     @Mock private ProductReviewRepository reviewRepository;
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
-    @Mock private SingleUserProvider singleUserProvider;
+    @Mock private UserLookupApi userLookupApi;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private ProductReviewProductApi productReviewProductGateway;
     @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
@@ -46,7 +45,7 @@ class ProductReviewManagerTest {
     @BeforeEach
     void setUp() {
         service = new ProductReviewManager(
-                reviewRepository, productReviewDtoConverter, singleUserProvider,
+                reviewRepository, productReviewDtoConverter, userLookupApi,
                 productReviewValidator, productReviewProductGateway, summaryDebouncer, eventPublisher
         );
     }
@@ -60,20 +59,21 @@ class ProductReviewManagerTest {
         void create_validRequest_savesAndReturnsDto() {
             UUID userId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
-            UserEntity user = UserEntity.builder().id(userId).build();
             ProductReviewRequest request = new ProductReviewRequest();
             request.setText("  Great coffee!  ");
             request.setRating(5);
             ProductReviewDto expectedDto = new ProductReviewDto();
 
-            when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
+            var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+            user.setId(userId);
+            when(userLookupApi.getUserById(userId)).thenReturn(user);
             UUID generatedId = UUID.randomUUID();
             doAnswer(invocation -> {
                 ProductReview review = invocation.getArgument(0);
                 review.setId(generatedId);
                 return review;
             }).when(reviewRepository).saveAndFlush(any(ProductReview.class));
-            when(productReviewDtoConverter.toProductReviewDto(any())).thenReturn(expectedDto);
+            when(productReviewDtoConverter.toProductReviewDto(any(), eq(user))).thenReturn(expectedDto);
 
             ProductReviewDto result = service.create(productId, userId, request);
 
@@ -81,6 +81,7 @@ class ProductReviewManagerTest {
 
             ArgumentCaptor<ProductReview> captor = ArgumentCaptor.forClass(ProductReview.class);
             verify(reviewRepository).saveAndFlush(captor.capture());
+            assertThat(captor.getValue().getUserId()).isEqualTo(userId);
             assertThat(captor.getValue().getText()).isEqualTo("Great coffee!");
             assertThat(captor.getValue().getProductRating()).isEqualTo(5);
             assertThat(captor.getValue().getLikesCount()).isZero();

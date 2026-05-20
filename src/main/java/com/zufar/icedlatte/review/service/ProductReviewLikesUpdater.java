@@ -10,6 +10,7 @@ import com.zufar.icedlatte.review.entity.ProductReviewLike;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -27,6 +28,7 @@ public class ProductReviewLikesUpdater implements ReviewMaintenanceApi {
     private final ProductReviewRepository productReviewRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final ProductReviewValidator productReviewValidator;
+    private final UserLookupApi userLookupApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto update(final UUID productId,
@@ -64,7 +66,7 @@ public class ProductReviewLikesUpdater implements ReviewMaintenanceApi {
         ProductReview productReview = productReviewRepository.findById(productReviewId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
-        return productReviewDtoConverter.toProductReviewDto(productReview);
+        return productReviewDtoConverter.toProductReviewDto(productReview, userLookupApi.getUserById(productReview.getUserId()));
     }
 
     private static void validateVote(Boolean vote) {

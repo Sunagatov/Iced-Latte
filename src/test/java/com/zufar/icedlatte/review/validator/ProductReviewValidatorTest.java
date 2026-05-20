@@ -6,7 +6,6 @@ import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,8 +112,7 @@ class ProductReviewValidatorTest {
     void validateProductReviewDeletionAllowedOwnerDeletesNoException() {
         UUID userId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        UserEntity owner = UserEntity.builder().id(userId).build();
-        ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
+        ProductReview review = ProductReview.builder().id(reviewId).userId(userId).build();
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
@@ -127,8 +125,7 @@ class ProductReviewValidatorTest {
         UUID currentUserId = UUID.randomUUID();
         UUID reviewOwnerId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        UserEntity owner = UserEntity.builder().id(reviewOwnerId).build();
-        ProductReview review = ProductReview.builder().id(reviewId).user(owner).build();
+        ProductReview review = ProductReview.builder().id(reviewId).userId(reviewOwnerId).build();
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 

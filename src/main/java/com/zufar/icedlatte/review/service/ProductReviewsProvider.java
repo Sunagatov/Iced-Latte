@@ -3,15 +3,14 @@ package com.zufar.icedlatte.review.service;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
-import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
-import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
-import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
-import com.zufar.icedlatte.openapi.dto.RatingMap;
+import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
+import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +31,7 @@ public class ProductReviewsProvider {
     private final ProductReviewValidator productReviewValidator;
     private final PaginationConfig paginationConfig;
     private final GetReviewsRequestValidator getReviewsRequestValidator;
+    private final UserLookupApi userLookupApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId,
@@ -45,7 +45,7 @@ public class ProductReviewsProvider {
 
         var responsePage = reviewRepository
                 .findAllProductReviews(productId, productRatings, pageRequest)
-                .map(productReviewDtoConverter::toProductReviewDto);
+                .map(this::toProductReviewDto);
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }
 
@@ -53,7 +53,7 @@ public class ProductReviewsProvider {
     public ProductReviewDto getProductReviewForUser(final UUID productId, final UUID userId) {
         productReviewValidator.validateProductExists(productId);
         return reviewRepository.findByUserIdAndProductId(userId, productId)
-                .map(productReviewDtoConverter::toProductReviewDto)
+                .map(this::toProductReviewDto)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Product's review for productId = '%s' and userId = '%s' was not found", productId, userId)));
     }
@@ -66,8 +66,13 @@ public class ProductReviewsProvider {
                                                                  final String sortDirection) {
         var responsePage = reviewRepository
                 .findAllByUserId(userId, buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, null))
-                .map(productReviewDtoConverter::toProductReviewDto);
+                .map(this::toProductReviewDto);
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
+    }
+
+    private ProductReviewDto toProductReviewDto(ProductReview productReview) {
+        UserDto userDto = userLookupApi.getUserById(productReview.getUserId());
+        return productReviewDtoConverter.toProductReviewDto(productReview, userDto);
     }
 
     private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(Integer pageNumber,

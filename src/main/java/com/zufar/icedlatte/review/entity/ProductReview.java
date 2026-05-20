@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.review.entity;
 
-import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,9 +21,8 @@ public class ProductReview {
     @ToString.Include
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(name = "product_id")
     private UUID productId;

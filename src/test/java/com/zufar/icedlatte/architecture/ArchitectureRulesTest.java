@@ -122,6 +122,32 @@ class ArchitectureRulesTest {
                             "..user.service.."
                     );
 
+    @ArchTest
+    static final ArchRule security_token_services_should_not_depend_on_user_entities =
+            noClasses()
+                    .that().resideInAPackage("..security.service.token..")
+                    .should().dependOnClassesThat().resideInAPackage("..user.entity..");
+
+    @ArchTest
+    static final ArchRule custom_user_details_service_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().haveSimpleName("CustomUserDetailsService")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..user.repository..",
+                            "..user.entity..",
+                            "..user.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule login_attempt_service_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().haveSimpleName("LoginAttemptService")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..user.repository..",
+                            "..user.entity..",
+                            "..user.service.."
+                    );
+
     /**
      * Non-order modules must not depend on order implementation services.
      * Spring Modulith already enforces this, but an explicit ArchUnit rule gives clearer failure messages.
@@ -148,6 +174,12 @@ class ArchitectureRulesTest {
     static final ArchRule order_module_should_not_depend_on_user_address_entity =
             noClasses()
                     .that().resideInAPackage("..order..")
+                    .should().dependOnClassesThat().resideInAPackage("..user.entity..");
+
+    @ArchTest
+    static final ArchRule review_module_should_not_depend_on_user_entities =
+            noClasses()
+                    .that().resideInAPackage("..review..")
                     .should().dependOnClassesThat().resideInAPackage("..user.entity..");
 
     @ArchTest
