@@ -13,7 +13,7 @@ class ModularityTests {
 
     private final ApplicationModules modules = ApplicationModules.of(
             IcedLatteApplication.class,
-            ApplicationModules.Filters.excludingModule("openapi"));
+            ApplicationModules.Filters.withoutModule("openapi"));
 
     @Test
     void printsApplicationModules() {
