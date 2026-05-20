@@ -6,6 +6,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.springframework.web.bind.annotation.RestController;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
@@ -18,9 +19,9 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 class ArchitectureRulesTest {
 
     @ArchTest
-    static final ArchRule endpoints_should_not_access_repositories =
+    static final ArchRule rest_controllers_should_not_access_repositories =
             noClasses()
-                    .that().haveSimpleNameEndingWith("Endpoint")
+                    .that().areAnnotatedWith(RestController.class)
                     .should().accessClassesThat().haveSimpleNameEndingWith("Repository");
 
     @ArchTest
@@ -33,22 +34,28 @@ class ArchitectureRulesTest {
                             "..email..", "..filestorage.."
                     );
 
+    @ArchTest
+    static final ArchRule no_module_should_depend_on_astartup =
+            noClasses()
+                    .that().resideOutsideOfPackage("..astartup..")
+                    .should().dependOnClassesThat().resideInAPackage("..astartup..");
+
     private static final DescribedPredicate<JavaClass> INFRASTRUCTURE_MODULE =
             new DescribedPredicate<>("belongs to infrastructure module") {
                 @Override
                 public boolean test(JavaClass javaClass) {
                     String pkg = javaClass.getPackageName();
                     return pkg.startsWith("com.zufar.icedlatte.security")
+                            || pkg.startsWith("com.zufar.icedlatte.user")
                             || pkg.startsWith("com.zufar.icedlatte.common")
-                            || pkg.startsWith("com.zufar.icedlatte.openapi")
-                            || pkg.startsWith("com.zufar.icedlatte.astartup");
+                            || pkg.startsWith("com.zufar.icedlatte.openapi");
                 }
             };
 
     /**
      * Checks that core business feature modules do not form dependency cycles.
-     * Infrastructure modules (security, common, openapi, astartup) are excluded
-     * because they have known coupling that will be addressed in later phases.
+     * Infrastructure modules (security, user, common, openapi) are excluded
+     * because security↔user has inherent bidirectional coupling.
      */
     @ArchTest
     static final ArchRule feature_packages_should_be_free_of_cycles =

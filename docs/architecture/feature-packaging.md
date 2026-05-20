@@ -31,8 +31,7 @@ Current backend feature packages:
 
 | Package | Owns |
 |---|---|
-| `security` | registration, login, JWT, sessions, rate limiting |
-| `auth` | OAuth callback and auth redirects |
+| `security` | registration, login, JWT, sessions, rate limiting, OAuth |
 | `user` | user profiles, addresses, avatars |
 | `product` | catalog, product filters, product images |
 | `cart` | shopping cart state and operations |
