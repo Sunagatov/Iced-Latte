@@ -10,7 +10,7 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
+import com.zufar.icedlatte.product.api.ProductPictureLinkUpdater;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

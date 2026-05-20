@@ -9,6 +9,8 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
+import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
+import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;

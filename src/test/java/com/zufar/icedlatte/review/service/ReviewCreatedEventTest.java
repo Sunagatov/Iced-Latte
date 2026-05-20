@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.review.service;
 
-import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

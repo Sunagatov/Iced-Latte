@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.review.kafka;
 
-import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

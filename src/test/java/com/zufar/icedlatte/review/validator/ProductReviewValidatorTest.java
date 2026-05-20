@@ -5,6 +5,7 @@ import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

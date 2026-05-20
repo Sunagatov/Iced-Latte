@@ -14,7 +14,7 @@ import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
+import com.zufar.icedlatte.product.api.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

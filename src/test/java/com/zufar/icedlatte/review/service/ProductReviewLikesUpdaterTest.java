@@ -8,7 +8,7 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

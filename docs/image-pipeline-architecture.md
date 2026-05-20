@@ -122,7 +122,7 @@ This works because:
 
 ### 3. ProductImageReceiver
 
-**File:** `com.zufar.icedlatte.product.api.filestorage.ProductImageReceiver`
+**File:** `com.zufar.icedlatte.product.api.ProductImageReceiver`
 
 Two resolution paths:
 

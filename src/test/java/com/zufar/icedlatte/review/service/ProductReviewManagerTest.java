@@ -4,11 +4,12 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
-import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,7 @@ class ProductReviewManagerTest {
     @Mock private SingleUserProvider singleUserProvider;
     @Mock private ProductReviewValidator productReviewValidator;
     @Mock private ProductReviewProductGateway productReviewProductGateway;
-    @Mock private com.zufar.icedlatte.review.ai.summary.ProductReviewSummaryDebouncer summaryDebouncer;
+    @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     private ProductReviewManager service;

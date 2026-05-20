@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.review.kafka;
 
-import com.zufar.icedlatte.review.ai.AsyncReviewProcessingService;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
+import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaConsumer;
+import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +47,7 @@ class ReviewCreatedKafkaConsumerTest {
 
         consumer.consume(event);
 
-        var captor = ArgumentCaptor.forClass(com.zufar.icedlatte.review.api.ReviewCreatedEvent.class);
+        var captor = ArgumentCaptor.forClass(ReviewCreatedEvent.class);
         verify(processingService).process(captor.capture());
         assertThat(captor.getValue().eventId()).isEqualTo(eventId);
         assertThat(captor.getValue().reviewId()).isEqualTo(reviewId);

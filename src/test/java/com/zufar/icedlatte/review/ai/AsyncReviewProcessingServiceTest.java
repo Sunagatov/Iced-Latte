@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.review.ai;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
-import com.zufar.icedlatte.review.ai.moderation.ReviewModerationService;
-import com.zufar.icedlatte.review.ai.summary.ProductReviewSummaryDebouncer;
-import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
+import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
+import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;

@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.review.ai.summary;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

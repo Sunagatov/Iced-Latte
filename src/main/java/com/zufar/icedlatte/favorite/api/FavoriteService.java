@@ -10,7 +10,7 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
+import com.zufar.icedlatte.product.api.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

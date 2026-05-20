@@ -9,6 +9,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
+import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

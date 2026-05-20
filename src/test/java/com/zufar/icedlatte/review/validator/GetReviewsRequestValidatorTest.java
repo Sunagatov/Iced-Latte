@@ -2,6 +2,7 @@ package com.zufar.icedlatte.review.validator;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
