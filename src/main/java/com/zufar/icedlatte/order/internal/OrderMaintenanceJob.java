@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -22,7 +22,6 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "order.maintenance.enabled", havingValue = "true", matchIfMissing = true)
-@SuppressWarnings("unused") // Scheduled methods are invoked by Spring, not direct callers.
 public class OrderMaintenanceJob {
 
     private static final String EXPIRATION_MONITOR_SLUG = "order-expiration-job";

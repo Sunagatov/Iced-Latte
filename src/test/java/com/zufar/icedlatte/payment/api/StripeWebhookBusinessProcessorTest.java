@@ -4,10 +4,7 @@ import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.openapi.dto.OrderEvent;
-import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.api.OrderDetailProvider;
-import com.zufar.icedlatte.order.api.OrderLifecycleService;
+import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -31,10 +28,8 @@ import static org.mockito.Mockito.*;
 @DisplayName("StripeWebhookBusinessProcessor unit tests")
 class StripeWebhookBusinessProcessorTest {
 
-    @Mock private OrderStatusTransitioner orderStatusTransitioner;
+    @Mock private OrderPaymentApi orderPaymentApi;
     @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderDetailProvider orderDetailProvider;
-    @Mock private OrderLifecycleService orderLifecycleService;
     @Mock private ShoppingCartService shoppingCartService;
     @InjectMocks private StripeWebhookBusinessProcessor processor;
 
@@ -52,16 +47,12 @@ class StripeWebhookBusinessProcessorTest {
                 .currency("usd").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
 
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-        when(orderStatusTransitioner.transition(eq(ORDER_ID), eq(OrderEvent.PENDING_PAYMENT_CONFIRMED),
-                any(), any())).thenReturn(null);
-        doNothing().when(orderLifecycleService).assignPaymentIntent(any(), any());
 
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test_123");
-        verify(orderStatusTransitioner).transition(eq(ORDER_ID), eq(OrderEvent.PENDING_PAYMENT_CONFIRMED),
-                any(), eq("Stripe payment confirmed"));
+        verify(orderPaymentApi).confirmPayment(eq(ORDER_ID), eq("Stripe payment confirmed"));
         verify(shoppingCartService).deleteCartForUser(USER_ID);
     }
 
@@ -79,7 +70,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -95,7 +86,7 @@ class StripeWebhookBusinessProcessorTest {
 
         processor.process(event);
 
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
         verify(shoppingCartService, never()).deleteCartForUser(any());
     }
 
@@ -115,7 +106,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -132,8 +123,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        verify(orderStatusTransitioner).transition(eq(ORDER_ID), eq(OrderEvent.PAYMENT_EXPIRED_EVENT),
-                any(), eq("Stripe session expired"));
+        verify(orderPaymentApi).expirePayment(eq(ORDER_ID), eq("Stripe session expired"));
     }
 
     @Test
@@ -150,8 +140,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-        verify(orderStatusTransitioner).transition(eq(ORDER_ID), eq(OrderEvent.PAYMENT_FAILED_EVENT),
-                any(), eq("Stripe async payment failed"));
+        verify(orderPaymentApi).failPayment(eq(ORDER_ID), eq("Stripe async payment failed"));
     }
 
     @Test
@@ -168,7 +157,7 @@ class StripeWebhookBusinessProcessorTest {
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         verify(paymentRepository, never()).save(any());
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -185,7 +174,7 @@ class StripeWebhookBusinessProcessorTest {
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         verify(paymentRepository, never()).save(any());
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -250,7 +239,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -267,7 +256,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test
@@ -284,7 +273,7 @@ class StripeWebhookBusinessProcessorTest {
         processor.process(event);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        verify(orderStatusTransitioner, never()).transition(any(), any(), any(), any());
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     // --- Helpers ---

@@ -4,13 +4,10 @@ import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
+import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
-
-import com.zufar.icedlatte.order.api.OrderDetailProvider;
-import com.zufar.icedlatte.order.api.OrderLifecycleService;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -34,10 +31,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("PaymentStatusService unit tests")
 class PaymentStatusServiceTest {
 
-    @Mock private OrderDetailProvider orderDetailProvider;
-    @Mock private OrderLifecycleService orderLifecycleService;
+    @Mock private OrderPaymentApi orderPaymentApi;
     @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderStatusTransitioner orderStatusTransitioner;
     @Mock private ShoppingCartService shoppingCartService;
     @Mock private SecurityPrincipalProvider securityPrincipalProvider;
     @Mock private TransactionTemplate transactionTemplate;
@@ -52,7 +47,7 @@ class PaymentStatusServiceTest {
         OrderSnapshot order = new OrderSnapshot(ORDER_ID, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PAID, java.math.BigDecimal.TEN, null, java.util.List.of());
         Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
 
-        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
+        when(orderPaymentApi.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -72,7 +67,7 @@ class PaymentStatusServiceTest {
                 .providerSessionId(null)
                 .status(PaymentStatus.CREATED).build();
 
-        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
+        when(orderPaymentApi.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -85,7 +80,7 @@ class PaymentStatusServiceTest {
     @Test
     @DisplayName("Throws OrderNotFoundException for unknown order")
     void getStatus_unknownOrder_throws() {
-        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenThrow(new com.zufar.icedlatte.order.exception.OrderNotFoundException(ORDER_ID));
+        when(orderPaymentApi.getSnapshot(ORDER_ID)).thenThrow(new com.zufar.icedlatte.order.exception.OrderNotFoundException(ORDER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
                 .isInstanceOf(OrderNotFoundException.class);
@@ -97,7 +92,7 @@ class PaymentStatusServiceTest {
         UUID otherUserId = UUID.randomUUID();
         OrderSnapshot order = new OrderSnapshot(ORDER_ID, otherUserId, com.zufar.icedlatte.openapi.dto.OrderStatus.PAID, java.math.BigDecimal.TEN, null, java.util.List.of());
 
-        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
+        when(orderPaymentApi.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
 
         assertThatThrownBy(() -> service.getStatus(ORDER_ID))
@@ -110,7 +105,7 @@ class PaymentStatusServiceTest {
         OrderSnapshot order = new OrderSnapshot(ORDER_ID, USER_ID,
                 com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
-        when(orderDetailProvider.getSnapshot(ORDER_ID)).thenReturn(order);
+        when(orderPaymentApi.getSnapshot(ORDER_ID)).thenReturn(order);
         when(securityPrincipalProvider.get()).thenReturn(new UserDto().id(USER_ID));
         when(paymentRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.empty());
 

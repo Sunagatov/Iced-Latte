@@ -1,8 +1,9 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.OrderStatusHistoryDto;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
@@ -21,7 +22,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service and some methods are endpoint-only.
 public class OrderDetailProvider {
 
     private static final Set<OrderStatus> CANCELLABLE = Set.of(OrderStatus.CREATED, OrderStatus.PAID);
@@ -29,23 +29,6 @@ public class OrderDetailProvider {
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
-
-    @Transactional(readOnly = true)
-    public Order findById(UUID orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    @Transactional(readOnly = true)
-    public Order findByIdWithItems(UUID orderId) {
-        return orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Order> findByStripePaymentIntentId(String paymentIntentId) {
-        return orderRepository.findByStripePaymentIntentId(paymentIntentId);
-    }
 
     @Transactional(readOnly = true)
     public OrderSnapshot getSnapshot(UUID orderId) {
@@ -60,16 +43,6 @@ public class OrderDetailProvider {
     @Transactional(readOnly = true)
     public Optional<OrderSnapshot> findSnapshotByStripePaymentIntentId(String paymentIntentId) {
         return orderRepository.findByStripePaymentIntentId(paymentIntentId).map(this::toSnapshot);
-    }
-
-    private OrderSnapshot toSnapshot(Order order) {
-        List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
-                ? List.of()
-                : order.getItems().stream()
-                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
-                    .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
-                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +78,26 @@ public class OrderDetailProvider {
                         .reason(h.getReason())
                         .changedAt(h.getChangedAt()))
                 .toList();
+    }
+
+    Order findById(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    Order findByIdWithItems(UUID orderId) {
+        return orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    private OrderSnapshot toSnapshot(Order order) {
+        List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
+                ? List.of()
+                : order.getItems().stream()
+                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                    .toList();
+        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
     private boolean canCancel(Order order) {

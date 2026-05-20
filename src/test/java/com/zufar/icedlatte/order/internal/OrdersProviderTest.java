@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.openapi.dto.OrderPageDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;

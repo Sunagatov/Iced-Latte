@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.openapi.dto.OrderPageDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -19,7 +19,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service and endpoint flow uses it indirectly.
 public class OrdersProvider {
 
     private final OrderRepository orderRepository;

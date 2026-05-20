@@ -4,9 +4,9 @@ import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.order.api.OrderCreator;
+import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
@@ -35,8 +35,8 @@ import static org.mockito.Mockito.*;
 class CheckoutPaymentTransactionServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderDetailProvider orderDetailProvider;
-    @Mock private OrderCreator orderCreator;
+    @Mock private OrderPaymentApi orderPaymentApi;
+    @Mock private OrderCheckoutApi orderCheckoutApi;
     @Mock private ShoppingCartService shoppingCartService;
     @Mock private StripeProperties stripeProperties;
     @InjectMocks private CheckoutPaymentTransactionService service;
@@ -63,7 +63,7 @@ class CheckoutPaymentTransactionServiceTest {
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
-        when(orderCreator.createPendingPaymentOrderSnapshot(eq(USER_ID), eq(request), eq(cart)))
+        when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), eq(request), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
         when(stripeProperties.currency()).thenReturn("usd");
@@ -91,7 +91,7 @@ class CheckoutPaymentTransactionServiceTest {
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderDetailProvider.getSnapshot(orderId)).thenReturn(existingOrder);
+        when(orderPaymentApi.getSnapshot(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
@@ -114,15 +114,15 @@ class CheckoutPaymentTransactionServiceTest {
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
-        when(orderDetailProvider.getSnapshotWithItems(orderId)).thenReturn(existingOrder);
+        when(orderPaymentApi.getSnapshotWithItems(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
                 IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isTrue();
-        verify(orderDetailProvider).getSnapshotWithItems(orderId);
-        verify(orderDetailProvider, never()).findById(orderId);
+        verify(orderPaymentApi).getSnapshotWithItems(orderId);
+        verify(orderPaymentApi, never()).getSnapshot(orderId);
     }
 
     @Test

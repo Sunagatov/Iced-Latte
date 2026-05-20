@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.order.entity.OrderStatusHistory;
 import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
@@ -13,7 +13,6 @@ import static org.springframework.transaction.event.TransactionPhase.BEFORE_COMM
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Transactional event listener is invoked by Spring.
 public class OrderStatusHistoryRecorder {
 
     private final OrderStatusHistoryRepository repository;

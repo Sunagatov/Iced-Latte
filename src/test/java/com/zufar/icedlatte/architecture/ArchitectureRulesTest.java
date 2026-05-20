@@ -53,6 +53,18 @@ class ArchitectureRulesTest {
             };
 
     /**
+     * API packages (named interfaces) should not depend on repositories or JPA entities.
+     * This ensures module boundaries expose only clean contracts (interfaces, records, DTOs).
+     * Currently enforced only for order.api which has been fully refactored.
+     * TODO: extend to cart.api, product.api, review.api after their api packages are cleaned.
+     */
+    @ArchTest
+    static final ArchRule api_packages_should_not_depend_on_repositories =
+            noClasses()
+                    .that().resideInAPackage("..order.api..")
+                    .should().dependOnClassesThat().haveSimpleNameEndingWith("Repository");
+
+    /**
      * Checks that core business feature modules do not form dependency cycles.
      * Infrastructure modules (security, user, common, openapi) are excluded
      * because security↔user has inherent bidirectional coupling.

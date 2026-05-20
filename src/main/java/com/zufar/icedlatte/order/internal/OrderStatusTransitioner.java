@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -26,18 +26,15 @@ import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service; methods are entry points for workflow transitions.
 public class OrderStatusTransitioner {
 
     private static final Map<OrderStatus, Map<OrderEvent, OrderStatus>> TRANSITIONS = Map.of(
-            // Stripe payment flow
             PENDING_PAYMENT, Map.of(
                     PENDING_PAYMENT_CONFIRMED, PAID,
                     PAYMENT_FAILED_EVENT, PAYMENT_FAILED,
                     PAYMENT_EXPIRED_EVENT, PAYMENT_EXPIRED,
                     CANCEL, CANCELLED
             ),
-            // Non-Stripe flow (stripe.enabled=false)
             CREATED, Map.of(PAYMENT_CONFIRMED, PAID, CANCEL, CANCELLED),
             PAID, Map.of(SHIP, SHIPPED, CANCEL, CANCELLED, REQUEST_REFUND, REFUND_REQUESTED),
             OrderStatus.SHIPPED, Map.of(DELIVER, DELIVERED),
@@ -47,6 +44,14 @@ public class OrderStatusTransitioner {
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
+    public Order transition(UUID orderId, OrderEvent event, UUID actorId) {
+        return transition(orderId, event, actorId, null);
+    }
+
+    /**
+     * Transitions order state. Returns the updated Order entity for internal use.
+     */
     @Transactional
     public Order transition(UUID orderId, OrderEvent event, UUID actorId, String reason) {
         Order order = orderRepository.findById(orderId)
@@ -68,11 +73,6 @@ public class OrderStatusTransitioner {
         ));
 
         return saved;
-    }
-
-    @Transactional
-    public Order transition(UUID orderId, OrderEvent event, UUID actorId) {
-        return transition(orderId, event, actorId, null);
     }
 
     private static OrderStatus resolveTransition(OrderStatus current, OrderEvent event) {

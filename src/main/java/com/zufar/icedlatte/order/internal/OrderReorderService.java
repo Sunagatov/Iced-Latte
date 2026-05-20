@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
@@ -24,7 +24,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service; methods are called from controllers.
 public class OrderReorderService {
 
     private final OrderRepository orderRepository;

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -8,6 +8,8 @@ import com.zufar.icedlatte.openapi.dto.CreateNewOrderRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.order.api.OrderCheckoutApi;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
@@ -32,11 +34,9 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service; entry points are called indirectly.
-public class OrderCreator {
+public class OrderCreator implements OrderCheckoutApi {
 
     private final OrderRepository orderRepository;
-    private final OrderDetailProvider orderDetailProvider;
     private final OrderDtoConverter orderDtoConverter;
     private final ShoppingCartService shoppingCartService;
     private final DeliveryAddressRepository deliveryAddressRepository;
@@ -45,6 +45,7 @@ public class OrderCreator {
     @Value("${order.cancellation-window-minutes:30}")
     private int cancellationWindowMinutes;
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request,
                            final String idempotencyKey) {
@@ -92,13 +93,21 @@ public class OrderCreator {
         return orderDtoConverter.toResponseDto(saved);
     }
 
-    /**
-     * Creates an order with PENDING_PAYMENT status for the Stripe checkout flow.
-     * Cart items are snapshot into order items at creation time.
-     */
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request,
-                                           ShoppingCartDto cart) {
+    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CreateCheckoutRequestDto request,
+                                                           ShoppingCartDto cart) {
+        Order order = createPendingPaymentOrder(userId, request, cart);
+        var items = order.getItems() == null ? List.<OrderSnapshot.OrderItemSnapshot>of()
+                : order.getItems().stream()
+                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                    .toList();
+        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request, ShoppingCartDto cart) {
         validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
 
         Address deliveryAddress = resolveDeliveryAddress(
@@ -112,7 +121,7 @@ public class OrderCreator {
 
         Order order = Order.builder()
                 .userId(userId)
-                .sessionId(UUID.randomUUID().toString()) // placeholder — TODO: make nullable in follow-up
+                .sessionId(UUID.randomUUID().toString())
                 .status(OrderStatus.PENDING_PAYMENT)
                 .items(items)
                 .deliveryAddress(deliveryAddress)
@@ -127,17 +136,6 @@ public class OrderCreator {
         Order saved = orderRepository.save(order);
         log.info("order.pending_payment: orderId={}, userId={}", saved.getId(), userId);
         return saved;
-    }
-
-    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CreateCheckoutRequestDto request,
-                                                           ShoppingCartDto cart) {
-        Order order = createPendingPaymentOrder(userId, request, cart);
-        var items = order.getItems() == null ? List.<OrderSnapshot.OrderItemSnapshot>of()
-                : order.getItems().stream()
-                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
-                    .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
-                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
     private void validateProductAvailability(List<OrderItem> items) {

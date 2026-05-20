@@ -4,8 +4,8 @@ import com.zufar.icedlatte.cart.api.ShoppingCartService;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.order.api.OrderCreator;
-import com.zufar.icedlatte.order.api.OrderDetailProvider;
+import com.zufar.icedlatte.order.api.OrderCheckoutApi;
+import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -33,8 +33,8 @@ import java.util.UUID;
 public class CheckoutPaymentTransactionService {
 
     private final PaymentRepository paymentRepository;
-    private final OrderDetailProvider orderDetailProvider;
-    private final OrderCreator orderCreator;
+    private final OrderPaymentApi orderPaymentApi;
+    private final OrderCheckoutApi orderCheckoutApi;
     private final ShoppingCartService shoppingCartService;
     private final StripeProperties stripeProperties;
 
@@ -50,8 +50,8 @@ public class CheckoutPaymentTransactionService {
             // Do NOT read the live cart — it may be deleted after successful payment.
             // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
             OrderSnapshot order = (existing.getProviderSessionId() == null
-                    ? orderDetailProvider.getSnapshotWithItems(existing.getOrderId())
-                    : orderDetailProvider.getSnapshot(existing.getOrderId())
+                    ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
+                    : orderPaymentApi.getSnapshot(existing.getOrderId())
             );
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
             return new CheckoutPreparation(order, existing, List.of(), true);
@@ -62,7 +62,7 @@ public class CheckoutPaymentTransactionService {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        OrderSnapshot order = orderCreator.createPendingPaymentOrderSnapshot(userId, request, cart);
+        OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(userId, request, cart);
 
         Payment payment = Payment.builder()
                 .orderId(order.id())

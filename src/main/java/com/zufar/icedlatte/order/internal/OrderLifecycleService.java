@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.order.api;
+package com.zufar.icedlatte.order.internal;
 
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
@@ -18,7 +18,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("unused") // Spring injects this service; methods are called from controllers.
 public class OrderLifecycleService {
 
     private final OrderRepository orderRepository;
@@ -38,14 +37,6 @@ public class OrderLifecycleService {
         }
 
         return orderDtoConverter.toResponseDto(cancelled);
-    }
-
-    @Transactional
-    public void assignPaymentIntent(UUID orderId, String stripePaymentIntentId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
-        order.setStripePaymentIntentId(stripePaymentIntentId);
-        orderRepository.save(order);
     }
 
     @Transactional

@@ -3,11 +3,8 @@ package com.zufar.icedlatte.payment.api;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.ShoppingCartService;
-import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.order.api.OrderDetailProvider;
-import com.zufar.icedlatte.order.api.OrderLifecycleService;
-import com.zufar.icedlatte.order.api.OrderStatusTransitioner;
+import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -34,10 +31,8 @@ import java.util.UUID;
 @SuppressWarnings("unused") // Spring injects this bean; webhook flow enters through framework-managed calls.
 public class StripeWebhookBusinessProcessor {
 
-    private final OrderStatusTransitioner orderStatusTransitioner;
+    private final OrderPaymentApi orderPaymentApi;
     private final PaymentRepository paymentRepository;
-    private final OrderDetailProvider orderDetailProvider;
-    private final OrderLifecycleService orderLifecycleService;
     private final ShoppingCartService shoppingCartService;
 
     @Transactional
@@ -117,11 +112,10 @@ public class StripeWebhookBusinessProcessor {
         payment.setLatestEventType(event.getType());
         paymentRepository.save(payment);
 
-        orderStatusTransitioner.transition(
-                orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, null, "Stripe payment confirmed");
+        orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed");
 
         // Store stripePaymentIntentId on Order for refund lookup
-        orderLifecycleService.assignPaymentIntent(orderId, stripeSession.getPaymentIntent());
+        orderPaymentApi.assignPaymentIntent(orderId, stripeSession.getPaymentIntent());
 
         shoppingCartService.deleteCartForUser(payment.getUserId());
 
@@ -143,8 +137,7 @@ public class StripeWebhookBusinessProcessor {
         paymentRepository.save(payment);
 
         try {
-            orderStatusTransitioner.transition(
-                    orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, null, "Stripe session expired");
+            orderPaymentApi.expirePayment(orderId, "Stripe session expired");
         } catch (InvalidOrderStateTransitionException _) {
             log.warn("order.expire.transition_failed: orderId={}", orderId);
         }
@@ -164,8 +157,7 @@ public class StripeWebhookBusinessProcessor {
         paymentRepository.save(payment);
 
         try {
-            orderStatusTransitioner.transition(
-                    orderId, OrderEvent.PAYMENT_FAILED_EVENT, null, "Stripe async payment failed");
+            orderPaymentApi.failPayment(orderId, "Stripe async payment failed");
         } catch (InvalidOrderStateTransitionException _) {
             log.warn("order.payment_failed.transition_failed: orderId={}", orderId);
         }
@@ -185,7 +177,7 @@ public class StripeWebhookBusinessProcessor {
         }
 
         String paymentIntentId = charge.getPaymentIntent();
-        Optional<OrderSnapshot> orderOpt = orderDetailProvider.findSnapshotByStripePaymentIntentId(paymentIntentId);
+        Optional<OrderSnapshot> orderOpt = orderPaymentApi.findByStripePaymentIntentId(paymentIntentId);
 
         if (orderOpt.isEmpty()) {
             log.warn("payment.webhook.order_not_found: paymentIntentId={}", paymentIntentId);
@@ -195,8 +187,7 @@ public class StripeWebhookBusinessProcessor {
         OrderSnapshot order = orderOpt.get();
         if (order.status() == OrderStatus.REFUND_REQUESTED) {
             try {
-                orderStatusTransitioner.transition(
-                        order.id(), OrderEvent.REFUND_CONFIRMED, null, "Stripe refund confirmed");
+                orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed");
                 log.info("order.refund.confirmed: orderId={}, paymentIntentId={}",
                         order.id(), paymentIntentId);
             } catch (InvalidOrderStateTransitionException _) {
