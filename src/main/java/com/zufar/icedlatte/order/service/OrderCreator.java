@@ -2,17 +2,18 @@ package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.entity.OrderAddress;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.user.entity.Address;
-import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
-import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
+import com.zufar.icedlatte.user.api.UserAddressApi;
+import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +35,7 @@ public class OrderCreator implements OrderCheckoutApi {
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
     private final CartCheckoutApi cartCheckoutApi;
-    private final DeliveryAddressRepository deliveryAddressRepository;
+    private final UserAddressApi userAddressApi;
     private final ProductCatalogApi productCatalogApi;
 
     @Value("${order.cancellation-window-minutes:30}")
@@ -65,7 +66,7 @@ public class OrderCreator implements OrderCheckoutApi {
 
         validateProductAvailability(items);
 
-        Address deliveryAddress = resolveAddress(request, userId);
+        OrderAddress deliveryAddress = resolveAddress(request, userId);
 
         Order order = Order.builder()
                 .userId(userId)
@@ -105,7 +106,7 @@ public class OrderCreator implements OrderCheckoutApi {
     Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request, ShoppingCartDto cart) {
         validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
 
-        Address deliveryAddress = resolveDeliveryAddress(
+        OrderAddress deliveryAddress = resolveDeliveryAddress(
                 request.getDeliveryAddressId(), request.getAddress(), userId);
 
         List<OrderItem> items = cart.getItems().stream()
@@ -143,22 +144,22 @@ public class OrderCreator implements OrderCheckoutApi {
         }
     }
 
-    private Address resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
+    private OrderAddress resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
         return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
     }
 
-    private Address resolveDeliveryAddress(UUID deliveryAddressId, AddressDto inlineAddress, UUID userId) {
+    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId, AddressDto inlineAddress, UUID userId) {
         if (deliveryAddressId != null) {
-            DeliveryAddressEntity saved = deliveryAddressRepository
-                    .findByIdAndUserId(deliveryAddressId, userId)
-                    .orElseThrow(() -> new BadRequestException(
-                            "Delivery address not found: " + deliveryAddressId));
-            return snapshotAddress(saved);
+            try {
+                return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
+            } catch (NotFoundException ex) {
+                throw new BadRequestException("Delivery address not found: " + deliveryAddressId);
+            }
         }
         if (inlineAddress == null) {
             throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
         }
-        return Address.builder()
+        return OrderAddress.builder()
                 .country(inlineAddress.getCountry())
                 .city(inlineAddress.getCity())
                 .line(inlineAddress.getLine())
@@ -166,12 +167,12 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
     }
 
-    private static Address snapshotAddress(DeliveryAddressEntity entity) {
-        return Address.builder()
-                .country(entity.getCountry())
-                .city(entity.getCity())
-                .line(entity.getLine())
-                .postcode(entity.getPostcode())
+    private static OrderAddress snapshotAddress(UserAddressSnapshot snapshot) {
+        return OrderAddress.builder()
+                .country(snapshot.country())
+                .city(snapshot.city())
+                .line(snapshot.line())
+                .postcode(snapshot.postcode())
                 .build();
     }
 

@@ -145,6 +145,12 @@ class ArchitectureRulesTest {
                     .should().dependOnClassesThat().haveSimpleName("DeliveryAddressEntity");
 
     @ArchTest
+    static final ArchRule order_module_should_not_depend_on_user_address_entity =
+            noClasses()
+                    .that().resideInAPackage("..order..")
+                    .should().dependOnClassesThat().resideInAPackage("..user.entity..");
+
+    @ArchTest
     static final ArchRule non_product_modules_should_not_depend_on_product_entities =
             noClasses()
                     .that().resideOutsideOfPackage("..product..")

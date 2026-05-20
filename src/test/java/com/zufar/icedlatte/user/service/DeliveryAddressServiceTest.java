@@ -7,6 +7,7 @@ import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +55,38 @@ class DeliveryAddressServiceTest {
         when(addressRepository.findAllByUserId(userId)).thenReturn(List.of());
 
         assertThat(service.getAll(userId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getDeliveryAddress returns snapshot for user address")
+    void getDeliveryAddress_existingAddress_returnsSnapshot() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = DeliveryAddressEntity.builder()
+                .country("UK")
+                .city("London")
+                .line("1 Main St")
+                .postcode("SW1A 1AA")
+                .build();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+
+        UserAddressSnapshot snapshot = service.getDeliveryAddress(userId, addressId);
+
+        assertThat(snapshot.country()).isEqualTo("UK");
+        assertThat(snapshot.city()).isEqualTo("London");
+        assertThat(snapshot.line()).isEqualTo("1 Main St");
+        assertThat(snapshot.postcode()).isEqualTo("SW1A 1AA");
+    }
+
+    @Test
+    @DisplayName("getDeliveryAddress throws NotFoundException when not found")
+    void getDeliveryAddress_notFound_throws() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getDeliveryAddress(userId, addressId))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

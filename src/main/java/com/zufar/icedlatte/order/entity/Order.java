@@ -2,7 +2,6 @@ package com.zufar.icedlatte.order.entity;
 
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.user.entity.Address;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -49,7 +48,7 @@ public class Order extends AuditableEntity {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "address_id", referencedColumnName = "id", nullable = false)
-    private Address deliveryAddress;
+    private OrderAddress deliveryAddress;
 
     @Column(name = "recipient_name", nullable = false, length = 128)
     private String recipientName;

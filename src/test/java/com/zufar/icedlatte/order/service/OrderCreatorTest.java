@@ -2,6 +2,7 @@ package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
@@ -9,8 +10,8 @@ import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
-import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
+import com.zufar.icedlatte.user.api.UserAddressApi;
+import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +41,7 @@ class OrderCreatorTest {
     @Mock private OrderRepository orderRepository;
     @Mock private OrderDtoConverter orderDtoConverter;
     @Mock private CartCheckoutApi shoppingCartService;
-        @Mock private DeliveryAddressRepository deliveryAddressRepository;
+    @Mock private UserAddressApi userAddressApi;
     @Mock private ProductCatalogApi productCatalogApi;
     @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;
     @Mock @SuppressWarnings("unused") private SingleUserProvider singleUserProvider;
@@ -101,9 +102,9 @@ class OrderCreatorTest {
         Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
         OrderItem orderItem = OrderItem.builder().productId(productId).productName("Test").build();
 
-        DeliveryAddressEntity savedAddr = DeliveryAddressEntity.builder()
-                .id(addressId).country("DE").city("Berlin").line("Unter den Linden 1").postcode("10117").build();
-        when(deliveryAddressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(savedAddr));
+        UserAddressSnapshot savedAddr =
+                new UserAddressSnapshot("DE", "Berlin", "Unter den Linden 1", "10117");
+        when(userAddressApi.getDeliveryAddress(userId, addressId)).thenReturn(savedAddr);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
@@ -131,7 +132,8 @@ class OrderCreatorTest {
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
-        when(deliveryAddressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
+        when(userAddressApi.getDeliveryAddress(userId, addressId))
+                .thenThrow(new NotFoundException("Delivery address not found."));
 
         assertThatThrownBy(() -> orderCreator.create(userId, request, null))
                 .isInstanceOf(BadRequestException.class)

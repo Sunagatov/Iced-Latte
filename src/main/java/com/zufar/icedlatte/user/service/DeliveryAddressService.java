@@ -6,6 +6,8 @@ import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.api.UserAddressApi;
+import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DeliveryAddressService {
+public class DeliveryAddressService implements UserAddressApi {
 
     private final DeliveryAddressRepository addressRepository;
     private final UserRepository userRepository;
@@ -31,8 +33,24 @@ public class DeliveryAddressService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UserAddressSnapshot getDeliveryAddress(UUID userId,
+                                                  UUID deliveryAddressId) {
+        var entity = addressRepository.findByIdAndUserId(deliveryAddressId, userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Delivery address with id = %s is not found.", deliveryAddressId)));
+        return new UserAddressSnapshot(
+                entity.getCountry(),
+                entity.getCity(),
+                entity.getLine(),
+                entity.getPostcode()
+        );
+    }
+
     @Transactional
-    public DeliveryAddressDto create(UUID userId, DeliveryAddressRequest request) {
+    public DeliveryAddressDto create(UUID userId,
+                                     DeliveryAddressRequest request) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
@@ -43,7 +61,9 @@ public class DeliveryAddressService {
     }
 
     @Transactional
-    public DeliveryAddressDto update(UUID userId, UUID addressId, DeliveryAddressRequest request) {
+    public DeliveryAddressDto update(UUID userId,
+                                     UUID addressId,
+                                     DeliveryAddressRequest request) {
         var entity = addressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Delivery address with id = %s is not found.", addressId)));
