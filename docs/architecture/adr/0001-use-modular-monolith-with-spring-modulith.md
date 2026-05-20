@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-05-19
+2026-05-19 (updated 2026-05-20)
 
 ## Context
 
@@ -23,47 +23,97 @@ implementation details of other domains.
 
 ## Decision
 
-We will keep the backend as a **modular monolith**. Business capabilities
-are represented as Spring Modulith application modules (direct subpackages
-of `com.zufar.icedlatte`).
+We keep the backend as a **modular monolith**. Business capabilities are
+represented as Spring Modulith application modules (direct subpackages of
+`com.zufar.icedlatte`).
 
 We adopt two complementary tools:
 
-1. **Spring Modulith** — detects application modules from package structure,
-   verifies module boundaries, and flags illegal cross-module access.
-2. **ArchUnit** — enforces additional architecture rules such as layering
-   constraints, cycle detection, and package dependency restrictions.
+1. **Spring Modulith 2.0.6** — detects application modules from package
+   structure, verifies module boundaries, and flags illegal cross-module
+   access.
+2. **ArchUnit 1.4.2** — enforces additional architecture rules such as
+   layering constraints, cycle detection, and package dependency
+   restrictions.
 
-### Rules enforced from Phase 1
+## Module boundary model
 
-- Controllers must not access repositories directly.
-- The `common` package must not depend on feature modules.
-- Feature packages must be free of dependency cycles.
-- Spring Modulith module verification must pass (cross-module internal
-  access is flagged).
+Each module is **CLOSED** by default. Only subpackages explicitly annotated
+with `@NamedInterface` are accessible from other modules. Subpackages
+without this annotation are internal — Spring Modulith will fail the build
+if another module tries to access them.
 
-### Future phases
+Three infrastructure modules remain **OPEN** (all subpackages accessible):
+- `security` — bidirectional coupling with `user` (inherent)
+- `user` — bidirectional coupling with `security` (inherent)
+- `openapi` — generated code used by all modules
 
-- Extract public module APIs (interfaces) per domain.
-- Move cross-module calls from repository/entity access to public APIs.
+## Current module state
+
+| Module | Type | Exposed subpackages (@NamedInterface) | Internal |
+|--------|------|---------------------------------------|----------|
+| cart | CLOSED | `api/` | repository, entity, converter, endpoint, exception |
+| order | CLOSED | `api/`, `exception/` | repository, entity, endpoint, converter, event, specification |
+| payment | CLOSED | none | everything |
+| product | CLOSED | `api/`, `api/filestorage/`, `entity/`, `converter/`, `exception/` | repository, endpoint, validator |
+| review | CLOSED | `api/` | everything else |
+| favorite | CLOSED | none | everything |
+| filestorage | CLOSED | top-level, `dto/`, `exception/`, `aws/` | repository, converter |
+| email | CLOSED | `api/token/`, `exception/`, `sender/` | config |
+| common | CLOSED | all subpackages (shared infrastructure) | — |
+| astartup | CLOSED | none | everything |
+| security | OPEN | all | — |
+| user | OPEN | all | — |
+| openapi | OPEN | all (generated) | — |
+
+## Rules enforced
+
+### Spring Modulith (ModularityTests)
+- Module structure verification passes (no illegal cross-module access).
+- No dependency cycles between modules.
+
+### ArchUnit (ArchitectureRulesTest)
+- Endpoints must not access repositories directly.
+- `common` must not depend on feature modules.
+- Business feature modules must be free of dependency cycles.
+
+## Key architectural changes made
+
+1. **auth → security.oauth** — merged OAuth into security module (eliminated auth↔security cycle).
+2. **SentryUserContextFilter → security.monitoring** — removed common→security dependency.
+3. **AuditConfig → Identifiable interface** — removed common→user dependency.
+4. **EmailVerificationService → security.api** — eliminated email↔security cycle.
+5. **Repositories made internal** — cart, order, product, review repositories are no longer accessible from other modules. Cross-module access goes through service APIs.
+6. **OrderSnapshot DTO** — payment uses a record DTO instead of Order entity directly.
+
+## Known remaining coupling (acceptable)
+
+- `product.entity` exposed — cart and favorite have `@ManyToOne ProductInfo` (JPA relationship requires entity visibility; fixing requires DB schema change).
+- `product.converter` exposed — cart's MapStruct mapper uses `ProductInfoDtoConverter`.
+- `security ↔ user` cycle — inherent bidirectional coupling; both remain OPEN.
+
+## Future work
+
+- Make `product.entity` internal (requires Liquibase migration to denormalize price/name into cart_item table).
+- Break `security ↔ user` cycle (extract `UserLookup` interface into common).
 - Introduce domain events for async cross-module communication.
-- Add documentation generation from module model.
+- Tighten `common` — move module-specific types out of common into their owning modules.
 
 ## Consequences
 
 ### Positive
 
-- Clearer boundaries between business domains.
-- Architecture violations caught automatically in CI.
-- Easier future extraction of modules into separate services if needed.
-- Better onboarding — new contributors see explicit module contracts.
-- Testable architecture, not just diagrams.
+- Architecture violations caught automatically in CI (build fails).
+- Repositories are encapsulated — no module can bypass service APIs.
+- Clear documentation of what each module exposes.
+- Easier future extraction of modules into separate services.
+- New contributors see explicit module contracts via `@NamedInterface`.
 
 ### Negative
 
-- Some existing cross-module coupling must be refactored over time.
-- Extra discipline required around package visibility.
-- Public module APIs must be designed carefully to avoid leaking internals.
+- `product.entity` remains exposed due to JPA relationship constraints.
+- `security` and `user` remain OPEN (inherent coupling).
+- `@NamedInterface` annotations add `package-info.java` files to exposed subpackages.
 
 ## References
 
