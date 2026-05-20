@@ -6,7 +6,7 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.service.AuthSessionService;
+import com.zufar.icedlatte.security.service.session.AuthSessionService;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -26,10 +26,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserProfileService unit tests")

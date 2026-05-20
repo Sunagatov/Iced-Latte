@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.service;
 
-
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.converter.RegistrationDtoConverter;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
+import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
+import com.zufar.icedlatte.security.service.token.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -24,9 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserRegistrationService unit tests")

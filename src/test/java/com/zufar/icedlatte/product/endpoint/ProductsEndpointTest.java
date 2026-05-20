@@ -7,6 +7,7 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 
@@ -15,12 +16,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.*;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiNotFoundResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
-
-import org.springframework.boot.test.web.server.LocalServerPort;
 
 @DisplayName("ProductsEndpoint Tests")
 class ProductsEndpointTest extends IntegrationTestBase {

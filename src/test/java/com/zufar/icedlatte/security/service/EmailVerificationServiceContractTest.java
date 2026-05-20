@@ -3,9 +3,12 @@ package com.zufar.icedlatte.security.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
-import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.exception.token.TimeTokenException;
+import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
+import com.zufar.icedlatte.security.service.token.TokenPurpose;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
 import com.zufar.icedlatte.user.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,9 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 @DisplayName("EmailVerificationService contract tests")
@@ -28,7 +29,7 @@ class EmailVerificationServiceContractTest {
         service = new EmailVerificationService(
                 new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
-                mock(com.zufar.icedlatte.security.email.AuthTokenEmailSender.class),
+                mock(com.zufar.icedlatte.security.service.email.AuthTokenEmailSender.class),
                 mock(UserRegistrationService.class),
                 mock(SingleUserProvider.class),
                 mock(UserProfileService.class)

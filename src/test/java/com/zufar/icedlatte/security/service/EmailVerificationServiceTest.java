@@ -2,14 +2,17 @@ package com.zufar.icedlatte.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
-import com.zufar.icedlatte.security.email.AuthTokenEmailSender;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
+import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
+import com.zufar.icedlatte.security.service.token.TokenPurpose;
+import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
 import com.zufar.icedlatte.user.service.UserProfileService;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmailVerificationService unit tests")

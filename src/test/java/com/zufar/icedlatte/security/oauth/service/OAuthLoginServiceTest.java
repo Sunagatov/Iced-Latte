@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.security.oauth.service;
 
-import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
-import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.api.OAuthProviderClient;
-import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
-import com.zufar.icedlatte.security.service.SessionTokenService;
+import com.zufar.icedlatte.security.entity.OAuthIdentityEntity;
+import com.zufar.icedlatte.security.repository.OAuthIdentityRepository;
+import com.zufar.icedlatte.security.service.oauth.OAuthLoginService;
+import com.zufar.icedlatte.security.service.oauth.OAuthProfile;
+import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
+import com.zufar.icedlatte.security.service.oauth.OAuthProviderClient;
+import com.zufar.icedlatte.security.service.token.SessionTokenService;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -29,9 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthLoginServiceTest {

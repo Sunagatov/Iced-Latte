@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.email;
 
+import com.zufar.icedlatte.security.service.email.SmtpAuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
@@ -10,9 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @DisplayName("SmtpAuthTokenEmailSender")
 class SmtpAuthTokenEmailSenderTest {

@@ -1,10 +1,16 @@
 package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.exception.UserAccountLockedException;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.signin.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,13 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 
 @ExtendWith(MockitoExtension.class)

@@ -1,15 +1,15 @@
 package com.zufar.icedlatte.security.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.configuration.AuthPaths;
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.exception.SessionNotFoundException;
-import com.zufar.icedlatte.security.exception.SessionOwnershipException;
-import com.zufar.icedlatte.security.exception.UserAccountLockedException;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
-import com.zufar.icedlatte.security.turnstile.TurnstileVerificationException;
+import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.session.SessionNotFoundException;
+import com.zufar.icedlatte.security.exception.session.SessionOwnershipException;
+import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
+import com.zufar.icedlatte.security.exception.signin.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
+import com.zufar.icedlatte.security.exception.turnstile.TurnstileVerificationException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

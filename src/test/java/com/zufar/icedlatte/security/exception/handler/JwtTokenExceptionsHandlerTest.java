@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
-import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.exception.JwtTokenException;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenException;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenHasNoUserEmailException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

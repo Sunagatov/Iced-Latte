@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.security.service.EmailVerificationService;
-import com.zufar.icedlatte.security.service.TokenPurpose;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.security.service.token.TokenPurpose;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.*;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBadRequestResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @DisplayName("SecurityEndpoint Tests")
 class SecurityEndpointTest extends IntegrationTestBase {

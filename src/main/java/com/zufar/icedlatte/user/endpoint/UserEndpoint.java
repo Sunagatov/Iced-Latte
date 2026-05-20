@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.endpoint;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.service.PasswordResetService;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserProfileService;
 import com.zufar.icedlatte.user.service.avatar.UserAvatarUploader;
@@ -34,7 +33,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final DeliveryAddressService deliveryAddressService;
-    private final PasswordResetService passwordResetService;
 
     @Override
     @GetMapping
@@ -96,20 +94,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
         var userId = securityPrincipalProvider.getUserId();
         userProfileService.deleteAvatar(userId);
         log.info("user.avatar.deleted: userId={}", userId);
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
-    @PostMapping("/password/reset")
-    public ResponseEntity<Void> resetUserPassword(@Valid @RequestBody InitiatePasswordResetRequest request) {
-        passwordResetService.requestReset(request.getEmail());
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
-    @PostMapping("/password/reset/confirm")
-    public ResponseEntity<Void> confirmResetUserPassword(@Valid @RequestBody ConfirmPasswordResetRequest request) {
-        passwordResetService.confirmReset(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok().build();
     }
 

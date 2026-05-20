@@ -1,8 +1,7 @@
 package com.zufar.icedlatte.security.oauth.service;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.api.OAuthProviderClient;
+import com.zufar.icedlatte.security.service.oauth.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,10 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthFlowServiceTest {

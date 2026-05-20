@@ -3,12 +3,14 @@ package com.zufar.icedlatte.security.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
-import com.zufar.icedlatte.security.ratelimit.filter.RateLimitingFilter;
+import com.zufar.icedlatte.ratelimit.filter.RateLimitingFilter;
+import com.zufar.icedlatte.security.service.jwt.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,23 +25,20 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.beans.factory.annotation.Value;
-
-import static org.springframework.security.config.Customizer.withDefaults;
-
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Duration;
 import java.time.Instant;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -76,8 +75,6 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
                         .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
                         .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
-                        .requestMatchers(HttpMethod.POST, ApiPaths.USERS_PASSWORD_RESET).permitAll()
-                        .requestMatchers(HttpMethod.POST, ApiPaths.USERS_PASSWORD_RESET_CONFIRM).permitAll()
                         .requestMatchers(SecurityConstants.USERS_URL).authenticated()
                         .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
                         .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()

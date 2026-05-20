@@ -5,8 +5,8 @@ import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.time.OffsetDateTime;

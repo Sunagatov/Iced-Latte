@@ -8,11 +8,7 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
-import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
-import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.filestorage.ProductPictureLinkUpdater;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -27,11 +23,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

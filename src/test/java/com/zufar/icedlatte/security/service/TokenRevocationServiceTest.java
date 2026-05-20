@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.jwt.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.service.session.AuthSessionService;
+import com.zufar.icedlatte.security.service.session.TokenRevocationService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,10 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TokenRevocationService unit tests")

@@ -1,21 +1,20 @@
 package com.zufar.icedlatte.review.service;
 
-import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
-
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
+import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.validator.ProductReviewValidator;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.service.SingleUserProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -27,10 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewManager unit tests")

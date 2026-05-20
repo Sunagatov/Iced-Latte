@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.exception.TimeTokenException;
-import com.zufar.icedlatte.user.service.SingleUserProvider;
+import com.zufar.icedlatte.security.exception.token.TimeTokenException;
+import com.zufar.icedlatte.security.service.password.PasswordResetService;
+import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.service.SingleUserProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,9 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.OffsetDateTime;
 
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PasswordResetService unit tests")

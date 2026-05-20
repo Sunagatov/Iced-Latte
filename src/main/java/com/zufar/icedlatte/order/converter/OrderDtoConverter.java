@@ -5,12 +5,7 @@ import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,

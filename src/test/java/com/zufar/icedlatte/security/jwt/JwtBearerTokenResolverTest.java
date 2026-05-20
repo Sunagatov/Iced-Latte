@@ -1,7 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.configuration.JwtProperties;
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
+import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

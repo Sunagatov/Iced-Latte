@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.service;
 
+import com.zufar.icedlatte.security.service.signin.CustomUserDetailsService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -16,9 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CustomUserDetailsService unit tests")

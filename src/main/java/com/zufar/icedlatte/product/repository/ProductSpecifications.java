@@ -1,9 +1,8 @@
 package com.zufar.icedlatte.product.repository;
 
 import com.zufar.icedlatte.product.entity.ProductInfo;
-import org.springframework.data.jpa.domain.Specification;
-
 import lombok.experimental.UtilityClass;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.List;

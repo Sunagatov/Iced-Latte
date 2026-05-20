@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
+import com.zufar.icedlatte.security.service.signin.LoginAttemptService;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,10 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LoginAttemptService unit tests")

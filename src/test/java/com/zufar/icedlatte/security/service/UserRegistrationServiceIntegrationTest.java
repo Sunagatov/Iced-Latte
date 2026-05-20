@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
+import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;

@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.security.ratelimit;
 
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
+import com.zufar.icedlatte.ratelimit.api.RateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
-import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 
 import java.time.Duration;
 import java.util.List;

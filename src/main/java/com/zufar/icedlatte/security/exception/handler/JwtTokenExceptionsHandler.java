@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.security.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
-import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.exception.JwtTokenException;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenException;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenHasNoUserEmailException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;

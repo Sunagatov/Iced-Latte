@@ -1,13 +1,12 @@
 package com.zufar.icedlatte.cart.repository;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 
 public interface ShoppingCartRepository extends JpaRepository<ShoppingCart, UUID> {
 

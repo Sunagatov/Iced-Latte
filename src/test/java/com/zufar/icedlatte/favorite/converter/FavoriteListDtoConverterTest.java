@@ -5,8 +5,8 @@ import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

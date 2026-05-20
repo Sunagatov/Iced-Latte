@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
+import com.zufar.icedlatte.security.exception.signin.UserAccountLockedException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

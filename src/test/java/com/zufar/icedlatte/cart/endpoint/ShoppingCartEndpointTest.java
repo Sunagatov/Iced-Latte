@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
 import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
@@ -15,8 +16,6 @@ import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
-
-import org.springframework.boot.test.web.server.LocalServerPort;
 
 @DisplayName("ShoppingCartEndpointTest Tests")
 class ShoppingCartEndpointTest extends IntegrationTestBase {

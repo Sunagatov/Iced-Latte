@@ -1,13 +1,11 @@
 package com.zufar.icedlatte.review.ai;
 
+import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.ai.moderation.ReviewModerationService;
 import com.zufar.icedlatte.review.ai.summary.ProductReviewSummaryDebouncer;
-
-import com.zufar.icedlatte.review.exception.ReviewModerationException;
-
-import com.zufar.icedlatte.product.api.ProductReviewProductGateway;
 import com.zufar.icedlatte.review.api.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,10 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AsyncReviewProcessingService unit tests")

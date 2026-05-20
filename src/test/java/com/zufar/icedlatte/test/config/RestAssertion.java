@@ -7,9 +7,7 @@ import org.hamcrest.Matcher;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.*;
 
 public final class RestAssertion {
 

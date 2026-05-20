@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.security.jwt.filter;
 
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.jwt.JwtAuthenticationProvider;
-import com.zufar.icedlatte.security.jwt.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.JwtTokenClaims;
+import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
+import com.zufar.icedlatte.security.service.jwt.filter.JwtAuthenticationFilter;
+import com.zufar.icedlatte.security.service.jwt.provider.JwtAuthenticationProvider;
+import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,11 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationFilter")

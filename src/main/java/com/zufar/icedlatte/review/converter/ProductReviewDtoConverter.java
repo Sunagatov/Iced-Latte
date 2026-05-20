@@ -7,12 +7,7 @@ import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

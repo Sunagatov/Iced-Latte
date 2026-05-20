@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.service.avatar;
 
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.FileStorageService;
+import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.configuration;
 
+import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -8,11 +9,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
 @DisplayName("JwtProperties unit tests")

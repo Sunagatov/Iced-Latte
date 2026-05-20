@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.user.exception.handler;
 
-import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;

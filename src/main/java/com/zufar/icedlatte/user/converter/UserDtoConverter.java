@@ -3,11 +3,7 @@ package com.zufar.icedlatte.user.converter;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         uses = AddressDtoConverter.class,

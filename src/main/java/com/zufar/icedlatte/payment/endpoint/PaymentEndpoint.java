@@ -4,8 +4,8 @@ import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
-import com.zufar.icedlatte.payment.api.checkout.CheckoutPaymentService;
 import com.zufar.icedlatte.payment.api.PaymentStatusService;
+import com.zufar.icedlatte.payment.api.checkout.CheckoutPaymentService;
 import com.zufar.icedlatte.payment.api.webhook.StripeWebhookService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -13,13 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 

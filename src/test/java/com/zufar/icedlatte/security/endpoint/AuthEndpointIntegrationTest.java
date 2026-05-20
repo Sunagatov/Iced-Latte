@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.security.oauth.service.OAuthLoginService;
-import com.zufar.icedlatte.security.oauth.api.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.api.OAuthProviderClient;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.service.oauth.OAuthLoginService;
+import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
+import com.zufar.icedlatte.security.service.oauth.OAuthProviderClient;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -21,17 +21,11 @@ import java.net.URI;
 import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @DisplayName("OAuth security endpoint integration tests")
 class AuthEndpointIntegrationTest extends IntegrationTestBase {

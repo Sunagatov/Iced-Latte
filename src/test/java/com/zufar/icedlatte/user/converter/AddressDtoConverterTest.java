@@ -3,9 +3,9 @@ package com.zufar.icedlatte.user.converter;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.stub.AddressDtoTestStub;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
+import com.zufar.icedlatte.filestorage.FileStorageService;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.filestorage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,12 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.exception.SdkClientException;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationMigration unit tests")

@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.configuration;
 
-import com.zufar.icedlatte.security.email.AuthTokenEmailSender;
-
+import com.zufar.icedlatte.security.configuration.email.EmailDisabledConfig;
+import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

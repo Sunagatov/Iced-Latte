@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.security.jwt;
 
+import com.zufar.icedlatte.security.service.jwt.provider.JwtAuthenticationProvider;
+import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +18,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationProvider Tests")

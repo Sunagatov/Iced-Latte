@@ -1,7 +1,9 @@
 package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.common.temporarycache.ExpiringKeyValueStore;
-import com.zufar.icedlatte.security.configuration.JwtProperties;
+import com.zufar.icedlatte.security.configuration.jwt.JwtProperties;
+import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,13 +16,7 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenBlacklist unit tests")
