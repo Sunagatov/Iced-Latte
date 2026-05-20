@@ -53,16 +53,18 @@ class ArchitectureRulesTest {
             };
 
     /**
-     * API packages (named interfaces) should not depend on repositories or JPA entities.
+     * API packages (named interfaces) should not depend on repositories, entities, or converters.
      * This ensures module boundaries expose only clean contracts (interfaces, records, DTOs).
      * Currently enforced only for order.api which has been fully refactored.
      * TODO: extend to cart.api, product.api, review.api after their api packages are cleaned.
      */
     @ArchTest
-    static final ArchRule api_packages_should_not_depend_on_repositories =
+    static final ArchRule api_packages_should_not_depend_on_internals =
             noClasses()
                     .that().resideInAPackage("..order.api..")
-                    .should().dependOnClassesThat().haveSimpleNameEndingWith("Repository");
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..order.repository..", "..order.entity..", "..order.converter.."
+                    );
 
     /**
      * Checks that core business feature modules do not form dependency cycles.
