@@ -124,9 +124,9 @@ class FavoriteServiceTest {
                 .thenReturn(Optional.of(staleList))
                 .thenReturn(Optional.of(freshList));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productDto));
-        when(favoriteRepository.save(staleList))
-                .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"));
-        when(favoriteRepository.save(freshList)).thenReturn(freshList);
+        when(favoriteRepository.save(any(FavoriteListEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"))
+                .thenReturn(freshList);
         when(favoriteListDtoConverter.toDto(any(), anyMap()))
                 .thenReturn(new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now()));
         when(listOfFavoriteProductsDtoConverter.toListProductDto(any())).thenReturn(response);

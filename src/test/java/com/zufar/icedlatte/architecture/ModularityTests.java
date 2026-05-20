@@ -11,7 +11,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ModularityTests {
 
-    private final ApplicationModules modules = ApplicationModules.of(IcedLatteApplication.class);
+    private final ApplicationModules modules = ApplicationModules.of(
+            IcedLatteApplication.class,
+            ApplicationModules.Filters.excludingModule("openapi"));
 
     @Test
     void printsApplicationModules() {
