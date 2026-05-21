@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
-import com.zufar.icedlatte.security.config.AuthPaths;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.session.SessionNotFoundException;
 import com.zufar.icedlatte.security.exception.session.SessionOwnershipException;
@@ -35,7 +35,7 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
                                                            HttpServletRequest request) {
-        if (!AuthPaths.REFRESH.equals(request.getRequestURI())) {
+        if (!ApiPaths.AUTH_REFRESH.equals(request.getRequestURI())) {
             log.debug("auth.sign_in.failed: reason_code=AbsentBearerHeaderException, status=401, method={}, path={}",
                     request.getMethod(), sanitize(request.getRequestURI()));
         }

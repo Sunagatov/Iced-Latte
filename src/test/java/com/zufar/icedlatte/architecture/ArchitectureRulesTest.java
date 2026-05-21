@@ -130,6 +130,17 @@ class ArchitectureRulesTest {
                     );
 
     @ArchTest
+    static final ArchRule ratelimit_api_should_not_depend_on_ratelimit_implementation =
+            noClasses()
+                    .that().resideInAPackage("..ratelimit.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..ratelimit.configuration..",
+                            "..ratelimit.dto..",
+                            "..ratelimit.filter..",
+                            "..ratelimit.util.."
+                    );
+
+    @ArchTest
     static final ArchRule api_packages_should_not_contain_spring_implementation_beans =
             noClasses()
                     .that().resideInAPackage("..api..")
@@ -258,6 +269,17 @@ class ArchitectureRulesTest {
             noClasses()
                     .that().resideOutsideOfPackage("..payment..")
                     .should().dependOnClassesThat().resideInAnyPackage("..payment.service..");
+
+    @ArchTest
+    static final ArchRule non_ratelimit_modules_should_not_depend_on_ratelimit_implementation =
+            noClasses()
+                    .that().resideOutsideOfPackage("..ratelimit..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..ratelimit.configuration..",
+                            "..ratelimit.dto..",
+                            "..ratelimit.filter..",
+                            "..ratelimit.util.."
+                    );
 
     /**
      * Checks that core business feature modules do not form dependency cycles.

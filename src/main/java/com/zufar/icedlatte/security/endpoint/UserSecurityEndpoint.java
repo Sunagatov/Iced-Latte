@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.service.oauth.OAuthFlowService;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
 import com.zufar.icedlatte.security.service.password.PasswordResetService;
@@ -35,7 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserSecurityEndpoint implements SecurityApi {
 
-    public static final String USER_SECURITY_API_URL = AuthPaths.ROOT;
+    public static final String USER_SECURITY_API_URL = ApiPaths.AUTH;
 
     private final UserAuthenticationService userAuthenticationService;
     private final SessionTokenService sessionTokenService;

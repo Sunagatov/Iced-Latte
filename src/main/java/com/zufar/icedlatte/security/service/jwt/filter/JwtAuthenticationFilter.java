@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenHasNoUserEmailException;
@@ -49,15 +49,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return AuthPaths.REFRESH.equals(uri)
-                || uri.startsWith(AuthPaths.OAUTH + "/");
+        return ApiPaths.AUTH_REFRESH.equals(uri)
+                || uri.startsWith(ApiPaths.AUTH_OAUTH + "/");
     }
 
     @Override
     protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
                                     @NonNull final HttpServletResponse httpResponse,
                                     @NonNull final FilterChain filterChain) throws IOException, ServletException {
-
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
@@ -83,7 +82,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
         }
     }
-// amazonq-ignore-next-line
 
     private void handleAuthenticationException(HttpServletRequest httpRequest,
                                                HttpServletResponse httpResponse,
@@ -95,12 +93,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // amazonq-ignore-next-line
         var errorInfo = switch (exception) {
-            case InvalidCredentialsException _ -> new ErrorInfo(ProblemType.INVALID_CREDENTIALS, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
-            case JwtTokenBlacklistedException _ -> new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
-            case ExpiredJwtException _ -> new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenHasNoUserEmailException _ -> new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
-            case UsernameNotFoundException _ -> new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
-            default -> new ErrorInfo(ProblemType.INTERNAL_ERROR, "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
+            case InvalidCredentialsException _ ->
+                    new ErrorInfo(ProblemType.INVALID_CREDENTIALS, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
+            case JwtTokenBlacklistedException _ ->
+                    new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
+            case ExpiredJwtException _ ->
+                    new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
+            case JwtTokenHasNoUserEmailException _ ->
+                    new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
+            case UsernameNotFoundException _ ->
+                    new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
+            default ->
+                    new ErrorInfo(ProblemType.INTERNAL_ERROR, "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
         };
 
         if (errorInfo.statusCode() >= 500) {
@@ -111,7 +115,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId);
             log.debug("auth.failed.details", exception);
         }
-        
+
         httpResponse.setStatus(errorInfo.statusCode());
         httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
         httpResponse.setCharacterEncoding("UTF-8");
@@ -131,8 +135,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setContentLength(responseBytes.length);
         httpResponse.getOutputStream().write(responseBytes);
     }
-    
+
     // Record for error information - Java 21 feature
-    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) {}
+    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) { }
 
 }

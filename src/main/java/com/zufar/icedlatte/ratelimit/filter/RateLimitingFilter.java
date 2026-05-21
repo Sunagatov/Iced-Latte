@@ -7,14 +7,13 @@ import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.ratelimit.api.AuthenticatedRequestIdentityProvider;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties;
 import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties.Bucket;
 import com.zufar.icedlatte.ratelimit.dto.RateLimitCategory;
 import com.zufar.icedlatte.ratelimit.util.RateLimitResponseWriter;
-import com.zufar.icedlatte.security.api.AuthApiPaths;
-import com.zufar.icedlatte.security.api.AuthenticatedTokenIdentityProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -43,7 +42,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
-    private final AuthenticatedTokenIdentityProvider authenticatedTokenIdentityProvider;
+    private final AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider;
     private final RateLimitProperties properties;
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
@@ -79,7 +78,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                               @Qualifier("closedRateLimiter") RateLimiter closedRateLimiter,
                               MeterRegistry meterRegistry,
                               ClientIpExtractor clientIpExtractor,
-                              AuthenticatedTokenIdentityProvider authenticatedTokenIdentityProvider,
+                              AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider,
                               RateLimitProperties properties,
                               ProblemTypeUriFactory problemTypeUriFactory,
                               CaffeineSizeProperties caffeineSizeProperties) {
@@ -87,7 +86,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
-        this.authenticatedTokenIdentityProvider = authenticatedTokenIdentityProvider;
+        this.authenticatedRequestIdentityProvider = authenticatedRequestIdentityProvider;
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
         this.warnedKeys = Caffeine.newBuilder()
@@ -192,7 +191,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private RateLimitCategory resolvePrimaryCategory(HttpServletRequest request) {
         String path = request.getRequestURI();
         return switch (path) {
-            case String uri when uri.startsWith(AuthApiPaths.ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
+            case String uri when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
             case String uri when uri.startsWith(ApiPaths.USERS_PASSWORD_RESET) -> RateLimitCategory.AUTH;
             case String uri when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
             case String uri when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
@@ -213,15 +212,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     // #2: Password reset is now a strict pre-auth path
     private boolean isStrictPreAuthPath(String path) {
-        return path.equals(AuthApiPaths.AUTHENTICATE)
-                || path.equals(AuthApiPaths.ROOT + "/register")
+        return path.equals(ApiPaths.AUTH_AUTHENTICATE)
+                || path.equals(ApiPaths.AUTH + "/register")
                 || path.startsWith(ApiPaths.USERS_PASSWORD_RESET);
     }
 
     private boolean isGlobalAuthPath(String path) {
-        return path.startsWith(AuthApiPaths.OAUTH + "/")
-                || path.equals(AuthApiPaths.AUTHENTICATE)
-                || path.equals(AuthApiPaths.ROOT + "/register");
+        return path.startsWith(ApiPaths.AUTH_OAUTH + "/")
+                || path.equals(ApiPaths.AUTH_AUTHENTICATE)
+                || path.equals(ApiPaths.AUTH + "/register");
     }
 
     private Identity resolveIdentity(HttpServletRequest request, String ip) {
@@ -231,7 +230,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
-        return authenticatedTokenIdentityProvider.findAccessTokenEmail(request);
+        return authenticatedRequestIdentityProvider.findIdentity(request);
     }
 
     private void logExceeded(HttpServletRequest request,

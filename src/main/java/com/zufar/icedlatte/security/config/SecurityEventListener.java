@@ -14,6 +14,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class SecurityEventListener {
 
+    private static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
+
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
         log.debug("auth.success: authType={}",
@@ -41,7 +43,7 @@ public class SecurityEventListener {
     }
 
     private static boolean isExpectedAnonymousDeny(String principal, String path) {
-        return SecurityConstants.ANONYMOUS_PRINCIPAL.equals(principal)
+        return ANONYMOUS_PRINCIPAL.equals(principal)
                 && (ApiPaths.USERS.equals(path)
                 || ApiPaths.CART.equals(path)
                 || ApiPaths.FAVORITES.equals(path));

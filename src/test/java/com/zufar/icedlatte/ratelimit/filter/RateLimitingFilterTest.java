@@ -3,10 +3,10 @@ package com.zufar.icedlatte.ratelimit.filter;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.ratelimit.api.AuthenticatedRequestIdentityProvider;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties;
-import com.zufar.icedlatte.security.api.AuthenticatedTokenIdentityProvider;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,7 @@ class RateLimitingFilterTest {
     @Mock private RateLimiter openRateLimiter;
     @Mock private RateLimiter closedRateLimiter;
     @Mock private ClientIpExtractor clientIpExtractor;
-    @Mock private AuthenticatedTokenIdentityProvider authenticatedTokenIdentityProvider;
+    @Mock private AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider;
 
     private RateLimitingFilter filter;
     private final ProblemTypeUriFactory problemTypeUriFactory =
@@ -54,7 +54,7 @@ class RateLimitingFilterTest {
                 closedRateLimiter,
                 new SimpleMeterRegistry(),
                 clientIpExtractor,
-                authenticatedTokenIdentityProvider,
+                authenticatedRequestIdentityProvider,
                 properties(),
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)
@@ -178,7 +178,7 @@ class RateLimitingFilterTest {
     @DisplayName("authenticated user key uses username only, not username+ip")
     void authenticatedUserKeyContainsUsernameOnly() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
-        when(authenticatedTokenIdentityProvider.findAccessTokenEmail(any(MockHttpServletRequest.class)))
+        when(authenticatedRequestIdentityProvider.findIdentity(any(MockHttpServletRequest.class)))
                 .thenReturn(Optional.of("alice@example.com"));
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
@@ -196,7 +196,7 @@ class RateLimitingFilterTest {
     @DisplayName("anonymous request key uses IP")
     void anonymousRequestKeyContainsIp() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
-        when(authenticatedTokenIdentityProvider.findAccessTokenEmail(any(MockHttpServletRequest.class)))
+        when(authenticatedRequestIdentityProvider.findIdentity(any(MockHttpServletRequest.class)))
                 .thenReturn(Optional.empty());
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
@@ -213,7 +213,7 @@ class RateLimitingFilterTest {
     @DisplayName("invalid token falls back to IP-based key")
     void invalidTokenStillUsesIpKey() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("7.7.7.7");
-        when(authenticatedTokenIdentityProvider.findAccessTokenEmail(any(MockHttpServletRequest.class)))
+        when(authenticatedRequestIdentityProvider.findIdentity(any(MockHttpServletRequest.class)))
                 .thenReturn(Optional.empty());
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
@@ -272,7 +272,7 @@ class RateLimitingFilterTest {
         properties.getAuth().setMaxRequests(0);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedTokenIdentityProvider, properties,
+                authenticatedRequestIdentityProvider, properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -288,7 +288,7 @@ class RateLimitingFilterTest {
         properties.getSearch().setWindowDuration(Duration.ZERO);
         filter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedTokenIdentityProvider, properties,
+                authenticatedRequestIdentityProvider, properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -371,7 +371,7 @@ class RateLimitingFilterTest {
         props.setBanThreshold(3);
         RateLimitingFilter banFilter = new RateLimitingFilter(
                 openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedTokenIdentityProvider, props,
+                authenticatedRequestIdentityProvider, props,
                 problemTypeUriFactory, new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");

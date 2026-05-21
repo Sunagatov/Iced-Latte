@@ -6,10 +6,11 @@ import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.ratelimit.filter.RateLimitingFilter;
 import com.zufar.icedlatte.security.service.jwt.filter.JwtAuthenticationFilter;
+import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +48,13 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SpringSecurityConfiguration {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String STRIPE_WEBHOOK_URL = ApiPaths.PAYMENT + "/stripe/webhook";
+    private static final String SHIPPING_URL_PATTERN = "/api/v1/shipping/**";
+    private static final String PRODUCT_REVIEW_URL_PATTERN = ApiPaths.PRODUCTS + "/*/review";
+    private static final String PRODUCT_REVIEWS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews";
+    private static final String PRODUCT_REVIEW_ITEM_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*";
+    private static final String PRODUCT_REVIEW_LIKES_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*/likes";
+    private static final String PRODUCT_REVIEWS_STATISTICS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/statistics";
 
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
@@ -54,7 +62,7 @@ public class SpringSecurityConfiguration {
     public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
                                                    final CorrelationFilter correlationFilter,
                                                    final JwtAuthenticationFilter jwtTokenFilter,
-                                                   final RateLimitingFilter rateLimitingFilter,
+                                                   @Qualifier("rateLimitingFilter") final Filter rateLimitingFilter,
                                                    final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
                 // amazonq-ignore-next-line
@@ -70,21 +78,21 @@ public class SpringSecurityConfiguration {
                         .contentTypeOptions(withDefaults())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(SecurityConstants.AUTH_SESSION_URL).authenticated()
-                        .requestMatchers(SecurityConstants.AUTH_LOGOUT_ALL_URL).authenticated()
-                        .requestMatchers(SecurityConstants.SHOPPING_CART_URL).authenticated()
-                        .requestMatchers(SecurityConstants.STRIPE_WEBHOOK_URL).permitAll()
-                        .requestMatchers(SecurityConstants.PAYMENT_URL).authenticated()
-                        .requestMatchers(SecurityConstants.USERS_URL).authenticated()
-                        .requestMatchers(SecurityConstants.FAVOURITES_URL).authenticated()
-                        .requestMatchers(SecurityConstants.ORDERS_URL).authenticated()
-                        .requestMatchers(SecurityConstants.SHIPPING_URL).authenticated()
-                        .requestMatchers(SecurityConstants.PRODUCT_REVIEW_URL).authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/*/reviews/*").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews/*/likes").authenticated()
-                        .requestMatchers(HttpMethod.GET, SecurityConstants.ALLOWED_PRODUCT_REVIEWS_URLS.toArray(String[]::new)).permitAll()
-                        .requestMatchers(HttpMethod.GET, SecurityConstants.AUTH_3PART_URL).permitAll()
+                        .requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN).authenticated()
+                        .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL).authenticated()
+                        .requestMatchers(ApiPaths.CART_PATTERN).authenticated()
+                        .requestMatchers(STRIPE_WEBHOOK_URL).permitAll()
+                        .requestMatchers(ApiPaths.PAYMENT_PATTERN).authenticated()
+                        .requestMatchers(ApiPaths.USERS_PATTERN).authenticated()
+                        .requestMatchers(ApiPaths.FAVORITES_PATTERN).authenticated()
+                        .requestMatchers(ApiPaths.ORDERS_PATTERN).authenticated()
+                        .requestMatchers(SHIPPING_URL_PATTERN).authenticated()
+                        .requestMatchers(PRODUCT_REVIEW_URL_PATTERN).authenticated()
+                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEWS_URL_PATTERN).authenticated()
+                        .requestMatchers(HttpMethod.DELETE, PRODUCT_REVIEW_ITEM_URL_PATTERN).authenticated()
+                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN).authenticated()
+                        .requestMatchers(HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN).permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPaths.AUTH_ALL_PATTERN).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**").hasRole("ADMIN")
                         .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN).hasRole("ADMIN")

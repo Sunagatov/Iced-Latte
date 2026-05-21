@@ -46,6 +46,7 @@ class ModularityTests {
                 "filestorage :: api", "filestorage :: aws", "filestorage :: exception",
                 "order :: api", "order :: exception",
                 "product :: api", "product :: exception",
+                "ratelimit :: api",
                 "review :: api",
                 "security :: api",
                 "user :: api", "user :: exception"
