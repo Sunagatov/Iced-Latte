@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.favorite.api.FavoriteService;
+import com.zufar.icedlatte.favorite.service.FavoriteService;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.favorite.api;
+package com.zufar.icedlatte.favorite.service;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;

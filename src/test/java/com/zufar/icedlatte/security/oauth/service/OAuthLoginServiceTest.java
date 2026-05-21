@@ -10,10 +10,9 @@ import com.zufar.icedlatte.security.service.oauth.OAuthProfile;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
 import com.zufar.icedlatte.security.service.oauth.OAuthProviderClient;
 import com.zufar.icedlatte.security.service.token.SessionTokenService;
-import com.zufar.icedlatte.user.entity.Authority;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import com.zufar.icedlatte.user.api.UserAuthenticationApi;
+import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
+import com.zufar.icedlatte.user.api.UserRegistrationApi;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,7 +42,8 @@ class OAuthLoginServiceTest {
 
     @Mock private OAuthProviderClient providerClient;
     @Mock private OAuthIdentityRepository oAuthIdentityRepository;
-    @Mock private UserRepository userRepository;
+    @Mock private UserAuthenticationApi userAuthenticationApi;
+    @Mock private UserRegistrationApi userRegistrationApi;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private SessionTokenService sessionTokenService;
     @Mock private HttpServletRequest request;
@@ -54,7 +55,8 @@ class OAuthLoginServiceTest {
         service = new OAuthLoginService(
                 List.of(providerClient),
                 oAuthIdentityRepository,
-                userRepository,
+                userAuthenticationApi,
+                userRegistrationApi,
                 passwordEncoder,
                 sessionTokenService
         );
@@ -62,23 +64,23 @@ class OAuthLoginServiceTest {
 
     @Test
     void reusesExistingOauthIdentityAndReturnsTokens() {
-        UserEntity existingUser = activeUser();
+        UserAuthenticationSnapshot existingUser = activeUser();
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubIdentity(existingUser);
-        stubToken(existingUser);
+        stubToken();
         UserAuthenticationResponse response = handle();
         assertThat(response.getToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        verify(sessionTokenService).issueForNewSession(existingUser, request);
+        verify(sessionTokenService).issueForNewSession(any(), eq(request));
     }
 
     @Test
     void linksNewOauthIdentityToExistingUserWhenProviderEmailIsVerified() {
-        UserEntity existingUser = activeUser();
+        UserAuthenticationSnapshot existingUser = activeUser();
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubNoIdentity();
         stubUser(existingUser);
-        stubToken(existingUser);
+        stubToken();
         UserAuthenticationResponse response = handle();
         assertThat(response.getToken()).isEqualTo("access-token");
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
@@ -87,16 +89,16 @@ class OAuthLoginServiceTest {
         assertThat(savedIdentity.getProvider()).isEqualTo(OAuthProvider.GOOGLE);
         assertThat(savedIdentity.getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
         assertThat(savedIdentity.getEmail()).isEqualTo(EXISTING_EMAIL);
-        assertThat(savedIdentity.getUser()).isSameAs(existingUser);
+        assertThat(savedIdentity.getUserId()).isEqualTo(existingUser.userId());
     }
 
     @Test
     void normalizesProviderSubjectAndEmailBeforeLookupAndIdentitySave() {
-        UserEntity existingUser = activeUser();
+        UserAuthenticationSnapshot existingUser = activeUser();
         stubProfile("  google-subject  ", " Existing@Example.com ", true, "Alice", "Existing");
         stubNoIdentity();
         stubUser(existingUser);
-        stubToken(existingUser);
+        stubToken();
         handle();
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
@@ -111,29 +113,23 @@ class OAuthLoginServiceTest {
         stubNoIdentity();
         stubNoUser();
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
-        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request))).thenReturn(tokenPair());
+        UserAuthenticationSnapshot newUser = activeUser(UUID.randomUUID(), NEW_EMAIL, "encoded-random-password");
+        when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(newUser);
+        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
         UserAuthenticationResponse response = handle();
         assertThat(response.getToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
-        verify(userRepository).save(savedUsers.capture());
-        UserEntity savedUser = savedUsers.getValue();
-        assertThat(savedUser.getFirstName()).isEqualTo("New");
-        assertThat(savedUser.getLastName()).isEqualTo("User");
-        assertThat(savedUser.getEmail()).isEqualTo(NEW_EMAIL);
-        assertThat(savedUser.getPassword()).isEqualTo("encoded-random-password");
-        assertThat(savedUser.isOauthUser()).isTrue();
-        assertThat(savedUser.isEnabled()).isTrue();
-        assertThat(savedUser.getAuthorities())
-                .singleElement()
-                .extracting(UserGrantedAuthority::getAuthority)
-                .isEqualTo(Authority.USER.name());
-        verify(sessionTokenService).issueForNewSession(savedUser, request);
+        verify(userRegistrationApi).registerOAuthUser(
+                eq("New"),
+                eq("User"),
+                eq(NEW_EMAIL),
+                eq("encoded-random-password")
+        );
+        verify(sessionTokenService).issueForNewSession(any(), eq(request));
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
         assertThat(savedIdentities.getValue().getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
-        assertThat(savedIdentities.getValue().getUser()).isSameAs(savedUser);
+        assertThat(savedIdentities.getValue().getUserId()).isEqualTo(newUser.userId());
     }
 
     @Test
@@ -143,7 +139,7 @@ class OAuthLoginServiceTest {
         stubNoUser();
         stubNewUserSave();
         handle();
-        verify(userRepository).save(any(UserEntity.class));
+        verify(userRegistrationApi).registerOAuthUser(any(), any(), any(), any());
     }
 
     @Test
@@ -153,10 +149,12 @@ class OAuthLoginServiceTest {
         stubNoUser();
         stubNewUserSave();
         handle();
-        ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
-        verify(userRepository).save(savedUsers.capture());
-        assertThat(savedUsers.getValue().getFirstName()).isEqualTo("OAuth");
-        assertThat(savedUsers.getValue().getLastName()).isEqualTo("User");
+        verify(userRegistrationApi).registerOAuthUser(
+                eq("OAuth"),
+                eq("User"),
+                eq(NEW_EMAIL),
+                eq("encoded-random-password")
+        );
     }
 
     @Test
@@ -167,10 +165,16 @@ class OAuthLoginServiceTest {
         stubNoUser();
         stubNewUserSave();
         handle();
-        ArgumentCaptor<UserEntity> savedUsers = ArgumentCaptor.forClass(UserEntity.class);
-        verify(userRepository).save(savedUsers.capture());
-        assertThat(savedUsers.getValue().getFirstName()).isEqualTo("Ada");
-        assertThat(savedUsers.getValue().getLastName()).hasSize(128);
+        ArgumentCaptor<String> firstName = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> lastName = ArgumentCaptor.forClass(String.class);
+        verify(userRegistrationApi).registerOAuthUser(
+                firstName.capture(),
+                lastName.capture(),
+                eq(NEW_EMAIL),
+                eq("encoded-random-password")
+        );
+        assertThat(firstName.getValue()).isEqualTo("Ada");
+        assertThat(lastName.getValue()).hasSize(128);
     }
 
     @Test
@@ -181,7 +185,7 @@ class OAuthLoginServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("google account subject is too long.");
 
-        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test
@@ -192,14 +196,14 @@ class OAuthLoginServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("google account email is too long.");
 
-        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test
     void rejectsLinkingWhenUnverifiedProviderEmailExistsLocally() {
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, false, "New", "User");
         stubNoIdentity();
-        stubUser(UserEntity.builder().email(EXISTING_EMAIL).build());
+        stubUser(activeUser());
 
         assertThatThrownBy(this::handle)
                 .isInstanceOf(BadRequestException.class)
@@ -208,8 +212,9 @@ class OAuthLoginServiceTest {
 
     @Test
     void rejectsExistingOauthIdentityWhenLocalUserCannotSignIn() {
-        UserEntity lockedUser = activeUser();
-        lockedUser.setAccountNonLocked(false);
+        UserAuthenticationSnapshot lockedUser = new UserAuthenticationSnapshot(
+                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, false, true, true
+        );
 
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubIdentity(lockedUser);
@@ -221,8 +226,9 @@ class OAuthLoginServiceTest {
 
     @Test
     void rejectsEmailLinkedOauthLoginWhenLocalUserCannotSignIn() {
-        UserEntity disabledUser = activeUser();
-        disabledUser.setEnabled(false);
+        UserAuthenticationSnapshot disabledUser = new UserAuthenticationSnapshot(
+                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, true, true, false
+        );
 
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubNoIdentity();
@@ -241,7 +247,7 @@ class OAuthLoginServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("google account has no subject.");
 
-        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test
@@ -252,7 +258,7 @@ class OAuthLoginServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("google account has no email.");
 
-        verifyNoInteractions(oAuthIdentityRepository, userRepository, sessionTokenService);
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test
@@ -260,7 +266,8 @@ class OAuthLoginServiceTest {
         OAuthLoginService service = new OAuthLoginService(
                 List.of(),
                 oAuthIdentityRepository,
-                userRepository,
+                userAuthenticationApi,
+                userRegistrationApi,
                 passwordEncoder,
                 sessionTokenService
         );
@@ -287,33 +294,35 @@ class OAuthLoginServiceTest {
                 .thenReturn(Optional.empty());
     }
 
-    private void stubIdentity(UserEntity user) {
+    private void stubIdentity(UserAuthenticationSnapshot user) {
         OAuthIdentityEntity identity = OAuthIdentityEntity.builder()
                 .provider(OAuthProvider.GOOGLE)
                 .providerSubject(OAuthLoginServiceTest.GOOGLE_SUBJECT)
                 .email(OAuthLoginServiceTest.EXISTING_EMAIL)
-                .user(user)
+                .userId(user.userId())
                 .build();
         when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, OAuthLoginServiceTest.GOOGLE_SUBJECT))
                 .thenReturn(Optional.of(identity));
+        when(userAuthenticationApi.findUserAuthenticationById(user.userId())).thenReturn(Optional.of(user));
     }
 
-    private void stubUser(UserEntity user) {
-        when(userRepository.findByEmail(OAuthLoginServiceTest.EXISTING_EMAIL)).thenReturn(Optional.of(user));
+    private void stubUser(UserAuthenticationSnapshot user) {
+        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.EXISTING_EMAIL)).thenReturn(Optional.of(user));
     }
 
     private void stubNoUser() {
-        when(userRepository.findByEmail(OAuthLoginServiceTest.NEW_EMAIL)).thenReturn(Optional.empty());
+        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.NEW_EMAIL)).thenReturn(Optional.empty());
     }
 
-    private void stubToken(UserEntity user) {
-        when(sessionTokenService.issueForNewSession(user, request)).thenReturn(tokenPair());
+    private void stubToken() {
+        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
     }
 
     private void stubNewUserSave() {
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
-        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(sessionTokenService.issueForNewSession(any(UserEntity.class), eq(request))).thenReturn(tokenPair());
+        when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any()))
+                .thenReturn(activeUser(UUID.randomUUID(), NEW_EMAIL, "encoded-random-password"));
+        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
     }
 
     private static UserAuthenticationResponse tokenPair() {
@@ -323,15 +332,21 @@ class OAuthLoginServiceTest {
         return response;
     }
 
-    private static UserEntity activeUser() {
-        return UserEntity.builder()
-                .email(OAuthLoginServiceTest.EXISTING_EMAIL)
-                .password("secret")
-                .accountNonExpired(true)
-                .accountNonLocked(true)
-                .credentialsNonExpired(true)
-                .enabled(true)
-                .build();
+    private static UserAuthenticationSnapshot activeUser() {
+        return activeUser(UUID.randomUUID(), OAuthLoginServiceTest.EXISTING_EMAIL, "secret");
+    }
+
+    private static UserAuthenticationSnapshot activeUser(UUID userId, String email, String password) {
+        return new UserAuthenticationSnapshot(
+                userId,
+                email,
+                password,
+                List.of("USER"),
+                true,
+                true,
+                true,
+                true
+        );
     }
 
     private static OAuthProfile profile(String providerSubject,

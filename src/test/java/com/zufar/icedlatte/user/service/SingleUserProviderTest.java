@@ -121,6 +121,30 @@ class SingleUserProviderTest {
     }
 
     @Test
+    @DisplayName("findUserAuthenticationById returns authentication snapshot")
+    void findUserAuthenticationByIdReturnsSnapshot() {
+        UUID userId = UUID.randomUUID();
+        UserEntity entity = UserEntity.builder()
+                .id(userId)
+                .email("user@example.com")
+                .password("encoded")
+                .authorities(java.util.Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .enabled(true)
+                .build();
+        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
+
+        var snapshot = singleUserProvider.findUserAuthenticationById(userId);
+
+        assertThat(snapshot).isPresent();
+        assertThat(snapshot.orElseThrow().userId()).isEqualTo(userId);
+        assertThat(snapshot.orElseThrow().email()).isEqualTo("user@example.com");
+        verify(userCrudRepository).findById(userId);
+    }
+
+    @Test
     @DisplayName("getUserEntityByEmail throws when user is missing")
     void getUserEntityByEmailThrowsWhenMissing() {
         when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());

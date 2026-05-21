@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.api;
+package com.zufar.icedlatte.security.service.principal;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
@@ -23,13 +23,13 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SecurityPrincipalProvider unit tests")
-class SecurityPrincipalProviderTest {
+class DefaultSecurityPrincipalProviderTest {
 
     @Mock
     private UserLookupApi userLookupApi;
 
     @InjectMocks
-    private SecurityPrincipalProvider provider;
+    private DefaultSecurityPrincipalProvider provider;
 
     @AfterEach
     void clearContext() {

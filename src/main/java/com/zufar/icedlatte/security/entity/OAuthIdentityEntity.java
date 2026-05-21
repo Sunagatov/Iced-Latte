@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.entity;
 
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
-import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,9 +21,8 @@ public class OAuthIdentityEntity extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false, length = 32)

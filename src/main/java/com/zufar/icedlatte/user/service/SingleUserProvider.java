@@ -40,21 +40,14 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     @Transactional(readOnly = true)
     public Optional<UserAuthenticationSnapshot> findUserAuthenticationByEmail(final String email) {
         return userCrudRepository.findByEmail(email)
-                .map(user -> {
-                    List<String> authorities = user.getAuthorities().stream()
-                            .map(UserGrantedAuthority::getAuthority)
-                            .toList();
-                    return new UserAuthenticationSnapshot(
-                            user.getId(),
-                            user.getEmail(),
-                            user.getPassword(),
-                            authorities,
-                            user.isAccountNonExpired(),
-                            user.isAccountNonLocked(),
-                            user.isCredentialsNonExpired(),
-                            user.isEnabled()
-                    );
-                });
+                .map(this::toAuthenticationSnapshot);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UserAuthenticationSnapshot> findUserAuthenticationById(final UUID userId) {
+        return userCrudRepository.findById(userId)
+                .map(this::toAuthenticationSnapshot);
     }
 
     @Transactional(readOnly = true)
@@ -69,4 +62,19 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
                 .orElseThrow(() -> new UserNotFoundException(email));
     }
 
+    private UserAuthenticationSnapshot toAuthenticationSnapshot(UserEntity user) {
+        List<String> authorities = user.getAuthorities().stream()
+                .map(UserGrantedAuthority::getAuthority)
+                .toList();
+        return new UserAuthenticationSnapshot(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                authorities,
+                user.isAccountNonExpired(),
+                user.isAccountNonLocked(),
+                user.isCredentialsNonExpired(),
+                user.isEnabled()
+        );
+    }
 }

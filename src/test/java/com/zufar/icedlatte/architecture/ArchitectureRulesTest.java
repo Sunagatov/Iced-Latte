@@ -6,6 +6,12 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.mapstruct.Mapper;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -112,39 +118,25 @@ class ArchitectureRulesTest {
                     );
 
     @ArchTest
-    static final ArchRule security_api_should_not_depend_on_user_implementation =
+    static final ArchRule api_packages_should_not_contain_spring_implementation_beans =
             noClasses()
-                    .that().resideInAPackage("..security.api..")
+                    .that().resideInAPackage("..api..")
+                    .should().beAnnotatedWith(Service.class)
+                    .orShould().beAnnotatedWith(Component.class)
+                    .orShould().beAnnotatedWith(Repository.class)
+                    .orShould().beAnnotatedWith(Configuration.class)
+                    .orShould().beAnnotatedWith(Controller.class)
+                    .orShould().beAnnotatedWith(RestController.class)
+                    .orShould().beAnnotatedWith(Mapper.class);
+
+    @ArchTest
+    static final ArchRule security_module_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().resideInAPackage("..security..")
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "..user.repository..",
                             "..user.entity..",
                             "..user.converter..",
-                            "..user.service.."
-                    );
-
-    @ArchTest
-    static final ArchRule security_token_services_should_not_depend_on_user_entities =
-            noClasses()
-                    .that().resideInAPackage("..security.service.token..")
-                    .should().dependOnClassesThat().resideInAPackage("..user.entity..");
-
-    @ArchTest
-    static final ArchRule custom_user_details_service_should_not_depend_on_user_implementation =
-            noClasses()
-                    .that().haveSimpleName("CustomUserDetailsService")
-                    .should().dependOnClassesThat().resideInAnyPackage(
-                            "..user.repository..",
-                            "..user.entity..",
-                            "..user.service.."
-                    );
-
-    @ArchTest
-    static final ArchRule login_attempt_service_should_not_depend_on_user_implementation =
-            noClasses()
-                    .that().haveSimpleName("LoginAttemptService")
-                    .should().dependOnClassesThat().resideInAnyPackage(
-                            "..user.repository..",
-                            "..user.entity..",
                             "..user.service.."
                     );
 
