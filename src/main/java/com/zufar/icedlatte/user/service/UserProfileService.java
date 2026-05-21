@@ -6,8 +6,7 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.api.UserAccountLockApi;
-import com.zufar.icedlatte.user.api.UserPasswordApi;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -25,7 +24,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserProfileService implements UserPasswordApi, UserAccountLockApi {
+public class UserProfileService implements UserAccessControlApi {
 
     private final SingleUserProvider singleUserProvider;
     private final UserRepository userRepository;
@@ -78,13 +77,19 @@ public class UserProfileService implements UserPasswordApi, UserAccountLockApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public int setAccountLockedStatus(String email, boolean accountNonLocked) {
-        return userRepository.setAccountLockedStatus(email, accountNonLocked);
+    public int lockAccount(String email) {
+        return userRepository.setAccountLockedStatus(email, false);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void unlockExpiredLockedAccounts() {
+    public int unlockAccount(String email) {
+        return userRepository.setAccountLockedStatus(email, true);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void unlockExpiredAccounts() {
         userRepository.unlockUsers();
     }
 

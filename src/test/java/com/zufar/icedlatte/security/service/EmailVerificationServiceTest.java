@@ -11,7 +11,7 @@ import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
 import com.zufar.icedlatte.user.api.UserLookupApi;
-import com.zufar.icedlatte.user.api.UserPasswordApi;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ class EmailVerificationServiceTest {
     @Mock private AuthTokenEmailSender emailConfirmation;
     @Mock private UserRegistrationService userRegistrationService;
     @Mock private UserLookupApi userLookupApi;
-    @Mock private UserPasswordApi userPasswordApi;
+    @Mock private UserAccessControlApi userAccessControlApi;
     @Mock private HttpServletRequest httpRequest;
 
     private EmailVerificationService service;
@@ -51,7 +51,7 @@ class EmailVerificationServiceTest {
                 emailConfirmation,
                 userRegistrationService,
                 userLookupApi,
-                userPasswordApi
+                userAccessControlApi
         );
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(service, "tokenLength", 9);
@@ -138,7 +138,7 @@ class EmailVerificationServiceTest {
             service.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(token), "newPass123!");
 
             verify(userLookupApi).getUserByEmail("user@example.com");
-            verify(userPasswordApi).changePassword(userId, "newPass123!");
+            verify(userAccessControlApi).changePassword(userId, "newPass123!");
         }
     }
 

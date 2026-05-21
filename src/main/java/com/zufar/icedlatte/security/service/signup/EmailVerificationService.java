@@ -11,7 +11,7 @@ import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
 import com.zufar.icedlatte.user.api.UserLookupApi;
-import com.zufar.icedlatte.user.api.UserPasswordApi;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +34,7 @@ public class EmailVerificationService {
     private final AuthTokenEmailSender emailConfirmation;
     private final UserRegistrationService userRegistrationService;
     private final UserLookupApi userLookupApi;
-    private final UserPasswordApi userPasswordApi;
+    private final UserAccessControlApi userAccessControlApi;
 
     @Value("${email.verification-token-length}")
     private int tokenLength;
@@ -65,7 +65,7 @@ public class EmailVerificationService {
                                                 String newPassword) {
         UserRegistrationRequest request = validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
         var user = userLookupApi.getUserByEmail(request.getEmail());
-        userPasswordApi.changePassword(user.id(), newPassword);
+        userAccessControlApi.changePassword(user.id(), newPassword);
     }
 
     public String generateToken(UserRegistrationRequest request, TokenPurpose purpose) {

@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.service;
 import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
 import com.zufar.icedlatte.security.service.signin.LoginAttemptService;
-import com.zufar.icedlatte.user.api.UserAccountLockApi;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 class LoginAttemptServiceTest {
 
     @Mock private LoginAttemptRepository loginAttemptRepository;
-    @Mock private UserAccountLockApi userAccountLockApi;
+    @Mock private UserAccessControlApi userAccessControlApi;
 
     @InjectMocks private LoginAttemptService service;
 
@@ -70,8 +70,8 @@ class LoginAttemptServiceTest {
             assertThat(existingAttempt.getLastModified()).isAfter(previousTimestamp);
             verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
             verify(loginAttemptRepository).save(existingAttempt);
-            verify(userAccountLockApi, never()).setAccountLockedStatus(any(), any(Boolean.class));
-            verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+            verify(userAccessControlApi, never()).lockAccount(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
         }
 
         @Test
@@ -85,8 +85,8 @@ class LoginAttemptServiceTest {
 
             verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
             verify(loginAttemptRepository).save(captor.capture());
-            verify(userAccountLockApi, never()).setAccountLockedStatus(any(), any(Boolean.class));
-            verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+            verify(userAccessControlApi, never()).lockAccount(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
 
             LoginAttemptEntity saved = captor.getValue();
             assertThat(saved.getUserEmail()).isEqualTo(USER_EMAIL);
@@ -109,15 +109,15 @@ class LoginAttemptServiceTest {
             when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(existingAttempt));
             when(loginAttemptRepository.save(existingAttempt)).thenReturn(existingAttempt);
             when(loginAttemptRepository.setUserLockedStatusAndExpiration(eq(USER_EMAIL), any(Instant.class))).thenReturn(1);
-            when(userAccountLockApi.setAccountLockedStatus(USER_EMAIL, false)).thenReturn(1);
+            when(userAccessControlApi.lockAccount(USER_EMAIL)).thenReturn(1);
 
             Instant before = Instant.now();
             service.recordFailure(USER_EMAIL);
             Instant after = Instant.now();
 
             verify(loginAttemptRepository).setUserLockedStatusAndExpiration(eq(USER_EMAIL), expirationCaptor.capture());
-            verify(userAccountLockApi).setAccountLockedStatus(USER_EMAIL, false);
-            verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+            verify(userAccessControlApi).lockAccount(USER_EMAIL);
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
 
             Instant expiration = expirationCaptor.getValue();
             assertThat(expiration)
@@ -144,7 +144,7 @@ class LoginAttemptServiceTest {
                     .lastModified(lastModified)
                     .build();
             when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(attempt));
-            when(userAccountLockApi.setAccountLockedStatus(USER_EMAIL, true)).thenReturn(1);
+            when(userAccessControlApi.unlockAccount(USER_EMAIL)).thenReturn(1);
 
             service.resetAfterSuccessfulAuthentication(USER_EMAIL);
 
@@ -153,9 +153,9 @@ class LoginAttemptServiceTest {
             assertThat(attempt.getExpirationDatetime()).isNull();
             assertThat(attempt.getLastModified()).isAfter(lastModified);
             verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
-            verify(userAccountLockApi).setAccountLockedStatus(USER_EMAIL, true);
+            verify(userAccessControlApi).unlockAccount(USER_EMAIL);
             verify(loginAttemptRepository, never()).save(any());
-            verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
         }
 
         @Test
@@ -179,8 +179,8 @@ class LoginAttemptServiceTest {
             assertThat(attempt.getExpirationDatetime()).isNull();
             assertThat(attempt.getLastModified()).isAfter(lastModified);
             verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
-            verify(userAccountLockApi, never()).setAccountLockedStatus(any(), any(Boolean.class));
-            verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+            verify(userAccessControlApi, never()).lockAccount(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
         }
     }
 
@@ -192,8 +192,8 @@ class LoginAttemptServiceTest {
         service.unlockExpiredAccounts();
 
         verify(loginAttemptRepository).resetLockedAccounts();
-        verify(userAccountLockApi).unlockExpiredLockedAccounts();
-        verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+        verify(userAccessControlApi).unlockExpiredAccounts();
+        verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }
 
     @Test
@@ -205,6 +205,6 @@ class LoginAttemptServiceTest {
         assertThatThrownBy(service::unlockExpiredAccounts).isSameAs(exception);
 
         verify(loginAttemptRepository).resetLockedAccounts();
-        verifyNoMoreInteractions(loginAttemptRepository, userAccountLockApi);
+        verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }
 }
