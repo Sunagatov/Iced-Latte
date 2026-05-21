@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.filestorage.converter;
 
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

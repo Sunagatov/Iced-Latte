@@ -43,7 +43,7 @@ class ModularityTests {
                 "common :: exception", "common :: exception-handler", "common :: http",
                 "common :: monitoring", "common :: pagination", "common :: temporarycache",
                 "common :: util", "common :: validation-pagination",
-                "filestorage :: api", "filestorage :: aws", "filestorage :: dto", "filestorage :: exception",
+                "filestorage :: api", "filestorage :: aws", "filestorage :: exception",
                 "order :: api", "order :: exception",
                 "product :: api", "product :: exception",
                 "review :: api",

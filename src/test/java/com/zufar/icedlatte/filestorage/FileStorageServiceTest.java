@@ -4,7 +4,7 @@ import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
 
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import org.junit.jupiter.api.DisplayName;

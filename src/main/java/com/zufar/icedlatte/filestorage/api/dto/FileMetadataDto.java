@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.filestorage.dto;
+package com.zufar.icedlatte.filestorage.api.dto;
 
 import java.util.UUID;
 

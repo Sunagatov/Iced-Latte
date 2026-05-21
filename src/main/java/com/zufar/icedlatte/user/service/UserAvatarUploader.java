@@ -2,7 +2,7 @@ package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.filestorage.api;
 
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;

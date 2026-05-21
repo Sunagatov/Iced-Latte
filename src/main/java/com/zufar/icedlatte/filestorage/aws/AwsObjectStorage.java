@@ -2,7 +2,7 @@ package com.zufar.icedlatte.filestorage.aws;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
-import com.zufar.icedlatte.filestorage.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import lombok.RequiredArgsConstructor;
