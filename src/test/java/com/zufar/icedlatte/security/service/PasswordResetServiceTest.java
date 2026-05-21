@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.exception.token.TimeTokenException;
+import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.security.service.password.PasswordResetService;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;

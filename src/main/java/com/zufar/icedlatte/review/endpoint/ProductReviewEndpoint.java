@@ -2,7 +2,6 @@ package com.zufar.icedlatte.review.endpoint;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.review.service.ProductReviewLikesUpdater;
 import com.zufar.icedlatte.review.service.ProductReviewManager;
 import com.zufar.icedlatte.review.service.ProductReviewsProvider;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
@@ -26,7 +25,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
 
     private final ProductReviewManager productReviewService;
     private final ProductReviewsProvider productReviewsProvider;
-    private final ProductReviewLikesUpdater productReviewLikesUpdater;
     private final CurrentUserProvider currentUserProvider;
 
     @Override
@@ -80,7 +78,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
                                                                  @PathVariable final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {
         UUID userId = currentUserProvider.getUserId();
-        var productReview = productReviewLikesUpdater.update(productId, productReviewId, userId, request.getIsLike());
+        var productReview = productReviewService.updateLike(productId, productReviewId, userId, request.getIsLike());
         log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }

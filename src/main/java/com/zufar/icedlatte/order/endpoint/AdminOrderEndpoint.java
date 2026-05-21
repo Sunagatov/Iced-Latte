@@ -11,7 +11,7 @@ import com.zufar.icedlatte.openapi.order.api.AdminOrdersApi;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
-import com.zufar.icedlatte.order.service.query.OrdersProvider;
+import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ import java.util.UUID;
 @SuppressWarnings("unused") // Spring MVC invokes endpoint methods via reflection.
 public class AdminOrderEndpoint implements AdminOrdersApi {
 
-    private final OrdersProvider ordersProvider;
+    private final OrderDetailProvider orderDetailProvider;
     private final OrderStatusTransitioner statusTransitioner;
     private final OrderDtoConverter orderDtoConverter;
     private final CurrentUserProvider currentUserProvider;
@@ -57,7 +57,7 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
                 sortBy != null ? sortBy : defaults.defaultSortAttribute(),
                 sortDirection != null ? sortDirection : defaults.defaultSortDirection()
         );
-        return ResponseEntity.ok(ordersProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
+        return ResponseEntity.ok(orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

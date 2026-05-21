@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.service.jwt.support;
 
 import com.zufar.icedlatte.common.temporarycache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.config.jwt.JwtProperties;
-import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service.jwt.support;
 
-import com.zufar.icedlatte.security.exception.jwt.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;

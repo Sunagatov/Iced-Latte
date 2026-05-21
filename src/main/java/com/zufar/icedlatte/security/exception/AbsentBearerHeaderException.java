@@ -1,8 +1,6 @@
-package com.zufar.icedlatte.security.exception.jwt;
+package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.AuthException;
-
-public final class AbsentBearerHeaderException extends AuthException {
+public final class AbsentBearerHeaderException extends AuthSecurityException {
 
     private static final String DEFAULT_MESSAGE = "Bearer authentication header is absent";
 

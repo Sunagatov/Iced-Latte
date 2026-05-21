@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.service.signup;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.service.signin.SecurityUserDetails;
 import com.zufar.icedlatte.security.service.token.SessionTokenService;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;

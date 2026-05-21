@@ -7,6 +7,7 @@ import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.*;
 class ProductReviewManagerTest {
 
     @Mock private ProductReviewRepository reviewRepository;
+    @Mock private ProductReviewLikeRepository productReviewLikeRepository;
     @Mock private ProductReviewDtoConverter productReviewDtoConverter;
     @Mock private UserLookupApi userLookupApi;
     @Mock private ProductReviewValidator productReviewValidator;
@@ -46,7 +48,7 @@ class ProductReviewManagerTest {
     @BeforeEach
     void setUp() {
         service = new ProductReviewManager(
-                reviewRepository, productReviewDtoConverter, userLookupApi,
+                reviewRepository, productReviewLikeRepository, productReviewDtoConverter, userLookupApi,
                 productReviewValidator, productReviewProductGateway, summaryDebouncer, eventPublisher
         );
     }

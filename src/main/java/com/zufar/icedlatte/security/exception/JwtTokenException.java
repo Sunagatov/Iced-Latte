@@ -1,8 +1,6 @@
-package com.zufar.icedlatte.security.exception.jwt;
+package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.AuthException;
-
-public final class JwtTokenException extends AuthException {
+public final class JwtTokenException extends RuntimeException {
 
     public JwtTokenException(Throwable cause) {
         super(cause.getMessage(), cause);

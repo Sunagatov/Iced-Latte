@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.service.signin;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
-import com.zufar.icedlatte.security.exception.signin.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.security.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.service.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.service.session.AuthSessionService;
 import lombok.RequiredArgsConstructor;

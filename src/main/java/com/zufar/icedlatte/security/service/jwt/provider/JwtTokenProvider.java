@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.service.jwt.provider;
 
 import com.zufar.icedlatte.security.config.jwt.JwtProperties;
-import com.zufar.icedlatte.security.exception.jwt.JwtTokenException;
+import com.zufar.icedlatte.security.exception.JwtTokenException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtClaimNames;
 import com.zufar.icedlatte.security.service.jwt.support.JwtSigningKeys;
 import io.jsonwebtoken.JwtException;

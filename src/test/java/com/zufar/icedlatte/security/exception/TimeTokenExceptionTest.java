@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.token.TimeTokenException;
+import com.zufar.icedlatte.security.exception.TimeTokenException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

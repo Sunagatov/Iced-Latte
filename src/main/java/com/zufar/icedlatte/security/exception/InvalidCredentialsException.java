@@ -1,8 +1,6 @@
-package com.zufar.icedlatte.security.exception.signin;
+package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.AuthException;
-
-public final class InvalidCredentialsException extends AuthException {
+public final class InvalidCredentialsException extends AuthSecurityException {
 
     public InvalidCredentialsException() {
         super("Invalid credentials");

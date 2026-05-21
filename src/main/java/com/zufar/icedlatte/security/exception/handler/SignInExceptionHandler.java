@@ -3,19 +3,21 @@ package com.zufar.icedlatte.security.exception.handler;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.exception.session.SessionNotFoundException;
-import com.zufar.icedlatte.security.exception.session.SessionOwnershipException;
-import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
-import com.zufar.icedlatte.security.exception.signin.UserAccountLockedException;
-import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
-import com.zufar.icedlatte.security.exception.turnstile.TurnstileVerificationException;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.AuthSecurityException;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.security.exception.SessionNotFoundException;
+import com.zufar.icedlatte.security.exception.SessionOwnershipException;
+import com.zufar.icedlatte.security.exception.TurnstileVerificationException;
+import com.zufar.icedlatte.security.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.exception.UserRegistrationException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,94 +33,54 @@ public class SignInExceptionHandler {
 
     private final ProblemDetailFactory problemDetailFactory;
 
-    @ExceptionHandler(AbsentBearerHeaderException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleAbsentBearerHeaderException(final AbsentBearerHeaderException exception,
-                                                           HttpServletRequest request) {
-        if (!ApiPaths.AUTH_REFRESH.equals(request.getRequestURI())) {
-            log.debug("auth.sign_in.failed: reason_code=AbsentBearerHeaderException, status=401, method={}, path={}",
+    @ExceptionHandler(AuthSecurityException.class)
+    public ResponseEntity<ProblemDetail> handleSecurityException(final AuthSecurityException ex,
+                                                                 HttpServletRequest request) {
+        record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) { }
+
+        var mapping = switch (ex) {
+            case AbsentBearerHeaderException _ ->
+                    new ErrorMapping("auth.sign_in.failed.AbsentBearerHeaderException", ProblemType.AUTH_REQUIRED,
+                            "Authentication required", HttpStatus.UNAUTHORIZED, "Authentication required.");
+            case UserRegistrationException _ ->
+                    new ErrorMapping("auth.sign_in.failed.UserRegistrationException", ProblemType.REGISTRATION_FAILED,
+                            "Registration failed", HttpStatus.CONFLICT, ex.getMessage());
+            case InvalidCredentialsException _ ->
+                    new ErrorMapping("auth.sign_in.failed.InvalidCredentialsException", ProblemType.INVALID_CREDENTIALS,
+                            "Invalid credentials", HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
+            case UserAccountLockedException _ ->
+                    new ErrorMapping("auth.sign_in.failed.UserAccountLockedException", ProblemType.ACCOUNT_LOCKED,
+                            "Account locked", HttpStatus.UNAUTHORIZED, "User account is locked.");
+            case SessionNotFoundException _ -> new ErrorMapping("auth.session.not_found", ProblemType.SESSION_NOT_FOUND,
+                    "Session not found", HttpStatus.NOT_FOUND, "Session not found.");
+            case SessionOwnershipException _ ->
+                    new ErrorMapping("auth.session.forbidden", ProblemType.SESSION_ACCESS_DENIED,
+                            "Access denied", HttpStatus.FORBIDDEN, "Access denied.");
+            case TurnstileVerificationException _ ->
+                    new ErrorMapping("auth.turnstile.failed", ProblemType.TURNSTILE_FAILED,
+                            "Verification failed", HttpStatus.BAD_REQUEST, ex.getMessage());
+        };
+
+        if (ex instanceof AbsentBearerHeaderException &&
+                ApiPaths.AUTH_REFRESH.equals(request.getRequestURI())) {
+            // Suppress noisy logging for missing bearer on refresh endpoint
+        } else {
+            log.debug("{}: status={}, method={}, path={}", mapping.logTag(), mapping.status().value(),
                     request.getMethod(), sanitize(request.getRequestURI()));
         }
-        return problemDetailFactory.build(ProblemType.AUTH_REQUIRED, "Authentication required",
-                HttpStatus.UNAUTHORIZED, "Authentication required.");
+
+        ProblemDetail pd = problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail());
+        return ResponseEntity.status(mapping.status()).body(pd);
     }
 
-    @ExceptionHandler(UserRegistrationException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ProblemDetail handleUserRegistrationException(final UserRegistrationException exception,
-                                                         HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.CONFLICT, request);
-        return problemDetailFactory.build(ProblemType.REGISTRATION_FAILED, "Registration failed",
-                HttpStatus.CONFLICT, exception.getMessage());
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
+    @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleInvalidCredentialsException(final InvalidCredentialsException exception,
-                                                           HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
+    public ProblemDetail handleSpringSecurityCredentialExceptions(final Exception exception,
+                                                                  HttpServletRequest request) {
+        log.debug("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
+                exception.getClass().getSimpleName(), request.getMethod(), sanitize(request.getRequestURI()));
         return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
-    }
-
-    @ExceptionHandler({UsernameNotFoundException.class})
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleUsernameNotFoundException(final UsernameNotFoundException exception,
-                                                         HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
-    }
-
-    @ExceptionHandler(UserAccountLockedException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleUserAccountLockedException(final UserAccountLockedException exception,
-                                                          HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build(ProblemType.ACCOUNT_LOCKED, "Account locked",
-                HttpStatus.UNAUTHORIZED, "User account is locked.");
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleBadCredentialsException(final BadCredentialsException exception,
-                                                       HttpServletRequest request) {
-        logAuthFailure(exception, HttpStatus.UNAUTHORIZED, request);
-        return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
-    }
-
-    @ExceptionHandler(SessionNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ProblemDetail handleSessionNotFoundException(final SessionNotFoundException exception,
-                                                        HttpServletRequest request) {
-        log.debug("auth.session.not_found: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return problemDetailFactory.build(ProblemType.SESSION_NOT_FOUND, "Session not found",
-                HttpStatus.NOT_FOUND, "Session not found.");
-    }
-
-    @ExceptionHandler(SessionOwnershipException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ProblemDetail handleSessionOwnershipException(final SessionOwnershipException exception,
-                                                         HttpServletRequest request) {
-        log.debug("auth.session.forbidden: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return problemDetailFactory.build(ProblemType.SESSION_ACCESS_DENIED, "Access denied",
-                HttpStatus.FORBIDDEN, "Access denied.");
-    }
-
-    @ExceptionHandler(TurnstileVerificationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ProblemDetail handleTurnstileVerificationException(final TurnstileVerificationException exception,
-                                                              HttpServletRequest request) {
-        log.info("auth.turnstile.failed: method={}, path={}", request.getMethod(), sanitize(request.getRequestURI()));
-        return problemDetailFactory.build(ProblemType.TURNSTILE_FAILED, "Verification failed",
-                HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    private void logAuthFailure(Exception exception, HttpStatus status, HttpServletRequest request) {
-        log.debug("auth.sign_in.failed: reason_code={}, status={}, method={}, path={}",
-                exception.getClass().getSimpleName(), status.value(),
-                request.getMethod(), sanitize(request.getRequestURI()));
     }
 
     private static String sanitize(String value) {

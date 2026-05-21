@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.session.SessionOwnershipException;
+import com.zufar.icedlatte.security.exception.SessionOwnershipException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

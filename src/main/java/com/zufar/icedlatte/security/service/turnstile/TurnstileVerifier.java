@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.service.turnstile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zufar.icedlatte.security.exception.turnstile.TurnstileVerificationException;
+import com.zufar.icedlatte.security.exception.TurnstileVerificationException;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

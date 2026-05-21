@@ -1,11 +1,16 @@
 package com.zufar.icedlatte.review.service;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
@@ -17,13 +22,15 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ProductReviewManager {
+public class ProductReviewManager implements ReviewMaintenanceApi {
 
     private final ProductReviewRepository reviewRepository;
+    private final ProductReviewLikeRepository productReviewLikeRepository;
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final UserLookupApi userLookupApi;
     private final ProductReviewValidator productReviewValidator;
@@ -73,5 +80,54 @@ public class ProductReviewManager {
         productReviewProductApi.refreshReviewAggregates(productId);
 
         summaryDebouncer.schedule(productId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ProductReviewDto updateLike(final UUID productId,
+                                       final UUID productReviewId,
+                                       final UUID userId,
+                                       final Boolean newProductReviewLike) {
+        if (newProductReviewLike == null) {
+            throw new BadRequestException(
+                    "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].");
+        }
+        productReviewValidator.validateProductIdIsValid(productId, productReviewId);
+
+        Optional<ProductReviewLike> productReviewLike = productReviewLikeRepository.findByUserIdAndProductReviewId(userId, productReviewId);
+
+        productReviewLike.ifPresentOrElse(
+                entity -> {
+                    if (entity.getIsLike().equals(newProductReviewLike)) {
+                        productReviewLikeRepository.deleteByUserIdAndProductReviewId(userId, productReviewId);
+                    } else {
+                        entity.setIsLike(newProductReviewLike);
+                        productReviewLikeRepository.saveAndFlush(entity);
+                    }
+                },
+                () -> {
+                    ProductReviewLike newReviewLike = ProductReviewLike.builder()
+                            .userId(userId)
+                            .productId(productId)
+                            .productReviewId(productReviewId)
+                            .isLike(newProductReviewLike)
+                            .build();
+                    productReviewLikeRepository.saveAndFlush(newReviewLike);
+                }
+        );
+
+        reviewRepository.updateLikesCount(productReviewId);
+        reviewRepository.updateDislikesCount(productReviewId);
+
+        ProductReview productReview = reviewRepository.findById(productReviewId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
+        return productReviewDtoConverter.toProductReviewDto(productReview, userLookupApi.getUserById(productReview.getUserId()));
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void refreshAllCounts() {
+        reviewRepository.updateAllLikesCounts();
+        reviewRepository.updateAllDislikesCounts();
     }
 }

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service.session;
 
-import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import jakarta.servlet.http.HttpServletRequest;

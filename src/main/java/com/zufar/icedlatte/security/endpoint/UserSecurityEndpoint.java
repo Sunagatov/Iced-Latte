@@ -8,7 +8,7 @@ import com.zufar.icedlatte.security.service.oauth.OAuthFlowService;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
 import com.zufar.icedlatte.security.service.password.PasswordResetService;
 import com.zufar.icedlatte.security.service.session.AuthSessionService;
-import com.zufar.icedlatte.security.service.session.LogoutService;
+import com.zufar.icedlatte.security.service.session.TokenRevocationService;
 import com.zufar.icedlatte.security.service.signin.UserAuthenticationService;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
@@ -42,7 +42,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final EmailVerificationService emailVerificationService;
     private final AuthSessionService authSessionService;
     private final RefreshTokenService refreshTokenService;
-    private final LogoutService logoutService;
+    private final TokenRevocationService tokenRevocationService;
     private final PasswordResetService passwordResetService;
     private final CurrentUserProvider currentUserProvider;
     private final UserRegistrationService userRegistrationService;
@@ -111,14 +111,14 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(name = "X-Refresh-Token", required = false)
                                        String xRefreshToken) {
-        logoutService.logout(xRefreshToken, httpRequest);
+        tokenRevocationService.revokeTokens(xRefreshToken, httpRequest);
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostMapping("/logout-all")
     public ResponseEntity<Void> logoutAll() {
-        logoutService.logoutAll(currentUserProvider.getUserId());
+        authSessionService.revokeAllForUser(currentUserProvider.getUserId());
         return ResponseEntity.ok().build();
     }
 

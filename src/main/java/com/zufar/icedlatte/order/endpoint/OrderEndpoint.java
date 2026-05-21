@@ -6,9 +6,8 @@ import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.service.OrderCreator;
 import com.zufar.icedlatte.order.service.OrderReorderService;
-import com.zufar.icedlatte.order.service.lifecycle.OrderLifecycleService;
+import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
-import com.zufar.icedlatte.order.service.query.OrdersProvider;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +33,9 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     public static final String ORDERS_URL = ApiPaths.ORDERS;
 
     private final CurrentUserProvider currentUserProvider;
-    private final OrdersProvider ordersProvider;
     private final OrderDetailProvider orderDetailProvider;
     private final OrderCreator orderCreator;
-    private final OrderLifecycleService orderLifecycleService;
+    private final OrderStatusTransitioner orderStatusTransitioner;
     private final OrderReorderService orderReorderService;
     private final PaginationConfig paginationConfig;
 
@@ -60,7 +58,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
                 sortBy != null ? sortBy : defaults.defaultSortAttribute(),
                 sortDirection != null ? sortDirection : defaults.defaultSortDirection()
         );
-        var result = ordersProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable);
+        var result = orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable);
         return ResponseEntity.ok(result);
     }
 
@@ -89,7 +87,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable final UUID orderId) {
         var userId = currentUserProvider.getUserId();
         log.info("orders.cancel: userId={}, orderId={}", userId, orderId);
-        var order = orderLifecycleService.cancel(orderId, userId);
+        var order = orderStatusTransitioner.cancel(orderId, userId);
         return ResponseEntity.ok(order);
     }
 
@@ -101,7 +99,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
         var userId = currentUserProvider.getUserId();
         String reason = request != null ? request.getReason() : null;
         log.info("orders.refund: userId={}, orderId={}", userId, orderId);
-        var order = orderLifecycleService.requestRefund(orderId, userId, reason);
+        var order = orderStatusTransitioner.requestRefund(orderId, userId, reason);
         return ResponseEntity.ok(order);
     }
 

@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.service.token;
 
 import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;

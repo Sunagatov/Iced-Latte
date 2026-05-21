@@ -1,7 +1,9 @@
 package com.zufar.icedlatte.order.service.lifecycle;
 
+import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
@@ -37,12 +39,13 @@ public class OrderStatusTransitioner {
             ),
             CREATED, Map.of(PAYMENT_CONFIRMED, PAID, CANCEL, CANCELLED),
             PAID, Map.of(SHIP, SHIPPED, CANCEL, CANCELLED, REQUEST_REFUND, REFUND_REQUESTED),
-            OrderStatus.SHIPPED, Map.of(DELIVER, DELIVERED),
+            SHIPPED, Map.of(DELIVER, DELIVERED),
             REFUND_REQUESTED, Map.of(REFUND_CONFIRMED, REFUNDED)
     );
 
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final OrderDtoConverter orderDtoConverter;
 
     @Transactional
     public Order transition(UUID orderId, OrderEvent event, UUID actorId) {
@@ -53,7 +56,10 @@ public class OrderStatusTransitioner {
      * Transitions order state. Returns the updated Order entity for internal use.
      */
     @Transactional
-    public Order transition(UUID orderId, OrderEvent event, UUID actorId, String reason) {
+    public Order transition(UUID orderId,
+                            OrderEvent event,
+                            UUID actorId,
+                            String reason) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -73,6 +79,37 @@ public class OrderStatusTransitioner {
         ));
 
         return saved;
+    }
+
+    @Transactional
+    public OrderDto cancel(UUID orderId, UUID userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUserId().equals(userId)) {
+            throw new OrderAccessDeniedException();
+        }
+        boolean wasPaid = order.getStatus() == OrderStatus.PAID;
+        Order cancelled = transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
+        if (wasPaid) {
+            log.warn("order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}",
+                    orderId, order.getStripePaymentIntentId());
+        }
+        return orderDtoConverter.toResponseDto(cancelled);
+    }
+
+    @Transactional
+    public OrderDto requestRefund(UUID orderId, UUID userId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUserId().equals(userId)) {
+            throw new OrderAccessDeniedException();
+        }
+        Order refundRequested = transition(orderId, OrderEvent.REQUEST_REFUND, userId, reason);
+        refundRequested.setRefundReason(reason);
+        orderRepository.save(refundRequested);
+        log.info("order.refund.requested: orderId={}, stripePaymentIntentId={}",
+                orderId, refundRequested.getStripePaymentIntentId());
+        return orderDtoConverter.toResponseDto(refundRequested);
     }
 
     private static OrderStatus resolveTransition(OrderStatus current, OrderEvent event) {

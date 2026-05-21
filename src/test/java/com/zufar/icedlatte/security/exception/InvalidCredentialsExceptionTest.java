@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
+import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.jwt;
 
 import com.zufar.icedlatte.common.temporarycache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.config.jwt.JwtProperties;
-import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

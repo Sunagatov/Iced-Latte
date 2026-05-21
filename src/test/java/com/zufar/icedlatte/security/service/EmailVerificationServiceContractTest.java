@@ -5,7 +5,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.token.TimeTokenException;
+import com.zufar.icedlatte.security.exception.TimeTokenException;
 import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
 import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
