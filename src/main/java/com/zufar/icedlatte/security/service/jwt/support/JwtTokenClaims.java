@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service.jwt.support;
 
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.security.exception.JwtTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -28,10 +28,10 @@ public class JwtTokenClaims {
     public String extractAccessTokenEmail(final String token) {
         try {
             return extractEmail(accessTokenClaims(token), "Missing email in JWT token");
-        } catch (JwtTokenHasNoUserEmailException ex) {
+        } catch (JwtTokenException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new JwtTokenHasNoUserEmailException("Failed to extract email from JWT token", ex);
+            throw new JwtTokenException("Failed to extract email from JWT token", ex);
         }
     }
 
@@ -46,10 +46,10 @@ public class JwtTokenClaims {
     public String extractRefreshTokenEmail(final String token) {
         try {
             return extractEmail(refreshTokenClaims(token), "Refresh token has no subject");
-        } catch (JwtTokenHasNoUserEmailException ex) {
+        } catch (JwtTokenException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new JwtTokenHasNoUserEmailException("Invalid refresh token", ex);
+            throw new JwtTokenException("Invalid refresh token", ex);
         }
     }
 
@@ -72,7 +72,7 @@ public class JwtTokenClaims {
     private String extractEmail(Claims claims, String missingEmailMessage) {
         return Optional.ofNullable(claims.getSubject())
                 .filter(StringUtils::hasText)
-                .orElseThrow(() -> new JwtTokenHasNoUserEmailException(missingEmailMessage));
+                .orElseThrow(() -> new JwtTokenException(missingEmailMessage));
     }
 
     private Optional<UUID> extractSessionId(Claims claims) {

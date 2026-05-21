@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.security.exception.JwtTokenException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtSigningKeys;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
 import io.jsonwebtoken.Jwts;
@@ -46,7 +46,7 @@ class JwtTokenClaimsTest {
     @DisplayName("extractAccessTokenEmail throws for invalid token")
     void extractAccessTokenEmailThrowsForInvalidToken() {
         assertThatThrownBy(() -> claims.extractAccessTokenEmail("not.a.token"))
-                .isInstanceOf(JwtTokenHasNoUserEmailException.class);
+                .isInstanceOf(JwtTokenException.class);
     }
 
     @Test

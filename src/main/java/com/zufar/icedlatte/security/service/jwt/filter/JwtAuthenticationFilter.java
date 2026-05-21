@@ -11,7 +11,7 @@ import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
+import com.zufar.icedlatte.security.exception.JwtTokenException;
 import com.zufar.icedlatte.security.service.jwt.provider.JwtAuthenticationProvider;
 import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
@@ -99,7 +99,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
             case ExpiredJwtException _ ->
                     new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenHasNoUserEmailException _ ->
+            case JwtTokenException _ ->
                     new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
             case UsernameNotFoundException _ ->
                     new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");

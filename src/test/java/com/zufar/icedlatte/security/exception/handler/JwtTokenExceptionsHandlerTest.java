@@ -3,7 +3,6 @@ package com.zufar.icedlatte.security.exception.handler;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,16 +51,4 @@ class JwtTokenExceptionsHandlerTest {
         assertThat(result).isEqualTo(expected);
     }
 
-    @Test
-    @DisplayName("Should return UNAUTHORIZED when JwtTokenHasNoUserEmailException is thrown")
-    void shouldReturnUnauthorizedWhenJwtTokenHasNoUserEmailExceptionThrown() {
-        JwtTokenHasNoUserEmailException exception = new JwtTokenHasNoUserEmailException("no email");
-        ProblemDetail expected = ProblemDetail.forStatus(401);
-        when(problemDetailFactory.build("auth-failed", "Authentication failed",
-                HttpStatus.UNAUTHORIZED, "Authentication failed.")).thenReturn(expected);
-
-        ProblemDetail result = jwtTokenExceptionsHandler.handleJwtTokenHasNoUserEmailException(exception);
-
-        assertThat(result).isEqualTo(expected);
-    }
 }

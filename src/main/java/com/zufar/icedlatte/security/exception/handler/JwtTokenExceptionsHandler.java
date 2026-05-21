@@ -4,7 +4,6 @@ import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.exception.JwtTokenException;
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -25,6 +24,7 @@ public class JwtTokenExceptionsHandler {
     @ExceptionHandler(JwtTokenException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleJwtTokenException(final JwtTokenException exception) {
+        log.debug("auth.rejected: reason=invalid_token, status=401");
         return problemDetailFactory.build("auth-failed", "Authentication failed",
                 HttpStatus.UNAUTHORIZED, "Authentication failed.");
     }
@@ -37,11 +37,4 @@ public class JwtTokenExceptionsHandler {
                 HttpStatus.UNAUTHORIZED, "Session expired. Please sign in again.");
     }
 
-    @ExceptionHandler(JwtTokenHasNoUserEmailException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ProblemDetail handleJwtTokenHasNoUserEmailException(final JwtTokenHasNoUserEmailException exception) {
-        log.debug("auth.refresh.rejected: reason=invalid_token, status=401");
-        return problemDetailFactory.build("auth-failed", "Authentication failed",
-                HttpStatus.UNAUTHORIZED, "Authentication failed.");
-    }
 }
