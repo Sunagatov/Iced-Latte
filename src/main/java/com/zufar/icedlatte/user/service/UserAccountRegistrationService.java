@@ -30,14 +30,7 @@ public class UserAccountRegistrationService implements UserRegistrationApi {
                                                            String lastName,
                                                            String email,
                                                            String encodedPassword) {
-        UserEntity user = UserEntity.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .email(email)
-                .password(encodedPassword)
-                .oauthUser(false)
-                .build();
-        return saveDefaultEnabledUser(user);
+        return registerUser(firstName, lastName, email, encodedPassword, false);
     }
 
     @Override
@@ -46,12 +39,20 @@ public class UserAccountRegistrationService implements UserRegistrationApi {
                                                         String lastName,
                                                         String email,
                                                         String encodedPassword) {
+        return registerUser(firstName, lastName, email, encodedPassword, true);
+    }
+
+    private UserAuthenticationSnapshot registerUser(String firstName,
+                                                    String lastName,
+                                                    String email,
+                                                    String encodedPassword,
+                                                    boolean oauthUser) {
         UserEntity user = UserEntity.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
                 .password(encodedPassword)
-                .oauthUser(true)
+                .oauthUser(oauthUser)
                 .build();
         return saveDefaultEnabledUser(user);
     }
