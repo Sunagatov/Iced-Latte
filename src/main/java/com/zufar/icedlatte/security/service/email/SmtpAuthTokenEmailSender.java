@@ -16,7 +16,6 @@ import java.util.Locale;
 public class SmtpAuthTokenEmailSender implements AuthTokenEmailSender {
 
     private final JavaMailSender javaMailSender;
-    private final SimpleMailMessage mailMessage;
     private final MessageSource messageSource;
 
     @Value("${spring.mail.subject.confirmation}")
@@ -25,9 +24,12 @@ public class SmtpAuthTokenEmailSender implements AuthTokenEmailSender {
     @Override
     public void sendTemporaryCode(String email, String token) {
         String body = messageSource.getMessage("email-template", new Object[]{token}, Locale.ROOT);
-        mailMessage.setTo(email);
-        mailMessage.setText(body);
-        mailMessage.setSubject(subject);
-        javaMailSender.send(mailMessage);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setText(body);
+        message.setSubject(subject);
+
+        javaMailSender.send(message);
     }
 }

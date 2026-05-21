@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.email;
 import com.zufar.icedlatte.security.service.email.SmtpAuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -18,7 +19,6 @@ class SmtpAuthTokenEmailSenderTest {
 
     private final JavaMailSender javaMailSender = mock(JavaMailSender.class);
     private final MessageSource messageSource = mock(MessageSource.class);
-    private final SimpleMailMessage mailMessage = new SimpleMailMessage();
 
     @Test
     @DisplayName("builds confirmation email body and sends it with configured subject")
@@ -26,14 +26,16 @@ class SmtpAuthTokenEmailSenderTest {
         when(messageSource.getMessage("email-template", new Object[]{"654321"}, Locale.ROOT))
                 .thenReturn("Use code 654321");
         SmtpAuthTokenEmailSender sender =
-                new SmtpAuthTokenEmailSender(javaMailSender, mailMessage, messageSource);
+                new SmtpAuthTokenEmailSender(javaMailSender, messageSource);
         ReflectionTestUtils.setField(sender, "subject", "Confirm your email");
 
         sender.sendTemporaryCode("user@example.com", "654321");
 
-        assertThat(mailMessage.getTo()).containsExactly("user@example.com");
-        assertThat(mailMessage.getText()).isEqualTo("Use code 654321");
-        assertThat(mailMessage.getSubject()).isEqualTo("Confirm your email");
-        verify(javaMailSender).send(mailMessage);
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(javaMailSender).send(captor.capture());
+        SimpleMailMessage sent = captor.getValue();
+        assertThat(sent.getTo()).containsExactly("user@example.com");
+        assertThat(sent.getText()).isEqualTo("Use code 654321");
+        assertThat(sent.getSubject()).isEqualTo("Confirm your email");
     }
 }
