@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.endpoint;
 
+import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
-import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.service.oauth.OAuthFlowService;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;

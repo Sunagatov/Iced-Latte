@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.exception;
 
-import com.zufar.icedlatte.security.exception.JwtTokenHasNoUserEmailException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.AuthenticationException;
