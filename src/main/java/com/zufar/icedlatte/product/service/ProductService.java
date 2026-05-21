@@ -5,7 +5,6 @@ import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.dto.ProductPageSnapshot;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
@@ -50,7 +49,7 @@ public class ProductService implements ProductCatalogApi {
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductSnapshot> getProductsByIds(final List<UUID> ids) {
         return getProductDtosByIds(ids).stream()
-                .map(ProductService::toSnapshot)
+                .map(productInfoDtoConverter::toSnapshot)
                 .toList();
     }
 
@@ -71,17 +70,6 @@ public class ProductService implements ProductCatalogApi {
             throw new ProductNotFoundException(missing);
         }
         return ids.stream().map(productsById::get).toList();
-    }
-
-    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public ProductPageSnapshot getProducts(final Integer pageNumber, final Integer pageSize,
-                                           final String sortAttribute, final String sortDirection,
-                                           final BigDecimal minPrice, final BigDecimal maxPrice,
-                                           final Integer minimumAverageRating,
-                                           final List<String> brandNames, final List<String> sellerNames,
-                                           final String keyword) {
-        return toPageSnapshot(getProductDtos(pageNumber, pageSize, sortAttribute, sortDirection,
-                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
     }
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
@@ -134,42 +122,5 @@ public class ProductService implements ProductCatalogApi {
     @Transactional(readOnly = true)
     public boolean existsById(final UUID productId) {
         return productInfoRepository.existsById(productId);
-    }
-
-    private static ProductPageSnapshot toPageSnapshot(ProductListWithPaginationInfoDto page) {
-        return new ProductPageSnapshot(
-                page.getProducts().stream().map(ProductService::toSnapshot).toList(),
-                page.getPage(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages()
-        );
-    }
-
-    private static ProductSnapshot toSnapshot(ProductInfoDto product) {
-        return new ProductSnapshot(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getQuantity(),
-                product.getActive(),
-                product.getProductFileUrl(),
-                product.getProductImageUrls(),
-                product.getAverageRating(),
-                product.getReviewsCount(),
-                product.getAiSummary(),
-                product.getBrandName(),
-                product.getSellerName(),
-                product.getOriginCountry(),
-                product.getWeight(),
-                product.getLength(),
-                product.getWidth(),
-                product.getHeight(),
-                product.getSoldProductsCount(),
-                product.getDiscount(),
-                product.getDateAdded(),
-                product.getPopularityScore()
-        );
     }
 }

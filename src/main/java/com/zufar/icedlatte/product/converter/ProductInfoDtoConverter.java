@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.converter;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,6 +29,8 @@ public interface ProductInfoDtoConverter {
     @Mapping(target = "page", source = "number")
     @Mapping(target = "size", source = "size")
     ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
+
+    ProductSnapshot toSnapshot(ProductInfoDto dto);
 
     @Named("roundAverageRatingValue")
     default BigDecimal roundAverageRatingValue(BigDecimal averageRating) {

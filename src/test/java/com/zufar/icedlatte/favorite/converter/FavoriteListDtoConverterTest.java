@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +63,6 @@ class FavoriteListDtoConverterTest {
     }
 
     private static ProductSnapshot productSnapshot(UUID id) {
-        return new ProductSnapshot(id, "Coffee", null, BigDecimal.valueOf(10), null, true, null, List.of(), null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new ProductSnapshot(id, "Coffee", BigDecimal.valueOf(10), null);
     }
 }

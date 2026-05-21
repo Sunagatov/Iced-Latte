@@ -148,7 +148,6 @@ class FavoriteServiceTest {
     }
 
     private static ProductSnapshot productSnapshot(UUID productId) {
-        return new ProductSnapshot(productId, "Coffee", null, null, null, true, null, List.of(), null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new ProductSnapshot(productId, "Coffee", null, null);
     }
 }

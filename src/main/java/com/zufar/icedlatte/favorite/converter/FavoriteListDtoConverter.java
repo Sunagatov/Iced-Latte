@@ -30,25 +30,7 @@ public class FavoriteListDtoConverter {
         return new ProductInfoDto()
                 .id(product.id())
                 .name(product.name())
-                .description(product.description())
                 .price(product.price())
-                .quantity(product.quantity())
-                .active(product.active())
-                .productFileUrl(product.productFileUrl())
-                .productImageUrls(product.productImageUrls())
-                .averageRating(product.averageRating())
-                .reviewsCount(product.reviewsCount())
-                .aiSummary(product.aiSummary())
-                .brandName(product.brandName())
-                .sellerName(product.sellerName())
-                .originCountry(product.originCountry())
-                .weight(product.weight())
-                .length(product.length())
-                .width(product.width())
-                .height(product.height())
-                .soldProductsCount(product.soldProductsCount())
-                .discount(product.discount())
-                .dateAdded(product.dateAdded())
-                .popularityScore(product.popularityScore());
+                .productFileUrl(product.productFileUrl());
     }
 }

@@ -65,16 +65,11 @@ public class CartDtoTestStub {
 
     public static Map<UUID, ProductSnapshot> createProductsById() {
         List<ProductSnapshot> products = List.of(
-                createProductSnapshot(FIRST_PRODUCT_ID, "First test name", "First test description", BigDecimal.valueOf(1.1), 1),
-                createProductSnapshot(SECOND_PRODUCT_ID, "Second test name", "Second test description", BigDecimal.valueOf(2.2), 2),
-                createProductSnapshot(THIRD_PRODUCT_ID, "Third test name", "Third test description", BigDecimal.valueOf(3.3), 3)
+                new ProductSnapshot(FIRST_PRODUCT_ID, "First test name", BigDecimal.valueOf(1.1), null),
+                new ProductSnapshot(SECOND_PRODUCT_ID, "Second test name", BigDecimal.valueOf(2.2), null),
+                new ProductSnapshot(THIRD_PRODUCT_ID, "Third test name", BigDecimal.valueOf(3.3), null)
         );
         return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
-    }
-
-    public static ProductSnapshot createProductSnapshot(UUID id, String name, String description, BigDecimal price, int quantity) {
-        return new ProductSnapshot(id, name, description, price, quantity, true, null, List.of(), null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static ShoppingCartDto createShoppingCartDto() {
@@ -88,5 +83,4 @@ public class CartDtoTestStub {
         dto.setClosedAt(OffsetDateTime.now().plusHours(2));
         return dto;
     }
-
 }
