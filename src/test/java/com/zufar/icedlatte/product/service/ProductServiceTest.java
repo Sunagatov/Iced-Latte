@@ -59,7 +59,7 @@ class ProductServiceTest {
             when(productInfoDtoConverter.toDto(product)).thenReturn(converted);
             when(productPictureLinkUpdater.update(converted)).thenReturn(enriched);
 
-            ProductInfoDto result = productService.getProductById(productId);
+            ProductInfoDto result = productService.getProductDtoById(productId);
 
             assertThat(result).isSameAs(enriched);
             verify(productInfoRepository).findById(productId);
@@ -73,7 +73,7 @@ class ProductServiceTest {
             UUID productId = UUID.randomUUID();
             when(productInfoRepository.findById(productId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productService.getProductById(productId))
+            assertThatThrownBy(() -> productService.getProductDtoById(productId))
                     .isInstanceOf(ProductNotFoundException.class)
                     .hasMessageContaining(productId.toString());
         }
@@ -86,14 +86,14 @@ class ProductServiceTest {
         @Test
         @DisplayName("returns empty list for null input")
         void nullInput_returnsEmpty() {
-            assertThat(productService.getProductsByIds(null)).isEmpty();
+            assertThat(productService.getProductDtosByIds(null)).isEmpty();
             verifyNoInteractions(productInfoRepository);
         }
 
         @Test
         @DisplayName("returns empty list for empty input")
         void emptyInput_returnsEmpty() {
-            assertThat(productService.getProductsByIds(List.of())).isEmpty();
+            assertThat(productService.getProductDtosByIds(List.of())).isEmpty();
             verifyNoInteractions(productInfoRepository);
         }
 
@@ -112,7 +112,7 @@ class ProductServiceTest {
             when(productInfoDtoConverter.toDto(p2)).thenReturn(dto2);
             when(productPictureLinkUpdater.updateBatch(List.of(dto1, dto2))).thenReturn(List.of(dto1, dto2));
 
-            assertThat(productService.getProductsByIds(List.of(id1, id2))).containsExactly(dto1, dto2);
+            assertThat(productService.getProductDtosByIds(List.of(id1, id2))).containsExactly(dto1, dto2);
         }
 
         @Test
@@ -127,7 +127,7 @@ class ProductServiceTest {
             when(productInfoDtoConverter.toDto(p1)).thenReturn(dto1);
             when(productPictureLinkUpdater.updateBatch(List.of(dto1))).thenReturn(List.of(dto1));
 
-            assertThatThrownBy(() -> productService.getProductsByIds(List.of(id1, id2)))
+            assertThatThrownBy(() -> productService.getProductDtosByIds(List.of(id1, id2)))
                     .isInstanceOf(ProductNotFoundException.class)
                     .hasMessageContaining(id2.toString());
         }
@@ -152,7 +152,7 @@ class ProductServiceTest {
             when(productPictureLinkUpdater.updateBatch(List.of(dto))).thenReturn(List.of(updatedDto));
             when(productInfoDtoConverter.toProductPaginationDto(any())).thenReturn(paginationDto);
 
-            ProductListWithPaginationInfoDto result = productService.getProducts(
+            ProductListWithPaginationInfoDto result = productService.getProductDtos(
                     1, 10, "price", "asc", null, null, null, null, null, "latte");
 
             assertThat(result).isSameAs(paginationDto);
@@ -180,7 +180,7 @@ class ProductServiceTest {
             when(productPictureLinkUpdater.updateBatch(List.of(dto))).thenReturn(List.of(dto));
             when(productInfoDtoConverter.toProductPaginationDto(any())).thenReturn(paginationDto);
 
-            productService.getProducts(null, null, null, null, null, null, null, null, null, null);
+            productService.getProductDtos(null, null, null, null, null, null, null, null, null, null);
 
             verify(productInfoRepository).findAll(any(Specification.class), pageableCaptor.capture());
             Pageable pageable = pageableCaptor.getValue();

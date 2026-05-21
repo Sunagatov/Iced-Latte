@@ -116,8 +116,8 @@ Admin / order support flows
 
 | Component | File | Status |
 |-----------|------|--------|
-| `StripeSessionCreator` | `payment/api/StripeSessionCreator.java` | Returns `SessionWithClientSecretDto` wrapping `sessionId` + `clientSecret` — wrong for hosted checkout (should return URL) |
-| `StripeWebhookService` | `payment/api/StripeWebhookService.java` | Handles `completed`, `expired`, `charge.refunded` — good base |
+| `StripeSessionCreator` | `payment/service/checkout/StripeCheckoutSessionCreator.java` | Returns `SessionWithClientSecretDto` wrapping `sessionId` + `clientSecret` — wrong for hosted checkout (should return URL) |
+| `StripeWebhookService` | `payment/service/webhook/StripeWebhookService.java` | Handles `completed`, `expired`, `charge.refunded` — good base |
 | `PaymentEndpoint` | `payment/endpoint/PaymentEndpoint.java` | `POST /payment` + `GET /payment/order` + webhook |
 | `StripeSessionLineItemListConverter` | `payment/converter/...` | MapStruct cart→Stripe line items — reusable (but `longValue()` must be fixed to `longValueExact()`) |
 | `OrderCreator` | `order/api/OrderCreator.java` | Two paths: `create()` (direct) and `createOrderAndDeleteCart(Session)` (Stripe) |
@@ -669,7 +669,7 @@ private static final Map<OrderStatus, Map<OrderEvent, OrderStatus>> TRANSITIONS 
 
 New service that orchestrates the checkout: validate → create order → create payment → call Stripe → return URL.
 
-**File:** `payment/api/CheckoutPaymentService.java`
+**File:** `payment/service/checkout/CheckoutPaymentService.java`
 
 > **Spring self-invocation trap:** `@Transactional` on methods called from within the same class does not create real transaction boundaries (Spring proxy-based AOP). The transactional methods are extracted into a separate `CheckoutPaymentTransactionService` to ensure proper transaction demarcation.
 
@@ -680,13 +680,13 @@ New service that orchestrates the checkout: validate → create order → create
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
 public class CheckoutPaymentService {
 
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final CheckoutPaymentTransactionService txService;
     private final StripeCheckoutSessionCreator stripeSessionCreator;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
-        UserDto user = securityPrincipalProvider.get();
-        UUID userId = user.getId();
+        CurrentUserSnapshot user = currentUserProvider.get();
+        UUID userId = user.id();
 
         // --- Stage 1: DB transaction — validate, create order + payment, commit ---
         CheckoutPreparation prepared = txService.prepareCheckout(userId, request, idempotencyKey);
@@ -698,7 +698,7 @@ public class CheckoutPaymentService {
 
         // --- Stage 2: Outside transaction — call Stripe ---
         StripeSessionResult stripeResult = stripeSessionCreator.create(
-                prepared.order(), user.getEmail(), prepared.cartItems());
+                prepared.order(), user.email(), prepared.cartItems());
 
         // --- Stage 3: DB transaction — save Stripe details ---
         txService.saveStripeDetails(prepared.payment().getId(), stripeResult);
@@ -758,7 +758,7 @@ public class CheckoutPaymentService {
                 .toList();
 
         StripeSessionResult stripeResult = stripeSessionCreator.createFromLineItems(
-                order, securityPrincipalProvider.get().getEmail(), lineItems);
+                order, currentUserProvider.get().email(), lineItems);
 
         txService.saveStripeDetails(payment.getId(), stripeResult);
 
@@ -770,7 +770,7 @@ public class CheckoutPaymentService {
 }
 ```
 
-**File:** `payment/api/CheckoutPaymentTransactionService.java`
+**File:** `payment/service/checkout/CheckoutPaymentTransactionService.java`
 
 ```java
 @Slf4j
@@ -959,7 +959,7 @@ private Address resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
 
 Renamed from `StripeSessionCreator`. Now receives an Order (not HttpServletRequest), uses `FRONTEND_URL`, and adds idempotency keys.
 
-**File:** `payment/api/StripeCheckoutSessionCreator.java`
+**File:** `payment/service/checkout/StripeCheckoutSessionCreator.java`
 
 ```java
 @Slf4j
@@ -1033,7 +1033,7 @@ public class StripeCheckoutSessionCreator {
 }
 ```
 
-**Record:** `payment/api/StripeSessionResult.java`
+**Record:** `payment/dto/StripeSessionResult.java`
 
 ```java
 public record StripeSessionResult(String sessionId, String checkoutUrl) {}
@@ -1052,7 +1052,7 @@ public record StripeSessionResult(String sessionId, String checkoutUrl) {}
 
 The webhook handler now transitions existing orders instead of creating them.
 
-**File:** `payment/api/StripeWebhookService.java`
+**File:** `payment/service/webhook/StripeWebhookService.java`
 
 ```java
 @Slf4j
@@ -1103,7 +1103,7 @@ public class StripeWebhookService {
 }
 ```
 
-**File:** `payment/api/StripeWebhookBusinessProcessor.java`
+**File:** `payment/service/webhook/StripeWebhookBusinessProcessor.java`
 
 > **Why a separate bean?** Spring's proxy-based `@Transactional` does not apply on self-invocation (calling a `@Transactional` method from within the same class). Extracting business processing into its own bean ensures the `@Transactional` annotation is honored.
 
@@ -1284,7 +1284,7 @@ public class StripeWebhookBusinessProcessor {
 - Sets `stripePaymentIntentId` on Order (documented design exception for refund lookup)
 - `PaymentEmailConfirmation` removed — email sent via `@TransactionalEventListener(phase = AFTER_COMMIT)` on `OrderStatusChangedEvent`
 
-**File:** `payment/api/StripeWebhookEventRecorder.java`
+**File:** `payment/service/webhook/StripeWebhookEventRecorder.java`
 
 ```java
 @Service
@@ -1385,7 +1385,7 @@ public class PaymentEndpoint implements PaymentApi {
 
 For the success page to poll. Does not create or modify anything.
 
-**File:** `payment/api/PaymentStatusService.java`
+**File:** `payment/service/PaymentStatusService.java`
 
 ```java
 @Service
@@ -1394,15 +1394,15 @@ public class PaymentStatusService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         // Enforce ownership: user can only read their own order status
-        UserDto currentUser = securityPrincipalProvider.get();
-        if (!order.getUserId().equals(currentUser.getId())) {
+        CurrentUserSnapshot currentUser = currentUserProvider.get();
+        if (!order.getUserId().equals(currentUser.id())) {
             throw new OrderAccessDeniedException(orderId);
         }
 
@@ -1790,14 +1790,14 @@ The `OrderHistory` component currently has status filter tabs: All, Placed (CREA
 | `payment/entity/StripeWebhookEvent.java` | Webhook event deduplication |
 | `payment/repository/PaymentRepository.java` | JPA repository: `findByOrderId()`, `findByOrderIdForUpdate()` (PESSIMISTIC_WRITE), `findByProviderSessionId()`, `findByCheckoutIdempotencyKeyAndUserId()` |
 | `payment/repository/StripeWebhookEventRepository.java` | JPA repository: `existsById()` |
-| `payment/api/CheckoutPaymentService.java` | Orchestrates: validate → create order → create payment → call Stripe |
-| `payment/api/CheckoutPaymentTransactionService.java` | Transactional methods for checkout (extracted to avoid Spring self-invocation trap) |
-| `payment/api/StripeCheckoutSessionCreator.java` | Creates Stripe Hosted Checkout Session with idempotency |
-| `payment/api/StripeSessionResult.java` | Record: `sessionId`, `checkoutUrl` |
-| `payment/api/CheckoutPreparation.java` | Record: `order`, `payment`, `cartItems`, `existing` |
-| `payment/api/PaymentStatusService.java` | Read-only status for success page polling |
-| `payment/api/StripeWebhookEventRecorder.java` | REQUIRES_NEW transactional methods for webhook event acquisition/status |
-| `payment/api/StripeWebhookBusinessProcessor.java` | @Transactional business logic for webhook events (extracted to avoid self-invocation) |
+| `payment/service/checkout/CheckoutPaymentService.java` | Orchestrates: validate → create order → create payment → call Stripe |
+| `payment/service/checkout/CheckoutPaymentTransactionService.java` | Transactional methods for checkout (extracted to avoid Spring self-invocation trap) |
+| `payment/service/checkout/StripeCheckoutSessionCreator.java` | Creates Stripe Hosted Checkout Session with idempotency |
+| `payment/dto/StripeSessionResult.java` | Record: `sessionId`, `checkoutUrl` |
+| `payment/dto/CheckoutPreparation.java` | Record: `order`, `payment`, `cartItems`, `existing` |
+| `payment/service/PaymentStatusService.java` | Read-only status for success page polling |
+| `payment/service/webhook/StripeWebhookEventRecorder.java` | REQUIRES_NEW transactional methods for webhook event acquisition/status |
+| `payment/service/webhook/StripeWebhookBusinessProcessor.java` | @Transactional business logic for webhook events (extracted to avoid self-invocation) |
 | `db/.../create-payments-table.sql` | Liquibase migration |
 | `db/.../create-stripe-webhook-events-table.sql` | Liquibase migration |
 
@@ -1808,7 +1808,7 @@ The `OrderHistory` component currently has status filter tabs: All, Placed (CREA
 | `order/api/OrderCreator.java` | Add `createPendingPaymentOrder()`. Remove `createOrderAndDeleteCart()`. |
 | `order/api/OrderStatusTransitioner.java` | Add `PENDING_PAYMENT` transitions in `TRANSITIONS` map |
 | `payment/endpoint/PaymentEndpoint.java` | New `POST /checkout`, `GET /checkout/{orderId}/status`. Remove old endpoints. |
-| `payment/api/StripeWebhookService.java` | Transition orders instead of creating them. Add event deduplication. Handle async events. Remove `processRedirect()`. |
+| `payment/service/webhook/StripeWebhookService.java` | Transition orders instead of creating them. Add event deduplication. Handle async events. Remove `processRedirect()`. |
 | `payment/converter/StripeSessionLineItemListConverter.java` | Fix `toStripeUnitAmount()`: change `longValue()` to `.setScale(0, RoundingMode.UNNECESSARY).longValueExact()` to prevent silent truncation |
 | `api-specs/payment-openapi.yaml` | New DTOs and endpoints |
 | `api-specs/order-openapi.yaml` | Add `PENDING_PAYMENT`, `PAYMENT_FAILED`, `PAYMENT_EXPIRED` to OrderStatus. Add new OrderEvents. |

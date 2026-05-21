@@ -5,7 +5,7 @@ import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.review.service.ProductReviewLikesUpdater;
 import com.zufar.icedlatte.review.service.ProductReviewManager;
 import com.zufar.icedlatte.review.service.ProductReviewsProvider;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +27,13 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     private final ProductReviewManager productReviewService;
     private final ProductReviewsProvider productReviewsProvider;
     private final ProductReviewLikesUpdater productReviewLikesUpdater;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
 
     @Override
     @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(@PathVariable final UUID productId,
                                                                 @Valid @RequestBody final ProductReviewRequest productReviewRequest) {
-        UUID userId = securityPrincipalProvider.getUserId();
+        UUID userId = currentUserProvider.getUserId();
         var review = productReviewService.create(productId, userId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
@@ -43,7 +43,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @DeleteMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/{productReviewId}")
     public ResponseEntity<Void> deleteProductReview(@PathVariable final UUID productId,
                                                     @PathVariable final UUID productReviewId) {
-        UUID userId = securityPrincipalProvider.getUserId();
+        UUID userId = currentUserProvider.getUserId();
         productReviewService.delete(productId, productReviewId, userId);
         log.info("review.deleted: reviewId={}", productReviewId);
         return ResponseEntity.ok().build();
@@ -65,7 +65,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     @Override
     @GetMapping(ApiPaths.PRODUCTS + "/{productId}/review")
     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {
-        return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId, securityPrincipalProvider.getUserId()));
+        return ResponseEntity.ok(productReviewsProvider.getProductReviewForUser(productId, currentUserProvider.getUserId()));
     }
 
     @Override
@@ -79,7 +79,7 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
     public ResponseEntity<ProductReviewDto> addProductReviewLike(@PathVariable final UUID productId,
                                                                  @PathVariable final UUID productReviewId,
                                                                  @Valid @RequestBody final ProductReviewLikeDto request) {
-        UUID userId = securityPrincipalProvider.getUserId();
+        UUID userId = currentUserProvider.getUserId();
         var productReview = productReviewLikesUpdater.update(productId, productReviewId, userId, request.getIsLike());
         log.info("review.rated: reviewId={}, vote={}", productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
@@ -93,6 +93,6 @@ public class ProductReviewEndpoint implements com.zufar.icedlatte.openapi.produc
             @RequestParam(name = "sort_attribute", required = false, defaultValue = "createdAt") final String sortAttribute,
             @RequestParam(name = "sort_direction", required = false, defaultValue = "asc") final String sortDirection) {
         return ResponseEntity.ok(productReviewsProvider.getUserReviews(
-                securityPrincipalProvider.getUserId(), pageNumber, pageSize, sortAttribute, sortDirection));
+                currentUserProvider.getUserId(), pageNumber, pageSize, sortAttribute, sortDirection));
     }
 }

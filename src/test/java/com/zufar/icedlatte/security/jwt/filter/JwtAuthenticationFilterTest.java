@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.jwt.filter;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.signin.InvalidCredentialsException;
 import com.zufar.icedlatte.security.service.jwt.filter.JwtAuthenticationFilter;
@@ -39,7 +39,7 @@ class JwtAuthenticationFilterTest {
     @Mock
     private JwtAuthenticationProvider jwtAuthenticationProvider;
     @Mock
-    private SecurityPrincipalProvider securityPrincipalProvider;
+    private CurrentUserProvider currentUserProvider;
     @Mock
     private JwtTokenClaims jwtTokenClaims;
     @Mock
@@ -86,7 +86,7 @@ class JwtAuthenticationFilterTest {
             FilterChain chain = mock(FilterChain.class);
 
             when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
-            when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+            when(currentUserProvider.getUserId()).thenReturn(userId);
             when(jwtBearerTokenResolver.extract(request)).thenReturn("jwt-token");
             when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenReturn(Optional.of(sessionId));
             doAnswer(_ -> {
@@ -115,7 +115,7 @@ class JwtAuthenticationFilterTest {
             FilterChain chain = mock(FilterChain.class);
 
             when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
-            when(securityPrincipalProvider.getUserId()).thenReturn(userId);
+            when(currentUserProvider.getUserId()).thenReturn(userId);
             when(jwtBearerTokenResolver.extract(request)).thenReturn("jwt-token");
             when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenThrow(new RuntimeException("bad sid"));
             doAnswer(_ -> {
@@ -140,7 +140,7 @@ class JwtAuthenticationFilterTest {
             filter().run(request, response, chain);
 
             verify(chain).doFilter(request, response);
-            verifyNoInteractions(securityPrincipalProvider, jwtBearerTokenResolver, jwtTokenClaims);
+            verifyNoInteractions(currentUserProvider, jwtBearerTokenResolver, jwtTokenClaims);
             assertThat(response.getStatus()).isEqualTo(200);
         }
 
@@ -170,7 +170,7 @@ class JwtAuthenticationFilterTest {
     private TestableJwtAuthenticationFilter filter() {
         return new TestableJwtAuthenticationFilter(
                 jwtAuthenticationProvider,
-                securityPrincipalProvider,
+                currentUserProvider,
                 jwtTokenClaims,
                 jwtBearerTokenResolver,
                 clientIpExtractor
@@ -187,11 +187,11 @@ class JwtAuthenticationFilterTest {
     private static final class TestableJwtAuthenticationFilter extends JwtAuthenticationFilter {
 
         private TestableJwtAuthenticationFilter(JwtAuthenticationProvider jwtAuthenticationProvider,
-                                                SecurityPrincipalProvider securityPrincipalProvider,
+                                                CurrentUserProvider currentUserProvider,
                                                 JwtTokenClaims jwtTokenClaims,
                                                 JwtBearerTokenResolver jwtBearerTokenResolver,
                                                 ClientIpExtractor clientIpExtractor) {
-            super(jwtAuthenticationProvider, securityPrincipalProvider, jwtTokenClaims,
+            super(jwtAuthenticationProvider, currentUserProvider, jwtTokenClaims,
                     jwtBearerTokenResolver, clientIpExtractor,
                     new ProblemTypeUriFactory("https://errors.example.test/problems"));
         }

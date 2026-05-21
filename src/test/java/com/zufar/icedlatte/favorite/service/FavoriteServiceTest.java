@@ -10,6 +10,7 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +69,7 @@ class FavoriteServiceTest {
         FavoriteListEntity entity = new FavoriteListEntity();
         entity.setFavoriteItems(new HashSet<>());
 
+        ProductSnapshot product = productSnapshot(productId);
         ProductInfoDto productDto = new ProductInfoDto();
         productDto.setId(productId);
 
@@ -78,7 +80,7 @@ class FavoriteServiceTest {
         response.setProducts(List.of(productDto));
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productDto));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(product));
         when(favoriteRepository.save(entity)).thenReturn(entity);
         when(favoriteListDtoConverter.toDto(any(), anyMap()))
                 .thenReturn(new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now()));
@@ -103,6 +105,7 @@ class FavoriteServiceTest {
         FavoriteListEntity freshList = new FavoriteListEntity();
         freshList.setFavoriteItems(new HashSet<>(Set.of(existingItem)));
 
+        ProductSnapshot product = productSnapshot(productId);
         ProductInfoDto productDto = new ProductInfoDto();
         productDto.setId(productId);
 
@@ -115,7 +118,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.findByUserId(userId))
                 .thenReturn(Optional.of(staleList))
                 .thenReturn(Optional.of(freshList));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productDto));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(product));
         when(favoriteRepository.save(any(FavoriteListEntity.class)))
                 .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"))
                 .thenReturn(freshList);
@@ -152,5 +155,10 @@ class FavoriteServiceTest {
 
         assertDoesNotThrow(() -> favoriteService.delete(UUID.randomUUID(), userId));
         verify(favoriteRepository, never()).save(any());
+    }
+
+    private static ProductSnapshot productSnapshot(UUID productId) {
+        return new ProductSnapshot(productId, "Coffee", null, null, null, true, null, List.of(), null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

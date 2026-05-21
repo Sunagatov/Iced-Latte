@@ -9,7 +9,7 @@ import com.zufar.icedlatte.order.service.OrderReorderService;
 import com.zufar.icedlatte.order.service.lifecycle.OrderLifecycleService;
 import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 import com.zufar.icedlatte.order.service.query.OrdersProvider;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
 
     public static final String ORDERS_URL = ApiPaths.ORDERS;
 
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final OrdersProvider ordersProvider;
     private final OrderDetailProvider orderDetailProvider;
     private final OrderCreator orderCreator;
@@ -52,7 +52,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
             @RequestParam(required = false) final Integer year,
             @RequestParam(required = false) final LocalDate dateFrom,
             @RequestParam(required = false) final LocalDate dateTo) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         var defaults = paginationConfig.orders();
         Pageable pageable = PageRequestFactory.of(
                 page != null ? page : paginationConfig.defaultPageNumber(),
@@ -67,7 +67,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @Override
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable final UUID orderId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         var order = orderDetailProvider.getOrder(orderId, userId);
         return ResponseEntity.ok(order);
     }
@@ -77,7 +77,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     public ResponseEntity<OrderDto> createOrder(
             @Valid @RequestBody final CreateNewOrderRequestDto request,
             @RequestHeader(value = "Idempotency-Key", required = false) final String idempotencyKey) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         log.info("orders.create: userId={}", userId);
         var order = orderCreator.create(userId, request, idempotencyKey);
         log.info("orders.created: userId={}, orderId={}", userId, order.getId());
@@ -87,7 +87,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @Override
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable final UUID orderId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         log.info("orders.cancel: userId={}, orderId={}", userId, orderId);
         var order = orderLifecycleService.cancel(orderId, userId);
         return ResponseEntity.ok(order);
@@ -98,7 +98,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     public ResponseEntity<OrderDto> requestRefund(
             @PathVariable final UUID orderId,
             @Valid @RequestBody(required = false) final RefundRequestDto request) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         String reason = request != null ? request.getReason() : null;
         log.info("orders.refund: userId={}, orderId={}", userId, orderId);
         var order = orderLifecycleService.requestRefund(orderId, userId, reason);
@@ -108,7 +108,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @Override
     @PostMapping("/{orderId}/reorder")
     public ResponseEntity<ReorderResponseDto> reorder(@PathVariable final UUID orderId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         log.info("orders.reorder: userId={}, orderId={}", userId, orderId);
         var result = orderReorderService.reorder(orderId, userId);
         return ResponseEntity.ok(result);
@@ -117,7 +117,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @Override
     @GetMapping("/{orderId}/history")
     public ResponseEntity<List<OrderStatusHistoryDto>> getOrderHistory(@PathVariable final UUID orderId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         var history = orderDetailProvider.getOrderHistory(orderId, userId);
         return ResponseEntity.ok(history);
     }

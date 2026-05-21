@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.product.api;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.api.dto.ProductPageSnapshot;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,11 +13,9 @@ import java.util.UUID;
  */
 public interface ProductCatalogApi {
 
-    ProductInfoDto getProductById(UUID productId);
+    List<ProductSnapshot> getProductsByIds(List<UUID> ids);
 
-    List<ProductInfoDto> getProductsByIds(List<UUID> ids);
-
-    ProductListWithPaginationInfoDto getProducts(
+    ProductPageSnapshot getProducts(
             Integer pageNumber, Integer pageSize,
             String sortAttribute, String sortDirection,
             BigDecimal minPrice, BigDecimal maxPrice,

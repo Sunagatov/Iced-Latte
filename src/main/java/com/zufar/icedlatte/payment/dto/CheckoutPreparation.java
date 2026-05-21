@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.payment.dto;
 
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.payment.service.checkout.CheckoutPaymentTransactionService;
 import com.zufar.icedlatte.payment.entity.Payment;
+import com.zufar.icedlatte.payment.service.checkout.CheckoutPaymentTransactionService;
 
 import java.util.List;
 
@@ -14,6 +14,6 @@ import java.util.List;
 public record CheckoutPreparation(
         OrderSnapshot order,
         Payment payment,
-        List<ShoppingCartItemDto> cartItems,
+        List<CartItemSnapshot> cartItems,
         boolean existing) {
 }

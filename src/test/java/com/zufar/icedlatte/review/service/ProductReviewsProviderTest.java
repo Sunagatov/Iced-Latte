@@ -10,6 +10,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ class ProductReviewsProviderTest {
         var page = new PageImpl<>(List.of(review));
         when(reviewRepository.findAllProductReviews(eq(productId), eq(null), any(Pageable.class)))
                 .thenReturn(page);
-        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        var user = user();
         when(userLookupApi.getUserById(userId)).thenReturn(user);
         var dto = new ProductReviewDto();
         when(productReviewDtoConverter.toProductReviewDto(review, user)).thenReturn(dto);
@@ -96,7 +97,7 @@ class ProductReviewsProviderTest {
     @DisplayName("getProductReviewForUser returns mapped dto when review exists")
     void getProductReviewForUserReviewExistsReturnsMappedDto() {
         var review = ProductReview.builder().id(UUID.randomUUID()).userId(userId).build();
-        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        var user = user();
         var dto = new ProductReviewDto();
         when(reviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(review));
         when(userLookupApi.getUserById(userId)).thenReturn(user);
@@ -115,5 +116,9 @@ class ProductReviewsProviderTest {
 
         assertThat(provider.getUserReviews(userId, 0, 10, "createdAt", "desc")).isEqualTo(expected);
         verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
+    }
+
+    private UserLookupSnapshot user() {
+        return new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
     }
 }

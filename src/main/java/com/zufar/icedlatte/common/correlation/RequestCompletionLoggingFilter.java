@@ -2,8 +2,6 @@ package com.zufar.icedlatte.common.correlation;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.config.AuthPaths;
-import com.zufar.icedlatte.security.config.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +24,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j(topic = "http.access")
 public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
+
+    private static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
 
     public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
             "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
@@ -103,7 +103,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     // Expected anonymous bootstrap / probe flow from the frontend.
     // These are not operationally interesting at WARN when the user is simply unauthenticated.
     private static boolean isExpectedAnonymousAuthProbe(String path) {
-        return AuthPaths.REFRESH.equals(path)
+        return ApiPaths.AUTH_REFRESH.equals(path)
                 || ApiPaths.USERS.equals(path)
                 || ApiPaths.CART.equals(path)
                 || ApiPaths.FAVORITES.equals(path);
@@ -129,7 +129,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null
                 && auth.isAuthenticated()
-                && !SecurityConstants.ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
+                && !ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
     }
 
     private static String normalizePath(String value) {

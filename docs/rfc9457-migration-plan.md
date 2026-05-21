@@ -250,7 +250,7 @@ The 4 common base exceptions have `@ResponseStatus` and are used heavily (26 thr
 ### Backend: unhandled JDK exceptions (hit catch-all → 500)
 
 14 `throw new IllegalStateException/IllegalArgumentException/SecurityException` sites have **no dedicated handler and no `@ResponseStatus`**, so they hit the catch-all and return 500:
-- ~~`SecurityPrincipalProvider.java:29` — `"No authenticated UserEntity in security context"` (should be 401)~~ **✅ FIXED → throws `UnauthorizedException`**
+- ~~`DefaultCurrentUserProvider.java` — `"No authenticated UserEntity in security context"` (should be 401)~~ **✅ FIXED → throws `UnauthorizedException`**
 - ~~`GoogleAuthCallbackHandler.java:39` — `"Google account has no email"` (should be 400)~~ **✅ FIXED → throws `BadRequestException`**
 - ~~`GoogleTokenExchanger.java:48` — `"Google ID token verification failed"` (should be 401)~~ **✅ FIXED → throws `UnauthorizedException`**
 - ~~`AwsObjectStorage.java:84` — `SecurityException("Invalid directory path")` (should be 400)~~ **✅ FIXED → throws `BadRequestException`**
@@ -731,7 +731,7 @@ Additional fixes applied:
 #### Step 0.5: Fix JDK exception throw sites — ✅ DONE
 
 Replaced 5 runtime `IllegalStateException`/`IllegalArgumentException`/`SecurityException` throws with proper typed exceptions:
-- `SecurityPrincipalProvider` → `UnauthorizedException("Authentication required.")`
+- `CurrentUserProvider` → `UnauthorizedException("Authentication required.")`
 - `GoogleAuthCallbackHandler` → `BadRequestException("Google account has no email.")`
 - `GoogleTokenExchanger` → `UnauthorizedException("Google authentication failed.")`
 - `AwsObjectStorage` → `BadRequestException("Invalid directory path.")`
@@ -999,7 +999,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 | `src/main/java/.../order/exception/OrderNotFoundException.java` | Added `@ResponseStatus(NOT_FOUND)`; no-arg message is safe; `Object orderId` constructor still leaks and must be sanitized in Phase 1 |
 | `src/main/java/.../order/exception/OrderAccessDeniedException.java` | Added `@ResponseStatus(FORBIDDEN)`, safe message |
 | `src/main/java/.../security/configuration/SpringSecurityConfiguration.java` | Rewrote `authenticationEntryPoint` + added `accessDeniedHandler` with proper JSON |
-| `src/main/java/.../security/api/SecurityPrincipalProvider.java` | `IllegalStateException` → `UnauthorizedException` |
+| `src/main/java/.../security/api/CurrentUserProvider.java` | `IllegalStateException` → `UnauthorizedException` |
 | `src/main/java/.../auth/api/GoogleAuthCallbackHandler.java` | `IllegalStateException` → `BadRequestException` |
 | `src/main/java/.../auth/api/GoogleTokenExchanger.java` | `IllegalStateException` → `UnauthorizedException` |
 | `src/main/java/.../filestorage/aws/AwsObjectStorage.java` | `SecurityException` → `BadRequestException` |
@@ -1007,7 +1007,7 @@ The cart store's `lastError` is now correctly populated with backend messages, b
 | `src/main/java/.../auth/endpoint/AuthEndpoint.java` | 503 now returns `{message, status}` body |
 | `src/main/java/.../review/ai/ReviewModerationException.java` | Added `@ResponseStatus(UNPROCESSABLE_ENTITY)` |
 | `src/main/java/.../filestorage/exception/CommonExceptionHandler.java` | Changed to `ResponseEntity` return for correct status per branch |
-| `src/test/java/.../security/api/SecurityPrincipalProviderTest.java` | Updated assertions |
+| `src/test/java/.../security/service/principal/DefaultCurrentUserProviderTest.java` | Updated assertions |
 | `src/test/java/.../auth/api/GoogleAuthCallbackHandlerTest.java` | Updated assertions |
 | `src/test/java/.../auth/api/GoogleTokenExchangerTest.java` | Updated assertions |
 | `src/test/java/.../filestorage/exception/CommonExceptionHandlerTest.java` | Updated for `ResponseEntity` + added 503 test |

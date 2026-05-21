@@ -21,7 +21,8 @@ public interface OrderPaymentApi {
 
     void failPayment(UUID orderId, String reason);
 
-    void assignPaymentIntent(UUID orderId, String stripePaymentIntentId);
+    void assignPaymentIntent(UUID orderId,
+                             String stripePaymentIntentId);
 
     void confirmRefund(UUID orderId, String reason);
 }

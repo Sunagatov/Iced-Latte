@@ -3,7 +3,6 @@ package com.zufar.icedlatte.security.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.exception.signup.UserRegistrationException;
@@ -13,6 +12,7 @@ import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
 import com.zufar.icedlatte.security.service.token.TokenPurpose;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.UserPasswordApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -131,7 +131,7 @@ class EmailVerificationServiceTest {
             UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
             registrationRequest.setEmail("user@example.com");
             UUID userId = UUID.randomUUID();
-            UserDto user = new UserDto().id(userId);
+            var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "user@example.com");
             String token = service.generateToken(registrationRequest, TokenPurpose.PASSWORD_RESET);
             when(userLookupApi.getUserByEmail("user@example.com")).thenReturn(user);
 

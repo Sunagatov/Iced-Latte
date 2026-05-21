@@ -11,9 +11,9 @@ import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -117,7 +117,7 @@ class ShoppingCartServiceTest {
         newProductToAdd.setProductId(newProductId);
         newProductToAdd.setProductQuantity(3);
 
-        ProductInfoDto newProductDto = productDto(newProductId, "New coffee", BigDecimal.valueOf(3.5));
+        ProductSnapshot newProductDto = productDto(newProductId, "New coffee", BigDecimal.valueOf(3.5));
         ShoppingCartDto expectedDto = new ShoppingCartDto();
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
@@ -125,7 +125,7 @@ class ShoppingCartServiceTest {
         when(shoppingCartRepository.save(shoppingCart)).thenReturn(shoppingCart);
         when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedDto);
 
-        ShoppingCartDto result = shoppingCartService.addItems(userId, Set.of(existingProductToAdd, newProductToAdd));
+        ShoppingCartDto result = shoppingCartService.addOpenApiItems(userId, Set.of(existingProductToAdd, newProductToAdd));
 
         assertThat(result).isEqualTo(expectedDto);
         assertThat(existingItem.getProductQuantity()).isEqualTo(3);
@@ -148,7 +148,7 @@ class ShoppingCartServiceTest {
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
 
-        assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
+        assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(ProductNotFoundException.class);
     }
 
@@ -165,12 +165,12 @@ class ShoppingCartServiceTest {
         itemToAdd.setProductId(productId);
         itemToAdd.setProductQuantity(100);
 
-        ProductInfoDto productDto = productDto(productId, "Coffee", BigDecimal.valueOf(2.5));
+        ProductSnapshot productDto = productDto(productId, "Coffee", BigDecimal.valueOf(2.5));
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(productDto));
 
-        assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
+        assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
         verify(shoppingCartRepository, never()).save(any(ShoppingCart.class));
@@ -193,7 +193,7 @@ class ShoppingCartServiceTest {
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
 
-        assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of(itemToAdd)))
+        assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
         verify(shoppingCartRepository, never()).save(any(ShoppingCart.class));
@@ -289,12 +289,8 @@ class ShoppingCartServiceTest {
         verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
     }
 
-    private static ProductInfoDto productDto(UUID id, String name, BigDecimal price) {
-        ProductInfoDto dto = new ProductInfoDto();
-        dto.setId(id);
-        dto.setName(name);
-        dto.setPrice(price);
-        dto.setActive(true);
-        return dto;
+    private static ProductSnapshot productDto(UUID id, String name, BigDecimal price) {
+        return new ProductSnapshot(id, name, null, price, null, true, null, List.of(), null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

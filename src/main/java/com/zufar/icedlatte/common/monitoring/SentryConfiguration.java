@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.common.monitoring;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.config.AuthPaths;
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
@@ -52,7 +51,7 @@ public class SentryConfiguration {
             var transactionName = transactionContext.getName();
             
             // Sample 100% of critical endpoints
-            if (transactionName.contains(AuthPaths.ROOT_PREFIX) ||
+            if (transactionName.contains(ApiPaths.AUTH_ROOT_PREFIX) ||
                 transactionName.contains(ApiPaths.PAYMENT + "/") ||
                 transactionName.contains(ApiPaths.ORDERS + "/")) {
                 return 1.0;

@@ -8,8 +8,8 @@ import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,8 +80,8 @@ public class FavoriteService {
         List<UUID> productIds = entity.getFavoriteItems().stream()
                 .map(FavoriteItemEntity::getProductId)
                 .toList();
-        Map<UUID, ProductInfoDto> productsById = productCatalogApi.getProductsByIds(productIds).stream()
-                .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
+        Map<UUID, ProductSnapshot> productsById = productCatalogApi.getProductsByIds(productIds).stream()
+                .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
 
         FavoriteListDto dto = favoriteListDtoConverter.toDto(entity, productsById);
         return listOfFavoriteProductsDtoConverter.toListProductDto(dto);
@@ -89,8 +89,8 @@ public class FavoriteService {
 
     private void validateProductsExist(Set<UUID> productIds) {
         if (productIds.isEmpty()) return;
-        List<ProductInfoDto> found = productCatalogApi.getProductsByIds(productIds.stream().toList());
-        Set<UUID> foundIds = found.stream().map(ProductInfoDto::getId).collect(Collectors.toSet());
+        List<ProductSnapshot> found = productCatalogApi.getProductsByIds(productIds.stream().toList());
+        Set<UUID> foundIds = found.stream().map(ProductSnapshot::id).collect(Collectors.toSet());
         List<UUID> missingIds = productIds.stream().filter(id -> !foundIds.contains(id)).toList();
         if (!missingIds.isEmpty()) {
             throw new ProductNotFoundException(missingIds);

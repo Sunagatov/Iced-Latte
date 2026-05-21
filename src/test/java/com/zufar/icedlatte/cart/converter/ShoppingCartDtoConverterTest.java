@@ -2,8 +2,8 @@ package com.zufar.icedlatte.cart.converter;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +22,7 @@ class ShoppingCartDtoConverterTest {
     @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")
     void shouldConvertShoppingCartToShoppingCartDtoWithCompleteInformation() {
         ShoppingCart cart = CartDtoTestStub.createShoppingCart();
-        Map<UUID, ProductInfoDto> productsById = CartDtoTestStub.createProductsById();
+        Map<UUID, ProductSnapshot> productsById = CartDtoTestStub.createProductsById();
 
         ShoppingCartDto result = converter.toDto(cart, productsById);
 
@@ -42,7 +42,7 @@ class ShoppingCartDtoConverterTest {
     @DisplayName("Should convert empty shopping cart correctly")
     void shouldConvertEmptyShoppingCartCorrectly() {
         ShoppingCart emptyCart = CartDtoTestStub.createEmptyShoppingCart();
-        Map<UUID, ProductInfoDto> productsById = Map.of();
+        Map<UUID, ProductSnapshot> productsById = Map.of();
 
         ShoppingCartDto result = converter.toDto(emptyCart, productsById);
 

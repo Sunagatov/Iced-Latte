@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.ratelimit.dto;
+package com.zufar.icedlatte.ratelimit.configuration;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

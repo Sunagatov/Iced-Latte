@@ -6,7 +6,7 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
+import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -45,7 +46,7 @@ class UserProfileServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private AuthSessionService authSessionService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserProfileService userProfileService;
@@ -186,7 +187,7 @@ class UserProfileServiceTest {
             userProfileService.changePassword(userId, request);
 
             verify(userRepository).changeUserPassword("encoded_new", userId);
-            verify(authSessionService).revokeAllForUser(userId);
+            verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         }
 
         @Test
@@ -218,7 +219,7 @@ class UserProfileServiceTest {
             userProfileService.changePassword(userId, "new_plain");
 
             verify(userRepository).changeUserPassword("encoded_new", userId);
-            verify(authSessionService).revokeAllForUser(userId);
+            verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         }
     }
 }

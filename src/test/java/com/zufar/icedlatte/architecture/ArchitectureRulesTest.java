@@ -37,7 +37,8 @@ class ArchitectureRulesTest {
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "..product..", "..cart..", "..order..",
                             "..payment..", "..review..", "..favorite..",
-                            "..email..", "..filestorage.."
+                            "..email..", "..filestorage..",
+                            "..icedlatte.security..", "..icedlatte.user.."
                     );
 
     @ArchTest
@@ -51,9 +52,8 @@ class ArchitectureRulesTest {
                 @Override
                 public boolean test(JavaClass javaClass) {
                     String pkg = javaClass.getPackageName();
-                    return pkg.startsWith("com.zufar.icedlatte.security")
-                            || pkg.startsWith("com.zufar.icedlatte.user")
-                            || pkg.startsWith("com.zufar.icedlatte.common")
+                    return pkg.startsWith("com.zufar.icedlatte.common")
+                            || pkg.startsWith("com.zufar.icedlatte.ratelimit")
                             || pkg.startsWith("com.zufar.icedlatte.openapi");
                 }
             };
@@ -118,6 +118,18 @@ class ArchitectureRulesTest {
                     );
 
     @ArchTest
+    static final ArchRule security_api_should_not_depend_on_security_implementation =
+            noClasses()
+                    .that().resideInAPackage("..security.api..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..security.config..",
+                            "..security.repository..",
+                            "..security.entity..",
+                            "..security.service..",
+                            "..security.exception.."
+                    );
+
+    @ArchTest
     static final ArchRule api_packages_should_not_contain_spring_implementation_beans =
             noClasses()
                     .that().resideInAPackage("..api..")
@@ -130,6 +142,27 @@ class ArchitectureRulesTest {
                     .orShould().beAnnotatedWith(Mapper.class);
 
     @ArchTest
+    static final ArchRule public_module_api_packages_should_not_depend_on_generated_openapi_dtos =
+            noClasses()
+                    .that().resideInAnyPackage(
+                            "..cart.api..",
+                            "..cart.api.dto..",
+                            "..filestorage.api..",
+                            "..filestorage.api.dto..",
+                            "..order.api..",
+                            "..order.api.dto..",
+                            "..product.api..",
+                            "..product.api.dto..",
+                            "..review.api..",
+                            "..security.api..",
+                            "..security.api.dto..",
+                            "..user.api..",
+                            "..user.api.dto.."
+                    )
+                    .and().resideOutsideOfPackage("..openapi..")
+                    .should().dependOnClassesThat().resideInAnyPackage("..openapi.dto..");
+
+    @ArchTest
     static final ArchRule security_module_should_not_depend_on_user_implementation =
             noClasses()
                     .that().resideInAPackage("..security..")
@@ -138,6 +171,28 @@ class ArchitectureRulesTest {
                             "..user.entity..",
                             "..user.converter..",
                             "..user.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule non_user_modules_should_not_depend_on_user_implementation =
+            noClasses()
+                    .that().resideOutsideOfPackage("..user..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..user.repository..",
+                            "..user.entity..",
+                            "..user.converter..",
+                            "..user.service.."
+                    );
+
+    @ArchTest
+    static final ArchRule non_security_modules_should_not_depend_on_security_implementation =
+            noClasses()
+                    .that().resideOutsideOfPackage("..security..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..security.config..",
+                            "..security.repository..",
+                            "..security.entity..",
+                            "..security.service.."
                     );
 
     /**
@@ -206,8 +261,8 @@ class ArchitectureRulesTest {
 
     /**
      * Checks that core business feature modules do not form dependency cycles.
-     * Infrastructure modules (security, user, common, openapi) are excluded
-     * because security↔user has inherent bidirectional coupling.
+     * Infrastructure modules (common, ratelimit, openapi) are excluded from this ArchUnit rule.
+     * Spring Modulith still verifies all closed module boundaries directly.
      */
     @ArchTest
     static final ArchRule feature_packages_should_be_free_of_cycles =

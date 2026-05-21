@@ -47,7 +47,8 @@ class ModularityTests {
                 "order :: api", "order :: exception",
                 "product :: api", "product :: exception",
                 "review :: api",
-                "user :: api"
+                "security :: api",
+                "user :: api", "user :: exception"
         );
 
         assertThat(allNamedInterfaces).isEqualTo(expected);

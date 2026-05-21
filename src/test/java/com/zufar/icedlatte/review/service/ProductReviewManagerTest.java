@@ -4,13 +4,14 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -64,8 +65,7 @@ class ProductReviewManagerTest {
             request.setRating(5);
             ProductReviewDto expectedDto = new ProductReviewDto();
 
-            var user = new com.zufar.icedlatte.openapi.dto.UserDto();
-            user.setId(userId);
+            var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
             when(userLookupApi.getUserById(userId)).thenReturn(user);
             UUID generatedId = UUID.randomUUID();
             doAnswer(invocation -> {

@@ -3,7 +3,10 @@ package com.zufar.icedlatte.review.service;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
+import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
+import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
@@ -71,8 +74,8 @@ public class ProductReviewsProvider {
     }
 
     private ProductReviewDto toProductReviewDto(ProductReview productReview) {
-        UserDto userDto = userLookupApi.getUserById(productReview.getUserId());
-        return productReviewDtoConverter.toProductReviewDto(productReview, userDto);
+        var user = userLookupApi.getUserById(productReview.getUserId());
+        return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
 
     private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(Integer pageNumber,

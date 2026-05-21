@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -59,12 +61,13 @@ public class CheckoutPaymentTransactionService {
             return new CheckoutPreparation(order, existing, List.of(), true);
         }
 
-        ShoppingCartDto cart = cartCheckoutApi.getByUserIdOrThrow(userId);
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+        CartSnapshot cart = cartCheckoutApi.getByUserIdOrThrow(userId);
+        if (cart.items() == null || cart.items().isEmpty()) {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(userId, request, cart);
+        OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(
+                userId, toCheckoutOrderRequest(request), cart);
 
         Payment payment = Payment.builder()
                 .orderId(order.id())
@@ -77,7 +80,7 @@ public class CheckoutPaymentTransactionService {
                 .build();
         payment = paymentRepository.save(payment);
 
-        return new CheckoutPreparation(order, payment, cart.getItems(), false);
+        return new CheckoutPreparation(order, payment, cart.items(), false);
     }
 
     @Transactional
@@ -94,4 +97,19 @@ public class CheckoutPaymentTransactionService {
                 .longValueExact();
     }
 
+    private CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
+        var address = request.getAddress() == null ? null : new OrderAddressRequest(
+                request.getAddress().getCountry(),
+                request.getAddress().getCity(),
+                request.getAddress().getLine(),
+                request.getAddress().getPostcode()
+        );
+        return new CheckoutOrderRequest(
+                request.getRecipientName(),
+                request.getRecipientSurname(),
+                request.getRecipientPhone(),
+                request.getDeliveryAddressId(),
+                address
+        );
+    }
 }

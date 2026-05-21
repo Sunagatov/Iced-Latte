@@ -2,7 +2,7 @@ package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.openapi.security.api.SecurityApi;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.service.oauth.OAuthFlowService;
 import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
@@ -44,7 +44,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final RefreshTokenService refreshTokenService;
     private final LogoutService logoutService;
     private final PasswordResetService passwordResetService;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final UserRegistrationService userRegistrationService;
     private final TurnstileVerifier turnstileVerifier;
     private final HttpServletRequest httpRequest;
@@ -118,20 +118,20 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/logout-all")
     public ResponseEntity<Void> logoutAll() {
-        logoutService.logoutAll(securityPrincipalProvider.getUserId());
+        logoutService.logoutAll(currentUserProvider.getUserId());
         return ResponseEntity.ok().build();
     }
 
     @Override
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionInfo>> getSessions() {
-        return ResponseEntity.ok(authSessionService.listActiveSessionInfos(securityPrincipalProvider.getUserId()));
+        return ResponseEntity.ok(authSessionService.listActiveSessionInfos(currentUserProvider.getUserId()));
     }
 
     @Override
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> revokeSession(@PathVariable UUID sessionId) {
-        authSessionService.revokeById(sessionId, securityPrincipalProvider.getUserId());
+        authSessionService.revokeById(sessionId, currentUserProvider.getUserId());
         return ResponseEntity.noContent().build();
     }
 

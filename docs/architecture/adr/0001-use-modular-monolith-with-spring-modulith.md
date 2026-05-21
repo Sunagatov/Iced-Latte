@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-05-19 (updated 2026-05-20)
+2026-05-19 (updated 2026-05-21)
 
 ## Context
 
@@ -43,10 +43,9 @@ with `@NamedInterface` are accessible from other modules. Subpackages
 without this annotation are internal — Spring Modulith will fail the build
 if another module tries to access them.
 
-Three infrastructure modules remain **OPEN** (all subpackages accessible):
-- `security` — bidirectional coupling with `user` (inherent)
-- `user` — bidirectional coupling with `security` (inherent)
-- `openapi` — generated code used by all modules
+Two infrastructure modules remain **OPEN** (all subpackages accessible):
+- `ratelimit` — Servlet filter infrastructure shared across authenticated and unauthenticated request paths
+- `openapi` — generated HTTP-edge code used by endpoint implementations
 
 ## Current module state
 
@@ -58,12 +57,13 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 | product | CLOSED | `api/`, `exception/` | service, entity, converter, repository, endpoint, validator |
 | review | CLOSED | `api/` | everything else |
 | favorite | CLOSED | none | everything |
-| filestorage | CLOSED | `api/`, `dto/`, `exception/`, `aws/` | service, repository, converter |
+| filestorage | CLOSED | `api/`, `api/dto/`, `exception/`, `aws/` | service, repository, converter |
 | email | CLOSED | `api/token/`, `exception/`, `sender/` | config |
 | common | CLOSED | all subpackages (shared infrastructure) | — |
 | astartup | CLOSED | none | everything |
-| security | OPEN | all | — |
-| user | OPEN | all | — |
+| ratelimit | OPEN | all | — |
+| security | CLOSED | `api/`, `api/dto/` | config, endpoint, entity, exception, repository, service |
+| user | CLOSED | `api/`, `api/dto/`, `exception/` | converter, endpoint, entity, repository, service |
 | openapi | OPEN | all (generated) | — |
 
 ## Rules enforced
@@ -87,6 +87,11 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 - Non-product modules must not depend on `product.entity` or `product.converter`.
 - Non-cart modules must not depend on `cart.service`.
 - Non-payment modules must not depend on `payment.service`.
+- Public module API packages must not depend on generated OpenAPI DTOs.
+- `user.api` must not depend on user repositories, entities, converters, or services.
+- `security.api` must not depend on security config, repositories, entities, services, or exceptions.
+- Non-user modules must not depend on user implementation packages.
+- Non-security modules must not depend on security implementation packages.
 
 ## Key architectural changes made
 
@@ -112,15 +117,24 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
     `cart.api` now exposes only the checkout/reorder contract used by order and payment.
 12. **payment service package cleanup** — renamed the misleading `payment.api` implementation
     package to `payment.service`; payment remains closed and exposes no named API.
+13. **Public API DTO packages** — public module DTOs now live under `api/dto`
+    where the contract needs a DTO namespace. Generated OpenAPI DTOs remain HTTP-edge
+    implementation types and are not exposed through public module APIs.
+14. **security/user API snapshots** — cross-module user identity lookup now uses
+    `CurrentUserProvider`, `CurrentUserSnapshot`, `UserLookupApi`, and
+    `UserLookupSnapshot` instead of exposing generated user DTOs through module APIs.
+15. **security/user modules closed** — password-change session revocation now uses
+    `UserSessionsRevocationRequestedEvent`, so `user` no longer calls security services
+    directly. Authenticated token identity lookup is exposed through
+    `AuthenticatedTokenIdentityProvider`, keeping JWT internals inside security.
 
 ## Known remaining coupling (acceptable)
 
-- `security ↔ user` cycle — inherent bidirectional coupling; both remain OPEN.
+- `ratelimit` remains OPEN as shared request-filter infrastructure. It depends on
+  `security.api` for authenticated-token identity, not on JWT implementation classes.
 
 ## Future work
 
-- Apply the same API-purity pattern to user and security.
-- Break `security ↔ user` cycle (extract `UserLookupApi` interface, close both modules).
 - Introduce domain events for async cross-module communication.
 - Tighten `common` — move module-specific types out of common into their owning modules.
 - Add explicit `@ApplicationModule(allowedDependencies = ...)` after module APIs stabilize.
@@ -137,7 +151,7 @@ Three infrastructure modules remain **OPEN** (all subpackages accessible):
 
 ### Negative
 
-- `security` and `user` remain OPEN (inherent coupling).
+- `ratelimit` remains OPEN while request-filter infrastructure is still shared broadly.
 - `@NamedInterface` annotations add `package-info.java` files to exposed subpackages.
 
 ## References

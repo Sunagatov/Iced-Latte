@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
-import com.zufar.icedlatte.ratelimit.dto.RateLimitProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -12,7 +12,7 @@ import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.service.query.OrdersProvider;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
     private final OrdersProvider ordersProvider;
     private final OrderStatusTransitioner statusTransitioner;
     private final OrderDtoConverter orderDtoConverter;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final PaginationConfig paginationConfig;
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -65,7 +65,7 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<OrderDto> updateOrderStatus(@PathVariable final UUID orderId,
                                                       @Valid @RequestBody final AdminOrderStatusUpdateDto request) {
-        var adminId = securityPrincipalProvider.getUserId();
+        var adminId = currentUserProvider.getUserId();
         log.info("admin.order.status.update: orderId={}, event={}, admin={}", orderId, request.getEvent(), adminId);
         Order updated = statusTransitioner.transition(orderId, request.getEvent(), adminId, request.getReason());
         return ResponseEntity.ok(orderDtoConverter.toResponseDto(updated));

@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.payment.converter;
 
 import com.stripe.param.checkout.SessionCreateParams;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +18,13 @@ public abstract class StripeSessionLineItemListConverter {
     @Autowired
     protected StripeProperties stripeProperties;
 
-    public abstract List<SessionCreateParams.LineItem> toLineItems(List<ShoppingCartItemDto> shoppingCartItems);
+    public abstract List<SessionCreateParams.LineItem> toLineItems(List<CartItemSnapshot> shoppingCartItems);
 
-    @Mapping(target = "priceData.unitAmount", source = "productInfo.price", qualifiedByName = "toStripeUnitAmount")
+    @Mapping(target = "priceData.unitAmount", source = "product.price", qualifiedByName = "toStripeUnitAmount")
     @Mapping(target = "priceData.currency", expression = "java(stripeProperties.currency())")
-    @Mapping(target = "priceData.productData.name", source = "productInfo.name")
+    @Mapping(target = "priceData.productData.name", source = "product.name")
     @Mapping(target = "quantity", source = "productQuantity")
-    public abstract SessionCreateParams.LineItem toLineItem(ShoppingCartItemDto shoppingCartItem);
+    public abstract SessionCreateParams.LineItem toLineItem(CartItemSnapshot shoppingCartItem);
 
     @Named("toStripeUnitAmount")
     Long toStripeUnitAmount(final BigDecimal price) {

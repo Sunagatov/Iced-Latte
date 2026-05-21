@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.service.principal;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,13 +13,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultSecurityPrincipalProvider implements SecurityPrincipalProvider {
+public class DefaultCurrentUserProvider implements CurrentUserProvider {
 
     private final UserLookupApi userLookupApi;
 
     @Override
-    public UserDto get() {
-        return userLookupApi.getUserById(getUserId());
+    public CurrentUserSnapshot get() {
+        var user = userLookupApi.getUserById(getUserId());
+        return new CurrentUserSnapshot(user.id(), user.email());
     }
 
     @Override

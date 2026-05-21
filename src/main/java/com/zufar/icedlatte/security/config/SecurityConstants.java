@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.config;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.security.api.SecurityApiConstants;
 import lombok.experimental.UtilityClass;
 
 import java.util.Set;
@@ -8,7 +9,7 @@ import java.util.Set;
 @UtilityClass
 public final class SecurityConstants {
 
-    public static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
+    public static final String ANONYMOUS_PRINCIPAL = SecurityApiConstants.ANONYMOUS_PRINCIPAL;
     public static final String AUTH_SESSION_URL = AuthPaths.SESSIONS_PATTERN;
     public static final String AUTH_LOGOUT_ALL_URL = AuthPaths.LOGOUT_ALL;
     public static final String SHOPPING_CART_URL = ApiPaths.CART_PATTERN;

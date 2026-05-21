@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.cart.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
@@ -9,8 +12,12 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,15 +52,21 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
-    public ShoppingCartDto getByUserIdOrThrow(final UUID userId) {
+    public CartSnapshot getByUserIdOrThrow(final UUID userId) {
         return shoppingCartRepository.findShoppingCartByUserId(userId)
-                .map(this::toCartDto)
+                .map(this::toCartSnapshot)
                 .orElseThrow(() -> new ShoppingCartNotFoundException(userId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto addItems(final UUID userId,
-                                    final Set<NewShoppingCartItemDto> itemsToAdd) {
+    public CartSnapshot addItems(final UUID userId,
+                                 final Set<AddCartItemRequest> itemsToAdd) {
+        return toCartSnapshot(addOpenApiItems(userId, toOpenApiItems(itemsToAdd)));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ShoppingCartDto addOpenApiItems(final UUID userId,
+                                           final Set<NewShoppingCartItemDto> itemsToAdd) {
         ShoppingCart shoppingCart = getOrCreateCart(userId);
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
         mergeIntoCart(shoppingCart, productsWithQuantity);
@@ -120,10 +133,26 @@ public class ShoppingCartService implements CartCheckoutApi {
         List<UUID> productIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductId)
                 .toList();
-        Map<UUID, ProductInfoDto> productsById = productCatalogApi.getProductsByIds(productIds).stream()
-                .collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
+        Map<UUID, ProductSnapshot> productsById = productCatalogApi.getProductsByIds(productIds).stream()
+                .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
 
         return shoppingCartDtoConverter.toDto(shoppingCart, productsById);
+    }
+
+    private CartSnapshot toCartSnapshot(ShoppingCart shoppingCart) {
+        return toCartSnapshot(toCartDto(shoppingCart));
+    }
+
+    private static CartSnapshot toCartSnapshot(ShoppingCartDto dto) {
+        var items = dto.getItems() == null ? List.<CartItemSnapshot>of()
+                : dto.getItems().stream()
+                    .map(item -> new CartItemSnapshot(
+                            item.getId(),
+                            toProductSnapshot(item.getProductInfo()),
+                            item.getProductQuantity()))
+                    .toList();
+        return new CartSnapshot(dto.getId(), dto.getUserId(), items, dto.getItemsQuantity(),
+                dto.getItemsTotalPrice(), dto.getProductsQuantity(), dto.getCreatedAt(), dto.getClosedAt());
     }
 
     private void mergeIntoCart(ShoppingCart cart, Map<UUID, Integer> productsWithQuantity) {
@@ -172,9 +201,9 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
 
         // Validate all new product IDs exist
-        List<ProductInfoDto> foundProducts = productCatalogApi.getProductsByIds(newProductIds.stream().toList());
+        List<ProductSnapshot> foundProducts = productCatalogApi.getProductsByIds(newProductIds.stream().toList());
         Set<UUID> foundIds = foundProducts.stream()
-                .map(ProductInfoDto::getId)
+                .map(ProductSnapshot::id)
                 .collect(Collectors.toSet());
         List<UUID> missingIds = newProductIds.stream()
                 .filter(id -> !foundIds.contains(id))
@@ -216,5 +245,40 @@ public class ShoppingCartService implements CartCheckoutApi {
     @Transactional
     public void deleteCartForUser(final UUID userId) {
         shoppingCartRepository.deleteByUserId(userId);
+    }
+
+    private static Set<NewShoppingCartItemDto> toOpenApiItems(Set<AddCartItemRequest> items) {
+        return items.stream()
+                .map(item -> new NewShoppingCartItemDto()
+                        .productId(item.productId())
+                        .productQuantity(item.productQuantity()))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private static ProductSnapshot toProductSnapshot(ProductInfoDto product) {
+        return new ProductSnapshot(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getQuantity(),
+                product.getActive(),
+                product.getProductFileUrl(),
+                product.getProductImageUrls(),
+                product.getAverageRating(),
+                product.getReviewsCount(),
+                product.getAiSummary(),
+                product.getBrandName(),
+                product.getSellerName(),
+                product.getOriginCountry(),
+                product.getWeight(),
+                product.getLength(),
+                product.getWidth(),
+                product.getHeight(),
+                product.getSoldProductsCount(),
+                product.getDiscount(),
+                product.getDateAdded(),
+                product.getPopularityScore()
+        );
     }
 }

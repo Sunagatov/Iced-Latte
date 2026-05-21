@@ -5,7 +5,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
@@ -53,7 +53,7 @@ public class StripeCheckoutSessionCreator {
      * line items, then delegates to {@link #createFromLineItems}.
      */
     public StripeSessionResult create(OrderSnapshot order, String customerEmail,
-                                      List<ShoppingCartItemDto> cartItems) {
+                                      List<CartItemSnapshot> cartItems) {
         List<SessionCreateParams.LineItem> lineItems = lineItemConverter.toLineItems(cartItems);
         return createFromLineItems(order, customerEmail, lineItems);
     }

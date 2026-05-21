@@ -4,7 +4,11 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public record ReviewCreatedEvent(UUID eventId, UUID reviewId, String text, UUID productId, Instant occurredAt) {
+public record ReviewCreatedEvent(UUID eventId,
+                                 UUID reviewId,
+                                 String text,
+                                 UUID productId,
+                                 Instant occurredAt) {
 
     public ReviewCreatedEvent {
         Objects.requireNonNull(eventId, "eventId");

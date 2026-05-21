@@ -960,7 +960,7 @@ This section traces every user interaction end-to-end: **browser → frontend �
    ⚠ Proxy must forward Idempotency-Key header                       [Phase 7]
 
 5. Backend: OrderEndpoint.createOrder()
-   → SecurityPrincipalProvider.getUserId() → extracts userId from JWT
+   → CurrentUserProvider.getUserId() → extracts userId from the authenticated principal
    → OrderCreator.create(userId, request)
      a. Check idempotency_key: if exists for this user → return existing order (200)
      b. Validate address: OrderAddressValidator checks exactly one of

@@ -10,6 +10,7 @@ import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
+import com.zufar.icedlatte.order.service.OrderCreator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,7 +97,7 @@ public class OrderDetailProvider {
                 : order.getItems().stream()
                     .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
                     .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+        return new OrderSnapshot(order.getId(), order.getUserId(), OrderCreator.toStatusSnapshot(order.getStatus()),
                 order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 

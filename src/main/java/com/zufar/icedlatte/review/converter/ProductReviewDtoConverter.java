@@ -4,9 +4,9 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
 
@@ -22,11 +22,11 @@ public interface ProductReviewDtoConverter {
     @Mapping(target = "userLastname", ignore = true)
     ProductReviewDto toProductReviewDto(ProductReview productReview);
 
-    default ProductReviewDto toProductReviewDto(ProductReview productReview, UserDto user) {
+    default ProductReviewDto toProductReviewDto(ProductReview productReview, UserLookupSnapshot user) {
         ProductReviewDto dto = toProductReviewDto(productReview);
         if (user != null) {
-            dto.setUserName(user.getFirstName());
-            dto.setUserLastname(user.getLastName());
+            dto.setUserName(user.firstName());
+            dto.setUserLastname(user.lastName());
         }
         return dto;
     }

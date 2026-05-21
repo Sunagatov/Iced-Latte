@@ -4,9 +4,10 @@ import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +27,14 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
 
     @Override
     @Transactional(readOnly = true)
-    public UserDto getUserById(final UUID userId) throws UserNotFoundException {
-        return userDtoConverter.toDto(getUserEntityById(userId));
+    public UserLookupSnapshot getUserById(final UUID userId) throws UserNotFoundException {
+        return toLookupSnapshot(getUserEntityById(userId));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public UserDto getUserByEmail(final String email) throws UserNotFoundException {
-        return userDtoConverter.toDto(getUserEntityByEmail(email));
+    public UserLookupSnapshot getUserByEmail(final String email) throws UserNotFoundException {
+        return toLookupSnapshot(getUserEntityByEmail(email));
     }
 
     @Override
@@ -60,6 +61,19 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     public UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
         return userCrudRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
+    }
+
+    public UserDto getUserDtoById(final UUID userId) throws UserNotFoundException {
+        return userDtoConverter.toDto(getUserEntityById(userId));
+    }
+
+    private UserLookupSnapshot toLookupSnapshot(UserEntity user) {
+        return new UserLookupSnapshot(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail()
+        );
     }
 
     private UserAuthenticationSnapshot toAuthenticationSnapshot(UserEntity user) {

@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
@@ -54,8 +54,7 @@ class OrderReorderServiceTest {
         when(productCatalogApi.existsById(availableProductId)).thenReturn(true);
         when(productCatalogApi.existsById(unavailableProductId)).thenReturn(false);
 
-        ShoppingCartDto cart = new ShoppingCartDto();
-        cart.setId(UUID.randomUUID());
+        CartSnapshot cart = new CartSnapshot(UUID.randomUUID(), userId, List.of(), 0, BigDecimal.ZERO, 0, null, null);
         when(shoppingCartService.addItems(eq(userId), any())).thenReturn(cart);
 
         ReorderResponseDto result = reorderService.reorder(orderId, userId);

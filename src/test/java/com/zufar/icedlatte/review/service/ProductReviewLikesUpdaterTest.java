@@ -10,6 +10,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +58,7 @@ class ProductReviewLikesUpdaterTest {
 
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(existingLike));
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
-        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
         when(userLookupApi.getUserById(userId)).thenReturn(user);
         when(productReviewDtoConverter.toProductReviewDto(productReview, user)).thenReturn(expected);
 
@@ -80,7 +81,7 @@ class ProductReviewLikesUpdaterTest {
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(productReview));
         when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId)).thenReturn(Optional.of(productReviewLike));
-        var user = new com.zufar.icedlatte.openapi.dto.UserDto();
+        var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
         when(userLookupApi.getUserById(userId)).thenReturn(user);
         when(productReviewDtoConverter.toProductReviewDto(productReview, user)).thenReturn(expected);
 

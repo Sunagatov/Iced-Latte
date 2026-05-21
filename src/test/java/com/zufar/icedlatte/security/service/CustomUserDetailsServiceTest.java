@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.signin.SecurityUserDetails;
 import com.zufar.icedlatte.security.service.signin.CustomUserDetailsService;
+import com.zufar.icedlatte.security.service.signin.SecurityUserDetails;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import org.junit.jupiter.api.DisplayName;

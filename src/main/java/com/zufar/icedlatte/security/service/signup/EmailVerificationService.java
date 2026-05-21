@@ -65,7 +65,7 @@ public class EmailVerificationService {
                                                 String newPassword) {
         UserRegistrationRequest request = validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
         var user = userLookupApi.getUserByEmail(request.getEmail());
-        userPasswordApi.changePassword(user.getId(), newPassword);
+        userPasswordApi.changePassword(user.id(), newPassword);
     }
 
     public String generateToken(UserRegistrationRequest request, TokenPurpose purpose) {

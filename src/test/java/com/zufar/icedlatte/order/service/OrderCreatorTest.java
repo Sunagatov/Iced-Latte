@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
@@ -58,8 +60,8 @@ class OrderCreatorTest {
         UUID userId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(null, buildAddressDto());
 
-        ShoppingCartDto emptyCart = new ShoppingCartDto();
-        emptyCart.setItems(Collections.emptyList());
+        CartSnapshot emptyCart = new CartSnapshot(UUID.randomUUID(), userId, Collections.emptyList(), 0,
+                BigDecimal.ZERO, 0, null, null);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
 
         assertThatThrownBy(() -> orderCreator.create(userId, request, null))
@@ -73,12 +75,10 @@ class OrderCreatorTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(null, buildAddressDto());
-        ShoppingCartDto cart = buildCart();
+        CartSnapshot cart = buildCart(productId);
         Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
-        OrderItem orderItem = OrderItem.builder().productId(productId).productName("Test").build();
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
@@ -98,15 +98,13 @@ class OrderCreatorTest {
         UUID addressId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(addressId, null);
-        ShoppingCartDto cart = buildCart();
+        CartSnapshot cart = buildCart(productId);
         Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
-        OrderItem orderItem = OrderItem.builder().productId(productId).productName("Test").build();
 
         UserAddressSnapshot savedAddr =
                 new UserAddressSnapshot("DE", "Berlin", "Unter den Linden 1", "10117");
         when(userAddressApi.getDeliveryAddress(userId, addressId)).thenReturn(savedAddr);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
@@ -126,11 +124,9 @@ class OrderCreatorTest {
         UUID addressId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(addressId, null);
-        ShoppingCartDto cart = buildCart();
-        OrderItem orderItem = OrderItem.builder().productId(productId).productName("Test").build();
+        CartSnapshot cart = buildCart(productId);
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
         when(userAddressApi.getDeliveryAddress(userId, addressId))
                 .thenThrow(new NotFoundException("Delivery address not found."));
@@ -165,7 +161,7 @@ class OrderCreatorTest {
                 .recipientName("A").recipientSurname("B")
                 .deliveryAddressId(UUID.randomUUID()).address(buildAddressDto());
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, buildCart()))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("not both");
     }
@@ -177,7 +173,7 @@ class OrderCreatorTest {
         CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
                 .recipientName("A").recipientSurname("B");
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, buildCart()))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be provided");
     }
@@ -189,13 +185,11 @@ class OrderCreatorTest {
         UUID productId = UUID.randomUUID();
         CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
                 .recipientName("A").recipientSurname("B").address(buildAddressDto());
-        ShoppingCartDto cart = buildCart();
-        OrderItem orderItem = OrderItem.builder().productId(productId).productName("Deleted Coffee").build();
+        CartSnapshot cart = buildCart(productId);
 
-        when(orderDtoConverter.toOrderItem(any())).thenReturn(orderItem);
         when(productCatalogApi.existsById(productId)).thenReturn(false);
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, req, cart))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), cart))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("no longer available");
     }
@@ -218,11 +212,11 @@ class OrderCreatorTest {
         return addr;
     }
 
-    private ShoppingCartDto buildCart() {
-        ShoppingCartDto cart = new ShoppingCartDto();
-        cart.setItems(List.of(new ShoppingCartItemDto()));
-        cart.setItemsQuantity(1);
-        cart.setItemsTotalPrice(BigDecimal.TEN);
-        return cart;
+    private CartSnapshot buildCart(UUID productId) {
+        ProductSnapshot product = new ProductSnapshot(productId, "Test", null, BigDecimal.TEN, null, true,
+                null, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new CartSnapshot(UUID.randomUUID(), UUID.randomUUID(),
+                List.of(new CartItemSnapshot(UUID.randomUUID(), product, 1)),
+                1, BigDecimal.TEN, 1, null, null);
     }
 }

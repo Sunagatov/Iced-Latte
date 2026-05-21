@@ -1,17 +1,19 @@
 package com.zufar.icedlatte.user.endpoint;
 
+import com.zufar.icedlatte.common.audit.Identifiable;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
-import com.zufar.icedlatte.user.service.UserProfileService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
+import com.zufar.icedlatte.user.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,14 +32,13 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public static final String API_CUSTOMERS = ApiPaths.USERS;
 
     private final UserProfileService userProfileService;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
     private final UserAvatarUploader userAvatarUploader;
     private final DeliveryAddressService deliveryAddressService;
 
     @Override
     @GetMapping
     public ResponseEntity<UserDto> getUserProfile() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         log.debug("user.profile.get: userId={}", userId);
         return ResponseEntity.ok(userProfileService.getProfile(userId));
     }
@@ -45,7 +46,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PutMapping
     public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         UserDto updated = userProfileService.updateProfile(userId, updateUserAccountRequest);
         log.info("user.profile.updated: userId={}", userId);
         return ResponseEntity.ok(updated);
@@ -54,7 +55,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PatchMapping
     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         userProfileService.changePassword(userId, changeUserPasswordRequest);
         log.info("user.password.changed: userId={}", userId);
         return ResponseEntity.ok().build();
@@ -63,7 +64,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @DeleteMapping
     public ResponseEntity<Void> deleteUserProfile() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         userProfileService.deleteProfile(userId);
         log.info("user.account.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
@@ -72,7 +73,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@RequestPart("file") MultipartFile file) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         userAvatarUploader.uploadUserAvatar(userId, file);
         log.info("user.avatar.uploaded: userId={}", userId);
         return ResponseEntity.ok().build();
@@ -81,7 +82,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @GetMapping(path = "/avatar")
     public ResponseEntity<String> getUserAvatarLink() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         log.debug("user.avatar.get: userId={}", userId);
         return userProfileService.findAvatarLink(userId)
                 .map(ResponseEntity::ok)
@@ -91,7 +92,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @DeleteMapping(path = "/avatar")
     public ResponseEntity<Void> deleteUserAvatar() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         userProfileService.deleteAvatar(userId);
         log.info("user.avatar.deleted: userId={}", userId);
         return ResponseEntity.ok().build();
@@ -100,7 +101,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @GetMapping("/addresses")
     public ResponseEntity<List<DeliveryAddressDto>> getDeliveryAddresses() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         log.debug("delivery_address.list_requested: userId={}", userId);
         return ResponseEntity.ok(deliveryAddressService.getAll(userId));
     }
@@ -108,7 +109,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PostMapping("/addresses")
     public ResponseEntity<DeliveryAddressDto> addDeliveryAddress(@Valid @RequestBody DeliveryAddressRequest request) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         DeliveryAddressDto created = deliveryAddressService.create(userId, request);
         log.info("delivery_address.created: userId={}, addressId={}", userId, created.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -118,7 +119,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @PutMapping("/addresses/{addressId}")
     public ResponseEntity<DeliveryAddressDto> updateDeliveryAddress(@PathVariable UUID addressId,
                                                                     @Valid @RequestBody DeliveryAddressRequest request) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         DeliveryAddressDto updated = deliveryAddressService.update(userId, addressId, request);
         log.info("delivery_address.updated: userId={}, addressId={}", userId, updated.getId());
         return ResponseEntity.ok(updated);
@@ -127,7 +128,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @DeleteMapping("/addresses/{addressId}")
     public ResponseEntity<Void> deleteDeliveryAddress(@PathVariable UUID addressId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         deliveryAddressService.delete(userId, addressId);
         log.info("delivery_address.deleted: userId={}, addressId={}", userId, addressId);
         return ResponseEntity.noContent().build();
@@ -136,9 +137,17 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     @Override
     @PatchMapping("/addresses/{addressId}/default")
     public ResponseEntity<DeliveryAddressDto> setDefaultDeliveryAddress(@PathVariable UUID addressId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserId();
         DeliveryAddressDto updated = deliveryAddressService.setDefault(userId, addressId);
         log.info("delivery_address.default_changed: userId={}, addressId={}", userId, updated.getId());
         return ResponseEntity.ok(updated);
+    }
+
+    private UUID currentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof Identifiable principal)) {
+            throw new UnauthorizedException("Authentication required.");
+        }
+        return principal.getId();
     }
 }

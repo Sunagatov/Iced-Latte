@@ -2,8 +2,8 @@ package com.zufar.icedlatte.cart.stub;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -63,24 +63,18 @@ public class CartDtoTestStub {
         return shoppingCart;
     }
 
-    public static Map<UUID, ProductInfoDto> createProductsById() {
-        List<ProductInfoDto> products = List.of(
-                createProductInfoDto(FIRST_PRODUCT_ID, "First test name", "First test description", BigDecimal.valueOf(1.1), 1),
-                createProductInfoDto(SECOND_PRODUCT_ID, "Second test name", "Second test description", BigDecimal.valueOf(2.2), 2),
-                createProductInfoDto(THIRD_PRODUCT_ID, "Third test name", "Third test description", BigDecimal.valueOf(3.3), 3)
+    public static Map<UUID, ProductSnapshot> createProductsById() {
+        List<ProductSnapshot> products = List.of(
+                createProductSnapshot(FIRST_PRODUCT_ID, "First test name", "First test description", BigDecimal.valueOf(1.1), 1),
+                createProductSnapshot(SECOND_PRODUCT_ID, "Second test name", "Second test description", BigDecimal.valueOf(2.2), 2),
+                createProductSnapshot(THIRD_PRODUCT_ID, "Third test name", "Third test description", BigDecimal.valueOf(3.3), 3)
         );
-        return products.stream().collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
+        return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
     }
 
-    public static ProductInfoDto createProductInfoDto(UUID id, String name, String description, BigDecimal price, int quantity) {
-        ProductInfoDto dto = new ProductInfoDto();
-        dto.setId(id);
-        dto.setName(name);
-        dto.setDescription(description);
-        dto.setPrice(price);
-        dto.setQuantity(quantity);
-        dto.setActive(true);
-        return dto;
+    public static ProductSnapshot createProductSnapshot(UUID id, String name, String description, BigDecimal price, int quantity) {
+        return new ProductSnapshot(id, name, description, price, quantity, true, null, List.of(), null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static ShoppingCartDto createShoppingCartDto() {

@@ -3,9 +3,9 @@ package com.zufar.icedlatte.payment.service.webhook;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
-import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
@@ -185,7 +185,7 @@ public class StripeWebhookBusinessProcessor {
         }
 
         OrderSnapshot order = orderOpt.get();
-        if (order.status() == OrderStatus.REFUND_REQUESTED) {
+        if (order.status() == OrderStatusSnapshot.REFUND_REQUESTED) {
             try {
                 orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed");
                 log.info("order.refund.confirmed: orderId={}, paymentIntentId={}",

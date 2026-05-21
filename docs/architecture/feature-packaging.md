@@ -31,7 +31,8 @@ Current backend feature packages:
 
 | Package | Owns |
 |---|---|
-| `security` | registration, login, JWT, sessions, rate limiting, OAuth |
+| `security` | registration, login, JWT, sessions, OAuth |
+| `ratelimit` | request rate-limiting infrastructure |
 | `user` | user profiles, addresses, avatars |
 | `product` | catalog, product filters, product images |
 | `cart` | shopping cart state and operations |
@@ -52,6 +53,7 @@ Most feature packages use a shape like this:
 ```text
 feature/
 ├── api/          # public module boundary: interfaces, records, stable DTOs
+│   └── dto/      # DTOs owned by the public module contract
 ├── service/      # concrete application services (hidden from other modules)
 ├── endpoint/     # REST endpoints
 ├── entity/       # JPA entities owned by the feature
@@ -63,7 +65,7 @@ feature/
 
 Not every feature needs every folder. Add folders when they are useful, not just to match a template.
 
-> **Convention:** New code should place only interfaces, records, and stable boundary DTOs in `api/`. Concrete application services belong in `service/` (or directly in the feature root for very small features). Legacy modules may still have concrete services in `api/` until refactored — see `order/` for the target pattern.
+> **Convention:** New code should place only interfaces, records, and stable boundary DTOs in `api/`. If a public contract needs several DTOs, prefer `api/dto/` so the contract remains readable. Concrete application services belong in `service/` (or directly in the feature root for very small features).
 
 ---
 
@@ -157,6 +159,7 @@ order -> payment.repository.*
 favorite -> product.entity.*
 review -> product.repository.*
 cart -> product.entity.*
+payment -> order.service.*
 ```
 
 Prefer:
@@ -170,6 +173,7 @@ cart -> product.api.ProductCatalogApi
 ```
 
 The `api` package is the boundary a feature intentionally exposes to other features.
+Generated OpenAPI DTOs are HTTP-edge models. They should stay in endpoints and implementation code, not in public module API contracts.
 
 ---
 

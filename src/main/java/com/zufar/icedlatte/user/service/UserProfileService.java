@@ -6,13 +6,14 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
 import com.zufar.icedlatte.user.api.UserAccountLockApi;
 import com.zufar.icedlatte.user.api.UserPasswordApi;
+import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -32,7 +33,7 @@ public class UserProfileService implements UserPasswordApi, UserAccountLockApi {
     private final PutUsersRequestValidator putUsersRequestValidator;
     private final FileStorageApi fileStorageApi;
     private final PasswordEncoder passwordEncoder;
-    private final AuthSessionService authSessionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public UserDto getProfile(UUID userId) {
@@ -72,7 +73,7 @@ public class UserProfileService implements UserPasswordApi, UserAccountLockApi {
     @Override
     public void changePassword(UUID userId, String newPassword) {
         userRepository.changeUserPassword(passwordEncoder.encode(newPassword), userId);
-        authSessionService.revokeAllForUser(userId);
+        eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
     }
 
     @Override

@@ -4,14 +4,14 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,14 +39,14 @@ public class PaymentStatusService {
     private final OrderPaymentApi orderPaymentApi;
     private final PaymentRepository paymentRepository;
     private final CartCheckoutApi cartCheckoutApi;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final TransactionTemplate transactionTemplate;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         OrderSnapshot order = orderPaymentApi.getSnapshot(orderId);
 
-        UserDto currentUser = securityPrincipalProvider.get();
-        if (!order.userId().equals(currentUser.getId())) {
+        var currentUser = currentUserProvider.get();
+        if (!order.userId().equals(currentUser.id())) {
             throw new OrderAccessDeniedException();
         }
 
@@ -63,7 +63,7 @@ public class PaymentStatusService {
 
         CheckoutStatusDto dto = new CheckoutStatusDto()
                 .orderId(order.id())
-                .orderStatus(order.status());
+                .orderStatus(OrderStatus.valueOf(order.status().name()));
 
         if (payment != null) {
             dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(payment.getStatus().name()));

@@ -1,10 +1,8 @@
 package com.zufar.icedlatte.review.service.ai.moderation;
 
-import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
-
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
-
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

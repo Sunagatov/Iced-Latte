@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
-import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
+import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
 import com.zufar.icedlatte.openapi.dto.UnavailableItemDto;
 import com.zufar.icedlatte.order.entity.Order;
@@ -35,15 +35,12 @@ public class OrderReorderService {
             throw new OrderAccessDeniedException();
         }
 
-        Set<NewShoppingCartItemDto> itemsToAdd = new LinkedHashSet<>();
+        Set<AddCartItemRequest> itemsToAdd = new LinkedHashSet<>();
         List<UnavailableItemDto> unavailable = new ArrayList<>();
 
         for (OrderItem item : order.getItems()) {
             if (productCatalogApi.existsById(item.getProductId())) {
-                var cartItem = new NewShoppingCartItemDto();
-                cartItem.setProductId(item.getProductId());
-                cartItem.setProductQuantity(item.getProductsQuantity());
-                itemsToAdd.add(cartItem);
+                itemsToAdd.add(new AddCartItemRequest(item.getProductId(), item.getProductsQuantity()));
             } else {
                 unavailable.add(new UnavailableItemDto()
                         .productName(item.getProductName())
@@ -54,7 +51,7 @@ public class OrderReorderService {
         UUID cartId = null;
         if (!itemsToAdd.isEmpty()) {
             var cart = cartCheckoutApi.addItems(userId, itemsToAdd);
-            cartId = cart.getId();
+            cartId = cart.id();
         }
 
         log.info("order.reorder: orderId={}, added={}, unavailable={}", orderId, itemsToAdd.size(), unavailable.size());

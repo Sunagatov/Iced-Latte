@@ -3,7 +3,7 @@ package com.zufar.icedlatte.review.converter;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.user.stub.UserDtoTestStub;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ public class ProductReviewDtoConverterTest {
                 .text("")
                 .createdAt(OffsetDateTime.now())
                 .build();
-        var user = UserDtoTestStub.createUserDto();
+        var user = new UserLookupSnapshot(UUID.randomUUID(), "first", "last", "user@example.com");
         ProductReviewDto actualProductReviewDto = converter.toProductReviewDto(expectedProductReview, user);
 
         assertThat(actualProductReviewDto.getProductReviewId()).isEqualTo(expectedProductReview.getId());
@@ -49,8 +49,8 @@ public class ProductReviewDtoConverterTest {
         assertThat(actualProductReviewDto.getProductRating()).isEqualTo(expectedProductReview.getProductRating());
         assertThat(actualProductReviewDto.getText()).isEqualTo(expectedProductReview.getText());
         assertThat(actualProductReviewDto.getCreatedAt()).isEqualTo(expectedProductReview.getCreatedAt());
-        assertThat(actualProductReviewDto.getUserName()).isEqualTo(Optional.of(user).get().getFirstName());
-        assertThat(actualProductReviewDto.getUserLastname()).isEqualTo(Optional.of(user).get().getLastName());
+        assertThat(actualProductReviewDto.getUserName()).isEqualTo(Optional.of(user).get().firstName());
+        assertThat(actualProductReviewDto.getUserLastname()).isEqualTo(Optional.of(user).get().lastName());
         assertThat(actualProductReviewDto.getLikesCount()).isEqualTo(expectedProductReview.getLikesCount());
         assertThat(actualProductReviewDto.getDislikesCount()).isEqualTo(expectedProductReview.getDislikesCount());
     }

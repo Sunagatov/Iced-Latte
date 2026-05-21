@@ -51,7 +51,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
             @RequestParam(name = "seller_names", required = false) List<String> sellerNames,
             @RequestParam(name = "keyword", required = false) String keyword) {
 
-        return ResponseEntity.ok(productService.getProducts(
+        return ResponseEntity.ok(productService.getProductDtos(
                 pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
     }
@@ -59,7 +59,7 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @Override
     @PostMapping("/ids")
     public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
-        var products = productService.getProductsByIds(productIdsDto.getProductIds());
+        var products = productService.getProductDtosByIds(productIdsDto.getProductIds());
         log.debug("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);
     }
@@ -68,6 +68,6 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
     @GetMapping("/{productId}")
     public ResponseEntity<ProductInfoDto> getProductById(@PathVariable final UUID productId) {
         log.debug("product.get: productId={}", productId);
-        return ResponseEntity.ok(productService.getProductById(productId));
+        return ResponseEntity.ok(productService.getProductDtoById(productId));
     }
 }

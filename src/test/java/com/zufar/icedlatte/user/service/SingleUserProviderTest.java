@@ -46,17 +46,24 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserById returns dto")
-    void getUserByIdReturnsDto() {
+    @DisplayName("getUserById returns lookup snapshot")
+    void getUserByIdReturnsLookupSnapshot() {
         UUID userId = UUID.randomUUID();
-        UserEntity entity = UserEntity.builder().id(userId).build();
-        UserDto dto = new UserDto().id(userId);
+        UserEntity entity = UserEntity.builder()
+                .id(userId)
+                .firstName("Ada")
+                .lastName("Lovelace")
+                .email("ada@example.com")
+                .build();
         when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
-        when(userDtoConverter.toDto(entity)).thenReturn(dto);
 
-        assertThat(singleUserProvider.getUserById(userId)).isSameAs(dto);
+        var snapshot = singleUserProvider.getUserById(userId);
+
+        assertThat(snapshot.id()).isEqualTo(userId);
+        assertThat(snapshot.firstName()).isEqualTo("Ada");
+        assertThat(snapshot.lastName()).isEqualTo("Lovelace");
+        assertThat(snapshot.email()).isEqualTo("ada@example.com");
         verify(userCrudRepository).findById(userId);
-        verify(userDtoConverter).toDto(entity);
     }
 
     @Test
@@ -70,15 +77,36 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserByEmail returns dto")
-    void getUserByEmailReturnsDto() {
-        UserEntity entity = UserEntity.builder().email("user@example.com").build();
-        UserDto dto = new UserDto().email("user@example.com");
+    @DisplayName("getUserByEmail returns lookup snapshot")
+    void getUserByEmailReturnsLookupSnapshot() {
+        UserEntity entity = UserEntity.builder()
+                .id(UUID.randomUUID())
+                .firstName("Grace")
+                .lastName("Hopper")
+                .email("user@example.com")
+                .build();
         when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+
+        var snapshot = singleUserProvider.getUserByEmail("user@example.com");
+
+        assertThat(snapshot.id()).isEqualTo(entity.getId());
+        assertThat(snapshot.firstName()).isEqualTo("Grace");
+        assertThat(snapshot.lastName()).isEqualTo("Hopper");
+        assertThat(snapshot.email()).isEqualTo("user@example.com");
+        verify(userCrudRepository).findByEmail("user@example.com");
+    }
+
+    @Test
+    @DisplayName("getUserDtoById returns OpenAPI dto for same-module profile usage")
+    void getUserDtoByIdReturnsDto() {
+        UUID userId = UUID.randomUUID();
+        UserEntity entity = UserEntity.builder().id(userId).build();
+        UserDto dto = new UserDto().id(userId);
+        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
         when(userDtoConverter.toDto(entity)).thenReturn(dto);
 
-        assertThat(singleUserProvider.getUserByEmail("user@example.com")).isSameAs(dto);
-        verify(userCrudRepository).findByEmail("user@example.com");
+        assertThat(singleUserProvider.getUserDtoById(userId)).isSameAs(dto);
+        verify(userCrudRepository).findById(userId);
         verify(userDtoConverter).toDto(entity);
     }
 

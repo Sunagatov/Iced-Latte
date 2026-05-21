@@ -1,11 +1,15 @@
 package com.zufar.icedlatte.order.service;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderAddress;
@@ -41,7 +45,6 @@ public class OrderCreator implements OrderCheckoutApi {
     @Value("${order.cancellation-window-minutes:30}")
     private int cancellationWindowMinutes;
 
-    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request,
                            final String idempotencyKey) {
@@ -55,13 +58,13 @@ public class OrderCreator implements OrderCheckoutApi {
 
         validateAddressInput(request);
 
-        ShoppingCartDto cart = cartCheckoutApi.getByUserIdOrThrow(userId);
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+        CartSnapshot cart = cartCheckoutApi.getByUserIdOrThrow(userId);
+        if (cart.items() == null || cart.items().isEmpty()) {
             throw new BadRequestException("Cannot create order: shopping cart is empty for userId=" + userId);
         }
 
-        List<OrderItem> items = cart.getItems().stream()
-                .map(orderDtoConverter::toOrderItem)
+        List<OrderItem> items = cart.items().stream()
+                .map(OrderCreator::toOrderItem)
                 .toList();
 
         validateProductAvailability(items);
@@ -77,8 +80,8 @@ public class OrderCreator implements OrderCheckoutApi {
                 .recipientName(request.getRecipientName())
                 .recipientSurname(request.getRecipientSurname())
                 .recipientPhone(request.getRecipientPhone())
-                .itemsQuantity(cart.getItemsQuantity())
-                .itemsTotalPrice(cart.getItemsTotalPrice())
+                .itemsQuantity(cart.itemsQuantity())
+                .itemsTotalPrice(cart.itemsTotalPrice())
                 .cancellationDeadline(OffsetDateTime.now().plusMinutes(cancellationWindowMinutes))
                 .idempotencyKey(idempotencyKey)
                 .build();
@@ -91,26 +94,26 @@ public class OrderCreator implements OrderCheckoutApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CreateCheckoutRequestDto request,
-                                                           ShoppingCartDto cart) {
+    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CheckoutOrderRequest request,
+                                                           CartSnapshot cart) {
         Order order = createPendingPaymentOrder(userId, request, cart);
         var items = order.getItems() == null ? List.<OrderSnapshot.OrderItemSnapshot>of()
                 : order.getItems().stream()
                     .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
                     .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), order.getStatus(),
+        return new OrderSnapshot(order.getId(), order.getUserId(), toStatusSnapshot(order.getStatus()),
                 order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    Order createPendingPaymentOrder(UUID userId, CreateCheckoutRequestDto request, ShoppingCartDto cart) {
-        validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
+    Order createPendingPaymentOrder(UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
+        validateCheckoutAddressInput(request.deliveryAddressId(), request.address());
 
         OrderAddress deliveryAddress = resolveDeliveryAddress(
-                request.getDeliveryAddressId(), request.getAddress(), userId);
+                request.deliveryAddressId(), request.address(), userId);
 
-        List<OrderItem> items = cart.getItems().stream()
-                .map(orderDtoConverter::toOrderItem)
+        List<OrderItem> items = cart.items().stream()
+                .map(OrderCreator::toOrderItem)
                 .toList();
 
         validateProductAvailability(items);
@@ -121,11 +124,11 @@ public class OrderCreator implements OrderCheckoutApi {
                 .status(OrderStatus.PENDING_PAYMENT)
                 .items(items)
                 .deliveryAddress(deliveryAddress)
-                .recipientName(request.getRecipientName())
-                .recipientSurname(request.getRecipientSurname())
-                .recipientPhone(request.getRecipientPhone())
-                .itemsQuantity(cart.getItemsQuantity())
-                .itemsTotalPrice(cart.getItemsTotalPrice())
+                .recipientName(request.recipientName())
+                .recipientSurname(request.recipientSurname())
+                .recipientPhone(request.recipientPhone())
+                .itemsQuantity(cart.itemsQuantity())
+                .itemsTotalPrice(cart.itemsTotalPrice())
                 .cancellationDeadline(OffsetDateTime.now().plusMinutes(cancellationWindowMinutes))
                 .build();
 
@@ -167,6 +170,25 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
     }
 
+    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId, OrderAddressRequest inlineAddress, UUID userId) {
+        if (deliveryAddressId != null) {
+            try {
+                return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
+            } catch (NotFoundException ex) {
+                throw new BadRequestException("Delivery address not found: " + deliveryAddressId);
+            }
+        }
+        if (inlineAddress == null) {
+            throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
+        }
+        return OrderAddress.builder()
+                .country(inlineAddress.country())
+                .city(inlineAddress.city())
+                .line(inlineAddress.line())
+                .postcode(inlineAddress.postcode())
+                .build();
+    }
+
     private static OrderAddress snapshotAddress(UserAddressSnapshot snapshot) {
         return OrderAddress.builder()
                 .country(snapshot.country())
@@ -189,5 +211,48 @@ public class OrderCreator implements OrderCheckoutApi {
         if (hasId && hasInline) {
             throw new BadRequestException("Provide either 'deliveryAddressId' or 'address', not both.");
         }
+    }
+
+    private static void validateCheckoutAddressInput(UUID deliveryAddressId, OrderAddressRequest inlineAddress) {
+        boolean hasId = deliveryAddressId != null;
+        boolean hasInline = inlineAddress != null;
+        if (!hasId && !hasInline) {
+            throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
+        }
+        if (hasId && hasInline) {
+            throw new BadRequestException("Provide either 'deliveryAddressId' or 'address', not both.");
+        }
+    }
+
+    public static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
+        return new CheckoutOrderRequest(
+                request.getRecipientName(),
+                request.getRecipientSurname(),
+                request.getRecipientPhone(),
+                request.getDeliveryAddressId(),
+                toAddressRequest(request.getAddress())
+        );
+    }
+
+    private static OrderAddressRequest toAddressRequest(AddressDto address) {
+        return address == null ? null : new OrderAddressRequest(
+                address.getCountry(),
+                address.getCity(),
+                address.getLine(),
+                address.getPostcode()
+        );
+    }
+
+    private static OrderItem toOrderItem(com.zufar.icedlatte.cart.api.dto.CartItemSnapshot item) {
+        return OrderItem.builder()
+                .productId(item.product().id())
+                .productName(item.product().name())
+                .productPrice(item.product().price())
+                .productsQuantity(item.productQuantity())
+                .build();
+    }
+
+    public static OrderStatusSnapshot toStatusSnapshot(OrderStatus status) {
+        return OrderStatusSnapshot.valueOf(status.name());
     }
 }

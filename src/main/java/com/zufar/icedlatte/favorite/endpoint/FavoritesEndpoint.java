@@ -5,7 +5,7 @@ import com.zufar.icedlatte.favorite.service.FavoriteService;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,22 +24,22 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
 
     public static final String FAVORITES_URL = ApiPaths.FAVORITES;
 
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final FavoriteService favoriteService;
 
     @Override
     @PostMapping
     public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Valid @RequestBody final ListOfFavoriteProducts request) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         var response = favoriteService.add(request, userId);
-        log.info("favourites.added: count={}", request.getProductIds().size());
+        log.debug("favourites.added: count={}", request.getProductIds().size());
         return ResponseEntity.ok(response);
     }
 
     @Override
     @GetMapping
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         var response = favoriteService.getEnrichedFavoriteList(userId);
         log.debug("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
         return ResponseEntity.ok(response);
@@ -48,9 +48,9 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     @Override
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> removeProductFromFavorite(@PathVariable final UUID productId) {
-        var userId = securityPrincipalProvider.getUserId();
+        var userId = currentUserProvider.getUserId();
         favoriteService.delete(productId, userId);
-        log.info("favourites.removed: productId={}", productId);
+        log.debug("favourites.removed: productId={}", productId);
         return ResponseEntity.ok().build();
     }
 }

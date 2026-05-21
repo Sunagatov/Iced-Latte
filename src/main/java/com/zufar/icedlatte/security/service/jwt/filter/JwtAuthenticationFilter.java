@@ -6,7 +6,7 @@ import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.config.AuthPaths;
 import com.zufar.icedlatte.security.exception.jwt.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.exception.jwt.JwtTokenBlacklistedException;
@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final JwtTokenClaims jwtTokenClaims;
     private final JwtBearerTokenResolver jwtBearerTokenResolver;
     private final ClientIpExtractor clientIpExtractor;
@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, securityPrincipalProvider.getUserId().toString());
+            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, currentUserProvider.getUserId().toString());
             try {
                 String rawToken = jwtBearerTokenResolver.extract(httpRequest);
                 jwtTokenClaims.extractAccessTokenSessionId(rawToken)

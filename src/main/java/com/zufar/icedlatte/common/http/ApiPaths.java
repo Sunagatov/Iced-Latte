@@ -7,6 +7,7 @@ public class ApiPaths {
 
     public static final String API_ROOT = "/api";
     public static final String USERS = "/api/v1/users";
+    public static final String AUTH = "/api/v1/auth";
     public static final String CART = "/api/v1/cart";
     public static final String FAVORITES = "/api/v1/favorites";
     public static final String PRODUCTS = "/api/v1/products";
@@ -27,5 +28,12 @@ public class ApiPaths {
     public static final String PRODUCTS_SELLERS = PRODUCTS + "/sellers";
 
     public static final String USERS_PASSWORD_RESET = USERS + "/password/reset";
-    public static final String USERS_PASSWORD_RESET_CONFIRM = USERS + "/password/reset/confirm";
+
+    public static final String AUTH_ROOT_PREFIX = AUTH + "/";
+    public static final String AUTH_AUTHENTICATE = AUTH + "/authenticate";
+    public static final String AUTH_REFRESH = AUTH + "/refresh";
+    public static final String AUTH_LOGOUT_ALL = AUTH + "/logout-all";
+    public static final String AUTH_OAUTH = AUTH + "/oauth";
+    public static final String AUTH_SESSIONS_PATTERN = AUTH + "/sessions/**";
+    public static final String AUTH_ALL_PATTERN = AUTH + "/**";
 }

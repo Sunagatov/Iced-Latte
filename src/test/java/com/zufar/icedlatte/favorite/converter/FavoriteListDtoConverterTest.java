@@ -4,12 +4,13 @@ import com.zufar.icedlatte.favorite.dto.FavoriteItemDto;
 import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -38,12 +39,9 @@ class FavoriteListDtoConverterTest {
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        ProductInfoDto productDto = new ProductInfoDto();
-        productDto.setId(productId);
-        productDto.setName("Coffee");
-        productDto.setPrice(BigDecimal.valueOf(10));
+        ProductSnapshot productDto = productSnapshot(productId);
 
-        Map<UUID, ProductInfoDto> productsById = Map.of(productId, productDto);
+        Map<UUID, ProductSnapshot> productsById = Map.of(productId, productDto);
 
         FavoriteListDto result = converter.toDto(entity, productsById);
 
@@ -74,13 +72,17 @@ class FavoriteListDtoConverterTest {
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        ProductInfoDto productDto = new ProductInfoDto();
-        productDto.setId(knownProductId);
-        Map<UUID, ProductInfoDto> productsById = Map.of(knownProductId, productDto);
+        ProductSnapshot productDto = productSnapshot(knownProductId);
+        Map<UUID, ProductSnapshot> productsById = Map.of(knownProductId, productDto);
 
         FavoriteListDto result = converter.toDto(entity, productsById);
 
         assertThat(result.favoriteItems()).hasSize(1);
         assertThat(result.favoriteItems().iterator().next().productInfo().getId()).isEqualTo(knownProductId);
+    }
+
+    private static ProductSnapshot productSnapshot(UUID id) {
+        return new ProductSnapshot(id, "Coffee", null, BigDecimal.valueOf(10), null, true, null, List.of(), null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

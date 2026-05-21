@@ -9,14 +9,12 @@ import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties.Bucket;
 import com.zufar.icedlatte.ratelimit.dto.RateLimitCategory;
-import com.zufar.icedlatte.ratelimit.dto.RateLimitProperties;
-import com.zufar.icedlatte.ratelimit.dto.RateLimitProperties.Bucket;
-import com.zufar.icedlatte.ratelimit.service.RateLimitResponseWriter;
-import com.zufar.icedlatte.security.config.AuthPaths;
-import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
+import com.zufar.icedlatte.ratelimit.util.RateLimitResponseWriter;
+import com.zufar.icedlatte.security.api.AuthApiPaths;
+import com.zufar.icedlatte.security.api.AuthenticatedTokenIdentityProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -45,9 +43,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
     private final ClientIpExtractor clientIpExtractor;
-    private final JwtBearerTokenResolver jwtBearerTokenResolver;
-    private final JwtTokenClaims jwtTokenClaims;
-    private final JwtTokenBlacklist jwtTokenBlacklist;
+    private final AuthenticatedTokenIdentityProvider authenticatedTokenIdentityProvider;
     private final RateLimitProperties properties;
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
@@ -83,9 +79,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                               @Qualifier("closedRateLimiter") RateLimiter closedRateLimiter,
                               MeterRegistry meterRegistry,
                               ClientIpExtractor clientIpExtractor,
-                              JwtBearerTokenResolver jwtBearerTokenResolver,
-                              JwtTokenClaims jwtTokenClaims,
-                              JwtTokenBlacklist jwtTokenBlacklist,
+                              AuthenticatedTokenIdentityProvider authenticatedTokenIdentityProvider,
                               RateLimitProperties properties,
                               ProblemTypeUriFactory problemTypeUriFactory,
                               CaffeineSizeProperties caffeineSizeProperties) {
@@ -93,9 +87,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
         this.clientIpExtractor = clientIpExtractor;
-        this.jwtBearerTokenResolver = jwtBearerTokenResolver;
-        this.jwtTokenClaims = jwtTokenClaims;
-        this.jwtTokenBlacklist = jwtTokenBlacklist;
+        this.authenticatedTokenIdentityProvider = authenticatedTokenIdentityProvider;
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
         this.warnedKeys = Caffeine.newBuilder()
@@ -174,13 +166,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
         if (!result.allowed()) {
-            meterRegistry.counter("rate_limit.requests.blocked", "category", category.value()).increment();
+            meterRegistry.counter("rate_limit.requests.blocked", "category", category.getValue()).increment();
             logExceeded(request, category, result, key, identityType, clientIp);
             RateLimitResponseWriter.writeTooManyRequests(response, result, problemTypeUriFactory.build(ProblemType.RATE_LIMITED));
             return true;
         }
 
-        meterRegistry.counter("rate_limit.requests.allowed", "category", category.value()).increment();
+        meterRegistry.counter("rate_limit.requests.allowed", "category", category.getValue()).increment();
         return false;
     }
 
@@ -200,7 +192,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private RateLimitCategory resolvePrimaryCategory(HttpServletRequest request) {
         String path = request.getRequestURI();
         return switch (path) {
-            case String uri when uri.startsWith(AuthPaths.ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
+            case String uri when uri.startsWith(AuthApiPaths.ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
             case String uri when uri.startsWith(ApiPaths.USERS_PASSWORD_RESET) -> RateLimitCategory.AUTH;
             case String uri when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
             case String uri when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
@@ -221,15 +213,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     // #2: Password reset is now a strict pre-auth path
     private boolean isStrictPreAuthPath(String path) {
-        return path.equals(AuthPaths.AUTHENTICATE)
-                || path.equals(AuthPaths.ROOT + "/register")
+        return path.equals(AuthApiPaths.AUTHENTICATE)
+                || path.equals(AuthApiPaths.ROOT + "/register")
                 || path.startsWith(ApiPaths.USERS_PASSWORD_RESET);
     }
 
     private boolean isGlobalAuthPath(String path) {
-        return path.startsWith(AuthPaths.OAUTH + "/")
-                || path.equals(AuthPaths.AUTHENTICATE)
-                || path.equals(AuthPaths.ROOT + "/register");
+        return path.startsWith(AuthApiPaths.OAUTH + "/")
+                || path.equals(AuthApiPaths.AUTHENTICATE)
+                || path.equals(AuthApiPaths.ROOT + "/register");
     }
 
     private Identity resolveIdentity(HttpServletRequest request, String ip) {
@@ -239,13 +231,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
-        try {
-            String token = jwtBearerTokenResolver.extract(request);
-            jwtTokenBlacklist.validateNotBlacklisted(token);
-            return Optional.of(jwtTokenClaims.extractAccessTokenEmail(token));
-        } catch (Exception _) {
-            return Optional.empty();
-        }
+        return authenticatedTokenIdentityProvider.findAccessTokenEmail(request);
     }
 
     private void logExceeded(HttpServletRequest request,
@@ -261,18 +247,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (firstBlock) {
             warnedKeys.put(rateLimitKey, Boolean.TRUE);
             log.warn("rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
-                    category.value(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    category.getValue(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
                     retryAfterSeconds, result.limit(), Math.max(0, result.remaining()));
         } else {
             log.debug("rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}",
-                    category.value(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
+                    category.getValue(), identityType, clientIp, request.getMethod(), ClientIpExtractor.sanitize(request.getRequestURI()),
                     retryAfterSeconds);
         }
     }
 
     private record Identity(String type, String value) {
         String key(RateLimitCategory category) {
-            return category.value() + ":" + type + ":" + value;
+            return category.getValue() + ":" + type + ":" + value;
         }
     }
 }

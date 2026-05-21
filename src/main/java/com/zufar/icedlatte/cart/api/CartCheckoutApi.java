@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 
 import java.util.Set;
 import java.util.UUID;
@@ -12,9 +12,9 @@ import java.util.UUID;
  */
 public interface CartCheckoutApi {
 
-    ShoppingCartDto getByUserIdOrThrow(UUID userId);
+    CartSnapshot getByUserIdOrThrow(UUID userId);
 
     void deleteCartForUser(UUID userId);
 
-    ShoppingCartDto addItems(UUID userId, Set<NewShoppingCartItemDto> items);
+    CartSnapshot addItems(UUID userId, Set<AddCartItemRequest> items);
 }

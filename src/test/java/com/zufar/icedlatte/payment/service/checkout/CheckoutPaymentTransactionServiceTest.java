@@ -1,12 +1,15 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -14,6 +17,7 @@ import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,20 +56,19 @@ class CheckoutPaymentTransactionServiceTest {
         CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()
                 .recipientName("John").recipientSurname("Doe");
 
-        var productInfo = new com.zufar.icedlatte.openapi.dto.ProductInfoDto()
-                .id(UUID.randomUUID()).name("Coffee").price(BigDecimal.valueOf(12.50));
-        var cartItem = new com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto()
-                .productInfo(productInfo).productQuantity(2);
-        ShoppingCartDto cart = new ShoppingCartDto()
-                .items(List.of(cartItem)).itemsTotalPrice(BigDecimal.valueOf(25.00)).itemsQuantity(2);
+        var productInfo = new ProductSnapshot(UUID.randomUUID(), "Coffee", null, BigDecimal.valueOf(12.50),
+                null, true, null, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 2);
+        CartSnapshot cart = new CartSnapshot(UUID.randomUUID(), USER_ID, List.of(cartItem), 1,
+                BigDecimal.valueOf(25.00), 2, null, null);
 
-        OrderSnapshot order = new OrderSnapshot(UUID.randomUUID(), USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT
+        OrderSnapshot order = new OrderSnapshot(UUID.randomUUID(), USER_ID, OrderStatusSnapshot.PENDING_PAYMENT
                 , java.math.BigDecimal.valueOf(25.00), null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
-        when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), eq(request), eq(cart)))
+        when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
         when(stripeProperties.currency()).thenReturn("usd");
@@ -89,7 +92,7 @@ class CheckoutPaymentTransactionServiceTest {
         UUID orderId = UUID.randomUUID();
         Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
                 .providerSessionId("cs_test_existing").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
+        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, OrderStatusSnapshot.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
@@ -112,7 +115,7 @@ class CheckoutPaymentTransactionServiceTest {
         UUID orderId = UUID.randomUUID();
         Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
                 .providerSessionId(null).status(PaymentStatus.CREATED).build();
-        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
+        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, OrderStatusSnapshot.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
@@ -133,7 +136,7 @@ class CheckoutPaymentTransactionServiceTest {
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID))
-                .thenReturn(new ShoppingCartDto().items(List.of()));
+                .thenReturn(new CartSnapshot(UUID.randomUUID(), USER_ID, List.of(), 0, BigDecimal.ZERO, 0, null, null));
 
         assertThatThrownBy(() -> service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),

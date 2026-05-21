@@ -6,14 +6,14 @@ import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
-import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +38,7 @@ import java.util.UUID;
 @SuppressWarnings("unused") // Spring injects this service and calls it from web entry points.
 public class CheckoutPaymentService {
 
-    private final SecurityPrincipalProvider securityPrincipalProvider;
+    private final CurrentUserProvider currentUserProvider;
     private final CheckoutPaymentTransactionService txService;
     private final StripeProperties stripeProperties;
     private final StripeCheckoutSessionCreator stripeSessionCreator;
@@ -51,20 +51,20 @@ public class CheckoutPaymentService {
             throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
         }
 
-        UserDto user = securityPrincipalProvider.get();
-        UUID userId = user.getId();
+        CurrentUserSnapshot user = currentUserProvider.get();
+        UUID userId = user.id();
 
         // Stage 1: DB transaction — validate, create order + payment, commit
         CheckoutPreparation prepared = txService.prepareCheckout(userId, request, idempotencyKey);
 
         // Idempotent retry: don't call Stripe with empty line items
         if (prepared.existing()) {
-            return resolveExistingCheckout(prepared, user.getEmail());
+            return resolveExistingCheckout(prepared, user.email());
         }
 
         // Stage 2: Outside transaction — call Stripe
         StripeSessionResult stripeResult = stripeSessionCreator.create(
-                prepared.order(), user.getEmail(), prepared.cartItems());
+                prepared.order(), user.email(), prepared.cartItems());
 
         // Stage 3: DB transaction — save Stripe details
         txService.saveStripeDetails(prepared.payment().getId(), stripeResult);

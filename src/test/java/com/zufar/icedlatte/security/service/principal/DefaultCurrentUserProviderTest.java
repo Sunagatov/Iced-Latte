@@ -2,8 +2,9 @@ package com.zufar.icedlatte.security.service.principal;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,14 +23,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SecurityPrincipalProvider unit tests")
-class DefaultSecurityPrincipalProviderTest {
+@DisplayName("CurrentUserProvider unit tests")
+class DefaultCurrentUserProviderTest {
 
     @Mock
     private UserLookupApi userLookupApi;
 
     @InjectMocks
-    private DefaultSecurityPrincipalProvider provider;
+    private DefaultCurrentUserProvider provider;
 
     @AfterEach
     void clearContext() {
@@ -41,15 +42,16 @@ class DefaultSecurityPrincipalProviderTest {
     class Get {
 
         @Test
-        @DisplayName("returns converted dto for authenticated user")
-        void returnsConvertedDtoForAuthenticatedUser() {
+        @DisplayName("returns snapshot for authenticated user")
+        void returnsSnapshotForAuthenticatedUser() {
             TestPrincipal principal = authenticatedUser();
-            UserDto dto = new UserDto().id(principal.getId());
-            when(userLookupApi.getUserById(principal.getId())).thenReturn(dto);
+            var user = new UserLookupSnapshot(principal.getId(), "Ada", "Lovelace", "ada@example.com");
+            when(userLookupApi.getUserById(principal.getId())).thenReturn(user);
 
-            UserDto result = provider.get();
+            CurrentUserSnapshot result = provider.get();
 
-            assertThat(result).isSameAs(dto);
+            assertThat(result.id()).isEqualTo(principal.getId());
+            assertThat(result.email()).isEqualTo("ada@example.com");
             verify(userLookupApi).getUserById(principal.getId());
             verifyNoMoreInteractions(userLookupApi);
         }
