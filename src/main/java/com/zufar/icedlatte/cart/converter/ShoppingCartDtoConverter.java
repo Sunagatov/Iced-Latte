@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.cart.converter;
 
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
@@ -73,5 +75,26 @@ public class ShoppingCartDtoConverter {
                 .discount(product.discount())
                 .dateAdded(product.dateAdded())
                 .popularityScore(product.popularityScore());
+    }
+
+    public CartSnapshot toSnapshot(final ShoppingCart cart,
+                                   final Map<UUID, ProductSnapshot> productsById) {
+        List<CartItemSnapshot> items = cart.getItems() == null ? List.of() :
+                cart.getItems().stream()
+                        .map(item -> new CartItemSnapshot(
+                                item.getId(),
+                                productsById.get(item.getProductId()),
+                                item.getProductQuantity()))
+                        .toList();
+
+        BigDecimal totalPrice = items.stream()
+                .filter(item -> item.product() != null && item.product().price() != null)
+                .map(item -> item.product().price().multiply(BigDecimal.valueOf(item.productQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int productsQuantity = items.stream().mapToInt(CartItemSnapshot::productQuantity).sum();
+
+        return new CartSnapshot(cart.getId(), cart.getUserId(), items, items.size(),
+                totalPrice, productsQuantity, cart.getCreatedAt(), cart.getClosedAt());
     }
 }
