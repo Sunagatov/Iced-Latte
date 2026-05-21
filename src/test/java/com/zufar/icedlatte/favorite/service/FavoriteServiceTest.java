@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.favorite.service;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
-import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
-import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
@@ -19,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.time.OffsetDateTime;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +35,6 @@ class FavoriteServiceTest {
     @Mock private FavoriteRepository favoriteRepository;
     @Mock private ProductCatalogApi productCatalogApi;
     @Mock private FavoriteListDtoConverter favoriteListDtoConverter;
-    @Mock private ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
 
     @Test
     @DisplayName("getEnrichedFavoriteList returns enriched DTO when list exists")
@@ -51,9 +47,7 @@ class FavoriteServiceTest {
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(favoriteListDtoConverter.toDto(any(), anyMap()))
-                .thenReturn(new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now()));
-        when(listOfFavoriteProductsDtoConverter.toListProductDto(any())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
 
         var result = favoriteService.getEnrichedFavoriteList(userId);
 
@@ -82,9 +76,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(product));
         when(favoriteRepository.save(entity)).thenReturn(entity);
-        when(favoriteListDtoConverter.toDto(any(), anyMap()))
-                .thenReturn(new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now()));
-        when(listOfFavoriteProductsDtoConverter.toListProductDto(any())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 
@@ -122,9 +114,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.save(any(FavoriteListEntity.class)))
                 .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"))
                 .thenReturn(freshList);
-        when(favoriteListDtoConverter.toDto(any(), anyMap()))
-                .thenReturn(new FavoriteListDto(UUID.randomUUID(), userId, Set.of(), OffsetDateTime.now()));
-        when(listOfFavoriteProductsDtoConverter.toListProductDto(any())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 

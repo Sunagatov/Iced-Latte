@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.favorite.service;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
-import com.zufar.icedlatte.favorite.converter.ListOfFavoriteProductsDtoConverter;
-import com.zufar.icedlatte.favorite.dto.FavoriteListDto;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
@@ -31,7 +29,6 @@ public class FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
     private final FavoriteListDtoConverter favoriteListDtoConverter;
-    private final ListOfFavoriteProductsDtoConverter listOfFavoriteProductsDtoConverter;
     private final ProductCatalogApi productCatalogApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -83,8 +80,7 @@ public class FavoriteService {
         Map<UUID, ProductSnapshot> productsById = productCatalogApi.getProductsByIds(productIds).stream()
                 .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
 
-        FavoriteListDto dto = favoriteListDtoConverter.toDto(entity, productsById);
-        return listOfFavoriteProductsDtoConverter.toListProductDto(dto);
+        return favoriteListDtoConverter.toDto(entity, productsById);
     }
 
     private void validateProductsExist(Set<UUID> productIds) {
