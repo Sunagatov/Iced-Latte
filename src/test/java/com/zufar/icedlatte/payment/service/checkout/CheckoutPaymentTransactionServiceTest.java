@@ -10,6 +10,7 @@ import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -44,6 +45,7 @@ class CheckoutPaymentTransactionServiceTest {
     @Mock private OrderPaymentApi orderPaymentApi;
     @Mock private OrderCheckoutApi orderCheckoutApi;
     @Mock private CartCheckoutApi shoppingCartService;
+    @Mock private OrderDtoConverter orderDtoConverter;
     @Mock private StripeProperties stripeProperties;
     @InjectMocks private CheckoutPaymentTransactionService service;
 
@@ -67,6 +69,7 @@ class CheckoutPaymentTransactionServiceTest {
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
+        when(orderDtoConverter.toCheckoutOrderRequest(request)).thenReturn(new CheckoutOrderRequest("John", "Doe", null, null, null));
         when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));

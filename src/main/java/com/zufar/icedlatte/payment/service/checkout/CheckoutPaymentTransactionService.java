@@ -8,7 +8,7 @@ import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
-import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
+import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -40,6 +40,7 @@ public class CheckoutPaymentTransactionService {
     private final OrderPaymentApi orderPaymentApi;
     private final OrderCheckoutApi orderCheckoutApi;
     private final CartCheckoutApi cartCheckoutApi;
+    private final OrderDtoConverter orderDtoConverter;
     private final StripeProperties stripeProperties;
 
     @Transactional
@@ -66,8 +67,8 @@ public class CheckoutPaymentTransactionService {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(
-                userId, toCheckoutOrderRequest(request), cart);
+        CheckoutOrderRequest checkoutOrderRequest = orderDtoConverter.toCheckoutOrderRequest(request);
+        OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(userId, checkoutOrderRequest, cart);
 
         Payment payment = Payment.builder()
                 .orderId(order.id())
@@ -97,19 +98,4 @@ public class CheckoutPaymentTransactionService {
                 .longValueExact();
     }
 
-    private CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
-        var address = request.getAddress() == null ? null : new OrderAddressRequest(
-                request.getAddress().getCountry(),
-                request.getAddress().getCity(),
-                request.getAddress().getLine(),
-                request.getAddress().getPostcode()
-        );
-        return new CheckoutOrderRequest(
-                request.getRecipientName(),
-                request.getRecipientSurname(),
-                request.getRecipientPhone(),
-                request.getDeliveryAddressId(),
-                address
-        );
-    }
 }

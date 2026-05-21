@@ -7,7 +7,6 @@ import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
@@ -46,7 +45,8 @@ public class OrderCreator implements OrderCheckoutApi {
     private int cancellationWindowMinutes;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public OrderDto create(final UUID userId, final CreateNewOrderRequestDto request,
+    public OrderDto create(final UUID userId,
+                           final CreateNewOrderRequestDto request,
                            final String idempotencyKey) {
         if (idempotencyKey != null) {
             Optional<Order> existing = orderRepository.findByIdempotencyKeyAndUserId(idempotencyKey, userId);
@@ -63,10 +63,7 @@ public class OrderCreator implements OrderCheckoutApi {
             throw new BadRequestException("Cannot create order: shopping cart is empty for userId=" + userId);
         }
 
-        List<OrderItem> items = cart.items().stream()
-                .map(OrderCreator::toOrderItem)
-                .toList();
-
+        List<OrderItem> items = orderDtoConverter.toOrderItems(cart.items());
         validateProductAvailability(items);
 
         OrderAddress deliveryAddress = resolveAddress(request, userId);
@@ -94,28 +91,22 @@ public class OrderCreator implements OrderCheckoutApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId, CheckoutOrderRequest request,
+    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId,
+                                                           CheckoutOrderRequest request,
                                                            CartSnapshot cart) {
         Order order = createPendingPaymentOrder(userId, request, cart);
-        var items = order.getItems() == null ? List.<OrderSnapshot.OrderItemSnapshot>of()
-                : order.getItems().stream()
-                    .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
-                    .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), toStatusSnapshot(order.getStatus()),
-                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+        return orderDtoConverter.toSnapshot(order);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    Order createPendingPaymentOrder(UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
+    Order createPendingPaymentOrder(UUID userId,
+                                    CheckoutOrderRequest request,
+                                    CartSnapshot cart) {
         validateCheckoutAddressInput(request.deliveryAddressId(), request.address());
 
-        OrderAddress deliveryAddress = resolveDeliveryAddress(
-                request.deliveryAddressId(), request.address(), userId);
+        OrderAddress deliveryAddress = resolveDeliveryAddress(request.deliveryAddressId(), request.address(), userId);
 
-        List<OrderItem> items = cart.items().stream()
-                .map(OrderCreator::toOrderItem)
-                .toList();
-
+        List<OrderItem> items = orderDtoConverter.toOrderItems(cart.items());
         validateProductAvailability(items);
 
         Order order = Order.builder()
@@ -151,7 +142,9 @@ public class OrderCreator implements OrderCheckoutApi {
         return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
     }
 
-    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId, AddressDto inlineAddress, UUID userId) {
+    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId,
+                                                AddressDto inlineAddress,
+                                                UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -170,7 +163,9 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
     }
 
-    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId, OrderAddressRequest inlineAddress, UUID userId) {
+    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId,
+                                                OrderAddressRequest inlineAddress,
+                                                UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -222,37 +217,5 @@ public class OrderCreator implements OrderCheckoutApi {
         if (hasId && hasInline) {
             throw new BadRequestException("Provide either 'deliveryAddressId' or 'address', not both.");
         }
-    }
-
-    public static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
-        return new CheckoutOrderRequest(
-                request.getRecipientName(),
-                request.getRecipientSurname(),
-                request.getRecipientPhone(),
-                request.getDeliveryAddressId(),
-                toAddressRequest(request.getAddress())
-        );
-    }
-
-    private static OrderAddressRequest toAddressRequest(AddressDto address) {
-        return address == null ? null : new OrderAddressRequest(
-                address.getCountry(),
-                address.getCity(),
-                address.getLine(),
-                address.getPostcode()
-        );
-    }
-
-    private static OrderItem toOrderItem(com.zufar.icedlatte.cart.api.dto.CartItemSnapshot item) {
-        return OrderItem.builder()
-                .productId(item.product().id())
-                .productName(item.product().name())
-                .productPrice(item.product().price())
-                .productsQuantity(item.productQuantity())
-                .build();
-    }
-
-    public static OrderStatusSnapshot toStatusSnapshot(OrderStatus status) {
-        return OrderStatusSnapshot.valueOf(status.name());
     }
 }

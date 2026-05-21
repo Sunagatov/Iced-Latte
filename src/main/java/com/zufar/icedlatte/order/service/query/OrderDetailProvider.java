@@ -9,7 +9,6 @@ import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
-import com.zufar.icedlatte.order.service.OrderCreator;
 import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.specification.OrderSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -40,19 +39,22 @@ public class OrderDetailProvider implements OrderPaymentApi {
     @Override
     @Transactional(readOnly = true)
     public OrderSnapshot getSnapshot(UUID orderId) {
-        return toSnapshot(findById(orderId));
+        Order order = findById(orderId);
+        return orderDtoConverter.toSnapshot(order);
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderSnapshot getSnapshotWithItems(UUID orderId) {
-        return toSnapshot(findByIdWithItems(orderId));
+        Order order = findByIdWithItems(orderId);
+        return orderDtoConverter.toSnapshot(order);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<OrderSnapshot> findByStripePaymentIntentId(String paymentIntentId) {
-        return orderRepository.findByStripePaymentIntentId(paymentIntentId).map(this::toSnapshot);
+        return orderRepository.findByStripePaymentIntentId(paymentIntentId)
+                .map(orderDtoConverter::toSnapshot);
     }
 
     @Transactional(readOnly = true)
@@ -165,16 +167,6 @@ public class OrderDetailProvider implements OrderPaymentApi {
     @Transactional
     public void confirmRefund(UUID orderId, String reason) {
         orderStatusTransitioner.transition(orderId, OrderEvent.REFUND_CONFIRMED, null, reason);
-    }
-
-    private OrderSnapshot toSnapshot(Order order) {
-        List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
-                ? List.of()
-                : order.getItems().stream()
-                .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
-                .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), OrderCreator.toStatusSnapshot(order.getStatus()),
-                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
     private boolean canCancel(Order order) {

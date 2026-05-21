@@ -1,27 +1,54 @@
 package com.zufar.icedlatte.order.converter;
 
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
 import org.mapstruct.*;
 
+import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        injectionStrategy = InjectionStrategy.FIELD,
-        uses = {OrderStatus.class})
-@SuppressWarnings("unused") // MapStruct generates and calls the implementation.
+        injectionStrategy = InjectionStrategy.FIELD)
 public interface OrderDtoConverter {
 
     OrderDto toResponseDto(final Order orderEntity);
 
-    @Named("toOrderItemDto")
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "productId", source = "productInfo.id")
-    @Mapping(target = "productName", source = "productInfo.name")
-    @Mapping(target = "productPrice", source = "productInfo.price")
+    @Mapping(target = "orderId", ignore = true)
+    @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "productPrice", source = "product.price")
     @Mapping(target = "productsQuantity", source = "productQuantity")
-    OrderItem toOrderItem(ShoppingCartItemDto cartItem);
+    OrderItem toOrderItem(CartItemSnapshot item);
+
+    List<OrderItem> toOrderItems(List<CartItemSnapshot> items);
+
+    default OrderSnapshot toSnapshot(Order order) {
+        List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
+                ? List.of()
+                : order.getItems().stream()
+                .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                .toList();
+        return new OrderSnapshot(order.getId(), order.getUserId(), toStatusSnapshot(order.getStatus()),
+                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+    }
+
+    default OrderStatusSnapshot toStatusSnapshot(OrderStatus status) {
+        return status == null ? null : OrderStatusSnapshot.valueOf(status.name());
+    }
+
+    @Mapping(target = "address", source = "address")
+    CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request);
+
+    @Mapping(target = "country", source = "country")
+    OrderAddressRequest toAddressRequest(AddressDto address);
 }

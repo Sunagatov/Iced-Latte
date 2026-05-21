@@ -6,6 +6,8 @@ import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.repository.OrderRepository;
@@ -15,6 +17,8 @@ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
+import com.zufar.icedlatte.order.entity.OrderItem;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,6 +56,15 @@ class OrderCreatorTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(orderCreator, "cancellationWindowMinutes", 30);
+        lenient().when(orderDtoConverter.toOrderItems(any())).thenAnswer(inv -> {
+            List<CartItemSnapshot> items = inv.getArgument(0);
+            return items.stream().map(i -> OrderItem.builder()
+                    .productId(i.product().id())
+                    .productName(i.product().name())
+                    .productPrice(i.product().price())
+                    .productsQuantity(i.productQuantity())
+                    .build()).toList();
+        });
     }
 
     @Test
@@ -161,7 +174,7 @@ class OrderCreatorTest {
                 .recipientName("A").recipientSurname("B")
                 .deliveryAddressId(UUID.randomUUID()).address(buildAddressDto());
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("not both");
     }
@@ -173,7 +186,7 @@ class OrderCreatorTest {
         CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
                 .recipientName("A").recipientSurname("B");
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be provided");
     }
@@ -189,7 +202,7 @@ class OrderCreatorTest {
 
         when(productCatalogApi.existsById(productId)).thenReturn(false);
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, OrderCreator.toCheckoutOrderRequest(req), cart))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), cart))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("no longer available");
     }
@@ -217,5 +230,11 @@ class OrderCreatorTest {
         return new CartSnapshot(UUID.randomUUID(), UUID.randomUUID(),
                 List.of(new CartItemSnapshot(UUID.randomUUID(), product, 1)),
                 1, BigDecimal.TEN, 1, null, null);
+    }
+
+    private static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto req) {
+        AddressDto a = req.getAddress();
+        OrderAddressRequest addr = a == null ? null : new OrderAddressRequest(a.getCountry(), a.getCity(), a.getLine(), a.getPostcode());
+        return new CheckoutOrderRequest(req.getRecipientName(), req.getRecipientSurname(), req.getRecipientPhone(), req.getDeliveryAddressId(), addr);
     }
 }
