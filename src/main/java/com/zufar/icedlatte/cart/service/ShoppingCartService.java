@@ -252,11 +252,4 @@ public class ShoppingCartService implements CartCheckoutApi {
         shoppingCartRepository.deleteByUserId(userId);
     }
 
-    private static Set<NewShoppingCartItemDto> toOpenApiItems(Set<AddCartItemRequest> items) {
-        return items.stream()
-                .map(item -> new NewShoppingCartItemDto()
-                        .productId(item.productId())
-                        .productQuantity(item.productQuantity()))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
 }
