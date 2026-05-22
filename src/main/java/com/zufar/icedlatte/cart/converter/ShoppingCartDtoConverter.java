@@ -8,16 +8,14 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
-
-import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
 
 @Component
 @RequiredArgsConstructor
@@ -31,8 +29,7 @@ public class ShoppingCartDtoConverter {
                 cart.getItems().stream()
                         .filter(item -> productsById.containsKey(item.getProductId()))
                         .map(item -> {
-                            var product = requireNonNullOrThrow(productsById.get(item.getProductId()),
-                                    () -> new ProductNotFoundException(item.getProductId()));
+                            var product = Objects.requireNonNull(productsById.get(item.getProductId()));
                             return toItemDto(item, product);
                         })
                         .toList();
@@ -69,8 +66,7 @@ public class ShoppingCartDtoConverter {
                 cart.getItems().stream()
                         .filter(item -> productsById.containsKey(item.getProductId()))
                         .map(item -> {
-                            var product = requireNonNullOrThrow(productsById.get(item.getProductId()),
-                                    () -> new ProductNotFoundException(item.getProductId()));
+                            var product = Objects.requireNonNull(productsById.get(item.getProductId()));
                             return new CartItemSnapshot(item.getId(), product, item.getProductQuantity());
                         })
                         .toList();
