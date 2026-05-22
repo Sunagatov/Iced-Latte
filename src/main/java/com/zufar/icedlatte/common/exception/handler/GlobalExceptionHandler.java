@@ -163,8 +163,10 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveHttpStatus(exception);
         String typeSlug = status.is5xxServerError() ? "internal-error" : "about:blank";
         String title = status.is5xxServerError() ? "Internal server error" : status.getReasonPhrase();
+        String errorMessage = exception.getMessage() != null ?
+                exception.getMessage() : exception.getClass().getSimpleName();
 
-        ProblemDetail pd = problemDetailFactory.build(typeSlug, title, status, exception.getMessage());
+        ProblemDetail pd = problemDetailFactory.build(typeSlug, title, status, errorMessage);
 
         if (status.is5xxServerError()) {
             log.error("exception.unhandled: exceptionClass={}, status={}", exception.getClass().getName(), status.value(), exception);

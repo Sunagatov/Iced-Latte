@@ -17,20 +17,20 @@
             "type": "string"
           },
           "description": {
-            "type": "string"
+            "type": ["string", "null"]
           },
           "price": {
             "type": "number"
           },
           "quantity": {
-            "type": "integer"
+            "type": ["integer", "null"]
           },
           "active": {
-            "type": "boolean"
+            "type": ["boolean", "null"]
           }
         }
       },
-      "required": ["id", "name", "description", "price", "quantity", "active"]
+      "required": ["id", "name", "price"]
     }
   },
   "required": ["products"]

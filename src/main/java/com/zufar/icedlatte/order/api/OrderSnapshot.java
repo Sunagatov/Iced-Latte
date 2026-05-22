@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.order.api;
 
+import org.jspecify.annotations.Nullable;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -9,7 +11,7 @@ public record OrderSnapshot(
         UUID userId,
         OrderStatusSnapshot status,
         BigDecimal itemsTotalPrice,
-        String stripePaymentIntentId,
+        @Nullable String stripePaymentIntentId,
         List<OrderItemSnapshot> items
 ) {
 

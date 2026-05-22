@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.cart.api.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -13,6 +15,6 @@ public record CartSnapshot(
         BigDecimal itemsTotalPrice,
         int productsQuantity,
         OffsetDateTime createdAt,
-        OffsetDateTime closedAt
+        @Nullable OffsetDateTime closedAt
 ) {
 }

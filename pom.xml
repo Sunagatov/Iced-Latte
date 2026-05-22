@@ -104,6 +104,11 @@
         <spring-modulith.version>2.0.6</spring-modulith.version>
         <archunit.version>1.4.2</archunit.version>
 
+        <!-- ========== STATIC ANALYSIS VERSIONS ========== -->
+        <error-prone.version>2.49.0</error-prone.version>
+        <nullaway.version>0.13.4</nullaway.version>
+        <jspecify.version>1.0.0</jspecify.version>
+
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
@@ -348,6 +353,11 @@
 
         <!-- ========== UTILITIES ========== -->
         <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
@@ -435,6 +445,15 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- Maven Enforcer Plugin -->
             <plugin>
@@ -486,12 +505,25 @@
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${mapstruct.version}</version>
                         </path>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${error-prone.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                            <version>${nullaway.version}</version>
+                        </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
                         <arg>-Amapstruct.suppressGeneratorTimestamp=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>--should-stop=ifError=FLOW</arg>
+                        <arg>-Xplugin:ErrorProne -XepAllDisabledChecksAsWarnings -XepDisableAllChecks -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:ExcludedFieldAnnotations=org.springframework.beans.factory.annotation.Autowired,org.springframework.beans.factory.annotation.Value,org.springframework.boot.context.properties.bind.DefaultValue,lombok.Setter -XepOpt:NullAway:ExcludedClassAnnotations=lombok.Data,lombok.Builder,lombok.Value</arg>
                     </compilerArgs>
-                    <showWarnings>false</showWarnings>
+                    <showWarnings>true</showWarnings>
                 </configuration>
             </plugin>
 

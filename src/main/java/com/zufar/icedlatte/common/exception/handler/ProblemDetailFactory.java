@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.exception.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
@@ -38,13 +39,13 @@ public class ProblemDetailFactory {
         pd.setTitle(title);
         pd.setInstance(resolveInstance());
         pd.setProperty("timestamp", Instant.now().toString());
-        if (errors != null && !errors.isEmpty()) {
+        if (!errors.isEmpty()) {
             pd.setProperty("errors", errors);
         }
         return pd;
     }
 
-    private static URI resolveInstance() {
+    private static @Nullable URI resolveInstance() {
         var attrs = RequestContextHolder.getRequestAttributes();
         if (attrs instanceof ServletRequestAttributes sra) {
             return URI.create(sra.getRequest().getRequestURI());
@@ -52,5 +53,5 @@ public class ProblemDetailFactory {
         return null;
     }
 
-    public record FieldError(String field, String message) {}
+    public record FieldError(String field, @Nullable String message) {}
 }
