@@ -22,6 +22,7 @@ public class ShoppingCartItem {
     private UUID id;
 
     @Version
+    @Builder.Default
     @Column(name = "version", nullable = false)
     private Integer version = 0;
 
