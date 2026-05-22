@@ -1,3 +1,4 @@
+# $schema: ./application-config.schema.json
 # noinspection YAMLSchemaValidation
 # =============================================================================
 #                         ICED LATTE — APPLICATION CONFIG
@@ -252,7 +253,7 @@ jwt:
 cors:
   allowed-origins: ${ALLOWED_ORIGINS}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
-  allowed-headers: "*"
+  allowed-headers: Authorization,Content-Type,Accept,Origin,X-Requested-With,X-Session-ID,X-Trace-ID,X-Correlation-ID,Idempotency-Key,X-Refresh-Token
   exposed-headers: Authorization,Content-Type,X-Request-ID
   # Allow cookies/auth headers in cross-origin requests.
   allow-credentials: true

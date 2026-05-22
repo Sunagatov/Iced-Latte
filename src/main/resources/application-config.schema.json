@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Iced Latte Spring Boot application configuration",
+  "description": "Permissive project schema for Spring Boot application YAML files with custom configuration properties.",
+  "type": "object",
+  "additionalProperties": true
+}
