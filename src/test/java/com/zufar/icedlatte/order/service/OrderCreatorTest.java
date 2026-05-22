@@ -225,7 +225,7 @@ class OrderCreatorTest {
     }
 
     private CartSnapshot buildCart(UUID productId) {
-        ProductSnapshot product = new ProductSnapshot(productId, "Test", BigDecimal.TEN, null);
+        ProductSnapshot product = new ProductSnapshot(productId, "Test", "Desc", BigDecimal.TEN, 10, true, null);
         return new CartSnapshot(UUID.randomUUID(), UUID.randomUUID(),
                 List.of(new CartItemSnapshot(UUID.randomUUID(), product, 1)),
                 1, BigDecimal.TEN, 1, null, null);

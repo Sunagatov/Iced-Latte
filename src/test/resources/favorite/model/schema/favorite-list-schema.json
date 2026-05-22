@@ -8,29 +8,26 @@
         "type": "object",
         "properties": {
           "id": {
-            "anyOf": [
-              { "type": "string" },
-              { "type": "null" }
-            ]
+            "type": "string"
           },
           "name": {
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "price": {
             "type": "number"
           },
           "quantity": {
-            "type": ["integer", "null"]
+            "type": "integer"
           },
           "active": {
-            "type": ["boolean", "null"]
+            "type": "boolean"
           }
-        }
-      },
-      "required": ["id", "name", "price"]
+        },
+        "required": ["id", "name", "description", "price", "quantity", "active"]
+      }
     }
   },
   "required": ["products"]

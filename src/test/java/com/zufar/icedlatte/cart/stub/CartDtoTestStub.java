@@ -65,9 +65,9 @@ public class CartDtoTestStub {
 
     public static Map<UUID, ProductSnapshot> createProductsById() {
         List<ProductSnapshot> products = List.of(
-                new ProductSnapshot(FIRST_PRODUCT_ID, "First test name", BigDecimal.valueOf(1.1), null),
-                new ProductSnapshot(SECOND_PRODUCT_ID, "Second test name", BigDecimal.valueOf(2.2), null),
-                new ProductSnapshot(THIRD_PRODUCT_ID, "Third test name", BigDecimal.valueOf(3.3), null)
+                new ProductSnapshot(FIRST_PRODUCT_ID, "First test name", "Desc", BigDecimal.valueOf(1.1), 10, true, null),
+                new ProductSnapshot(SECOND_PRODUCT_ID, "Second test name", "Desc", BigDecimal.valueOf(2.2), 10, true, null),
+                new ProductSnapshot(THIRD_PRODUCT_ID, "Third test name", "Desc", BigDecimal.valueOf(3.3), 10, true, null)
         );
         return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
     }

@@ -65,6 +65,6 @@ class FavoriteListDtoConverterTest {
     }
 
     private static ProductSnapshot productSnapshot(UUID id) {
-        return new ProductSnapshot(id, "Coffee", BigDecimal.valueOf(10), null);
+        return new ProductSnapshot(id, "Coffee", "Desc", BigDecimal.valueOf(10), 100, true, null);
     }
 }

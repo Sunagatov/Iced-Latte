@@ -58,7 +58,7 @@ class CheckoutPaymentTransactionServiceTest {
         CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()
                 .recipientName("John").recipientSurname("Doe");
 
-        var productInfo = new ProductSnapshot(UUID.randomUUID(), "Coffee", BigDecimal.valueOf(12.50), null);
+        var productInfo = new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
         var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 2);
         CartSnapshot cart = new CartSnapshot(UUID.randomUUID(), USER_ID, List.of(cartItem), 1,
                 BigDecimal.valueOf(25.00), 2, null, null);
