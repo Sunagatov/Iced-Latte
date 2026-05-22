@@ -517,11 +517,9 @@
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
-                        <arg>-Amapstruct.suppressGeneratorTimestamp=true</arg>
-                        <arg>-Amapstruct.defaultComponentModel=spring</arg>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -XepAllDisabledChecksAsWarnings -XepDisableAllChecks -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:ExcludedFieldAnnotations=org.springframework.beans.factory.annotation.Autowired,org.springframework.beans.factory.annotation.Value,org.springframework.boot.context.properties.bind.DefaultValue,lombok.Setter -XepOpt:NullAway:ExcludedClassAnnotations=lombok.Data,lombok.Builder,lombok.Value</arg>
+                        <arg>-Xplugin:ErrorProne -XepExcludedPaths:.*/target/generated-sources/.*|.*/src/test/.* -XepAllDisabledChecksAsWarnings -XepDisableAllChecks -Xep:NullAway:ERROR -Xep:MissingOverride:WARN -Xep:UnusedVariable:WARN -Xep:EqualsHashCode:WARN -Xep:MustBeClosedChecker:WARN -Xep:ReturnValueIgnored:WARN -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:ExcludedFieldAnnotations=org.springframework.beans.factory.annotation.Autowired,org.springframework.beans.factory.annotation.Value,org.springframework.boot.context.properties.bind.DefaultValue,lombok.Setter -XepOpt:NullAway:ExcludedClassAnnotations=lombok.Data,lombok.Builder,lombok.Value,javax.annotation.processing.Generated</arg>
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
                 </configuration>
