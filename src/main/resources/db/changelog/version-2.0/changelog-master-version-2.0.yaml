@@ -54,3 +54,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/04.05.2026.part2.create-stripe-webhook-events-table.sql
       errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/add-payment-order-business-constraints.sql
+      errorIfMissing: true
