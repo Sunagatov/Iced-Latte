@@ -109,6 +109,10 @@
         <nullaway.version>0.13.4</nullaway.version>
         <jspecify.version>1.0.0</jspecify.version>
 
+        <!-- ========== MUTATION TESTING VERSIONS ========== -->
+        <pitest-maven-plugin.version>1.25.0</pitest-maven-plugin.version>
+        <pitest-junit5-plugin.version>1.2.1</pitest-junit5-plugin.version>
+
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
@@ -835,6 +839,52 @@
                             <outputFormat>json</outputFormat>
                             <outputName>bom</outputName>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Run mutation testing: mvn test -P mutation-testing -->
+        <profile>
+            <id>mutation-testing</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>${pitest-maven-plugin.version}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>${pitest-junit5-plugin.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <targetClasses>
+                                <param>com.zufar.icedlatte.*</param>
+                            </targetClasses>
+                            <excludedClasses>
+                                <param>com.zufar.icedlatte.openapi.*</param>
+                                <param>com.zufar.icedlatte.configuration.*</param>
+                            </excludedClasses>
+                            <mutators>
+                                <mutator>DEFAULTS</mutator>
+                            </mutators>
+                            <outputFormats>
+                                <param>HTML</param>
+                            </outputFormats>
+                            <timestampedReports>false</timestampedReports>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>pit-report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
