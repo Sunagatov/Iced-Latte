@@ -23,6 +23,7 @@ public class ApiPaths {
     public static final String ORDERS_PATTERN = ORDERS + "/**";
     public static final String ADMIN_ORDERS_PATTERN = ADMIN_ORDERS + "/**";
     public static final String PAYMENT_PATTERN = PAYMENT + "/**";
+    public static final String PRODUCTS_PATTERN = PRODUCTS + "/**";
 
     public static final String PRODUCTS_BRANDS = PRODUCTS + "/brands";
     public static final String PRODUCTS_SELLERS = PRODUCTS + "/sellers";

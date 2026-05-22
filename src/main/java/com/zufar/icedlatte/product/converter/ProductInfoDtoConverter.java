@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.converter;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import org.jspecify.annotations.Nullable;
@@ -14,7 +15,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@SuppressWarnings("NullableProblems")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface ProductInfoDtoConverter {
 
     @Named("toProductInfoDto")
@@ -27,12 +30,12 @@ public interface ProductInfoDtoConverter {
     @Mapping(target = "products", source = "content")
     @Mapping(target = "page", source = "number")
     @Mapping(target = "size", source = "size")
-    ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
+    ProductListWithPaginationInfoDto toProductPaginationDto(
+            Page<ProductInfoDto> pageProductResponseDto);
 
     ProductSnapshot toSnapshot(ProductInfoDto dto);
 
-    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-    ProductInfoDto fromSnapshot(ProductSnapshot snapshot);
+    ProductSummaryDto toSummaryDto(ProductSnapshot snapshot);
 
     @Named("roundAverageRatingValue")
     default @Nullable BigDecimal roundAverageRatingValue(@Nullable BigDecimal averageRating) {

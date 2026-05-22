@@ -114,6 +114,9 @@ management:
   endpoint:
     health:
       enabled: true
+      probes:
+        enabled: true
+        add-additional-paths: true
   health:
     redis:
       enabled: false

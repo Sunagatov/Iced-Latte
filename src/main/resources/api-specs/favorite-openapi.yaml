@@ -166,7 +166,7 @@ components:
           type: "array"
           description: "An array of product details for the favorite products."
           items:
-            $ref: "./product-openapi.yaml#/components/schemas/ProductInfoDto"
+            $ref: "./product-openapi.yaml#/components/schemas/ProductSummaryDto"
       required:
         - products
 

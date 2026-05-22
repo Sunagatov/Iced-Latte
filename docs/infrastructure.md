@@ -212,7 +212,7 @@ AWS_ENABLED=false
 
 ## ⚡ Redis Cache
 
-Redis improves caching and rate-limiting behavior. The backend can run without Redis because supported caches fall back to in-memory implementations.
+Redis improves caching and rate-limiting behavior. If Redis is not configured, the backend uses in-memory cache implementations where supported.
 
 ### Local defaults
 
@@ -245,7 +245,7 @@ iced-latte-redis
 
 ### If Redis is down
 
-The backend should continue running with in-memory fallbacks, but behavior is less durable across restarts and multiple backend instances.
+If Redis is not configured, supported caches use in-memory implementations. If Redis is configured but temporarily unavailable, Redis cache operations fail open and are logged; requests should continue, but Redis-backed caching is not effective during the outage.
 
 Start Redis with:
 

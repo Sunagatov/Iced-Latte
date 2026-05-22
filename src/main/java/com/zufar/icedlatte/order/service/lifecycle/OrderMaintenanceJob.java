@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,9 @@ public class OrderMaintenanceJob {
     @Value("${order.refund-monitor-interval-ms:3600000}")
     private long refundMonitorIntervalMs;
 
+    @Value("${order.maintenance.batch-size:100}")
+    private int batchSize;
+
     @Scheduled(fixedDelayString = "${order.expiration-check-interval-ms:3600000}")
     public void expireUnpaidOrders() {
         sentryJobMonitor.run(EXPIRATION_MONITOR_SLUG, sentryJobMonitor.fixedDelayConfig(expirationCheckIntervalMs),
@@ -49,12 +53,12 @@ public class OrderMaintenanceJob {
                 .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.CREATED)))
                 .and((root, _, cb) -> cb.lessThan(root.get("createdAt"), cutoff));
 
-        List<Order> expired = orderRepository.findAll(spec);
+        List<Order> expired = orderRepository.findAll(spec, PageRequest.of(0, batchSize)).getContent();
         for (Order order : expired) {
             order.setStatus(OrderStatus.CANCELLED);
-            orderRepository.save(order);
             log.info("order.expired: orderId={}", order.getId());
         }
+        orderRepository.saveAll(expired);
         if (!expired.isEmpty()) {
             log.info("order.expiration.completed: count={}", expired.size());
         }
@@ -72,7 +76,7 @@ public class OrderMaintenanceJob {
                 .where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.REFUND_REQUESTED)))
                 .and((root, _, cb) -> cb.lessThan(root.get("updatedAt"), cutoff));
 
-        List<Order> stuck = orderRepository.findAll(spec);
+        List<Order> stuck = orderRepository.findAll(spec, PageRequest.of(0, batchSize)).getContent();
         for (Order order : stuck) {
             log.warn("order.refund.stuck: orderId={}, stripePaymentIntentId={}",
                     order.getId(), order.getStripePaymentIntentId());

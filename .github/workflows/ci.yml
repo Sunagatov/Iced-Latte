@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [development]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Build and Test
@@ -24,8 +28,8 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Build, test and generate coverage
-        run: mvn -B package --file pom.xml
+      - name: Build, unit tests, integration tests and coverage
+        run: mvn -B clean verify --file pom.xml --no-transfer-progress
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
@@ -154,14 +158,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install oasdiff
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/tufin/oasdiff/main/install.sh | sh
-
       - name: Check for breaking changes in API specs
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
+          OASDIFF_IMAGE: tufin/oasdiff:v1.11.8
         run: |
           if [ "${EVENT_NAME}" = "pull_request" ]; then
             REF="origin/${BASE_REF}"
@@ -169,7 +170,7 @@ jobs:
             REF="HEAD~1"
           fi
           BREAKING=0
-          BASE_DIR=/tmp/base-api-specs
+          BASE_DIR=.api-specs-base
           mkdir -p "$BASE_DIR"
           for f in src/main/resources/api-specs/*.yaml; do
             name=$(basename "$f")
@@ -178,7 +179,7 @@ jobs:
           for spec in src/main/resources/api-specs/*-openapi.yaml; do
             name=$(basename "$spec")
             [ -f "$BASE_DIR/$name" ] || continue
-            if oasdiff breaking "$BASE_DIR/$name" "$spec" --fail-on ERR; then
+            if docker run --rm -v "$PWD:/work" -w /work "$OASDIFF_IMAGE" breaking "$BASE_DIR/$name" "$spec" --fail-on ERR; then
               echo "[OK] No breaking changes in $name"
             else
               echo "[FAIL] Breaking changes detected in $name"

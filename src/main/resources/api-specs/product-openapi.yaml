@@ -257,6 +257,28 @@ components:
             $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
 
   schemas:
+    ProductSummaryDto:
+      type: "object"
+      description: "Summary information about a product for list, cart, and favorite views."
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Unique identifier for the product."
+        name:
+          type: "string"
+          description: "Name of the product."
+        price:
+          type: "number"
+          description: "Price of the product."
+        productFileUrl:
+          type: "string"
+          description: "URL of the product's primary image or file."
+
     ProductInfoDto:
       type: "object"
       description: "Detailed information about a product in the Iced Latte catalog."

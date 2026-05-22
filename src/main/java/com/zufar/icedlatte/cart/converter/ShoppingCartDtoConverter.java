@@ -56,7 +56,7 @@ public class ShoppingCartDtoConverter {
                                           ProductSnapshot productInfo) {
         return new ShoppingCartItemDto()
                 .id(item.getId())
-                .productInfo(productInfoDtoConverter.fromSnapshot(productInfo))
+                .productInfo(productInfoDtoConverter.toSummaryDto(productInfo))
                 .productQuantity(item.getProductQuantity());
     }
 

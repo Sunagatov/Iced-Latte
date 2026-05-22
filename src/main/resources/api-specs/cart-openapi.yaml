@@ -248,7 +248,7 @@ components:
           type: "string"
           format: "uuid"
         productInfo:
-          $ref: "product-openapi.yaml#/components/schemas/ProductInfoDto"
+          $ref: "product-openapi.yaml#/components/schemas/ProductSummaryDto"
         productQuantity:
           type: "integer"
           format: "int32"

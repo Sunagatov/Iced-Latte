@@ -3,7 +3,7 @@ package com.zufar.icedlatte.favorite.converter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +20,12 @@ public class FavoriteListDtoConverter {
     private final ProductInfoDtoConverter productInfoDtoConverter;
 
     public ListOfFavoriteProductsDto toDto(final FavoriteListEntity entity, final Map<UUID, ProductSnapshot> productsById) {
-        List<ProductInfoDto> products = entity.getFavoriteItems().stream()
+        List<ProductSummaryDto> products = entity.getFavoriteItems().stream()
                 .map(FavoriteItemEntity::getProductId)
                 .filter(productsById::containsKey)
                 .distinct()
                 .map(productsById::get)
-                .map(productInfoDtoConverter::fromSnapshot)
+                .map(productInfoDtoConverter::toSummaryDto)
                 .toList();
 
         return new ListOfFavoriteProductsDto(products);

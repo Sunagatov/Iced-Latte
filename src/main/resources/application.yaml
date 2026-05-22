@@ -1,3 +1,4 @@
+# noinspection YAMLSchemaValidation
 # =============================================================================
 #                         ICED LATTE — APPLICATION CONFIG
 # =============================================================================
@@ -444,6 +445,7 @@ order:
   # Set to false to disable order maintenance scheduled jobs (e.g. in multi-instance deploys).
   maintenance:
     enabled: true
+    batch-size: 100
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -525,6 +527,9 @@ management:
       enabled: false
     health:
       enabled: true
+      probes:
+        enabled: true
+        add-additional-paths: true
       # "when-authorized" = only authenticated users see full health details.
       show-details: when-authorized
   endpoints:
@@ -556,7 +561,7 @@ management:
         http.server.requests: 0.5,0.95,0.99
   health:
     redis:
-      enabled: true
+      enabled: false
   tracing:
     sampling:
       # Fraction of requests to trace via OpenTelemetry/Micrometer (0.1 = 10%).

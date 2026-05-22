@@ -12,8 +12,9 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+@SuppressWarnings("NullableProblems")
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        unmappedTargetPolicy = ReportingPolicy.ERROR,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {
 
@@ -24,10 +25,8 @@ public interface ProductReviewDtoConverter {
 
     default ProductReviewDto toProductReviewDto(ProductReview productReview, UserLookupSnapshot user) {
         ProductReviewDto dto = toProductReviewDto(productReview);
-        if (user != null) {
-            dto.setUserName(user.firstName());
-            dto.setUserLastname(user.lastName());
-        }
+        dto.setUserName(user.firstName());
+        dto.setUserLastname(user.lastName());
         return dto;
     }
 

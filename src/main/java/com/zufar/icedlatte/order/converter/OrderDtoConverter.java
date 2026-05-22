@@ -18,11 +18,14 @@ import java.util.List;
 
 import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
 
+@SuppressWarnings("NullableProblems")
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        unmappedTargetPolicy = ReportingPolicy.ERROR,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface OrderDtoConverter {
 
+    @Mapping(target = "canCancel", ignore = true)
+    @Mapping(target = "canRefund", ignore = true)
     OrderDto toResponseDto(final Order orderEntity);
 
     @Mapping(target = "id", ignore = true)
