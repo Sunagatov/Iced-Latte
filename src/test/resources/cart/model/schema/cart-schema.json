@@ -16,93 +16,38 @@
           "id": {
             "type": "string"
           },
-          "userId": {
-            "type": "string"
-          },
-          "productId": {
-            "type": "string"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "productDescription": {
-            "type": "string"
-          },
-          "productPrice": {
-            "type": "number"
-          },
-          "productQuantity": {
-            "type": "number"
-          },
-          "productActive": {
-            "type": "boolean"
-          },
-          "shoppingCart": {
+          "productInfo": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string"
               },
-              "userId": {
+              "name": {
                 "type": "string"
               },
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "userId": {
-                      "type": "string"
-                    },
-                    "productId": {
-                      "type": "string"
-                    },
-                    "productName": {
-                      "type": "string"
-                    },
-                    "productDescription": {
-                      "type": "string"
-                    },
-                    "productPrice": {
-                      "type": "number"
-                    },
-                    "productQuantity": {
-                      "type": "number"
-                    },
-                    "productActive": {
-                      "type": "boolean"
-                    }
-                  }
-                }
-              },
-              "itemsQuantity": {
+              "price": {
                 "type": "number"
               },
-              "productsQuantity": {
-                "type": "number"
-              },
-              "itemsTotalPrice": {
-                "type": "number"
-              },
-              "createdAt": {
-                "type": "string"
-              },
-              "closedAt": {
+              "productFileUrl": {
                 "type": ["string", "null"]
               }
-            }
+            },
+            "required": ["id", "name", "price"]
+          },
+          "productQuantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99
           }
-        }
+        },
+        "required": ["id", "productInfo", "productQuantity"]
       }
     },
     "itemsQuantity": {
-      "type": "number"
+      "type": "integer"
     },
     "productsQuantity": {
-      "type": "number"
+      "type": "integer"
     },
     "itemsTotalPrice": {
       "type": "number"
@@ -113,5 +58,6 @@
     "closedAt": {
       "type": ["string", "null"]
     }
-  }
+  },
+  "required": ["id", "userId", "items", "itemsQuantity", "itemsTotalPrice", "productsQuantity", "createdAt"]
 }

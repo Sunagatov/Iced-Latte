@@ -13,20 +13,14 @@
           "name": {
             "type": "string"
           },
-          "description": {
-            "type": "string"
-          },
           "price": {
             "type": "number"
           },
-          "quantity": {
-            "type": "integer"
-          },
-          "active": {
-            "type": "boolean"
+          "productFileUrl": {
+            "type": ["string", "null"]
           }
         },
-        "required": ["id", "name", "description", "price", "quantity", "active"]
+        "required": ["id", "name", "price"]
       }
     }
   },

@@ -6,7 +6,7 @@ import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +65,7 @@ class FavoriteServiceTest {
         entity.setFavoriteItems(new HashSet<>());
 
         ProductSnapshot product = productSnapshot(productId);
-        ProductInfoDto productDto = new ProductInfoDto();
+        ProductSummaryDto productDto = new ProductSummaryDto();
         productDto.setId(productId);
 
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
@@ -98,7 +99,7 @@ class FavoriteServiceTest {
         freshList.setFavoriteItems(new HashSet<>(Set.of(existingItem)));
 
         ProductSnapshot product = productSnapshot(productId);
-        ProductInfoDto productDto = new ProductInfoDto();
+        ProductSummaryDto productDto = new ProductSummaryDto();
         productDto.setId(productId);
 
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
@@ -148,6 +149,6 @@ class FavoriteServiceTest {
     }
 
     private static ProductSnapshot productSnapshot(UUID productId) {
-        return new ProductSnapshot(productId, "Coffee", null, null, null, null, null);
+        return new ProductSnapshot(productId, "Coffee", null, BigDecimal.TEN, null, null, null);
     }
 }
