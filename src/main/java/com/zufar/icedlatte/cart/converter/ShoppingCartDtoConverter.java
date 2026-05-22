@@ -4,10 +4,11 @@ import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -16,7 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class ShoppingCartDtoConverter {
+
+    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     public ShoppingCartDto toDto(final ShoppingCart cart,
                                  final Map<UUID, ProductSnapshot> productsById) {
@@ -47,16 +51,8 @@ public class ShoppingCartDtoConverter {
                                           ProductSnapshot productInfo) {
         return new ShoppingCartItemDto()
                 .id(item.getId())
-                .productInfo(toDto(productInfo))
+                .productInfo(productInfoDtoConverter.fromSnapshot(productInfo))
                 .productQuantity(item.getProductQuantity());
-    }
-
-    private ProductInfoDto toDto(ProductSnapshot product) {
-        return new ProductInfoDto()
-                .id(product.id())
-                .name(product.name())
-                .price(product.price())
-                .productFileUrl(product.productFileUrl());
     }
 
     public CartSnapshot toSnapshot(final ShoppingCart cart,

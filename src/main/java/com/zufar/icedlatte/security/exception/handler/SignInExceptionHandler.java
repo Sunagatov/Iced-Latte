@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.exception.handler;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.http.RequestPathUtils;
 import com.zufar.icedlatte.security.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +45,9 @@ public class SignInExceptionHandler {
             case UserAccountLockedException _ ->
                     new ErrorMapping("auth.sign_in.failed.UserAccountLockedException", ProblemType.ACCOUNT_LOCKED,
                             "Account locked", HttpStatus.UNAUTHORIZED, "User account is locked.");
-            case SessionNotFoundException _ -> new ErrorMapping("auth.session.not_found", ProblemType.SESSION_NOT_FOUND,
-                    "Session not found", HttpStatus.NOT_FOUND, "Session not found.");
+            case SessionNotFoundException _ ->
+                    new ErrorMapping("auth.session.not_found", ProblemType.SESSION_NOT_FOUND,
+                            "Session not found", HttpStatus.NOT_FOUND, "Session not found.");
             case SessionOwnershipException _ ->
                     new ErrorMapping("auth.session.forbidden", ProblemType.SESSION_ACCESS_DENIED,
                             "Access denied", HttpStatus.FORBIDDEN, "Access denied.");
@@ -59,7 +61,7 @@ public class SignInExceptionHandler {
             // Suppress noisy logging for missing bearer on refresh endpoint
         } else {
             log.debug("{}: status={}, method={}, path={}", mapping.logTag(), mapping.status().value(),
-                    request.getMethod(), sanitize(request.getRequestURI()));
+                    request.getMethod(), RequestPathUtils.sanitize(request.getRequestURI()));
         }
 
         ProblemDetail pd = problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail());
@@ -71,12 +73,9 @@ public class SignInExceptionHandler {
     public ProblemDetail handleSpringSecurityCredentialExceptions(final Exception exception,
                                                                   HttpServletRequest request) {
         log.debug("auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
-                exception.getClass().getSimpleName(), request.getMethod(), sanitize(request.getRequestURI()));
+                exception.getClass().getSimpleName(), request.getMethod(), RequestPathUtils.sanitize(request.getRequestURI()));
         return problemDetailFactory.build(ProblemType.INVALID_CREDENTIALS, "Invalid credentials",
                 HttpStatus.UNAUTHORIZED, "The login credentials are invalid.");
     }
 
-    private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
-    }
 }

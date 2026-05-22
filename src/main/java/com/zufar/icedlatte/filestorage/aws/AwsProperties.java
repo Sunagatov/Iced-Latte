@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.config;
+package com.zufar.icedlatte.filestorage.aws;
 
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;

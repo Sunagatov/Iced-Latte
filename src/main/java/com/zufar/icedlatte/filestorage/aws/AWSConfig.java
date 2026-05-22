@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.config;
+package com.zufar.icedlatte.filestorage.aws;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,26 +23,27 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class AWSConfig {
 
-    private static final String AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
-
     private final AwsProperties awsProperties;
 
     @Bean
     @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true")
     public S3Client s3Client() {
+        String endpointUrl = awsProperties.endpointUrl();
+        String region = awsProperties.region();
+
         try {
             var builder = S3Client.builder()
                     .credentialsProvider(buildCredentials())
-                    .region(Region.of(awsProperties.region()));
-            if (!StringUtils.hasText(awsProperties.endpointUrl())) {
+                    .region(Region.of(region));
+            if (!StringUtils.hasText(endpointUrl)) {
                 return builder.build();
             }
-            return builder.endpointOverride(URI.create(awsProperties.endpointUrl()))
+            return builder.endpointOverride(URI.create(endpointUrl))
                     .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                     .build();
         } catch (SdkClientException ace) {
             log.error("aws.s3.client.init_error: region={}, endpointOverrideConfigured={}, exceptionClass={}",
-                    awsProperties.region(), StringUtils.hasText(awsProperties.endpointUrl()), ace.getClass().getSimpleName(), ace);
+                    region, StringUtils.hasText(endpointUrl), ace.getClass().getSimpleName(), ace);
             throw ace;
         }
     }
@@ -69,9 +70,12 @@ public class AWSConfig {
     }
 
     private StaticCredentialsProvider buildCredentials() {
-        String sessionToken = System.getenv(AWS_SESSION_TOKEN);
+        String sessionToken = System.getenv("AWS_SESSION_TOKEN");
+        String accessKey = awsProperties.accessKey();
+        String secretKey = awsProperties.secretKey();
+
         return StringUtils.hasText(sessionToken)
-                ? StaticCredentialsProvider.create(AwsSessionCredentials.create(awsProperties.accessKey(), awsProperties.secretKey(), sessionToken))
-                : StaticCredentialsProvider.create(AwsBasicCredentials.create(awsProperties.accessKey(), awsProperties.secretKey()));
+                ? StaticCredentialsProvider.create(AwsSessionCredentials.create(accessKey, secretKey, sessionToken))
+                : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
     }
 }

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.common.config;
+package com.zufar.icedlatte.filestorage.aws;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,8 +35,6 @@ class AWSConfigTest {
 
         try (S3Client client = config.s3Client()) {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.of("eu-west-2"));
-            // When AWS_ENDPOINT_URL env var is set (e.g., local Docker MinIO),
-            // the SDK picks it up automatically. Only assert empty when env is unset.
             String envEndpoint = System.getenv("AWS_ENDPOINT_URL");
             if (envEndpoint == null || envEndpoint.isBlank()) {
                 assertThat(client.serviceClientConfiguration().endpointOverride()).isEmpty();

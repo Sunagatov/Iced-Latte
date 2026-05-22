@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.common.temporarycache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;

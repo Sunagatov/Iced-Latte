@@ -86,6 +86,6 @@ public class PutUsersRequestValidator {
     }
 
     private static String error(String message) {
-        return String.format(" Error: { %s }. ", message);
+        return " Error: { %s }. ".formatted(message);
     }
 }

@@ -4,8 +4,10 @@ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FavoriteListDtoConverterTest {
 
-    private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter();
+    private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter(Mappers.getMapper(ProductInfoDtoConverter.class));
 
     @Test
     @DisplayName("converts entity to ListOfFavoriteProductsDto with product details")

@@ -4,8 +4,10 @@ import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -16,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ShoppingCartDtoConverterTest {
 
-    private final ShoppingCartDtoConverter converter = new ShoppingCartDtoConverter();
+    private final ShoppingCartDtoConverter converter = new ShoppingCartDtoConverter(Mappers.getMapper(ProductInfoDtoConverter.class));
 
     @Test
     @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")

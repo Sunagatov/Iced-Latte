@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.common.temporarycache.ExpiringKeyValueStore;
+import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.config.jwt.JwtProperties;
 import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
