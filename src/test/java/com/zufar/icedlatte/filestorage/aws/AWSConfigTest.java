@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,6 +26,10 @@ class AWSConfigTest {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.of("eu-west-2"));
             assertThat(client.serviceClientConfiguration().endpointOverride())
                     .isEqualTo(Optional.of(URI.create("http://localhost:9000")));
+            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallTimeout())
+                    .contains(Duration.ofSeconds(60));
+            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallAttemptTimeout())
+                    .contains(Duration.ofSeconds(15));
         }
     }
 
@@ -63,10 +68,23 @@ class AWSConfigTest {
 
         try (CloudFrontClient client = config.cloudFrontClient()) {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.AWS_GLOBAL);
+            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallTimeout())
+                    .contains(Duration.ofSeconds(60));
+            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallAttemptTimeout())
+                    .contains(Duration.ofSeconds(15));
         }
     }
 
     private static AWSConfig configured(String endpointUrl) {
-        return new AWSConfig(new AwsProperties("access-key", "secret-key", "eu-west-2", endpointUrl));
+        return new AWSConfig(new AwsProperties(
+                "access-key",
+                "secret-key",
+                "eu-west-2",
+                endpointUrl,
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(60),
+                Duration.ofSeconds(60),
+                Duration.ofSeconds(15)));
     }
 }

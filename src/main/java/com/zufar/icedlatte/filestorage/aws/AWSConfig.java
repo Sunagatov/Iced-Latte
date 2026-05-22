@@ -9,7 +9,9 @@ import org.springframework.util.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -34,7 +36,9 @@ public class AWSConfig {
         try {
             var builder = S3Client.builder()
                     .credentialsProvider(buildCredentials())
-                    .region(Region.of(region));
+                    .region(Region.of(region))
+                    .httpClientBuilder(buildHttpClient())
+                    .overrideConfiguration(buildOverrideConfiguration());
             if (!StringUtils.hasText(endpointUrl)) {
                 return builder.build();
             }
@@ -66,6 +70,21 @@ public class AWSConfig {
         return CloudFrontClient.builder()
                 .credentialsProvider(buildCredentials())
                 .region(Region.AWS_GLOBAL)
+                .httpClientBuilder(buildHttpClient())
+                .overrideConfiguration(buildOverrideConfiguration())
+                .build();
+    }
+
+    private UrlConnectionHttpClient.Builder buildHttpClient() {
+        return UrlConnectionHttpClient.builder()
+                .connectionTimeout(awsProperties.connectTimeout())
+                .socketTimeout(awsProperties.readTimeout());
+    }
+
+    private ClientOverrideConfiguration buildOverrideConfiguration() {
+        return ClientOverrideConfiguration.builder()
+                .apiCallAttemptTimeout(awsProperties.apiCallAttemptTimeout())
+                .apiCallTimeout(awsProperties.apiCallTimeout())
                 .build();
     }
 

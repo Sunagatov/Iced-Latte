@@ -71,6 +71,8 @@ spring:
     link-expiration-time: PT1H
     read-timeout: 10s
     connect-timeout: 10s
+    api-call-attempt-timeout: 15s
+    api-call-timeout: 60s
     write-timeout: 60s
     secure: false
     default-image-directory:
