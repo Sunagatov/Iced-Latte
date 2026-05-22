@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.correlation;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.http.RequestPathUtils;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -74,7 +75,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
             if (status >= 500) {
                 log.error(OUTCOME, args);
-            } else if (status == 404 && isPublicInternetNoise(path)) {
+            } else if (status == 404 && RequestPathUtils.isPublicInternetNoise(path)) {
                 log.debug(OUTCOME, args);
             } else if (!authenticated && status == HttpServletResponse.SC_UNAUTHORIZED && isExpectedAnonymousAuthProbe(path)) {
                 log.debug(OUTCOME, args);
@@ -109,20 +110,13 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 || ApiPaths.FAVORITES.equals(path);
     }
 
-    private static boolean isPublicInternetNoise(String path) {
-        String normalized = normalizePath(path);
-        return !normalized.startsWith(ApiPaths.API_ROOT + "/")
-                && !normalized.startsWith(ApiPaths.ACTUATOR_ROOT)
-                && !normalized.startsWith(ApiPaths.DOCS_ROOT);
-    }
-
     private static String resolvePathTemplate(HttpServletRequest request) {
         Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String resolved = pattern != null ? pattern.toString() : null;
         if (resolved == null || "/**".equals(resolved)) {
             resolved = request.getRequestURI();
         }
-        return sanitize(normalizePath(resolved));
+        return RequestPathUtils.sanitize(RequestPathUtils.normalizePath(resolved));
     }
 
     private static boolean isAuthenticated() {
@@ -130,16 +124,5 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         return auth != null
                 && auth.isAuthenticated()
                 && !ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
-    }
-
-    private static String normalizePath(String value) {
-        if (value == null || value.isBlank()) {
-            return "/";
-        }
-        return value.startsWith("/") ? value : "/" + value;
-    }
-
-    private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
     }
 }

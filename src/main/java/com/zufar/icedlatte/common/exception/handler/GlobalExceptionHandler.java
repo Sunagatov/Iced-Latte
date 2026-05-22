@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.exception.handler;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.http.RequestPathUtils;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,9 +72,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ProblemDetail handleNoResourceFoundException(final NoResourceFoundException exception) {
-        String path = normalizePath(sanitize(exception.getResourcePath()));
+        String path = RequestPathUtils.normalizePath(RequestPathUtils.sanitize(exception.getResourcePath()));
         String method = exception.getHttpMethod().name();
-        if (isPublicInternetNoise(path)) {
+        if (RequestPathUtils.isPublicInternetNoise(path)) {
             log.debug("exception.resource_not_found.scan: method={}, path={}", method, path);
         } else {
             log.debug("exception.resource_not_found: method={}, path={}", method, path);
@@ -142,7 +143,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<ProblemDetail> handleHttpMediaTypeNotAcceptableException(
             final HttpMediaTypeNotAcceptableException exception) {
-        log.debug("exception.not_acceptable: status=406, message={}", sanitize(exception.getMessage()));
+        log.debug("exception.not_acceptable: status=406, message={}", RequestPathUtils.sanitize(exception.getMessage()));
         ProblemDetail pd = problemDetailFactory.build("about:blank", "Not Acceptable",
                 HttpStatus.NOT_ACCEPTABLE, "The requested media type is not supported.");
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(pd);
@@ -151,9 +152,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
             final HttpRequestMethodNotSupportedException exception) {
-        log.debug("exception.method_not_supported: method={}, status=405", sanitize(exception.getMethod()));
+        log.debug("exception.method_not_supported: method={}, status=405", RequestPathUtils.sanitize(exception.getMethod()));
         ProblemDetail pd = problemDetailFactory.build("about:blank", "Method Not Allowed",
-                HttpStatus.METHOD_NOT_ALLOWED, "HTTP method '" + sanitize(exception.getMethod()) + "' is not supported.");
+                HttpStatus.METHOD_NOT_ALLOWED, "HTTP method '" + RequestPathUtils.sanitize(exception.getMethod()) + "' is not supported.");
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(pd);
     }
 
@@ -175,26 +176,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(pd);
     }
 
-    private static boolean isPublicInternetNoise(String path) {
-        return !path.startsWith("/api/")
-                && !path.startsWith("/actuator/")
-                && !path.startsWith("/api/docs/");
-    }
-
-    private static String normalizePath(String value) {
-        if (value == null || value.isBlank()) {
-            return "/";
-        }
-        return value.startsWith("/") ? value : "/" + value;
-    }
-
-    private static String sanitize(String value) {
-        return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
-    }
-
     private static HttpStatus resolveHttpStatus(Exception exception) {
-        ResponseStatus responseStatus = AnnotatedElementUtils.findMergedAnnotation(
-                exception.getClass(), ResponseStatus.class);
-        return responseStatus != null ? responseStatus.code() : HttpStatus.INTERNAL_SERVER_ERROR;
+        ResponseStatus responseStatus = AnnotatedElementUtils.findMergedAnnotation(exception.getClass(), ResponseStatus.class);
+        return responseStatus == null ?
+                HttpStatus.INTERNAL_SERVER_ERROR : responseStatus.code();
     }
 }
