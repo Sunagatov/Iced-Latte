@@ -22,6 +22,7 @@ import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -50,7 +51,7 @@ public class OrderCreator implements OrderCheckoutApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(final UUID userId,
                            final CreateNewOrderRequestDto request,
-                           final String idempotencyKey) {
+                           final @Nullable String idempotencyKey) {
         if (idempotencyKey != null) {
             Optional<Order> existing = orderRepository.findByIdempotencyKeyAndUserId(idempotencyKey, userId);
             if (existing.isPresent()) {
@@ -62,7 +63,7 @@ public class OrderCreator implements OrderCheckoutApi {
         validateAddressInput(request);
 
         CartSnapshot cart = cartCheckoutApi.getByUserIdOrThrow(userId);
-        if (cart.items() == null || cart.items().isEmpty()) {
+        if (cart.items().isEmpty()) {
             throw new BadRequestException("Cannot create order: shopping cart is empty for userId=" + userId);
         }
 
@@ -145,8 +146,8 @@ public class OrderCreator implements OrderCheckoutApi {
         return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
     }
 
-    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId,
-                                                AddressDto inlineAddress,
+    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId,
+                                                @Nullable AddressDto inlineAddress,
                                                 UUID userId) {
         if (deliveryAddressId != null) {
             try {
@@ -166,8 +167,8 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
     }
 
-    private OrderAddress resolveDeliveryAddress(UUID deliveryAddressId,
-                                                OrderAddressRequest inlineAddress,
+    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId,
+                                                @Nullable OrderAddressRequest inlineAddress,
                                                 UUID userId) {
         if (deliveryAddressId != null) {
             try {
@@ -200,7 +201,8 @@ public class OrderCreator implements OrderCheckoutApi {
         validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
     }
 
-    private static void validateCheckoutAddressInput(UUID deliveryAddressId, AddressDto inlineAddress) {
+    private static void validateCheckoutAddressInput(@Nullable UUID deliveryAddressId,
+                                                     @Nullable AddressDto inlineAddress) {
         boolean hasId = deliveryAddressId != null;
         boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {
@@ -211,7 +213,8 @@ public class OrderCreator implements OrderCheckoutApi {
         }
     }
 
-    private static void validateCheckoutAddressInput(UUID deliveryAddressId, OrderAddressRequest inlineAddress) {
+    private static void validateCheckoutAddressInput(@Nullable UUID deliveryAddressId,
+                                                     @Nullable OrderAddressRequest inlineAddress) {
         boolean hasId = deliveryAddressId != null;
         boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {

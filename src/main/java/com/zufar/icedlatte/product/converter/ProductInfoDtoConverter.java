@@ -4,6 +4,7 @@ import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.entity.ProductInfo;
+import org.jspecify.annotations.Nullable;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;
 
@@ -20,6 +21,7 @@ public interface ProductInfoDtoConverter {
     @Mapping(target = "averageRating", source = "averageRating", qualifiedByName = "roundAverageRatingValue")
     @Mapping(target = "dateAdded", source = "dateAdded", qualifiedByName = "localToOffsetDate")
     @Mapping(target = "productFileUrl", ignore = true)
+    @Mapping(target = "productImageUrls", ignore = true)
     ProductInfoDto toDto(ProductInfo entity);
 
     @Mapping(target = "products", source = "content")
@@ -33,12 +35,12 @@ public interface ProductInfoDtoConverter {
     ProductInfoDto fromSnapshot(ProductSnapshot snapshot);
 
     @Named("roundAverageRatingValue")
-    default BigDecimal roundAverageRatingValue(BigDecimal averageRating) {
+    default @Nullable BigDecimal roundAverageRatingValue(@Nullable BigDecimal averageRating) {
         return (averageRating == null) ? null : averageRating.setScale(1, RoundingMode.HALF_UP);
     }
 
     @Named("localToOffsetDate")
-    default OffsetDateTime localToOffsetDate(LocalDateTime value) {
+    default @Nullable OffsetDateTime localToOffsetDate(@Nullable LocalDateTime value) {
         return (value == null) ? null : value.atOffset(ZoneOffset.UTC);
     }
 }

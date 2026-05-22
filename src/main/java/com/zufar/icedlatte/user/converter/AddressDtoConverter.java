@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.converter;
 
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.entity.Address;
+import org.jspecify.annotations.Nullable;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
@@ -15,7 +16,7 @@ public interface AddressDtoConverter {
     AddressDto toDto(final Address entity);
 
     @Named("toAddress")
-    default Address toEntity(final AddressDto dto) {
+    default @Nullable Address toEntity(final @Nullable AddressDto dto) {
         if (dto == null) {
             return null;
         }
@@ -34,7 +35,7 @@ public interface AddressDtoConverter {
                 .build();
     }
 
-    private static boolean isBlank(String s) {
+    private static boolean isBlank(@Nullable String s) {
         return s == null || s.isBlank();
     }
 }

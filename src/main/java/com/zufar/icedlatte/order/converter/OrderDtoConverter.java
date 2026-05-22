@@ -11,9 +11,12 @@ import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
+import org.jspecify.annotations.Nullable;
 import org.mapstruct.*;
 
 import java.util.List;
+
+import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -38,11 +41,15 @@ public interface OrderDtoConverter {
                 : order.getItems().stream()
                 .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
                 .toList();
-        return new OrderSnapshot(order.getId(), order.getUserId(), toStatusSnapshot(order.getStatus()),
+
+        OrderStatusSnapshot statusSnapshot = requireNonNullOrThrow(toStatusSnapshot(order.getStatus()),
+                () -> new IllegalStateException("Order status must not be null for orderId: " + order.getId()));
+
+        return new OrderSnapshot(order.getId(), order.getUserId(), statusSnapshot,
                 order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
     }
 
-    default OrderStatusSnapshot toStatusSnapshot(OrderStatus status) {
+    default @Nullable OrderStatusSnapshot toStatusSnapshot(@Nullable OrderStatus status) {
         return status == null ? null : OrderStatusSnapshot.valueOf(status.name());
     }
 

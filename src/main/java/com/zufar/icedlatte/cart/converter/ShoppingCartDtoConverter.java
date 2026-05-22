@@ -8,6 +8,7 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
 
 @Component
 @RequiredArgsConstructor
@@ -26,7 +29,12 @@ public class ShoppingCartDtoConverter {
                                  final Map<UUID, ProductSnapshot> productsById) {
         List<ShoppingCartItemDto> itemDtos = cart.getItems() == null ? List.of() :
                 cart.getItems().stream()
-                        .map(item -> toItemDto(item, productsById.get(item.getProductId())))
+                        .filter(item -> productsById.containsKey(item.getProductId()))
+                        .map(item -> {
+                            var product = requireNonNullOrThrow(productsById.get(item.getProductId()),
+                                    () -> new ProductNotFoundException(item.getProductId()));
+                            return toItemDto(item, product);
+                        })
                         .toList();
 
         BigDecimal itemsTotalPrice = itemDtos.stream()
@@ -59,14 +67,15 @@ public class ShoppingCartDtoConverter {
                                    final Map<UUID, ProductSnapshot> productsById) {
         List<CartItemSnapshot> items = cart.getItems() == null ? List.of() :
                 cart.getItems().stream()
-                        .map(item -> new CartItemSnapshot(
-                                item.getId(),
-                                productsById.get(item.getProductId()),
-                                item.getProductQuantity()))
+                        .filter(item -> productsById.containsKey(item.getProductId()))
+                        .map(item -> {
+                            var product = requireNonNullOrThrow(productsById.get(item.getProductId()),
+                                    () -> new ProductNotFoundException(item.getProductId()));
+                            return new CartItemSnapshot(item.getId(), product, item.getProductQuantity());
+                        })
                         .toList();
 
         BigDecimal totalPrice = items.stream()
-                .filter(item -> item.product() != null && item.product().price() != null)
                 .map(item -> item.product().price().multiply(BigDecimal.valueOf(item.productQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 

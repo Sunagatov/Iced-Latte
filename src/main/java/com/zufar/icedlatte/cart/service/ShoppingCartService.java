@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -219,7 +221,8 @@ public class ShoppingCartService implements CartCheckoutApi {
 
         return newProductIds.stream()
                 .map(productId -> {
-                    Integer productQuantity = productsWithQuantity.get(productId);
+                    int productQuantity = requireNonNullOrThrow(productsWithQuantity.get(productId),
+                            () -> new IllegalStateException("Product quantity not found for productId: " + productId));
                     validateProductQuantity(productQuantity);
                     return ShoppingCartItem.builder()
                             .shoppingCart(shoppingCart)

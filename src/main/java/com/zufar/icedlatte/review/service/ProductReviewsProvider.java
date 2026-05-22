@@ -16,6 +16,7 @@ import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -38,11 +39,11 @@ public class ProductReviewsProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductReviewsAndRatingsWithPagination getProductReviews(final UUID productId,
-                                                                    final Integer pageNumber,
-                                                                    final Integer pageSize,
-                                                                    final String sortAttribute,
-                                                                    final String sortDirection,
-                                                                    final List<Integer> productRatings) {
+                                                                    final @Nullable Integer pageNumber,
+                                                                    final @Nullable Integer pageSize,
+                                                                    final @Nullable String sortAttribute,
+                                                                    final @Nullable String sortDirection,
+                                                                    final @Nullable List<Integer> productRatings) {
         productReviewValidator.validateProductExists(productId);
         var pageRequest = buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
 
@@ -63,10 +64,10 @@ public class ProductReviewsProvider {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public ProductReviewsAndRatingsWithPagination getUserReviews(final UUID userId,
-                                                                 final Integer pageNumber,
-                                                                 final Integer pageSize,
-                                                                 final String sortAttribute,
-                                                                 final String sortDirection) {
+                                                                 final @Nullable Integer pageNumber,
+                                                                 final @Nullable Integer pageSize,
+                                                                 final @Nullable String sortAttribute,
+                                                                 final @Nullable String sortDirection) {
         var responsePage = reviewRepository
                 .findAllByUserId(userId, buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, null))
                 .map(this::toProductReviewDto);
@@ -78,11 +79,11 @@ public class ProductReviewsProvider {
         return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
 
-    private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(Integer pageNumber,
-                                                                                      Integer pageSize,
-                                                                                      String sortAttribute,
-                                                                                      String sortDirection,
-                                                                                      List<Integer> productRatings) {
+    private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(@Nullable Integer pageNumber,
+                                                                                      @Nullable Integer pageSize,
+                                                                                      @Nullable String sortAttribute,
+                                                                                      @Nullable String sortDirection,
+                                                                                      @Nullable List<Integer> productRatings) {
         int page = pageNumber != null ? pageNumber : paginationConfig.defaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.reviews().defaultPageSize();
         String sortAttr = sortAttribute != null ? sortAttribute : paginationConfig.reviews().defaultSortAttribute();
