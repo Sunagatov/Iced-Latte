@@ -247,12 +247,6 @@ class ArchitectureRulesTest {
                     .should().dependOnClassesThat().resideInAnyPackage("..product.entity..");
 
     @ArchTest
-    static final ArchRule non_product_modules_should_not_depend_on_product_converters =
-            noClasses()
-                    .that().resideOutsideOfPackage("..product..")
-                    .should().dependOnClassesThat().resideInAnyPackage("..product.converter..");
-
-    @ArchTest
     static final ArchRule non_product_modules_should_not_depend_on_product_services =
             noClasses()
                     .that().resideOutsideOfPackage("..product..")

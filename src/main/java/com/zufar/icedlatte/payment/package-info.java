@@ -3,6 +3,7 @@
                 "cart :: api",
                 "common :: *",
                 "order :: api",
+                "order :: converter",
                 "order :: exception",
                 "product :: api",
                 "security :: api"

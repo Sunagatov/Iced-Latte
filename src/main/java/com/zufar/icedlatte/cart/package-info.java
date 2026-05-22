@@ -2,6 +2,7 @@
         allowedDependencies = {
                 "common :: *",
                 "product :: api",
+                "product :: converter",
                 "product :: exception",
                 "security :: api"
         }
