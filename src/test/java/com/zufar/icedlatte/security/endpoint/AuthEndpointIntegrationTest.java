@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.service.oauth.OAuthLoginService;
-import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
-import com.zufar.icedlatte.security.service.oauth.OAuthProviderClient;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;

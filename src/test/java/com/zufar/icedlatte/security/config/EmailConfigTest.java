@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.config;
 
-import com.zufar.icedlatte.security.config.email.EmailConfig;
-import com.zufar.icedlatte.security.config.email.EmailDisabledConfig;
-import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.email.config.EmailConfig;
+import com.zufar.icedlatte.security.email.config.EmailDisabledConfig;
+import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;

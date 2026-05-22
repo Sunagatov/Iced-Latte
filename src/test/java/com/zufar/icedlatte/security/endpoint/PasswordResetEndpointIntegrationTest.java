@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.endpoint;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
-import com.zufar.icedlatte.security.service.token.TokenPurpose;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -2,12 +2,12 @@ package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.service.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
-import com.zufar.icedlatte.security.service.signin.UserAuthenticationService;
-import com.zufar.icedlatte.security.service.token.SessionTokenService;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.session.token.SessionTokenService;
+import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;

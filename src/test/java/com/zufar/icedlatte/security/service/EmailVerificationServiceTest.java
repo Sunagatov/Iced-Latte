@@ -1,17 +1,17 @@
 package com.zufar.icedlatte.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
-import com.zufar.icedlatte.security.service.email.AuthTokenEmailSender;
-import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
-import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
-import com.zufar.icedlatte.security.service.token.TokenPurpose;
-import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;

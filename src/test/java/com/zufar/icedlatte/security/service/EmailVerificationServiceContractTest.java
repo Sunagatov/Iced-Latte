@@ -2,15 +2,15 @@ package com.zufar.icedlatte.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.TimeTokenException;
-import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
-import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
-import com.zufar.icedlatte.security.service.token.TokenPurpose;
-import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
+import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class EmailVerificationServiceContractTest {
         service = new EmailVerificationService(
                 new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
-                mock(com.zufar.icedlatte.security.service.email.AuthTokenEmailSender.class),
+                mock(com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender.class),
                 mock(UserRegistrationService.class),
                 mock(UserLookupApi.class),
                 mock(UserAccessControlApi.class)

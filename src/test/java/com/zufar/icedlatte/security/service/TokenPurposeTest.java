@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.service.token.TokenPurpose;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

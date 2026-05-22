@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.exception.JwtTokenException;
-import com.zufar.icedlatte.security.service.jwt.support.JwtSigningKeys;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

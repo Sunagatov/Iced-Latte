@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
-import com.zufar.icedlatte.security.service.session.TokenRevocationService;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.session.revocation.TokenRevocationService;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.config;
 
-import com.zufar.icedlatte.security.config.jwt.JwtProperties;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;

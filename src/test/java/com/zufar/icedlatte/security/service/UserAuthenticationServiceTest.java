@@ -2,11 +2,11 @@ package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.exception.UserAccountLockedException;
-import com.zufar.icedlatte.security.service.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.service.signin.LoginAttemptService;
-import com.zufar.icedlatte.security.service.signin.UserAuthenticationService;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
+import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

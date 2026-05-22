@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.service.principal;
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
+import com.zufar.icedlatte.security.principal.DefaultCurrentUserProvider;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import org.junit.jupiter.api.AfterEach;

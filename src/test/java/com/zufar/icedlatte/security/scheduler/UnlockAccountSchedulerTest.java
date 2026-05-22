@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.scheduler;
 
-import com.zufar.icedlatte.security.service.signin.LoginAttemptService;
-import com.zufar.icedlatte.security.service.signin.UnlockAccountScheduler;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
+import com.zufar.icedlatte.security.signin.lockout.UnlockAccountScheduler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

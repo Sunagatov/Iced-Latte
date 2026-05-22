@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.exception.TimeTokenException;
-import com.zufar.icedlatte.security.service.password.PasswordResetService;
-import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
+import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
+import com.zufar.icedlatte.security.signup.password.PasswordResetService;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;

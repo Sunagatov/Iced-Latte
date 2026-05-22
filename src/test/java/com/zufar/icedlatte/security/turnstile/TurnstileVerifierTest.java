@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.security.turnstile;
 
-import com.zufar.icedlatte.security.exception.TurnstileVerificationException;
-import com.zufar.icedlatte.security.service.turnstile.TurnstileVerifier;
+import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

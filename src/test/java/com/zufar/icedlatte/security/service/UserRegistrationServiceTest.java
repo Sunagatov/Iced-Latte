@@ -2,9 +2,9 @@ package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.exception.UserRegistrationException;
-import com.zufar.icedlatte.security.service.signup.UserRegistrationService;
-import com.zufar.icedlatte.security.service.token.SessionTokenService;
+import com.zufar.icedlatte.security.session.token.SessionTokenService;
+import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 import jakarta.servlet.http.HttpServletRequest;

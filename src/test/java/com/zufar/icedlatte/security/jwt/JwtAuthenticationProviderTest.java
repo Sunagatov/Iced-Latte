@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.service.jwt.provider.JwtAuthenticationProvider;
-import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.test.config;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.service.signup.EmailVerificationService;
-import com.zufar.icedlatte.security.service.token.TokenPurpose;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.springframework.beans.factory.annotation.Autowired;

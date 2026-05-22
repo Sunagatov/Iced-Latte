@@ -1,14 +1,14 @@
 package com.zufar.icedlatte.security.service;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.service.jwt.support.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.service.jwt.support.JwtTokenClaims;
-import com.zufar.icedlatte.security.service.session.AuthSessionService;
-import com.zufar.icedlatte.security.service.token.RefreshTokenService;
-import com.zufar.icedlatte.security.service.token.SessionTokenService;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.session.token.RefreshTokenService;
+import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

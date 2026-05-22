@@ -1,7 +1,11 @@
 package com.zufar.icedlatte.security.oauth.service;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.service.oauth.*;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.flow.OAuthFlowService;
+import com.zufar.icedlatte.security.oauth.flow.OAuthStateStore;
+import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

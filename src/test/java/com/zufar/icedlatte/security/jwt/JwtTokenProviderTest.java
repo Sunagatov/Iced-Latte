@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.jwt;
 
-import com.zufar.icedlatte.security.config.jwt.JwtProperties;
-import com.zufar.icedlatte.security.service.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.service.jwt.support.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;

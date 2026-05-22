@@ -2,6 +2,9 @@ package com.zufar.icedlatte.security.service.oauth;
 
 import com.google.api.client.googleapis.auth.oauth2.*;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.security.oauth.config.GoogleOAuthProperties;
+import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
+import com.zufar.icedlatte.security.oauth.login.GoogleTokenExchanger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

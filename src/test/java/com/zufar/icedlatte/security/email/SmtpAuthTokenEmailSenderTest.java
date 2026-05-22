@@ -1,6 +1,6 @@
 package com.zufar.icedlatte.security.email;
 
-import com.zufar.icedlatte.security.service.email.SmtpAuthTokenEmailSender;
+import com.zufar.icedlatte.security.email.sender.SmtpAuthTokenEmailSender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

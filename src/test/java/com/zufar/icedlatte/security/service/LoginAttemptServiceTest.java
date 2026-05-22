@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.service;
 
-import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
-import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
-import com.zufar.icedlatte.security.service.signin.LoginAttemptService;
+import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
+import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

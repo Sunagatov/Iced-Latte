@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.security.oauth.service;
 
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.flow.OAuthStateStore;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
-import com.zufar.icedlatte.security.service.oauth.OAuthProvider;
-import com.zufar.icedlatte.security.service.oauth.OAuthStateStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
