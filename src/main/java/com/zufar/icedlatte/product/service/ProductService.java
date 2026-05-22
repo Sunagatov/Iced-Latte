@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.service;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import org.jspecify.annotations.Nullable;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
@@ -46,6 +47,7 @@ public class ProductService implements ProductCatalogApi {
         return productPictureLinkUpdater.update(productInfoDtoConverter.toDto(product));
     }
 
+    @Override
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductSnapshot> getProductsByIds(final List<UUID> ids) {
         return getProductDtosByIds(ids).stream()
@@ -55,7 +57,7 @@ public class ProductService implements ProductCatalogApi {
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductInfoDto> getProductDtosByIds(final List<UUID> ids) {
-        if (ids == null || ids.isEmpty()) {
+        if (ids.isEmpty()) {
             return List.of();
         }
         List<ProductInfoDto> products = productInfoRepository.findAllById(ids).stream()
@@ -73,12 +75,12 @@ public class ProductService implements ProductCatalogApi {
     }
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public ProductListWithPaginationInfoDto getProductDtos(final Integer pageNumber, final Integer pageSize,
-                                                           final String sortAttribute, final String sortDirection,
-                                                           final BigDecimal minPrice, final BigDecimal maxPrice,
-                                                           final Integer minimumAverageRating,
-                                                           final List<String> brandNames, final List<String> sellerNames,
-                                                           final String keyword) {
+    public ProductListWithPaginationInfoDto getProductDtos(final @Nullable Integer pageNumber, final @Nullable Integer pageSize,
+                                                           final @Nullable String sortAttribute, final @Nullable String sortDirection,
+                                                           final @Nullable BigDecimal minPrice, final @Nullable BigDecimal maxPrice,
+                                                           final @Nullable Integer minimumAverageRating,
+                                                           final @Nullable List<String> brandNames, final @Nullable List<String> sellerNames,
+                                                           final @Nullable String keyword) {
         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,
                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);
 
@@ -107,18 +109,21 @@ public class ProductService implements ProductCatalogApi {
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 
+    @Override
     @Cacheable(cacheNames = "sellers")
     @Transactional(readOnly = true)
     public List<String> getSellerNames() {
         return productInfoRepository.findDistinctSellerNames();
     }
 
+    @Override
     @Cacheable(cacheNames = "brands")
     @Transactional(readOnly = true)
     public List<String> getBrandNames() {
         return productInfoRepository.findDistinctBrandNames();
     }
 
+    @Override
     @Transactional(readOnly = true)
     public boolean existsById(final UUID productId) {
         return productInfoRepository.existsById(productId);

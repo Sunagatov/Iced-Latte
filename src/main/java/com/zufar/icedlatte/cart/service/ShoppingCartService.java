@@ -51,6 +51,7 @@ public class ShoppingCartService implements CartCheckoutApi {
         return toCartDto(getOrCreateCart(userId));
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public CartSnapshot getByUserIdOrThrow(final UUID userId) {
         return shoppingCartRepository.findShoppingCartByUserId(userId)
@@ -58,6 +59,7 @@ public class ShoppingCartService implements CartCheckoutApi {
                 .orElseThrow(() -> new ShoppingCartNotFoundException(userId));
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public CartSnapshot addItems(final UUID userId,
                                  final Set<AddCartItemRequest> itemsToAdd) {
@@ -250,6 +252,7 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
     }
 
+    @Override
     @Transactional
     public void deleteCartForUser(final UUID userId) {
         shoppingCartRepository.deleteByUserId(userId);

@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.validation.pagination;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,10 +12,10 @@ public class PaginationParametersValidator {
 
     private static final Set<String> ALLOWED_SORT_DIRECTION_VALUES = Set.of("asc", "desc");
 
-    public List<String> validate(final Integer pageNumber,
-                                 final Integer pageSize,
-                                 final String sortAttribute,
-                                 final String sortDirection,
+    public List<String> validate(final @Nullable Integer pageNumber,
+                                 final @Nullable Integer pageSize,
+                                 final @Nullable String sortAttribute,
+                                 final @Nullable String sortDirection,
                                  final Set<String> allowedSortAttributeValues) {
         List<String> errors = new ArrayList<>();
         if (pageNumber != null && pageNumber < 0) {

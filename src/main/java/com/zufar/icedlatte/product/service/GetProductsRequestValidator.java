@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.service;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,15 +21,15 @@ public class GetProductsRequestValidator {
 
     private final PaginationParametersValidator paginationParametersValidator;
 
-    public void validate(final Integer pageNumber,
-                         final Integer pageSize,
-                         final String sortAttribute,
-                         final String sortDirection,
-                         final BigDecimal minPrice,
-                         final BigDecimal maxPrice,
-                         final Integer minimumAverageRating,
-                         final List<String> brandNames,
-                         final List<String> sellerNames) {
+    public void validate(final @Nullable Integer pageNumber,
+                         final @Nullable Integer pageSize,
+                         final @Nullable String sortAttribute,
+                         final @Nullable String sortDirection,
+                         final @Nullable BigDecimal minPrice,
+                         final @Nullable BigDecimal maxPrice,
+                         final @Nullable Integer minimumAverageRating,
+                         final @Nullable List<String> brandNames,
+                         final @Nullable List<String> sellerNames) {
 
         List<String> errors = new ArrayList<>(paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
         errors.addAll(validateMinMaxPrice(minPrice, maxPrice));
@@ -46,7 +47,7 @@ public class GetProductsRequestValidator {
         }
     }
 
-    private static List<String> validateMinMaxPrice(BigDecimal minPrice, BigDecimal maxPrice) {
+    private static List<String> validateMinMaxPrice(@Nullable BigDecimal minPrice, @Nullable BigDecimal maxPrice) {
         List<String> errors = new ArrayList<>();
         if (minPrice != null && minPrice.signum() < 0) {
             errors.add(error("'%s' is incorrect 'minPrice'. It must be a non-negative number.".formatted(minPrice)));
@@ -60,9 +61,9 @@ public class GetProductsRequestValidator {
         return errors;
     }
 
-    private static List<String> validateNameList(List<String> names, String fieldName) {
+    private static List<String> validateNameList(@Nullable List<String> names, String fieldName) {
         List<String> errors = new ArrayList<>();
-        if (names != null && names.stream().anyMatch(n -> n == null || n.isBlank())) {
+        if (names != null && names.stream().anyMatch(String::isBlank)) {
             errors.add(error("Some values of '%s' are blank. Values must be non-blank.".formatted(fieldName)));
         }
         if (names != null && names.stream().distinct().count() < names.size()) {

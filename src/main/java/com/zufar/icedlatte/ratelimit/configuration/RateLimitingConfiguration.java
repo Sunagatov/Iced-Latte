@@ -103,6 +103,7 @@ public class RateLimitingConfiguration {
                     .build();
         }
 
+        @Override
         public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {
             try {
                 FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));

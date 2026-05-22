@@ -29,6 +29,7 @@ public class UserGrantedAuthority implements GrantedAuthority {
     @Column(name = "authority", nullable = false, length = 32)
     private Authority authority;
 
+    @Override
     public String getAuthority() {
         return authority.name();
     }

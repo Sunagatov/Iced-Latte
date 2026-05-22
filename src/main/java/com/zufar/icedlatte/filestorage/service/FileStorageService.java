@@ -28,10 +28,12 @@ public class FileStorageService implements FileStorageApi {
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
 
+    @Override
     public boolean isEnabled() {
         return objectStorage.isConfigured();
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void store(MultipartFile file, FileMetadataDto fileMetadataDto) {
         objectStorage.upload(file, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
@@ -39,11 +41,13 @@ public class FileStorageService implements FileStorageApi {
         fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void storeDirectory(String bucketName, String directoryPath) throws IOException {
         objectStorage.uploadDirectory(bucketName, directoryPath);
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED,
             readOnly = true)
@@ -52,6 +56,7 @@ public class FileStorageService implements FileStorageApi {
                 .flatMap(objectStorage::getUrl);
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED,
             isolation = Isolation.READ_COMMITTED,
             readOnly = true)
@@ -63,6 +68,7 @@ public class FileStorageService implements FileStorageApi {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteFile(UUID relatedObjectId) {
         findMetadata(relatedObjectId).ifPresent(fileMetadataDto -> {
@@ -72,6 +78,7 @@ public class FileStorageService implements FileStorageApi {
         });
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshBucketIndex(String bucketName) {
         List<FileMetadataDto> fileMetadataList = objectStorage.listObjectKeys(bucketName).stream()
