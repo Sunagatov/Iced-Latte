@@ -7,7 +7,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.payment.config.StripeProperties;
+import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -40,8 +38,8 @@ public class CheckoutPaymentService {
 
     private final CurrentUserProvider currentUserProvider;
     private final CheckoutPaymentTransactionService txService;
-    private final StripeProperties stripeProperties;
     private final StripeCheckoutSessionCreator stripeSessionCreator;
+    private final StripeSessionLineItemListConverter lineItemConverter;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
@@ -107,7 +105,7 @@ public class CheckoutPaymentService {
         // Rebuild line items from persisted Order.items (NOT the live cart).
         OrderSnapshot order = prepared.order();
         List<SessionCreateParams.LineItem> lineItems = order.items().stream()
-                .map(this::toStripeLineItem)
+                .map(lineItemConverter::toLineItem)
                 .toList();
 
         StripeSessionResult stripeResult = stripeSessionCreator.createFromLineItems(
@@ -121,19 +119,4 @@ public class CheckoutPaymentService {
                 .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
     }
 
-    private SessionCreateParams.LineItem toStripeLineItem(OrderSnapshot.OrderItemSnapshot item) {
-        return SessionCreateParams.LineItem.builder()
-                .setQuantity((long) item.productsQuantity())
-                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                        .setCurrency(stripeProperties.currency())
-                        .setUnitAmount(item.productPrice()
-                                .multiply(BigDecimal.valueOf(100))
-                                .setScale(0, RoundingMode.UNNECESSARY)
-                                .longValueExact())
-                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                .setName(item.productName())
-                                .build())
-                        .build())
-                .build();
-    }
 }

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.payment.converter;
 
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,19 @@ public abstract class StripeSessionLineItemListConverter {
     @Mapping(target = "priceData.productData.name", source = "product.name")
     @Mapping(target = "quantity", source = "productQuantity")
     public abstract SessionCreateParams.LineItem toLineItem(CartItemSnapshot shoppingCartItem);
+
+    public SessionCreateParams.LineItem toLineItem(OrderSnapshot.OrderItemSnapshot item) {
+        return SessionCreateParams.LineItem.builder()
+                .setQuantity((long) item.productsQuantity())
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency(stripeProperties.currency())
+                        .setUnitAmount(toStripeUnitAmount(item.productPrice()))
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName(item.productName())
+                                .build())
+                        .build())
+                .build();
+    }
 
     @Named("toStripeUnitAmount")
     Long toStripeUnitAmount(final BigDecimal price) {
