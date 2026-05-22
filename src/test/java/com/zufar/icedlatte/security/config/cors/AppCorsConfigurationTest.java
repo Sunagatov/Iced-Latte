@@ -14,12 +14,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AppCorsConfigurationTest {
 
     @Test
-    @DisplayName("builds API CORS config with wildcard allowed header support")
-    void buildsCorsConfigWithWildcardAllowedHeader() {
+    @DisplayName("builds API CORS config with explicit allowed headers")
+    void buildsCorsConfigWithExplicitAllowedHeaders() {
         var properties = new CorsProperties(
                 List.of("https://app.example.com"),
                 List.of("GET", "POST"),
-                List.of("*"),
+                List.of("Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin",
+                        "X-Requested-With",
+                        "X-Session-ID",
+                        "X-Trace-ID",
+                        "X-Correlation-ID",
+                        "Idempotency-Key",
+                        "X-Refresh-Token"),
                 List.of("Authorization", "X-Trace-ID"),
                 true,
                 7200L);
@@ -32,7 +41,18 @@ class AppCorsConfigurationTest {
         assertThat(corsConfiguration).isNotNull();
         assertThat(corsConfiguration.getAllowedOriginPatterns()).containsExactly("https://app.example.com");
         assertThat(corsConfiguration.getAllowedMethods()).containsExactly("GET", "POST");
-        assertThat(corsConfiguration.getAllowedHeaders()).containsExactly("*");
+        assertThat(corsConfiguration.getAllowedHeaders())
+                .containsExactly(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin",
+                        "X-Requested-With",
+                        "X-Session-ID",
+                        "X-Trace-ID",
+                        "X-Correlation-ID",
+                        "Idempotency-Key",
+                        "X-Refresh-Token");
         assertThat(corsConfiguration.getExposedHeaders()).containsExactly("Authorization", "X-Trace-ID");
         assertThat(corsConfiguration.getAllowCredentials()).isTrue();
         assertThat(corsConfiguration.getMaxAge()).isEqualTo(7200L);
