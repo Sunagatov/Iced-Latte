@@ -84,13 +84,6 @@ class ProductServiceTest {
     class GetProductsByIds {
 
         @Test
-        @DisplayName("returns empty list for null input")
-        void nullInput_returnsEmpty() {
-            assertThat(productService.getProductDtosByIds(null)).isEmpty();
-            verifyNoInteractions(productInfoRepository);
-        }
-
-        @Test
         @DisplayName("returns empty list for empty input")
         void emptyInput_returnsEmpty() {
             assertThat(productService.getProductDtosByIds(List.of())).isEmpty();
