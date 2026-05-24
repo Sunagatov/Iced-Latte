@@ -39,13 +39,12 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         Runnable runnableJob = () -> transactionTemplate.executeWithoutResult(_ -> {
-                    log.info("migration.ratings.start");
-                    long t0 = System.currentTimeMillis();
-                    productReviewProductApi.refreshAllReviewAggregates();
-                    reviewMaintenanceApi.refreshAllCounts();
-                    log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
-                }
-        );
+            log.info("migration.ratings.start");
+            long t0 = System.currentTimeMillis();
+            productReviewProductApi.refreshAllReviewAggregates();
+            reviewMaintenanceApi.refreshAllCounts();
+            log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
+        });
 
         CompletableFuture.runAsync(runnableJob, executor)
                 .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
