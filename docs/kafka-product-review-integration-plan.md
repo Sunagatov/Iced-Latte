@@ -76,8 +76,10 @@ The product-review module already has a partial event flow:
 
 - `ProductReviewManager` saves a review and publishes `ReviewCreatedEvent`.
 - `ReviewCreatedApplicationEventListener` handles `ReviewCreatedEvent` locally when Kafka is disabled.
-- `ReviewCreatedKafkaPublisher` directly sends `ReviewCreatedEvent` to Kafka when Kafka is enabled.
-- `ReviewCreatedKafkaConsumer` consumes Kafka events and calls `AsyncReviewProcessingService`.
+- `ReviewCreatedOutboxEventListener` writes `ReviewCreatedEvent` into `outbox_events` when Kafka is enabled.
+- `ReviewCreatedKafkaPublisher` publishes claimed `outbox_events` rows to Kafka.
+- `ReviewCreatedKafkaConsumer` records Kafka messages into `inbox_events`.
+- `ReviewCreatedInboxProcessor` processes durable inbox rows and calls `AsyncReviewProcessingService`.
 - `AsyncReviewProcessingService` runs moderation logic. If moderation rejects the review, it deletes the review, refreshes product aggregates, and schedules summary update.
 - Kafka-related configuration already exists in `application.yaml`, `application-dev.yaml`, `.env.example`, and `docker-compose.yml`.
 
@@ -88,11 +90,11 @@ Problems with the current partial Kafka path:
 - There is no durable consumer inbox.
 - Duplicate Kafka delivery is not explicitly controlled by a consumer-side idempotency table.
 - Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.messaging.kafka.*`; this must be verified and fixed during implementation.
-- Existing direct Kafka publishing should be replaced, not extended. The final Kafka-enabled path must be `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
+- Existing direct Kafka publishing is replaced by the final Kafka-enabled path: `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
 - Current Kafka code serializes/deserializes a Java-specific `ReviewCreatedKafkaEvent` type directly. The outbox design should prefer storing and publishing the JSON envelope from `outbox_events.payload`, then mapping that JSON to the review event contract at the listener boundary. This reduces coupling to Java package names and Spring JSON type headers.
 - `ReviewCreatedEvent` currently does not carry `userId`; therefore `actorId` cannot be populated without changing the internal event or passing request context separately.
 - AI is optional through `ai.enabled`; when AI is disabled, moderation and summary services are no-op implementations. Kafka integration must preserve that behavior.
-- `docs/events/schemas/review-created-event.schema.json` currently still requires `payload.text`; implementation must update that schema before Kafka-enabled mode is considered contract-correct.
+- `docs/events/schemas/review-created-event.schema.json` must require `payload.reviewId` and `payload.productId`, and must not allow `payload.text`.
 
 Repo-specific facts to keep in mind during implementation:
 
@@ -177,7 +179,7 @@ Mapping rule:
 
 - Internal `ReviewCreatedEvent` may keep `text` for the non-Kafka local fallback.
 - Kafka-facing `ReviewCreatedKafkaEvent` and the `outbox_events.payload` must not include `text`.
-- `ReviewCreatedOutboxWriter` is responsible for mapping internal domain event data to the Kafka envelope with only `reviewId` and `productId`.
+- `ReviewCreatedOutboxEventListener` is responsible for mapping internal domain event data to the Kafka envelope with only `reviewId` and `productId`.
 - Use the application `ObjectMapper` for JSON serialization so Java time handling and future JSON config stay consistent.
 - Treat serialization failure while writing the outbox row as an application bug and roll back the review transaction in Kafka-enabled mode.
 - Do not put secrets, auth headers, cookies, raw tokens, or review text into payload or headers.
@@ -594,7 +596,6 @@ kafka.outbox.poll-interval=5s
 kafka.outbox.max-attempts=10
 kafka.outbox.stale-lock-timeout=5m
 kafka.outbox.worker-enabled=true
-kafka.outbox.worker-concurrency=1
 ```
 
 The worker should be disabled unless `kafka.enabled=true`.
@@ -638,8 +639,8 @@ Because the Vault broker is single-node, replication factor is currently `1`, so
 
 Serialization recommendation:
 
-- Prefer `KafkaTemplate<String, String>` or `KafkaTemplate<String, JsonNode>` for the generic outbox publisher so it publishes the JSON envelope stored in `outbox_events.payload`.
-- Do not require the generic outbox publisher to know about `ReviewCreatedKafkaEvent`.
+- Use `KafkaTemplate<String, String>` in v1 so the publisher sends the exact JSON envelope stored in `outbox_events.payload`.
+- Keep `ReviewCreatedKafkaPublisher` product-review-owned for the first integration. Extract a generic publisher only after a second module proves the duplication.
 - If Spring's `JsonSerializer` / `JsonDeserializer` is kept, disable reliance on type headers and explicitly fix trusted packages/default type config. A bad package name must fail loudly during Kafka-enabled tests.
 - Configure producer delivery timeout/request timeout intentionally so a stuck broker does not block a worker thread forever.
 
@@ -882,22 +883,23 @@ Suggested package:
 com.zufar.icedlatte.review.messaging.kafka
 ```
 
-Suggested files:
+Current files:
 
 ```text
 review/dto/ReviewCreatedEvent.java
 review/messaging/kafka/event/ReviewCreatedKafkaEvent.java
-review/messaging/kafka/outbox/ReviewCreatedOutboxWriter.java
+review/messaging/kafka/outbox/OutboxEventRepository.java
 review/messaging/kafka/outbox/ReviewCreatedOutboxEventListener.java
-review/messaging/kafka/inbox/ReviewCreatedKafkaListener.java
-review/messaging/kafka/inbox/ReviewCreatedKafkaEventMapper.java
+review/messaging/kafka/outbox/ReviewCreatedKafkaPublisher.java
+review/messaging/kafka/inbox/InboxEventRepository.java
+review/messaging/kafka/inbox/ReviewCreatedKafkaConsumer.java
 review/messaging/kafka/inbox/ReviewCreatedInboxProcessor.java
 ```
 
-Refactor existing direct classes:
+Refactor rules:
 
-- Replace `ReviewCreatedKafkaPublisher` with outbox writing and generic outbox publishing.
-- Refactor `ReviewCreatedKafkaConsumer` so it records to `inbox_events` only.
+- Keep `ReviewCreatedKafkaPublisher` as an outbox publisher that sends stored JSON payloads, not as a direct domain-event publisher.
+- Keep `ReviewCreatedKafkaConsumer` as a thin listener that records to `inbox_events` only.
 - Keep `ReviewCreatedApplicationEventListener` only for `kafka.enabled=false`.
 - Keep `AsyncReviewProcessingService` as the business service used by both local fallback and Kafka inbox processing.
 - Remove `text` from `ReviewCreatedKafkaEvent.Payload`; keep text only in the internal `ReviewCreatedEvent` if the local fallback still needs it.
@@ -930,7 +932,6 @@ kafka:
   outbox:
     enabled: ${KAFKA_OUTBOX_ENABLED:${KAFKA_ENABLED:false}}
     worker-enabled: ${KAFKA_OUTBOX_WORKER_ENABLED:${KAFKA_ENABLED:false}}
-    worker-concurrency: ${KAFKA_OUTBOX_WORKER_CONCURRENCY:1}
     batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:25}
     poll-interval: ${KAFKA_OUTBOX_POLL_INTERVAL:5s}
     max-attempts: ${KAFKA_OUTBOX_MAX_ATTEMPTS:10}
@@ -939,7 +940,6 @@ kafka:
   inbox:
     enabled: ${KAFKA_INBOX_ENABLED:${KAFKA_ENABLED:false}}
     worker-enabled: ${KAFKA_INBOX_WORKER_ENABLED:${KAFKA_ENABLED:false}}
-    worker-concurrency: ${KAFKA_INBOX_WORKER_CONCURRENCY:1}
     batch-size: ${KAFKA_INBOX_BATCH_SIZE:25}
     poll-interval: ${KAFKA_INBOX_POLL_INTERVAL:5s}
     max-attempts: ${KAFKA_INBOX_MAX_ATTEMPTS:10}
@@ -977,7 +977,7 @@ Configuration invariants:
 - Fail application startup when `kafka.enabled=true` and required topic/group/bootstrap properties are blank.
 - Fail application startup when `kafka.enabled=true` but outbox or inbox recording is disabled for the review-created flow.
 - Fail application startup when worker settings are invalid, for example non-positive batch size, non-positive max attempts, negative/zero poll interval, or negative/zero stale-lock timeout.
-- Validate `kafka.outbox.worker-concurrency` and `kafka.inbox.worker-concurrency` are `1` in v1 unless key-level locking is implemented in the same PR.
+- V1 has one scheduled worker loop per running app instance. In production-like deployments, run only one active outbox worker and one active inbox worker unless key-level locking is added.
 - Prefer failing startup over silently dropping product-review events because of inconsistent Kafka configuration.
 - Update `.env.example` with any new `KAFKA_OUTBOX_*` and `KAFKA_INBOX_*` variables introduced by the implementation.
 - Update `application-config.schema.json` if the project uses it to document or validate configuration keys.
@@ -1026,9 +1026,7 @@ Tasks:
 
 - Add Liquibase migration for `outbox_events`.
 - Register the migration in `changelog-master-version-2.0.yaml` with `errorIfMissing: true`.
-- Add `OutboxEvent` entity and repository.
-- Add `OutboxEventWriter`.
-- Add `ReviewCreatedOutboxWriter`.
+- Add `OutboxEventRepository`.
 - Add `ReviewCreatedOutboxEventListener` with `TransactionPhase.BEFORE_COMMIT`.
 - Ensure the outbox listener does not run without an active transaction.
 - Store the serialized Kafka envelope in `outbox_events.payload` during the same database transaction as review creation.
@@ -1052,12 +1050,12 @@ Goal: publish outbox rows to Kafka reliably.
 
 Tasks:
 
-- Add `KafkaOutboxPublisher`.
+- Add `ReviewCreatedKafkaPublisher`.
 - Poll eligible `PENDING` and `FAILED_RETRYABLE` rows.
 - Use row locking to avoid two app instances publishing the same row concurrently.
 - Use `FOR UPDATE SKIP LOCKED` or equivalent PostgreSQL row-locking behavior.
 - Publish to Kafka with configured topic and partition key.
-- Publish the stored JSON envelope from `outbox_events.payload`; do not remap from a JPA entity to product-review-specific DTO inside the generic publisher.
+- Publish the stored JSON envelope from `outbox_events.payload`; do not remap from a JPA entity to product-review-specific DTO inside the publisher.
 - Wait for Kafka send acknowledgement.
 - Mark `PUBLISHED` only after ack.
 - Mark retryable failures with backoff.
@@ -1081,8 +1079,7 @@ Tasks:
 
 - Add Liquibase migration for `inbox_events`.
 - Register the migration in `changelog-master-version-2.0.yaml` with `errorIfMissing: true`.
-- Add `InboxEvent` entity and repository.
-- Add `InboxEventRecorder`.
+- Add `InboxEventRepository`.
 - Refactor `ReviewCreatedKafkaConsumer` into a thin listener.
 - Listener records Kafka event into `inbox_events`.
 - Listener captures topic, partition, offset, key, and safe headers.
@@ -1130,9 +1127,9 @@ Goal: prove reliability boundaries and fallback behavior.
 Unit tests:
 
 - `ReviewCreatedKafkaEventTest`
-- `ReviewCreatedOutboxWriterTest`
-- `KafkaOutboxPublisherTest`
-- `InboxEventRecorderTest`
+- `ReviewCreatedOutboxEventListenerTest`
+- `ReviewCreatedKafkaPublisherTest`
+- `InboxEventRepositoryTest`
 - `ReviewCreatedInboxProcessorTest`
 - `InboxEventWorkerTest`
 - `ReviewCreatedApplicationEventListenerTest`

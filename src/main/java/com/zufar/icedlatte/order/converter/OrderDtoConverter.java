@@ -11,12 +11,9 @@ import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
-import org.jspecify.annotations.Nullable;
 import org.mapstruct.*;
 
 import java.util.List;
-
-import static com.zufar.icedlatte.common.util.Preconditions.requireNonNullOrThrow;
 
 @SuppressWarnings("NullableProblems")
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
@@ -45,15 +42,14 @@ public interface OrderDtoConverter {
                 .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
                 .toList();
 
-        OrderStatusSnapshot statusSnapshot = requireNonNullOrThrow(toStatusSnapshot(order.getStatus()),
-                () -> new IllegalStateException("Order status must not be null for orderId: " + order.getId()));
+        OrderStatus status = order.getStatus();
+        if (status == null) {
+            throw new IllegalStateException("Order status must not be null for orderId: " + order.getId());
+        }
+        OrderStatusSnapshot statusSnapshot = OrderStatusSnapshot.valueOf(status.name());
 
         return new OrderSnapshot(order.getId(), order.getUserId(), statusSnapshot,
                 order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
-    }
-
-    default @Nullable OrderStatusSnapshot toStatusSnapshot(@Nullable OrderStatus status) {
-        return status == null ? null : OrderStatusSnapshot.valueOf(status.name());
     }
 
     @Mapping(target = "address", source = "address")
@@ -61,4 +57,5 @@ public interface OrderDtoConverter {
 
     @Mapping(target = "country", source = "country")
     OrderAddressRequest toAddressRequest(AddressDto address);
+
 }
