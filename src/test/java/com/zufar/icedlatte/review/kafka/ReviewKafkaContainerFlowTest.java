@@ -8,12 +8,15 @@ import com.zufar.icedlatte.review.messaging.kafka.inbox.InboxEventRepository;
 import com.zufar.icedlatte.review.messaging.kafka.inbox.ReviewCreatedKafkaConsumer;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.OutboxEventRepository;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,14 +24,17 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.EmbeddedKafkaKraftBroker;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,21 +44,25 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@DisplayName("Review Kafka embedded flow")
-class ReviewKafkaEmbeddedFlowTest {
+@Testcontainers
+@DisplayName("Review Kafka container flow")
+class ReviewKafkaContainerFlowTest {
 
     private static final String TOPIC = "iced-latte.review.created.v1";
-    private static EmbeddedKafkaBroker embeddedKafka;
+
+    @Container
+    private static final KafkaContainer KAFKA = new KafkaContainer(
+            DockerImageName.parse("apache/kafka-native:3.8.0")
+    );
 
     @BeforeAll
-    static void startKafka() {
-        embeddedKafka = new EmbeddedKafkaKraftBroker(1, 1, TOPIC);
-        embeddedKafka.afterPropertiesSet();
-    }
-
-    @AfterAll
-    static void stopKafka() {
-        embeddedKafka.destroy();
+    static void createTopic() throws Exception {
+        Map<String, Object> bootstrapServersConfig = Map.of(
+                AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers()
+        );
+        try (AdminClient adminClient = AdminClient.create(bootstrapServersConfig)) {
+            adminClient.createTopics(List.of(new NewTopic(TOPIC, 1, (short) 1))).all().get();
+        }
     }
 
     @Test
@@ -83,7 +93,7 @@ class ReviewKafkaEmbeddedFlowTest {
         KafkaIntegrationProperties properties = kafkaProperties();
 
         try (Consumer<String, String> rawConsumer = rawConsumer()) {
-            embeddedKafka.consumeFromAnEmbeddedTopic(rawConsumer, false, TOPIC);
+            rawConsumer.subscribe(List.of(TOPIC));
 
             new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository)
                     .publishPendingOutboxEvents();
@@ -119,7 +129,8 @@ class ReviewKafkaEmbeddedFlowTest {
     }
 
     private KafkaTemplate<String, String> kafkaTemplate() {
-        var producerProperties = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafka));
+        var producerProperties = new HashMap<String, Object>();
+        producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers());
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         var producerFactory = new DefaultKafkaProducerFactory<String, String>(producerProperties);
@@ -127,8 +138,13 @@ class ReviewKafkaEmbeddedFlowTest {
     }
 
     private Consumer<String, String> rawConsumer() {
+        var consumerProperties = new HashMap<String, Object>();
+        consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers());
+        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "review-container-flow");
+        consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         return new DefaultKafkaConsumerFactory<>(
-                KafkaTestUtils.consumerProps(embeddedKafka, "review-embedded-flow", true),
+                consumerProperties,
                 new StringDeserializer(),
                 new StringDeserializer()
         ).createConsumer();
