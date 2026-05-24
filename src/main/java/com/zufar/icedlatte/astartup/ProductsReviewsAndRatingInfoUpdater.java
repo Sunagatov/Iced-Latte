@@ -1,9 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -11,8 +10,11 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -36,18 +38,22 @@ public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
             return;
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
-        CompletableFuture.runAsync(() ->
-                transactionTemplate.executeWithoutResult(_ -> {
+        Runnable runnableJob = () -> transactionTemplate.executeWithoutResult(_ -> {
                     log.info("migration.ratings.start");
                     long t0 = System.currentTimeMillis();
                     productReviewProductApi.refreshAllReviewAggregates();
                     reviewMaintenanceApi.refreshAllCounts();
                     log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
-                }), executor)
-            .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
-            .whenComplete((_, e) -> {
-                executor.close();
-                if (e != null) log.error("migration.ratings.error: message={}", e.getMessage(), e);
-            });
+                }
+        );
+
+        CompletableFuture.runAsync(runnableJob, executor)
+                .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
+                .whenComplete((_, e) -> {
+                    executor.close();
+                    if (e != null) {
+                        log.error("migration.ratings.error: message={}", e.getMessage(), e);
+                    }
+                });
     }
 }

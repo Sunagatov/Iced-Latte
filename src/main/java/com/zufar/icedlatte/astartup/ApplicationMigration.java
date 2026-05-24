@@ -41,21 +41,24 @@ public class ApplicationMigration implements ApplicationRunner {
             return;
         }
         var executor = Executors.newVirtualThreadPerTaskExecutor();
-        CompletableFuture.runAsync(uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled"), executor)
+        Runnable uploadFilesJob = uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled");
+
+        CompletableFuture.runAsync(uploadFilesJob, executor)
                 .thenRunAsync(this::refreshMetadataIndex, executor)
                 .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
                 .whenComplete((_, e) -> {
                     executor.close();
                     if (e != null) {
-                        log.error("migration.aws.error: exceptionClass={}",
-                                e.getClass().getSimpleName(), e);
+                        log.error("migration.aws.error: exceptionClass={}", e.getClass().getSimpleName(), e);
                     }
                 });
     }
 
     private boolean isAwsConfigured() {
-        return productPictureBucket != null && !productPictureBucket.isEmpty()
-                && directoryPath != null && !directoryPath.isEmpty()
+        return productPictureBucket != null
+                && !productPictureBucket.isEmpty()
+                && directoryPath != null
+                && !directoryPath.isEmpty()
                 && fileStorageApi.isEnabled();
     }
 
@@ -64,13 +67,16 @@ public class ApplicationMigration implements ApplicationRunner {
             log.info("migration.upload.start: path={}", directoryPath);
             long t0 = System.currentTimeMillis();
             fileStorageApi.storeDirectory(productPictureBucket, directoryPath);
-            log.info("migration.upload.finish: bucket={}, path={}, durationMs={}", productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
+            log.info("migration.upload.finish: bucket={}, path={}, durationMs={}",
+                    productPictureBucket, directoryPath, System.currentTimeMillis() - t0);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
         } catch (FileReadException e) {
-            log.warn("migration.upload.read_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            log.warn("migration.upload.read_error: exceptionClass={}",
+                    e.getClass().getSimpleName(), e);
         } catch (java.io.IOException e) {
-            log.warn("migration.upload.io_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            log.warn("migration.upload.io_error: exceptionClass={}",
+                    e.getClass().getSimpleName(), e);
         }
     }
 
@@ -79,9 +85,11 @@ public class ApplicationMigration implements ApplicationRunner {
             fileStorageApi.refreshBucketIndex(productPictureBucket);
             log.info("migration.metadata.refreshed: bucket={}", productPictureBucket);
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
-            log.warn("migration.metadata.refresh_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            log.warn("migration.metadata.refresh_error: exceptionClass={}",
+                    e.getClass().getSimpleName(), e);
         } catch (DataAccessException e) {
-            log.warn("migration.metadata.persist_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            log.warn("migration.metadata.persist_error: exceptionClass={}",
+                    e.getClass().getSimpleName(), e);
         }
     }
 }
