@@ -181,6 +181,14 @@ Mapping rule:
 - Treat serialization failure while writing the outbox row as an application bug and roll back the review transaction in Kafka-enabled mode.
 - Do not put secrets, auth headers, cookies, raw tokens, or review text into payload or headers.
 
+Header policy:
+
+- Headers are optional in v1.
+- Safe headers may include `eventId`, `eventType`, `eventVersion`, `sourceApp`, `correlationId`, and `contentType`.
+- Do not copy inbound HTTP headers wholesale into Kafka or database event headers.
+- Do not store `Authorization`, `Cookie`, CSRF tokens, session ids, refresh/access tokens, API keys, or provider credentials in event headers.
+- If `actorId` is populated later, treat it as private data and keep it out of logs unless explicitly needed and reviewed.
+
 Contract validation rule:
 
 - Keep `docs/events/asyncapi.yaml`, `docs/events/schemas/review-created-event.schema.json`, `ReviewCreatedKafkaEvent`, and the outbox writer mapping in sync in the same PR.
@@ -959,6 +967,8 @@ Configuration invariants:
 - `kafka.outbox.worker-enabled=false` may be used on secondary app instances, but at least one production-like instance must run the outbox worker or events will remain pending.
 - `kafka.inbox.worker-enabled=false` may be used to pause business processing intentionally, but then `inbox_events` will accumulate.
 - Fail application startup when `kafka.enabled=true` and required topic/group/bootstrap properties are blank.
+- Fail application startup when worker settings are invalid, for example non-positive batch size, non-positive max attempts, negative/zero poll interval, or negative/zero stale-lock timeout.
+- Validate `kafka.outbox.worker-concurrency` and `kafka.inbox.worker-concurrency` are `1` in v1 unless key-level locking is implemented in the same PR.
 - Prefer failing startup over silently dropping product-review events because of inconsistent Kafka configuration.
 - Update `.env.example` with any new `KAFKA_OUTBOX_*` and `KAFKA_INBOX_*` variables introduced by the implementation.
 - Update `application-config.schema.json` if the project uses it to document or validate configuration keys.
@@ -986,6 +996,7 @@ Tasks:
 - Verify the topic exists in Vault `infra/kafka/topics.yml` and is created before enabling Kafka in Iced Latte.
 - Switch the review-created listener to manual acknowledgement, or isolate it in a listener container factory with manual ack if other listeners need different behavior.
 - Add configuration-properties validation so Kafka-enabled startup fails when required Kafka topic/group/bootstrap settings are blank.
+- Add configuration validation for positive batch sizes, positive max attempts, positive durations, and v1 worker concurrency limits.
 
 Acceptance criteria:
 
@@ -993,6 +1004,7 @@ Acceptance criteria:
 - Event schema contains only `reviewId` and `productId` in payload.
 - Kafka topic and consumer group names are config-driven.
 - `kafka.enabled=true` does not require `ai.enabled=true`.
+- Invalid worker configuration fails startup.
 - Missing Kafka topic does not break review creation; it leaves outbox rows retryable.
 - Invalid Kafka-enabled configuration fails startup instead of silently dropping events.
 
@@ -1111,6 +1123,7 @@ Unit tests:
 - `InboxEventWorkerTest`
 - `ReviewCreatedApplicationEventListenerTest`
 - `ReviewCreatedEventContractTest`
+- `EventProcessingPropertiesValidationTest`
 
 Integration tests:
 
@@ -1125,6 +1138,7 @@ Integration tests:
 - Kafka-enabled mode does not run the local async listener.
 - Kafka listener does not acknowledge a message when inbox insert fails.
 - Kafka payload does not contain review text.
+- Kafka payload and headers do not contain credentials, authorization headers, cookies, or review text.
 - Kafka-enabled flow works with `AI_ENABLED=false`.
 - Stale outbox and inbox locks are reclaimed.
 
@@ -1159,6 +1173,24 @@ Useful future metrics:
 - oldest retryable inbox age
 
 Do not add admin replay endpoints in the first PR. Manual database inspection is enough for v1.
+
+### Manual Operations V1
+
+Because v1 intentionally has no admin replay endpoints, operational recovery should be explicit and conservative.
+
+Safe manual actions:
+
+- Inspect `FAILED_PERMANENT` rows by `event_id`, `event_type`, `aggregate_id`, `attempt_count`, `last_error`, `created_at`, and `updated_at`.
+- If the root cause is fixed and replay is safe, manually move a failed row back to a retryable state by setting `status = FAILED_RETRYABLE`, clearing `locked_by` and `locked_at`, clearing or preserving `last_error` according to the incident note, and setting `next_attempt_at = now()`.
+- If an outbox row should never be published, set `status = CANCELLED`, clear `locked_by` and `locked_at`, and keep the row for audit.
+- If an inbox row should never be processed, keep it as `FAILED_PERMANENT` in v1; do not delete it as a way to skip processing.
+
+Manual replay cautions:
+
+- Do not manually insert Kafka messages to bypass `outbox_events`; that bypasses the event id and audit trail.
+- Do not reset `attempt_count` unless the operator deliberately wants to give the row a full retry budget again.
+- Do not update `payload` by hand except to correct an incident with a reviewed SQL change.
+- Do not delete failed rows until retention/cleanup tooling exists.
 
 ---
 
