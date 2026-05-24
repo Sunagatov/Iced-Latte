@@ -24,13 +24,15 @@ The integration must be reliable, optional, and safe for local contributors:
 - The Kafka-enabled path must use a transactional outbox for reliable publishing.
 - The Kafka consumer must use a durable inbox for idempotent processing and retry control.
 - The existing non-Kafka async review processing must remain only as the `kafka.enabled=false` fallback.
+- `ProductReviewManager` should stay focused on product-review business work. Kafka-specific routing should live in event adapters/listeners.
 
 The target architecture is:
 
 ```text
 User creates product review
 -> ProductReviewManager saves ProductReview
--> same DB transaction inserts outbox_events row
+-> ProductReviewManager publishes in-process ReviewCreatedEvent
+-> Kafka-enabled transactional listener inserts outbox_events row before commit
 -> Outbox worker locks eligible outbox rows
 -> Outbox worker publishes to Kafka and waits for broker ack
 -> Outbox worker marks row PUBLISHED only after ack
@@ -86,6 +88,7 @@ Problems with the current partial Kafka path:
 - There is no durable consumer inbox.
 - Duplicate Kafka delivery is not explicitly controlled by a consumer-side idempotency table.
 - Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.service.kafka`; this must be verified and fixed during implementation.
+- Existing direct Kafka publishing should be replaced, not extended. The final Kafka-enabled path must be `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
 
 ---
 
@@ -117,6 +120,24 @@ Reason: product-review summary work is product-scoped. Using `productId` preserv
 
 Avoid composite keys such as `productId:reviewId` for v1. They add complexity and weaken the main ordering property because every review has a different `reviewId`.
 
+### Topic Provisioning
+
+Iced Latte should not rely on Kafka auto topic creation. Vault Kafka currently treats `infra/kafka/topics.yml` as the canonical planned topic inventory, and `iced-latte.review.created.v1` is already listed there with:
+
+```text
+partitions: 3
+replication_factor: 1
+retention_ms: 259200000
+owner: iced-latte
+```
+
+Implementation assumptions:
+
+- Local contributor Compose does not run Kafka and keeps `KAFKA_ENABLED=false`.
+- Production-like Vault deployments must create the topic before enabling Iced Latte Kafka.
+- If the topic is missing when Kafka is enabled, outbox publishing should fail retryably and leave rows inspectable; review creation must still succeed because the outbox row was already committed.
+- Do not enable broker auto topic creation as a shortcut.
+
 ### Payload
 
 Do not publish review text to Kafka. Publish identifiers only.
@@ -138,6 +159,12 @@ Do not publish review text to Kafka. Publish identifiers only.
 ```
 
 The consumer must load the `ProductReview` from PostgreSQL by `reviewId` before moderation.
+
+Mapping rule:
+
+- Internal `ReviewCreatedEvent` may keep `text` for the non-Kafka local fallback.
+- Kafka-facing `ReviewCreatedKafkaEvent` and the `outbox_events.payload` must not include `text`.
+- `ReviewCreatedOutboxWriter` is responsible for mapping internal domain event data to the Kafka envelope with only `reviewId` and `productId`.
 
 ---
 
@@ -174,7 +201,8 @@ When `kafka.enabled=false`:
 When `kafka.enabled=true`:
 
 - Disable the local `ReviewCreatedApplicationEventListener`.
-- Write `review.created` to `outbox_events`.
+- Enable a transactional outbox listener for `ReviewCreatedEvent`.
+- Write `review.created` to `outbox_events` before the review transaction commits.
 - Publish from outbox to Kafka.
 - Record consumed Kafka messages into `inbox_events`.
 - Process review moderation from inbox worker.
@@ -244,6 +272,13 @@ INDEX (aggregate_type, aggregate_id)
 INDEX (topic)
 ```
 
+Recommended retention:
+
+- Keep `PUBLISHED` rows for a short operational window, for example 7-30 days.
+- Keep `FAILED_PERMANENT` rows until manually inspected or explicitly cleaned.
+- Do not delete unpublished rows automatically.
+- Add cleanup as a later scheduled job, not as part of the first publisher loop.
+
 ### Inbox Table
 
 Use one shared durable inbox table:
@@ -299,6 +334,12 @@ INDEX (consumer_name, status)
 
 The unique `(event_id, consumer_name)` constraint is the consumer idempotency boundary. Duplicate Kafka delivery must not process the same event twice for the same consumer.
 
+Recommended retention:
+
+- Keep `PROCESSED` and `IGNORED` rows for a short operational window, for example 7-30 days.
+- Keep `FAILED_PERMANENT` rows until manually inspected or explicitly cleaned.
+- Do not delete retryable rows automatically.
+
 ### DLQ Decision
 
 Do not add Kafka DLQ topics in the first implementation.
@@ -323,21 +364,30 @@ iced-latte.review.created.dlq.v1
 
 ### Write Path
 
-`ProductReviewManager.create(...)` must save the review and write the outbox event in the same transaction.
+`ProductReviewManager.create(...)` should save the review and publish the in-process domain event. Delivery adapters decide what happens with that event.
 
 ```text
 begin transaction
   validate product/review/user rules
   save ProductReview
   refresh product review aggregates
+  publish ReviewCreatedEvent
   if kafka.enabled=true:
-      insert outbox_events row for review.created
+      ReviewCreatedOutboxEventListener writes outbox_events row before commit
   else:
-      publish local ReviewCreatedEvent for local fallback
+      ReviewCreatedApplicationEventListener runs local async processing after commit
 commit transaction
 ```
 
 Implementation must ensure the outbox row cannot exist without the review, and the review cannot commit without the outbox row when Kafka is enabled.
+
+Recommended Spring boundary:
+
+- `ProductReviewManager` continues to call `ApplicationEventPublisher.publishEvent(...)`.
+- `ReviewCreatedOutboxEventListener` is conditional on `kafka.enabled=true`.
+- `ReviewCreatedOutboxEventListener` uses `@TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)` so the outbox insert participates in the same transaction as the review insert.
+- `ReviewCreatedApplicationEventListener` remains conditional on `kafka.enabled=false` and uses `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)` with `@Async`.
+- If the outbox insert fails in Kafka-enabled mode, the review transaction must roll back.
 
 ### Publish Worker
 
@@ -358,15 +408,47 @@ and next_attempt_at <= now()
 7. On transient failure, mark `FAILED_RETRYABLE`, increment `attempt_count`, store `last_error`, and set `next_attempt_at` using backoff.
 8. If max attempts is exceeded, mark `FAILED_PERMANENT`.
 
+Use PostgreSQL row locking semantics:
+
+```sql
+SELECT *
+FROM outbox_events
+WHERE status IN ('PENDING', 'FAILED_RETRYABLE')
+  AND next_attempt_at <= now()
+ORDER BY created_at
+LIMIT :batchSize
+FOR UPDATE SKIP LOCKED;
+```
+
+The implementation may express this through a native Spring Data query. `SKIP LOCKED` is important because it allows multiple app instances to run the worker without blocking each other on the same rows.
+
+Stale `IN_PROGRESS` rows must be reclaimable. A worker should treat rows as retryable again when:
+
+```text
+status = IN_PROGRESS
+and locked_at < now() - stale-lock-timeout
+```
+
+Do not rely on JVM memory to track in-progress rows. Database state is the source of truth.
+
 Use small batches in v1, for example:
 
 ```text
 kafka.outbox.batch-size=25
 kafka.outbox.poll-interval=5s
 kafka.outbox.max-attempts=10
+kafka.outbox.stale-lock-timeout=5m
 ```
 
 The worker should be disabled unless `kafka.enabled=true`.
+
+Backoff should be explicit and bounded. Recommended v1:
+
+```text
+next_attempt_at = now + min(2^attempt_count seconds, 5 minutes)
+```
+
+The exact formula can be implemented in Java for readability. Tests must prove that retry delay increases and does not grow without bound.
 
 ### Kafka Producer Acks
 
@@ -378,6 +460,7 @@ Producer config should prefer reliability:
 acks=all
 enable.idempotence=true
 retries > 0
+max.in.flight.requests.per.connection <= 5
 ```
 
 Because the Vault broker is single-node, replication factor is currently `1`, so `acks=all` means acknowledgement from the single in-sync broker. This is still the correct producer semantic and remains valid if the broker topology grows later.
@@ -398,6 +481,19 @@ It should:
 4. Commit Kafka offset after durable inbox insert or duplicate detection.
 
 The listener must not run AI moderation directly.
+
+Offset acknowledgement rule:
+
+- The listener must not acknowledge or commit the Kafka offset before the inbox insert transaction commits.
+- With Spring Kafka `ack-mode=record`, this is acceptable only if the listener method is transactional and the database transaction commits before the method returns.
+- Manual acknowledgement is also acceptable, but then `Acknowledgment.acknowledge()` must be called only after successful inbox insert or duplicate detection.
+- If the inbox insert fails, the Kafka record must be retried by Kafka rather than lost.
+
+This is the critical durability boundary for consumption:
+
+```text
+Kafka record -> committed inbox row -> Kafka offset commit
+```
 
 ### Inbox Worker
 
@@ -422,6 +518,32 @@ and consumer_name = 'iced-latte-review-ai'
 10. On permanent failure or max attempts exceeded, mark `FAILED_PERMANENT`.
 
 If the review no longer exists when the event is processed, mark the inbox row `IGNORED` or `PROCESSED` with a clear log. This is acceptable because duplicate or stale events must be safe.
+
+Use the same row-locking pattern as the outbox worker:
+
+```sql
+SELECT *
+FROM inbox_events
+WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE')
+  AND next_attempt_at <= now()
+  AND consumer_name = :consumerName
+ORDER BY created_at
+LIMIT :batchSize
+FOR UPDATE SKIP LOCKED;
+```
+
+Stale `IN_PROGRESS` inbox rows must be reclaimable using `locked_at` and `kafka.inbox.stale-lock-timeout`.
+
+The inbox worker must run business processing in a transaction that includes the inbox status update. If business processing fails, the worker must persist the failure status in a separate transaction or carefully structure the transaction so the failure marker is not rolled back with the failed business work.
+
+Recommended approach:
+
+- Mark row `IN_PROGRESS` in a short transaction.
+- Run business processing in a new transaction.
+- Mark `PROCESSED` in a short transaction after success.
+- On exception, mark `FAILED_RETRYABLE` or `FAILED_PERMANENT` in a separate transaction.
+
+This mirrors the Stripe webhook event recorder pattern already used elsewhere in the project.
 
 ---
 
@@ -464,9 +586,9 @@ docs/events/schemas/review-created-event.schema.json
 ### Database
 
 ```text
-src/main/resources/db/changelog/version-*/...create-outbox-events-table.sql
-src/main/resources/db/changelog/version-*/...create-inbox-events-table.sql
-src/main/resources/db/changelog-master.yaml
+src/main/resources/db/changelog/version-2.0/DD.MM.2026.partN.create-outbox-events-table.sql
+src/main/resources/db/changelog/version-2.0/DD.MM.2026.partN.create-inbox-events-table.sql
+src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
 ```
 
 ### Shared Event Infrastructure
@@ -503,6 +625,13 @@ com.zufar.icedlatte.event
 
 Do not put product-review business logic in this shared infrastructure package.
 
+Spring Modulith note:
+
+- The `review` module currently allows `common :: *`, so shared event infrastructure under `common` is the preferred direction.
+- If new `common.event` subpackages are added, update the controlled named-interface snapshot test if Spring Modulith exposes a new named interface.
+- `common.event` must not depend on `review`, `product`, `order`, `payment`, or any other feature module.
+- Product-review-specific mapping belongs in `review.service.kafka`, not in `common.event`.
+
 ### Product Review Event Files
 
 Suggested package:
@@ -517,6 +646,7 @@ Suggested files:
 review/dto/ReviewCreatedEvent.java
 review/service/kafka/ReviewCreatedKafkaEvent.java
 review/service/kafka/ReviewCreatedOutboxWriter.java
+review/service/kafka/ReviewCreatedOutboxEventListener.java
 review/service/kafka/ReviewCreatedKafkaListener.java
 review/service/kafka/ReviewCreatedInboxProcessor.java
 ```
@@ -527,6 +657,7 @@ Refactor existing direct classes:
 - Refactor `ReviewCreatedKafkaConsumer` so it records to `inbox_events` only.
 - Keep `ReviewCreatedApplicationEventListener` only for `kafka.enabled=false`.
 - Keep `AsyncReviewProcessingService` as the business service used by both local fallback and Kafka inbox processing.
+- Remove `text` from `ReviewCreatedKafkaEvent.Payload`; keep text only in the internal `ReviewCreatedEvent` if the local fallback still needs it.
 
 ---
 
@@ -547,12 +678,14 @@ kafka:
     poll-interval: ${KAFKA_OUTBOX_POLL_INTERVAL:5s}
     max-attempts: ${KAFKA_OUTBOX_MAX_ATTEMPTS:10}
     stale-lock-timeout: ${KAFKA_OUTBOX_STALE_LOCK_TIMEOUT:5m}
+    retention: ${KAFKA_OUTBOX_RETENTION:30d}
   inbox:
     enabled: ${KAFKA_INBOX_ENABLED:${KAFKA_ENABLED:false}}
     batch-size: ${KAFKA_INBOX_BATCH_SIZE:25}
     poll-interval: ${KAFKA_INBOX_POLL_INTERVAL:5s}
     max-attempts: ${KAFKA_INBOX_MAX_ATTEMPTS:10}
     stale-lock-timeout: ${KAFKA_INBOX_STALE_LOCK_TIMEOUT:5m}
+    retention: ${KAFKA_INBOX_RETENTION:30d}
 ```
 
 Kafka disabled mode must remain the default in:
@@ -582,15 +715,20 @@ Tasks:
 - Verify `ReviewCreatedKafkaEvent` package names match Spring Kafka JSON deserializer config.
 - Update `docs/events/asyncapi.yaml` if needed.
 - Update `review-created-event.schema.json` to remove `text` from payload.
+- Update `ReviewCreatedKafkaEvent.Payload` to remove `text`.
 - Ensure `.env.example` contains Kafka defaults.
 - Ensure `application-dev.yaml` disables Kafka.
 - Ensure `application-prod.yaml` can opt in via env vars.
+- Keep local `docker-compose.yml` backend default at `KAFKA_ENABLED=false`; production/Vault deployment config owns enabling Kafka.
+- Verify the topic exists in Vault `infra/kafka/topics.yml` and is created before enabling Kafka in Iced Latte.
+- Decide whether listener offset commits use `ack-mode=record` with transactional listener method or explicit manual acknowledgements.
 
 Acceptance criteria:
 
 - App starts with Kafka disabled.
 - Event schema contains only `reviewId` and `productId` in payload.
 - Kafka topic and consumer group names are config-driven.
+- Missing Kafka topic does not break review creation; it leaves outbox rows retryable.
 
 ### Phase 2: Outbox Schema And Writer
 
@@ -602,7 +740,8 @@ Tasks:
 - Add `OutboxEvent` entity and repository.
 - Add `OutboxEventWriter`.
 - Add `ReviewCreatedOutboxWriter`.
-- Modify `ProductReviewManager.create(...)` so Kafka-enabled mode writes outbox row in the same transaction as the review.
+- Add `ReviewCreatedOutboxEventListener` with `TransactionPhase.BEFORE_COMMIT`.
+- Keep `ProductReviewManager.create(...)` publishing `ReviewCreatedEvent`; avoid Kafka-specific branching in the business service unless implementation constraints force it.
 - Ensure Kafka-disabled mode still uses local `ReviewCreatedEvent` fallback.
 
 Acceptance criteria:
@@ -611,6 +750,7 @@ Acceptance criteria:
 - If the review transaction rolls back, no outbox row remains.
 - If the outbox insert fails, the review transaction rolls back.
 - When Kafka is disabled, current local async behavior still works.
+- Unit tests prove Kafka-enabled and Kafka-disabled listeners are mutually exclusive.
 
 ### Phase 3: Outbox Publisher Worker
 
@@ -621,11 +761,13 @@ Tasks:
 - Add `KafkaOutboxPublisher`.
 - Poll eligible `PENDING` and `FAILED_RETRYABLE` rows.
 - Use row locking to avoid two app instances publishing the same row concurrently.
+- Use `FOR UPDATE SKIP LOCKED` or equivalent PostgreSQL row-locking behavior.
 - Publish to Kafka with configured topic and partition key.
 - Wait for Kafka send acknowledgement.
 - Mark `PUBLISHED` only after ack.
 - Mark retryable failures with backoff.
 - Mark permanent failures after max attempts.
+- Reclaim stale `IN_PROGRESS` rows after `stale-lock-timeout`.
 
 Acceptance criteria:
 
@@ -634,6 +776,7 @@ Acceptance criteria:
 - Successful broker ack marks row `PUBLISHED`.
 - Duplicate publication is minimized by DB locking.
 - Unit tests cover success, retryable failure, and max attempts.
+- Unit tests cover stale lock recovery and bounded backoff.
 
 ### Phase 4: Inbox Schema And Listener
 
@@ -648,12 +791,14 @@ Tasks:
 - Listener records Kafka event into `inbox_events`.
 - Listener handles duplicate `(event_id, consumer_name)` as a safe skip.
 - Listener does not call `AsyncReviewProcessingService` directly.
+- Listener commits Kafka offset only after inbox insert or duplicate detection.
 
 Acceptance criteria:
 
 - Consuming a Kafka message inserts one inbox row.
 - Consuming the same Kafka message twice does not create duplicate inbox rows.
 - Kafka offset is committed only after durable inbox insert or duplicate detection.
+- Failed inbox insert causes Kafka redelivery rather than message loss.
 
 ### Phase 5: Inbox Worker And Review Processing
 
@@ -668,6 +813,8 @@ Tasks:
 - Call existing `AsyncReviewProcessingService` behavior.
 - Preserve current delete-on-moderation-rejection behavior.
 - Mark rows `PROCESSED`, `FAILED_RETRYABLE`, `FAILED_PERMANENT`, or `IGNORED`.
+- Reclaim stale `IN_PROGRESS` rows after `stale-lock-timeout`.
+- Persist failure status even when business processing throws.
 
 Acceptance criteria:
 
@@ -675,6 +822,7 @@ Acceptance criteria:
 - Duplicate inbox events do not duplicate side effects.
 - Missing review rows are handled safely.
 - Failed processing is visible in `inbox_events`.
+- Tests prove retryable failures do not lose the inbox row.
 
 ### Phase 6: Tests
 
@@ -699,6 +847,9 @@ Integration tests:
 - Inbox worker processes review-created event.
 - Duplicate Kafka event is ignored by inbox uniqueness.
 - Kafka disabled mode uses local listener and does not write outbox rows.
+- Kafka-enabled mode does not run the local async listener.
+- Kafka listener does not acknowledge a message when inbox insert fails.
+- Stale outbox and inbox locks are reclaimed.
 
 Use Testcontainers Kafka for Kafka integration tests.
 
@@ -727,6 +878,8 @@ Useful future metrics:
 - publish latency
 - processing latency
 - consumer lag
+- oldest pending outbox age
+- oldest retryable inbox age
 
 Do not add admin replay endpoints in the first PR. Manual database inspection is enough for v1.
 
@@ -745,6 +898,10 @@ Review creation still succeeds. Outbox row remains retryable.
 ### App Crashes After Outbox Row Is Locked
 
 The stale-lock timeout must allow future workers to reclaim rows stuck in `IN_PROGRESS`.
+
+### App Crashes After Inbox Row Is Locked
+
+The stale-lock timeout must allow future workers to reclaim inbox rows stuck in `IN_PROGRESS`.
 
 ### Kafka Publish Succeeds But App Crashes Before Marking Published
 
@@ -766,6 +923,14 @@ Delete the review, refresh product aggregates, schedule summary update, mark inb
 
 Classify as retryable if the current moderation behavior can distinguish transient provider failures. Otherwise, preserve current fallback behavior and document it in the processor test cases.
 
+### Poison Message Cannot Be Processed
+
+After `max_attempts`, mark the inbox row `FAILED_PERMANENT`. Do not keep retrying forever. Do not add a Kafka DLQ topic in v1.
+
+### Outbox Row Is Permanently Unpublishable
+
+After `max_attempts`, mark the outbox row `FAILED_PERMANENT`. Review creation has already succeeded, so the operational response is inspection, manual correction, or future admin replay tooling.
+
 ---
 
 ## Open Implementation Decisions
@@ -778,12 +943,17 @@ These decisions should be confirmed during implementation:
 4. Whether `last_error` should store full exception class plus safe message or safe message only.
 5. Whether `actorId` should be populated from `userId` in `review.created`; this is useful for traceability but should be treated as private data.
 6. Whether `correlationId` should be read from the current MDC/request context.
+7. Whether Kafka listener offset acknowledgement should remain `ack-mode=record` or move to manual ack for clearer control.
+8. Whether `IGNORED` should be terminal success for missing reviews, or whether missing reviews should be treated as `PROCESSED`.
+9. Whether outbox and inbox cleanup jobs belong in the first implementation or a follow-up PR.
 
 Recommended defaults:
 
 - Use top-level `event` package if architecture tests reject `common.event`.
 - Store `error_class` separately only if needed; otherwise keep `last_error`.
 - Leave `actorId` and `correlationId` nullable in v1.
+- Treat `IGNORED` as terminal success for missing reviews in v1.
+- Defer cleanup jobs to a follow-up PR, but create retention fields/config now.
 
 ---
 
@@ -804,4 +974,3 @@ Recommended defaults:
 The intended architecture is:
 
 > Iced Latte uses a transactional outbox to reliably publish product-review events to Kafka after the product-review transaction commits. Kafka is optional for local contributors. In Kafka-enabled deployments, a polling outbox worker publishes `review.created` events and waits for broker acknowledgement before marking rows as published. Consumers use a durable inbox table, so Kafka listeners only record messages and commit offsets after durable handoff. Business processing runs from the inbox worker, making retries, duplicate handling, and permanent failures visible in PostgreSQL. The system is intentionally at-least-once, and idempotency is enforced through the inbox uniqueness boundary.
-
