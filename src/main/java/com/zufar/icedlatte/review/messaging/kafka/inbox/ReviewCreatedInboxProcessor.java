@@ -17,7 +17,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true")
-class ReviewCreatedInboxProcessor {
+public class ReviewCreatedInboxProcessor {
 
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;

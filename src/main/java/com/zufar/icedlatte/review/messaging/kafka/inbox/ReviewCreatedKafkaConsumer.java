@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
@@ -31,10 +30,6 @@ public class ReviewCreatedKafkaConsumer {
     private final KafkaIntegrationProperties properties;
     private final InboxEventRepository inboxEventRepository;
 
-    @KafkaListener(
-            topics = "${kafka.topics.review-created}",
-            groupId = "${kafka.consumer-groups.review-ai}"
-    )
     public void consume(ConsumerRecord<String, String> record, Acknowledgment acknowledgment) throws JsonProcessingException {
         if (!properties.inbox().enabled()) {
             throw new IllegalStateException("Kafka inbox recording is disabled while Kafka consumer is active");
