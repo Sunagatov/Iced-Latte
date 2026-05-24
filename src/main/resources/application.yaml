@@ -127,19 +127,19 @@ spring:
     client-id: ${KAFKA_CLIENT_ID:iced-latte}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
-        "[spring.json.add.type.headers]": false
+        "[acks]": all
+        "[enable.idempotence]": true
+        "[retries]": 10
+        "[max.in.flight.requests.per.connection]": 5
     consumer:
       auto-offset-reset: earliest
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-      properties:
-        "[spring.json.trusted.packages]": com.zufar.icedlatte.review.kafka
-        "[spring.json.value.default.type]": com.zufar.icedlatte.review.kafka.ReviewCreatedKafkaEvent
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     listener:
-      ack-mode: record
+      ack-mode: manual
 
   # ───────────────────────────────────────────────────────────────────────────
   # ②-D  OBJECT STORAGE (AWS S3 / MinIO)
@@ -229,6 +229,23 @@ kafka:
     review-created: ${KAFKA_TOPIC_REVIEW_CREATED:iced-latte.review.created.v1}
   consumer-groups:
     review-ai: ${KAFKA_CONSUMER_GROUP_REVIEW_AI:iced-latte-review-ai}
+  outbox:
+    enabled: ${KAFKA_OUTBOX_ENABLED:true}
+    worker-enabled: ${KAFKA_OUTBOX_WORKER_ENABLED:true}
+    batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:25}
+    max-attempts: ${KAFKA_OUTBOX_MAX_ATTEMPTS:10}
+    poll-interval: ${KAFKA_OUTBOX_POLL_INTERVAL:PT5S}
+    stale-lock-timeout: ${KAFKA_OUTBOX_STALE_LOCK_TIMEOUT:PT5M}
+    publish-timeout: ${KAFKA_OUTBOX_PUBLISH_TIMEOUT:PT10S}
+    worker-id: ${KAFKA_OUTBOX_WORKER_ID:iced-latte-outbox-worker}
+  inbox:
+    enabled: ${KAFKA_INBOX_ENABLED:true}
+    worker-enabled: ${KAFKA_INBOX_WORKER_ENABLED:true}
+    batch-size: ${KAFKA_INBOX_BATCH_SIZE:25}
+    max-attempts: ${KAFKA_INBOX_MAX_ATTEMPTS:10}
+    poll-interval: ${KAFKA_INBOX_POLL_INTERVAL:PT5S}
+    stale-lock-timeout: ${KAFKA_INBOX_STALE_LOCK_TIMEOUT:PT5M}
+    worker-id: ${KAFKA_INBOX_WORKER_ID:iced-latte-review-ai-inbox-worker}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1,25 +1,27 @@
 package com.zufar.icedlatte.review.kafka;
 
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
-import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaEvent;
-import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaPublisher;
+import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
+import com.zufar.icedlatte.review.messaging.kafka.outbox.OutboxEventRepository;
+import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.kafka.support.SendResult;
 
-import java.time.Instant;
+import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,37 +30,51 @@ import static org.mockito.Mockito.when;
 class ReviewCreatedKafkaPublisherTest {
 
     @Mock
-    private KafkaTemplate<String, ReviewCreatedKafkaEvent> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Mock
+    private OutboxEventRepository outboxEventRepository;
 
     private ReviewCreatedKafkaPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new ReviewCreatedKafkaPublisher(kafkaTemplate);
-        ReflectionTestUtils.setField(publisher, "reviewCreatedTopic", "iced-latte.review.created.v1");
+        KafkaIntegrationProperties properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                new KafkaIntegrationProperties.Outbox(true, true, 25, 10, Duration.ofSeconds(5),
+                        Duration.ofMinutes(5), Duration.ofSeconds(10), "test-outbox-worker"),
+                KafkaIntegrationProperties.Inbox.defaults()
+        );
+        publisher = new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository);
     }
 
     @Test
-    @DisplayName("publishes review-created envelope keyed by product id")
-    void publishesReviewCreatedEnvelopeKeyedByProductId() {
+    @DisplayName("publishes claimed outbox rows and marks them published after Kafka ack")
+    void publishesClaimedOutboxRowsAndMarksThemPublishedAfterKafkaAck() {
         UUID eventId = UUID.randomUUID();
-        UUID reviewId = UUID.randomUUID();
-        UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(
+        UUID rowId = UUID.randomUUID();
+        var row = new OutboxEventRepository.OutboxEventRow(
+                rowId,
                 eventId,
-                reviewId,
-                "Great coffee",
-                productId,
-                Instant.parse("2026-05-18T12:00:00Z")
+                "iced-latte.review.created.v1",
+                "product-1",
+                "{\"eventId\":\"" + eventId + "\"}",
+                "{}",
+                0,
+                10
         );
-        when(kafkaTemplate.send(eq("iced-latte.review.created.v1"), eq(productId.toString()), any(ReviewCreatedKafkaEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        when(outboxEventRepository.claimPublishableEvents(anyInt(), anyString())).thenReturn(List.of(row));
+        var producerRecord = new ProducerRecord<>("iced-latte.review.created.v1", "product-1", row.payload());
+        var metadata = new RecordMetadata(new TopicPartition("iced-latte.review.created.v1", 0),
+                42L, 0, 0L, 0, 0);
+        when(kafkaTemplate.send("iced-latte.review.created.v1", "product-1", row.payload()))
+                .thenReturn(CompletableFuture.completedFuture(new SendResult<>(producerRecord, metadata)));
 
-        publisher.publish(event);
+        publisher.publishPendingOutboxEvents();
 
-        ArgumentCaptor<ReviewCreatedKafkaEvent> eventCaptor = ArgumentCaptor.forClass(ReviewCreatedKafkaEvent.class);
-        verify(kafkaTemplate).send(eq("iced-latte.review.created.v1"), eq(productId.toString()), eventCaptor.capture());
-        assertThat(eventCaptor.getValue().eventId()).isEqualTo(eventId);
-        assertThat(eventCaptor.getValue().payload().reviewId()).isEqualTo(reviewId);
+        verify(kafkaTemplate).send("iced-latte.review.created.v1", "product-1", row.payload());
+        verify(outboxEventRepository).markPublished(rowId, "test-outbox-worker", 0, 42L);
     }
 }

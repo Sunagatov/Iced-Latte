@@ -54,8 +54,7 @@
       "additionalProperties": false,
       "required": [
         "reviewId",
-        "productId",
-        "text"
+        "productId"
       ],
       "properties": {
         "reviewId": {
@@ -65,9 +64,6 @@
         "productId": {
           "type": "string",
           "format": "uuid"
-        },
-        "text": {
-          "type": "string"
         }
       }
     }

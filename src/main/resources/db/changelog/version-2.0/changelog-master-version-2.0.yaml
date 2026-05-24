@@ -57,3 +57,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/add-payment-order-business-constraints.sql
       errorIfMissing: true
+
+  # ========== KAFKA PRODUCT REVIEW INTEGRATION ==========
+  - include:
+      file: db/changelog/version-2.0/24.05.2026.part1.create-kafka-outbox-inbox-tables.sql
+      errorIfMissing: true

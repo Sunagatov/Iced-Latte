@@ -34,12 +34,17 @@ class AsyncReviewProcessingServiceTest {
     @Test
     @DisplayName("does nothing else when moderation passes")
     void doesNothingElseWhenModerationPasses() {
-        ReviewCreatedEvent event = new ReviewCreatedEvent(UUID.randomUUID(), "Great coffee", UUID.randomUUID());
+        UUID reviewId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "Great coffee", productId);
+        ProductReview review = ProductReview.builder().id(reviewId).productId(productId).text("Great coffee").build();
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         service.process(event);
 
+        verify(reviewRepository).findById(reviewId);
         verify(moderationService).moderate("Great coffee");
-        verifyNoInteractions(reviewRepository, productReviewProductGateway, summaryDebouncer);
+        verifyNoInteractions(productReviewProductGateway, summaryDebouncer);
     }
 
     @Test
@@ -48,7 +53,7 @@ class AsyncReviewProcessingServiceTest {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "spam", productId);
-        ProductReview review = ProductReview.builder().id(reviewId).productId(productId).build();
+        ProductReview review = ProductReview.builder().id(reviewId).productId(productId).text("spam").build();
         doThrow(new ReviewModerationException("spam"))
                 .when(moderationService).moderate("spam");
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
@@ -61,17 +66,16 @@ class AsyncReviewProcessingServiceTest {
     }
 
     @Test
-    @DisplayName("stops after moderation failure when the review has already disappeared")
-    void stopsAfterModerationFailureWhenReviewHasAlreadyDisappeared() {
+    @DisplayName("ignores processing when the review has already disappeared")
+    void ignoresProcessingWhenReviewHasAlreadyDisappeared() {
         UUID reviewId = UUID.randomUUID();
         ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "spam", UUID.randomUUID());
-        doThrow(new ReviewModerationException("spam"))
-                .when(moderationService).moderate("spam");
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
         service.process(event);
 
         verify(reviewRepository).findById(reviewId);
+        verifyNoInteractions(moderationService);
         verifyNoInteractions(productReviewProductGateway, summaryDebouncer);
     }
 }

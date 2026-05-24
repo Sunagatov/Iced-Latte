@@ -1,11 +1,12 @@
 package com.zufar.icedlatte.review.kafka;
 
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
-import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaEvent;
+import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.lang.reflect.RecordComponent;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,33 +32,21 @@ class ReviewCreatedKafkaEventTest {
         assertThat(kafkaEvent.occurredAt()).isEqualTo(occurredAt);
         assertThat(kafkaEvent.payload().reviewId()).isEqualTo(reviewId);
         assertThat(kafkaEvent.payload().productId()).isEqualTo(productId);
-        assertThat(kafkaEvent.payload().text()).isEqualTo("Fresh review");
     }
 
     @Test
-    @DisplayName("maps Kafka envelope back to domain event for existing processing service")
-    void mapsKafkaEnvelopeBackToDomainEvent() {
-        UUID eventId = UUID.randomUUID();
+    @DisplayName("does not put review text in Kafka payload")
+    void doesNotPutReviewTextInKafkaPayload() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        Instant occurredAt = Instant.parse("2026-05-18T12:00:00Z");
-        ReviewCreatedKafkaEvent kafkaEvent = new ReviewCreatedKafkaEvent(
-                eventId,
-                "review.created",
-                1,
-                "iced-latte",
-                occurredAt,
-                null,
-                null,
-                new ReviewCreatedKafkaEvent.Payload(reviewId, productId, "Fresh review")
-        );
+        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(reviewId, "Fresh review", productId);
 
-        ReviewCreatedEvent domainEvent = kafkaEvent.toDomainEvent();
+        ReviewCreatedKafkaEvent kafkaEvent = ReviewCreatedKafkaEvent.fromDomainEvent(domainEvent);
 
-        assertThat(domainEvent.eventId()).isEqualTo(eventId);
-        assertThat(domainEvent.reviewId()).isEqualTo(reviewId);
-        assertThat(domainEvent.productId()).isEqualTo(productId);
-        assertThat(domainEvent.text()).isEqualTo("Fresh review");
-        assertThat(domainEvent.occurredAt()).isEqualTo(occurredAt);
+        assertThat(kafkaEvent.payload().reviewId()).isEqualTo(reviewId);
+        assertThat(kafkaEvent.payload().productId()).isEqualTo(productId);
+        assertThat(ReviewCreatedKafkaEvent.Payload.class.getRecordComponents())
+                .extracting(RecordComponent::getName)
+                .doesNotContain("text");
     }
 }

@@ -1,36 +1,39 @@
 package com.zufar.icedlatte.review.kafka;
 
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
-import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
-import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaConsumer;
-import com.zufar.icedlatte.review.service.kafka.ReviewCreatedKafkaEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.review.messaging.kafka.inbox.InboxEventRepository;
+import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
+import com.zufar.icedlatte.review.messaging.kafka.inbox.ReviewCreatedKafkaConsumer;
+import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.Acknowledgment;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReviewCreatedKafkaConsumer")
 class ReviewCreatedKafkaConsumerTest {
 
     @Mock
-    private AsyncReviewProcessingService processingService;
+    private InboxEventRepository inboxEventRepository;
 
-    @InjectMocks
-    private ReviewCreatedKafkaConsumer consumer;
+    @Mock
+    private Acknowledgment acknowledgment;
 
     @Test
-    @DisplayName("delegates consumed event to existing review processing service")
-    void delegatesConsumedEventToExistingReviewProcessingService() {
+    @DisplayName("records consumed event in inbox and acknowledges after insert")
+    void recordsConsumedEventInInboxAndAcknowledgesAfterInsert() throws Exception {
         UUID eventId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
@@ -42,16 +45,26 @@ class ReviewCreatedKafkaConsumerTest {
                 Instant.parse("2026-05-18T12:00:00Z"),
                 null,
                 null,
-                new ReviewCreatedKafkaEvent.Payload(reviewId, productId, "Great coffee")
+                new ReviewCreatedKafkaEvent.Payload(reviewId, productId)
         );
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        String payload = objectMapper.writeValueAsString(event);
+        var properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                KafkaIntegrationProperties.Outbox.defaults(),
+                new KafkaIntegrationProperties.Inbox(true, true, 25, 10, Duration.ofSeconds(5),
+                        Duration.ofMinutes(5), "test-inbox-worker")
+        );
+        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
+        when(inboxEventRepository.insertReceivedEvent(eq(event), eq("iced-latte.review.created.v1"),
+                eq(productId.toString()), eq(0), eq(42L), eq("iced-latte-review-ai"), eq(payload), eq("{}"), eq(10)))
+                .thenReturn(true);
 
-        consumer.consume(event);
+        consumer.consume(record, acknowledgment);
 
-        var captor = ArgumentCaptor.forClass(ReviewCreatedEvent.class);
-        verify(processingService).process(captor.capture());
-        assertThat(captor.getValue().eventId()).isEqualTo(eventId);
-        assertThat(captor.getValue().reviewId()).isEqualTo(reviewId);
-        assertThat(captor.getValue().productId()).isEqualTo(productId);
-        assertThat(captor.getValue().text()).isEqualTo("Great coffee");
+        verify(acknowledgment).acknowledge();
     }
 }

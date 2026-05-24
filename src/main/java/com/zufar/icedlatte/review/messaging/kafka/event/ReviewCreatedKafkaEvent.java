@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.review.service.kafka;
+package com.zufar.icedlatte.review.messaging.kafka.event;
 
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 
@@ -26,17 +26,13 @@ public record ReviewCreatedKafkaEvent(
     }
 
     public static ReviewCreatedKafkaEvent fromDomainEvent(ReviewCreatedEvent event) {
-        Payload payload = new Payload(event.reviewId(), event.productId(), event.text());
+        Payload payload = new Payload(event.reviewId(), event.productId());
         return new ReviewCreatedKafkaEvent(
                 event.eventId(), "review.created", 1, "iced-latte", event.occurredAt(), null, null, payload
         );
     }
 
-    public ReviewCreatedEvent toDomainEvent() {
-        return new ReviewCreatedEvent(eventId, payload.reviewId(), payload.text(), payload.productId(), occurredAt);
-    }
-
-    public record Payload(UUID reviewId, UUID productId, String text) {
+    public record Payload(UUID reviewId, UUID productId) {
         public Payload {
             Objects.requireNonNull(reviewId, "reviewId");
             Objects.requireNonNull(productId, "productId");

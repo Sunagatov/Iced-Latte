@@ -26,18 +26,32 @@ public class AsyncReviewProcessingService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void process(ReviewCreatedEvent event) {
-        try {
-            moderationService.moderate(event.text());
-        } catch (ReviewModerationException e) {
-            UUID reviewId = event.reviewId();
-            log.warn("review.moderation.failed: reviewId={}, reasonCode=REJECTED_BY_MODERATION", reviewId);
-            reviewRepository.findById(reviewId).ifPresent(review -> {
-                UUID productId = review.getProductId();
-                reviewRepository.deleteById(reviewId);
-                productReviewProductApi.refreshReviewAggregates(productId);
-                summaryDebouncer.schedule(productId);
-                log.info("review.moderation.rejected: reviewId={}, productId={}", reviewId, productId);
-            });
+        processByReviewId(event.reviewId());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ProcessingResult processByReviewId(UUID reviewId) {
+        var review = reviewRepository.findById(reviewId);
+        if (review.isEmpty()) {
+            log.info("review.processing.ignored: reviewId={}, reason=REVIEW_NOT_FOUND", reviewId);
+            return ProcessingResult.IGNORED;
         }
+
+        UUID productId = review.get().getProductId();
+        try {
+            moderationService.moderate(review.get().getText());
+        } catch (ReviewModerationException e) {
+            log.warn("review.moderation.failed: reviewId={}, reasonCode=REJECTED_BY_MODERATION", reviewId);
+            reviewRepository.deleteById(reviewId);
+            productReviewProductApi.refreshReviewAggregates(productId);
+            summaryDebouncer.schedule(productId);
+            log.info("review.moderation.rejected: reviewId={}, productId={}", reviewId, productId);
+        }
+        return ProcessingResult.PROCESSED;
+    }
+
+    public enum ProcessingResult {
+        PROCESSED,
+        IGNORED
     }
 }

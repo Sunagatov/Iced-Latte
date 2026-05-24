@@ -87,7 +87,7 @@ Problems with the current partial Kafka path:
 - If Kafka publish fails after the review transaction commits, there is no durable retry record.
 - There is no durable consumer inbox.
 - Duplicate Kafka delivery is not explicitly controlled by a consumer-side idempotency table.
-- Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.service.kafka`; this must be verified and fixed during implementation.
+- Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.messaging.kafka.*`; this must be verified and fixed during implementation.
 - Existing direct Kafka publishing should be replaced, not extended. The final Kafka-enabled path must be `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
 - Current Kafka code serializes/deserializes a Java-specific `ReviewCreatedKafkaEvent` type directly. The outbox design should prefer storing and publishing the JSON envelope from `outbox_events.payload`, then mapping that JSON to the review event contract at the listener boundary. This reduces coupling to Java package names and Spring JSON type headers.
 - `ReviewCreatedEvent` currently does not carry `userId`; therefore `actorId` cannot be populated without changing the internal event or passing request context separately.
@@ -832,64 +832,66 @@ Migration registration:
 
 Keep infrastructure app-local, not in Vault.
 
-Suggested package:
+Do not extract a shared Kafka/event package in the first product-review implementation.
+Spring Modulith should keep the first integration cohesive inside the `review` module.
+The shared database tables are cross-module, but the Java code should stay
+module-owned until a second module proves the common shape.
+
+First implementation package:
 
 ```text
-com.zufar.icedlatte.common.event
+com.zufar.icedlatte.review.messaging.kafka
 ```
 
-Suggested files:
+First implementation files:
 
 ```text
-common/event/entity/OutboxEvent.java
-common/event/entity/OutboxEventStatus.java
-common/event/entity/InboxEvent.java
-common/event/entity/InboxEventStatus.java
-common/event/repository/OutboxEventRepository.java
-common/event/repository/InboxEventRepository.java
-common/event/service/OutboxEventWriter.java
-common/event/service/KafkaOutboxPublisher.java
-common/event/service/InboxEventRecorder.java
-common/event/service/InboxEventWorker.java
-common/event/config/EventProcessingProperties.java
-common/event/config/KafkaEventProcessingConfig.java
+review/messaging/kafka/config/KafkaIntegrationProperties.java
+review/messaging/kafka/event/ReviewCreatedKafkaEvent.java
+review/messaging/kafka/outbox/OutboxEventRepository.java
+review/messaging/kafka/outbox/ReviewCreatedOutboxEventListener.java
+review/messaging/kafka/outbox/ReviewCreatedKafkaPublisher.java
+review/messaging/kafka/inbox/InboxEventRepository.java
+review/messaging/kafka/inbox/ReviewCreatedKafkaConsumer.java
+review/messaging/kafka/inbox/ReviewCreatedInboxProcessor.java
 ```
 
-If `common.event` violates the current architecture rules, use an app-owned infrastructure package such as:
+Future extraction rule:
 
-```text
-com.zufar.icedlatte.event
-```
-
-Do not put product-review business logic in this shared infrastructure package.
+Extract only after another module needs Kafka. At that point, move only proven
+generic mechanics into a cohesive infrastructure package, such as
+`common.event.outbox` and `common.event.inbox`, while leaving event contracts,
+mappers, listeners, and processors inside the owning feature module.
 
 Spring Modulith note:
 
-- The `review` module currently allows `common :: *`, so shared event infrastructure under `common` is the preferred direction.
-- If new `common.event` subpackages are added, update the controlled named-interface snapshot test if Spring Modulith exposes a new named interface.
-- `common.event` must not depend on `review`, `product`, `order`, `payment`, or any other feature module.
-- Product-review-specific mapping belongs in `review.service.kafka`, not in `common.event`.
-- The generic outbox publisher should be event-type agnostic: it reads `topic`, `partition_key`, `payload`, and optional `headers` from `outbox_events`.
-- Event-type-specific code should be limited to writing the correct outbox payload and processing matching inbox rows.
+- The `review` module owns the first Kafka integration end to end.
+- Avoid a technology-only top-level package just because Kafka is used.
+- Do not put product-review business logic in `common`.
+- When a second module integrates Kafka, extract only duplication that is
+  already concrete: row claiming, retry/backoff, stale lock reclaiming, and
+  terminal status transitions.
+- Any future `common.event` package must not depend on `review`, `product`,
+  `order`, `payment`, or any other feature module.
 
 ### Product Review Event Files
 
 Suggested package:
 
 ```text
-com.zufar.icedlatte.review.service.kafka
+com.zufar.icedlatte.review.messaging.kafka
 ```
 
 Suggested files:
 
 ```text
 review/dto/ReviewCreatedEvent.java
-review/service/kafka/ReviewCreatedKafkaEvent.java
-review/service/kafka/ReviewCreatedOutboxWriter.java
-review/service/kafka/ReviewCreatedOutboxEventListener.java
-review/service/kafka/ReviewCreatedKafkaListener.java
-review/service/kafka/ReviewCreatedKafkaEventMapper.java
-review/service/kafka/ReviewCreatedInboxProcessor.java
+review/messaging/kafka/event/ReviewCreatedKafkaEvent.java
+review/messaging/kafka/outbox/ReviewCreatedOutboxWriter.java
+review/messaging/kafka/outbox/ReviewCreatedOutboxEventListener.java
+review/messaging/kafka/inbox/ReviewCreatedKafkaListener.java
+review/messaging/kafka/inbox/ReviewCreatedKafkaEventMapper.java
+review/messaging/kafka/inbox/ReviewCreatedInboxProcessor.java
 ```
 
 Refactor existing direct classes:
