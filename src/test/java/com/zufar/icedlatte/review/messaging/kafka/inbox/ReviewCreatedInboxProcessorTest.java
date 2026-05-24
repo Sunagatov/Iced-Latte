@@ -54,7 +54,8 @@ class ReviewCreatedInboxProcessorTest {
 
         processor.processPendingInboxEvents();
 
-        verify(inboxEventRepository).claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker");
+        verify(inboxEventRepository)
+                .claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker");
     }
 
     @Test
@@ -84,11 +85,13 @@ class ReviewCreatedInboxProcessorTest {
         IllegalStateException failure = new IllegalStateException("moderation unavailable");
         when(inboxEventRepository.claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker"))
                 .thenReturn(List.of(new InboxEventRepository.InboxEventRow(rowId, eventId, payload, 2, 10)));
-        when(processingService.processByReviewId(reviewId)).thenThrow(failure);
+        when(processingService.processByReviewId(reviewId))
+                .thenThrow(failure);
 
         processor.processPendingInboxEvents();
 
-        verify(inboxEventRepository).markFailed(rowId, "test-inbox-worker", 2, 10, failure);
+        verify(inboxEventRepository)
+                .markFailed(rowId, "test-inbox-worker", 2, 10, failure);
     }
 
     private ReviewCreatedKafkaEvent reviewCreatedEvent(UUID eventId, UUID reviewId) {
