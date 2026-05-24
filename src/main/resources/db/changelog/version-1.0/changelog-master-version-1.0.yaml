@@ -1,6 +1,6 @@
 # Database Changelog - Version 1.0
 # Initial release database schema and data
-# 
+#
 # This version includes:
 # - Core product management
 # - User authentication and authorization
@@ -11,7 +11,7 @@
 # - File management
 
 databaseChangeLog:
-  
+
   # ========== CORE PRODUCT SYSTEM ==========
   # Product catalog foundation
   - include:
@@ -20,7 +20,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/19.07.2023.part2.insert-product-data.sql
       errorIfMissing: true
-      
+
   # ========== SHOPPING CART SYSTEM ==========
   # Cart and cart item tables with seed data
   - include:
@@ -35,7 +35,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/21.07.2023.part4.insert-shopping-cart-item-data.sql
       errorIfMissing: true
-      
+
   # ========== USER MANAGEMENT & SECURITY ==========
   # Address management
   - include:
@@ -44,7 +44,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/28.07.2023.part2.insert-address-table-data.sql
       errorIfMissing: true
-      
+
   # User authentication and authorization
   - include:
       file: db/changelog/version-1.0/28.07.2023.part3.create-user-granted-authority-table.sql
@@ -58,7 +58,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/28.07.2023.part6.insert-user-details-table-data.sql
       errorIfMissing: true
-      
+
   # Login security and attempt tracking
   - include:
       file: db/changelog/version-1.0/07.10.2023.part1.create-login-attempts-table.sql
@@ -66,7 +66,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/07.10.2023.part2.insert-login-attempts-table-data.sql
       errorIfMissing: true
-      
+
   # ========== FAVORITES SYSTEM ==========
   # Favorite product lists and items
   - include:
@@ -81,13 +81,13 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/23.11.2023.part4.insert-favorite-item-data.sql
       errorIfMissing: true
-      
+
   # ========== FILE MANAGEMENT ==========
   # File metadata storage
   - include:
       file: db/changelog/version-1.0/13.12.2023.part1.create-file-metadata-table.sql
       errorIfMissing: true
-      
+
   # ========== ORDER MANAGEMENT ==========
   # Order and order item tables
   - include:
@@ -96,7 +96,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/07.01.2024.part2.create-order-item-table.sql
       errorIfMissing: true
-      
+
   # ========== REVIEW & RATING SYSTEM ==========
   # Product reviews, ratings, and likes
   - include:
@@ -111,7 +111,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-1.0/13.04.2024.part2.insert-product-review-likes-data.sql
       errorIfMissing: true
-      
+
   # ========== AUDIT & COMPLIANCE ==========
   # Comprehensive audit logging system
   - include:
