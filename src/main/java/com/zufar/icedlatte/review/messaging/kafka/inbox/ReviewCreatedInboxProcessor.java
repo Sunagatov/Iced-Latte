@@ -25,45 +25,37 @@ class ReviewCreatedInboxProcessor {
 
     @Scheduled(fixedDelayString = "${kafka.inbox.poll-interval:PT5S}")
     public void processPendingInboxEvents() {
-        if (!properties.inbox().enabled() || !properties.inbox().workerEnabled()) {
+        KafkaIntegrationProperties.Inbox inbox = properties.inbox();
+        if (!inbox.enabled() || !inbox.workerEnabled()) {
             return;
         }
-
-        int reclaimed = inboxEventRepository.reclaimStaleLocks(
-                Instant.now().minus(properties.inbox().staleLockTimeout())
-        );
+        Instant lockedBefore = Instant.now().minus(inbox.staleLockTimeout());
+        int reclaimed = inboxEventRepository.reclaimStaleLocks(lockedBefore);
         if (reclaimed > 0) {
             log.warn("review.inbox.locks.reclaimed: count={}", reclaimed);
         }
+        String consumerName = properties.consumerGroups().reviewAi();
 
-        var events = inboxEventRepository.claimProcessableEvents(
-                properties.inbox().batchSize(),
-                properties.inbox().workerId()
-        );
+        var events = inboxEventRepository.claimProcessableEvents(inbox.batchSize(), consumerName, inbox.workerId());
         for (var event : events) {
             process(event);
         }
     }
 
     private void process(InboxEventRepository.InboxEventRow row) {
+        KafkaIntegrationProperties.Inbox inbox = properties.inbox();
         try {
             ReviewCreatedKafkaEvent event = objectMapper.readValue(row.payload(), ReviewCreatedKafkaEvent.class);
             AsyncReviewProcessingService.ProcessingResult result =
                     processingService.processByReviewId(event.payload().reviewId());
             if (result == AsyncReviewProcessingService.ProcessingResult.IGNORED) {
-                inboxEventRepository.markIgnored(row.id(), properties.inbox().workerId());
+                inboxEventRepository.markIgnored(row.id(), inbox.workerId());
             } else {
-                inboxEventRepository.markProcessed(row.id(), properties.inbox().workerId());
+                inboxEventRepository.markProcessed(row.id(), inbox.workerId());
             }
             log.info("review.inbox.processed: eventId={}, status={}", row.eventId(), result);
         } catch (Exception e) {
-            inboxEventRepository.markFailed(
-                    row.id(),
-                    properties.inbox().workerId(),
-                    row.attemptCount(),
-                    row.maxAttempts(),
-                    e
-            );
+            inboxEventRepository.markFailed(row.id(), inbox.workerId(), row.attemptCount(), row.maxAttempts(), e);
             log.warn("review.inbox.processing.failed: eventId={}", row.eventId(), e);
         }
     }

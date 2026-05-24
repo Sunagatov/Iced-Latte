@@ -29,50 +29,44 @@ public class InboxEventRepository {
                                        String headers,
                                        int maxAttempts) {
         int inserted = jdbcTemplate.update("""
-                INSERT INTO inbox_events (
-                    event_id, event_type, event_version, topic, partition_key,
-                    kafka_partition, kafka_offset, consumer_name, payload, headers,
-                    status, max_attempts
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'RECEIVED', ?)
-                ON CONFLICT DO NOTHING
-                """,
-                event.eventId(),
-                event.eventType(),
-                event.eventVersion(),
-                topic,
-                partitionKey,
-                kafkaPartition,
-                kafkaOffset,
-                consumerName,
-                payload,
-                headers,
-                maxAttempts
+                        INSERT INTO inbox_events (
+                            event_id, event_type, event_version, topic, partition_key,
+                            kafka_partition, kafka_offset, consumer_name, payload, headers,
+                            status, max_attempts
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'RECEIVED', ?)
+                        ON CONFLICT DO NOTHING
+                        """,
+                event.eventId(), event.eventType(), event.eventVersion(),
+                topic, partitionKey, kafkaPartition, kafkaOffset, consumerName,
+                payload, headers, maxAttempts
         );
         return inserted == 1;
     }
 
-    public List<InboxEventRow> claimProcessableEvents(int batchSize, String workerId) {
+    public List<InboxEventRow> claimProcessableEvents(int batchSize, String consumerName, String workerId) {
         return jdbcTemplate.query("""
-                WITH candidate AS (
-                    SELECT id
-                    FROM inbox_events
-                    WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE')
-                      AND (next_attempt_at IS NULL OR next_attempt_at <= now())
-                    ORDER BY created_at
-                    LIMIT ?
-                    FOR UPDATE SKIP LOCKED
-                )
-                UPDATE inbox_events i
-                SET status = 'IN_PROGRESS',
-                    locked_by = ?,
-                    locked_at = now(),
-                    updated_at = now()
-                FROM candidate
-                WHERE i.id = candidate.id
-                RETURNING i.id, i.event_id, i.payload::text, i.attempt_count, i.max_attempts
-                """,
+                        WITH candidate AS (
+                            SELECT id
+                            FROM inbox_events
+                            WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE')
+                              AND (next_attempt_at IS NULL OR next_attempt_at <= now())
+                              AND consumer_name = ?
+                            ORDER BY created_at
+                            LIMIT ?
+                            FOR UPDATE SKIP LOCKED
+                        )
+                        UPDATE inbox_events i
+                        SET status = 'IN_PROGRESS',
+                            locked_by = ?,
+                            locked_at = now(),
+                            updated_at = now()
+                        FROM candidate
+                        WHERE i.id = candidate.id
+                        RETURNING i.id, i.event_id, i.payload::text, i.attempt_count, i.max_attempts
+                        """,
                 (rs, _) -> mapRow(rs),
+                consumerName,
                 batchSize,
                 workerId
         );
@@ -80,15 +74,15 @@ public class InboxEventRepository {
 
     public int reclaimStaleLocks(Instant lockedBefore) {
         return jdbcTemplate.update("""
-                UPDATE inbox_events
-                SET status = 'FAILED_RETRYABLE',
-                    locked_by = NULL,
-                    locked_at = NULL,
-                    next_attempt_at = now(),
-                    updated_at = now()
-                WHERE status = 'IN_PROGRESS'
-                  AND locked_at < ?
-                """,
+                        UPDATE inbox_events
+                        SET status = 'FAILED_RETRYABLE',
+                            locked_by = NULL,
+                            locked_at = NULL,
+                            next_attempt_at = now(),
+                            updated_at = now()
+                        WHERE status = 'IN_PROGRESS'
+                          AND locked_at < ?
+                        """,
                 Timestamp.from(lockedBefore)
         );
     }
@@ -101,47 +95,49 @@ public class InboxEventRepository {
         markTerminal(id, workerId, "IGNORED");
     }
 
-    public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
+    public void markFailed(UUID id, String workerId,
+                           int attemptCount, int maxAttempts,
+                           Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
-        Instant nextAttemptAt = permanent
-                ? null
-                : Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS);
+        String status = permanent ? "FAILED_PERMANENT" : "FAILED_RETRYABLE";
+        Timestamp nextAttemptAt;
+        if (permanent) {
+            nextAttemptAt = null;
+        } else {
+            nextAttemptAt = Timestamp.from(Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS));
+        }
         jdbcTemplate.update("""
-                UPDATE inbox_events
-                SET status = ?,
-                    attempt_count = ?,
-                    next_attempt_at = ?,
-                    locked_by = NULL,
-                    locked_at = NULL,
-                    last_error = ?,
-                    updated_at = now()
-                WHERE id = ?
-                  AND status = 'IN_PROGRESS'
-                  AND locked_by = ?
-                """,
-                permanent ? "FAILED_PERMANENT" : "FAILED_RETRYABLE",
-                nextAttemptCount,
-                nextAttemptAt == null ? null : Timestamp.from(nextAttemptAt),
-                sanitizedError(failure),
-                id,
-                workerId
+                        UPDATE inbox_events
+                        SET status = ?,
+                            attempt_count = ?,
+                            next_attempt_at = ?,
+                            locked_by = NULL,
+                            locked_at = NULL,
+                            last_error = ?,
+                            updated_at = now()
+                        WHERE id = ?
+                          AND status = 'IN_PROGRESS'
+                          AND locked_by = ?
+                        """,
+                status, nextAttemptCount, nextAttemptAt,
+                sanitizedError(failure), id, workerId
         );
     }
 
     private void markTerminal(UUID id, String workerId, String status) {
         jdbcTemplate.update("""
-                UPDATE inbox_events
-                SET status = ?,
-                    locked_by = NULL,
-                    locked_at = NULL,
-                    processed_at = now(),
-                    last_error = NULL,
-                    updated_at = now()
-                WHERE id = ?
-                  AND status = 'IN_PROGRESS'
-                  AND locked_by = ?
-                """,
+                        UPDATE inbox_events
+                        SET status = ?,
+                            locked_by = NULL,
+                            locked_at = NULL,
+                            processed_at = now(),
+                            last_error = NULL,
+                            updated_at = now()
+                        WHERE id = ?
+                          AND status = 'IN_PROGRESS'
+                          AND locked_by = ?
+                        """,
                 status, id, workerId
         );
     }
@@ -165,10 +161,5 @@ public class InboxEventRepository {
         );
     }
 
-    public record InboxEventRow(UUID id,
-                                UUID eventId,
-                                String payload,
-                                int attemptCount,
-                                int maxAttempts) {
-    }
+    public record InboxEventRow(UUID id, UUID eventId, String payload, int attemptCount, int maxAttempts) {}
 }

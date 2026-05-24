@@ -1,14 +1,17 @@
 package com.zufar.icedlatte.review.kafka;
 
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
+import com.zufar.icedlatte.review.messaging.kafka.config.KafkaBootstrapPropertiesValidator;
 import com.zufar.icedlatte.review.messaging.kafka.inbox.ReviewCreatedKafkaConsumer;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
 import com.zufar.icedlatte.review.service.ai.ReviewCreatedApplicationEventListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -126,6 +129,19 @@ class ReviewKafkaConfigurationTest {
                 .hasMessage("kafka.inbox.poll-interval must be positive");
     }
 
+    @Test
+    @DisplayName("rejects Kafka-enabled configuration with blank bootstrap servers")
+    void rejectsKafkaEnabledConfigurationWithBlankBootstrapServers() {
+        KafkaProperties kafkaProperties = new KafkaProperties();
+        kafkaProperties.setBootstrapServers(List.of(" "));
+
+        var validator = new KafkaBootstrapPropertiesValidator(kafkaEnabledProperties(), kafkaProperties);
+
+        assertThatThrownBy(validator::afterPropertiesSet)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("spring.kafka.bootstrap-servers must not be blank when Kafka is enabled");
+    }
+
     private void assertKafkaEnabledCondition(Class<?> componentClass) {
         ConditionalOnProperty condition = componentClass.getAnnotation(ConditionalOnProperty.class);
 
@@ -140,5 +156,15 @@ class ReviewKafkaConfigurationTest {
                                               KafkaIntegrationProperties.Outbox outbox,
                                               KafkaIntegrationProperties.Inbox inbox) {
         new KafkaIntegrationProperties(true, topics, consumerGroups, outbox, inbox);
+    }
+
+    private KafkaIntegrationProperties kafkaEnabledProperties() {
+        return new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                KafkaIntegrationProperties.Outbox.defaults(),
+                KafkaIntegrationProperties.Inbox.defaults()
+        );
     }
 }

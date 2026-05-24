@@ -1,14 +1,18 @@
 package com.zufar.icedlatte.review.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
+import java.io.File;
 import java.lang.reflect.RecordComponent;
+import java.time.Instant;
 import java.util.UUID;
 
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("ReviewCreatedKafkaEvent")
@@ -48,5 +52,24 @@ class ReviewCreatedKafkaEventTest {
         assertThat(ReviewCreatedKafkaEvent.Payload.class.getRecordComponents())
                 .extracting(RecordComponent::getName)
                 .doesNotContain("text");
+    }
+
+    @Test
+    @DisplayName("serialized envelope matches the review-created JSON schema")
+    void serializedEnvelopeMatchesReviewCreatedJsonSchema() throws Exception {
+        UUID reviewId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(
+                UUID.randomUUID(), reviewId, "Fresh review", productId, Instant.parse("2026-05-24T12:00:00Z"));
+        ReviewCreatedKafkaEvent kafkaEvent = ReviewCreatedKafkaEvent.fromDomainEvent(domainEvent);
+        ObjectMapper objectMapper = new ObjectMapper()
+                .findAndRegisterModules()
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        String json = objectMapper.writeValueAsString(kafkaEvent);
+
+        org.hamcrest.MatcherAssert.assertThat(
+                json, matchesJsonSchema(new File("docs/events/schemas/review-created-event.schema.json")));
+        assertThat(json).doesNotContain("Fresh review", "\"text\"");
     }
 }
