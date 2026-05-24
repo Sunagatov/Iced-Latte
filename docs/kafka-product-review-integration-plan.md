@@ -89,7 +89,14 @@ Problems with the current partial Kafka path:
 - Duplicate Kafka delivery is not explicitly controlled by a consumer-side idempotency table.
 - Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.service.kafka`; this must be verified and fixed during implementation.
 - Existing direct Kafka publishing should be replaced, not extended. The final Kafka-enabled path must be `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
-§- Current Kafka code serializes/deserializes a Java-specific `ReviewCreatedKafkaEvent` type directly. The outbox design should prefer storing and publishing the JSON envelope from `outbox_events.payload`, then mapping that JSON to the review event contract at the listener boundary. This reduces coupling to Java package names and Spring JSON type headers.
+- Current Kafka code serializes/deserializes a Java-specific `ReviewCreatedKafkaEvent` type directly. The outbox design should prefer storing and publishing the JSON envelope from `outbox_events.payload`, then mapping that JSON to the review event contract at the listener boundary. This reduces coupling to Java package names and Spring JSON type headers.
+
+Repo-specific facts to keep in mind during implementation:
+
+- `IcedLatteApplication` already has `@EnableScheduling`, `@EnableAsync`, `@EnableRetry`, and `@ConfigurationPropertiesScan`.
+- Liquibase root config is `src/main/resources/db/changelog-master.yaml`; version 2 migrations are included from `src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml`.
+- Spring Modulith verifies module dependencies and controls exposed `@NamedInterface` packages in `ModularityTests`.
+- `spring-boot-starter-kafka-test`, Testcontainers PostgreSQL, and JSON Schema validator dependencies already exist in `pom.xml`, so the proposed contract and Kafka tests should not need a new test stack.
 
 ---
 
@@ -177,6 +184,8 @@ Contract validation rule:
 - Keep `docs/events/asyncapi.yaml`, `docs/events/schemas/review-created-event.schema.json`, `ReviewCreatedKafkaEvent`, and the outbox writer mapping in sync in the same PR.
 - Add at least one test that serializes the Java Kafka event/envelope and validates the resulting JSON against `review-created-event.schema.json`, or an equivalent strict contract test if JSON Schema validation is not added.
 - The schema must require `reviewId` and `productId`, and must not allow `payload.text`.
+- Prefer a strict JSON Schema for the event envelope: require top-level metadata fields, require `payload.reviewId` and `payload.productId`, and reject unknown payload fields unless there is a deliberate compatibility reason.
+- Treat event version changes as a contract change. If the payload changes incompatibly, create a new topic suffix such as `.v2` instead of silently changing `.v1`.
 
 ---
 
@@ -267,6 +276,13 @@ Suggested columns:
 | `created_at` | TIMESTAMPTZ not null | Audit |
 | `updated_at` | TIMESTAMPTZ not null | Audit |
 
+JPA mapping guidance:
+
+- Store `status` as `@Enumerated(EnumType.STRING)`.
+- Map `payload` and `headers` either as `String` containing canonical JSON or as a Jackson type supported by Hibernate 6 JSON mapping, for example `@JdbcTypeCode(SqlTypes.JSON)` with `columnDefinition = "jsonb"`.
+- Do not use Java serialization or database-specific object blobs for event payloads.
+- Keep persisted enum names stable; changing enum names later becomes a data migration.
+
 Suggested statuses:
 
 ```text
@@ -288,6 +304,13 @@ INDEX (topic)
 INDEX (partition_key, created_at)
 ```
 
+Consider a partial index for polling efficiency if the table grows:
+
+```text
+INDEX ON outbox_events (next_attempt_at, created_at)
+WHERE status IN ('PENDING', 'FAILED_RETRYABLE')
+```
+
 Recommended constraints:
 
 ```text
@@ -303,6 +326,8 @@ Column default rules:
 - Terminal rows should clear `locked_by` and `locked_at`.
 - Retryable failure rows should clear `locked_by` and `locked_at`, increment `attempt_count`, set `last_error`, and set the next retry time.
 - `last_error` must be sanitized and bounded before storing. Do not store payloads, secrets, stack traces, or unbounded provider responses.
+- Every status transition must update `updated_at`.
+- Status updates after publishing should guard by `id`, expected status, and `locked_by` so an old worker cannot overwrite a row that was reclaimed by another worker after a stale-lock timeout.
 
 Recommended retention:
 
@@ -347,6 +372,12 @@ Suggested columns:
 | `created_at` | TIMESTAMPTZ not null | Audit |
 | `updated_at` | TIMESTAMPTZ not null | Audit |
 
+JPA mapping guidance:
+
+- Store `status` as `@Enumerated(EnumType.STRING)`.
+- Use the same JSONB mapping strategy as `outbox_events` for `payload` and `headers`.
+- Avoid module-specific entity dependencies in shared inbox infrastructure; event-specific code should parse the JSON envelope at the processor boundary.
+
 Suggested statuses:
 
 ```text
@@ -369,6 +400,13 @@ INDEX (consumer_name, status)
 INDEX (partition_key, created_at)
 ```
 
+Consider a partial index for polling efficiency if the table grows:
+
+```text
+INDEX ON inbox_events (consumer_name, next_attempt_at, created_at)
+WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE')
+```
+
 Recommended constraints:
 
 ```text
@@ -387,6 +425,8 @@ Column default rules:
 - Terminal rows should clear `locked_by` and `locked_at`.
 - Retryable failure rows should clear `locked_by` and `locked_at`, increment `attempt_count`, set `last_error`, and set the next retry time.
 - `consumer_name` is the durable processor identity, not just the Kafka group id. For this flow it should match the configured review AI consumer group unless there is a deliberate reason to separate those names.
+- Every status transition must update `updated_at`.
+- Status updates after processing should guard by `id`, expected status, and `locked_by` so a stale worker cannot overwrite a row that another worker reclaimed.
 
 Recommended retention:
 
@@ -518,6 +558,13 @@ kafka.outbox.worker-concurrency=1
 
 The worker should be disabled unless `kafka.enabled=true`.
 
+Scheduling guidance:
+
+- Implement the polling loop with `@Scheduled(fixedDelayString = "${kafka.outbox.poll-interval:5s}")` or an equivalent scheduler bean.
+- `IcedLatteApplication` already enables scheduling; do not add another application-level scheduling annotation.
+- The scheduled method should immediately return when `kafka.enabled=false` or `kafka.outbox.worker-enabled=false`.
+- Keep the scheduled method thin; delegate claiming, publishing, and status transitions to testable services.
+
 Ordering policy:
 
 - V1 should use one outbox worker thread per application process.
@@ -577,9 +624,11 @@ Offset acknowledgement rule:
 - The listener must not acknowledge or commit the Kafka offset before the inbox insert transaction commits.
 - Recommended v1: use manual acknowledgement for this listener.
 - `Acknowledgment.acknowledge()` must be called only after successful inbox insert or duplicate detection.
-- With Spring Kafka `ack-mode=record`, the same rule is acceptable only if the listener method is transactional and the database transaction commits before the method returns. Manual ack is clearer and less error-prone for this plan.
+- Current `ack-mode=record` should be changed globally or replaced with a review-specific listener container factory using manual ack.
 - If the inbox insert fails, the Kafka record must be retried by Kafka rather than lost.
 - Do not annotate the Kafka listener itself with `@Async`. Kafka listener concurrency should be controlled through Spring Kafka container configuration, not through application async execution.
+- The listener must use an explicit stable Kafka group id from `kafka.consumer-groups.review-ai`; do not rely on a generated or environment-specific group id.
+- Duplicate detection should acknowledge the Kafka record when an existing `inbox_events` row is found for `(event_id, consumer_name)`, regardless of whether that row is currently `RECEIVED`, `IN_PROGRESS`, `PROCESSED`, `FAILED_RETRYABLE`, `FAILED_PERMANENT`, or `IGNORED`.
 
 This is the critical durability boundary for consumption:
 
@@ -617,7 +666,7 @@ and consumer_name = 'iced-latte-review-ai'
 9. On transient failure, mark `FAILED_RETRYABLE`.
 10. On permanent failure or max attempts exceeded, mark `FAILED_PERMANENT`.
 
-If the review no longer exists when the event is processed, mark the inbox row `IGNORED` or `PROCESSED` with a clear log. This is acceptable because duplicate or stale events must be safe.
+If the review no longer exists when the event is processed, mark the inbox row `IGNORED` with a clear log. This is acceptable because duplicate or stale events must be safe.
 
 Attempt-count semantics:
 
@@ -649,6 +698,8 @@ Recommended approach:
 - Run business processing in a new transaction.
 - Mark `PROCESSED` in a short transaction after success.
 - On exception, mark `FAILED_RETRYABLE` or `FAILED_PERMANENT` in a separate transaction.
+- Implement the polling loop with `@Scheduled(fixedDelayString = "${kafka.inbox.poll-interval:5s}")` or an equivalent scheduler bean.
+- The scheduled method should immediately return when `kafka.enabled=false`, `kafka.inbox.enabled=false`, or `kafka.inbox.worker-enabled=false`.
 
 This mirrors the Stripe webhook event recorder pattern already used elsewhere in the project.
 
@@ -711,6 +762,13 @@ src/main/resources/db/changelog/version-2.0/DD.MM.2026.partN.create-outbox-event
 src/main/resources/db/changelog/version-2.0/DD.MM.2026.partN.create-inbox-events-table.sql
 src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
 ```
+
+Migration registration:
+
+- Add both SQL files to `src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml`.
+- Follow the existing version-2.0 include style and set `errorIfMissing: true` for new Kafka migration includes.
+- Keep DDL idempotence consistent with existing project migrations; do not rely on Hibernate schema generation because JPA uses `ddl-auto: validate`.
+- Add `jsonb` columns directly in SQL migrations; the entity mapping must match the exact column types.
 
 ### Shared Event Infrastructure
 
@@ -796,6 +854,12 @@ spring:
   kafka:
     listener:
       ack-mode: manual
+    producer:
+      properties:
+        acks: all
+        enable.idempotence: true
+    consumer:
+      enable-auto-commit: false
 
 kafka:
   enabled: ${KAFKA_ENABLED:false}
@@ -842,6 +906,7 @@ Configuration invariants:
 
 - If `kafka.enabled=false`, local fallback is active and Kafka outbox/inbox components must not run.
 - If `kafka.enabled=true`, local fallback is inactive and outbox writing for `review.created` must be active.
+- Kafka listeners must set their group id from `kafka.consumer-groups.review-ai`; `spring.kafka.consumer.group-id` is optional only if every listener declares its group explicitly.
 - `kafka.outbox.worker-enabled=false` may be used on secondary app instances, but at least one production-like instance must run the outbox worker or events will remain pending.
 - `kafka.inbox.worker-enabled=false` may be used to pause business processing intentionally, but then `inbox_events` will accumulate.
 - Fail application startup when `kafka.enabled=true` and required topic/group/bootstrap properties are blank.
@@ -862,6 +927,7 @@ Tasks:
 - Verify `ReviewCreatedKafkaEvent` package names match Spring Kafka JSON deserializer config.
 - Update `docs/events/asyncapi.yaml` if needed.
 - Update `review-created-event.schema.json` to remove `text` from payload.
+- Make the schema strict enough to reject unexpected `payload.text`.
 - Add or update a contract test proving the serialized event matches the schema.
 - Update `ReviewCreatedKafkaEvent.Payload` to remove `text`.
 - Ensure `.env.example` contains Kafka defaults.
@@ -887,6 +953,7 @@ Goal: reliably record product-review events in PostgreSQL.
 Tasks:
 
 - Add Liquibase migration for `outbox_events`.
+- Register the migration in `changelog-master-version-2.0.yaml` with `errorIfMissing: true`.
 - Add `OutboxEvent` entity and repository.
 - Add `OutboxEventWriter`.
 - Add `ReviewCreatedOutboxWriter`.
@@ -937,6 +1004,7 @@ Goal: make Kafka consumption durable and idempotent.
 Tasks:
 
 - Add Liquibase migration for `inbox_events`.
+- Register the migration in `changelog-master-version-2.0.yaml` with `errorIfMissing: true`.
 - Add `InboxEvent` entity and repository.
 - Add `InboxEventRecorder`.
 - Refactor `ReviewCreatedKafkaConsumer` into a thin listener.
@@ -1069,7 +1137,7 @@ The event may be published again later. This is acceptable because Kafka and the
 
 ### Review Was Already Deleted
 
-Inbox processor should mark the row `IGNORED` or `PROCESSED` and log that the review no longer exists.
+Inbox processor should mark the row `IGNORED` and log that the review no longer exists.
 
 ### Moderation Rejects Review
 
@@ -1089,9 +1157,9 @@ After `max_attempts`, mark the outbox row `FAILED_PERMANENT`. Review creation ha
 
 ---
 
-## Open Implementation Decisions
+## Implementation Details To Confirm
 
-These decisions should be confirmed during implementation:
+These details should be confirmed during implementation, but the recommended defaults below are the intended v1 behavior unless code constraints force a change:
 
 1. Exact package for shared event infrastructure: `common.event` or top-level `event`.
 2. Exact Liquibase version folder and migration filenames.
@@ -1100,8 +1168,7 @@ These decisions should be confirmed during implementation:
 5. Whether `actorId` should be populated from `userId` in `review.created`; this is useful for traceability but should be treated as private data.
 6. Whether `correlationId` should be read from the current MDC/request context.
 7. Whether manual ack is configured globally or through a review-specific listener container factory.
-8. Whether `IGNORED` should be terminal success for missing reviews, or whether missing reviews should be treated as `PROCESSED`.
-9. Whether outbox and inbox cleanup jobs belong in the first implementation or a follow-up PR.
+8. Whether outbox and inbox cleanup jobs belong in the first implementation or a follow-up PR.
 
 Recommended defaults:
 
