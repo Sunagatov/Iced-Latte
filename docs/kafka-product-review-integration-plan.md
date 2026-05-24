@@ -1162,14 +1162,14 @@ Goal: make event flow debuggable.
 Logging:
 
 - `review.outbox.created`
-- `kafka.outbox.publish.started`
-- `kafka.outbox.publish.succeeded`
-- `kafka.outbox.publish.failed`
-- `kafka.inbox.recorded`
-- `kafka.inbox.duplicate`
-- `kafka.inbox.processing.started`
-- `kafka.inbox.processing.succeeded`
-- `kafka.inbox.processing.failed`
+- `event.outbox.publish.started`
+- `event.outbox.publish.succeeded`
+- `event.outbox.publish.failed`
+- `event.inbox.recorded`
+- `event.inbox.duplicate`
+- `event.inbox.processing.started`
+- `event.inbox.processing.succeeded`
+- `event.inbox.processing.failed`
 
 Useful future metrics:
 
