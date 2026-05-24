@@ -90,6 +90,8 @@ Problems with the current partial Kafka path:
 - Existing serializer trusted-package config appears to reference `com.zufar.icedlatte.review.kafka`, but current classes live under `com.zufar.icedlatte.review.service.kafka`; this must be verified and fixed during implementation.
 - Existing direct Kafka publishing should be replaced, not extended. The final Kafka-enabled path must be `ReviewCreatedEvent -> outbox_events -> Kafka -> inbox_events -> inbox worker`.
 - Current Kafka code serializes/deserializes a Java-specific `ReviewCreatedKafkaEvent` type directly. The outbox design should prefer storing and publishing the JSON envelope from `outbox_events.payload`, then mapping that JSON to the review event contract at the listener boundary. This reduces coupling to Java package names and Spring JSON type headers.
+- `ReviewCreatedEvent` currently does not carry `userId`; therefore `actorId` cannot be populated without changing the internal event or passing request context separately.
+- AI is optional through `ai.enabled`; when AI is disabled, moderation and summary services are no-op implementations. Kafka integration must preserve that behavior.
 
 Repo-specific facts to keep in mind during implementation:
 
@@ -298,11 +300,14 @@ Required indexes:
 
 ```text
 UNIQUE (event_id)
+UNIQUE (aggregate_type, aggregate_id, event_type, event_version)
 INDEX (status, next_attempt_at)
 INDEX (aggregate_type, aggregate_id)
 INDEX (topic)
 INDEX (partition_key, created_at)
 ```
+
+The `(aggregate_type, aggregate_id, event_type, event_version)` uniqueness rule prevents accidentally creating two `review.created.v1` outbox rows for the same review. If a future event type legitimately needs multiple events with the same aggregate and event type, add a separate sequence or business discriminator before reusing this constraint.
 
 Consider a partial index for polling efficiency if the table grows:
 
@@ -523,6 +528,28 @@ FOR UPDATE SKIP LOCKED;
 
 The implementation may express this through a native Spring Data query. `SKIP LOCKED` is important because it allows multiple app instances to run the worker without blocking each other on the same rows.
 
+Recommended claim shape:
+
+```sql
+WITH candidate AS (
+  SELECT id
+  FROM outbox_events
+  WHERE status IN ('PENDING', 'FAILED_RETRYABLE')
+    AND next_attempt_at <= now()
+  ORDER BY created_at
+  LIMIT :batchSize
+  FOR UPDATE SKIP LOCKED
+)
+UPDATE outbox_events o
+SET status = 'IN_PROGRESS',
+    locked_by = :workerId,
+    locked_at = now(),
+    updated_at = now()
+FROM candidate
+WHERE o.id = candidate.id
+RETURNING o.*;
+```
+
 Stale `IN_PROGRESS` rows must be reclaimable. A worker should treat rows as retryable again when:
 
 ```text
@@ -544,6 +571,7 @@ Transaction shape:
 - Publish claimed rows outside the database transaction. Do not hold database row locks while waiting for Kafka broker acknowledgements.
 - Mark each row `PUBLISHED`, `FAILED_RETRYABLE`, or `FAILED_PERMANENT` in a separate short transaction.
 - Store Kafka `partition` and `offset` from the send result when marking `PUBLISHED`.
+- When marking success or failure, update only rows that still match `id = :id`, `status = 'IN_PROGRESS'`, and `locked_by = :workerId`; if no row is updated, log it and do not retry in memory because another worker may have reclaimed the row.
 
 Use small batches in v1, for example:
 
@@ -643,6 +671,7 @@ Deserialization and schema failures:
 - If typed Spring deserialization is kept, use Spring Kafka `ErrorHandlingDeserializer` and configure an error handler before enabling Kafka in production-like environments.
 - For v1, deserialization failures may be treated as operational failures visible in logs/metrics because Iced Latte is the only producer of this topic.
 - Do not silently skip malformed records. A malformed record must either be retried, logged with topic/partition/offset, or moved to a future Kafka DLQ when that is introduced.
+- If malformed records are retried without a Kafka DLQ, they can block that partition. This is acceptable for v1 only because Iced Latte is the sole producer; production rollout should monitor this explicitly.
 
 ### Inbox Worker
 
@@ -688,6 +717,8 @@ LIMIT :batchSize
 FOR UPDATE SKIP LOCKED;
 ```
 
+Use the same `WITH candidate ... UPDATE ... RETURNING` claim pattern as the outbox worker, setting `status = 'IN_PROGRESS'`, `locked_by`, `locked_at`, and `updated_at` in the claim transaction.
+
 Stale `IN_PROGRESS` inbox rows must be reclaimable using `locked_at` and `kafka.inbox.stale-lock-timeout`.
 
 The inbox worker must run business processing in a transaction that includes the inbox status update. If business processing fails, the worker must persist the failure status in a separate transaction or carefully structure the transaction so the failure marker is not rolled back with the failed business work.
@@ -698,6 +729,7 @@ Recommended approach:
 - Run business processing in a new transaction.
 - Mark `PROCESSED` in a short transaction after success.
 - On exception, mark `FAILED_RETRYABLE` or `FAILED_PERMANENT` in a separate transaction.
+- When marking success or failure, update only rows that still match `id = :id`, `status = 'IN_PROGRESS'`, and `locked_by = :workerId`.
 - Implement the polling loop with `@Scheduled(fixedDelayString = "${kafka.inbox.poll-interval:5s}")` or an equivalent scheduler bean.
 - The scheduled method should immediately return when `kafka.enabled=false`, `kafka.inbox.enabled=false`, or `kafka.inbox.worker-enabled=false`.
 
@@ -731,6 +763,12 @@ This keeps behavior consistent with the existing non-Kafka implementation.
 
 Tradeoff: moderation is eventually consistent. A rejected review may exist briefly before Kafka processing deletes it. This is already conceptually similar to the current async-after-commit behavior.
 
+AI-disabled behavior:
+
+- When `ai.enabled=false`, the current project wires no-op moderation and summary services.
+- Kafka-enabled mode must still run the inbox processor, but the moderation call should pass through the same no-op service and mark the inbox row `PROCESSED`.
+- Do not make Kafka enablement imply `ai.enabled=true`; they are separate feature flags.
+
 Do not add a `PENDING_MODERATION` review status in this first Kafka integration. That would be a separate product behavior change.
 
 Important refactor:
@@ -740,6 +778,13 @@ Important refactor:
 - Add a review-processing entry point that accepts `reviewId` or loads `ProductReview` before moderation, for example `AsyncReviewProcessingService.processByReviewId(reviewId)`.
 - The Kafka inbox processor should load the current review row, read text from PostgreSQL, and then reuse the same moderation/delete/aggregate/summary behavior.
 - If the review is missing, treat it as `IGNORED` in v1.
+
+Idempotent side-effect expectations:
+
+- Deleting an already-deleted review must be safe and should result in `IGNORED`.
+- `refreshReviewAggregates(productId)` recalculates aggregate state and is safe to call more than once.
+- `summaryDebouncer.schedule(productId)` is product-scoped and debounce-based, so duplicate scheduling should not create incorrect product state.
+- Any future side effect added to review-created processing must be idempotent before it is called from the inbox worker.
 
 ---
 
@@ -885,6 +930,9 @@ kafka:
     max-attempts: ${KAFKA_INBOX_MAX_ATTEMPTS:10}
     stale-lock-timeout: ${KAFKA_INBOX_STALE_LOCK_TIMEOUT:5m}
     retention: ${KAFKA_INBOX_RETENTION:30d}
+
+ai:
+  enabled: ${AI_ENABLED:false}
 ```
 
 Kafka disabled mode must remain the default in:
@@ -907,6 +955,7 @@ Configuration invariants:
 - If `kafka.enabled=false`, local fallback is active and Kafka outbox/inbox components must not run.
 - If `kafka.enabled=true`, local fallback is inactive and outbox writing for `review.created` must be active.
 - Kafka listeners must set their group id from `kafka.consumer-groups.review-ai`; `spring.kafka.consumer.group-id` is optional only if every listener declares its group explicitly.
+- `kafka.enabled` and `ai.enabled` are independent. Kafka can be enabled while AI remains disabled; in that case messages still flow through outbox/inbox and the no-op moderation/summary behavior is preserved.
 - `kafka.outbox.worker-enabled=false` may be used on secondary app instances, but at least one production-like instance must run the outbox worker or events will remain pending.
 - `kafka.inbox.worker-enabled=false` may be used to pause business processing intentionally, but then `inbox_events` will accumulate.
 - Fail application startup when `kafka.enabled=true` and required topic/group/bootstrap properties are blank.
@@ -943,6 +992,7 @@ Acceptance criteria:
 - App starts with Kafka disabled.
 - Event schema contains only `reviewId` and `productId` in payload.
 - Kafka topic and consumer group names are config-driven.
+- `kafka.enabled=true` does not require `ai.enabled=true`.
 - Missing Kafka topic does not break review creation; it leaves outbox rows retryable.
 - Invalid Kafka-enabled configuration fails startup instead of silently dropping events.
 
@@ -969,6 +1019,7 @@ Acceptance criteria:
 - If the outbox insert fails, the review transaction rolls back.
 - When Kafka is disabled, current local async behavior still works.
 - Unit tests prove Kafka-enabled and Kafka-disabled listeners are mutually exclusive.
+- Duplicate `review.created` outbox writes for the same review are rejected by the database uniqueness boundary.
 
 ### Phase 3: Outbox Publisher Worker
 
@@ -1044,6 +1095,7 @@ Acceptance criteria:
 - Missing review rows are handled safely.
 - Failed processing is visible in `inbox_events`.
 - Tests prove retryable failures do not lose the inbox row.
+- Tests prove `ai.enabled=false` still results in a `PROCESSED` inbox row without calling real AI.
 
 ### Phase 6: Tests
 
@@ -1073,6 +1125,7 @@ Integration tests:
 - Kafka-enabled mode does not run the local async listener.
 - Kafka listener does not acknowledge a message when inbox insert fails.
 - Kafka payload does not contain review text.
+- Kafka-enabled flow works with `AI_ENABLED=false`.
 - Stale outbox and inbox locks are reclaimed.
 
 Use Testcontainers Kafka for Kafka integration tests.
@@ -1142,6 +1195,10 @@ Inbox processor should mark the row `IGNORED` and log that the review no longer 
 ### Moderation Rejects Review
 
 Delete the review, refresh product aggregates, schedule summary update, mark inbox row `PROCESSED`.
+
+### AI Is Disabled
+
+The inbox processor should still process the row through the configured no-op moderation/summary services and mark the row `PROCESSED`. Kafka enablement must not require AI provider credentials.
 
 ### Moderation Provider Is Temporarily Unavailable
 
