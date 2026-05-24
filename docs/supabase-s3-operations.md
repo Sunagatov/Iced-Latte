@@ -172,7 +172,7 @@ ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'error\|e
 ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'Duplicate key\|IllegalState' | tail -5"
 
 # Watch logs in real-time after restart
-ssh root@116.203.197.65 "docker logs iced-latte-backend -f 2>&1" 
+ssh root@116.203.197.65 "docker logs iced-latte-backend -f 2>&1"
 ```
 
 > **Timing:** After restart, the backend takes ~30-60 seconds to become healthy (healthcheck has `start_period: 60s`). The migration runs asynchronously on a virtual thread — the app may report healthy before the S3 index refresh completes.
