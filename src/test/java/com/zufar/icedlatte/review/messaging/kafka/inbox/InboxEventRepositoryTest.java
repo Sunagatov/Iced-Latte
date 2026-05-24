@@ -30,13 +30,14 @@ class InboxEventRepositoryTest {
     @Test
     @DisplayName("claims only rows for the requested consumer")
     void claimsOnlyRowsForRequestedConsumer() {
-        when(jdbcTemplate.query(anyString(), anyInboxRowMapper(), any(), any(), any()))
+        when(jdbcTemplate.<InboxEventRepository.InboxEventRow>query(
+                anyString(), anyInboxRowMapper(), any(), any(), any()))
                 .thenReturn(List.of());
         var repository = new InboxEventRepository(jdbcTemplate);
 
         repository.claimProcessableEvents(25, "iced-latte-review-ai", "worker-1");
 
-        verify(jdbcTemplate).query(
+        verify(jdbcTemplate).<InboxEventRepository.InboxEventRow>query(
                 contains("AND consumer_name = ?"),
                 anyInboxRowMapper(),
                 eq("iced-latte-review-ai"),
