@@ -45,32 +45,24 @@ public class ReviewCreatedKafkaPublisher {
     }
 
     private void publish(OutboxEventRepository.OutboxEventRow event) {
+        KafkaIntegrationProperties.Outbox outbox = properties.outbox();
         try {
-            SendResult<String, String> result = kafkaTemplate.send(
-                    event.topic(),
-                    event.partitionKey(),
-                    event.payload()
-            ).get(properties.outbox().publishTimeout().toMillis(), TimeUnit.MILLISECONDS);
+            log.info("event.outbox.publish.started: eventId={}, topic={}", event.eventId(), event.topic());
+            SendResult<String, String> result = kafkaTemplate.send(event.topic(), event.partitionKey(), event.payload())
+                    .get(outbox.publishTimeout().toMillis(), TimeUnit.MILLISECONDS);
 
             outboxEventRepository.markPublished(
                     event.id(),
-                    properties.outbox().workerId(),
+                    outbox.workerId(),
                     result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset()
             );
-            log.info("review.outbox.published: eventId={}, topic={}, partition={}, offset={}",
+            log.info("event.outbox.publish.succeeded: eventId={}, topic={}, partition={}, offset={}",
                     event.eventId(), event.topic(), result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset());
         } catch (Exception e) {
-            outboxEventRepository.markFailed(
-                    event.id(),
-                    properties.outbox().workerId(),
-                    event.attemptCount(),
-                    event.maxAttempts(),
-                    e
-            );
-            log.warn("review.outbox.publish.failed: eventId={}, topic={}",
-                    event.eventId(), event.topic(), e);
+            outboxEventRepository.markFailed(event.id(), outbox.workerId(), event.attemptCount(), event.maxAttempts(), e);
+            log.warn("event.outbox.publish.failed: eventId={}, topic={}", event.eventId(), event.topic(), e);
         }
     }
 }

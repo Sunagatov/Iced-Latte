@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -45,18 +46,19 @@ class ReviewCreatedInboxProcessor {
     private void process(InboxEventRepository.InboxEventRow row) {
         KafkaIntegrationProperties.Inbox inbox = properties.inbox();
         try {
+            log.info("event.inbox.processing.started: eventId={}", row.eventId());
             ReviewCreatedKafkaEvent event = objectMapper.readValue(row.payload(), ReviewCreatedKafkaEvent.class);
-            AsyncReviewProcessingService.ProcessingResult result =
-                    processingService.processByReviewId(event.payload().reviewId());
+            UUID reviewId = event.payload().reviewId();
+            AsyncReviewProcessingService.ProcessingResult result = processingService.processByReviewId(reviewId);
             if (result == AsyncReviewProcessingService.ProcessingResult.IGNORED) {
                 inboxEventRepository.markIgnored(row.id(), inbox.workerId());
             } else {
                 inboxEventRepository.markProcessed(row.id(), inbox.workerId());
             }
-            log.info("review.inbox.processed: eventId={}, status={}", row.eventId(), result);
+            log.info("event.inbox.processing.succeeded: eventId={}, status={}", row.eventId(), result);
         } catch (Exception e) {
             inboxEventRepository.markFailed(row.id(), inbox.workerId(), row.attemptCount(), row.maxAttempts(), e);
-            log.warn("review.inbox.processing.failed: eventId={}", row.eventId(), e);
+            log.warn("event.inbox.processing.failed: eventId={}", row.eventId(), e);
         }
     }
 }

@@ -13,11 +13,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.support.Acknowledgment;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -63,6 +65,48 @@ class ReviewCreatedKafkaConsumerTest {
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
         when(inboxEventRepository.insertReceivedEvent(eq(event), eq("iced-latte.review.created.v1"),
                 eq(productId.toString()), eq(0), eq(42L), eq("iced-latte-review-ai"), eq(payload), eq("{}"), eq(10)))
+                .thenReturn(true);
+
+        consumer.consume(record, acknowledgment);
+
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    @DisplayName("records only safe Kafka headers in inbox")
+    void recordsOnlySafeKafkaHeadersInInbox() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        UUID reviewId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ReviewCreatedKafkaEvent event = new ReviewCreatedKafkaEvent(
+                eventId,
+                "review.created",
+                1,
+                "iced-latte",
+                Instant.parse("2026-05-18T12:00:00Z"),
+                null,
+                null,
+                new ReviewCreatedKafkaEvent.Payload(reviewId, productId)
+        );
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        String payload = objectMapper.writeValueAsString(event);
+        var properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                KafkaIntegrationProperties.Outbox.defaults(),
+                new KafkaIntegrationProperties.Inbox(true, true, 25, 10, Duration.ofSeconds(5),
+                        Duration.ofMinutes(5), "test-inbox-worker")
+        );
+        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
+        record.headers()
+                .add("eventId", eventId.toString().getBytes(StandardCharsets.UTF_8))
+                .add("Authorization", "Bearer secret".getBytes(StandardCharsets.UTF_8))
+                .add("Cookie", "session=secret".getBytes(StandardCharsets.UTF_8));
+        when(inboxEventRepository.insertReceivedEvent(any(ReviewCreatedKafkaEvent.class), eq("iced-latte.review.created.v1"),
+                eq(productId.toString()), eq(0), eq(42L), eq("iced-latte-review-ai"), eq(payload),
+                eq("{\"eventId\":\"" + eventId + "\"}"), eq(10)))
                 .thenReturn(true);
 
         consumer.consume(record, acknowledgment);

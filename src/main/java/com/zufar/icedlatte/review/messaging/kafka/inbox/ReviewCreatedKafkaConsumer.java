@@ -12,11 +12,20 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true")
 public class ReviewCreatedKafkaConsumer {
+
+    private static final Set<String> SAFE_HEADER_NAMES = Set.of(
+            "eventId", "eventType", "eventVersion", "sourceApp", "correlationId", "contentType"
+    );
 
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;
@@ -40,17 +49,30 @@ public class ReviewCreatedKafkaConsumer {
                 record.offset(),
                 properties.consumerGroups().reviewAi(),
                 record.value(),
-                "{}",
+                safeHeadersAsJson(record),
                 properties.inbox().maxAttempts()
         );
         acknowledgment.acknowledge();
 
         if (inserted) {
-            log.info("review.inbox.received: eventId={}, topic={}, partition={}, offset={}",
+            log.info("event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}",
                     event.eventId(), record.topic(), record.partition(), record.offset());
         } else {
-            log.info("review.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}",
+            log.info("event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}",
                     event.eventId(), record.topic(), record.partition(), record.offset());
         }
+    }
+
+    private String safeHeadersAsJson(ConsumerRecord<String, String> record) throws JsonProcessingException {
+        Map<String, String> safeHeaders = new LinkedHashMap<>();
+        record.headers().forEach(header -> {
+            String key = header.key();
+            String value = new String(header.value(), StandardCharsets.UTF_8);
+
+            if (SAFE_HEADER_NAMES.contains(key)) {
+                safeHeaders.put(key, value);
+            }
+        });
+        return objectMapper.writeValueAsString(safeHeaders);
     }
 }

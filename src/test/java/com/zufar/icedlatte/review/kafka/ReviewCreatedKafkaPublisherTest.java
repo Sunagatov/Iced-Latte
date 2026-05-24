@@ -22,7 +22,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,5 +79,51 @@ class ReviewCreatedKafkaPublisherTest {
 
         verify(kafkaTemplate).send("iced-latte.review.created.v1", "product-1", row.payload());
         verify(outboxEventRepository).markPublished(rowId, "test-outbox-worker", 0, 42L);
+    }
+
+    @Test
+    @DisplayName("marks claimed outbox rows failed when Kafka send fails")
+    void marksClaimedOutboxRowsFailedWhenKafkaSendFails() {
+        UUID eventId = UUID.randomUUID();
+        UUID rowId = UUID.randomUUID();
+        var row = new OutboxEventRepository.OutboxEventRow(
+                rowId,
+                eventId,
+                "iced-latte.review.created.v1",
+                "product-1",
+                "{\"eventId\":\"" + eventId + "\"}",
+                "{}",
+                2,
+                10
+        );
+        when(outboxEventRepository.claimPublishableEvents(anyInt(), anyString())).thenReturn(List.of(row));
+        CompletableFuture<SendResult<String, String>> failedSend = new CompletableFuture<>();
+        IllegalStateException failure = new IllegalStateException("broker unavailable");
+        failedSend.completeExceptionally(failure);
+        when(kafkaTemplate.send("iced-latte.review.created.v1", "product-1", row.payload()))
+                .thenReturn(failedSend);
+
+        publisher.publishPendingOutboxEvents();
+
+        verify(outboxEventRepository).markFailed(
+                eq(rowId), eq("test-outbox-worker"), eq(2), eq(10), isA(Exception.class));
+    }
+
+    @Test
+    @DisplayName("does not publish when outbox worker is disabled")
+    void doesNotPublishWhenOutboxWorkerIsDisabled() {
+        KafkaIntegrationProperties properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                new KafkaIntegrationProperties.Outbox(true, false, 25, 10, Duration.ofSeconds(5),
+                        Duration.ofMinutes(5), Duration.ofSeconds(10), "test-outbox-worker"),
+                KafkaIntegrationProperties.Inbox.defaults()
+        );
+        var disabledPublisher = new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository);
+
+        disabledPublisher.publishPendingOutboxEvents();
+
+        verifyNoInteractions(kafkaTemplate, outboxEventRepository);
     }
 }
