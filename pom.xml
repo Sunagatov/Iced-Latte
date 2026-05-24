@@ -504,7 +504,6 @@
                 <artifactId>spotless-maven-plugin</artifactId>
                 <version>${spotless-maven-plugin.version}</version>
                 <configuration>
-                    <ratchetFrom>origin/development</ratchetFrom>
                     <java>
                         <palantirJavaFormat>
                             <version>${palantir-java-format.version}</version>
