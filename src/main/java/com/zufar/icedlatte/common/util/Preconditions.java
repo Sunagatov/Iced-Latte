@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.common.util;
 
-import lombok.experimental.UtilityClass;
-
 import java.time.Duration;
 import java.util.function.Supplier;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Preconditions {
@@ -22,8 +22,8 @@ public class Preconditions {
         return value;
     }
 
-    public static Duration requirePositiveOrThrow(Duration value,
-                                                  Supplier<? extends RuntimeException> exceptionSupplier) {
+    public static Duration requirePositiveOrThrow(
+            Duration value, Supplier<? extends RuntimeException> exceptionSupplier) {
         if (value == null || value.isZero() || value.isNegative()) {
             throw exceptionSupplier.get();
         }

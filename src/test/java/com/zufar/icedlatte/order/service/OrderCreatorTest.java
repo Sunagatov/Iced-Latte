@@ -1,5 +1,28 @@
 package com.zufar.icedlatte.order.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
@@ -18,51 +41,50 @@ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.service.SingleUserProvider;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderCreator unit tests")
 class OrderCreatorTest {
 
-    @Mock private OrderRepository orderRepository;
-    @Mock private OrderDtoConverter orderDtoConverter;
-    @Mock private CartCheckoutApi shoppingCartService;
-    @Mock private UserAddressApi userAddressApi;
-    @Mock private ProductCatalogApi productCatalogApi;
-    @Mock @SuppressWarnings("unused") private OrderDetailProvider orderDetailProvider;
-    @Mock @SuppressWarnings("unused") private SingleUserProvider singleUserProvider;
-    @InjectMocks private OrderCreator orderCreator;
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private OrderDtoConverter orderDtoConverter;
+
+    @Mock
+    private CartCheckoutApi shoppingCartService;
+
+    @Mock
+    private UserAddressApi userAddressApi;
+
+    @Mock
+    private ProductCatalogApi productCatalogApi;
+
+    @Mock
+    @SuppressWarnings("unused")
+    private OrderDetailProvider orderDetailProvider;
+
+    @Mock
+    @SuppressWarnings("unused")
+    private SingleUserProvider singleUserProvider;
+
+    @InjectMocks
+    private OrderCreator orderCreator;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(orderCreator, "cancellationWindowMinutes", 30);
         lenient().when(orderDtoConverter.toOrderItems(any())).thenAnswer(inv -> {
             List<CartItemSnapshot> items = inv.getArgument(0);
-            return items.stream().map(i -> OrderItem.builder()
-                    .productId(i.product().id())
-                    .productName(i.product().name())
-                    .productPrice(i.product().price())
-                    .productsQuantity(i.productQuantity())
-                    .build()).toList();
+            return items.stream()
+                    .map(i -> OrderItem.builder()
+                            .productId(i.product().id())
+                            .productName(i.product().name())
+                            .productPrice(i.product().price())
+                            .productsQuantity(i.productQuantity())
+                            .build())
+                    .toList();
         });
     }
 
@@ -72,12 +94,11 @@ class OrderCreatorTest {
         UUID userId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(null, buildAddressDto());
 
-        CartSnapshot emptyCart = new CartSnapshot(UUID.randomUUID(), userId, Collections.emptyList(), 0,
-                BigDecimal.ZERO, 0, null, null);
+        CartSnapshot emptyCart = new CartSnapshot(
+                UUID.randomUUID(), userId, Collections.emptyList(), 0, BigDecimal.ZERO, 0, OffsetDateTime.now(), null);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(emptyCart);
 
-        assertThatThrownBy(() -> orderCreator.create(userId, request, null))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> orderCreator.create(userId, request, null)).isInstanceOf(BadRequestException.class);
         verify(orderRepository, never()).save(any());
     }
 
@@ -88,7 +109,12 @@ class OrderCreatorTest {
         UUID productId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(null, buildAddressDto());
         CartSnapshot cart = buildCart(productId);
-        Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
+        Order saved = Order.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .status(OrderStatus.CREATED)
+                .items(List.of())
+                .build();
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
@@ -111,10 +137,14 @@ class OrderCreatorTest {
         UUID productId = UUID.randomUUID();
         CreateNewOrderRequestDto request = buildRequest(addressId, null);
         CartSnapshot cart = buildCart(productId);
-        Order saved = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
+        Order saved = Order.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .status(OrderStatus.CREATED)
+                .items(List.of())
+                .build();
 
-        UserAddressSnapshot savedAddr =
-                new UserAddressSnapshot("DE", "Berlin", "Unter den Linden 1", "10117");
+        UserAddressSnapshot savedAddr = new UserAddressSnapshot("DE", "Berlin", "Unter den Linden 1", "10117");
         when(userAddressApi.getDeliveryAddress(userId, addressId)).thenReturn(savedAddr);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
         when(productCatalogApi.existsById(productId)).thenReturn(true);
@@ -153,7 +183,12 @@ class OrderCreatorTest {
     void createWithDuplicateIdempotencyKeyReturnsExisting() {
         UUID userId = UUID.randomUUID();
         String key = "idem-key-123";
-        Order existing = Order.builder().id(UUID.randomUUID()).userId(userId).status(OrderStatus.CREATED).items(List.of()).build();
+        Order existing = Order.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .status(OrderStatus.CREATED)
+                .items(List.of())
+                .build();
         OrderDto expectedDto = new OrderDto();
 
         when(orderRepository.findByIdempotencyKeyAndUserId(key, userId)).thenReturn(Optional.of(existing));
@@ -170,10 +205,13 @@ class OrderCreatorTest {
     void createPendingPaymentOrder_bothAddressInputs_throws() {
         UUID userId = UUID.randomUUID();
         CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
-                .recipientName("A").recipientSurname("B")
-                .deliveryAddressId(UUID.randomUUID()).address(buildAddressDto());
+                .recipientName("A")
+                .recipientSurname("B")
+                .deliveryAddressId(UUID.randomUUID())
+                .address(buildAddressDto());
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(
+                        userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("not both");
     }
@@ -182,10 +220,11 @@ class OrderCreatorTest {
     @DisplayName("Checkout: rejects when neither deliveryAddressId nor address is provided")
     void createPendingPaymentOrder_noAddress_throws() {
         UUID userId = UUID.randomUUID();
-        CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
-                .recipientName("A").recipientSurname("B");
+        CreateCheckoutRequestDto req =
+                new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B");
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(
+                        userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be provided");
     }
@@ -196,7 +235,9 @@ class OrderCreatorTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         CreateCheckoutRequestDto req = new CreateCheckoutRequestDto()
-                .recipientName("A").recipientSurname("B").address(buildAddressDto());
+                .recipientName("A")
+                .recipientSurname("B")
+                .address(buildAddressDto());
         CartSnapshot cart = buildCart(productId);
 
         when(productCatalogApi.existsById(productId)).thenReturn(false);
@@ -226,14 +267,31 @@ class OrderCreatorTest {
 
     private CartSnapshot buildCart(UUID productId) {
         ProductSnapshot product = new ProductSnapshot(productId, "Test", "Desc", BigDecimal.TEN, 10, true, null);
-        return new CartSnapshot(UUID.randomUUID(), UUID.randomUUID(),
+        return new CartSnapshot(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
                 List.of(new CartItemSnapshot(UUID.randomUUID(), product, 1)),
-                1, BigDecimal.TEN, 1, null, null);
+                1,
+                BigDecimal.TEN,
+                1,
+                OffsetDateTime.now(),
+                null);
     }
 
     private static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto req) {
         AddressDto a = req.getAddress();
-        OrderAddressRequest addr = a == null ? null : new OrderAddressRequest(a.getCountry(), a.getCity(), a.getLine(), a.getPostcode());
-        return new CheckoutOrderRequest(req.getRecipientName(), req.getRecipientSurname(), req.getRecipientPhone(), req.getDeliveryAddressId(), addr);
+        OrderAddressRequest addr = a == null
+                ? null
+                : new OrderAddressRequest(
+                        Objects.requireNonNull(a.getCountry()),
+                        Objects.requireNonNull(a.getCity()),
+                        Objects.requireNonNull(a.getLine()),
+                        Objects.requireNonNull(a.getPostcode()));
+        return new CheckoutOrderRequest(
+                req.getRecipientName(),
+                req.getRecipientSurname(),
+                req.getRecipientPhone(),
+                req.getDeliveryAddressId(),
+                addr);
     }
 }

@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("UserEndpoint integration tests")
 class UserEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {

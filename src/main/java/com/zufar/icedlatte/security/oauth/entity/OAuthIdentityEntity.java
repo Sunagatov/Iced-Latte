@@ -1,11 +1,13 @@
 package com.zufar.icedlatte.security.oauth.entity;
 
+import java.util.UUID;
+
+import jakarta.persistence.*;
+
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import jakarta.persistence.*;
-import lombok.*;
 
-import java.util.UUID;
+import lombok.*;
 
 @Builder
 @Getter

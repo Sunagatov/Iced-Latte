@@ -1,5 +1,23 @@
 package com.zufar.icedlatte.cart.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
@@ -15,34 +33,25 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ShoppingCartService unit tests")
 class ShoppingCartServiceTest {
 
-    @Mock private ShoppingCartRepository shoppingCartRepository;
-    @Mock private ShoppingCartItemRepository shoppingCartItemRepository;
-    @Mock private ProductCatalogApi productCatalogApi;
-    @Mock private ShoppingCartDtoConverter shoppingCartDtoConverter;
+    @Mock
+    private ShoppingCartRepository shoppingCartRepository;
 
-    @InjectMocks private ShoppingCartService shoppingCartService;
+    @Mock
+    private ShoppingCartItemRepository shoppingCartItemRepository;
+
+    @Mock
+    private ProductCatalogApi productCatalogApi;
+
+    @Mock
+    private ShoppingCartDtoConverter shoppingCartDtoConverter;
+
+    @InjectMocks
+    private ShoppingCartService shoppingCartService;
 
     @Test
     @DisplayName("getByUserId returns the existing cart dto")
@@ -106,7 +115,11 @@ class ShoppingCartServiceTest {
         ShoppingCart shoppingCart = new ShoppingCart();
         shoppingCart.setId(UUID.randomUUID());
         ShoppingCartItem existingItem = ShoppingCartItem.builder()
-                .id(UUID.randomUUID()).shoppingCart(shoppingCart).productId(existingProductId).productQuantity(1).build();
+                .id(UUID.randomUUID())
+                .shoppingCart(shoppingCart)
+                .productId(existingProductId)
+                .productQuantity(1)
+                .build();
         shoppingCart.setItems(new HashSet<>(Set.of(existingItem)));
 
         NewShoppingCartItemDto existingProductToAdd = new NewShoppingCartItemDto();
@@ -125,7 +138,8 @@ class ShoppingCartServiceTest {
         when(shoppingCartRepository.save(shoppingCart)).thenReturn(shoppingCart);
         when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedDto);
 
-        ShoppingCartDto result = shoppingCartService.addOpenApiItems(userId, Set.of(existingProductToAdd, newProductToAdd));
+        ShoppingCartDto result =
+                shoppingCartService.addOpenApiItems(userId, Set.of(existingProductToAdd, newProductToAdd));
 
         assertThat(result).isEqualTo(expectedDto);
         assertThat(existingItem.getProductQuantity()).isEqualTo(3);
@@ -184,7 +198,11 @@ class ShoppingCartServiceTest {
         ShoppingCart shoppingCart = new ShoppingCart();
         shoppingCart.setId(UUID.randomUUID());
         ShoppingCartItem existingItem = ShoppingCartItem.builder()
-                .id(UUID.randomUUID()).shoppingCart(shoppingCart).productId(productId).productQuantity(98).build();
+                .id(UUID.randomUUID())
+                .shoppingCart(shoppingCart)
+                .productId(productId)
+                .productQuantity(98)
+                .build();
         shoppingCart.setItems(new HashSet<>(Set.of(existingItem)));
 
         NewShoppingCartItemDto itemToAdd = new NewShoppingCartItemDto();
@@ -213,12 +231,12 @@ class ShoppingCartServiceTest {
         when(shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItem.getId(), userId))
                 .thenReturn(Optional.of(shoppingCartItem));
         when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(shoppingCartItem);
-        when(shoppingCartRepository.findShoppingCartByUserId(userId))
-                .thenReturn(Optional.of(cart));
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
         when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(cartDto);
 
-        ShoppingCartDto result = shoppingCartService.updateItemQuantity(shoppingCartItem.getId(), userId, productQuantityChange);
+        ShoppingCartDto result =
+                shoppingCartService.updateItemQuantity(shoppingCartItem.getId(), userId, productQuantityChange);
 
         assertThat(result).isEqualTo(cartDto);
         verify(shoppingCartItemRepository).save(shoppingCartItem);
@@ -273,7 +291,8 @@ class ShoppingCartServiceTest {
     @DisplayName("deleteItems removes the requested items and returns the updated cart")
     void deleteItemsRemovesItemsAndReturnsCart() {
         UUID userId = UUID.randomUUID();
-        List<UUID> itemIdsForDelete = Collections.singletonList(UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
+        List<UUID> itemIdsForDelete =
+                Collections.singletonList(UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906"));
         DeleteItemsFromShoppingCartRequest request = new DeleteItemsFromShoppingCartRequest();
         request.shoppingCartItemIds(itemIdsForDelete);
         ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();

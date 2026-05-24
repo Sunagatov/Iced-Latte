@@ -1,5 +1,19 @@
 package com.zufar.icedlatte.review.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRatingStats;
 import com.zufar.icedlatte.openapi.dto.RatingMap;
@@ -8,19 +22,6 @@ import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewsProvider statistics tests")
@@ -29,11 +30,20 @@ class ProductReviewsStatisticsTest {
     @InjectMocks
     ProductReviewsProvider productReviewsProvider;
 
-    @Mock ProductReviewRepository reviewRepository;
-    @Mock ProductReviewDtoConverter productReviewDtoConverter;
-    @Mock ProductReviewValidator productReviewValidator;
-    @Mock PaginationConfig paginationConfig;
-    @Mock GetReviewsRequestValidator getReviewsRequestValidator;
+    @Mock
+    ProductReviewRepository reviewRepository;
+
+    @Mock
+    ProductReviewDtoConverter productReviewDtoConverter;
+
+    @Mock
+    ProductReviewValidator productReviewValidator;
+
+    @Mock
+    PaginationConfig paginationConfig;
+
+    @Mock
+    GetReviewsRequestValidator getReviewsRequestValidator;
 
     @Test
     @DisplayName("Should return stats with correct avg rating and rating map")

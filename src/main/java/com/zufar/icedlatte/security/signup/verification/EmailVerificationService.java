@@ -1,5 +1,14 @@
 package com.zufar.icedlatte.security.signup.verification;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -13,14 +22,8 @@ import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.OffsetDateTime;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -56,14 +59,14 @@ public class EmailVerificationService {
         emailConfirmation.sendTemporaryCode(email, token);
     }
 
-    public UserAuthenticationResponse confirmEmailByCode(ConfirmEmailRequest confirmEmailRequest,
-                                                         HttpServletRequest httpRequest) {
-        UserRegistrationRequest userRegistrationRequest = validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
+    public UserAuthenticationResponse confirmEmailByCode(
+            ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
+        UserRegistrationRequest userRegistrationRequest =
+                validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
         return userRegistrationService.register(userRegistrationRequest, httpRequest);
     }
 
-    public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest,
-                                                String newPassword) {
+    public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest, String newPassword) {
         UserRegistrationRequest request = validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
         var user = userLookupApi.getUserByEmail(request.getEmail());
         userAccessControlApi.changePassword(user.id(), newPassword);
@@ -79,10 +82,12 @@ public class EmailVerificationService {
         return token;
     }
 
-    public UserRegistrationRequest validateToken(ConfirmEmailRequest confirmEmailRequest, TokenPurpose expectedPurpose) {
+    public UserRegistrationRequest validateToken(
+            ConfirmEmailRequest confirmEmailRequest, TokenPurpose expectedPurpose) {
         String token = confirmEmailRequest.getToken();
         validateTokenFormat(token);
-        TokenEntry entry = temporaryStore.take(tokenKey(token))
+        TokenEntry entry = temporaryStore
+                .take(tokenKey(token))
                 .map(this::deserializeEntry)
                 .orElseThrow(() -> new BadRequestException("Incorrect token"));
         if (entry.purpose() != expectedPurpose) {
@@ -93,11 +98,9 @@ public class EmailVerificationService {
     }
 
     private void validateCooldown(String email) {
-        temporaryStore.get(cooldownKey(email))
-                .map(OffsetDateTime::parse)
-                .ifPresent(expiry -> {
-                    throw new TimeTokenException(email, expiry);
-                });
+        temporaryStore.get(cooldownKey(email)).map(OffsetDateTime::parse).ifPresent(expiry -> {
+            throw new TimeTokenException(email, expiry);
+        });
     }
 
     private String serializeEntry(TokenEntry entry) {
@@ -138,5 +141,5 @@ public class EmailVerificationService {
         return COOLDOWN_KEY_PREFIX + email;
     }
 
-    private record TokenEntry(UserRegistrationRequest request, TokenPurpose purpose) { }
+    private record TokenEntry(UserRegistrationRequest request, TokenPurpose purpose) {}
 }

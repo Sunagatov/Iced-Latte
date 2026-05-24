@@ -1,18 +1,19 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @DisplayName("AWSConfig unit tests")
 class AWSConfigTest {
@@ -26,9 +27,13 @@ class AWSConfigTest {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.of("eu-west-2"));
             assertThat(client.serviceClientConfiguration().endpointOverride())
                     .isEqualTo(Optional.of(URI.create("http://localhost:9000")));
-            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallTimeout())
+            assertThat(client.serviceClientConfiguration()
+                            .overrideConfiguration()
+                            .apiCallTimeout())
                     .contains(Duration.ofSeconds(60));
-            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallAttemptTimeout())
+            assertThat(client.serviceClientConfiguration()
+                            .overrideConfiguration()
+                            .apiCallAttemptTimeout())
                     .contains(Duration.ofSeconds(15));
         }
     }
@@ -42,7 +47,8 @@ class AWSConfigTest {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.of("eu-west-2"));
             String envEndpoint = System.getenv("AWS_ENDPOINT_URL");
             if (envEndpoint == null || envEndpoint.isBlank()) {
-                assertThat(client.serviceClientConfiguration().endpointOverride()).isEmpty();
+                assertThat(client.serviceClientConfiguration().endpointOverride())
+                        .isEmpty();
             }
         }
     }
@@ -68,9 +74,13 @@ class AWSConfigTest {
 
         try (CloudFrontClient client = config.cloudFrontClient()) {
             assertThat(client.serviceClientConfiguration().region()).isEqualTo(Region.AWS_GLOBAL);
-            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallTimeout())
+            assertThat(client.serviceClientConfiguration()
+                            .overrideConfiguration()
+                            .apiCallTimeout())
                     .contains(Duration.ofSeconds(60));
-            assertThat(client.serviceClientConfiguration().overrideConfiguration().apiCallAttemptTimeout())
+            assertThat(client.serviceClientConfiguration()
+                            .overrideConfiguration()
+                            .apiCallAttemptTimeout())
                     .contains(Duration.ofSeconds(15));
         }
     }

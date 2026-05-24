@@ -1,23 +1,25 @@
 package com.zufar.icedlatte.filestorage.service;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
-import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -48,23 +50,17 @@ public class FileStorageService implements FileStorageApi {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED,
-            isolation = Isolation.READ_COMMITTED,
-            readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> findFileUrl(UUID relatedObjectId) {
-        return findMetadata(relatedObjectId)
-                .flatMap(objectStorage::getUrl);
+        return findMetadata(relatedObjectId).flatMap(objectStorage::getUrl);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED,
-            isolation = Isolation.READ_COMMITTED,
-            readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, String> findFileUrls(List<UUID> relatedObjectIds) {
         return findMetadata(relatedObjectIds).entrySet().stream()
-                .flatMap(entry -> objectStorage.getUrl(entry.getValue())
-                        .map(url -> Map.entry(entry.getKey(), url))
-                        .stream())
+                .flatMap(entry ->
+                        objectStorage.getUrl(entry.getValue()).map(url -> Map.entry(entry.getKey(), url)).stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -85,10 +81,7 @@ public class FileStorageService implements FileStorageApi {
                 .map(fileName -> toFileMetadata(fileName, bucketName))
                 .flatMap(Optional::stream)
                 .collect(Collectors.toMap(
-                        FileMetadataDto::relatedObjectId,
-                        metadata -> metadata,
-                        this::selectPreferredMetadata
-                ))
+                        FileMetadataDto::relatedObjectId, metadata -> metadata, this::selectPreferredMetadata))
                 .values()
                 .stream()
                 .toList();
@@ -97,27 +90,24 @@ public class FileStorageService implements FileStorageApi {
     }
 
     private Optional<FileMetadataDto> findMetadata(UUID relatedObjectId) {
-        return findMetadata(List.of(relatedObjectId)).values().stream()
-                .findFirst();
+        return findMetadata(List.of(relatedObjectId)).values().stream().findFirst();
     }
 
     private Map<UUID, FileMetadataDto> findMetadata(List<UUID> relatedObjectIds) {
-        return fileMetadataRepository.findByRelatedObjectIdIn(relatedObjectIds)
-                .stream()
+        return fileMetadataRepository.findByRelatedObjectIdIn(relatedObjectIds).stream()
                 .map(fileMetadataDtoConverter::toDto)
                 .collect(Collectors.toMap(
-                        FileMetadataDto::relatedObjectId,
-                        metadata -> metadata,
-                        this::selectPreferredMetadata
-                ));
+                        FileMetadataDto::relatedObjectId, metadata -> metadata, this::selectPreferredMetadata));
     }
 
-    private FileMetadataDto selectPreferredMetadata(FileMetadataDto first,
-                                                    FileMetadataDto second) {
+    private FileMetadataDto selectPreferredMetadata(FileMetadataDto first, FileMetadataDto second) {
         FileMetadataDto preferred = compareMetadata(first, second) <= 0 ? first : second;
         FileMetadataDto skipped = preferred == first ? second : first;
-        log.warn("storage.metadata.duplicate_related_object: objectId={}, selected={}, skipped={}",
-                preferred.relatedObjectId(), preferred.fileName(), skipped.fileName());
+        log.warn(
+                "storage.metadata.duplicate_related_object: objectId={}, selected={}, skipped={}",
+                preferred.relatedObjectId(),
+                preferred.fileName(),
+                skipped.fileName());
         return preferred;
     }
 

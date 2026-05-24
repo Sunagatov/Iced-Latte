@@ -1,6 +1,12 @@
 package com.zufar.icedlatte.product.service;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,19 +15,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductPictureLinkUpdater unit tests")
 class ProductPictureLinkUpdaterTest {
 
-    @Mock private ProductImageReceiver productImageReceiver;
-    @InjectMocks private ProductPictureLinkUpdater updater;
+    @Mock
+    private ProductImageReceiver productImageReceiver;
+
+    @InjectMocks
+    private ProductPictureLinkUpdater updater;
 
     @Nested
     @DisplayName("update")
@@ -34,7 +38,8 @@ class ProductPictureLinkUpdaterTest {
             ProductInfoDto dto = new ProductInfoDto();
             dto.setId(productId);
             when(productImageReceiver.getProductFileUrl(productId)).thenReturn("https://cdn.example.com/main.jpg");
-            when(productImageReceiver.getProductImageUrls(productId)).thenReturn(List.of("https://cdn.example.com/1.jpg"));
+            when(productImageReceiver.getProductImageUrls(productId))
+                    .thenReturn(List.of("https://cdn.example.com/1.jpg"));
 
             ProductInfoDto result = updater.update(dto);
 
@@ -85,8 +90,7 @@ class ProductPictureLinkUpdaterTest {
             ProductInfoDto dto = new ProductInfoDto();
             dto.setId(productId);
 
-            when(productImageReceiver.getProductFileUrls(List.of(productId)))
-                    .thenReturn(Map.of(productId, "main-url"));
+            when(productImageReceiver.getProductFileUrls(List.of(productId))).thenReturn(Map.of(productId, "main-url"));
             when(productImageReceiver.getProductImageUrlsBatch(List.of(productId)))
                     .thenReturn(Map.of());
 

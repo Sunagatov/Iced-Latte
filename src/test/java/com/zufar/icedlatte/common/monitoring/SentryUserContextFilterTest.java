@@ -1,7 +1,12 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import com.zufar.icedlatte.common.audit.Identifiable;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+
+import java.util.UUID;
+
 import jakarta.servlet.FilterChain;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,16 +18,14 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import com.zufar.icedlatte.common.audit.Identifiable;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SentryUserContextFilter unit tests")
 class SentryUserContextFilterTest {
 
-    @Mock private FilterChain filterChain;
+    @Mock
+    private FilterChain filterChain;
 
     @AfterEach
     void tearDown() {
@@ -35,9 +38,8 @@ class SentryUserContextFilterTest {
     void setsAndClearsSentryUser() throws Exception {
         io.sentry.Sentry.init(options -> options.setDsn(""));
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000042");
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(new TestPrincipal(userId), null)
-        );
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(new TestPrincipal(userId), null));
         SentryUserContextFilter filter = new SentryUserContextFilter();
 
         filter.doFilterInternal(new MockHttpServletRequest(), new MockHttpServletResponse(), filterChain);

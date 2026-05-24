@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.review.messaging.kafka.event;
 
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
-
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 
 public record ReviewCreatedKafkaEvent(
         UUID eventId,
@@ -14,8 +14,7 @@ public record ReviewCreatedKafkaEvent(
         Instant occurredAt,
         String correlationId,
         UUID actorId,
-        Payload payload
-) {
+        Payload payload) {
 
     public ReviewCreatedKafkaEvent {
         Objects.requireNonNull(eventId, "eventId");
@@ -28,8 +27,7 @@ public record ReviewCreatedKafkaEvent(
     public static ReviewCreatedKafkaEvent fromDomainEvent(ReviewCreatedEvent event) {
         Payload payload = new Payload(event.reviewId(), event.productId());
         return new ReviewCreatedKafkaEvent(
-                event.eventId(), "review.created", 1, "iced-latte", event.occurredAt(), null, null, payload
-        );
+                event.eventId(), "review.created", 1, "iced-latte", event.occurredAt(), null, null, payload);
     }
 
     public record Payload(UUID reviewId, UUID productId) {

@@ -1,31 +1,34 @@
 package com.zufar.icedlatte.common;
 
-import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
-import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
+import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
 /**
- * Verifies that {@code @Version} fields use the correct {@code jakarta.persistence.Version}
- * annotation and that Hibernate actually manages optimistic locking for all versioned entities.
+ * Verifies that {@code @Version} fields use the correct {@code jakarta.persistence.Version} annotation and that
+ * Hibernate actually manages optimistic locking for all versioned entities.
  *
  * <p>Each test verifies:
+ *
  * <ol>
- *   <li>Version is non-null (Hibernate initialized it)</li>
- *   <li>Version increments on update</li>
- *   <li>A stale version causes an exception on flush</li>
+ *   <li>Version is non-null (Hibernate initialized it)
+ *   <li>Version increments on update
+ *   <li>A stale version causes an exception on flush
  * </ol>
  */
 @DisplayName("Optimistic locking integration tests")
@@ -49,27 +52,29 @@ class OptimisticLockingIntegrationTest extends IntegrationTestBase {
             return item.getId();
         });
 
-        int versionBefore = transactionTemplate.execute(_ -> entityManager.find(ShoppingCartItem.class, itemId).getVersion());
+        int versionBefore = transactionTemplate.execute(
+                _ -> entityManager.find(ShoppingCartItem.class, itemId).getVersion());
 
         transactionTemplate.executeWithoutResult(_ -> {
             ShoppingCartItem item = entityManager.find(ShoppingCartItem.class, itemId);
             item.setProductQuantity(item.getProductQuantity() + 1);
         });
 
-        int versionAfter = transactionTemplate.execute(_ -> entityManager.find(ShoppingCartItem.class, itemId).getVersion());
+        int versionAfter = transactionTemplate.execute(
+                _ -> entityManager.find(ShoppingCartItem.class, itemId).getVersion());
 
         assertEquals(versionBefore + 1, versionAfter, "Version should increment on update");
-        assertThrows(Exception.class, () ->
-                        transactionTemplate.executeWithoutResult(_ -> {
-                            ShoppingCartItem stale = entityManager.find(ShoppingCartItem.class, itemId);
-                            entityManager.detach(stale);
-                            stale.setVersion(versionBefore);
-                            stale.setProductQuantity(99);
-                            entityManager.merge(stale);
-                            entityManager.flush();
-                        }),
-                "Stale version should cause optimistic lock failure"
-        );
+        assertThrows(
+                Exception.class,
+                () -> transactionTemplate.executeWithoutResult(_ -> {
+                    ShoppingCartItem stale = entityManager.find(ShoppingCartItem.class, itemId);
+                    entityManager.detach(stale);
+                    stale.setVersion(versionBefore);
+                    stale.setProductQuantity(99);
+                    entityManager.merge(stale);
+                    entityManager.flush();
+                }),
+                "Stale version should cause optimistic lock failure");
     }
 
     @Test
@@ -83,27 +88,29 @@ class OptimisticLockingIntegrationTest extends IntegrationTestBase {
             return product.getId();
         });
 
-        long versionBefore = transactionTemplate.execute(_ -> entityManager.find(ProductInfo.class, productId).getVersion());
+        long versionBefore = transactionTemplate.execute(
+                _ -> entityManager.find(ProductInfo.class, productId).getVersion());
 
         transactionTemplate.executeWithoutResult(_ -> {
             ProductInfo product = entityManager.find(ProductInfo.class, productId);
             product.setPrice(product.getPrice().add(BigDecimal.ONE));
         });
 
-        long versionAfter = transactionTemplate.execute(_ -> entityManager.find(ProductInfo.class, productId).getVersion());
+        long versionAfter = transactionTemplate.execute(
+                _ -> entityManager.find(ProductInfo.class, productId).getVersion());
 
         assertEquals(versionBefore + 1, versionAfter, "Version should increment on update");
-        assertThrows(Exception.class, () ->
-                        transactionTemplate.executeWithoutResult(_ -> {
-                            ProductInfo product = entityManager.find(ProductInfo.class, productId);
-                            entityManager.detach(product);
-                            product.setVersion(versionBefore);
-                            product.setPrice(BigDecimal.valueOf(999));
-                            entityManager.merge(product);
-                            entityManager.flush();
-                        }),
-                "Stale version should cause optimistic lock failure"
-        );
+        assertThrows(
+                Exception.class,
+                () -> transactionTemplate.executeWithoutResult(_ -> {
+                    ProductInfo product = entityManager.find(ProductInfo.class, productId);
+                    entityManager.detach(product);
+                    product.setVersion(versionBefore);
+                    product.setPrice(BigDecimal.valueOf(999));
+                    entityManager.merge(product);
+                    entityManager.flush();
+                }),
+                "Stale version should cause optimistic lock failure");
     }
 
     @Test
@@ -118,18 +125,19 @@ class OptimisticLockingIntegrationTest extends IntegrationTestBase {
             return item.getId();
         });
 
-        int versionBefore = transactionTemplate.execute(_ -> entityManager.find(FavoriteItemEntity.class, itemId).getVersion());
+        int versionBefore = transactionTemplate.execute(
+                _ -> entityManager.find(FavoriteItemEntity.class, itemId).getVersion());
 
-        assertThrows(Exception.class, () ->
-                        transactionTemplate.executeWithoutResult(_ -> {
-                            FavoriteItemEntity item = entityManager.find(FavoriteItemEntity.class, itemId);
-                            entityManager.detach(item);
-                            item.setVersion(versionBefore - 1);
-                            entityManager.merge(item);
-                            entityManager.flush();
-                        }),
-                "Stale version should cause optimistic lock failure"
-        );
+        assertThrows(
+                Exception.class,
+                () -> transactionTemplate.executeWithoutResult(_ -> {
+                    FavoriteItemEntity item = entityManager.find(FavoriteItemEntity.class, itemId);
+                    entityManager.detach(item);
+                    item.setVersion(versionBefore - 1);
+                    entityManager.merge(item);
+                    entityManager.flush();
+                }),
+                "Stale version should cause optimistic lock failure");
     }
 
     @Test
@@ -153,31 +161,33 @@ class OptimisticLockingIntegrationTest extends IntegrationTestBase {
             var versionField = java.util.Arrays.stream(Order.class.getDeclaredFields())
                     .filter(f -> f.isAnnotationPresent(jakarta.persistence.Version.class))
                     .findFirst();
-            assertNotNull(versionField.orElse(null), "Order must have a field annotated with jakarta.persistence.Version");
+            assertNotNull(
+                    versionField.orElse(null), "Order must have a field annotated with jakarta.persistence.Version");
             return;
         }
 
-        int versionBefore = transactionTemplate.execute(_ -> entityManager.find(Order.class, orderId).getVersion());
+        int versionBefore = transactionTemplate.execute(
+                _ -> entityManager.find(Order.class, orderId).getVersion());
 
         transactionTemplate.executeWithoutResult(_ -> {
             Order order = entityManager.find(Order.class, orderId);
             order.setRecipientPhone("555-0100");
         });
 
-        int versionAfter = transactionTemplate.execute(_ -> entityManager.find(Order.class, orderId).getVersion());
+        int versionAfter = transactionTemplate.execute(
+                _ -> entityManager.find(Order.class, orderId).getVersion());
 
         assertEquals(versionBefore + 1, versionAfter, "Version should increment on update");
-        assertThrows(Exception.class, () ->
-                        transactionTemplate.executeWithoutResult(_ -> {
-                            Order order = entityManager.find(Order.class, orderId);
-                            entityManager.detach(order);
-                            order.setVersion(versionBefore);
-                            order.setRecipientPhone("555-9999");
-                            entityManager.merge(order);
-                            entityManager.flush();
-                        }),
-                "Stale version should cause optimistic lock failure"
-        );
+        assertThrows(
+                Exception.class,
+                () -> transactionTemplate.executeWithoutResult(_ -> {
+                    Order order = entityManager.find(Order.class, orderId);
+                    entityManager.detach(order);
+                    order.setVersion(versionBefore);
+                    order.setRecipientPhone("555-9999");
+                    entityManager.merge(order);
+                    entityManager.flush();
+                }),
+                "Stale version should cause optimistic lock failure");
     }
-
 }

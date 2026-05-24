@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.signin.exception;
 
-
 public final class UserRegistrationException extends AuthSecurityException {
 
     public UserRegistrationException(final String message) {

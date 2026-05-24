@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.common.monitoring;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.DisplayName;
@@ -11,16 +15,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SlowQueryAspect unit tests")
 class SlowQueryAspectTest {
 
-    @Mock private ProceedingJoinPoint joinPoint;
-    @Mock private Signature signature;
+    @Mock
+    private ProceedingJoinPoint joinPoint;
+
+    @Mock
+    private Signature signature;
 
     @InjectMocks
     private SlowQueryAspect aspect;

@@ -1,13 +1,17 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
-import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.util.Optional;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,15 +21,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.util.Optional;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("OAuth security endpoint integration tests")
 class AuthEndpointIntegrationTest extends IntegrationTestBase {
@@ -48,9 +51,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        specification = given()
-                .port(port)
-                .basePath(BASE_PATH);
+        specification = given().port(port).basePath(BASE_PATH);
         when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
         when(oAuthProviderClient.buildAuthorizationUri(any(String.class)))
                 .thenAnswer(invocation -> googleAuthUri(invocation.getArgument(0)));
@@ -65,33 +66,35 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenReturn(tokenPair("jwt-token", "refresh-token"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", callbackBase)
                 .get("/oauth/google");
 
-        initiateResponse.then()
+        initiateResponse
+                .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", allOf(
-                        containsString("state="),
-                        containsString("client_id="),
-                        containsString("redirect_uri=")
-                ));
+                .header(
+                        "Location",
+                        allOf(containsString("state="), containsString("client_id="), containsString("redirect_uri=")));
 
         String state = extractState(initiateResponse);
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", allOf(
-                        containsString(callbackBase),
-                        containsString("#token=jwt-token"),
-                        containsString("refreshToken=refresh-token")
-                ));
+                .header(
+                        "Location",
+                        allOf(
+                                containsString(callbackBase),
+                                containsString("#token=jwt-token"),
+                                containsString("refreshToken=refresh-token")));
     }
 
     @Test
@@ -103,7 +106,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenReturn(tokenPair("jwt-token", "refresh-token"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", callbackBase)
                 .get("/oauth/google");
 
@@ -111,17 +115,19 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", allOf(
-                        containsString(callbackBase),
-                        containsString("#token=jwt-token"),
-                        containsString("refreshToken=refresh-token")
-                ));
+                .header(
+                        "Location",
+                        allOf(
+                                containsString(callbackBase),
+                                containsString("#token=jwt-token"),
+                                containsString("refreshToken=refresh-token")));
     }
 
     @Test
@@ -133,7 +139,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenReturn(tokenPair("jwt-once", "refresh-once"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", callbackBase)
                 .get("/oauth/google");
 
@@ -141,7 +148,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "first-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
@@ -149,7 +157,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .statusCode(HttpStatus.FOUND.value());
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "second-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
@@ -168,7 +177,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenReturn(tokenPair("safe-jwt", "safe-refresh"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", "https://evil.example.com/callback")
                 .get("/oauth/google");
 
@@ -176,18 +186,20 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", allOf(
-                        containsString(frontendUrl + "/auth/google/callback"),
-                        containsString("#token=safe-jwt"),
-                        containsString("refreshToken=safe-refresh"),
-                        not(containsString("evil.example.com"))
-                ));
+                .header(
+                        "Location",
+                        allOf(
+                                containsString(frontendUrl + "/auth/google/callback"),
+                                containsString("#token=safe-jwt"),
+                                containsString("refreshToken=safe-refresh"),
+                                not(containsString("evil.example.com"))));
     }
 
     @Test
@@ -197,7 +209,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenReturn(tokenPair("safe-jwt", "safe-refresh"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", frontendUrl + "/profile")
                 .get("/oauth/google");
 
@@ -205,45 +218,51 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header("Location", allOf(
-                        containsString(frontendUrl + "/auth/google/callback"),
-                        containsString("#token=safe-jwt"),
-                        not(containsString("/profile"))
-                ));
+                .header(
+                        "Location",
+                        allOf(
+                                containsString(frontendUrl + "/auth/google/callback"),
+                                containsString("#token=safe-jwt"),
+                                not(containsString("/profile"))));
     }
 
     @Test
     @DisplayName("Should redirect with missing_code error when callback code is absent")
     void shouldRedirectWithMissingCodeErrorWhenCallbackCodeIsAbsent() {
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("state", "any-state")
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=missing_code"));
 
-        verify(oAuthLoginService, never()).handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
+        verify(oAuthLoginService, never())
+                .handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
     }
 
     @Test
     @DisplayName("Should redirect with invalid_state when callback state is absent")
     void shouldRedirectWithInvalidStateWhenCallbackStateIsAbsent() {
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "valid-code")
                 .get("/oauth/google/callback")
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
 
-        verify(oAuthLoginService, never()).handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
+        verify(oAuthLoginService, never())
+                .handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
     }
 
     @Test
@@ -255,7 +274,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .thenThrow(new IllegalStateException("exchange failed"));
 
         Response initiateResponse = given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("redirectUrl", callbackBase)
                 .get("/oauth/google");
 
@@ -263,7 +283,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         assertNotNull(state);
 
         given(specification)
-                .redirects().follow(false)
+                .redirects()
+                .follow(false)
                 .queryParam("code", "broken-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
@@ -275,10 +296,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should return 405 for GET refresh requests")
     void shouldReturn405ForGetRefreshRequests() {
-        given(specification)
-                .get("/refresh")
-                .then()
-                .statusCode(HttpStatus.METHOD_NOT_ALLOWED.value());
+        given(specification).get("/refresh").then().statusCode(HttpStatus.METHOD_NOT_ALLOWED.value());
     }
 
     private String extractState(Response response) {

@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.common.pagination;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("PageRequestFactory unit tests")
 class PageRequestFactoryTest {
@@ -22,10 +22,7 @@ class PageRequestFactoryTest {
 
             assertThat(pageable.getPageNumber()).isZero();
             assertThat(pageable.getPageSize()).isEqualTo(10);
-            assertThat(pageable.getSort()).containsExactly(
-                    Sort.Order.asc("name"),
-                    Sort.Order.asc("id")
-            );
+            assertThat(pageable.getSort()).containsExactly(Sort.Order.asc("name"), Sort.Order.asc("id"));
         }
 
         @Test
@@ -35,10 +32,7 @@ class PageRequestFactoryTest {
 
             assertThat(pageable.getPageNumber()).isEqualTo(2);
             assertThat(pageable.getPageSize()).isEqualTo(5);
-            assertThat(pageable.getSort()).containsExactly(
-                    Sort.Order.desc("price"),
-                    Sort.Order.asc("id")
-            );
+            assertThat(pageable.getSort()).containsExactly(Sort.Order.desc("price"), Sort.Order.asc("id"));
         }
 
         @Test
@@ -46,10 +40,7 @@ class PageRequestFactoryTest {
         void treatsUppercaseDescAsDescending() {
             Pageable pageable = PageRequestFactory.of(0, 20, "createdAt", "DESC");
 
-            assertThat(pageable.getSort()).containsExactly(
-                    Sort.Order.desc("createdAt"),
-                    Sort.Order.asc("id")
-            );
+            assertThat(pageable.getSort()).containsExactly(Sort.Order.desc("createdAt"), Sort.Order.asc("id"));
         }
 
         @Test

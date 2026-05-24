@@ -1,9 +1,14 @@
 package com.zufar.icedlatte.security.oauth.login;
 
-import com.google.api.client.googleapis.auth.oauth2.*;
-import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.security.oauth.config.GoogleOAuthProperties;
-import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.GeneralSecurityException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,24 +16,29 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.net.URI;
-import java.security.GeneralSecurityException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.google.api.client.googleapis.auth.oauth2.*;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.security.oauth.config.GoogleOAuthProperties;
+import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GoogleTokenExchanger unit tests")
 class GoogleTokenExchangerTest {
 
-    @Mock private GoogleAuthorizationCodeFlow flow;
-    @Mock private GoogleAuthorizationCodeTokenRequest tokenRequest;
-    @Mock private GoogleIdTokenVerifier verifier;
-    @Mock private GoogleTokenResponse tokenResponse;
-    @Mock private GoogleIdToken idToken;
+    @Mock
+    private GoogleAuthorizationCodeFlow flow;
+
+    @Mock
+    private GoogleAuthorizationCodeTokenRequest tokenRequest;
+
+    @Mock
+    private GoogleIdTokenVerifier verifier;
+
+    @Mock
+    private GoogleTokenResponse tokenResponse;
+
+    @Mock
+    private GoogleIdToken idToken;
 
     @Test
     @DisplayName("buildAuthorizationUri includes Google OAuth parameters")
@@ -126,13 +136,10 @@ class GoogleTokenExchangerTest {
     }
 
     private GoogleTokenExchanger exchangerWithMocks() {
-        var auth = new GoogleOAuthProperties.Auth(new GoogleOAuthProperties.Auth.Server("https://accounts.google.com/o/oauth2/v2/auth"));
+        var auth = new GoogleOAuthProperties.Auth(
+                new GoogleOAuthProperties.Auth.Server("https://accounts.google.com/o/oauth2/v2/auth"));
         var properties = new GoogleOAuthProperties(
-                "client-id",
-                "client-secret",
-                "https://app.example.com/callback",
-                "openid email profile",
-                auth);
+                "client-id", "client-secret", "https://app.example.com/callback", "openid email profile", auth);
         GoogleTokenExchanger exchanger = new GoogleTokenExchanger(properties);
         ReflectionTestUtils.setField(exchanger, "flow", flow);
         ReflectionTestUtils.setField(exchanger, "verifier", verifier);

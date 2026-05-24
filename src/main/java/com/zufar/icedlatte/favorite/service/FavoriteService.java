@@ -1,5 +1,16 @@
 package com.zufar.icedlatte.favorite.service;
 
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
@@ -9,18 +20,9 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,8 +35,8 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
-        FavoriteListEntity entity = favoriteRepository.findByUserId(userId)
-                .orElseGet(() -> createNewFavoriteList(userId));
+        FavoriteListEntity entity =
+                favoriteRepository.findByUserId(userId).orElseGet(() -> createNewFavoriteList(userId));
         return toEnrichedDto(entity);
     }
 
@@ -49,8 +51,9 @@ public class FavoriteService {
 
         validateProductsExist(newProductIds);
 
-        newProductIds.forEach(productId ->
-                favoriteList.getFavoriteItems().add(FavoriteItemEntity.builder()
+        newProductIds.forEach(productId -> favoriteList
+                .getFavoriteItems()
+                .add(FavoriteItemEntity.builder()
                         .favoriteListEntity(favoriteList)
                         .productId(productId)
                         .build()));
@@ -61,16 +64,17 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void delete(final UUID productId, final UUID userId) {
-        favoriteRepository.findByUserId(userId).ifPresent(favoriteList ->
-                favoriteList.getFavoriteItems()
+        favoriteRepository
+                .findByUserId(userId)
+                .ifPresent(favoriteList -> favoriteList
+                        .getFavoriteItems()
                         .removeIf(item -> item.getProductId().equals(productId)));
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private FavoriteListEntity getOrCreateFavoriteList(UUID userId) {
-        return favoriteRepository.findByUserId(userId)
-                .orElseGet(() -> createAndSaveFavoriteList(userId));
+        return favoriteRepository.findByUserId(userId).orElseGet(() -> createAndSaveFavoriteList(userId));
     }
 
     private ListOfFavoriteProductsDto toEnrichedDto(FavoriteListEntity entity) {
@@ -85,17 +89,18 @@ public class FavoriteService {
 
     private void validateProductsExist(Set<UUID> productIds) {
         if (productIds.isEmpty()) return;
-        List<ProductSnapshot> found = productCatalogApi.getProductsByIds(productIds.stream().toList());
+        List<ProductSnapshot> found =
+                productCatalogApi.getProductsByIds(productIds.stream().toList());
         Set<UUID> foundIds = found.stream().map(ProductSnapshot::id).collect(Collectors.toSet());
-        List<UUID> missingIds = productIds.stream().filter(id -> !foundIds.contains(id)).toList();
+        List<UUID> missingIds =
+                productIds.stream().filter(id -> !foundIds.contains(id)).toList();
         if (!missingIds.isEmpty()) {
             throw new ProductNotFoundException(missingIds);
         }
     }
 
-    private FavoriteListEntity saveWithConcurrentInsertRecovery(FavoriteListEntity favoriteList,
-                                                                Set<UUID> newProductIds,
-                                                                UUID userId) {
+    private FavoriteListEntity saveWithConcurrentInsertRecovery(
+            FavoriteListEntity favoriteList, Set<UUID> newProductIds, UUID userId) {
         try {
             return favoriteRepository.save(favoriteList);
         } catch (DataIntegrityViolationException ex) {
@@ -107,10 +112,11 @@ public class FavoriteService {
             Set<UUID> existingIds = extractProductIds(fresh);
             newProductIds.stream()
                     .filter(id -> !existingIds.contains(id))
-                    .forEach(productId -> fresh.getFavoriteItems().add(FavoriteItemEntity.builder()
-                            .favoriteListEntity(fresh)
-                            .productId(productId)
-                            .build()));
+                    .forEach(productId -> fresh.getFavoriteItems()
+                            .add(FavoriteItemEntity.builder()
+                                    .favoriteListEntity(fresh)
+                                    .productId(productId)
+                                    .build()));
             return favoriteRepository.save(fresh);
         }
     }
@@ -120,7 +126,8 @@ public class FavoriteService {
             return favoriteRepository.save(createNewFavoriteList(userId));
         } catch (DataIntegrityViolationException ex) {
             log.warn("favourites.create.concurrent_conflict: userId={}", userId);
-            return favoriteRepository.findByUserId(userId)
+            return favoriteRepository
+                    .findByUserId(userId)
                     .orElseThrow(() -> new IllegalStateException(
                             "Favorite list not found after uniqueness conflict for userId=" + userId, ex));
         }

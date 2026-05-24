@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.security.session.management;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.SessionInfo;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
@@ -8,16 +18,9 @@ import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.repository.AuthSessionRepository;
 import com.zufar.icedlatte.security.signin.exception.SessionNotFoundException;
 import com.zufar.icedlatte.security.signin.exception.SessionOwnershipException;
-import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -29,10 +32,8 @@ public class AuthSessionService {
     private final ClientIpExtractor clientIpExtractor;
 
     @Transactional
-    public AuthSessionEntity createSession(UUID sessionId,
-                                           UUID userId,
-                                           String refreshTokenHash,
-                                           HttpServletRequest request) {
+    public AuthSessionEntity createSession(
+            UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
         OffsetDateTime now = now();
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)
@@ -50,8 +51,7 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void rotateSession(String oldRefreshTokenHash,
-                              String newRefreshTokenHash) {
+    public void rotateSession(String oldRefreshTokenHash, String newRefreshTokenHash) {
         AuthSessionEntity session = findActiveByHash(oldRefreshTokenHash);
         OffsetDateTime now = now();
         session.setPreviousTokenHash(oldRefreshTokenHash);
@@ -64,11 +64,10 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeByRefreshTokenHash(String refreshTokenHash) {
-        sessionRepository.findByRefreshTokenHash(refreshTokenHash)
-                .ifPresent(session -> {
-                    revokeSession(session);
-                    log.info("auth.session.revoked: sessionId={}", maskSessionId(session.getId()));
-                });
+        sessionRepository.findByRefreshTokenHash(refreshTokenHash).ifPresent(session -> {
+            revokeSession(session);
+            log.info("auth.session.revoked: sessionId={}", maskSessionId(session.getId()));
+        });
     }
 
     @Transactional
@@ -78,10 +77,9 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void revokeById(UUID sessionId,
-                           UUID requestingUserId) {
-        AuthSessionEntity session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new SessionNotFoundException(sessionId));
+    public void revokeById(UUID sessionId, UUID requestingUserId) {
+        AuthSessionEntity session =
+                sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
         if (!session.getUserId().equals(requestingUserId)) {
             throw new SessionOwnershipException(sessionId);
         }
@@ -95,7 +93,8 @@ public class AuthSessionService {
         // This path handles legacy (non-session-managed) tokens that bypass that flow.
         // Guard on both revokedAt and compromised: replay path sets both before throwing,
         // so checking only revokedAt would still fire a duplicate revoke_all.
-        sessionRepository.findById(sessionId)
+        sessionRepository
+                .findById(sessionId)
                 .filter(this::isActiveSession)
                 .ifPresent(s -> revokeAllForUser(s.getUserId()));
     }
@@ -105,17 +104,15 @@ public class AuthSessionService {
     }
 
     public List<SessionInfo> listActiveSessionInfos(UUID userId) {
-        return listActiveSessions(userId).stream()
-                .map(this::toSessionInfo)
-                .toList();
+        return listActiveSessions(userId).stream().map(this::toSessionInfo).toList();
     }
 
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
-        sessionRepository.findByPreviousTokenHash(refreshTokenHash)
-                .ifPresent(this::handleReplayAttempt);
+        sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(this::handleReplayAttempt);
 
-        AuthSessionEntity session = sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+        AuthSessionEntity session = sessionRepository
+                .findByRefreshTokenHash(refreshTokenHash)
                 .orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
         if (!isActiveSession(session)) {
             handleRevokedOrCompromisedSession(session);
@@ -129,12 +126,16 @@ public class AuthSessionService {
     private void handleReplayAttempt(AuthSessionEntity session) {
         if (isActiveSession(session)) {
             markCompromised(session);
-            log.warn("auth.session.replay_detected: sessionId={}, userId={}",
-                    maskSessionId(session.getId()), session.getUserId());
+            log.warn(
+                    "auth.session.replay_detected: sessionId={}, userId={}",
+                    maskSessionId(session.getId()),
+                    session.getUserId());
             revokeAllForUser(session.getUserId());
         } else {
-            log.warn("auth.session.replay_repeated: sessionId={}, userId={}",
-                    maskSessionId(session.getId()), session.getUserId());
+            log.warn(
+                    "auth.session.replay_repeated: sessionId={}, userId={}",
+                    maskSessionId(session.getId()),
+                    session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been rotated");
     }
@@ -142,8 +143,10 @@ public class AuthSessionService {
     private void handleRevokedOrCompromisedSession(AuthSessionEntity session) {
         if (!session.isCompromised()) {
             markCompromised(session);
-            log.warn("auth.session.reuse_detected: sessionId={}, userId={}",
-                    maskSessionId(session.getId()), session.getUserId());
+            log.warn(
+                    "auth.session.reuse_detected: sessionId={}, userId={}",
+                    maskSessionId(session.getId()),
+                    session.getUserId());
             revokeAllForUser(session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been revoked");

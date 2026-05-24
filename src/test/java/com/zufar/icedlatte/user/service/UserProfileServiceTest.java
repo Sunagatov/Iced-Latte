@@ -1,15 +1,13 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.openapi.dto.AddressDto;
-import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
-import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,13 +18,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
+import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
+import com.zufar.icedlatte.user.converter.UserDtoConverter;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserProfileService unit tests")
@@ -34,17 +35,23 @@ class UserProfileServiceTest {
 
     @Mock
     private SingleUserProvider singleUserProvider;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserDtoConverter userDtoConverter;
+
     @Mock
     @SuppressWarnings("unused")
     private PutUsersRequestValidator putUsersRequestValidator;
+
     @Mock
     private FileStorageApi fileStorageService;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private ApplicationEventPublisher eventPublisher;
 

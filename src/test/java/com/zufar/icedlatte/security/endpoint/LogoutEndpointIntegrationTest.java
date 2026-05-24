@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.hasSize;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasSize;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("Logout endpoint integration tests")
 class LogoutEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -18,14 +19,12 @@ class LogoutEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport 
     void shouldBlacklistAccessTokenAndRefreshTokenOnLogout() {
         AuthenticatedUser user = registerAndAuthenticateUser();
 
-        given(authenticatedJsonSpec(AUTH_BASE_PATH, user.accessToken())
-                .header("X-Refresh-Token", user.refreshToken()))
+        given(authenticatedJsonSpec(AUTH_BASE_PATH, user.accessToken()).header("X-Refresh-Token", user.refreshToken()))
                 .post("/logout")
                 .then()
                 .statusCode(HttpStatus.OK.value());
 
-        given(jsonSpec(AUTH_BASE_PATH)
-                .header("Authorization", "Bearer " + user.refreshToken()))
+        given(jsonSpec(AUTH_BASE_PATH).header("Authorization", "Bearer " + user.refreshToken()))
                 .post("/refresh")
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value());
@@ -47,14 +46,12 @@ class LogoutEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport 
                 .then()
                 .statusCode(HttpStatus.OK.value());
 
-        given(jsonSpec(AUTH_BASE_PATH)
-                .header("Authorization", "Bearer " + firstSession.refreshToken()))
+        given(jsonSpec(AUTH_BASE_PATH).header("Authorization", "Bearer " + firstSession.refreshToken()))
                 .post("/refresh")
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value());
 
-        given(jsonSpec(AUTH_BASE_PATH)
-                .header("Authorization", "Bearer " + secondSession.refreshToken()))
+        given(jsonSpec(AUTH_BASE_PATH).header("Authorization", "Bearer " + secondSession.refreshToken()))
                 .post("/refresh")
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value());
@@ -80,11 +77,6 @@ class LogoutEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport 
                 .extract()
                 .jsonPath();
 
-        return new AuthenticatedUser(
-                response.getString("token"),
-                response.getString("refreshToken"),
-                email,
-                password
-        );
+        return new AuthenticatedUser(response.getString("token"), response.getString("refreshToken"), email, password);
     }
 }

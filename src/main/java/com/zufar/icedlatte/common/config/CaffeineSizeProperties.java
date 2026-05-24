@@ -9,5 +9,4 @@ public record CaffeineSizeProperties(
         @DefaultValue("5000") int rateLimitFilterSize,
         @DefaultValue("10000") int rateLimitWindowSize,
         @DefaultValue("1000") int redisErrorLogSize,
-        @DefaultValue("10000") int temporaryStoreSize
-) {}
+        @DefaultValue("10000") int temporaryStoreSize) {}

@@ -4,8 +4,8 @@ import java.util.Collection;
 
 public final class InvalidAvatarFileTypeException extends UserException {
 
-    public InvalidAvatarFileTypeException(String contentType,
-                                          Collection<String> allowedContentTypes) {
-        super("Avatar file type not allowed: " + contentType + ". Allowed types: " + String.join(", ", allowedContentTypes));
+    public InvalidAvatarFileTypeException(String contentType, Collection<String> allowedContentTypes) {
+        super("Avatar file type not allowed: " + contentType + ". Allowed types: "
+                + String.join(", ", allowedContentTypes));
     }
 }

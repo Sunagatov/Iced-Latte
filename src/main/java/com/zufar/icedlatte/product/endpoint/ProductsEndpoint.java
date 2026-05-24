@@ -1,18 +1,21 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.product.service.ProductService;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.product.service.ProductService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -52,13 +55,22 @@ public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api
             @RequestParam(name = "keyword", required = false) String keyword) {
 
         return ResponseEntity.ok(productService.getProductDtos(
-                pageNumber, pageSize, sortAttribute, sortDirection,
-                minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames, keyword));
+                pageNumber,
+                pageSize,
+                sortAttribute,
+                sortDirection,
+                minPrice,
+                maxPrice,
+                minimumAverageRating,
+                brandNames,
+                sellerNames,
+                keyword));
     }
 
     @Override
     @PostMapping("/ids")
-    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(@Valid @RequestBody final ProductIdsDto productIdsDto) {
+    public ResponseEntity<List<ProductInfoDto>> getProductsByIds(
+            @Valid @RequestBody final ProductIdsDto productIdsDto) {
         var products = productService.getProductDtosByIds(productIdsDto.getProductIds());
         log.debug("product.ids.fetched: count={}", products.size());
         return ResponseEntity.ok(products);

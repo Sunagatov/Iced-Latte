@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.user.service;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
@@ -11,16 +21,8 @@ import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +49,7 @@ public class UserProfileService implements UserAccessControlApi {
                 request.getLastName(),
                 request.getPhoneNumber(),
                 request.getBirthDate(),
-                addressDto
-        );
+                addressDto);
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
         userDtoConverter.updateEntity(userEntity, request);
         return toProfileDto(userRepository.save(userEntity));

@@ -1,13 +1,15 @@
 package com.zufar.icedlatte.security.signup.password;
 
+import org.springframework.stereotype.Service;
+
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service

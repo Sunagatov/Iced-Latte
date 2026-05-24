@@ -1,17 +1,18 @@
 package com.zufar.icedlatte.common.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @DisplayName("ClientIpExtractor unit tests")
 class ClientIpExtractorTest {
@@ -107,8 +108,7 @@ class ClientIpExtractorTest {
         @Test
         @DisplayName("replaces CR and LF to avoid log injection")
         void replacesCrAndLfToAvoidLogInjection() {
-            assertThat(ClientIpExtractor.sanitize("abc\r\ndef"))
-                    .isEqualTo("abc__def");
+            assertThat(ClientIpExtractor.sanitize("abc\r\ndef")).isEqualTo("abc__def");
         }
 
         @Test

@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.security.email.config;
 
-import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Locale;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 
-import java.util.Locale;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 
 @DisplayName("EmailConfig unit tests")
 class EmailConfigTest {
@@ -23,7 +24,7 @@ class EmailConfigTest {
         assertThat(messageSource).isInstanceOf(ReloadableResourceBundleMessageSource.class);
         ReloadableResourceBundleMessageSource bundle = (ReloadableResourceBundleMessageSource) messageSource;
         assertThat(bundle.getBasenameSet()).containsExactly("classpath:messages/messages");
-        assertThat(bundle.getMessage("email-template", new Object[]{"123456"}, Locale.ENGLISH))
+        assertThat(bundle.getMessage("email-template", new Object[] {"123456"}, Locale.ENGLISH))
                 .contains("123456")
                 .contains("5 minutes");
     }

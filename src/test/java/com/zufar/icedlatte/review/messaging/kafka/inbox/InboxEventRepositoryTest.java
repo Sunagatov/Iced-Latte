@@ -1,17 +1,5 @@
 package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -19,6 +7,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InboxEventRepository")
@@ -30,20 +30,19 @@ class InboxEventRepositoryTest {
     @Test
     @DisplayName("claims only rows for the requested consumer")
     void claimsOnlyRowsForRequestedConsumer() {
-        when(jdbcTemplate.<InboxEventRepository.InboxEventRow>query(
-                anyString(), anyInboxRowMapper(), any(), any(), any()))
+        when(jdbcTemplate.query(anyString(), anyInboxRowMapper(), any(), any(), any()))
                 .thenReturn(List.of());
         var repository = new InboxEventRepository(jdbcTemplate);
 
         repository.claimProcessableEvents(25, "iced-latte-review-ai", "worker-1");
 
-        verify(jdbcTemplate).<InboxEventRepository.InboxEventRow>query(
-                contains("AND consumer_name = ?"),
-                anyInboxRowMapper(),
-                eq("iced-latte-review-ai"),
-                eq(25),
-                eq("worker-1")
-        );
+        verify(jdbcTemplate)
+                .query(
+                        contains("AND consumer_name = ?"),
+                        anyInboxRowMapper(),
+                        eq("iced-latte-review-ai"),
+                        eq(25),
+                        eq("worker-1"));
     }
 
     private RowMapper<InboxEventRepository.InboxEventRow> anyInboxRowMapper() {
@@ -59,15 +58,15 @@ class InboxEventRepositoryTest {
 
         repository.markFailed(rowId, "worker-1", 2, 10, failure);
 
-        verify(jdbcTemplate).update(
-                anyString(),
-                eq("FAILED_RETRYABLE"),
-                eq(3),
-                any(Timestamp.class),
-                eq("IllegalStateException: boom"),
-                eq(rowId),
-                eq("worker-1")
-        );
+        verify(jdbcTemplate)
+                .update(
+                        anyString(),
+                        eq("FAILED_RETRYABLE"),
+                        eq(3),
+                        any(Timestamp.class),
+                        eq("IllegalStateException: boom"),
+                        eq(rowId),
+                        eq("worker-1"));
     }
 
     @Test
@@ -79,14 +78,14 @@ class InboxEventRepositoryTest {
 
         repository.markFailed(rowId, "worker-1", 9, 10, failure);
 
-        verify(jdbcTemplate).update(
-                anyString(),
-                eq("FAILED_PERMANENT"),
-                eq(10),
-                isNull(),
-                eq("IllegalStateException: boom"),
-                eq(rowId),
-                eq("worker-1")
-        );
+        verify(jdbcTemplate)
+                .update(
+                        anyString(),
+                        eq("FAILED_PERMANENT"),
+                        eq(10),
+                        isNull(),
+                        eq("IllegalStateException: boom"),
+                        eq(rowId),
+                        eq("worker-1"));
     }
 }

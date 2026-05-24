@@ -3,8 +3,8 @@ package com.zufar.icedlatte.user.api;
 import java.util.UUID;
 
 /**
- * Cross-module API for managing user credentials and account access state.
- * Consumed by the security module for password resets and account locking.
+ * Cross-module API for managing user credentials and account access state. Consumed by the security module for password
+ * resets and account locking.
  */
 public interface UserAccessControlApi {
 

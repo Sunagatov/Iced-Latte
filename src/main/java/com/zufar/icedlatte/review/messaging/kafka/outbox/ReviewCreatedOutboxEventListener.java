@@ -1,16 +1,18 @@
 package com.zufar.icedlatte.review.messaging.kafka.outbox;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -35,6 +37,10 @@ class ReviewCreatedOutboxEventListener {
         int maxAttempts = properties.outbox().maxAttempts();
 
         outboxEventRepository.insertReviewCreatedEvent(kafkaEvent, topic, partitionKey, payload, "{}", maxAttempts);
-        log.info("review.outbox.created: eventId={}, topic={}, partitionKey={}", kafkaEvent.eventId(), topic, partitionKey);
+        log.info(
+                "review.outbox.created: eventId={}, topic={}, partitionKey={}",
+                kafkaEvent.eventId(),
+                topic,
+                partitionKey);
     }
 }

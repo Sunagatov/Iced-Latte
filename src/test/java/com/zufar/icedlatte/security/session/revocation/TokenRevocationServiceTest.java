@@ -1,10 +1,9 @@
 package com.zufar.icedlatte.security.session.revocation;
 
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+import static org.mockito.Mockito.*;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,18 +12,29 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TokenRevocationService unit tests")
 class TokenRevocationServiceTest {
 
-    @Mock private JwtTokenBlacklist jwtTokenBlacklist;
-    @Mock private JwtBearerTokenResolver jwtBearerTokenResolver;
-    @Mock private AuthSessionService authSessionService;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private JwtTokenBlacklist jwtTokenBlacklist;
 
-    @InjectMocks private TokenRevocationService service;
+    @Mock
+    private JwtBearerTokenResolver jwtBearerTokenResolver;
+
+    @Mock
+    private AuthSessionService authSessionService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private TokenRevocationService service;
 
     @Nested
     @DisplayName("revokeTokens")
@@ -35,8 +45,7 @@ class TokenRevocationServiceTest {
         void revokesAndBlacklistsRefreshAndAccessTokens() {
             when(request.getHeader("Authorization")).thenReturn("Bearer access.header.payload");
             when(jwtTokenBlacklist.hash("refresh-token")).thenReturn("refresh-hash");
-            when(jwtBearerTokenResolver.extract("Bearer access.header.payload"))
-                    .thenReturn("access.header.payload");
+            when(jwtBearerTokenResolver.extract("Bearer access.header.payload")).thenReturn("access.header.payload");
 
             service.revokeTokens("refresh-token", request);
 
@@ -63,9 +72,9 @@ class TokenRevocationServiceTest {
         void stillBlacklistsAccessTokenWhenRefreshTokenExtractionFails() {
             when(request.getHeader("Authorization")).thenReturn("Bearer access.header.payload");
             doThrow(new AbsentBearerHeaderException("missing"))
-                    .when(jwtBearerTokenResolver).extract(request);
-            when(jwtBearerTokenResolver.extract("Bearer access.header.payload"))
-                    .thenReturn("access.header.payload");
+                    .when(jwtBearerTokenResolver)
+                    .extract(request);
+            when(jwtBearerTokenResolver.extract("Bearer access.header.payload")).thenReturn("access.header.payload");
 
             service.revokeTokens(null, request);
 
@@ -80,7 +89,8 @@ class TokenRevocationServiceTest {
             when(request.getHeader("Authorization")).thenReturn("Broken");
             when(jwtTokenBlacklist.hash("refresh-token")).thenReturn("refresh-hash");
             doThrow(new AbsentBearerHeaderException("invalid"))
-                    .when(jwtBearerTokenResolver).extract("Broken");
+                    .when(jwtBearerTokenResolver)
+                    .extract("Broken");
 
             service.revokeTokens("refresh-token", request);
 

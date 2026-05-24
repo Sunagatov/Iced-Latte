@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.order.endpoint;
 
-import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.notNullValue;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
+import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("Order access control integration tests")
 class OrderAccessControlIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -76,10 +77,7 @@ class OrderAccessControlIntegrationTest extends AuthenticatedUserIntegrationSupp
     @Test
     @DisplayName("Unauthenticated request returns 401")
     void unauthenticatedReturns401() {
-        given(jsonSpec(ORDERS_URL))
-                .get()
-                .then()
-                .statusCode(HttpStatus.UNAUTHORIZED.value());
+        given(jsonSpec(ORDERS_URL)).get().then().statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test

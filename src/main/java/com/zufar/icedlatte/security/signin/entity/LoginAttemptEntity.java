@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.signin.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.Instant;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import lombok.*;
 
 @Setter
 @Getter
@@ -19,7 +20,7 @@ public class LoginAttemptEntity {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-// amazonq-ignore-next-line
+    // amazonq-ignore-next-line
 
     @Column(name = "user_email", nullable = false, unique = true, length = 254)
     private String userEmail;

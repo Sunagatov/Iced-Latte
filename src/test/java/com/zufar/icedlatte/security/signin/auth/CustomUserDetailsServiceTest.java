@@ -1,7 +1,13 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import com.zufar.icedlatte.user.api.UserAuthenticationApi;
-import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,13 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.user.api.UserAuthenticationApi;
+import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CustomUserDetailsService unit tests")
@@ -77,14 +78,6 @@ class CustomUserDetailsServiceTest {
 
     private static UserAuthenticationSnapshot user() {
         return new UserAuthenticationSnapshot(
-                UUID.randomUUID(),
-                "john.doe@example.com",
-                "password123",
-                List.of("USER"),
-                true,
-                true,
-                true,
-                true
-        );
+                UUID.randomUUID(), "john.doe@example.com", "password123", List.of("USER"), true, true, true, true);
     }
 }

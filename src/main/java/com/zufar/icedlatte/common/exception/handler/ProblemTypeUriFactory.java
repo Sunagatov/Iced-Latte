@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.common.exception.handler;
 
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.net.URI;
 
 @Component
 public class ProblemTypeUriFactory {
@@ -11,7 +11,7 @@ public class ProblemTypeUriFactory {
     private final String typeBaseUrl;
 
     public ProblemTypeUriFactory(@Value("${problem.type-base-url}") String typeBaseUrl) {
-        if (typeBaseUrl == null || typeBaseUrl.isBlank()) {
+        if (typeBaseUrl.isBlank()) {
             throw new IllegalArgumentException("problem.type-base-url must be configured");
         }
         this.typeBaseUrl = typeBaseUrl.endsWith("/") ? typeBaseUrl : typeBaseUrl + "/";

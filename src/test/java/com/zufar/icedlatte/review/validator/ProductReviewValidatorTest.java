@@ -1,11 +1,12 @@
 package com.zufar.icedlatte.review.validator;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.exception.NotFoundException;
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,12 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.NotFoundException;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewValidator unit tests")
@@ -26,8 +27,10 @@ class ProductReviewValidatorTest {
 
     @Mock
     private ProductReviewRepository productReviewRepository;
+
     @Mock
     private ProductReviewProductApi productReviewProductGateway;
+
     @InjectMocks
     private ProductReviewValidator validator;
 
@@ -42,22 +45,19 @@ class ProductReviewValidatorTest {
     @Test
     @DisplayName("validateReviewText: blank text throws BadRequestException")
     void validateReviewTextBlankThrowsBadRequestException() {
-        assertThatThrownBy(() -> validator.validateReviewText("   "))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> validator.validateReviewText("   ")).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("validateReviewText: empty string throws BadRequestException")
     void validateReviewTextEmptyThrowsBadRequestException() {
-        assertThatThrownBy(() -> validator.validateReviewText(""))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> validator.validateReviewText("")).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("validateReviewText: text with forbidden characters throws BadRequestException")
     void validateReviewTextForbiddenCharsThrowsBadRequestException() {
-        assertThatThrownBy(() -> validator.validateReviewText("Bad <script>"))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> validator.validateReviewText("Bad <script>")).isInstanceOf(BadRequestException.class);
     }
 
     // ── validateProductExists ───────────────────────────────────────────────
@@ -77,8 +77,7 @@ class ProductReviewValidatorTest {
         UUID productId = UUID.randomUUID();
         when(productReviewProductGateway.exists(productId)).thenReturn(false);
 
-        assertThatThrownBy(() -> validator.validateProductExists(productId))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> validator.validateProductExists(productId)).isInstanceOf(NotFoundException.class);
     }
 
     // ── validateReviewExistsForUser ─────────────────────────────────────────
@@ -88,9 +87,11 @@ class ProductReviewValidatorTest {
     void validateReviewExistsForUserNoReviewNoException() {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        when(productReviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
+        when(productReviewRepository.findByUserIdAndProductId(userId, productId))
+                .thenReturn(Optional.empty());
 
-        assertThatCode(() -> validator.validateReviewExistsForUser(userId, productId)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateReviewExistsForUser(userId, productId))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -99,7 +100,8 @@ class ProductReviewValidatorTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         ProductReview existing = ProductReview.builder().id(UUID.randomUUID()).build();
-        when(productReviewRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(existing));
+        when(productReviewRepository.findByUserIdAndProductId(userId, productId))
+                .thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> validator.validateReviewExistsForUser(userId, productId))
                 .isInstanceOf(BadRequestException.class);
@@ -112,11 +114,13 @@ class ProductReviewValidatorTest {
     void validateProductReviewDeletionAllowedOwnerDeletesNoException() {
         UUID userId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        ProductReview review = ProductReview.builder().id(reviewId).userId(userId).build();
+        ProductReview review =
+                ProductReview.builder().id(reviewId).userId(userId).build();
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        assertThatCode(() -> validator.validateProductReviewDeletionAllowed(reviewId, userId)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateProductReviewDeletionAllowed(reviewId, userId))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -125,7 +129,8 @@ class ProductReviewValidatorTest {
         UUID currentUserId = UUID.randomUUID();
         UUID reviewOwnerId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
-        ProductReview review = ProductReview.builder().id(reviewId).userId(reviewOwnerId).build();
+        ProductReview review =
+                ProductReview.builder().id(reviewId).userId(reviewOwnerId).build();
 
         when(productReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
@@ -141,9 +146,11 @@ class ProductReviewValidatorTest {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         when(productReviewProductGateway.exists(productId)).thenReturn(true);
-        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(true);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId))
+                .thenReturn(true);
 
-        assertThatCode(() -> validator.validateProductIdIsValid(productId, reviewId)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateProductIdIsValid(productId, reviewId))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -163,7 +170,8 @@ class ProductReviewValidatorTest {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         when(productReviewProductGateway.exists(productId)).thenReturn(true);
-        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId))
+                .thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
                 .isInstanceOf(NotFoundException.class);
@@ -175,7 +183,8 @@ class ProductReviewValidatorTest {
         UUID productId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         when(productReviewProductGateway.exists(productId)).thenReturn(true);
-        when(productReviewRepository.existsByIdAndProductId(reviewId, productId)).thenReturn(false);
+        when(productReviewRepository.existsByIdAndProductId(reviewId, productId))
+                .thenReturn(false);
 
         assertThatThrownBy(() -> validator.validateProductIdIsValid(productId, reviewId))
                 .isInstanceOf(NotFoundException.class);

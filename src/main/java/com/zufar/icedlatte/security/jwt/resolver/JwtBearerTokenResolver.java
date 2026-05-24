@@ -1,14 +1,17 @@
 package com.zufar.icedlatte.security.jwt.resolver;
 
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+import java.util.Optional;
+
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Optional;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -35,15 +38,12 @@ public class JwtBearerTokenResolver {
                 .orElseThrow(() -> {
                     log.debug("jwt.header.invalid");
                     return new AbsentBearerHeaderException(
-                        "Missing or invalid Authorization header. Expected format: " +
-                                BEARER_PREFIX + "<token>"
-                    );
+                            "Missing or invalid Authorization header. Expected format: " + BEARER_PREFIX + "<token>");
                 });
     }
 
     private boolean isValidBearerHeader(String authHeader) {
-        return authHeader.startsWith(BEARER_PREFIX) &&
-                authHeader.length() > BEARER_PREFIX.length();
+        return authHeader.startsWith(BEARER_PREFIX) && authHeader.length() > BEARER_PREFIX.length();
     }
 
     private String extractTokenFromHeader(String authHeader) {
@@ -55,19 +55,19 @@ public class JwtBearerTokenResolver {
             log.debug("jwt.header.empty_token");
             return false;
         }
-        
+
         if (token.length() < MIN_TOKEN_LENGTH || token.length() > MAX_TOKEN_LENGTH) {
             log.debug("jwt.header.invalid_length");
             return false;
         }
-        
+
         // Basic JWT format validation (should have 2 dots for 3 parts)
         long dotCount = token.chars().filter(ch -> ch == '.').count();
         if (dotCount != 2) {
             log.debug("jwt.header.invalid_format");
             return false;
         }
-        
+
         return true;
     }
 }

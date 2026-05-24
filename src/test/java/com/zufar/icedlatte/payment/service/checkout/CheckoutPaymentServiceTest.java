@@ -1,9 +1,7 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
-import com.zufar.icedlatte.payment.config.StripeProperties;
-import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,20 +9,36 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
+import com.zufar.icedlatte.payment.config.StripeProperties;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CheckoutPaymentService unit tests")
 class CheckoutPaymentServiceTest {
 
-    @Mock @SuppressWarnings("unused") private CurrentUserProvider currentUserProvider;
-    @Mock @SuppressWarnings("unused") private CheckoutPaymentTransactionService txService;
-    @Mock @SuppressWarnings("unused") private StripeCheckoutSessionCreator stripeSessionCreator;
-    @Mock @SuppressWarnings("unused") private StripeProperties stripeProperties;
-    @InjectMocks private CheckoutPaymentService service;
+    @Mock
+    @SuppressWarnings("unused")
+    private CurrentUserProvider currentUserProvider;
 
-    private final CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()
-            .recipientName("A").recipientSurname("B");
+    @Mock
+    @SuppressWarnings("unused")
+    private CheckoutPaymentTransactionService txService;
+
+    @Mock
+    @SuppressWarnings("unused")
+    private StripeCheckoutSessionCreator stripeSessionCreator;
+
+    @Mock
+    @SuppressWarnings("unused")
+    private StripeProperties stripeProperties;
+
+    @InjectMocks
+    private CheckoutPaymentService service;
+
+    private final CreateCheckoutRequestDto request =
+            new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B");
 
     @Test
     @DisplayName("rejects null Idempotency-Key")

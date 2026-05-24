@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.order.endpoint;
 
-import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("Order history integration tests")
 class OrderHistoryIntegrationTest extends AuthenticatedUserIntegrationSupport {

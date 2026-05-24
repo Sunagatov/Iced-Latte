@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.product.specification;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 
 @DisplayName("ProductSpecifications unit tests")
 class ProductSpecificationsTest {
@@ -52,7 +53,8 @@ class ProductSpecificationsTest {
         void createsActiveSpecificationsForPopulatedNumericFilters() {
             assertThat(ProductSpecifications.minPriceSpec(BigDecimal.ONE)).isNotNull();
             assertThat(ProductSpecifications.maxPriceSpec(BigDecimal.TEN)).isNotNull();
-            assertThat(ProductSpecifications.minRatingSpec(BigDecimal.valueOf(4.5))).isNotNull();
+            assertThat(ProductSpecifications.minRatingSpec(BigDecimal.valueOf(4.5)))
+                    .isNotNull();
         }
 
         @Test

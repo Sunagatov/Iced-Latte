@@ -1,10 +1,5 @@
 package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
-import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -13,22 +8,31 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+
+import lombok.RequiredArgsConstructor;
+
 @Repository
 @RequiredArgsConstructor
 public class InboxEventRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public boolean insertReceivedEvent(ReviewCreatedKafkaEvent event,
-                                       String topic,
-                                       String partitionKey,
-                                       int kafkaPartition,
-                                       long kafkaOffset,
-                                       String consumerName,
-                                       String payload,
-                                       String headers,
-                                       int maxAttempts) {
-        int inserted = jdbcTemplate.update("""
+    public boolean insertReceivedEvent(
+            ReviewCreatedKafkaEvent event,
+            String topic,
+            String partitionKey,
+            int kafkaPartition,
+            long kafkaOffset,
+            String consumerName,
+            String payload,
+            String headers,
+            int maxAttempts) {
+        int inserted = jdbcTemplate.update(
+                """
                         INSERT INTO inbox_events (
                             event_id, event_type, event_version, topic, partition_key,
                             kafka_partition, kafka_offset, consumer_name, payload, headers,
@@ -37,10 +41,17 @@ public class InboxEventRepository {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'RECEIVED', ?)
                         ON CONFLICT DO NOTHING
                         """,
-                event.eventId(), event.eventType(), event.eventVersion(),
-                topic, partitionKey, kafkaPartition, kafkaOffset, consumerName,
-                payload, headers, maxAttempts
-        );
+                event.eventId(),
+                event.eventType(),
+                event.eventVersion(),
+                topic,
+                partitionKey,
+                kafkaPartition,
+                kafkaOffset,
+                consumerName,
+                payload,
+                headers,
+                maxAttempts);
         return inserted == 1;
     }
 
@@ -64,12 +75,7 @@ public class InboxEventRepository {
                         FROM candidate
                         WHERE i.id = candidate.id
                         RETURNING i.id, i.event_id, i.payload::text, i.attempt_count, i.max_attempts
-                        """,
-                (rs, _) -> mapRow(rs),
-                consumerName,
-                batchSize,
-                workerId
-        );
+                        """, (rs, _) -> mapRow(rs), consumerName, batchSize, workerId);
     }
 
     public int reclaimStaleLocks(Instant lockedBefore) {
@@ -82,9 +88,7 @@ public class InboxEventRepository {
                             updated_at = now()
                         WHERE status = 'IN_PROGRESS'
                           AND locked_at < ?
-                        """,
-                Timestamp.from(lockedBefore)
-        );
+                        """, Timestamp.from(lockedBefore));
     }
 
     public void markProcessed(UUID id, String workerId) {
@@ -95,9 +99,7 @@ public class InboxEventRepository {
         markTerminal(id, workerId, "IGNORED");
     }
 
-    public void markFailed(UUID id, String workerId,
-                           int attemptCount, int maxAttempts,
-                           Throwable failure) {
+    public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
         String status = permanent ? "FAILED_PERMANENT" : "FAILED_RETRYABLE";
@@ -119,10 +121,7 @@ public class InboxEventRepository {
                         WHERE id = ?
                           AND status = 'IN_PROGRESS'
                           AND locked_by = ?
-                        """,
-                status, nextAttemptCount, nextAttemptAt,
-                sanitizedError(failure), id, workerId
-        );
+                        """, status, nextAttemptCount, nextAttemptAt, sanitizedError(failure), id, workerId);
     }
 
     private void markTerminal(UUID id, String workerId, String status) {
@@ -137,9 +136,7 @@ public class InboxEventRepository {
                         WHERE id = ?
                           AND status = 'IN_PROGRESS'
                           AND locked_by = ?
-                        """,
-                status, id, workerId
-        );
+                        """, status, id, workerId);
     }
 
     private long backoffSeconds(int attemptCount) {
@@ -157,8 +154,7 @@ public class InboxEventRepository {
                 rs.getObject("event_id", UUID.class),
                 rs.getString("payload"),
                 rs.getInt("attempt_count"),
-                rs.getInt("max_attempts")
-        );
+                rs.getInt("max_attempts"));
     }
 
     public record InboxEventRow(UUID id, UUID eventId, String payload, int attemptCount, int maxAttempts) {}

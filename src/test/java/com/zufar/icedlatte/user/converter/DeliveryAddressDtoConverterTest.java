@@ -1,16 +1,17 @@
 package com.zufar.icedlatte.user.converter;
 
-import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
-import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
-import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
-import com.zufar.icedlatte.user.entity.UserEntity;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
+import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
+import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
+import com.zufar.icedlatte.user.entity.UserEntity;
 
 @DisplayName("DeliveryAddressDtoConverter")
 class DeliveryAddressDtoConverterTest {
@@ -46,13 +47,8 @@ class DeliveryAddressDtoConverterTest {
     @Test
     @DisplayName("maps request to entity without copying generated fields")
     void toEntity_mapsRequestAndIgnoresManagedFields() {
-        DeliveryAddressRequest request = new DeliveryAddressRequest(
-                "Office",
-                "5 Bean Road",
-                "Manchester",
-                "United Kingdom",
-                "M1 1AA"
-        );
+        DeliveryAddressRequest request =
+                new DeliveryAddressRequest("Office", "5 Bean Road", "Manchester", "United Kingdom", "M1 1AA");
 
         DeliveryAddressEntity entity = converter.toEntity(request);
 

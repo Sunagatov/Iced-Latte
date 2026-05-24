@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.security.config;
 
-import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -18,7 +20,8 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        log.debug("auth.success: authType={}",
+        log.debug(
+                "auth.success: authType={}",
                 event.getAuthentication().getClass().getSimpleName());
     }
 
@@ -44,9 +47,7 @@ public class SecurityEventListener {
 
     private static boolean isExpectedAnonymousDeny(String principal, String path) {
         return ANONYMOUS_PRINCIPAL.equals(principal)
-                && (ApiPaths.USERS.equals(path)
-                || ApiPaths.CART.equals(path)
-                || ApiPaths.FAVORITES.equals(path));
+                && (ApiPaths.USERS.equals(path) || ApiPaths.CART.equals(path) || ApiPaths.FAVORITES.equals(path));
     }
 
     private static String normalizePath(String value) {

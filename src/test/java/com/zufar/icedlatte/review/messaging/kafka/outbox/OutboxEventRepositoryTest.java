@@ -1,20 +1,20 @@
 package com.zufar.icedlatte.review.messaging.kafka.outbox;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+
+import java.sql.Timestamp;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.sql.Timestamp;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OutboxEventRepository")
@@ -32,15 +32,15 @@ class OutboxEventRepositoryTest {
 
         repository.markFailed(rowId, "worker-1", 2, 10, failure);
 
-        verify(jdbcTemplate).update(
-                anyString(),
-                eq("FAILED_RETRYABLE"),
-                eq(3),
-                any(Timestamp.class),
-                eq("IllegalStateException: boom"),
-                eq(rowId),
-                eq("worker-1")
-        );
+        verify(jdbcTemplate)
+                .update(
+                        anyString(),
+                        eq("FAILED_RETRYABLE"),
+                        eq(3),
+                        any(Timestamp.class),
+                        eq("IllegalStateException: boom"),
+                        eq(rowId),
+                        eq("worker-1"));
     }
 
     @Test
@@ -52,14 +52,14 @@ class OutboxEventRepositoryTest {
 
         repository.markFailed(rowId, "worker-1", 9, 10, failure);
 
-        verify(jdbcTemplate).update(
-                anyString(),
-                eq("FAILED_PERMANENT"),
-                eq(10),
-                isNull(),
-                eq("IllegalStateException: boom"),
-                eq(rowId),
-                eq("worker-1")
-        );
+        verify(jdbcTemplate)
+                .update(
+                        anyString(),
+                        eq("FAILED_PERMANENT"),
+                        eq(10),
+                        isNull(),
+                        eq("IllegalStateException: boom"),
+                        eq(rowId),
+                        eq("worker-1"));
     }
 }

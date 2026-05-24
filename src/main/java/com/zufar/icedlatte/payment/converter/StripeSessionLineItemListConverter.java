@@ -1,18 +1,20 @@
 package com.zufar.icedlatte.payment.converter;
 
-import com.stripe.param.checkout.SessionCreateParams;
-import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
-import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.payment.config.StripeProperties;
-import org.jspecify.annotations.NonNull;
-import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+import org.jspecify.annotations.NonNull;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.stripe.param.checkout.SessionCreateParams;
+import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.payment.config.StripeProperties;
+
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
         imports = BigDecimal.class,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 @SuppressWarnings({"unused", "NullableProblems"}) // MapStruct generates and calls the implementation.

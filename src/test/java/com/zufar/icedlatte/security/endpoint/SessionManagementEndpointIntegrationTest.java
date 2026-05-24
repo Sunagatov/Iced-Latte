@@ -1,20 +1,22 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
 @DisplayName("Session management integration tests")
+@SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
 class SessionManagementEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
 
     private static final String AUTH_BASE_PATH = "/api/v1/auth";
@@ -101,8 +103,7 @@ class SessionManagementEndpointIntegrationTest extends AuthenticatedUserIntegrat
     }
 
     private AuthenticatedUser authenticateWithUserAgent(String email, String password, String userAgent) {
-        var response = given(jsonSpec(AUTH_BASE_PATH)
-                .header("User-Agent", userAgent))
+        var response = given(jsonSpec(AUTH_BASE_PATH).header("User-Agent", userAgent))
                 .body("""
                         {
                           "email": "%s",
@@ -115,11 +116,6 @@ class SessionManagementEndpointIntegrationTest extends AuthenticatedUserIntegrat
                 .extract()
                 .jsonPath();
 
-        return new AuthenticatedUser(
-                response.getString("token"),
-                response.getString("refreshToken"),
-                email,
-                password
-        );
+        return new AuthenticatedUser(response.getString("token"), response.getString("refreshToken"), email, password);
     }
 }

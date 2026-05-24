@@ -1,7 +1,10 @@
 package com.zufar.icedlatte.security.jwt.resolver;
 
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,10 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtBearerTokenResolver Tests")

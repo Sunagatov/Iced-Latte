@@ -1,10 +1,5 @@
 package com.zufar.icedlatte.review.messaging.kafka.outbox;
 
-import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -13,19 +8,28 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+
+import lombok.RequiredArgsConstructor;
+
 @Repository
 @RequiredArgsConstructor
 public class OutboxEventRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public void insertReviewCreatedEvent(ReviewCreatedKafkaEvent event,
-                                         String topic,
-                                         String partitionKey,
-                                         String payload,
-                                         String headers,
-                                         int maxAttempts) {
-        jdbcTemplate.update("""
+    public void insertReviewCreatedEvent(
+            ReviewCreatedKafkaEvent event,
+            String topic,
+            String partitionKey,
+            String payload,
+            String headers,
+            int maxAttempts) {
+        jdbcTemplate.update(
+                """
                 INSERT INTO outbox_events (
                     event_id, aggregate_type, aggregate_id, event_type, event_version,
                     topic, partition_key, payload, headers, status, max_attempts
@@ -41,8 +45,7 @@ public class OutboxEventRepository {
                 partitionKey,
                 payload,
                 headers,
-                maxAttempts
-        );
+                maxAttempts);
     }
 
     public List<OutboxEventRow> claimPublishableEvents(int batchSize, String workerId) {
@@ -65,11 +68,7 @@ public class OutboxEventRepository {
                 WHERE o.id = candidate.id
                 RETURNING o.id, o.event_id, o.topic, o.partition_key, o.payload::text, o.headers::text,
                           o.attempt_count, o.max_attempts
-                """,
-                (rs, _) -> mapRow(rs),
-                batchSize,
-                workerId
-        );
+                """, (rs, _) -> mapRow(rs), batchSize, workerId);
     }
 
     public int reclaimStaleLocks(Instant lockedBefore) {
@@ -82,9 +81,7 @@ public class OutboxEventRepository {
                     updated_at = now()
                 WHERE status = 'IN_PROGRESS'
                   AND locked_at < ?
-                """,
-                Timestamp.from(lockedBefore)
-        );
+                """, Timestamp.from(lockedBefore));
     }
 
     public void markPublished(UUID id, String workerId, int partition, long offset) {
@@ -101,21 +98,16 @@ public class OutboxEventRepository {
                 WHERE id = ?
                   AND status = 'IN_PROGRESS'
                   AND locked_by = ?
-                """,
-                partition,
-                offset,
-                id,
-                workerId
-        );
+                """, partition, offset, id, workerId);
     }
 
     public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
-        Instant nextAttemptAt = permanent
-                ? null
-                : Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS);
-        jdbcTemplate.update("""
+        Instant nextAttemptAt =
+                permanent ? null : Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS);
+        jdbcTemplate.update(
+                """
                 UPDATE outbox_events
                 SET status = ?,
                     attempt_count = ?,
@@ -133,8 +125,7 @@ public class OutboxEventRepository {
                 nextAttemptAt == null ? null : Timestamp.from(nextAttemptAt),
                 sanitizedError(failure),
                 id,
-                workerId
-        );
+                workerId);
     }
 
     private long backoffSeconds(int attemptCount) {
@@ -155,17 +146,16 @@ public class OutboxEventRepository {
                 rs.getString("payload"),
                 rs.getString("headers"),
                 rs.getInt("attempt_count"),
-                rs.getInt("max_attempts")
-        );
+                rs.getInt("max_attempts"));
     }
 
-    public record OutboxEventRow(UUID id,
-                                 UUID eventId,
-                                 String topic,
-                                 String partitionKey,
-                                 String payload,
-                                 String headers,
-                                 int attemptCount,
-                                 int maxAttempts) {
-    }
+    public record OutboxEventRow(
+            UUID id,
+            UUID eventId,
+            String topic,
+            String partitionKey,
+            String payload,
+            String headers,
+            int attemptCount,
+            int maxAttempts) {}
 }

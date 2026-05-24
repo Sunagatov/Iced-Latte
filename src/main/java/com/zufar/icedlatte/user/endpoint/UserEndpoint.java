@@ -1,15 +1,10 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.user.service.DeliveryAddressService;
-import com.zufar.icedlatte.user.service.UserAvatarUploader;
-import com.zufar.icedlatte.user.service.UserProfileService;
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +13,16 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+import com.zufar.icedlatte.common.audit.Identifiable;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.user.service.DeliveryAddressService;
+import com.zufar.icedlatte.user.service.UserAvatarUploader;
+import com.zufar.icedlatte.user.service.UserProfileService;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -45,7 +47,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PutMapping
-    public ResponseEntity<UserDto> editUserProfile(@Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
+    public ResponseEntity<UserDto> editUserProfile(
+            @Valid @RequestBody UpdateUserAccountRequest updateUserAccountRequest) {
         var userId = currentUserId();
         UserDto updated = userProfileService.updateProfile(userId, updateUserAccountRequest);
         log.info("user.profile.updated: userId={}", userId);
@@ -54,7 +57,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PatchMapping
-    public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
+    public ResponseEntity<Void> changeUserPassword(
+            @Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
         var userId = currentUserId();
         userProfileService.changePassword(userId, changeUserPasswordRequest);
         log.info("user.password.changed: userId={}", userId);
@@ -71,7 +75,9 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     @Override
-    @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(
+            path = "/avatar",
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(@RequestPart("file") MultipartFile file) {
         var userId = currentUserId();
         userAvatarUploader.uploadUserAvatar(userId, file);
@@ -84,7 +90,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<String> getUserAvatarLink() {
         var userId = currentUserId();
         log.debug("user.avatar.get: userId={}", userId);
-        return userProfileService.findAvatarLink(userId)
+        return userProfileService
+                .findAvatarLink(userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -117,8 +124,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
 
     @Override
     @PutMapping("/addresses/{addressId}")
-    public ResponseEntity<DeliveryAddressDto> updateDeliveryAddress(@PathVariable UUID addressId,
-                                                                    @Valid @RequestBody DeliveryAddressRequest request) {
+    public ResponseEntity<DeliveryAddressDto> updateDeliveryAddress(
+            @PathVariable UUID addressId, @Valid @RequestBody DeliveryAddressRequest request) {
         var userId = currentUserId();
         DeliveryAddressDto updated = deliveryAddressService.update(userId, addressId, request);
         log.info("delivery_address.updated: userId={}, addressId={}", userId, updated.getId());

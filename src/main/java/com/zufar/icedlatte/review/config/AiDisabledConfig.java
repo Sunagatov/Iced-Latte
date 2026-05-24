@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.review.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
 import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration

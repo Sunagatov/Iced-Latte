@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.order.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import lombok.*;
 
 @Getter
 @Setter

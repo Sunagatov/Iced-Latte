@@ -1,15 +1,13 @@
 package com.zufar.icedlatte.security.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.zufar.icedlatte.common.correlation.CorrelationFilter;
-import com.zufar.icedlatte.common.exception.ProblemType;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
+import static org.springframework.security.config.Customizer.withDefaults;
+
+import java.time.Duration;
+import java.time.Instant;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -36,10 +34,15 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.time.Duration;
-import java.time.Instant;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 
-import static org.springframework.security.config.Customizer.withDefaults;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -59,59 +62,78 @@ public class SpringSecurityConfiguration {
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity httpSecurity,
-                                                   final CorrelationFilter correlationFilter,
-                                                   final JwtAuthenticationFilter jwtTokenFilter,
-                                                   @Qualifier("rateLimitingFilter") final Filter rateLimitingFilter,
-                                                   final CorsConfigurationSource corsConfigurationSource) {
+    public SecurityFilterChain securityFilterChain(
+            final HttpSecurity httpSecurity,
+            final CorrelationFilter correlationFilter,
+            final JwtAuthenticationFilter jwtTokenFilter,
+            @Qualifier("rateLimitingFilter") final Filter rateLimitingFilter,
+            final CorsConfigurationSource corsConfigurationSource) {
         return httpSecurity
                 // amazonq-ignore-next-line
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .httpStrictTransportSecurity(hstsConfig -> hstsConfig
                                 .maxAgeInSeconds(Duration.ofDays(365).toSeconds())
                                 .includeSubDomains(true)
                                 .preload(true))
-                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                        .contentTypeOptions(withDefaults())
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN).authenticated()
-                        .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL).authenticated()
-                        .requestMatchers(ApiPaths.CART_PATTERN).authenticated()
-                        .requestMatchers(STRIPE_WEBHOOK_URL).permitAll()
-                        .requestMatchers(ApiPaths.PAYMENT_PATTERN).authenticated()
-                        .requestMatchers(ApiPaths.USERS_PATTERN).authenticated()
-                        .requestMatchers(ApiPaths.FAVORITES_PATTERN).authenticated()
-                        .requestMatchers(ApiPaths.ORDERS_PATTERN).authenticated()
-                        .requestMatchers(SHIPPING_URL_PATTERN).authenticated()
-                        .requestMatchers(PRODUCT_REVIEW_URL_PATTERN).authenticated()
-                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEWS_URL_PATTERN).authenticated()
-                        .requestMatchers(HttpMethod.DELETE, PRODUCT_REVIEW_ITEM_URL_PATTERN).authenticated()
-                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN).authenticated()
-                        .requestMatchers(HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN).permitAll()
-                        .requestMatchers(ApiPaths.AUTH_ALL_PATTERN).permitAll()
-                        .requestMatchers(ApiPaths.PRODUCTS_PATTERN).permitAll()
-                        .requestMatchers(ApiPaths.DOCS_ROOT + "**").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus", "/livez", "/readyz").permitAll()
-                        .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**").hasRole("ADMIN")
-                        .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN).hasRole("ADMIN")
-                        .requestMatchers(ApiPaths.API_ROOT + "/**").authenticated()
-                        .anyRequest().denyAll()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, _) ->
-                                writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Authentication required.", request.getRequestURI()))
-                        .accessDeniedHandler((request, response, _) ->
-                                writeErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
-                                        "Access denied.", request.getRequestURI()))
-                )
+                        .referrerPolicy(referrer -> referrer.policy(
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .contentTypeOptions(withDefaults()))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
+                        .authenticated()
+                        .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL)
+                        .authenticated()
+                        .requestMatchers(ApiPaths.CART_PATTERN)
+                        .authenticated()
+                        .requestMatchers(STRIPE_WEBHOOK_URL)
+                        .permitAll()
+                        .requestMatchers(ApiPaths.PAYMENT_PATTERN)
+                        .authenticated()
+                        .requestMatchers(ApiPaths.USERS_PATTERN)
+                        .authenticated()
+                        .requestMatchers(ApiPaths.FAVORITES_PATTERN)
+                        .authenticated()
+                        .requestMatchers(ApiPaths.ORDERS_PATTERN)
+                        .authenticated()
+                        .requestMatchers(SHIPPING_URL_PATTERN)
+                        .authenticated()
+                        .requestMatchers(PRODUCT_REVIEW_URL_PATTERN)
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEWS_URL_PATTERN)
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, PRODUCT_REVIEW_ITEM_URL_PATTERN)
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN)
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
+                        .permitAll()
+                        .requestMatchers(ApiPaths.AUTH_ALL_PATTERN)
+                        .permitAll()
+                        .requestMatchers(ApiPaths.PRODUCTS_PATTERN)
+                        .permitAll()
+                        .requestMatchers(ApiPaths.DOCS_ROOT + "**")
+                        .permitAll()
+                        .requestMatchers(
+                                "/actuator/health", "/actuator/info", "/actuator/prometheus", "/livez", "/readyz")
+                        .permitAll()
+                        .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN)
+                        .hasRole("ADMIN")
+                        .requestMatchers(ApiPaths.API_ROOT + "/**")
+                        .authenticated()
+                        .anyRequest()
+                        .denyAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, _) -> writeErrorResponse(
+                                response,
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "Authentication required.",
+                                request.getRequestURI()))
+                        .accessDeniedHandler((request, response, _) -> writeErrorResponse(
+                                response, HttpServletResponse.SC_FORBIDDEN, "Access denied.", request.getRequestURI())))
                 .addFilterBefore(correlationFilter, DisableEncodeUrlFilter.class)
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
@@ -134,8 +156,8 @@ public class SpringSecurityConfiguration {
 
     // amazonq-ignore-next-line
     @Bean
-    public AuthenticationProvider authenticationProvider(final UserDetailsService userDetailsService,
-                                                         final PasswordEncoder passwordEncoder) {
+    public AuthenticationProvider authenticationProvider(
+            final UserDetailsService userDetailsService, final PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
         // amazonq-ignore-next-line
         authenticationProvider.setPasswordEncoder(passwordEncoder);
@@ -165,16 +187,15 @@ public class SpringSecurityConfiguration {
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 
-    private void writeErrorResponse(HttpServletResponse response,
-                                    int status,
-                                    String message,
-                                    String path) throws java.io.IOException {
+    private void writeErrorResponse(HttpServletResponse response, int status, String message, String path)
+            throws java.io.IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         String typeSlug = status == 401 ? ProblemType.AUTH_REQUIRED : ProblemType.ACCESS_DENIED;
         String title = status == 401 ? "Authentication required" : "Access denied";
-        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+        ObjectNode json = OBJECT_MAPPER
+                .createObjectNode()
                 .put("type", problemTypeUriFactory.build(typeSlug))
                 .put("title", title)
                 .put("status", status)

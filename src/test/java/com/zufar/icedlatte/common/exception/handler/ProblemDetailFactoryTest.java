@@ -1,22 +1,22 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 
 @DisplayName("ProblemDetailFactory unit tests")
 class ProblemDetailFactoryTest {
 
-    private final ProblemDetailFactory factory = new ProblemDetailFactory(
-            new ProblemTypeUriFactory("https://errors.example.test/problems"));
+    private final ProblemDetailFactory factory =
+            new ProblemDetailFactory(new ProblemTypeUriFactory("https://errors.example.test/problems"));
 
     @Test
     @DisplayName("build() sets type URI correctly")
@@ -53,9 +53,10 @@ class ProblemDetailFactoryTest {
     @Test
     @DisplayName("build() with errors sets the errors extension property")
     void setsErrorsExtension() {
-        List<ProblemDetailFactory.FieldError> errors = List.of(
-                new ProblemDetailFactory.FieldError("name", "must not be blank"));
-        ProblemDetail pd = factory.build("validation-failed", "Validation failed", HttpStatus.BAD_REQUEST, "detail", errors);
+        List<ProblemDetailFactory.FieldError> errors =
+                List.of(new ProblemDetailFactory.FieldError("name", "must not be blank"));
+        ProblemDetail pd =
+                factory.build("validation-failed", "Validation failed", HttpStatus.BAD_REQUEST, "detail", errors);
         Map<String, Object> props = Objects.requireNonNull(pd.getProperties());
         assertThat(props.get("errors")).isEqualTo(errors);
     }
@@ -63,8 +64,8 @@ class ProblemDetailFactoryTest {
     @Test
     @DisplayName("5xx status sanitizes detail")
     void sanitizes5xxDetail() {
-        ProblemDetail pd = factory.build("internal-error", "Internal server error",
-                HttpStatus.INTERNAL_SERVER_ERROR, "secret stack trace");
+        ProblemDetail pd = factory.build(
+                "internal-error", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR, "secret stack trace");
         assertThat(pd.getDetail()).isEqualTo("An internal server error occurred.");
     }
 }

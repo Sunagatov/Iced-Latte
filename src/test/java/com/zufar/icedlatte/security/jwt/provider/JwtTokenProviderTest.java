@@ -1,26 +1,29 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.crypto.SecretKey;
-import java.time.Duration;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.UUID;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 @DisplayName("JwtTokenProvider unit tests")
 class JwtTokenProviderTest {
@@ -56,8 +59,11 @@ class JwtTokenProviderTest {
     void generateTokenContainsCorrectSubject() {
         String token = tokenProvider.generateToken(user("alice@example.com"), UUID.randomUUID());
 
-        Claims claims = Jwts.parser().verifyWith(signingKey).build()
-                .parseSignedClaims(token).getPayload();
+        Claims claims = Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
         assertThat(claims.getSubject()).isEqualTo("alice@example.com");
     }
 
@@ -82,14 +88,13 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("Access token with extra claims includes those claims")
     void generateTokenWithExtraClaimsIncludesThem() {
-        String token = tokenProvider.generateToken(
-                java.util.Map.of("role", "ADMIN"),
-                user("dave@example.com"),
-                null
-        );
+        String token = tokenProvider.generateToken(java.util.Map.of("role", "ADMIN"), user("dave@example.com"), null);
 
-        Claims claims = Jwts.parser().verifyWith(signingKey).build()
-                .parseSignedClaims(token).getPayload();
+        Claims claims = Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
         assertThat(claims.get("role")).isEqualTo("ADMIN");
     }
 }

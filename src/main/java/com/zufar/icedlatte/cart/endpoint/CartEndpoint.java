@@ -1,5 +1,11 @@
 package com.zufar.icedlatte.cart.endpoint;
 
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import com.zufar.icedlatte.cart.service.ShoppingCartService;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
@@ -7,12 +13,9 @@ import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -28,7 +31,8 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @PostMapping("/items")
-    public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(@Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
+    public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(
+            @Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
         var userId = currentUserProvider.getUserId();
         var shoppingCart = shoppingCartService.addOpenApiItems(userId, request.getItems());
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
@@ -45,7 +49,8 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @PatchMapping("/items")
-    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(@Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
+    public ResponseEntity<ShoppingCartDto> updateProductQuantityInShoppingCartItem(
+            @Valid @RequestBody final UpdateProductQuantityInShoppingCartItemRequest request) {
         var itemId = request.getShoppingCartItemId();
         var quantityChange = request.getProductQuantityChange();
         var userId = currentUserProvider.getUserId();
@@ -57,7 +62,8 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     @Override
     @DeleteMapping("/items")
-    public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(@Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
+    public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(
+            @Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
         var userId = currentUserProvider.getUserId();
         var shoppingCart = shoppingCartService.deleteItems(request, userId);
         log.debug("cart.items.deleted");

@@ -1,16 +1,17 @@
 package com.zufar.icedlatte.payment.entity;
 
+import java.time.OffsetDateTime;
+
 import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
-
 /**
- * Deduplicates Stripe webhook events using insert-first pattern.
- * The stripe_event_id is the natural primary key (assigned by Stripe).
+ * Deduplicates Stripe webhook events using insert-first pattern. The stripe_event_id is the natural primary key
+ * (assigned by Stripe).
  */
 @Getter
 @Setter

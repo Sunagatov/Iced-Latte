@@ -1,22 +1,23 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import com.zufar.icedlatte.payment.entity.StripeWebhookEvent;
-import com.zufar.icedlatte.payment.entity.WebhookEventStatus;
-import com.zufar.icedlatte.payment.repository.StripeWebhookEventRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.OffsetDateTime;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import com.zufar.icedlatte.payment.entity.StripeWebhookEvent;
+import com.zufar.icedlatte.payment.entity.WebhookEventStatus;
+import com.zufar.icedlatte.payment.repository.StripeWebhookEventRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
- * Transaction-boundary bean for webhook event persistence.
- * Each method runs in REQUIRES_NEW so the event state is committed
- * independently of the outer webhook-processing transaction.
- * <p>
- * This bean exists only to make Spring @Transactional proxy work —
- * self-invocation inside StripeWebhookEventRecorder would bypass it.
+ * Transaction-boundary bean for webhook event persistence. Each method runs in REQUIRES_NEW so the event state is
+ * committed independently of the outer webhook-processing transaction.
+ *
+ * <p>This bean exists only to make Spring @Transactional proxy work — self-invocation inside StripeWebhookEventRecorder
+ * would bypass it.
  */
 @Service
 @RequiredArgsConstructor
@@ -27,14 +28,14 @@ class StripeWebhookEventTransactionService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryInsertNewEvent(String eventId, String eventType) {
         repository.saveAndFlush(new StripeWebhookEvent(
-                eventId, eventType, WebhookEventStatus.PROCESSING,
-                OffsetDateTime.now(), null, null));
+                eventId, eventType, WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null));
         return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryReacquireRetryableEvent(String eventId) {
-        return repository.findById(eventId)
+        return repository
+                .findById(eventId)
                 .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED)
                 .map(evt -> {
                     evt.setStatus(WebhookEventStatus.PROCESSING);

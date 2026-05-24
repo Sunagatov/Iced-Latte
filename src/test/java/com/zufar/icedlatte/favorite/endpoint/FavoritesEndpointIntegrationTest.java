@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("Favorites endpoint integration tests")
 class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -122,11 +123,9 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 {
                   "productIds": [%s]
                 }
-                """.formatted(
-                java.util.Arrays.stream(productIds)
-                        .map(id -> "\"" + id + "\"")
-                        .collect(java.util.stream.Collectors.joining(", "))
-        );
+                """.formatted(java.util.Arrays.stream(productIds)
+                .map(id -> "\"" + id + "\"")
+                .collect(java.util.stream.Collectors.joining(", ")));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
                 .body(body)

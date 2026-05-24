@@ -1,17 +1,19 @@
 package com.zufar.icedlatte.security.session.management;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.repository.AuthSessionRepository;
-import com.zufar.icedlatte.security.signin.exception.SessionNotFoundException;
-import com.zufar.icedlatte.security.signin.exception.SessionOwnershipException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,27 +22,37 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.repository.AuthSessionRepository;
+import com.zufar.icedlatte.security.signin.exception.SessionNotFoundException;
+import com.zufar.icedlatte.security.signin.exception.SessionOwnershipException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthSessionService unit tests")
 class AuthSessionServiceTest {
 
-    @Mock private AuthSessionRepository sessionRepository;
-    @Mock private JwtProperties jwtProperties;
-    @Mock private ClientIpExtractor clientIpExtractor;
-    @Mock private HttpServletRequest request;
-    @InjectMocks private AuthSessionService service;
+    @Mock
+    private AuthSessionRepository sessionRepository;
+
+    @Mock
+    private JwtProperties jwtProperties;
+
+    @Mock
+    private ClientIpExtractor clientIpExtractor;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private AuthSessionService service;
 
     @Test
     @DisplayName("createSession saves and returns entity")
@@ -50,7 +62,8 @@ class AuthSessionServiceTest {
         UUID userId = UUID.randomUUID();
         when(request.getHeader("User-Agent")).thenReturn("TestAgent");
         when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
-        AuthSessionEntity saved = AuthSessionEntity.builder().id(sessionId).userId(userId).build();
+        AuthSessionEntity saved =
+                AuthSessionEntity.builder().id(sessionId).userId(userId).build();
         when(sessionRepository.save(any())).thenReturn(saved);
 
         AuthSessionEntity result = service.createSession(sessionId, userId, "hash123", request);
@@ -84,7 +97,8 @@ class AuthSessionServiceTest {
     @Test
     @DisplayName("revokeByRefreshTokenHash revokes existing session")
     void revokeByRefreshTokenHashRevokesSession() {
-        AuthSessionEntity session = AuthSessionEntity.builder().id(UUID.randomUUID()).build();
+        AuthSessionEntity session =
+                AuthSessionEntity.builder().id(UUID.randomUUID()).build();
         when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(session));
 
         service.revokeByRefreshTokenHash("hash");
@@ -114,7 +128,8 @@ class AuthSessionServiceTest {
     void revokeByIdRevokesOwnSession() {
         UUID sessionId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        AuthSessionEntity session = AuthSessionEntity.builder().id(sessionId).userId(userId).build();
+        AuthSessionEntity session =
+                AuthSessionEntity.builder().id(sessionId).userId(userId).build();
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
         service.revokeById(sessionId, userId);
@@ -138,7 +153,8 @@ class AuthSessionServiceTest {
         UUID sessionId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID requesterId = UUID.randomUUID();
-        AuthSessionEntity session = AuthSessionEntity.builder().id(sessionId).userId(ownerId).build();
+        AuthSessionEntity session =
+                AuthSessionEntity.builder().id(sessionId).userId(ownerId).build();
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
         assertThatThrownBy(() -> service.revokeById(sessionId, requesterId))
@@ -149,8 +165,10 @@ class AuthSessionServiceTest {
     @DisplayName("listActiveSessions delegates to repository")
     void listActiveSessionsDelegatesToRepository() {
         UUID userId = UUID.randomUUID();
-        List<AuthSessionEntity> sessions = List.of(AuthSessionEntity.builder().id(UUID.randomUUID()).build());
-        when(sessionRepository.findActiveSessions(eq(userId), any(OffsetDateTime.class))).thenReturn(sessions);
+        List<AuthSessionEntity> sessions =
+                List.of(AuthSessionEntity.builder().id(UUID.randomUUID()).build());
+        when(sessionRepository.findActiveSessions(eq(userId), any(OffsetDateTime.class)))
+                .thenReturn(sessions);
 
         assertThat(service.listActiveSessions(userId)).isEqualTo(sessions);
     }
@@ -159,7 +177,10 @@ class AuthSessionServiceTest {
     @DisplayName("findActiveByHash throws when previous token hash found (replay attack)")
     void findActiveByHashThrowsOnReplayAttack() {
         AuthSessionEntity compromised = AuthSessionEntity.builder()
-                .id(UUID.randomUUID()).userId(UUID.randomUUID()).compromised(false).build();
+                .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
+                .compromised(false)
+                .build();
         when(sessionRepository.findByPreviousTokenHash("oldHash")).thenReturn(Optional.of(compromised));
 
         assertThatThrownBy(() -> service.findActiveByHash("oldHash"))
@@ -201,7 +222,8 @@ class AuthSessionServiceTest {
     @DisplayName("findActiveByHash throws when session is revoked")
     void findActiveByHashThrowsWhenRevoked() {
         AuthSessionEntity revoked = AuthSessionEntity.builder()
-                .id(UUID.randomUUID()).userId(UUID.randomUUID())
+                .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
                 .revokedAt(OffsetDateTime.now().minusHours(1))
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
@@ -241,7 +263,8 @@ class AuthSessionServiceTest {
     @DisplayName("findActiveByHash throws when session is expired")
     void findActiveByHashThrowsWhenExpired() {
         AuthSessionEntity expired = AuthSessionEntity.builder()
-                .id(UUID.randomUUID()).userId(UUID.randomUUID())
+                .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
                 .expiresAt(OffsetDateTime.now().minusHours(1))
                 .compromised(false)
                 .build();
@@ -257,7 +280,8 @@ class AuthSessionServiceTest {
     @DisplayName("findActiveByHash returns active session")
     void findActiveByHashReturnsActiveSession() {
         AuthSessionEntity active = AuthSessionEntity.builder()
-                .id(UUID.randomUUID()).userId(UUID.randomUUID())
+                .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
@@ -272,7 +296,8 @@ class AuthSessionServiceTest {
     void rotateSessionUpdatesSession() {
         when(jwtProperties.refreshExpiration()).thenReturn(Duration.ofDays(1));
         AuthSessionEntity active = AuthSessionEntity.builder()
-                .id(UUID.randomUUID()).userId(UUID.randomUUID())
+                .id(UUID.randomUUID())
+                .userId(UUID.randomUUID())
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();

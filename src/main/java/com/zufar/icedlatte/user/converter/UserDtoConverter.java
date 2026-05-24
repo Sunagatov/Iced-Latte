@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.user.converter;
 
+import org.mapstruct.*;
+
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.UserEntity;
-import org.mapstruct.*;
 
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
         uses = AddressDtoConverter.class,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface UserDtoConverter {

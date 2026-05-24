@@ -1,5 +1,21 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
@@ -8,30 +24,22 @@ import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("StripeWebhookBusinessProcessor unit tests")
 class StripeWebhookBusinessProcessorTest {
 
-    @Mock private OrderPaymentApi orderPaymentApi;
-    @Mock private PaymentRepository paymentRepository;
-    @Mock private CartCheckoutApi shoppingCartService;
-    @InjectMocks private StripeWebhookBusinessProcessor processor;
+    @Mock
+    private OrderPaymentApi orderPaymentApi;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private CartCheckoutApi shoppingCartService;
+
+    @InjectMocks
+    private StripeWebhookBusinessProcessor processor;
 
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID USER_ID = UUID.randomUUID();
@@ -43,8 +51,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
 
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
@@ -63,7 +76,10 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("unpaid", null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -80,8 +96,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.PAID).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.PAID)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -97,8 +118,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 9999L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -116,7 +142,10 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.STRIPE_SESSION_CREATED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -133,7 +162,10 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.AWAITING_ASYNC_CONFIRMATION).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .status(PaymentStatus.AWAITING_ASYNC_CONFIRMATION)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -150,7 +182,8 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
+        Payment payment =
+                Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -167,7 +200,8 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
+        Payment payment =
+                Payment.builder().orderId(ORDER_ID).status(PaymentStatus.PAID).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -184,7 +218,8 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.FAILED).build();
+        Payment payment =
+                Payment.builder().orderId(ORDER_ID).status(PaymentStatus.FAILED).build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -200,7 +235,10 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession(null, null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.EXPIRED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .status(PaymentStatus.EXPIRED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -216,7 +254,10 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("unpaid", null, null, null);
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).status(PaymentStatus.RECONCILIATION_FAILED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .status(PaymentStatus.RECONCILIATION_FAILED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -232,8 +273,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.FAILED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.FAILED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -249,8 +295,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.EXPIRED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.EXPIRED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);
@@ -266,8 +317,13 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder().orderId(ORDER_ID).userId(USER_ID).amountMinor(2500L)
-                .currency("usd").status(PaymentStatus.RECONCILIATION_FAILED).build();
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.RECONCILIATION_FAILED)
+                .build();
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
 
         processor.process(event);

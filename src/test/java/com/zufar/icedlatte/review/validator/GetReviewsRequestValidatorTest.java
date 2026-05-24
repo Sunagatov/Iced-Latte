@@ -1,16 +1,17 @@
 package com.zufar.icedlatte.review.validator;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 
 @DisplayName("GetReviewsRequestValidator unit tests")
 class GetReviewsRequestValidatorTest {

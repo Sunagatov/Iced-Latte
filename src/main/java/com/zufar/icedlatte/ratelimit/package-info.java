@@ -1,6 +1,2 @@
-@org.springframework.modulith.ApplicationModule(
-        allowedDependencies = {
-                "common :: *"
-        }
-)
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"common :: *"})
 package com.zufar.icedlatte.ratelimit;

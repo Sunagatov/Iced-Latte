@@ -1,23 +1,23 @@
 package com.zufar.icedlatte.product.converter;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import org.jspecify.annotations.Nullable;
-import org.mapstruct.*;
-import org.springframework.data.domain.Page;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+import org.jspecify.annotations.Nullable;
+import org.mapstruct.*;
+import org.springframework.data.domain.Page;
+
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface ProductInfoDtoConverter {
 
     @Named("toProductInfoDto")
@@ -30,8 +30,7 @@ public interface ProductInfoDtoConverter {
     @Mapping(target = "products", source = "content")
     @Mapping(target = "page", source = "number")
     @Mapping(target = "size", source = "size")
-    ProductListWithPaginationInfoDto toProductPaginationDto(
-            Page<ProductInfoDto> pageProductResponseDto);
+    ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
 
     ProductSnapshot toSnapshot(ProductInfoDto dto);
 

@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.order.repository;
 
-import com.zufar.icedlatte.order.entity.Order;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.zufar.icedlatte.order.entity.Order;
 
 @Repository
 @SuppressWarnings("unused") // Spring Data generates implementations for repository methods.

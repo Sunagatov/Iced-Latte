@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.signin.exception;
 
-
 import java.util.UUID;
 
 public final class SessionNotFoundException extends AuthSecurityException {

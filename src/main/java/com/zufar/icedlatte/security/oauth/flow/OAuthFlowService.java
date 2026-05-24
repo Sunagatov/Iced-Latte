@@ -1,15 +1,5 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -17,6 +7,19 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -38,8 +41,7 @@ public class OAuthFlowService {
     private final OAuthLoginService oAuthLoginService;
     private final OAuthStateStore oAuthStateStore;
 
-    public Optional<URI> initiate(OAuthProvider provider,
-                                  String redirectUrl) {
+    public Optional<URI> initiate(OAuthProvider provider, String redirectUrl) {
         var client = oAuthLoginService.findClient(provider);
         if (client.isEmpty()) {
             log.warn("auth.oauth.disabled: provider={}", provider.id());
@@ -52,10 +54,7 @@ public class OAuthFlowService {
         return Optional.of(client.get().buildAuthorizationUri(nonce));
     }
 
-    public URI completeCallback(OAuthProvider provider,
-                                String code,
-                                String state,
-                                HttpServletRequest request) {
+    public URI completeCallback(OAuthProvider provider, String code, String state, HttpServletRequest request) {
         if (oAuthLoginService.findClient(provider).isEmpty()) {
             return buildSignInErrorRedirect(PROVIDER_DISABLED_ERROR);
         }
@@ -76,14 +75,16 @@ public class OAuthFlowService {
             UserAuthenticationResponse tokens = oAuthLoginService.handle(provider, code, request);
             return URI.create(buildCallbackUrlWithFragmentTokens(callbackBase, tokens));
         } catch (Exception e) {
-            log.error("auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
-                    provider.id(), e.getClass().getSimpleName(), e);
+            log.error(
+                    "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
+                    provider.id(),
+                    e.getClass().getSimpleName(),
+                    e);
             return buildFrontendErrorRedirect(callbackBase);
         }
     }
 
-    private String resolveCallbackBase(OAuthProvider provider,
-                                       String redirectUrl) {
+    private String resolveCallbackBase(OAuthProvider provider, String redirectUrl) {
         if (redirectUrl == null || redirectUrl.isBlank()) {
             return defaultCallbackBase(provider);
         }
@@ -95,7 +96,9 @@ public class OAuthFlowService {
                     && effectivePort(allowed) == effectivePort(incoming);
             boolean expectedPath = provider.callbackPath().equals(incoming.getPath());
             if (!sameOrigin || !expectedPath) {
-                log.info("auth.oauth.redirect.rejected: provider={}, reasonCode={}", provider.id(),
+                log.info(
+                        "auth.oauth.redirect.rejected: provider={}, reasonCode={}",
+                        provider.id(),
                         sameOrigin ? "PATH_MISMATCH" : "ORIGIN_MISMATCH");
                 return defaultCallbackBase(provider);
             }
@@ -124,8 +127,7 @@ public class OAuthFlowService {
                 .toUriString();
     }
 
-    private static String buildCallbackUrlWithFragmentTokens(String callbackBase,
-                                                             UserAuthenticationResponse tokens) {
+    private static String buildCallbackUrlWithFragmentTokens(String callbackBase, UserAuthenticationResponse tokens) {
         return callbackBase
                 + "#token=" + urlEncode(tokens.getToken())
                 + "&refreshToken=" + urlEncode(tokens.getRefreshToken());
@@ -134,9 +136,7 @@ public class OAuthFlowService {
     private static String generateStateNonce() {
         byte[] nonceBytes = new byte[16];
         SECURE_RANDOM.nextBytes(nonceBytes);
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(nonceBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(nonceBytes);
     }
 
     private static String urlEncode(String value) {
@@ -155,8 +155,7 @@ public class OAuthFlowService {
         try {
             URI callbackUri = new URI(callbackBase);
             URI frontendUri = new URI(frontendUrl);
-            UriComponentsBuilder redirectBuilder = UriComponentsBuilder
-                    .fromUri(frontendUri)
+            UriComponentsBuilder redirectBuilder = UriComponentsBuilder.fromUri(frontendUri)
                     .path(SIGN_IN_PATH)
                     .queryParam(ERROR_QUERY_PARAM, AUTH_FAILED_ERROR);
             String next = UriComponentsBuilder.fromUri(callbackUri)

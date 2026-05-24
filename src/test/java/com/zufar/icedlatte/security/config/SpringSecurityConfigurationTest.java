@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.security.config;
 
-import com.zufar.icedlatte.common.correlation.CorrelationFilter;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -15,10 +17,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 
 @DisplayName("SpringSecurityConfiguration")
 class SpringSecurityConfigurationTest {
@@ -31,8 +32,7 @@ class SpringSecurityConfigurationTest {
     void disablesDuplicateServletRegistrationForCorrelationFilter() {
         CorrelationFilter filter = mock(CorrelationFilter.class);
 
-        FilterRegistrationBean<CorrelationFilter> registration =
-                configuration.correlationFilterRegistration(filter);
+        FilterRegistrationBean<CorrelationFilter> registration = configuration.correlationFilterRegistration(filter);
 
         assertThat(registration.isEnabled()).isFalse();
         assertThat(registration.getFilter()).isSameAs(filter);
@@ -43,8 +43,7 @@ class SpringSecurityConfigurationTest {
     void disablesDuplicateServletRegistrationForJwtFilter() {
         JwtAuthenticationFilter filter = mock(JwtAuthenticationFilter.class);
 
-        FilterRegistrationBean<JwtAuthenticationFilter> registration =
-                configuration.jwtFilterRegistration(filter);
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = configuration.jwtFilterRegistration(filter);
 
         assertThat(registration.isEnabled()).isFalse();
         assertThat(registration.getFilter()).isSameAs(filter);
@@ -53,12 +52,13 @@ class SpringSecurityConfigurationTest {
     @Test
     @DisplayName("builds DAO authentication provider with explicit user-not-found behavior")
     void buildsDaoAuthenticationProviderWithExplicitUserNotFoundBehavior() {
-        UserDetailsService userDetailsService =
-                username -> User.withUsername(username).password("encoded").authorities("ROLE_USER").build();
+        UserDetailsService userDetailsService = username -> User.withUsername(username)
+                .password("encoded")
+                .authorities("ROLE_USER")
+                .build();
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
-        AuthenticationProvider provider =
-                configuration.authenticationProvider(userDetailsService, passwordEncoder);
+        AuthenticationProvider provider = configuration.authenticationProvider(userDetailsService, passwordEncoder);
 
         assertThat(provider).isInstanceOf(DaoAuthenticationProvider.class);
         DaoAuthenticationProvider daoProvider = (DaoAuthenticationProvider) provider;
@@ -72,7 +72,8 @@ class SpringSecurityConfigurationTest {
         AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
         when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
 
-        assertThat(configuration.authenticationManager(authenticationConfiguration)).isSameAs(authenticationManager);
+        assertThat(configuration.authenticationManager(authenticationConfiguration))
+                .isSameAs(authenticationManager);
     }
 
     @Test

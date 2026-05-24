@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.product.service;
 
-import com.zufar.icedlatte.common.config.PaginationConfig;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import com.zufar.icedlatte.product.exception.ProductNotFoundException;
-import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,25 +22,34 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.exception.ProductNotFoundException;
+import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
 @DisplayName("ProductService unit tests")
 class ProductServiceTest {
 
-    @Mock private ProductInfoRepository productInfoRepository;
-    @Mock private ProductInfoDtoConverter productInfoDtoConverter;
-    @Mock private ProductPictureLinkUpdater productPictureLinkUpdater;
-    @Mock private PaginationConfig paginationConfig;
-    @Mock @SuppressWarnings("unused") private GetProductsRequestValidator getProductsRequestValidator;
+    @Mock
+    private ProductInfoRepository productInfoRepository;
+
+    @Mock
+    private ProductInfoDtoConverter productInfoDtoConverter;
+
+    @Mock
+    private ProductPictureLinkUpdater productPictureLinkUpdater;
+
+    @Mock
+    private PaginationConfig paginationConfig;
+
+    @Mock
+    @SuppressWarnings("unused")
+    private GetProductsRequestValidator getProductsRequestValidator;
 
     @InjectMocks
     private ProductService productService;
@@ -95,10 +106,14 @@ class ProductServiceTest {
         void allFound_returnsInOrder() {
             UUID id1 = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();
-            ProductInfo p1 = new ProductInfo(); p1.setId(id1);
-            ProductInfo p2 = new ProductInfo(); p2.setId(id2);
-            ProductInfoDto dto1 = new ProductInfoDto(); dto1.setId(id1);
-            ProductInfoDto dto2 = new ProductInfoDto(); dto2.setId(id2);
+            ProductInfo p1 = new ProductInfo();
+            p1.setId(id1);
+            ProductInfo p2 = new ProductInfo();
+            p2.setId(id2);
+            ProductInfoDto dto1 = new ProductInfoDto();
+            dto1.setId(id1);
+            ProductInfoDto dto2 = new ProductInfoDto();
+            dto2.setId(id2);
 
             when(productInfoRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(p1, p2));
             when(productInfoDtoConverter.toDto(p1)).thenReturn(dto1);
@@ -113,8 +128,10 @@ class ProductServiceTest {
         void missingProduct_throws() {
             UUID id1 = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();
-            ProductInfo p1 = new ProductInfo(); p1.setId(id1);
-            ProductInfoDto dto1 = new ProductInfoDto(); dto1.setId(id1);
+            ProductInfo p1 = new ProductInfo();
+            p1.setId(id1);
+            ProductInfoDto dto1 = new ProductInfoDto();
+            dto1.setId(id1);
 
             when(productInfoRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(p1));
             when(productInfoDtoConverter.toDto(p1)).thenReturn(dto1);
@@ -140,13 +157,14 @@ class ProductServiceTest {
             Page<ProductInfo> page = new PageImpl<>(List.of(product));
             ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-            when(productInfoRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+            when(productInfoRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(page);
             when(productInfoDtoConverter.toDto(product)).thenReturn(dto);
             when(productPictureLinkUpdater.updateBatch(List.of(dto))).thenReturn(List.of(updatedDto));
             when(productInfoDtoConverter.toProductPaginationDto(any())).thenReturn(paginationDto);
 
-            ProductListWithPaginationInfoDto result = productService.getProductDtos(
-                    1, 10, "price", "asc", null, null, null, null, null, "latte");
+            ProductListWithPaginationInfoDto result =
+                    productService.getProductDtos(1, 10, "price", "asc", null, null, null, null, null, "latte");
 
             assertThat(result).isSameAs(paginationDto);
             verify(productInfoRepository).findAll(any(Specification.class), pageableCaptor.capture());
@@ -168,7 +186,8 @@ class ProductServiceTest {
 
             when(paginationConfig.defaultPageNumber()).thenReturn(0);
             when(paginationConfig.products()).thenReturn(products);
-            when(productInfoRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+            when(productInfoRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(page);
             when(productInfoDtoConverter.toDto(product)).thenReturn(dto);
             when(productPictureLinkUpdater.updateBatch(List.of(dto))).thenReturn(List.of(dto));
             when(productInfoDtoConverter.toProductPaginationDto(any())).thenReturn(paginationDto);

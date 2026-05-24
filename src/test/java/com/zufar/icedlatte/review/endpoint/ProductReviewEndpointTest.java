@@ -1,9 +1,13 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import static com.zufar.icedlatte.test.config.RestAssertion.*;
+import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
+import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,13 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import java.util.UUID;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.*;
-import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
-import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("ProductReviewEndpoint Tests")
 class ProductReviewEndpointTest extends IntegrationTestBase {
@@ -29,7 +31,8 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     private static final String REVIEW_ADD_BAD_BODY = "/review/model/add-review-bad-body.json";
     private static final String REVIEW_ADD_EMPTY_TEXT = "/review/model/add-review-empty-text.json";
     private static final String REVIEW_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
-    private static final String REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA = "review/model/schema/review-response-schema.json";
+    private static final String REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA =
+            "review/model/schema/review-response-schema.json";
     private static final String FAILED_REVIEW_SCHEMA = "common/model/schema/failed-request-schema.json";
     private static final String EXPECTED_REVIEW = "Wow, Iced Latte is so good!!!";
     private static final String AMERICANO_ID = "e6a4d7f2-d40e-4e5f-93b8-5d56ce6724c5";
@@ -56,8 +59,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
         if (cachedJwtToken == null) {
             cachedJwtToken = getJwtToken(port, email, password);
         }
-        specification = given()
-                .port(port)
+        specification = given().port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
                 .contentType(ContentType.JSON)
@@ -67,7 +69,8 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should add review successfully and return object containing review")
     void shouldAddReviewSuccessfully() {
-        Response response = given(specification).body(getRequestBody(REVIEW_ADD_BODY))
+        Response response = given(specification)
+                .body(getRequestBody(REVIEW_ADD_BODY))
                 .post("/{productId}/reviews", COCONUT_COLD_BREW_ID);
 
         assertRestApiBodySchemaResponse(response, HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
@@ -87,14 +90,20 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
         String reviewId = "38939e11-cf1f-42ff-bfbd-ba1c2bc867f8";
 
         assertRestApiBodySchemaResponse(
-                given(specification).body(LIKE_REQUEST_BODY).post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId),
-                HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+                        given(specification)
+                                .body(LIKE_REQUEST_BODY)
+                                .post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId),
+                        HttpStatus.OK,
+                        REVIEW_RESPONSE_SCHEMA)
                 .body("productReviewId", notNullValue())
                 .body("productId", equalTo(ESPRESSO_ID));
 
         assertRestApiBodySchemaResponse(
-                given(specification).body(DISLIKE_REQUEST_BODY).post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId),
-                HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+                        given(specification)
+                                .body(DISLIKE_REQUEST_BODY)
+                                .post("/{productId}/reviews/{reviewId}/likes", ESPRESSO_ID, reviewId),
+                        HttpStatus.OK,
+                        REVIEW_RESPONSE_SCHEMA)
                 .body("productReviewId", notNullValue())
                 .body("productId", equalTo(ESPRESSO_ID));
     }
@@ -102,7 +111,10 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should fetch review successfully for an authorized user who has a review")
     void shouldFetchReviewSuccessfully() {
-        assertRestApiBodySchemaResponse(given(specification).get("/{productId}/review", AMERICANO_ID), HttpStatus.OK, REVIEW_RESPONSE_SCHEMA)
+        assertRestApiBodySchemaResponse(
+                        given(specification).get("/{productId}/review", AMERICANO_ID),
+                        HttpStatus.OK,
+                        REVIEW_RESPONSE_SCHEMA)
                 .body("text", startsWith(START_OF_REVIEW_FOR_AMERICANO))
                 .body("productRating", equalTo(EXPECTED_PRODUCT_RATING));
     }
@@ -111,17 +123,20 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should return 404 when authorized user has no review for the product")
     void shouldReturn404WhenUserHasNoReview() {
         assertRestApiNotFoundResponse(
-                given(specification).get("/{productId}/review", COCONUT_COLD_BREW_ID),
-                FAILED_REVIEW_SCHEMA);
+                given(specification).get("/{productId}/review", COCONUT_COLD_BREW_ID), FAILED_REVIEW_SCHEMA);
     }
 
     @Test
     @DisplayName("Should fetch review statistics successfully")
     void shouldFetchReviewStatsSuccessfully() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).accept(ContentType.JSON);
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .accept(ContentType.JSON);
 
-        assertRestApiBodySchemaResponse(given(noAuth).get("/{productId}/reviews/statistics", ESPRESSO_ID), HttpStatus.OK, RATING_RESPONSE_SCHEMA)
+        assertRestApiBodySchemaResponse(
+                        given(noAuth).get("/{productId}/reviews/statistics", ESPRESSO_ID),
+                        HttpStatus.OK,
+                        RATING_RESPONSE_SCHEMA)
                 .body("avgRating", equalTo(3.3f))
                 .body("reviewsCount", equalTo(8))
                 .body("productId", notNullValue())
@@ -136,16 +151,21 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Reviews and ratings with default pagination and sorting for unauthorized user. Should return 200 OK")
     void shouldSuccessfullyReturnReviewsForDefaultPaginationAndSortingForAnonymous() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).contentType(ContentType.JSON).accept(ContentType.JSON);
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
 
-        assertRestApiOkResponse(given(noAuth).get("/{productId}/reviews", AMERICANO_ID), REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA);
+        assertRestApiOkResponse(
+                given(noAuth).get("/{productId}/reviews", AMERICANO_ID), REVIEWS_WITH_RATINGS_RESPONSE_SCHEMA);
     }
 
     @Test
     @DisplayName("Should return 404 Not Found on attempt to add review for invalid product ID")
     void shouldReturnNotFoundOnAttemptToAddNonExistentProduct() {
         assertRestApiNotFoundResponse(
-                given(specification).body(getRequestBody(REVIEW_ADD_BODY)).post("/{productId}/reviews", UUID.randomUUID()),
+                given(specification)
+                        .body(getRequestBody(REVIEW_ADD_BODY))
+                        .post("/{productId}/reviews", UUID.randomUUID()),
                 FAILED_REVIEW_SCHEMA);
     }
 
@@ -153,7 +173,9 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Missing required fields in add review request body. Should return 400 Bad Request")
     void shouldReturnBadRequestForBadBody() {
         assertRestApiBadRequestResponse(
-                given(specification).body(getRequestBody(REVIEW_ADD_BAD_BODY)).post("/{productId}/reviews", AMERICANO_ID),
+                given(specification)
+                        .body(getRequestBody(REVIEW_ADD_BAD_BODY))
+                        .post("/{productId}/reviews", AMERICANO_ID),
                 FAILED_REVIEW_SCHEMA);
     }
 
@@ -161,7 +183,9 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Review text is an empty string in add review request body. Should return 400 Bad Request")
     void shouldReturnBadRequestForEmptyReviewText() {
         assertRestApiBadRequestResponse(
-                given(specification).body(getRequestBody(REVIEW_ADD_EMPTY_TEXT)).post("/{productId}/reviews", AMERICANO_ID),
+                given(specification)
+                        .body(getRequestBody(REVIEW_ADD_EMPTY_TEXT))
+                        .post("/{productId}/reviews", AMERICANO_ID),
                 FAILED_REVIEW_SCHEMA);
     }
 
@@ -178,13 +202,18 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should delete existing review successfully")
     void shouldDeleteExistingReviewSuccessfully() {
-        Response responsePost = given(specification).body(getRequestBody(REVIEW_ADD_BODY))
+        Response responsePost = given(specification)
+                .body(getRequestBody(REVIEW_ADD_BODY))
                 .post("/{productId}/reviews", COCONUT_COLD_BREW_ID);
         responsePost.then().statusCode(HttpStatus.OK.value());
 
         given(specification)
-                .delete("/{productId}/reviews/{productReviewId}", COCONUT_COLD_BREW_ID, responsePost.then().extract().path("productReviewId").toString())
-                .then().statusCode(HttpStatus.OK.value());
+                .delete(
+                        "/{productId}/reviews/{productReviewId}",
+                        COCONUT_COLD_BREW_ID,
+                        responsePost.then().extract().path("productReviewId").toString())
+                .then()
+                .statusCode(HttpStatus.OK.value());
     }
 
     @Test
@@ -199,13 +228,19 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should return 401 Unauthorized for protected endpoints without token")
     void shouldReturnUnauthorizedWithoutToken() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL).contentType(ContentType.JSON).accept(ContentType.JSON);
+                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON);
 
-        given(noAuth).body(getRequestBody(REVIEW_ADD_BODY)).post("/{productId}/reviews", AMERICANO_ID)
-                .then().statusCode(HttpStatus.UNAUTHORIZED.value());
-        given(noAuth).delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID())
-                .then().statusCode(HttpStatus.UNAUTHORIZED.value());
-        given(noAuth).get("/{productId}/review", AMERICANO_ID)
-                .then().statusCode(HttpStatus.UNAUTHORIZED.value());
+        given(noAuth)
+                .body(getRequestBody(REVIEW_ADD_BODY))
+                .post("/{productId}/reviews", AMERICANO_ID)
+                .then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
+        given(noAuth)
+                .delete("/{productId}/reviews/{reviewId}", AMERICANO_ID, UUID.randomUUID())
+                .then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
+        given(noAuth).get("/{productId}/review", AMERICANO_ID).then().statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 }

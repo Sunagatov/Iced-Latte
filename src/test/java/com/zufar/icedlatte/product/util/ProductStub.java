@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.product.util;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import com.zufar.icedlatte.product.entity.ProductInfo;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+import com.zufar.icedlatte.product.entity.ProductInfo;
+
+@SuppressWarnings("unused")
 public class ProductStub {
 
     public static ProductInfo generateSampleEntityProduct() {
@@ -66,5 +67,4 @@ public class ProductStub {
 
         return products;
     }
-
 }

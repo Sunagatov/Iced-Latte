@@ -1,8 +1,11 @@
 package com.zufar.icedlatte.user.service;
-import com.zufar.icedlatte.user.entity.Authority;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
-import com.zufar.icedlatte.user.repository.UserRepository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,11 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.user.entity.Authority;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
+import com.zufar.icedlatte.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAccountRegistrationService unit tests")
@@ -39,18 +41,14 @@ class UserAccountRegistrationServiceTest {
     @Test
     @DisplayName("registerPasswordUser persists default enabled user and returns authentication snapshot")
     void registerPasswordUserPersistsDefaultEnabledUserAndReturnsSnapshot() {
-        when(userRepository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserEntity.class))).thenAnswer(invocation -> {
-            UserEntity user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
-            return user;
-        });
+        when(userRepository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserEntity.class)))
+                .thenAnswer(invocation -> {
+                    UserEntity user = invocation.getArgument(0);
+                    user.setId(UUID.randomUUID());
+                    return user;
+                });
 
-        var snapshot = service.registerPasswordUser(
-                "Alice",
-                "Example",
-                "alice@example.com",
-                "encoded-password"
-        );
+        var snapshot = service.registerPasswordUser("Alice", "Example", "alice@example.com", "encoded-password");
 
         ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).saveAndFlush(userCaptor.capture());
@@ -79,18 +77,14 @@ class UserAccountRegistrationServiceTest {
     @Test
     @DisplayName("registerOAuthUser persists oauth user")
     void registerOAuthUserPersistsOauthUser() {
-        when(userRepository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserEntity.class))).thenAnswer(invocation -> {
-            UserEntity user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
-            return user;
-        });
+        when(userRepository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserEntity.class)))
+                .thenAnswer(invocation -> {
+                    UserEntity user = invocation.getArgument(0);
+                    user.setId(UUID.randomUUID());
+                    return user;
+                });
 
-        var snapshot = service.registerOAuthUser(
-                "OAuth",
-                "User",
-                "oauth@example.com",
-                "encoded-password"
-        );
+        var snapshot = service.registerOAuthUser("OAuth", "User", "oauth@example.com", "encoded-password");
 
         ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).saveAndFlush(userCaptor.capture());

@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.jwt.exception;
 
-import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 
 @DisplayName("AbsentBearerHeaderException")
 class AbsentBearerHeaderExceptionTest {
@@ -12,15 +13,13 @@ class AbsentBearerHeaderExceptionTest {
     @Test
     @DisplayName("default constructor uses standard message")
     void defaultConstructorUsesStandardMessage() {
-        assertThat(new AbsentBearerHeaderException())
-                .hasMessage("Bearer authentication header is absent");
+        assertThat(new AbsentBearerHeaderException()).hasMessage("Bearer authentication header is absent");
     }
 
     @Test
     @DisplayName("message constructor preserves custom message")
     void messageConstructorPreservesCustomMessage() {
-        assertThat(new AbsentBearerHeaderException("Custom message"))
-                .hasMessage("Custom message");
+        assertThat(new AbsentBearerHeaderException("Custom message")).hasMessage("Custom message");
     }
 
     @Test

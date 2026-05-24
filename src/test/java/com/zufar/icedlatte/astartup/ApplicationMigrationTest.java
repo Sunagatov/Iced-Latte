@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.exception.FileReadException;
-import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,17 +13,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
-import software.amazon.awssdk.core.exception.SdkClientException;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.exception.FileReadException;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+
+import software.amazon.awssdk.core.exception.SdkClientException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationMigration unit tests")
 class ApplicationMigrationTest {
 
-    @Mock private FileStorageApi fileStorageService;
-    @Mock private ApplicationArguments args;
+    @Mock
+    private FileStorageApi fileStorageService;
+
+    @Mock
+    private ApplicationArguments args;
 
     private ApplicationMigration migration;
 
@@ -92,7 +97,8 @@ class ApplicationMigrationTest {
         @DisplayName("swallows file upload failures")
         void swallowsFileUploadFailures() throws Exception {
             doThrow(new FileUploadException("seed.zip", new RuntimeException("boom")))
-                    .when(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+                    .when(fileStorageService)
+                    .storeDirectory("products-bucket", "/seed/products");
 
             assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
 
@@ -104,7 +110,8 @@ class ApplicationMigrationTest {
         @DisplayName("swallows file read failures")
         void swallowsFileReadFailures() throws Exception {
             doThrow(new FileReadException("seed.zip", new RuntimeException("boom")))
-                    .when(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+                    .when(fileStorageService)
+                    .storeDirectory("products-bucket", "/seed/products");
 
             assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
 
@@ -130,7 +137,8 @@ class ApplicationMigrationTest {
         @DisplayName("swallows SDK failures")
         void swallowsSdkFailures() {
             doThrow(SdkClientException.create("unreachable"))
-                    .when(fileStorageService).refreshBucketIndex("products-bucket");
+                    .when(fileStorageService)
+                    .refreshBucketIndex("products-bucket");
 
             assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
 
@@ -147,7 +155,8 @@ class ApplicationMigrationTest {
         @DisplayName("swallows persistence failures")
         void swallowsPersistenceFailures() {
             doThrow(new DataAccessResourceFailureException("db down"))
-                    .when(fileStorageService).refreshBucketIndex("products-bucket");
+                    .when(fileStorageService)
+                    .refreshBucketIndex("products-bucket");
 
             assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
 

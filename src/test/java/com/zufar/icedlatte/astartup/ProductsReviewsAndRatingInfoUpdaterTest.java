@@ -1,7 +1,11 @@
 package com.zufar.icedlatte.astartup;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,20 +19,24 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.function.Consumer;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.api.ReviewMaintenanceApi;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductsReviewsAndRatingInfoUpdater unit tests")
 class ProductsReviewsAndRatingInfoUpdaterTest {
 
-    @Mock private ProductReviewProductApi productReviewProductGateway;
-    @Mock private ReviewMaintenanceApi reviewMaintenanceApi;
-    @Mock private TransactionTemplate transactionTemplate;
-    @Mock private ApplicationArguments args;
+    @Mock
+    private ProductReviewProductApi productReviewProductGateway;
+
+    @Mock
+    private ReviewMaintenanceApi reviewMaintenanceApi;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
+    @Mock
+    private ApplicationArguments args;
 
     private ProductsReviewsAndRatingInfoUpdater updater;
 
@@ -58,10 +66,12 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         @DisplayName("executes all rating backfill updates inside the transaction callback")
         void executesAllUpdatesInTransaction() {
             doAnswer(invocation -> {
-                Consumer<TransactionStatus> callback = invocation.getArgument(0);
-                callback.accept(null);
-                return null;
-            }).when(transactionTemplate).executeWithoutResult(any());
+                        Consumer<TransactionStatus> callback = invocation.getArgument(0);
+                        callback.accept(null);
+                        return null;
+                    })
+                    .when(transactionTemplate)
+                    .executeWithoutResult(any());
 
             updater.run(args);
 
@@ -75,8 +85,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         @Test
         @DisplayName("does not propagate async transaction failures to the caller")
         void doesNotPropagateAsyncFailures() {
-            doThrow(new IllegalStateException("boom"))
-                    .when(transactionTemplate).executeWithoutResult(any());
+            doThrow(new IllegalStateException("boom")).when(transactionTemplate).executeWithoutResult(any());
 
             assertThatCode(() -> updater.run(args)).doesNotThrowAnyException();
 

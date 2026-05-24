@@ -1,8 +1,11 @@
 package com.zufar.icedlatte.review.service.ai.summary;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.*;
+
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationContext;
@@ -10,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.*;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -46,21 +49,27 @@ public class ProductReviewSummaryDebouncer {
         firstTriggerTime.putIfAbsent(productId, now);
 
         long elapsed = now - firstTriggerTime.get(productId);
-        long delay = elapsed >= maxWaitSec * 1000
-                ? 0
-                : debounceDelaySec;
+        long delay = elapsed >= maxWaitSec * 1000 ? 0 : debounceDelaySec;
 
         ScheduledFuture<?> existing = pendingDebounce.remove(productId);
         if (existing != null) existing.cancel(false);
 
-        ScheduledFuture<?> future = scheduler.schedule(() -> {
-            try {
-                applicationContext.getBean(ProductReviewSummaryDebouncer.class).runSummary(productId);
-            } catch (Exception e) {
-                log.warn("product.ai_summary.schedule.failed: productId={}, exceptionClass={}",
-                        productId, e.getClass().getSimpleName(), e);
-            }
-        }, delay, TimeUnit.SECONDS);
+        ScheduledFuture<?> future = scheduler.schedule(
+                () -> {
+                    try {
+                        applicationContext
+                                .getBean(ProductReviewSummaryDebouncer.class)
+                                .runSummary(productId);
+                    } catch (Exception e) {
+                        log.warn(
+                                "product.ai_summary.schedule.failed: productId={}, exceptionClass={}",
+                                productId,
+                                e.getClass().getSimpleName(),
+                                e);
+                    }
+                },
+                delay,
+                TimeUnit.SECONDS);
         pendingDebounce.put(productId, future);
     }
 
@@ -74,8 +83,10 @@ public class ProductReviewSummaryDebouncer {
             productReviewProductApi.updateAiSummary(productId, summary);
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
-            log.warn("product.ai_summary.failed: productId={}, exceptionClass={}",
-                    productId, e.getClass().getSimpleName());
+            log.warn(
+                    "product.ai_summary.failed: productId={}, exceptionClass={}",
+                    productId,
+                    e.getClass().getSimpleName());
         }
     }
 

@@ -1,14 +1,7 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
-import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,8 +13,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -40,8 +41,7 @@ public class UserAuthenticationService {
         String userPassword = request.getPassword();
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userEmail, userPassword)
-            );
+                    new UsernamePasswordAuthenticationToken(userEmail, userPassword));
             if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
                 // amazonq-ignore-next-line
                 throw new InvalidCredentialsException();
@@ -64,8 +64,8 @@ public class UserAuthenticationService {
         }
     }
 
-    public UserAuthenticationResponse buildTokenPair(final UserDetails userDetails,
-                                                     UUID sessionId, String refreshToken) {
+    public UserAuthenticationResponse buildTokenPair(
+            final UserDetails userDetails, UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
         log.info("auth.sign_in.succeeded: sessionId={}", AuthSessionService.maskSessionId(sessionId));
         loginAttemptService.resetAfterSuccessfulAuthentication(userDetails.getUsername());

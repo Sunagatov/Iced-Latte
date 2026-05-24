@@ -1,8 +1,10 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.util.Collections;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,10 +16,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
-import java.util.Collections;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationProvider Tests")
@@ -39,11 +40,7 @@ class JwtAuthenticationProviderTest {
     @DisplayName("successfully authenticates user and attaches request details")
     void successfullyAuthenticatesUserAndAttachesRequestDetails() {
         JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
-                jwtBearerTokenResolver,
-                jwtTokenClaims,
-                userDetailsService,
-                jwtTokenBlacklist
-        );
+                jwtBearerTokenResolver, jwtTokenClaims, userDetailsService, jwtTokenBlacklist);
         MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         httpRequest.setRemoteAddr("203.0.113.10");
         UserDetails userDetails = new User("test@example.com", "password", Collections.emptyList());

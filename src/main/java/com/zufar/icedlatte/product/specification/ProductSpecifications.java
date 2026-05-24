@@ -1,11 +1,13 @@
 package com.zufar.icedlatte.product.specification;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
-import lombok.experimental.UtilityClass;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.math.BigDecimal;
 import java.util.List;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import com.zufar.icedlatte.product.entity.ProductInfo;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ProductSpecifications {
@@ -25,11 +27,15 @@ public class ProductSpecifications {
     }
 
     public static Specification<ProductInfo> brandNamesSpec(List<String> brandNames) {
-        return (brandNames == null || brandNames.isEmpty()) ? NONE : (r, _, _) -> r.get("brandName").in(brandNames);
+        return (brandNames == null || brandNames.isEmpty())
+                ? NONE
+                : (r, _, _) -> r.get("brandName").in(brandNames);
     }
 
     public static Specification<ProductInfo> sellerNamesSpec(List<String> sellerNames) {
-        return (sellerNames == null || sellerNames.isEmpty()) ? NONE : (r, _, _) -> r.get("sellerName").in(sellerNames);
+        return (sellerNames == null || sellerNames.isEmpty())
+                ? NONE
+                : (r, _, _) -> r.get("sellerName").in(sellerNames);
     }
 
     public static Specification<ProductInfo> nameContainsSpec(String keyword) {

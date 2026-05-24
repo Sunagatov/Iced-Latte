@@ -1,5 +1,10 @@
 package com.zufar.icedlatte.order.service;
 
+import java.util.*;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
@@ -10,12 +15,9 @@ import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
 
 @Slf4j
 @Service
@@ -28,8 +30,7 @@ public class OrderReorderService {
 
     @Transactional
     public ReorderResponseDto reorder(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if (!order.getUserId().equals(userId)) {
             throw new OrderAccessDeniedException();

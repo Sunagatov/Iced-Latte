@@ -1,6 +1,10 @@
 package com.zufar.icedlatte.common.audit;
 
-import com.zufar.icedlatte.user.entity.UserEntity;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,10 +13,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.user.entity.UserEntity;
 
 @DisplayName("AuditConfig")
 class AuditConfigTest {

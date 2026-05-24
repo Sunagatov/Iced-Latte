@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.filestorage.converter;
 
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.entity.FileMetadata;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 
 @DisplayName("FileMetadataDtoConverter")
 class FileMetadataDtoConverterTest {
@@ -54,8 +55,6 @@ class FileMetadataDtoConverterTest {
 
         List<FileMetadata> entities = converter.toEntityList(List.of(first, second));
 
-        assertThat(entities)
-                .extracting(FileMetadata::getFileName)
-                .containsExactly("first.png", "second.png");
+        assertThat(entities).extracting(FileMetadata::getFileName).containsExactly("first.png", "second.png");
     }
 }

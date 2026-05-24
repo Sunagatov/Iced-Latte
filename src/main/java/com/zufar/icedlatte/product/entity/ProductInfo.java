@@ -1,14 +1,17 @@
 package com.zufar.icedlatte.product.entity;
 
-import com.zufar.icedlatte.common.audit.AuditableEntity;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.zufar.icedlatte.common.audit.AuditableEntity;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -19,13 +22,12 @@ import java.util.UUID;
 @Table(
         name = "product",
         indexes = {
-                @Index(name = "idx_product_price", columnList = "price"),
-                @Index(name = "idx_product_brand", columnList = "brand_name"),
-                @Index(name = "idx_product_seller", columnList = "seller_name"),
-                @Index(name = "idx_product_avg_rating", columnList = "average_rating"),
-                @Index(name = "idx_product_popularity", columnList = "popularity_score")
-        }
-)
+            @Index(name = "idx_product_price", columnList = "price"),
+            @Index(name = "idx_product_brand", columnList = "brand_name"),
+            @Index(name = "idx_product_seller", columnList = "seller_name"),
+            @Index(name = "idx_product_avg_rating", columnList = "average_rating"),
+            @Index(name = "idx_product_popularity", columnList = "popularity_score")
+        })
 public class ProductInfo extends AuditableEntity {
 
     @Id

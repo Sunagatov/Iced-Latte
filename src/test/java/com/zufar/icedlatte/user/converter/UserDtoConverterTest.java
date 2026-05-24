@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.user.converter;
 
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.stub.UserDtoTestStub;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,8 +13,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.stub.UserDtoTestStub;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = UserDtoConverterTest.Config.class)
@@ -22,8 +23,15 @@ class UserDtoConverterTest {
 
     @Configuration
     static class Config {
-        @Bean UserDtoConverter userDtoConverter() { return Mappers.getMapper(UserDtoConverter.class); }
-        @Bean AddressDtoConverter addressDtoConverter() { return Mappers.getMapper(AddressDtoConverter.class); }
+        @Bean
+        UserDtoConverter userDtoConverter() {
+            return Mappers.getMapper(UserDtoConverter.class);
+        }
+
+        @Bean
+        AddressDtoConverter addressDtoConverter() {
+            return Mappers.getMapper(AddressDtoConverter.class);
+        }
     }
 
     @Autowired

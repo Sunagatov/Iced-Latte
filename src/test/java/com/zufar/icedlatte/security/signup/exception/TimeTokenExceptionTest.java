@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.security.signup.exception;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.OffsetDateTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("TimeTokenException")
 class TimeTokenExceptionTest {
@@ -13,10 +13,8 @@ class TimeTokenExceptionTest {
     @Test
     @DisplayName("includes email and remaining time in the message")
     void includesEmailAndRemainingTimeInTheMessage() {
-        TimeTokenException exception = new TimeTokenException(
-                "user@example.com",
-                OffsetDateTime.now().plusSeconds(65)
-        );
+        TimeTokenException exception =
+                new TimeTokenException("user@example.com", OffsetDateTime.now().plusSeconds(65));
 
         assertThat(exception.getEmail()).isEqualTo("user@example.com");
         assertThat(exception.getMessage())

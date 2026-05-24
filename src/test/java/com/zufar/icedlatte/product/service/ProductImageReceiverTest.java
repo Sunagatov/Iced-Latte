@@ -1,8 +1,13 @@
 package com.zufar.icedlatte.product.service;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.product.entity.ProductImage;
-import com.zufar.icedlatte.product.repository.ProductImageRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,13 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.product.entity.ProductImage;
+import com.zufar.icedlatte.product.repository.ProductImageRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductImageReceiver unit tests")
@@ -27,8 +28,11 @@ class ProductImageReceiverTest {
 
     private static final String PLACEHOLDER = "/assets/images/product-placeholder.png";
 
-    @Mock private FileStorageApi fileStorageService;
-    @Mock private ProductImageRepository productImageRepository;
+    @Mock
+    private FileStorageApi fileStorageService;
+
+    @Mock
+    private ProductImageRepository productImageRepository;
 
     @InjectMocks
     private ProductImageReceiver receiver;
@@ -84,10 +88,10 @@ class ProductImageReceiverTest {
         @DisplayName("returns repository image URLs in repository order")
         void returnsRepositoryImageUrlsInRepositoryOrder() {
             UUID productId = UUID.randomUUID();
-            when(productImageRepository.findByProductIdOrderByPosition(productId)).thenReturn(List.of(
-                    new ProductImage(UUID.randomUUID(), productId, "url-1", (short) 1),
-                    new ProductImage(UUID.randomUUID(), productId, "url-2", (short) 2)
-            ));
+            when(productImageRepository.findByProductIdOrderByPosition(productId))
+                    .thenReturn(List.of(
+                            new ProductImage(UUID.randomUUID(), productId, "url-1", (short) 1),
+                            new ProductImage(UUID.randomUUID(), productId, "url-2", (short) 2)));
 
             List<String> result = receiver.getProductImageUrls(productId);
 
@@ -100,7 +104,8 @@ class ProductImageReceiverTest {
         @DisplayName("returns an empty list when the repository has no images")
         void returnsEmptyListWhenRepositoryHasNoImages() {
             UUID productId = UUID.randomUUID();
-            when(productImageRepository.findByProductIdOrderByPosition(productId)).thenReturn(List.of());
+            when(productImageRepository.findByProductIdOrderByPosition(productId))
+                    .thenReturn(List.of());
 
             assertThat(receiver.getProductImageUrls(productId)).isEmpty();
             verify(productImageRepository).findByProductIdOrderByPosition(productId);
@@ -117,11 +122,11 @@ class ProductImageReceiverTest {
         void groupsImageUrlsByProductIdInRepositoryOrder() {
             UUID productId1 = UUID.randomUUID();
             UUID productId2 = UUID.randomUUID();
-            when(productImageRepository.findByProductIdInOrderByPosition(List.of(productId1, productId2))).thenReturn(List.of(
-                    new ProductImage(UUID.randomUUID(), productId1, "p1-1", (short) 1),
-                    new ProductImage(UUID.randomUUID(), productId1, "p1-2", (short) 2),
-                    new ProductImage(UUID.randomUUID(), productId2, "p2-1", (short) 1)
-            ));
+            when(productImageRepository.findByProductIdInOrderByPosition(List.of(productId1, productId2)))
+                    .thenReturn(List.of(
+                            new ProductImage(UUID.randomUUID(), productId1, "p1-1", (short) 1),
+                            new ProductImage(UUID.randomUUID(), productId1, "p1-2", (short) 2),
+                            new ProductImage(UUID.randomUUID(), productId2, "p2-1", (short) 1)));
 
             Map<UUID, List<String>> result = receiver.getProductImageUrlsBatch(List.of(productId1, productId2));
 
@@ -157,7 +162,8 @@ class ProductImageReceiverTest {
         void returnsPlaceholdersForAllProductsWhenProviderThrows() {
             UUID productId1 = UUID.randomUUID();
             UUID productId2 = UUID.randomUUID();
-            when(fileStorageService.findFileUrls(List.of(productId1, productId2))).thenThrow(new RuntimeException("S3 down"));
+            when(fileStorageService.findFileUrls(List.of(productId1, productId2)))
+                    .thenThrow(new RuntimeException("S3 down"));
 
             Map<UUID, String> result = receiver.getProductFileUrls(List.of(productId1, productId2));
 

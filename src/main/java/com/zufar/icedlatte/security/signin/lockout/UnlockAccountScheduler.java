@@ -1,10 +1,12 @@
 package com.zufar.icedlatte.security.signin.lockout;
 
-import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +23,6 @@ public class UnlockAccountScheduler {
     @Scheduled(cron = "${unlock-account-scheduler-cron}")
     public void unlockLockoutExpiredAccounts() {
         sentryJobMonitor.run(
-                MONITOR_SLUG,
-                sentryJobMonitor.cronConfig(cron),
-                loginAttemptService::unlockExpiredAccounts
-        );
+                MONITOR_SLUG, sentryJobMonitor.cronConfig(cron), loginAttemptService::unlockExpiredAccounts);
     }
 }

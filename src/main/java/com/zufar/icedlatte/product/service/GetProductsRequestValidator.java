@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.product.service;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.stereotype.Service;
+
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -21,17 +23,19 @@ public class GetProductsRequestValidator {
 
     private final PaginationParametersValidator paginationParametersValidator;
 
-    public void validate(final @Nullable Integer pageNumber,
-                         final @Nullable Integer pageSize,
-                         final @Nullable String sortAttribute,
-                         final @Nullable String sortDirection,
-                         final @Nullable BigDecimal minPrice,
-                         final @Nullable BigDecimal maxPrice,
-                         final @Nullable Integer minimumAverageRating,
-                         final @Nullable List<String> brandNames,
-                         final @Nullable List<String> sellerNames) {
+    public void validate(
+            final @Nullable Integer pageNumber,
+            final @Nullable Integer pageSize,
+            final @Nullable String sortAttribute,
+            final @Nullable String sortDirection,
+            final @Nullable BigDecimal minPrice,
+            final @Nullable BigDecimal maxPrice,
+            final @Nullable Integer minimumAverageRating,
+            final @Nullable List<String> brandNames,
+            final @Nullable List<String> sellerNames) {
 
-        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
+        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
+                pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
         errors.addAll(validateMinMaxPrice(minPrice, maxPrice));
         errors.addAll(validateNameList(brandNames, "brandNames"));
         errors.addAll(validateNameList(sellerNames, "sellerNames"));
@@ -56,7 +60,8 @@ public class GetProductsRequestValidator {
             errors.add(error("'%s' is incorrect 'maxPrice'. It must be a non-negative number.".formatted(maxPrice)));
         }
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            errors.add(error("'%s' and '%s' are incorrect. 'maxPrice' must be >= 'minPrice'.".formatted(minPrice, maxPrice)));
+            errors.add(error(
+                    "'%s' and '%s' are incorrect. 'maxPrice' must be >= 'minPrice'.".formatted(minPrice, maxPrice)));
         }
         return errors;
     }

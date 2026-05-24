@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.order.service.lifecycle;
 
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.*;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
+
+import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderEvent;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
@@ -11,19 +23,9 @@ import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderCancellationWindowExpiredException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.zufar.icedlatte.openapi.dto.OrderEvent.*;
-import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
 
 @Slf4j
 @Service
@@ -31,17 +33,16 @@ import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
 public class OrderStatusTransitioner {
 
     private static final Map<OrderStatus, Map<OrderEvent, OrderStatus>> TRANSITIONS = Map.of(
-            PENDING_PAYMENT, Map.of(
-                    PENDING_PAYMENT_CONFIRMED, PAID,
-                    PAYMENT_FAILED_EVENT, PAYMENT_FAILED,
-                    PAYMENT_EXPIRED_EVENT, PAYMENT_EXPIRED,
-                    CANCEL, CANCELLED
-            ),
+            PENDING_PAYMENT,
+                    Map.of(
+                            PENDING_PAYMENT_CONFIRMED, PAID,
+                            PAYMENT_FAILED_EVENT, PAYMENT_FAILED,
+                            PAYMENT_EXPIRED_EVENT, PAYMENT_EXPIRED,
+                            CANCEL, CANCELLED),
             CREATED, Map.of(PAYMENT_CONFIRMED, PAID, CANCEL, CANCELLED),
             PAID, Map.of(SHIP, SHIPPED, CANCEL, CANCELLED, REQUEST_REFUND, REFUND_REQUESTED),
             SHIPPED, Map.of(DELIVER, DELIVERED),
-            REFUND_REQUESTED, Map.of(REFUND_CONFIRMED, REFUNDED)
-    );
+            REFUND_REQUESTED, Map.of(REFUND_CONFIRMED, REFUNDED));
 
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -52,16 +53,10 @@ public class OrderStatusTransitioner {
         return transition(orderId, event, actorId, null);
     }
 
-    /**
-     * Transitions order state. Returns the updated Order entity for internal use.
-     */
+    /** Transitions order state. Returns the updated Order entity for internal use. */
     @Transactional
-    public Order transition(UUID orderId,
-                            OrderEvent event,
-                            UUID actorId,
-                            String reason) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    public Order transition(UUID orderId, OrderEvent event, UUID actorId, String reason) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
         validateGuards(order, event, actorId);
 
@@ -71,44 +66,50 @@ public class OrderStatusTransitioner {
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
 
-        log.info("order.status.transitioned: orderId={}, from={}, to={}, event={}, actor={}",
-                orderId, oldStatus, newStatus, event, actorId);
+        log.info(
+                "order.status.transitioned: orderId={}, from={}, to={}, event={}, actor={}",
+                orderId,
+                oldStatus,
+                newStatus,
+                event,
+                actorId);
 
-        eventPublisher.publishEvent(new OrderStatusChangedEvent(
-                orderId, oldStatus, newStatus, actorId, reason, OffsetDateTime.now()
-        ));
+        eventPublisher.publishEvent(
+                new OrderStatusChangedEvent(orderId, oldStatus, newStatus, actorId, reason, OffsetDateTime.now()));
 
         return saved;
     }
 
     @Transactional
     public OrderDto cancel(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
         if (!order.getUserId().equals(userId)) {
             throw new OrderAccessDeniedException();
         }
         boolean wasPaid = order.getStatus() == OrderStatus.PAID;
         Order cancelled = transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
         if (wasPaid) {
-            log.warn("order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}",
-                    orderId, order.getStripePaymentIntentId());
+            log.warn(
+                    "order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}",
+                    orderId,
+                    order.getStripePaymentIntentId());
         }
         return orderDtoConverter.toResponseDto(cancelled);
     }
 
     @Transactional
     public OrderDto requestRefund(UUID orderId, UUID userId, String reason) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
         if (!order.getUserId().equals(userId)) {
             throw new OrderAccessDeniedException();
         }
         Order refundRequested = transition(orderId, OrderEvent.REQUEST_REFUND, userId, reason);
         refundRequested.setRefundReason(reason);
         orderRepository.save(refundRequested);
-        log.info("order.refund.requested: orderId={}, stripePaymentIntentId={}",
-                orderId, refundRequested.getStripePaymentIntentId());
+        log.info(
+                "order.refund.requested: orderId={}, stripePaymentIntentId={}",
+                orderId,
+                refundRequested.getStripePaymentIntentId());
         return orderDtoConverter.toResponseDto(refundRequested);
     }
 

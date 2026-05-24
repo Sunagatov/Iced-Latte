@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.review.service.ai.moderation;
 
-import com.zufar.icedlatte.review.exception.ReviewModerationException;
-import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -28,14 +30,16 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
         try {
             var response = reviewAiService.moderate(text);
             if (!response.startsWith(OK)) {
-                var reason = response.contains(":") ?
-                        response.substring(response.indexOf(':') + 1).trim() : response;
+                var reason = response.contains(":")
+                        ? response.substring(response.indexOf(':') + 1).trim()
+                        : response;
                 throw new ReviewModerationException(reason);
             }
         } catch (ReviewModerationException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("ai.moderation.unavailable: exceptionClass={}", e.getClass().getSimpleName());
+            log.warn(
+                    "ai.moderation.unavailable: exceptionClass={}", e.getClass().getSimpleName());
         }
     }
 
@@ -44,13 +48,13 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
         try {
             var reviews = reviewRepository.findAllByProductId(productId);
             if (reviews.isEmpty()) return null;
-            var combined = reviews.stream()
-                    .map(r -> "- " + r.getText())
-                    .collect(Collectors.joining("\n"));
+            var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
             return reviewAiService.aggregateSummary(combined);
         } catch (Exception e) {
-            log.warn("ai.summary.unavailable: productId={}, exceptionClass={}",
-                    productId, e.getClass().getSimpleName());
+            log.warn(
+                    "ai.summary.unavailable: productId={}, exceptionClass={}",
+                    productId,
+                    e.getClass().getSimpleName());
             return FALLBACK_SUMMARY;
         }
     }

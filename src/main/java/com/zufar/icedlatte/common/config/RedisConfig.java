@@ -1,11 +1,8 @@
 package com.zufar.icedlatte.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.util.List;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,11 +19,16 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.type.TypeFactory;
-
-import java.time.Duration;
-import java.util.List;
 
 @Slf4j
 @Configuration
@@ -34,10 +36,11 @@ import java.util.List;
 @ConditionalOnProperty(name = "spring.data.redis.host")
 public class RedisConfig implements CachingConfigurer {
 
-    private static final com.github.benmanes.caffeine.cache.Cache<String, Boolean> LOGGED_CACHE_ERRORS = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofMinutes(5))
-            .maximumSize(1_000)
-            .build();
+    private static final com.github.benmanes.caffeine.cache.Cache<String, Boolean> LOGGED_CACHE_ERRORS =
+            Caffeine.newBuilder()
+                    .expireAfterWrite(Duration.ofMinutes(5))
+                    .maximumSize(1_000)
+                    .build();
 
     private final CacheProperties cacheProperties;
 
@@ -46,9 +49,7 @@ public class RedisConfig implements CachingConfigurer {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .findAndRegisterModules()
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Bean
@@ -60,8 +61,8 @@ public class RedisConfig implements CachingConfigurer {
 
         JavaType listOfString = tf.constructCollectionType(List.class, String.class);
 
-        var productSerializer    = new JacksonJsonRedisSerializer<>(mapper, ProductInfoDto.class);
-        var stringSerializer     = new JacksonJsonRedisSerializer<>(mapper, String.class);
+        var productSerializer = new JacksonJsonRedisSerializer<>(mapper, ProductInfoDto.class);
+        var stringSerializer = new JacksonJsonRedisSerializer<>(mapper, String.class);
         var listStringSerializer = new JacksonJsonRedisSerializer<>(mapper, listOfString);
 
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
@@ -70,22 +71,33 @@ public class RedisConfig implements CachingConfigurer {
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(base.entryTtl(cacheProperties.getDefaultTtl())
-                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
-                .withCacheConfiguration("productById",
+                        .serializeValuesWith(
+                                RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
+                .withCacheConfiguration(
+                        "productById",
                         base.entryTtl(cacheProperties.getProductTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(productSerializer)))
-                .withCacheConfiguration("productImageUrl",
+                                .serializeValuesWith(
+                                        RedisSerializationContext.SerializationPair.fromSerializer(productSerializer)))
+                .withCacheConfiguration(
+                        "productImageUrl",
                         base.entryTtl(cacheProperties.getImageUrlTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
-                .withCacheConfiguration("productImageUrls",
+                                .serializeValuesWith(
+                                        RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
+                .withCacheConfiguration(
+                        "productImageUrls",
                         base.entryTtl(cacheProperties.getImageUrlsTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
-                .withCacheConfiguration("brands",
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                                        listStringSerializer)))
+                .withCacheConfiguration(
+                        "brands",
                         base.entryTtl(cacheProperties.getBrandsTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
-                .withCacheConfiguration("sellers",
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                                        listStringSerializer)))
+                .withCacheConfiguration(
+                        "sellers",
                         base.entryTtl(cacheProperties.getSellersTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(listStringSerializer)))
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                                        listStringSerializer)))
                 .build();
     }
 
@@ -102,44 +114,35 @@ public class RedisConfig implements CachingConfigurer {
     public CacheErrorHandler errorHandler() {
         return new SimpleCacheErrorHandler() {
             @Override
-            public void handleCacheGetError(@NonNull RuntimeException e,
-                                            @NonNull Cache cache,
-                                            @NonNull Object key) {
+            public void handleCacheGetError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
                 logCacheError("get", cache.getName(), key, e);
             }
+
             @Override
-            public void handleCachePutError(@NonNull RuntimeException e,
-                                            @NonNull Cache cache,
-                                            @NonNull Object key,
-                                            Object value) {
+            public void handleCachePutError(
+                    @NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key, Object value) {
                 logCacheError("put", cache.getName(), key, e);
             }
+
             @Override
-            public void handleCacheEvictError(@NonNull RuntimeException e,
-                                              @NonNull Cache cache,
-                                              @NonNull Object key) {
+            public void handleCacheEvictError(@NonNull RuntimeException e, @NonNull Cache cache, @NonNull Object key) {
                 logCacheError("evict", cache.getName(), key, e);
             }
+
             @Override
-            public void handleCacheClearError(@NonNull RuntimeException e,
-                                              @NonNull Cache cache) {
+            public void handleCacheClearError(@NonNull RuntimeException e, @NonNull Cache cache) {
                 logCacheError("clear", cache.getName(), null, e);
             }
         };
     }
 
-    private static void logCacheError(String operation,
-                                      String cacheName,
-                                      Object key,
-                                      RuntimeException exception) {
+    private static void logCacheError(String operation, String cacheName, Object key, RuntimeException exception) {
         String exceptionClass = exception.getClass().getSimpleName();
         String dedupKey = operation + "|" + cacheName + "|" + exceptionClass;
         if (LOGGED_CACHE_ERRORS.asMap().putIfAbsent(dedupKey, Boolean.TRUE) == null) {
-            log.warn("cache.{}.error: cache={}, key={}, exceptionClass={}",
-                    operation, cacheName, key, exceptionClass);
+            log.warn("cache.{}.error: cache={}, key={}, exceptionClass={}", operation, cacheName, key, exceptionClass);
         } else {
-            log.debug("cache.{}.error: cache={}, key={}, exceptionClass={}",
-                    operation, cacheName, key, exceptionClass);
+            log.debug("cache.{}.error: cache={}, key={}, exceptionClass={}", operation, cacheName, key, exceptionClass);
         }
     }
 }

@@ -1,16 +1,15 @@
 package com.zufar.icedlatte.security.jwt.filter;
 
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
-import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.user.entity.UserEntity;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,12 +23,15 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
+import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.user.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationFilter")
@@ -37,12 +39,16 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private JwtAuthenticationProvider jwtAuthenticationProvider;
+
     @Mock
     private CurrentUserProvider currentUserProvider;
+
     @Mock
     private JwtTokenClaims jwtTokenClaims;
+
     @Mock
     private JwtBearerTokenResolver jwtBearerTokenResolver;
+
     @Mock
     private ClientIpExtractor clientIpExtractor;
 
@@ -63,7 +69,8 @@ class JwtAuthenticationFilterTest {
 
             assertThat(filter.shouldSkip(request("/api/v1/auth/refresh"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google"))).isTrue();
-            assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google/callback"))).isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google/callback")))
+                    .isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/products"))).isFalse();
         }
     }
@@ -89,11 +96,14 @@ class JwtAuthenticationFilterTest {
             when(jwtBearerTokenResolver.extract(request)).thenReturn("jwt-token");
             when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenReturn(Optional.of(sessionId));
             doAnswer(_ -> {
-                assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(authentication);
-                assertThat(MDC.get("userId")).isEqualTo(userId.toString());
-                assertThat(MDC.get("sessionId")).isEqualTo(sessionId.toString());
-                return null;
-            }).when(chain).doFilter(request, response);
+                        assertThat(SecurityContextHolder.getContext().getAuthentication())
+                                .isSameAs(authentication);
+                        assertThat(MDC.get("userId")).isEqualTo(userId.toString());
+                        assertThat(MDC.get("sessionId")).isEqualTo(sessionId.toString());
+                        return null;
+                    })
+                    .when(chain)
+                    .doFilter(request, response);
 
             filter().run(request, response, chain);
 
@@ -118,10 +128,12 @@ class JwtAuthenticationFilterTest {
             when(jwtBearerTokenResolver.extract(request)).thenReturn("jwt-token");
             when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenThrow(new RuntimeException("bad sid"));
             doAnswer(_ -> {
-                assertThat(MDC.get("userId")).isEqualTo(userId.toString());
-                assertThat(MDC.get("sessionId")).isNull();
-                return null;
-            }).when(chain).doFilter(request, response);
+                        assertThat(MDC.get("userId")).isEqualTo(userId.toString());
+                        assertThat(MDC.get("sessionId")).isNull();
+                        return null;
+                    })
+                    .when(chain)
+                    .doFilter(request, response);
 
             filter().run(request, response, chain);
 
@@ -172,8 +184,7 @@ class JwtAuthenticationFilterTest {
                 currentUserProvider,
                 jwtTokenClaims,
                 jwtBearerTokenResolver,
-                clientIpExtractor
-        );
+                clientIpExtractor);
     }
 
     private static MockHttpServletRequest request(String uri) {
@@ -185,13 +196,18 @@ class JwtAuthenticationFilterTest {
 
     private static final class TestableJwtAuthenticationFilter extends JwtAuthenticationFilter {
 
-        private TestableJwtAuthenticationFilter(JwtAuthenticationProvider jwtAuthenticationProvider,
-                                                CurrentUserProvider currentUserProvider,
-                                                JwtTokenClaims jwtTokenClaims,
-                                                JwtBearerTokenResolver jwtBearerTokenResolver,
-                                                ClientIpExtractor clientIpExtractor) {
-            super(jwtAuthenticationProvider, currentUserProvider, jwtTokenClaims,
-                    jwtBearerTokenResolver, clientIpExtractor,
+        private TestableJwtAuthenticationFilter(
+                JwtAuthenticationProvider jwtAuthenticationProvider,
+                CurrentUserProvider currentUserProvider,
+                JwtTokenClaims jwtTokenClaims,
+                JwtBearerTokenResolver jwtBearerTokenResolver,
+                ClientIpExtractor clientIpExtractor) {
+            super(
+                    jwtAuthenticationProvider,
+                    currentUserProvider,
+                    jwtTokenClaims,
+                    jwtBearerTokenResolver,
+                    clientIpExtractor,
                     new ProblemTypeUriFactory("https://errors.example.test/problems"));
         }
 
@@ -199,9 +215,8 @@ class JwtAuthenticationFilterTest {
             return super.shouldNotFilter(request);
         }
 
-        private void run(MockHttpServletRequest request,
-                         MockHttpServletResponse response,
-                         FilterChain chain) throws ServletException, IOException {
+        private void run(MockHttpServletRequest request, MockHttpServletResponse response, FilterChain chain)
+                throws ServletException, IOException {
             super.doFilterInternal(request, response, chain);
         }
     }

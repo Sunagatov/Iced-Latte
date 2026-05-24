@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
 
 @DisplayName("CaffeineFixedWindowRateLimiter unit tests")
 class CaffeineFixedWindowRateLimiterTest {

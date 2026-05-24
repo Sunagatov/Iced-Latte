@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
+import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
+import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,11 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
-import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
-import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
+
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("ShoppingCartEndpointTest Tests")
 class ShoppingCartEndpointTest extends IntegrationTestBase {
@@ -44,8 +46,7 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
         if (cachedJwtToken == null) {
             cachedJwtToken = getJwtToken(port, email, password);
         }
-        specification = given()
-                .port(port)
+        specification = given().port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath(CartEndpoint.CART_URL)
                 .contentType(ContentType.JSON)
@@ -56,7 +57,9 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
     @DisplayName("Should retrieve shopping cart successfully")
     void shouldRetrieveShoppingCartSuccessfully() {
         assertRestApiOkResponse(given(specification).get(), SHOPPING_CART_SCHEMA_LOCATION);
-        given(specification).get().then()
+        given(specification)
+                .get()
+                .then()
                 .body("id", notNullValue())
                 .body("userId", notNullValue())
                 .body("items", notNullValue())
@@ -68,7 +71,9 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should add item to shopping cart successfully")
     void shouldAddItemToShoppingCart() {
-        Response response = given(specification).body(getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION)).post("/items");
+        Response response = given(specification)
+                .body(getRequestBody(SHOPPING_CART_ADD_BODY_LOCATION))
+                .post("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
         response.then()
                 .body("items", hasSize(greaterThan(0)))
@@ -79,43 +84,52 @@ class ShoppingCartEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should update shopping cart item quantity successfully")
     void shouldUpdateItemQuantityInShoppingCart() {
-        Response response = given(specification).body(getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION)).patch("/items");
+        Response response = given(specification)
+                .body(getRequestBody(SHOPPING_CART_UPDATE_BODY_LOCATION))
+                .patch("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
-        response.then()
-                .body("items", notNullValue())
-                .body("itemsQuantity", greaterThanOrEqualTo(0));
+        response.then().body("items", notNullValue()).body("itemsQuantity", greaterThanOrEqualTo(0));
     }
 
     @Test
     @DisplayName("Should return 404 when updating non-existent shopping cart item")
     void shouldReturnNotFoundWhenUpdatingNonExistentItem() {
-        given(specification).body(getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION)).patch("/items")
-                .then().statusCode(HttpStatus.NOT_FOUND.value());
+        given(specification)
+                .body(getRequestBody(SHOPPING_CART_UPDATE_BAD_BODY_LOCATION))
+                .patch("/items")
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
     @DisplayName("Should delete items from shopping cart successfully")
     void shouldDeleteItemsFromShoppingCart() {
-        Response response = given(specification).body(getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION)).delete("/items");
+        Response response = given(specification)
+                .body(getRequestBody(SHOPPING_CART_DELETE_BODY_LOCATION))
+                .delete("/items");
         assertRestApiOkResponse(response, SHOPPING_CART_SCHEMA_LOCATION);
-        response.then()
-                .body("items", notNullValue())
-                .body("itemsQuantity", greaterThanOrEqualTo(0));
+        response.then().body("items", notNullValue()).body("itemsQuantity", greaterThanOrEqualTo(0));
     }
 
     @Test
     @DisplayName("Should return 401 when accessing cart without authentication")
     void shouldReturnUnauthorizedWithoutToken() {
-        given().port(port).basePath(CartEndpoint.CART_URL)
-                .contentType(ContentType.JSON).accept(ContentType.JSON)
+        given().port(port)
+                .basePath(CartEndpoint.CART_URL)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
                 .get()
-                .then().statusCode(HttpStatus.UNAUTHORIZED.value());
+                .then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
     @DisplayName("Should return 400 for invalid request body")
     void shouldReturnBadRequestForInvalidBody() {
-        given(specification).body("{\"invalid\": \"data\"}").post("/items")
-                .then().statusCode(HttpStatus.BAD_REQUEST.value());
+        given(specification)
+                .body("{\"invalid\": \"data\"}")
+                .post("/items")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }

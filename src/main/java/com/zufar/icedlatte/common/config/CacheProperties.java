@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.common.config;
 
-import lombok.Data;
+import java.time.Duration;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.time.Duration;
+import lombok.Data;
 
 @Data
 @ConfigurationProperties(prefix = "cache")

@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.test.config;
 
-import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
+import static io.restassured.RestAssured.given;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 
 public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTestBase {
 
@@ -22,16 +24,14 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     private EmailVerificationService emailVerificationService;
 
     protected RequestSpecification jsonSpec(String basePath) {
-        return given()
-                .port(port)
+        return given().port(port)
                 .basePath(basePath)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
     }
 
     protected RequestSpecification authenticatedJsonSpec(String basePath, String accessToken) {
-        return jsonSpec(basePath)
-                .header("Authorization", "Bearer " + accessToken);
+        return jsonSpec(basePath).header("Authorization", "Bearer " + accessToken);
     }
 
     protected AuthenticatedUser registerAndAuthenticateUser() {
@@ -43,11 +43,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     }
 
     protected AuthenticatedUser registerAndAuthenticateUser(
-            String firstName,
-            String lastName,
-            String email,
-            String password
-    ) {
+            String firstName, String lastName, String email, String password) {
         UserRegistrationRequest pending = new UserRegistrationRequest(firstName, lastName, email, password);
         String confirmationToken = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
@@ -61,19 +57,8 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
                 .extract()
                 .jsonPath();
 
-        return new AuthenticatedUser(
-                response.getString("token"),
-                response.getString("refreshToken"),
-                email,
-                password
-        );
+        return new AuthenticatedUser(response.getString("token"), response.getString("refreshToken"), email, password);
     }
 
-    public record AuthenticatedUser(
-            String accessToken,
-            String refreshToken,
-            String email,
-            String password
-    ) {
-    }
+    public record AuthenticatedUser(String accessToken, String refreshToken, String email, String password) {}
 }

@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum OAuthProvider {
-
     GOOGLE("google");
 
     private final String id;

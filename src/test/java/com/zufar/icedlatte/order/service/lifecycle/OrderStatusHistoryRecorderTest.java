@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.order.service.lifecycle;
 
-import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import com.zufar.icedlatte.order.entity.OrderStatusHistory;
-import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
-import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,18 +14,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.order.entity.OrderStatusHistory;
+import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
+import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderStatusHistoryRecorder unit tests")
 class OrderStatusHistoryRecorderTest {
 
-    @Mock private OrderStatusHistoryRepository repository;
-    @InjectMocks private OrderStatusHistoryRecorder recorder;
+    @Mock
+    private OrderStatusHistoryRepository repository;
+
+    @InjectMocks
+    private OrderStatusHistoryRecorder recorder;
 
     @Test
     @DisplayName("Persists history entry from domain event")
@@ -33,8 +37,7 @@ class OrderStatusHistoryRecorderTest {
         OffsetDateTime now = OffsetDateTime.now();
 
         OrderStatusChangedEvent event = new OrderStatusChangedEvent(
-                orderId, OrderStatus.CREATED, OrderStatus.PAID, actorId, "Payment confirmed", now
-        );
+                orderId, OrderStatus.CREATED, OrderStatus.PAID, actorId, "Payment confirmed", now);
 
         recorder.onStatusChanged(event);
 

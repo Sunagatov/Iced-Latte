@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.security.signin.exception;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("SessionNotFoundException")
 class SessionNotFoundExceptionTest {
@@ -15,7 +15,6 @@ class SessionNotFoundExceptionTest {
     void rendersMissingSessionIdInMessage() {
         UUID sessionId = UUID.randomUUID();
 
-        assertThat(new SessionNotFoundException(sessionId))
-                .hasMessage("Session not found: " + sessionId);
+        assertThat(new SessionNotFoundException(sessionId)).hasMessage("Session not found: " + sessionId);
     }
 }

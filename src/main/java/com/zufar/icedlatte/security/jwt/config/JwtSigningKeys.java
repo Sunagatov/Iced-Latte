@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.jwt.config;
 
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
+
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtSigningKeys {
@@ -17,7 +18,11 @@ public class JwtSigningKeys {
         this.refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.refreshSecret()));
     }
 
-    public SecretKey get() { return signingKey; }
+    public SecretKey get() {
+        return signingKey;
+    }
 
-    public SecretKey getRefresh() { return refreshKey; }
+    public SecretKey getRefresh() {
+        return refreshKey;
+    }
 }

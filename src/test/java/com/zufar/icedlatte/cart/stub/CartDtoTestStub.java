@@ -1,15 +1,15 @@
 package com.zufar.icedlatte.cart.stub;
 
-import com.zufar.icedlatte.cart.entity.ShoppingCart;
-import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.zufar.icedlatte.cart.entity.ShoppingCart;
+import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 public class CartDtoTestStub {
 
@@ -36,9 +36,27 @@ public class CartDtoTestStub {
         UUID thirdItemId = UUID.fromString("b00ed4dc-62d1-449c-b559-65d9c2cad906");
 
         Set<ShoppingCartItem> items = new HashSet<>();
-        items.add(ShoppingCartItem.builder().id(firstItemId).version(1).shoppingCart(shoppingCart).productId(FIRST_PRODUCT_ID).productQuantity(1).build());
-        items.add(ShoppingCartItem.builder().id(secondItemId).version(1).shoppingCart(shoppingCart).productId(SECOND_PRODUCT_ID).productQuantity(2).build());
-        items.add(ShoppingCartItem.builder().id(thirdItemId).version(1).shoppingCart(shoppingCart).productId(THIRD_PRODUCT_ID).productQuantity(3).build());
+        items.add(ShoppingCartItem.builder()
+                .id(firstItemId)
+                .version(1)
+                .shoppingCart(shoppingCart)
+                .productId(FIRST_PRODUCT_ID)
+                .productQuantity(1)
+                .build());
+        items.add(ShoppingCartItem.builder()
+                .id(secondItemId)
+                .version(1)
+                .shoppingCart(shoppingCart)
+                .productId(SECOND_PRODUCT_ID)
+                .productQuantity(2)
+                .build());
+        items.add(ShoppingCartItem.builder()
+                .id(thirdItemId)
+                .version(1)
+                .shoppingCart(shoppingCart)
+                .productId(THIRD_PRODUCT_ID)
+                .productQuantity(3)
+                .build());
 
         shoppingCart.setId(UUID.randomUUID());
         shoppingCart.setUserId(userId);
@@ -65,10 +83,12 @@ public class CartDtoTestStub {
 
     public static Map<UUID, ProductSnapshot> createProductsById() {
         List<ProductSnapshot> products = List.of(
-                new ProductSnapshot(FIRST_PRODUCT_ID, "First test name", "Desc", BigDecimal.valueOf(1.1), 10, true, null),
-                new ProductSnapshot(SECOND_PRODUCT_ID, "Second test name", "Desc", BigDecimal.valueOf(2.2), 10, true, null),
-                new ProductSnapshot(THIRD_PRODUCT_ID, "Third test name", "Desc", BigDecimal.valueOf(3.3), 10, true, null)
-        );
+                new ProductSnapshot(
+                        FIRST_PRODUCT_ID, "First test name", "Desc", BigDecimal.valueOf(1.1), 10, true, null),
+                new ProductSnapshot(
+                        SECOND_PRODUCT_ID, "Second test name", "Desc", BigDecimal.valueOf(2.2), 10, true, null),
+                new ProductSnapshot(
+                        THIRD_PRODUCT_ID, "Third test name", "Desc", BigDecimal.valueOf(3.3), 10, true, null));
         return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
     }
 

@@ -1,18 +1,19 @@
 package com.zufar.icedlatte.common.correlation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
+import java.io.IOException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 
 @DisplayName("CorrelationFilter unit tests")
 class CorrelationFilterTest {
@@ -65,14 +66,16 @@ class CorrelationFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
         doAnswer(ignored -> {
-            assertThat(MDC.get("correlationId")).isNotBlank();
-            assertThat(MDC.get("requestId")).isNotBlank();
-            assertThat(MDC.get("sessionId")).isEqualTo("session-1");
-            assertThat(MDC.get("clientTraceId")).isEqualTo("trace-1");
-            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, "user-1");
-            assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isEqualTo("user-1");
-            return null;
-        }).when(chain).doFilter(request, response);
+                    assertThat(MDC.get("correlationId")).isNotBlank();
+                    assertThat(MDC.get("requestId")).isNotBlank();
+                    assertThat(MDC.get("sessionId")).isEqualTo("session-1");
+                    assertThat(MDC.get("clientTraceId")).isEqualTo("trace-1");
+                    MDC.put(RequestContextConstants.USER_ID_MDC_KEY, "user-1");
+                    assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isEqualTo("user-1");
+                    return null;
+                })
+                .when(chain)
+                .doFilter(request, response);
 
         filter.doFilterInternal(request, response, chain);
 

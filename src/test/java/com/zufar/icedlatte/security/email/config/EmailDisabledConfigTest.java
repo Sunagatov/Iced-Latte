@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.email.config;
 
-import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 
 @DisplayName("EmailDisabledConfig")
 class EmailDisabledConfigTest {

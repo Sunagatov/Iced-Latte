@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import lombok.RequiredArgsConstructor;
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -8,9 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.net.URI;
-import java.time.Instant;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -20,18 +21,12 @@ public class ProblemDetailFactory {
 
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
-    public ProblemDetail build(String typeSlug,
-                               String title,
-                               HttpStatus status,
-                               String detail) {
+    public ProblemDetail build(String typeSlug, String title, HttpStatus status, String detail) {
         return build(typeSlug, title, status, detail, List.of());
     }
 
-    public ProblemDetail build(String typeSlug,
-                               String title,
-                               HttpStatus status,
-                               String detail,
-                               List<FieldError> errors) {
+    public ProblemDetail build(
+            String typeSlug, String title, HttpStatus status, String detail, List<FieldError> errors) {
         String safeDetail = status.is5xxServerError() ? SAFE_5XX_MESSAGE : detail;
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, safeDetail);

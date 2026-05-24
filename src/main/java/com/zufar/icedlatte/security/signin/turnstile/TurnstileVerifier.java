@@ -1,19 +1,22 @@
 package com.zufar.icedlatte.security.signin.turnstile;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Verifies Cloudflare Turnstile tokens via the siteverify API.
- * Disabled (no-op) when {@code turnstile.secret-key} is blank.
+ * Verifies Cloudflare Turnstile tokens via the siteverify API. Disabled (no-op) when {@code turnstile.secret-key} is
+ * blank.
  */
 @Slf4j
 @Component
@@ -41,7 +44,8 @@ public class TurnstileVerifier {
             form.add("secret", secretKey);
             form.add("response", token);
 
-            TurnstileResponse result = restClient.post()
+            TurnstileResponse result = restClient
+                    .post()
                     .uri(VERIFY_URL)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(form)
@@ -60,5 +64,6 @@ public class TurnstileVerifier {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record TurnstileResponse(@JsonProperty("success") boolean success) {}
+    private record TurnstileResponse(
+            @JsonProperty("success") boolean success) {}
 }

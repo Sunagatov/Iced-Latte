@@ -1,5 +1,18 @@
 package com.zufar.icedlatte.cart.service;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
@@ -17,21 +30,9 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 
 @Slf4j
 @Service
@@ -53,18 +54,19 @@ public class ShoppingCartService implements CartCheckoutApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public CartSnapshot getByUserIdOrThrow(final UUID userId) {
-        return shoppingCartRepository.findShoppingCartByUserId(userId)
+        return shoppingCartRepository
+                .findShoppingCartByUserId(userId)
                 .map(this::toCartSnapshot)
                 .orElseThrow(() -> new ShoppingCartNotFoundException(userId));
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public CartSnapshot addItems(final UUID userId,
-                                 final Set<AddCartItemRequest> itemsToAdd) {
+    public CartSnapshot addItems(final UUID userId, final Set<AddCartItemRequest> itemsToAdd) {
         ShoppingCart shoppingCart = getOrCreateCart(userId);
         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
-                .collect(Collectors.toMap(AddCartItemRequest::productId, AddCartItemRequest::productQuantity, Integer::sum));
+                .collect(Collectors.toMap(
+                        AddCartItemRequest::productId, AddCartItemRequest::productQuantity, Integer::sum));
         mergeIntoCart(shoppingCart, productsWithQuantity);
         try {
             return toCartSnapshot(shoppingCartRepository.save(shoppingCart));
@@ -80,8 +82,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto addOpenApiItems(final UUID userId,
-                                           final Set<NewShoppingCartItemDto> itemsToAdd) {
+    public ShoppingCartDto addOpenApiItems(final UUID userId, final Set<NewShoppingCartItemDto> itemsToAdd) {
         ShoppingCart shoppingCart = getOrCreateCart(userId);
         Map<UUID, Integer> productsWithQuantity = extractProductsWithQuantity(itemsToAdd);
         mergeIntoCart(shoppingCart, productsWithQuantity);
@@ -101,10 +102,10 @@ public class ShoppingCartService implements CartCheckoutApi {
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto updateItemQuantity(final UUID shoppingCartItemId,
-                                              final UUID userId,
-                                              final int productQuantityChange) {
-        ShoppingCartItem item = shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
+    public ShoppingCartDto updateItemQuantity(
+            final UUID shoppingCartItemId, final UUID userId, final int productQuantityChange) {
+        ShoppingCartItem item = shoppingCartItemRepository
+                .findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
                 .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
 
         validateQuantityChange(shoppingCartItemId, productQuantityChange, item);
@@ -115,8 +116,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ShoppingCartDto deleteItems(final DeleteItemsFromShoppingCartRequest request,
-                                       final UUID userId) {
+    public ShoppingCartDto deleteItems(final DeleteItemsFromShoppingCartRequest request, final UUID userId) {
         List<UUID> itemIds = request.getShoppingCartItemIds();
         shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
         log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
@@ -124,23 +124,22 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     private ShoppingCart getOrCreateCart(UUID userId) {
-        return shoppingCartRepository.findShoppingCartByUserId(userId)
-                .orElseGet(() -> createNewShoppingCart(userId));
+        return shoppingCartRepository.findShoppingCartByUserId(userId).orElseGet(() -> createNewShoppingCart(userId));
     }
 
     private ShoppingCart createNewShoppingCart(UUID userId) {
         try {
-            ShoppingCart shoppingCart = ShoppingCart.builder()
-                    .userId(userId)
-                    .items(new HashSet<>())
-                    .build();
+            ShoppingCart shoppingCart =
+                    ShoppingCart.builder().userId(userId).items(new HashSet<>()).build();
             shoppingCartRepository.save(shoppingCart);
             log.info("cart.created: userId={}", userId);
             return shoppingCart;
         } catch (DataIntegrityViolationException ex) {
             log.warn("cart.create.concurrent_conflict: userId={}", userId);
-            return shoppingCartRepository.findShoppingCartByUserId(userId)
-                    .orElseThrow(() -> new IllegalStateException("Cart not found after uniqueness conflict for userId=" + userId, ex));
+            return shoppingCartRepository
+                    .findShoppingCartByUserId(userId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Cart not found after uniqueness conflict for userId=" + userId, ex));
         }
     }
 
@@ -178,12 +177,11 @@ public class ShoppingCartService implements CartCheckoutApi {
                 .collect(Collectors.toMap(
                         NewShoppingCartItemDto::getProductId,
                         NewShoppingCartItemDto::getProductQuantity,
-                        Integer::sum
-                ));
+                        Integer::sum));
     }
 
-    private static void increaseExistingItemQuantities(ShoppingCart shoppingCart,
-                                                       Map<UUID, Integer> productsWithQuantity) {
+    private static void increaseExistingItemQuantities(
+            ShoppingCart shoppingCart, Map<UUID, Integer> productsWithQuantity) {
         shoppingCart.getItems().forEach(item -> {
             Integer quantityToAdd = productsWithQuantity.get(item.getProductId());
             if (quantityToAdd != null) {
@@ -194,8 +192,7 @@ public class ShoppingCartService implements CartCheckoutApi {
         });
     }
 
-    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity,
-                                                  ShoppingCart shoppingCart) {
+    private List<ShoppingCartItem> createNewItems(Map<UUID, Integer> productsWithQuantity, ShoppingCart shoppingCart) {
         Set<UUID> existingProductIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductId)
                 .collect(Collectors.toSet());
@@ -209,20 +206,19 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
 
         // Validate all new product IDs exist
-        List<ProductSnapshot> foundProducts = productCatalogApi.getProductsByIds(newProductIds.stream().toList());
-        Set<UUID> foundIds = foundProducts.stream()
-                .map(ProductSnapshot::id)
-                .collect(Collectors.toSet());
-        List<UUID> missingIds = newProductIds.stream()
-                .filter(id -> !foundIds.contains(id))
-                .toList();
+        List<ProductSnapshot> foundProducts =
+                productCatalogApi.getProductsByIds(newProductIds.stream().toList());
+        Set<UUID> foundIds = foundProducts.stream().map(ProductSnapshot::id).collect(Collectors.toSet());
+        List<UUID> missingIds =
+                newProductIds.stream().filter(id -> !foundIds.contains(id)).toList();
         if (!missingIds.isEmpty()) {
             throw new ProductNotFoundException(missingIds);
         }
 
         return newProductIds.stream()
                 .map(productId -> {
-                    int productQuantity = Objects.requireNonNull(productsWithQuantity.get(productId),
+                    int productQuantity = Objects.requireNonNull(
+                            productsWithQuantity.get(productId),
                             "Product quantity not found for productId: " + productId);
                     validateProductQuantity(productQuantity);
                     return ShoppingCartItem.builder()
@@ -234,9 +230,8 @@ public class ShoppingCartService implements CartCheckoutApi {
                 .toList();
     }
 
-    private void validateQuantityChange(final UUID shoppingCartItemId,
-                                        int productQuantityChange,
-                                        ShoppingCartItem item) {
+    private void validateQuantityChange(
+            final UUID shoppingCartItemId, int productQuantityChange, ShoppingCartItem item) {
         if (productQuantityChange == 0) {
             log.debug("cart.item.quantity.zero_change: itemId={}", shoppingCartItemId);
             throw new InvalidItemProductQuantityException("Product quantity change must not be zero.");
@@ -256,5 +251,4 @@ public class ShoppingCartService implements CartCheckoutApi {
     public void deleteCartForUser(final UUID userId) {
         shoppingCartRepository.deleteByUserId(userId);
     }
-
 }

@@ -1,13 +1,6 @@
 package com.zufar.icedlatte.favorite.converter;
 
-import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
-import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -15,11 +8,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+
+import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
+import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 
 class FavoriteListDtoConverterTest {
 
-    private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter(Mappers.getMapper(ProductInfoDtoConverter.class));
+    private final FavoriteListDtoConverter converter =
+            new FavoriteListDtoConverter(Mappers.getMapper(ProductInfoDtoConverter.class));
 
     @Test
     @DisplayName("converts entity to ListOfFavoriteProductsDto with product details")
@@ -29,9 +31,10 @@ class FavoriteListDtoConverterTest {
         FavoriteListEntity entity = FavoriteListEntity.builder()
                 .id(UUID.randomUUID())
                 .userId(UUID.randomUUID())
-                .favoriteItems(Set.of(
-                        FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(productId).build()
-                ))
+                .favoriteItems(Set.of(FavoriteItemEntity.builder()
+                        .id(UUID.randomUUID())
+                        .productId(productId)
+                        .build()))
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
@@ -52,9 +55,14 @@ class FavoriteListDtoConverterTest {
                 .id(UUID.randomUUID())
                 .userId(UUID.randomUUID())
                 .favoriteItems(Set.of(
-                        FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(knownId).build(),
-                        FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(unknownId).build()
-                ))
+                        FavoriteItemEntity.builder()
+                                .id(UUID.randomUUID())
+                                .productId(knownId)
+                                .build(),
+                        FavoriteItemEntity.builder()
+                                .id(UUID.randomUUID())
+                                .productId(unknownId)
+                                .build()))
                 .updatedAt(OffsetDateTime.now())
                 .build();
 

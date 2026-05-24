@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import com.zufar.icedlatte.common.http.ApiPaths;
-import io.sentry.Breadcrumb;
-import io.sentry.SentryEvent;
-import io.sentry.SentryOptions;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+
+import com.zufar.icedlatte.common.http.ApiPaths;
+
+import io.sentry.Breadcrumb;
+import io.sentry.SentryEvent;
+import io.sentry.SentryOptions;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -26,7 +28,8 @@ public class SentryConfiguration {
     public SentryOptions.BeforeSendCallback beforeSendCallback() {
         return (event, _) -> {
             // Only send server errors (5xx) to Sentry. 4xx are client errors — expected, not bugs.
-            if (event.getLevel() != null && event.getLevel() != io.sentry.SentryLevel.ERROR
+            if (event.getLevel() != null
+                    && event.getLevel() != io.sentry.SentryLevel.ERROR
                     && event.getLevel() != io.sentry.SentryLevel.FATAL) {
                 return null;
             }
@@ -49,20 +52,19 @@ public class SentryConfiguration {
         return samplingContext -> {
             var transactionContext = samplingContext.getTransactionContext();
             var transactionName = transactionContext.getName();
-            
+
             // Sample 100% of critical endpoints
-            if (transactionName.contains(ApiPaths.AUTH_ROOT_PREFIX) ||
-                transactionName.contains(ApiPaths.PAYMENT + "/") ||
-                transactionName.contains(ApiPaths.ORDERS + "/")) {
+            if (transactionName.contains(ApiPaths.AUTH_ROOT_PREFIX)
+                    || transactionName.contains(ApiPaths.PAYMENT + "/")
+                    || transactionName.contains(ApiPaths.ORDERS + "/")) {
                 return 1.0;
             }
-            
+
             // Sample 50% of user-facing endpoints
-            if (transactionName.contains(ApiPaths.PRODUCTS + "/") ||
-                transactionName.contains(ApiPaths.CART + "/")) {
+            if (transactionName.contains(ApiPaths.PRODUCTS + "/") || transactionName.contains(ApiPaths.CART + "/")) {
                 return 0.5;
             }
-            
+
             // Sample 10% of everything else
             return 0.1;
         };
@@ -74,13 +76,13 @@ public class SentryConfiguration {
             // Add custom tags to transactions
             transaction.setTag("application", applicationName);
             transaction.setTag("version", applicationVersion);
-            
+
             // Filter out health check transactions
-            if (transaction.getTransaction() != null && 
-                transaction.getTransaction().contains("/actuator/health")) {
+            if (transaction.getTransaction() != null
+                    && transaction.getTransaction().contains("/actuator/health")) {
                 return null; // Don't send health check transactions
             }
-            
+
             return transaction;
         };
     }

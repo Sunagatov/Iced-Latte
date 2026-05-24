@@ -1,7 +1,12 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
-import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,18 +15,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Duration;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OAuthStateStore unit tests")
 class OAuthStateStoreTest {
 
-    @Mock private ExpiringKeyValueStore temporaryStore;
+    @Mock
+    private ExpiringKeyValueStore temporaryStore;
 
     private OAuthStateStore cache;
 
@@ -36,14 +38,14 @@ class OAuthStateStoreTest {
     void storeWritesTheCallbackUnderNamespacedKey() {
         cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback");
 
-        verify(temporaryStore).put("oauth:state:google:nonce-1", "https://example.com/callback", Duration.ofMinutes(10));
+        verify(temporaryStore)
+                .put("oauth:state:google:nonce-1", "https://example.com/callback", Duration.ofMinutes(10));
     }
 
     @Test
     @DisplayName("consume returns the stored callback")
     void consumeReturnsStoredCallback() {
-        when(temporaryStore.take("oauth:state:google:nonce-1"))
-                .thenReturn(Optional.of("https://example.com/callback"));
+        when(temporaryStore.take("oauth:state:google:nonce-1")).thenReturn(Optional.of("https://example.com/callback"));
 
         assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isEqualTo("https://example.com/callback");
     }
@@ -51,8 +53,7 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("consume uses a provider-specific key")
     void consumeUsesProviderSpecificKey() {
-        when(temporaryStore.take("oauth:state:google:nonce-1"))
-                .thenReturn(Optional.empty());
+        when(temporaryStore.take("oauth:state:google:nonce-1")).thenReturn(Optional.empty());
 
         assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isNull();
     }

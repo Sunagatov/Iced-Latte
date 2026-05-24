@@ -1,11 +1,14 @@
 package com.zufar.icedlatte.filestorage;
 
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
-import com.zufar.icedlatte.filestorage.entity.FileMetadata;
-import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
-import com.zufar.icedlatte.filestorage.service.FileStorageService;
-import com.zufar.icedlatte.filestorage.service.ObjectStorage;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,14 +19,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
+import com.zufar.icedlatte.filestorage.service.FileStorageService;
+import com.zufar.icedlatte.filestorage.service.ObjectStorage;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FileStorageService unit tests")
@@ -31,10 +32,13 @@ public class FileStorageServiceTest {
 
     @Mock
     private ObjectStorage objectStorage;
+
     @Mock
     private FileMetadataRepository fileMetadataRepository;
+
     @Mock
     private FileMetadataDtoConverter fileMetadataDtoConverter;
+
     @Mock
     private MultipartFile multipartFile;
 
@@ -75,7 +79,8 @@ public class FileStorageServiceTest {
             FileMetadata entity = new FileMetadata();
             entity.setRelatedObjectId(relatedObjectId);
             FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of(entity));
+            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                    .thenReturn(List.of(entity));
             when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
             when(objectStorage.getUrl(metadata)).thenReturn(Optional.of("https://cdn.example.com/key"));
 
@@ -86,7 +91,8 @@ public class FileStorageServiceTest {
         @DisplayName("returns empty when metadata is missing")
         void returnsEmptyWhenMetadataMissing() {
             UUID relatedObjectId = UUID.randomUUID();
-            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of());
+            when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                    .thenReturn(List.of());
 
             assertThat(fileStorageService.findFileUrl(relatedObjectId)).isEmpty();
             verifyNoInteractions(objectStorage);
@@ -141,7 +147,8 @@ public class FileStorageServiceTest {
         FileMetadata entity = new FileMetadata();
         entity.setRelatedObjectId(relatedObjectId);
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
-        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId))).thenReturn(List.of(entity));
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(entity));
         when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
 
         fileStorageService.deleteFile(relatedObjectId);
@@ -154,11 +161,8 @@ public class FileStorageServiceTest {
     @DisplayName("refreshBucketIndex clears old bucket metadata before saving")
     void refreshBucketIndexClearsOldBucketMetadataBeforeSaving() {
         UUID relatedObjectId = UUID.randomUUID();
-        List<FileMetadataDto> metadata = List.of(new FileMetadataDto(
-                relatedObjectId,
-                "bucket",
-                "product_" + relatedObjectId + "/key"
-        ));
+        List<FileMetadataDto> metadata =
+                List.of(new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/key"));
         List<FileMetadata> entities = List.of(new FileMetadata());
         when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of("product_" + relatedObjectId + "/key"));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(entities);
@@ -174,15 +178,10 @@ public class FileStorageServiceTest {
     @SuppressWarnings("unchecked")
     void refreshBucketIndexMapsValidStorageKeysToMetadataBeforeSaving() {
         UUID relatedObjectId = UUID.randomUUID();
-        List<FileMetadataDto> metadata = List.of(new FileMetadataDto(
-                relatedObjectId,
-                "bucket",
-                "product_" + relatedObjectId + "/cover.jpg"
-        ));
-        when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of(
-                "product_" + relatedObjectId + "/cover.jpg",
-                "invalid-key"
-        ));
+        List<FileMetadataDto> metadata =
+                List.of(new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/cover.jpg"));
+        when(objectStorage.listObjectKeys("bucket"))
+                .thenReturn(List.of("product_" + relatedObjectId + "/cover.jpg", "invalid-key"));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
 
         fileStorageService.refreshBucketIndex("bucket");
@@ -197,15 +196,12 @@ public class FileStorageServiceTest {
     @SuppressWarnings("unchecked")
     void refreshBucketIndexSavesOnePreferredMetadataRowPerRelatedObject() {
         UUID relatedObjectId = UUID.randomUUID();
-        FileMetadataDto preferred = new FileMetadataDto(
-                relatedObjectId,
-                "bucket",
-                "product_" + relatedObjectId + "/card_logo.webp"
-        );
-        when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of(
-                "product_" + relatedObjectId + "/card_logo.png",
-                "product_" + relatedObjectId + "/card_logo.webp"
-        ));
+        FileMetadataDto preferred =
+                new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/card_logo.webp");
+        when(objectStorage.listObjectKeys("bucket"))
+                .thenReturn(List.of(
+                        "product_" + relatedObjectId + "/card_logo.png",
+                        "product_" + relatedObjectId + "/card_logo.webp"));
         when(fileMetadataDtoConverter.toEntityList(List.of(preferred))).thenReturn(List.of(new FileMetadata()));
 
         fileStorageService.refreshBucketIndex("bucket");

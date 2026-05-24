@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.order.endpoint;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
@@ -9,18 +21,9 @@ import com.zufar.icedlatte.order.service.OrderReorderService;
 import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.service.query.OrderDetailProvider;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -56,8 +59,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
                 page != null ? page : paginationConfig.defaultPageNumber(),
                 size != null ? Math.min(size, defaults.maxPageSize()) : defaults.defaultPageSize(),
                 sortBy != null ? sortBy : defaults.defaultSortAttribute(),
-                sortDirection != null ? sortDirection : defaults.defaultSortDirection()
-        );
+                sortDirection != null ? sortDirection : defaults.defaultSortDirection());
         var result = orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable);
         return ResponseEntity.ok(result);
     }
@@ -94,8 +96,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     @Override
     @PostMapping("/{orderId}/refund")
     public ResponseEntity<OrderDto> requestRefund(
-            @PathVariable final UUID orderId,
-            @Valid @RequestBody(required = false) final RefundRequestDto request) {
+            @PathVariable final UUID orderId, @Valid @RequestBody(required = false) final RefundRequestDto request) {
         var userId = currentUserProvider.getUserId();
         String reason = request != null ? request.getReason() : null;
         log.info("orders.refund: userId={}, orderId={}", userId, orderId);

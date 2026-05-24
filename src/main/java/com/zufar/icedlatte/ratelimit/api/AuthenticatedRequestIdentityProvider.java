@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.ratelimit.api;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.util.Optional;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthenticatedRequestIdentityProvider {
 

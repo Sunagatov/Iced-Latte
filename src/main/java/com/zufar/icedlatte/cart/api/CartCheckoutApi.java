@@ -1,14 +1,14 @@
 package com.zufar.icedlatte.cart.api;
 
-import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
-import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
-
 import java.util.Set;
 import java.util.UUID;
 
+import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
+import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
+
 /**
- * Narrow contract exposed to payment and order modules.
- * Provides checkout-related cart operations and reorder item addition.
+ * Narrow contract exposed to payment and order modules. Provides checkout-related cart operations and reorder item
+ * addition.
  */
 public interface CartCheckoutApi {
 

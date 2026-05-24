@@ -1,17 +1,18 @@
 package com.zufar.icedlatte.security.jwt.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+
+import java.time.Duration;
+
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
 @DisplayName("JwtProperties unit tests")
@@ -35,8 +36,7 @@ class JwtPropertiesTest {
                 Duration.ofMinutes(15),
                 Duration.ofDays(7),
                 "iced-latte",
-                "iced-latte-users"
-        );
+                "iced-latte-users");
 
         assertThat(validator.validate(properties)).isEmpty();
         assertThat(properties.expiration()).isEqualTo(Duration.ofMinutes(15));
@@ -46,15 +46,7 @@ class JwtPropertiesTest {
     @Test
     @DisplayName("rejects blank and null required fields")
     void rejectsBlankAndNullFields() {
-        JwtProperties properties = new JwtProperties(
-                "",
-                " ",
-                "",
-                null,
-                null,
-                "",
-                ""
-        );
+        JwtProperties properties = new JwtProperties("", " ", "", null, null, "", "");
 
         var violations = validator.validate(properties);
 
@@ -62,13 +54,6 @@ class JwtPropertiesTest {
         assertThat(violations)
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .containsExactlyInAnyOrder(
-                        "header",
-                        "secret",
-                        "refreshSecret",
-                        "expiration",
-                        "refreshExpiration",
-                        "issuer",
-                        "audience"
-                );
+                        "header", "secret", "refreshSecret", "expiration", "refreshExpiration", "issuer", "audience");
     }
 }

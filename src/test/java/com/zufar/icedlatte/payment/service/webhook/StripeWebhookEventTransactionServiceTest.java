@@ -1,8 +1,13 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import com.zufar.icedlatte.payment.entity.StripeWebhookEvent;
-import com.zufar.icedlatte.payment.entity.WebhookEventStatus;
-import com.zufar.icedlatte.payment.repository.StripeWebhookEventRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.OffsetDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,27 +16,27 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.OffsetDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.payment.entity.StripeWebhookEvent;
+import com.zufar.icedlatte.payment.entity.WebhookEventStatus;
+import com.zufar.icedlatte.payment.repository.StripeWebhookEventRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("StripeWebhookEventTransactionService unit tests")
 class StripeWebhookEventTransactionServiceTest {
 
-    @Mock private StripeWebhookEventRepository repository;
-    @InjectMocks private StripeWebhookEventTransactionService service;
+    @Mock
+    private StripeWebhookEventRepository repository;
+
+    @InjectMocks
+    private StripeWebhookEventTransactionService service;
 
     @Test
     @DisplayName("tryInsertNewEvent saves event with PROCESSING status")
     void tryInsertNewEvent_savesProcessing() {
         when(repository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(service.tryInsertNewEvent("evt_1", "checkout.session.completed")).isTrue();
+        assertThat(service.tryInsertNewEvent("evt_1", "checkout.session.completed"))
+                .isTrue();
 
         ArgumentCaptor<StripeWebhookEvent> captor = ArgumentCaptor.forClass(StripeWebhookEvent.class);
         verify(repository).saveAndFlush(captor.capture());
@@ -43,8 +48,12 @@ class StripeWebhookEventTransactionServiceTest {
     @DisplayName("tryReacquireRetryableEvent re-acquires RETRYABLE_FAILED event")
     void tryReacquireRetryableEvent_reAcquires() {
         StripeWebhookEvent event = new StripeWebhookEvent(
-                "evt_1", "checkout.session.completed", WebhookEventStatus.RETRYABLE_FAILED,
-                OffsetDateTime.now(), null, "DB timeout");
+                "evt_1",
+                "checkout.session.completed",
+                WebhookEventStatus.RETRYABLE_FAILED,
+                OffsetDateTime.now(),
+                null,
+                "DB timeout");
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isTrue();
@@ -56,8 +65,12 @@ class StripeWebhookEventTransactionServiceTest {
     @DisplayName("tryReacquireRetryableEvent returns false for PROCESSED event")
     void tryReacquireRetryableEvent_processedEvent_returnsFalse() {
         StripeWebhookEvent event = new StripeWebhookEvent(
-                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSED,
-                OffsetDateTime.now(), OffsetDateTime.now(), null);
+                "evt_1",
+                "checkout.session.completed",
+                WebhookEventStatus.PROCESSED,
+                OffsetDateTime.now(),
+                OffsetDateTime.now(),
+                null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
@@ -67,8 +80,7 @@ class StripeWebhookEventTransactionServiceTest {
     @DisplayName("tryReacquireRetryableEvent returns false for PROCESSING event")
     void tryReacquireRetryableEvent_processingEvent_returnsFalse() {
         StripeWebhookEvent event = new StripeWebhookEvent(
-                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING,
-                OffsetDateTime.now(), null, null);
+                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
@@ -78,8 +90,7 @@ class StripeWebhookEventTransactionServiceTest {
     @DisplayName("markProcessed sets PROCESSED status and processedAt")
     void markProcessed_setsStatus() {
         StripeWebhookEvent event = new StripeWebhookEvent(
-                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING,
-                OffsetDateTime.now(), null, null);
+                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
         service.markProcessed("evt_1");
@@ -92,8 +103,7 @@ class StripeWebhookEventTransactionServiceTest {
     @DisplayName("markRetryableFailed sets status and truncates long reason")
     void markRetryableFailed_setsStatusAndReason() {
         StripeWebhookEvent event = new StripeWebhookEvent(
-                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING,
-                OffsetDateTime.now(), null, null);
+                "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null);
         when(repository.findById("evt_1")).thenReturn(Optional.of(event));
 
         service.markRetryableFailed("evt_1", "Connection timeout");

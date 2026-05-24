@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.user.api;
 
+import java.util.UUID;
+
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
-
-import java.util.UUID;
 
 public interface UserLookupApi {
 

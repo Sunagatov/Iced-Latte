@@ -1,19 +1,8 @@
 package com.zufar.icedlatte.common.validation;
 
-import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
-import com.zufar.icedlatte.favorite.endpoint.FavoritesEndpoint;
-import com.zufar.icedlatte.order.endpoint.AdminOrderEndpoint;
-import com.zufar.icedlatte.order.endpoint.OrderEndpoint;
-import com.zufar.icedlatte.payment.endpoint.PaymentEndpoint;
-import com.zufar.icedlatte.product.endpoint.ProductsEndpoint;
-import com.zufar.icedlatte.review.endpoint.ProductReviewEndpoint;
-import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
-import com.zufar.icedlatte.user.endpoint.UserEndpoint;
-import jakarta.validation.Validation;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -29,9 +18,22 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.mock;
+import jakarta.validation.Validation;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.zufar.icedlatte.cart.endpoint.CartEndpoint;
+import com.zufar.icedlatte.favorite.endpoint.FavoritesEndpoint;
+import com.zufar.icedlatte.order.endpoint.AdminOrderEndpoint;
+import com.zufar.icedlatte.order.endpoint.OrderEndpoint;
+import com.zufar.icedlatte.payment.endpoint.PaymentEndpoint;
+import com.zufar.icedlatte.product.endpoint.ProductsEndpoint;
+import com.zufar.icedlatte.review.endpoint.ProductReviewEndpoint;
+import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
+import com.zufar.icedlatte.user.endpoint.UserEndpoint;
 
 @DisplayName("OpenAPI endpoint validation contract tests")
 class OpenApiEndpointValidationContractTest {
@@ -45,8 +47,7 @@ class OpenApiEndpointValidationContractTest {
             ProductsEndpoint.class,
             ProductReviewEndpoint.class,
             UserEndpoint.class,
-            UserSecurityEndpoint.class
-    );
+            UserSecurityEndpoint.class);
 
     @Test
     @DisplayName("every production endpoint is covered by generated OpenAPI contract checks")
@@ -60,13 +61,16 @@ class OpenApiEndpointValidationContractTest {
     @DisplayName("every generated OpenAPI operation is explicitly overridden by its endpoint")
     void everyGeneratedOpenApiOperationHasConcreteEndpointOverride() {
         for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
-            generatedOpenApiOperationMethods(endpointClass).forEach(apiMethod -> assertThatCode(() -> {
-                        Method endpointMethod = endpointClass.getDeclaredMethod(apiMethod.getName(), apiMethod.getParameterTypes());
-                        assertThat(endpointMethod).isNotNull();
-                    })
-                    .as("%s must override generated OpenAPI operation %s",
-                            endpointClass.getSimpleName(), apiMethod.getName())
-                    .doesNotThrowAnyException());
+            generatedOpenApiOperationMethods(endpointClass)
+                    .forEach(apiMethod -> assertThatCode(() -> {
+                                Method endpointMethod = endpointClass.getDeclaredMethod(
+                                        apiMethod.getName(), apiMethod.getParameterTypes());
+                                assertThat(endpointMethod).isNotNull();
+                            })
+                            .as(
+                                    "%s must override generated OpenAPI operation %s",
+                                    endpointClass.getSimpleName(), apiMethod.getName())
+                            .doesNotThrowAnyException());
         }
     }
 
@@ -74,17 +78,22 @@ class OpenApiEndpointValidationContractTest {
     @DisplayName("endpoint validation metadata matches implemented generated OpenAPI interfaces")
     void endpointValidationMetadataMatchesGeneratedApiInterfaces() {
         assertThatCode(() -> {
-            try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
-                var executableValidator = validatorFactory.getValidator().forExecutables();
-                for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
-                    Object endpoint = instantiateWithMocks(endpointClass);
-                    for (Method apiMethod : generatedOpenApiOperationMethods(endpointClass).toList()) {
-                        Method endpointMethod = endpointClass.getMethod(apiMethod.getName(), apiMethod.getParameterTypes());
-                        executableValidator.validateParameters(endpoint, endpointMethod, dummyArguments(endpointMethod));
+                    try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+                        var executableValidator =
+                                validatorFactory.getValidator().forExecutables();
+                        for (Class<?> endpointClass : GENERATED_API_ENDPOINTS) {
+                            Object endpoint = instantiateWithMocks(endpointClass);
+                            for (Method apiMethod : generatedOpenApiOperationMethods(endpointClass)
+                                    .toList()) {
+                                Method endpointMethod =
+                                        endpointClass.getMethod(apiMethod.getName(), apiMethod.getParameterTypes());
+                                executableValidator.validateParameters(
+                                        endpoint, endpointMethod, dummyArguments(endpointMethod));
+                            }
+                        }
                     }
-                }
-            }
-        }).doesNotThrowAnyException();
+                })
+                .doesNotThrowAnyException();
     }
 
     private static Stream<Method> generatedOpenApiOperationMethods(Class<?> endpointClass) {
@@ -98,8 +107,7 @@ class OpenApiEndpointValidationContractTest {
     }
 
     private static boolean isGeneratedOpenApiInterface(Class<?> apiInterface) {
-        return apiInterface.isInterface()
-                && apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.");
+        return apiInterface.isInterface() && apiInterface.getPackageName().startsWith("com.zufar.icedlatte.openapi.");
     }
 
     private static Set<String> endpointSourceClassNames() throws Exception {

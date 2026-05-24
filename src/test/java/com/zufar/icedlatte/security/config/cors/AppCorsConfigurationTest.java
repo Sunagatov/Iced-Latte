@@ -1,14 +1,14 @@
 package com.zufar.icedlatte.security.config.cors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("AppCorsConfiguration unit tests")
 class AppCorsConfigurationTest {
@@ -19,7 +19,8 @@ class AppCorsConfigurationTest {
         var properties = new CorsProperties(
                 List.of("https://app.example.com"),
                 List.of("GET", "POST"),
-                List.of("Authorization",
+                List.of(
+                        "Authorization",
                         "Content-Type",
                         "Accept",
                         "Origin",
@@ -35,8 +36,8 @@ class AppCorsConfigurationTest {
         AppCorsConfiguration configuration = new AppCorsConfiguration(properties);
 
         CorsConfigurationSource source = configuration.corsConfigurationSource();
-        CorsConfiguration corsConfiguration = source.getCorsConfiguration(
-                new MockHttpServletRequest("GET", "/api/v1/products"));
+        CorsConfiguration corsConfiguration =
+                source.getCorsConfiguration(new MockHttpServletRequest("GET", "/api/v1/products"));
 
         assertThat(corsConfiguration).isNotNull();
         assertThat(corsConfiguration.getAllowedOriginPatterns()).containsExactly("https://app.example.com");

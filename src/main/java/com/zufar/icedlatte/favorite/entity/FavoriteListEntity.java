@@ -1,13 +1,15 @@
 package com.zufar.icedlatte.favorite.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.UpdateTimestamp;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -27,9 +29,15 @@ public class FavoriteListEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "favoriteListEntity",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE,
-                    CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH},
+    @OneToMany(
+            mappedBy = "favoriteListEntity",
+            cascade = {
+                CascadeType.PERSIST,
+                CascadeType.MERGE,
+                CascadeType.REFRESH,
+                CascadeType.REMOVE,
+                CascadeType.DETACH
+            },
             orphanRemoval = true,
             fetch = FetchType.LAZY)
     private Set<FavoriteItemEntity> favoriteItems;

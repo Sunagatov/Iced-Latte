@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import io.sentry.*;
-import io.sentry.protocol.SentryId;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.concurrent.TimeUnit;
+import io.sentry.*;
+import io.sentry.protocol.SentryId;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -23,11 +24,19 @@ public class SentryJobMonitor {
         long startedAt = System.nanoTime();
         try {
             job.run();
-            captureCheckIn(monitorSlug, CheckInStatus.OK, monitorConfigForFinalCheckIn(monitorConfig, checkInId),
-                    durationSeconds(startedAt), checkInId);
+            captureCheckIn(
+                    monitorSlug,
+                    CheckInStatus.OK,
+                    monitorConfigForFinalCheckIn(monitorConfig, checkInId),
+                    durationSeconds(startedAt),
+                    checkInId);
         } catch (RuntimeException | Error e) {
-            captureCheckIn(monitorSlug, CheckInStatus.ERROR, monitorConfigForFinalCheckIn(monitorConfig, checkInId),
-                    durationSeconds(startedAt), checkInId);
+            captureCheckIn(
+                    monitorSlug,
+                    CheckInStatus.ERROR,
+                    monitorConfigForFinalCheckIn(monitorConfig, checkInId),
+                    durationSeconds(startedAt),
+                    checkInId);
             throw e;
         }
     }
@@ -44,8 +53,8 @@ public class SentryJobMonitor {
 
     public MonitorConfig fixedDelayConfig(long fixedDelayMs) {
         long intervalMinutes = Math.max(1, TimeUnit.MILLISECONDS.toMinutes(fixedDelayMs));
-        MonitorConfig monitorConfig = new MonitorConfig(MonitorSchedule.interval(Math.toIntExact(intervalMinutes),
-                MonitorScheduleUnit.MINUTE));
+        MonitorConfig monitorConfig = new MonitorConfig(
+                MonitorSchedule.interval(Math.toIntExact(intervalMinutes), MonitorScheduleUnit.MINUTE));
         monitorConfig.setCheckinMargin(5L);
         monitorConfig.setMaxRuntime(Math.max(5L, intervalMinutes));
         monitorConfig.setFailureIssueThreshold(1L);
@@ -64,16 +73,16 @@ public class SentryJobMonitor {
         return springCron;
     }
 
-    private SentryId captureCheckIn(String monitorSlug,
-                                    MonitorConfig monitorConfig) {
+    private SentryId captureCheckIn(String monitorSlug, MonitorConfig monitorConfig) {
         return captureCheckIn(monitorSlug, CheckInStatus.IN_PROGRESS, monitorConfig, null, null);
     }
 
-    private SentryId captureCheckIn(String monitorSlug,
-                                    CheckInStatus status,
-                                    MonitorConfig monitorConfig,
-                                    Double duration,
-                                    SentryId checkInId) {
+    private SentryId captureCheckIn(
+            String monitorSlug,
+            CheckInStatus status,
+            MonitorConfig monitorConfig,
+            Double duration,
+            SentryId checkInId) {
         if (!sentryEnabled || !Sentry.isEnabled()) {
             return SentryId.EMPTY_ID;
         }
@@ -83,8 +92,11 @@ public class SentryJobMonitor {
             checkIn.setDuration(duration);
             return Sentry.captureCheckIn(checkIn);
         } catch (RuntimeException e) {
-            log.debug("sentry.monitor.check_in_failed: monitorSlug={}, status={}, exceptionClass={}",
-                    monitorSlug, status.apiName(), e.getClass().getSimpleName());
+            log.debug(
+                    "sentry.monitor.check_in_failed: monitorSlug={}, status={}, exceptionClass={}",
+                    monitorSlug,
+                    status.apiName(),
+                    e.getClass().getSimpleName());
             return SentryId.EMPTY_ID;
         }
     }

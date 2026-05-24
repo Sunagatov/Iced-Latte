@@ -1,5 +1,24 @@
 package com.zufar.icedlatte.security.signup.verification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
@@ -12,46 +31,38 @@ import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
-import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmailVerificationService unit tests")
 class EmailVerificationServiceTest {
 
-    @Mock private AuthTokenEmailSender emailConfirmation;
-    @Mock private UserRegistrationService userRegistrationService;
-    @Mock private UserLookupApi userLookupApi;
-    @Mock private UserAccessControlApi userAccessControlApi;
-    @Mock private HttpServletRequest httpRequest;
+    @Mock
+    private AuthTokenEmailSender emailConfirmation;
+
+    @Mock
+    private UserRegistrationService userRegistrationService;
+
+    @Mock
+    private UserLookupApi userLookupApi;
+
+    @Mock
+    private UserAccessControlApi userAccessControlApi;
+
+    @Mock
+    private HttpServletRequest httpRequest;
 
     private EmailVerificationService service;
 
     @BeforeEach
     void setUp() {
         service = new EmailVerificationService(
-                new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
+                new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(
+                        1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
                 emailConfirmation,
                 userRegistrationService,
                 userLookupApi,
-                userAccessControlApi
-        );
+                userAccessControlApi);
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(service, "tokenLength", 9);
     }
@@ -69,7 +80,8 @@ class EmailVerificationServiceTest {
             service.sendEmailVerificationCode(request);
 
             verify(userRegistrationService).ensureEmailAvailable(request);
-            verify(emailConfirmation).sendTemporaryCode(eq("john@example.com"), argThat(token -> token.matches("\\d{9}")));
+            verify(emailConfirmation)
+                    .sendTemporaryCode(eq("john@example.com"), argThat(token -> token.matches("\\d{9}")));
         }
 
         @Test
@@ -78,7 +90,8 @@ class EmailVerificationServiceTest {
             UserRegistrationRequest request =
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass123!");
             doThrow(new UserRegistrationException("duplicate"))
-                    .when(userRegistrationService).ensureEmailAvailable(request);
+                    .when(userRegistrationService)
+                    .ensureEmailAvailable(request);
 
             assertThatThrownBy(() -> service.sendEmailVerificationCode(request))
                     .isInstanceOf(UserRegistrationException.class);
@@ -96,7 +109,8 @@ class EmailVerificationServiceTest {
         void createsPasswordResetRequestWithEmailAndSendsGeneratedToken() {
             service.sendPasswordResetCode("user@example.com");
 
-            verify(emailConfirmation).sendTemporaryCode(eq("user@example.com"), argThat(token -> token.matches("\\d{9}")));
+            verify(emailConfirmation)
+                    .sendTemporaryCode(eq("user@example.com"), argThat(token -> token.matches("\\d{9}")));
         }
     }
 
@@ -111,7 +125,8 @@ class EmailVerificationServiceTest {
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
             UserAuthenticationResponse authResponse = new UserAuthenticationResponse();
             String token = service.generateToken(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
-            when(userRegistrationService.register(registrationRequest, httpRequest)).thenReturn(authResponse);
+            when(userRegistrationService.register(registrationRequest, httpRequest))
+                    .thenReturn(authResponse);
 
             UserAuthenticationResponse result = service.confirmEmailByCode(new ConfirmEmailRequest(token), httpRequest);
 
@@ -144,7 +159,8 @@ class EmailVerificationServiceTest {
     @Test
     @DisplayName("generateToken returns a 9 digit token")
     void generateTokenReturnsNineDigitToken() {
-        UserRegistrationRequest request = new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
+        UserRegistrationRequest request =
+                new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
 
         String token = service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
 
@@ -154,7 +170,8 @@ class EmailVerificationServiceTest {
     @Test
     @DisplayName("validateToken rejects invalid token format")
     void validateTokenRejectsInvalidTokenFormat() {
-        assertThatThrownBy(() -> service.validateToken(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(
+                        () -> service.validateToken(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(com.zufar.icedlatte.common.exception.BadRequestException.class);
     }
 }

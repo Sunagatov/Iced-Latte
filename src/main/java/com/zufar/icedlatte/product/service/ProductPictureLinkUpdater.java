@@ -1,13 +1,15 @@
 package com.zufar.icedlatte.product.service;
 
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -24,9 +26,7 @@ public class ProductPictureLinkUpdater {
     }
 
     public List<ProductInfoDto> updateBatch(List<ProductInfoDto> products) {
-        List<UUID> productIds = products.stream()
-                .map(ProductInfoDto::getId)
-                .toList();
+        List<UUID> productIds = products.stream().map(ProductInfoDto::getId).toList();
 
         Map<UUID, String> fileUrls = productImageReceiver.getProductFileUrls(productIds);
         Map<UUID, List<String>> imageUrls = productImageReceiver.getProductImageUrlsBatch(productIds);

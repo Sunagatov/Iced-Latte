@@ -1,8 +1,14 @@
 package com.zufar.icedlatte.review.service.ai.moderation;
 
-import com.zufar.icedlatte.review.entity.ProductReview;
-import com.zufar.icedlatte.review.exception.ReviewModerationException;
-import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,14 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.exception.ReviewModerationException;
+import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LangChain4jReviewAiService unit tests")

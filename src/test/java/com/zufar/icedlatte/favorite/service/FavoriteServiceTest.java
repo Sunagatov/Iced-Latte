@@ -1,5 +1,23 @@
 package com.zufar.icedlatte.favorite.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
@@ -9,33 +27,22 @@ import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
-
-import java.math.BigDecimal;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FavoriteService unit tests")
 class FavoriteServiceTest {
 
-    @InjectMocks private FavoriteService favoriteService;
+    @InjectMocks
+    private FavoriteService favoriteService;
 
-    @Mock private FavoriteRepository favoriteRepository;
-    @Mock private ProductCatalogApi productCatalogApi;
-    @Mock private FavoriteListDtoConverter favoriteListDtoConverter;
+    @Mock
+    private FavoriteRepository favoriteRepository;
+
+    @Mock
+    private ProductCatalogApi productCatalogApi;
+
+    @Mock
+    private FavoriteListDtoConverter favoriteListDtoConverter;
 
     @Test
     @DisplayName("getEnrichedFavoriteList returns enriched DTO when list exists")
@@ -94,7 +101,10 @@ class FavoriteServiceTest {
         FavoriteListEntity staleList = new FavoriteListEntity();
         staleList.setFavoriteItems(new HashSet<>());
 
-        FavoriteItemEntity existingItem = FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(productId).build();
+        FavoriteItemEntity existingItem = FavoriteItemEntity.builder()
+                .id(UUID.randomUUID())
+                .productId(productId)
+                .build();
         FavoriteListEntity freshList = new FavoriteListEntity();
         freshList.setFavoriteItems(new HashSet<>(Set.of(existingItem)));
 
@@ -128,7 +138,10 @@ class FavoriteServiceTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        FavoriteItemEntity item = FavoriteItemEntity.builder().id(UUID.randomUUID()).productId(productId).build();
+        FavoriteItemEntity item = FavoriteItemEntity.builder()
+                .id(UUID.randomUUID())
+                .productId(productId)
+                .build();
         FavoriteListEntity entity = new FavoriteListEntity();
         entity.setFavoriteItems(new HashSet<>(Set.of(item)));
 

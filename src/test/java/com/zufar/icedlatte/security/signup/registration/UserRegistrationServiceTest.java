@@ -1,12 +1,16 @@
 package com.zufar.icedlatte.security.signup.registration;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.token.SessionTokenService;
-import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
-import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
-import com.zufar.icedlatte.user.api.UserRegistrationApi;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,25 +20,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.token.SessionTokenService;
+import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
+import com.zufar.icedlatte.user.api.UserRegistrationApi;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserRegistrationService unit tests")
 class UserRegistrationServiceTest {
 
-    @Mock private UserRegistrationApi userRegistrationApi;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private SessionTokenService sessionTokenService;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private UserRegistrationApi userRegistrationApi;
 
-    @InjectMocks private UserRegistrationService service;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private SessionTokenService sessionTokenService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private UserRegistrationService service;
 
     @Test
     @DisplayName("register normalizes input, persists the user, and returns a session-bound token pair")
@@ -53,25 +63,20 @@ class UserRegistrationServiceTest {
                 true,
                 true,
                 true,
-                true
-        );
+                true);
         UserAuthenticationResponse tokenPair = new UserAuthenticationResponse();
         tokenPair.setToken("access-token");
         tokenPair.setRefreshToken("refresh-token");
 
         when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
-        when(userRegistrationApi.registerPasswordUser(any(), any(), any(), any())).thenReturn(snapshot);
-        when(sessionTokenService.issueForNewSession(any(), eq(request)))
-                .thenReturn(tokenPair);
+        when(userRegistrationApi.registerPasswordUser(any(), any(), any(), any()))
+                .thenReturn(snapshot);
+        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair);
 
         UserAuthenticationResponse response = service.register(registrationRequest, request);
 
-        verify(userRegistrationApi).registerPasswordUser(
-                eq("Alice"),
-                eq("Example"),
-                eq("mixed.case@example.com"),
-                eq("encoded-password")
-        );
+        verify(userRegistrationApi)
+                .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
 
         assertThat(response.getToken()).isEqualTo("access-token");

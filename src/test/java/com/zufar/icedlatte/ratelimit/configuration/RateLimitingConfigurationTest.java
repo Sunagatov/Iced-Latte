@@ -1,7 +1,14 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
-import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import com.zufar.icedlatte.ratelimit.api.RateLimiter;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,20 +18,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 
-import java.time.Duration;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
+import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RateLimitingConfiguration unit tests")
 class RateLimitingConfigurationTest {
 
-    @Mock private RedisTemplate<String, String> redisTemplate;
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
 
     private final RateLimitingConfiguration configuration = new RateLimitingConfiguration();
 
@@ -86,7 +88,8 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth flood fallback uses open policy semantics")
         void preAuthFloodFallbackUsesOpenPolicy() {
-            RateLimiter limiter = configuration.openCaffeineRateLimiter(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+            RateLimiter limiter = configuration.openCaffeineRateLimiter(
+                    new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
             var first = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
             var second = limiter.tryConsume("global:ip:1.2.3.4", 1, Duration.ofMinutes(1));
@@ -98,7 +101,8 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("pre-auth auth fallback uses closed-policy limiter behavior")
         void preAuthAuthFallbackCreatesClosedPolicyLimiter() {
-            RateLimiter limiter = configuration.closedCaffeineRateLimiter(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+            RateLimiter limiter = configuration.closedCaffeineRateLimiter(
+                    new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
             var result = limiter.tryConsume("auth:ip:1.2.3.4", 2, Duration.ofMinutes(1));
 

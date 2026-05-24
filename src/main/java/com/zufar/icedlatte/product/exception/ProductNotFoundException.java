@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.product.exception;
 
-import lombok.Getter;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import lombok.Getter;
 
 @Getter
 @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -20,8 +21,9 @@ public class ProductNotFoundException extends RuntimeException {
     }
 
     public ProductNotFoundException(final List<UUID> productIds) {
-        super(String.format("Products with productIds = %s are not found.", productIds.stream().map(UUID::toString)
-                .collect(Collectors.joining(", "))));
+        super(String.format(
+                "Products with productIds = %s are not found.",
+                productIds.stream().map(UUID::toString).collect(Collectors.joining(", "))));
         this.productIds = productIds;
     }
 }

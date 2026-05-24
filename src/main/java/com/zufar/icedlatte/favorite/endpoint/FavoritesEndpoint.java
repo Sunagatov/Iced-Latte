@@ -1,19 +1,22 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.favorite.service.FavoriteService;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.favorite.api.FavoriteProductsApi;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
-import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -29,7 +32,8 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(@Valid @RequestBody final ListOfFavoriteProducts request) {
+    public ResponseEntity<ListOfFavoriteProductsDto> addListOfFavoriteProducts(
+            @Valid @RequestBody final ListOfFavoriteProducts request) {
         var userId = currentUserProvider.getUserId();
         var response = favoriteService.add(request, userId);
         log.debug("favourites.added: count={}", request.getProductIds().size());
@@ -41,7 +45,10 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = currentUserProvider.getUserId();
         var response = favoriteService.getEnrichedFavoriteList(userId);
-        log.debug("favourites.retrieved: count={}, userId={}", response.getProducts().size(), userId);
+        log.debug(
+                "favourites.retrieved: count={}, userId={}",
+                response.getProducts().size(),
+                userId);
         return ResponseEntity.ok(response);
     }
 

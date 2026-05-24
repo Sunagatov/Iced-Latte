@@ -1,17 +1,19 @@
 package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
-import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
-import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.util.UUID;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
+import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

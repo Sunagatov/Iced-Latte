@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.security.session.management;
 
-import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor

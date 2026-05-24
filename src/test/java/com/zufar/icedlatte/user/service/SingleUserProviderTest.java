@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
-import com.zufar.icedlatte.user.entity.Authority;
-import com.zufar.icedlatte.user.entity.UserEntity;
-import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
-import com.zufar.icedlatte.user.repository.UserRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,12 +14,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.converter.UserDtoConverter;
+import com.zufar.icedlatte.user.entity.Authority;
+import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SingleUserProvider unit tests")
@@ -117,7 +118,8 @@ class SingleUserProviderTest {
                 .id(UUID.randomUUID())
                 .email("user@example.com")
                 .password("encoded")
-                .authorities(java.util.Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
+                .authorities(java.util.Set.of(
+                        UserGrantedAuthority.builder().authority(Authority.USER).build()))
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)
@@ -144,7 +146,8 @@ class SingleUserProviderTest {
     void findUserAuthenticationByEmailReturnsEmptyWhenMissing() {
         when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
 
-        assertThat(singleUserProvider.findUserAuthenticationByEmail("missing@example.com")).isEmpty();
+        assertThat(singleUserProvider.findUserAuthenticationByEmail("missing@example.com"))
+                .isEmpty();
         verify(userCrudRepository).findByEmail("missing@example.com");
     }
 
@@ -156,7 +159,8 @@ class SingleUserProviderTest {
                 .id(userId)
                 .email("user@example.com")
                 .password("encoded")
-                .authorities(java.util.Set.of(UserGrantedAuthority.builder().authority(Authority.USER).build()))
+                .authorities(java.util.Set.of(
+                        UserGrantedAuthority.builder().authority(Authority.USER).build()))
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)

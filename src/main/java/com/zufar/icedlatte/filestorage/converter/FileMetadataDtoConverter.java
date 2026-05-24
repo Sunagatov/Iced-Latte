@@ -1,7 +1,7 @@
 package com.zufar.icedlatte.filestorage.converter;
 
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import java.util.List;
+
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,11 +9,11 @@ import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.entity.FileMetadata;
 
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface FileMetadataDtoConverter {
 
     @Named("toFileMetadataDto")

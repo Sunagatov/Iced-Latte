@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.product.repository;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.UUID;
+import com.zufar.icedlatte.product.entity.ProductInfo;
 
 public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>, JpaSpecificationExecutor<ProductInfo> {
 
@@ -19,8 +20,7 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
     List<String> findDistinctBrandNames();
 
     @Modifying
-    @Query(nativeQuery = true,
-            value = """
+    @Query(nativeQuery = true, value = """
                     UPDATE product p
                        SET average_rating = COALESCE((SELECT AVG(pr.rating)
                                                        FROM product_reviews pr
@@ -30,8 +30,7 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
     void updateAverageRating(@Param("productId") UUID productId);
 
     @Modifying
-    @Query(nativeQuery = true,
-            value = """
+    @Query(nativeQuery = true, value = """
                     UPDATE product p
                        SET reviews_count = (SELECT COUNT(pr.id)
                                               FROM product_reviews pr
@@ -42,8 +41,7 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
 
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
-    @Query(nativeQuery = true,
-            value = """
+    @Query(nativeQuery = true, value = """
                     -- noinspection SqlWithoutWhere
                     UPDATE product p
                                    SET average_rating = COALESCE((SELECT AVG(pr.rating)
@@ -54,8 +52,7 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
 
     @SuppressWarnings("SqlWithoutWhereClause")
     @Modifying
-    @Query(nativeQuery = true,
-            value = """
+    @Query(nativeQuery = true, value = """
                     -- noinspection SqlWithoutWhere
                     UPDATE product p
                                    SET reviews_count = (SELECT COUNT(pr.id)

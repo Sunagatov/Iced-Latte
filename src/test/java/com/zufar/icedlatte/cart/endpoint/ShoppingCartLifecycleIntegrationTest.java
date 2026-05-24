@@ -1,13 +1,15 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import io.restassured.response.Response;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
+import io.restassured.response.Response;
 
 @DisplayName("Shopping cart lifecycle integration tests")
 class ShoppingCartLifecycleIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -105,10 +107,7 @@ class ShoppingCartLifecycleIntegrationTest extends AuthenticatedUserIntegrationS
         AuthenticatedUser secondUser = registerAndAuthenticateUser();
 
         Response firstResponse = addItem(firstUser, PRODUCT_ID, 1);
-        String foreignCartItemId = firstResponse.then()
-                .extract()
-                .jsonPath()
-                .getString("items[0].id");
+        String foreignCartItemId = firstResponse.then().extract().jsonPath().getString("items[0].id");
 
         given(authenticatedJsonSpec(CartEndpoint.CART_URL, secondUser.accessToken()))
                 .body("""

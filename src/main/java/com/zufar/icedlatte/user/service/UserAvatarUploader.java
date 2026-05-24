@@ -1,11 +1,10 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
-import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Set;
+import java.util.UUID;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,34 +13,35 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
-import java.util.UUID;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class UserAvatarUploader {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp"
-    );
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final FileStorageApi fileStorageApi;
     private final ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator;
 
-    public UserAvatarUploader(FileStorageApi fileStorageApi,
-                              ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator) {
+    public UserAvatarUploader(
+            FileStorageApi fileStorageApi, ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator) {
         this.fileStorageApi = fileStorageApi;
         this.cloudfrontInvalidator = cloudfrontInvalidator;
     }
 
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
+
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
-    @Transactional(propagation = Propagation.REQUIRED,
-            isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
         String contentType = normalizeContentType(file);
         validateAvatarFile(userId, file, contentType);
@@ -51,9 +51,7 @@ public class UserAvatarUploader {
         invalidateAvatarCache(fileName);
     }
 
-    private void validateAvatarFile(UUID userId,
-                                    MultipartFile file,
-                                    String contentType) {
+    private void validateAvatarFile(UUID userId, MultipartFile file, String contentType) {
         if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
             throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
@@ -73,14 +71,9 @@ public class UserAvatarUploader {
         return AVATAR_NAME_PREFIX + userId;
     }
 
-    private void uploadAvatarFile(MultipartFile file,
-                                  UUID userId,
-                                  String fileName) {
+    private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {
         if (!fileStorageApi.isEnabled()) {
-            throw new FileUploadException(
-                    fileName,
-                    new IllegalStateException("File storage is not configured")
-            );
+            throw new FileUploadException(fileName, new IllegalStateException("File storage is not configured"));
         }
         fileStorageApi.store(file, new FileMetadataDto(userId, bucketName, fileName));
     }
@@ -100,10 +93,7 @@ public class UserAvatarUploader {
 
     // FF D8 FF
     private static boolean isJpeg(byte[] h) {
-        return h.length >= 3
-                && (h[0] & 0xFF) == 0xFF
-                && (h[1] & 0xFF) == 0xD8
-                && (h[2] & 0xFF) == 0xFF;
+        return h.length >= 3 && (h[0] & 0xFF) == 0xFF && (h[1] & 0xFF) == 0xD8 && (h[2] & 0xFF) == 0xFF;
     }
 
     // 89 50 4E 47 0D 0A 1A 0A
@@ -122,12 +112,12 @@ public class UserAvatarUploader {
     // 52 49 46 46 ?? ?? ?? ?? 57 45 42 50  (RIFF....WEBP)
     private static boolean isWebp(byte[] h) {
         return h.length >= 12
-                && (h[0] & 0xFF) == 0x52  // R
-                && (h[1] & 0xFF) == 0x49  // I
-                && (h[2] & 0xFF) == 0x46  // F
-                && (h[3] & 0xFF) == 0x46  // F
-                && (h[8] & 0xFF) == 0x57  // W
-                && (h[9] & 0xFF) == 0x45  // E
+                && (h[0] & 0xFF) == 0x52 // R
+                && (h[1] & 0xFF) == 0x49 // I
+                && (h[2] & 0xFF) == 0x46 // F
+                && (h[3] & 0xFF) == 0x46 // F
+                && (h[8] & 0xFF) == 0x57 // W
+                && (h[9] & 0xFF) == 0x45 // E
                 && (h[10] & 0xFF) == 0x42 // B
                 && (h[11] & 0xFF) == 0x50; // P
     }

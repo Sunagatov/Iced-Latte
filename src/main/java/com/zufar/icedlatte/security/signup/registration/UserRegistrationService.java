@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.security.signup.registration;
 
+import java.util.Locale;
+import java.util.Objects;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
@@ -7,15 +17,9 @@ import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
-import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Slf4j
 @Service
@@ -36,18 +40,18 @@ public class UserRegistrationService {
     }
 
     @Transactional
-    public UserAuthenticationResponse register(final UserRegistrationRequest userRegistrationRequest,
-                                               final HttpServletRequest httpRequest) {
+    public UserAuthenticationResponse register(
+            final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
         String email = normalizeEmail(userRegistrationRequest.getEmail());
-        String encryptedPassword = passwordEncoder.encode(userRegistrationRequest.getPassword());
+        String encryptedPassword =
+                Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
 
         try {
             UserAuthenticationSnapshot snapshot = userRegistrationApi.registerPasswordUser(
                     userRegistrationRequest.getFirstName(),
                     userRegistrationRequest.getLastName(),
                     email,
-                    encryptedPassword
-            );
+                    encryptedPassword);
             log.info("auth.registration.succeeded: userId={}", snapshot.userId());
             return sessionTokenService.issueForNewSession(SecurityUserDetails.from(snapshot), httpRequest);
         } catch (DataIntegrityViolationException e) {

@@ -1,11 +1,10 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
-import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,10 +20,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
+import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")
@@ -49,7 +50,8 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should return UserDetails when valid credentials are provided")
     void shouldReturnUserDetailsWhenValidCredentialsProvided() {
         Authentication authentication = mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
 
         UserDetails result = userAuthenticationService.verifyCredentials(request);
@@ -96,7 +98,8 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should throw InvalidCredentialsException when principal is not UserDetails")
     void shouldThrowInvalidCredentialsExceptionWhenPrincipalIsNotUserDetails() {
         Authentication authentication = mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn("plain-string-principal");
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
@@ -107,7 +110,7 @@ class UserAuthenticationServiceTest {
     @Test
     @DisplayName("Should rethrow unexpected authentication exceptions")
     void shouldRethrowUnexpectedAuthenticationExceptions() {
-        AuthenticationException failure = new AuthenticationException("boom") { };
+        AuthenticationException failure = new AuthenticationException("boom") {};
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(failure);
 
@@ -129,7 +132,8 @@ class UserAuthenticationServiceTest {
         when(jwtTokenProvider.generateToken(userDetails, sessionId)).thenReturn(expectedAccessToken);
         when(userDetails.getUsername()).thenReturn(email);
 
-        UserAuthenticationResponse response = userAuthenticationService.buildTokenPair(userDetails, sessionId, refreshToken);
+        UserAuthenticationResponse response =
+                userAuthenticationService.buildTokenPair(userDetails, sessionId, refreshToken);
 
         assertNotNull(response);
         assertEquals(expectedAccessToken, response.getToken());

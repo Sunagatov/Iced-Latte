@@ -1,11 +1,12 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import static io.restassured.RestAssured.given;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
 @DisplayName("User account deletion integration tests")
 class UserAccountDeletionIntegrationTest extends AuthenticatedUserIntegrationSupport {

@@ -1,5 +1,22 @@
 package com.zufar.icedlatte.review.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
@@ -13,44 +30,48 @@ import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebounc
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewManager unit tests")
 class ProductReviewManagerTest {
 
-    @Mock private ProductReviewRepository reviewRepository;
-    @Mock private ProductReviewLikeRepository productReviewLikeRepository;
-    @Mock private ProductReviewDtoConverter productReviewDtoConverter;
-    @Mock private UserLookupApi userLookupApi;
-    @Mock private ProductReviewValidator productReviewValidator;
-    @Mock private ProductReviewProductApi productReviewProductGateway;
-    @Mock private ProductReviewSummaryDebouncer summaryDebouncer;
-    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private ProductReviewRepository reviewRepository;
+
+    @Mock
+    private ProductReviewLikeRepository productReviewLikeRepository;
+
+    @Mock
+    private ProductReviewDtoConverter productReviewDtoConverter;
+
+    @Mock
+    private UserLookupApi userLookupApi;
+
+    @Mock
+    private ProductReviewValidator productReviewValidator;
+
+    @Mock
+    private ProductReviewProductApi productReviewProductGateway;
+
+    @Mock
+    private ProductReviewSummaryDebouncer summaryDebouncer;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private ProductReviewManager service;
 
     @BeforeEach
     void setUp() {
         service = new ProductReviewManager(
-                reviewRepository, productReviewLikeRepository, productReviewDtoConverter, userLookupApi,
-                productReviewValidator, productReviewProductGateway, summaryDebouncer, eventPublisher
-        );
+                reviewRepository,
+                productReviewLikeRepository,
+                productReviewDtoConverter,
+                userLookupApi,
+                productReviewValidator,
+                productReviewProductGateway,
+                summaryDebouncer,
+                eventPublisher);
     }
 
     @Nested
@@ -71,10 +92,12 @@ class ProductReviewManagerTest {
             when(userLookupApi.getUserById(userId)).thenReturn(user);
             UUID generatedId = UUID.randomUUID();
             doAnswer(invocation -> {
-                ProductReview review = invocation.getArgument(0);
-                review.setId(generatedId);
-                return review;
-            }).when(reviewRepository).saveAndFlush(any(ProductReview.class));
+                        ProductReview review = invocation.getArgument(0);
+                        review.setId(generatedId);
+                        return review;
+                    })
+                    .when(reviewRepository)
+                    .saveAndFlush(any(ProductReview.class));
             when(productReviewDtoConverter.toProductReviewDto(any(), eq(user))).thenReturn(expectedDto);
 
             ProductReviewDto result = service.create(productId, userId, request);
@@ -106,7 +129,9 @@ class ProductReviewManagerTest {
             request.setText("   ");
             request.setRating(3);
 
-            doThrow(new BadRequestException("Product's review is empty")).when(productReviewValidator).validateReviewText("   ");
+            doThrow(new BadRequestException("Product's review is empty"))
+                    .when(productReviewValidator)
+                    .validateReviewText("   ");
 
             assertThatThrownBy(() -> service.create(productId, userId, request))
                     .isInstanceOf(BadRequestException.class);
@@ -141,7 +166,8 @@ class ProductReviewManagerTest {
             UUID userId = UUID.randomUUID();
 
             doThrow(new BadRequestException("Deletion denied"))
-                    .when(productReviewValidator).validateProductReviewDeletionAllowed(reviewId, userId);
+                    .when(productReviewValidator)
+                    .validateProductReviewDeletionAllowed(reviewId, userId);
 
             assertThatThrownBy(() -> service.delete(productId, reviewId, userId))
                     .isInstanceOf(BadRequestException.class);

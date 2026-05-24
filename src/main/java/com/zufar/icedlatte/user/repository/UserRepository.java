@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.user.repository;
 
-import com.zufar.icedlatte.user.entity.UserEntity;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.zufar.icedlatte.user.entity.UserEntity;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
@@ -26,37 +27,32 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * Updates the locked status of a user based on the given email.
      *
      * @param newPassword The new password of the user.
-     * @param userId      The id of the user.
+     * @param userId The id of the user.
      */
     @Modifying
     @Transactional
-    @Query(value = "UPDATE UserEntity u " +
-            "SET u.password = :newPassword " +
-            "WHERE u.id = :userId")
+    @Query(value = "UPDATE UserEntity u " + "SET u.password = :newPassword " + "WHERE u.id = :userId")
     void changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
 
     /**
      * Updates the accountNonLocked status of a user based on the given email.
      *
-     * @param email            The email of the user.
+     * @param email The email of the user.
      * @param accountNonLocked The new accountNonLocked value (true = unlocked, false = locked).
      */
     @Modifying
     @Transactional
-    @Query("UPDATE UserEntity u " +
-            "SET u.accountNonLocked = :accountNonLocked " +
-            "WHERE u.email = :email")
-    int setAccountLockedStatus(@Param("email") String email,
-                               @Param("accountNonLocked") boolean accountNonLocked);
+    @Query("UPDATE UserEntity u " + "SET u.accountNonLocked = :accountNonLocked " + "WHERE u.email = :email")
+    int setAccountLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 
     /**
-     * Unlocks all users that have corresponding entries in the login_attempts table
-     * with is_user_locked set to false.
+     * Unlocks all users that have corresponding entries in the login_attempts table with is_user_locked set to false.
      */
     @Modifying
     @Transactional
-    @Query(value = "UPDATE UserEntity u " +
-            "SET u.accountNonLocked = true " +
-            "WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")
+    @Query(
+            value =
+                    "UPDATE UserEntity u " + "SET u.accountNonLocked = true "
+                            + "WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")
     void unlockUsers();
 }

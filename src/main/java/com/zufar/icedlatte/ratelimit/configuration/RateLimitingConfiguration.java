@@ -1,10 +1,9 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import com.zufar.icedlatte.ratelimit.api.RateLimiter;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,13 +12,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+import com.zufar.icedlatte.ratelimit.api.RateLimiter;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-@EnableConfigurationProperties({RateLimitProperties.class, com.zufar.icedlatte.common.config.CaffeineSizeProperties.class})
+@EnableConfigurationProperties({
+    RateLimitProperties.class,
+    com.zufar.icedlatte.common.config.CaffeineSizeProperties.class
+})
 public class RateLimitingConfiguration {
 
     private static final Cache<String, Boolean> LOGGED_LIMITER_ERRORS = Caffeine.newBuilder()
@@ -37,7 +42,10 @@ public class RateLimitingConfiguration {
             return {current, pttl}
             """, List.class);
 
-    public enum FailPolicy { OPEN, CLOSED }
+    public enum FailPolicy {
+        OPEN,
+        CLOSED
+    }
 
     @Bean("openRateLimiter")
     @ConditionalOnProperty(name = "spring.data.redis.host")
@@ -48,7 +56,8 @@ public class RateLimitingConfiguration {
 
     @Bean("openRateLimiter")
     @ConditionalOnMissingBean(name = "openRateLimiter")
-    public RateLimiter openCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
+    public RateLimiter openCaffeineRateLimiter(
+            com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.open: in-memory Caffeine");
         return new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, caffeineSizeProperties.rateLimitWindowSize());
     }
@@ -62,7 +71,8 @@ public class RateLimitingConfiguration {
 
     @Bean("closedRateLimiter")
     @ConditionalOnMissingBean(name = "closedRateLimiter")
-    public RateLimiter closedCaffeineRateLimiter(com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
+    public RateLimiter closedCaffeineRateLimiter(
+            com.zufar.icedlatte.common.config.CaffeineSizeProperties caffeineSizeProperties) {
         log.info("rate_limit.mode.closed: in-memory Caffeine");
         return new CaffeineFixedWindowRateLimiter(FailPolicy.CLOSED, caffeineSizeProperties.rateLimitWindowSize());
     }
@@ -72,10 +82,7 @@ public class RateLimitingConfiguration {
             try {
                 @SuppressWarnings("rawtypes")
                 List result = redisTemplate.execute(
-                        RATE_LIMIT_SCRIPT,
-                        List.of("rate:" + key),
-                        String.valueOf(windowDuration.toMillis())
-                );
+                        RATE_LIMIT_SCRIPT, List.of("rate:" + key), String.valueOf(windowDuration.toMillis()));
                 long count = ((Number) result.getFirst()).longValue();
                 long pttl = ((Number) result.get(1)).longValue();
                 long resetTimeMillis = System.currentTimeMillis() + Math.max(0, pttl);
@@ -84,7 +91,10 @@ public class RateLimitingConfiguration {
             } catch (Exception e) {
                 logRepeatedLimiterFailure("rate_limit.redis_error", key, policy, e, policy == FailPolicy.OPEN);
                 boolean allowed = policy == FailPolicy.OPEN;
-                return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
+                return new RateLimitResult(
+                        allowed,
+                        maxTokens,
+                        allowed ? maxTokens : 0,
                         System.currentTimeMillis() + windowDuration.toMillis());
             }
         };
@@ -111,7 +121,10 @@ public class RateLimitingConfiguration {
             } catch (Exception e) {
                 logRepeatedLimiterFailure("rate_limit.cache_error", key, failPolicy, e, false);
                 boolean allowed = failPolicy == FailPolicy.OPEN;
-                return new RateLimitResult(allowed, maxTokens, allowed ? maxTokens : 0,
+                return new RateLimitResult(
+                        allowed,
+                        maxTokens,
+                        allowed ? maxTokens : 0,
                         System.currentTimeMillis() + windowDuration.toMillis());
             }
         }
@@ -140,11 +153,8 @@ public class RateLimitingConfiguration {
         }
     }
 
-    private static void logRepeatedLimiterFailure(String event,
-                                                  String key,
-                                                  FailPolicy policy,
-                                                  Exception exception,
-                                                  boolean warnOnFirst) {
+    private static void logRepeatedLimiterFailure(
+            String event, String key, FailPolicy policy, Exception exception, boolean warnOnFirst) {
         String exceptionClass = exception.getClass().getSimpleName();
         String dedupKey = event + "|" + policy + "|" + exceptionClass;
         if (LOGGED_LIMITER_ERRORS.asMap().putIfAbsent(dedupKey, Boolean.TRUE) == null) {
@@ -157,5 +167,4 @@ public class RateLimitingConfiguration {
             log.debug("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass);
         }
     }
-
 }

@@ -1,5 +1,25 @@
 package com.zufar.icedlatte.order.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.openapi.dto.ReorderResponseDto;
@@ -8,33 +28,22 @@ import com.zufar.icedlatte.order.entity.OrderItem;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderReorderService unit tests")
 class OrderReorderServiceTest {
 
-    @Mock private OrderRepository orderRepository;
-    @Mock private ProductCatalogApi productCatalogApi;
-    @Mock private CartCheckoutApi shoppingCartService;
-    @InjectMocks private OrderReorderService reorderService;
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private ProductCatalogApi productCatalogApi;
+
+    @Mock
+    private CartCheckoutApi shoppingCartService;
+
+    @InjectMocks
+    private OrderReorderService reorderService;
 
     @Test
     @DisplayName("Adds available products to cart and reports unavailable ones")
@@ -45,16 +54,29 @@ class OrderReorderServiceTest {
         UUID unavailableProductId = UUID.randomUUID();
 
         OrderItem available = OrderItem.builder()
-                .productId(availableProductId).productName("Nitro").productsQuantity(2).productPrice(BigDecimal.TEN).build();
+                .productId(availableProductId)
+                .productName("Nitro")
+                .productsQuantity(2)
+                .productPrice(BigDecimal.TEN)
+                .build();
         OrderItem unavailable = OrderItem.builder()
-                .productId(unavailableProductId).productName("Discontinued").productsQuantity(1).productPrice(BigDecimal.ONE).build();
-        Order order = Order.builder().id(orderId).userId(userId).items(List.of(available, unavailable)).build();
+                .productId(unavailableProductId)
+                .productName("Discontinued")
+                .productsQuantity(1)
+                .productPrice(BigDecimal.ONE)
+                .build();
+        Order order = Order.builder()
+                .id(orderId)
+                .userId(userId)
+                .items(List.of(available, unavailable))
+                .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(productCatalogApi.existsById(availableProductId)).thenReturn(true);
         when(productCatalogApi.existsById(unavailableProductId)).thenReturn(false);
 
-        CartSnapshot cart = new CartSnapshot(UUID.randomUUID(), userId, List.of(), 0, BigDecimal.ZERO, 0, null, null);
+        CartSnapshot cart = new CartSnapshot(
+                UUID.randomUUID(), userId, List.of(), 0, BigDecimal.ZERO, 0, OffsetDateTime.now(), null);
         when(shoppingCartService.addItems(eq(userId), any())).thenReturn(cart);
 
         ReorderResponseDto result = reorderService.reorder(orderId, userId);
@@ -70,7 +92,11 @@ class OrderReorderServiceTest {
     @DisplayName("Throws when user doesn't own the order")
     void reorderOtherUsersOrderThrows() {
         UUID orderId = UUID.randomUUID();
-        Order order = Order.builder().id(orderId).userId(UUID.randomUUID()).items(List.of()).build();
+        Order order = Order.builder()
+                .id(orderId)
+                .userId(UUID.randomUUID())
+                .items(List.of())
+                .build();
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> reorderService.reorder(orderId, UUID.randomUUID()))

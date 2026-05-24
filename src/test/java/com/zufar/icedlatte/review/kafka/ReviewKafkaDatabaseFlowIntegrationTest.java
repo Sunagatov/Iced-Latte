@@ -1,12 +1,16 @@
 package com.zufar.icedlatte.review.kafka;
 
-import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
-import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
-import com.zufar.icedlatte.review.messaging.kafka.inbox.ReviewCreatedInboxProcessor;
-import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
-import com.zufar.icedlatte.review.service.ProductReviewManager;
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import com.zufar.icedlatte.user.api.UserLookupApi;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -20,25 +24,20 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
+import com.zufar.icedlatte.review.messaging.kafka.inbox.ReviewCreatedInboxProcessor;
+import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
+import com.zufar.icedlatte.review.service.ProductReviewManager;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+import com.zufar.icedlatte.user.api.UserLookupApi;
 
 @DisplayName("Review Kafka database flow")
 class ReviewKafkaDatabaseFlowIntegrationTest extends AuthenticatedUserIntegrationSupport {
 
     private static final String TOPIC = "iced-latte.review.created.v1";
     private static final UUID PRODUCT_ID = UUID.fromString("d1a2b3c4-0001-4000-8000-000000000007");
-    private static final KafkaContainer KAFKA = new KafkaContainer(
-            DockerImageName.parse("apache/kafka-native:3.8.0")
-    );
+    private static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"));
 
     @Autowired
     private ProductReviewManager productReviewManager;
@@ -77,7 +76,9 @@ class ReviewKafkaDatabaseFlowIntegrationTest extends AuthenticatedUserIntegratio
     @Test
     @DisplayName("creates review, publishes outbox event, records inbox event, and processes it")
     void createsReviewPublishesOutboxRecordsInboxAndProcessesIt() {
-        UUID userId = userLookupApi.getUserByEmail(registerAndAuthenticateUser().email()).id();
+        UUID userId = userLookupApi
+                .getUserByEmail(registerAndAuthenticateUser().email())
+                .id();
         ProductReviewRequest request = new ProductReviewRequest();
         request.setText("Testcontainers Kafka database flow review");
         request.setRating(5);
@@ -87,7 +88,8 @@ class ReviewKafkaDatabaseFlowIntegrationTest extends AuthenticatedUserIntegratio
 
         UUID eventId = selectEventIdFromOutbox(reviewId);
         assertThat(selectOutboxStatus(eventId)).isEqualTo("PENDING");
-        assertThat(selectOutboxPayload(eventId)).doesNotContain("Testcontainers Kafka database flow review", "\"text\"");
+        assertThat(selectOutboxPayload(eventId))
+                .doesNotContain("Testcontainers Kafka database flow review", "\"text\"");
 
         startKafkaListeners();
         outboxPublisher.publishPendingOutboxEvents();
@@ -104,11 +106,13 @@ class ReviewKafkaDatabaseFlowIntegrationTest extends AuthenticatedUserIntegratio
     }
 
     private static void createTopic() throws Exception {
-        Map<String, Object> bootstrapServersConfig = Map.of(
-                AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers()
-        );
+        Map<String, Object> bootstrapServersConfig =
+                Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers());
         try (AdminClient adminClient = AdminClient.create(bootstrapServersConfig)) {
-            adminClient.createTopics(List.of(new NewTopic(TOPIC, 1, (short) 1))).all().get();
+            adminClient
+                    .createTopics(List.of(new NewTopic(TOPIC, 1, (short) 1)))
+                    .all()
+                    .get();
         }
     }
 
@@ -159,15 +163,19 @@ class ReviewKafkaDatabaseFlowIntegrationTest extends AuthenticatedUserIntegratio
     private void waitUntil(BooleanSupplier condition) {
         CompletableFuture<Void> completed = new CompletableFuture<>();
         try (ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
-            executor.scheduleAtFixedRate(() -> {
-                try {
-                    if (condition.getAsBoolean()) {
-                        completed.complete(null);
-                    }
-                } catch (Exception e) {
-                    completed.completeExceptionally(e);
-                }
-            }, 0, 100, TimeUnit.MILLISECONDS);
+            executor.scheduleAtFixedRate(
+                    () -> {
+                        try {
+                            if (condition.getAsBoolean()) {
+                                completed.complete(null);
+                            }
+                        } catch (Exception e) {
+                            completed.completeExceptionally(e);
+                        }
+                    },
+                    0,
+                    100,
+                    TimeUnit.MILLISECONDS);
             completed.get(10, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new AssertionError("Timed out waiting for Kafka database flow", e);

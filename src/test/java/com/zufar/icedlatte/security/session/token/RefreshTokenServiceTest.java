@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.security.session.token;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,26 +20,41 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService unit tests")
 class RefreshTokenServiceTest {
 
-    @Mock private JwtBearerTokenResolver jwtBearerTokenResolver;
-    @Mock private JwtTokenClaims jwtTokenClaims;
-    @Mock private JwtTokenBlacklist jwtTokenBlacklist;
-    @Mock private UserDetailsService userDetailsService;
-    @Mock private AuthSessionService authSessionService;
-    @Mock private SessionTokenService sessionTokenService;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private JwtBearerTokenResolver jwtBearerTokenResolver;
 
-    @InjectMocks private RefreshTokenService service;
+    @Mock
+    private JwtTokenClaims jwtTokenClaims;
+
+    @Mock
+    private JwtTokenBlacklist jwtTokenBlacklist;
+
+    @Mock
+    private UserDetailsService userDetailsService;
+
+    @Mock
+    private AuthSessionService authSessionService;
+
+    @Mock
+    private SessionTokenService sessionTokenService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private RefreshTokenService service;
 
     @Nested
     @DisplayName("refresh")
@@ -53,7 +69,8 @@ class RefreshTokenServiceTest {
             UUID userId = UUID.randomUUID();
             var user = user(email);
             var sessionId = UUID.randomUUID();
-            AuthSessionEntity session = AuthSessionEntity.builder().id(sessionId).userId(userId).build();
+            AuthSessionEntity session =
+                    AuthSessionEntity.builder().id(sessionId).userId(userId).build();
             UserAuthenticationResponse responseBody = response();
 
             when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
@@ -61,7 +78,8 @@ class RefreshTokenServiceTest {
             when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
             when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            when(sessionTokenService.rotateSessionTokens(session, oldHash, user)).thenReturn(responseBody);
+            when(sessionTokenService.rotateSessionTokens(session, oldHash, user))
+                    .thenReturn(responseBody);
 
             ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
 
@@ -86,7 +104,8 @@ class RefreshTokenServiceTest {
             when(jwtTokenClaims.isSessionManagedRefreshToken(rawToken)).thenReturn(false);
             when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, request)).thenReturn(responseBody);
+            when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, request))
+                    .thenReturn(responseBody);
 
             ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
 
@@ -109,8 +128,7 @@ class RefreshTokenServiceTest {
             when(jwtTokenClaims.isSessionManagedRefreshToken(rawToken)).thenReturn(true);
             when(jwtTokenClaims.extractRefreshTokenSessionId(rawToken)).thenReturn(Optional.of(sessionId));
 
-            assertThatThrownBy(() -> service.refresh(request))
-                    .isSameAs(failure);
+            assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
 
             verify(authSessionService).revokeAllForUserBySessionId(sessionId);
             verifyNoInteractions(userDetailsService, sessionTokenService);

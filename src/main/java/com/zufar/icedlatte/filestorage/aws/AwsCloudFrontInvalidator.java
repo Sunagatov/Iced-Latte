@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.filestorage.aws;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 
 @Slf4j
 @Service
@@ -25,10 +26,8 @@ public class AwsCloudFrontInvalidator {
             log.warn("cloudfront.invalidation.skipped: reason=distribution_id_not_configured");
             return;
         }
-        cloudFrontClient.createInvalidation(r -> r
-                .distributionId(distributionId)
-                .invalidationBatch(b -> b
-                        .callerReference(UUID.randomUUID().toString())
+        cloudFrontClient.createInvalidation(r -> r.distributionId(distributionId)
+                .invalidationBatch(b -> b.callerReference(UUID.randomUUID().toString())
                         .paths(p -> p.quantity(1).items("/" + fileKey))));
         log.info("cloudfront.invalidation.created: key={}", fileKey);
     }

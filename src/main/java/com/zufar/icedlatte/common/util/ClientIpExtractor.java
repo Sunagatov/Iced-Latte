@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.common.util;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.net.InetAddress;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -35,9 +37,9 @@ public class ClientIpExtractor {
         trustedProxies = trustedProxies == null
                 ? List.of()
                 : trustedProxies.stream()
-                  .map(String::trim)
-                  .filter(value -> !value.isBlank())
-                  .toList();
+                        .map(String::trim)
+                        .filter(value -> !value.isBlank())
+                        .toList();
 
         if (trustedProxies.isEmpty()) {
             log.info("rate_limit.trusted_proxies: none configured — X-Forwarded-For will be ignored");
@@ -71,8 +73,8 @@ public class ClientIpExtractor {
     }
 
     /**
-     * Shared log-sanitizer: strips CR/LF to prevent log injection.
-     * Used by rate-limiting filters so the logic lives in one place.
+     * Shared log-sanitizer: strips CR/LF to prevent log injection. Used by rate-limiting filters so the logic lives in
+     * one place.
      */
     public static String sanitize(String value) {
         return value == null ? "" : value.replaceAll("[\\r\\n]", "_");
@@ -83,8 +85,7 @@ public class ClientIpExtractor {
             return false;
         }
 
-        return trustedProxies.stream()
-                .anyMatch(rule -> matchesTrustedProxyRule(remoteAddress, rule));
+        return trustedProxies.stream().anyMatch(rule -> matchesTrustedProxyRule(remoteAddress, rule));
     }
 
     private static boolean matchesTrustedProxyRule(String remoteAddress, String rule) {

@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.security.jwt.config;
 
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.util.Base64;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.crypto.SecretKey;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 @DisplayName("JwtSigningKeys unit tests")
 class JwtSigningKeysTest {
@@ -37,6 +39,7 @@ class JwtSigningKeysTest {
 
         assertThat(provider.get().getEncoded()).isEqualTo(expectedAccess.getEncoded());
         assertThat(provider.getRefresh().getEncoded()).isEqualTo(expectedRefresh.getEncoded());
-        assertThat(provider.get().getEncoded()).isNotEqualTo(provider.getRefresh().getEncoded());
+        assertThat(provider.get().getEncoded())
+                .isNotEqualTo(provider.getRefresh().getEncoded());
     }
 }

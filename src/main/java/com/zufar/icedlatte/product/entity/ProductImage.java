@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.product.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Getter
 @Setter

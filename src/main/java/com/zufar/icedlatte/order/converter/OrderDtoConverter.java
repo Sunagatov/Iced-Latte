@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.order.converter;
 
+import java.util.List;
+
+import org.mapstruct.*;
+
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -11,12 +15,10 @@ import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
-import org.mapstruct.*;
-
-import java.util.List;
 
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface OrderDtoConverter {
@@ -39,8 +41,9 @@ public interface OrderDtoConverter {
         List<OrderSnapshot.OrderItemSnapshot> items = order.getItems() == null
                 ? List.of()
                 : order.getItems().stream()
-                .map(i -> new OrderSnapshot.OrderItemSnapshot(i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
-                .toList();
+                        .map(i -> new OrderSnapshot.OrderItemSnapshot(
+                                i.getProductName(), i.getProductPrice(), i.getProductsQuantity()))
+                        .toList();
 
         OrderStatus status = order.getStatus();
         if (status == null) {
@@ -48,8 +51,13 @@ public interface OrderDtoConverter {
         }
         OrderStatusSnapshot statusSnapshot = OrderStatusSnapshot.valueOf(status.name());
 
-        return new OrderSnapshot(order.getId(), order.getUserId(), statusSnapshot,
-                order.getItemsTotalPrice(), order.getStripePaymentIntentId(), items);
+        return new OrderSnapshot(
+                order.getId(),
+                order.getUserId(),
+                statusSnapshot,
+                order.getItemsTotalPrice(),
+                order.getStripePaymentIntentId(),
+                items);
     }
 
     @Mapping(target = "address", source = "address")
@@ -57,5 +65,4 @@ public interface OrderDtoConverter {
 
     @Mapping(target = "country", source = "country")
     OrderAddressRequest toAddressRequest(AddressDto address);
-
 }

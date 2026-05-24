@@ -1,11 +1,13 @@
 package com.zufar.icedlatte.order.entity;
 
-import com.zufar.icedlatte.openapi.dto.OrderStatus;
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
+
+import lombok.*;
 
 @Getter
 @Setter

@@ -1,5 +1,10 @@
 package com.zufar.icedlatte.payment.service;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
@@ -12,23 +17,19 @@ import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.util.UUID;
 
 /**
  * Status polling for the success page.
- * <p>
- * Primary path: the Stripe webhook updates payment/order status before the
- * success page polls. This is how real payment systems work.
- * <p>
- * Fallback path: if the webhook hasn't arrived yet (common in local dev
- * without Stripe CLI), this service calls Session.retrieve() directly and
- * updates the status. Real payment systems always have a reconciliation
- * fallback — never rely on a single delivery mechanism for money.
+ *
+ * <p>Primary path: the Stripe webhook updates payment/order status before the success page polls. This is how real
+ * payment systems work.
+ *
+ * <p>Fallback path: if the webhook hasn't arrived yet (common in local dev without Stripe CLI), this service calls
+ * Session.retrieve() directly and updates the status. Real payment systems always have a reconciliation fallback —
+ * never rely on a single delivery mechanism for money.
  */
 @Slf4j
 @Service
@@ -53,8 +54,7 @@ public class PaymentStatusService {
         Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
 
         // Fallback: if webhook hasn't arrived yet, check Stripe directly.
-        if (payment != null && !payment.getStatus().isTerminal()
-                && payment.getProviderSessionId() != null) {
+        if (payment != null && !payment.getStatus().isTerminal() && payment.getProviderSessionId() != null) {
             trySyncFromStripe(payment);
             // Re-read after potential update
             order = orderPaymentApi.getSnapshot(orderId);
@@ -66,16 +66,16 @@ public class PaymentStatusService {
                 .orderStatus(OrderStatus.valueOf(order.status().name()));
 
         if (payment != null) {
-            dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(payment.getStatus().name()));
+            dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(
+                    payment.getStatus().name()));
         }
 
         return dto;
     }
 
     /**
-     * Calls Stripe Session.retrieve() and updates local status if Stripe
-     * confirms payment. This is the reconciliation fallback — the webhook
-     * is the primary path.
+     * Calls Stripe Session.retrieve() and updates local status if Stripe confirms payment. This is the reconciliation
+     * fallback — the webhook is the primary path.
      */
     private void trySyncFromStripe(Payment payment) {
         try {
@@ -84,16 +84,14 @@ public class PaymentStatusService {
                 syncPaidStatus(payment.getOrderId(), session);
             }
         } catch (StripeException e) {
-            log.warn("payment.sync.stripe_error: orderId={}, error={}",
-                    payment.getOrderId(), e.getMessage());
+            log.warn("payment.sync.stripe_error: orderId={}, error={}", payment.getOrderId(), e.getMessage());
         }
     }
 
     /**
-     * Updates payment/order to PAID inside a programmatic transaction.
-     * Uses TransactionTemplate instead of @Transactional to avoid the
-     * Spring self-invocation trap (calling a @Transactional method from
-     * within the same class bypasses the proxy).
+     * Updates payment/order to PAID inside a programmatic transaction. Uses TransactionTemplate instead
+     * of @Transactional to avoid the Spring self-invocation trap (calling a @Transactional method from within the same
+     * class bypasses the proxy).
      */
     private void syncPaidStatus(UUID orderId, Session session) {
         transactionTemplate.executeWithoutResult(status -> {
@@ -125,8 +123,7 @@ public class PaymentStatusService {
 
             cartCheckoutApi.deleteCartForUser(locked.getUserId());
 
-            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}",
-                    orderId, session.getPaymentIntent());
+            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, session.getPaymentIntent());
         });
     }
 }

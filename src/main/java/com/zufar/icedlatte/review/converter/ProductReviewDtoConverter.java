@@ -1,5 +1,10 @@
 package com.zufar.icedlatte.review.converter;
 
+import java.util.List;
+
+import org.mapstruct.*;
+import org.springframework.data.domain.Page;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
@@ -7,13 +12,10 @@ import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
-import org.mapstruct.*;
-import org.springframework.data.domain.Page;
-
-import java.util.List;
 
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR,
         injectionStrategy = InjectionStrategy.FIELD)
 public interface ProductReviewDtoConverter {

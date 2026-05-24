@@ -1,16 +1,16 @@
 package com.zufar.icedlatte.security.config.cors;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
-
-import java.util.List;
 
 @Validated
 @ConfigurationProperties(prefix = "cors")
 public record CorsProperties(
-
         @NotEmpty(message = "CORS allowed-origins must not be empty")
         List<String> allowedOrigins,
 
@@ -26,7 +26,4 @@ public record CorsProperties(
         @NotNull(message = "CORS allow-credentials must not be null")
         Boolean allowCredentials,
 
-        @NotNull(message = "CORS max-age must not be null")
-        Long maxAge
-) {
-}
+        @NotNull(message = "CORS max-age must not be null") Long maxAge) {}

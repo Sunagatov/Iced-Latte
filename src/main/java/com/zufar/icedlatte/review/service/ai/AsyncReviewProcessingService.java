@@ -1,18 +1,20 @@
 package com.zufar.icedlatte.review.service.ai;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Slf4j
 @Service

@@ -1,12 +1,12 @@
 package com.zufar.icedlatte.common.util;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("Preconditions")
 class PreconditionsTest {
@@ -51,8 +51,8 @@ class PreconditionsTest {
     @Test
     @DisplayName("throws for non-positive duration")
     void throwsForNonPositiveDuration() {
-        assertThatThrownBy(() -> Preconditions.requirePositiveOrThrow(Duration.ZERO,
-                () -> new IllegalStateException("positive duration")))
+        assertThatThrownBy(() -> Preconditions.requirePositiveOrThrow(
+                        Duration.ZERO, () -> new IllegalStateException("positive duration")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("positive duration");
     }

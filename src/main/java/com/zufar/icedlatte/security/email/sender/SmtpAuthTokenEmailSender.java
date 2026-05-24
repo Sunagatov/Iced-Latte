@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.email.sender;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
@@ -8,7 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
-import java.util.Locale;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class SmtpAuthTokenEmailSender implements AuthTokenEmailSender {
 
     @Override
     public void sendTemporaryCode(String email, String token) {
-        String body = messageSource.getMessage("email-template", new Object[]{token}, Locale.ROOT);
+        String body = messageSource.getMessage("email-template", new Object[] {token}, Locale.ROOT);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

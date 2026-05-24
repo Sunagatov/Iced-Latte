@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.review.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import lombok.*;
 
 @Getter
 @Setter

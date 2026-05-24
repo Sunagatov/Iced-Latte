@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.ratelimit.filter;
 
-import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
-import com.zufar.icedlatte.ratelimit.api.AuthenticatedRequestIdentityProvider;
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import com.zufar.icedlatte.ratelimit.api.RateLimiter;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.util.Optional;
+
 import jakarta.servlet.FilterChain;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,23 +24,33 @@ import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import java.time.Duration;
-import java.util.Optional;
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.ratelimit.api.AuthenticatedRequestIdentityProvider;
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+import com.zufar.icedlatte.ratelimit.api.RateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitProperties;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("RateLimitingFilter Tests")
+@SuppressWarnings("StaticImportCanBeUsed")
 class RateLimitingFilterTest {
 
-    @Mock private RateLimiter openRateLimiter;
-    @Mock private RateLimiter closedRateLimiter;
-    @Mock private ClientIpExtractor clientIpExtractor;
-    @Mock private AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider;
+    @Mock
+    private RateLimiter openRateLimiter;
+
+    @Mock
+    private RateLimiter closedRateLimiter;
+
+    @Mock
+    private ClientIpExtractor clientIpExtractor;
+
+    @Mock
+    private AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider;
 
     private RateLimitingFilter filter;
     private final ProblemTypeUriFactory problemTypeUriFactory =
@@ -57,8 +68,7 @@ class RateLimitingFilterTest {
                 authenticatedRequestIdentityProvider,
                 properties(),
                 problemTypeUriFactory,
-                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)
-        );
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
     }
 
     @ParameterizedTest(name = "{0} -> {1}")
@@ -82,7 +92,8 @@ class RateLimitingFilterTest {
                 .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
         when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
-        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith(expectedCategory.trim() + ":")), anyInt(), any()))
+        when(openRateLimiter.tryConsume(
+                        argThat(key -> key != null && key.startsWith(expectedCategory.trim() + ":")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", path.trim());
@@ -126,11 +137,11 @@ class RateLimitingFilterTest {
         filter.doFilterInternal(
                 new MockHttpServletRequest("GET", "/api/v1/products"),
                 new MockHttpServletResponse(),
-                mock(FilterChain.class)
-        );
+                mock(FilterChain.class));
 
         verify(openRateLimiter).tryConsume(argThat(key -> key != null && key.startsWith("global:")), anyInt(), any());
-        verify(openRateLimiter, never()).tryConsume(argThat(key -> key != null && key.startsWith("search:")), anyInt(), any());
+        verify(openRateLimiter, never())
+                .tryConsume(argThat(key -> key != null && key.startsWith("search:")), anyInt(), any());
     }
 
     @Test
@@ -183,8 +194,10 @@ class RateLimitingFilterTest {
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
-        filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/cart"),
-                new MockHttpServletResponse(), mock(FilterChain.class));
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/cart"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
@@ -201,8 +214,10 @@ class RateLimitingFilterTest {
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
-        filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"),
-                new MockHttpServletResponse(), mock(FilterChain.class));
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/products"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
@@ -218,8 +233,10 @@ class RateLimitingFilterTest {
         when(openRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
-        filter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"),
-                new MockHttpServletResponse(), mock(FilterChain.class));
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/products"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class));
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
@@ -229,14 +246,17 @@ class RateLimitingFilterTest {
     @Test
     @DisplayName("OPTIONS requests are skipped")
     void optionsRequestIsSkipped() {
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("OPTIONS", "/api/v1/auth/login"))).isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("OPTIONS", "/api/v1/auth/login")))
+                .isTrue();
     }
 
     @Test
     @DisplayName("actuator and docs paths are skipped")
     void actuatorAndDocsAreSkipped() {
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health"))).isTrue();
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui"))).isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health")))
+                .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui")))
+                .isTrue();
     }
 
     @Test
@@ -271,8 +291,12 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.getAuth().setMaxRequests(0);
         filter = new RateLimitingFilter(
-                openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedRequestIdentityProvider, properties,
+                openRateLimiter,
+                closedRateLimiter,
+                new SimpleMeterRegistry(),
+                clientIpExtractor,
+                authenticatedRequestIdentityProvider,
+                properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -287,8 +311,12 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.getSearch().setWindowDuration(Duration.ZERO);
         filter = new RateLimitingFilter(
-                openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedRequestIdentityProvider, properties,
+                openRateLimiter,
+                closedRateLimiter,
+                new SimpleMeterRegistry(),
+                clientIpExtractor,
+                authenticatedRequestIdentityProvider,
+                properties,
                 problemTypeUriFactory,
                 new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
@@ -310,7 +338,8 @@ class RateLimitingFilterTest {
         filter.doFilterInternal(request, response, mock(FilterChain.class));
 
         assertThat(response.getStatus()).isEqualTo(429);
-        verify(openRateLimiter, never()).tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any());
+        verify(openRateLimiter, never())
+                .tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any());
     }
 
     @Test
@@ -341,7 +370,8 @@ class RateLimitingFilterTest {
         request.setContentType("multipart/form-data; boundary=----");
         filter.doFilterInternal(request, new MockHttpServletResponse(), mock(FilterChain.class));
 
-        verify(openRateLimiter).tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any());
+        verify(openRateLimiter)
+                .tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any());
     }
 
     @Test
@@ -370,9 +400,14 @@ class RateLimitingFilterTest {
         RateLimitProperties props = properties();
         props.setBanThreshold(3);
         RateLimitingFilter banFilter = new RateLimitingFilter(
-                openRateLimiter, closedRateLimiter, new SimpleMeterRegistry(), clientIpExtractor,
-                authenticatedRequestIdentityProvider, props,
-                problemTypeUriFactory, new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+                openRateLimiter,
+                closedRateLimiter,
+                new SimpleMeterRegistry(),
+                clientIpExtractor,
+                authenticatedRequestIdentityProvider,
+                props,
+                problemTypeUriFactory,
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
 

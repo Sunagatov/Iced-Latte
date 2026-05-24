@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.favorite.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -35,8 +36,7 @@ public class FavoriteItemEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FavoriteItemEntity that)) return false;
-        return Objects.equals(favoriteListEntity, that.favoriteListEntity) &&
-                Objects.equals(productId, that.productId);
+        return Objects.equals(favoriteListEntity, that.favoriteListEntity) && Objects.equals(productId, that.productId);
     }
 
     @Override

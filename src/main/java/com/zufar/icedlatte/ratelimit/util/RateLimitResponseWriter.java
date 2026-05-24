@@ -1,29 +1,32 @@
 package com.zufar.icedlatte.ratelimit.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.experimental.UtilityClass;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+
+import lombok.experimental.UtilityClass;
+
 /**
- * Shared 429 response writer used by both rate-limiting filters.
- * Keeps the response format consistent across pre-auth and post-auth paths.
+ * Shared 429 response writer used by both rate-limiting filters. Keeps the response format consistent across pre-auth
+ * and post-auth paths.
  */
 @UtilityClass
 public class RateLimitResponseWriter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static void writeRateLimitHeaders(HttpServletResponse response,
-                                             RateLimitResult result) {
-        long resetSeconds = Math.max(0, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+    public static void writeRateLimitHeaders(HttpServletResponse response, RateLimitResult result) {
+        long resetSeconds =
+                Math.max(0, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         // Legacy X- headers (widely supported by clients)
         response.setHeader("X-RateLimit-Limit", String.valueOf(result.limit()));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, result.remaining())));
@@ -33,16 +36,17 @@ public class RateLimitResponseWriter {
         response.setHeader("RateLimit", "\"default\";r=" + Math.max(0, result.remaining()) + ";t=" + resetSeconds);
     }
 
-    public static void writeTooManyRequests(HttpServletResponse response,
-                                            RateLimitResult result,
-                                            String type) throws IOException {
-        long retryAfterSeconds = Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
+    public static void writeTooManyRequests(HttpServletResponse response, RateLimitResult result, String type)
+            throws IOException {
+        long retryAfterSeconds =
+                Math.max(1, TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis()));
         writeRateLimitHeaders(response, result);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
-        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+        ObjectNode json = OBJECT_MAPPER
+                .createObjectNode()
                 .put("type", type)
                 .put("title", "Too many requests")
                 .put("status", HttpStatus.TOO_MANY_REQUESTS.value())

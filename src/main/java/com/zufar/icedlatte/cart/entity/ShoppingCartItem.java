@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.cart.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import lombok.*;
 
 @Builder
 @Getter

@@ -1,8 +1,12 @@
 package com.zufar.icedlatte.security.jwt.blacklist;
 
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,19 +14,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenBlacklist unit tests")
 class JwtTokenBlacklistTest {
 
-    @Mock private ExpiringKeyValueStore temporaryStore;
-    @Mock private JwtProperties jwtProperties;
+    @Mock
+    private ExpiringKeyValueStore temporaryStore;
+
+    @Mock
+    private JwtProperties jwtProperties;
 
     private JwtTokenBlacklist service;
 
@@ -70,8 +74,7 @@ class JwtTokenBlacklistTest {
     @Test
     @DisplayName("isBlacklisted fails closed when the store errors")
     void isBlacklistedFailsClosedWhenStoreErrors() {
-        doThrow(new RuntimeException("store down"))
-                .when(temporaryStore).contains(any());
+        doThrow(new RuntimeException("store down")).when(temporaryStore).contains(any());
 
         assertThat(service.isBlacklisted(TOKEN)).isTrue();
     }
@@ -88,7 +91,6 @@ class JwtTokenBlacklistTest {
     @Test
     @DisplayName("validateNotBlacklisted throws when token is blank")
     void validateNotBlacklistedThrowsWhenTokenIsBlank() {
-        assertThatThrownBy(() -> service.validateNotBlacklisted(" "))
-                .isInstanceOf(JwtTokenBlacklistedException.class);
+        assertThatThrownBy(() -> service.validateNotBlacklisted(" ")).isInstanceOf(JwtTokenBlacklistedException.class);
     }
 }

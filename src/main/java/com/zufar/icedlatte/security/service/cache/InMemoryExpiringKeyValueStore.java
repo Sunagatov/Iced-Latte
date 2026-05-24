@@ -1,18 +1,20 @@
 package com.zufar.icedlatte.security.service.cache;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
-import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Optional;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -69,12 +71,14 @@ public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
         }
 
         @Override
-        public long expireAfterUpdate(@NonNull String key, @NonNull CacheValue value, long currentTime, long currentDuration) {
+        public long expireAfterUpdate(
+                @NonNull String key, @NonNull CacheValue value, long currentTime, long currentDuration) {
             return ttlNanos(value);
         }
 
         @Override
-        public long expireAfterRead(@NonNull String key, @NonNull CacheValue value, long currentTime, long currentDuration) {
+        public long expireAfterRead(
+                @NonNull String key, @NonNull CacheValue value, long currentTime, long currentDuration) {
             return currentDuration;
         }
 

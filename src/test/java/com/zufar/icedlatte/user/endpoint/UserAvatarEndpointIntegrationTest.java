@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.given;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
+import io.restassured.http.ContentType;
 
 @DisplayName("User avatar endpoint integration tests")
 class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -18,8 +20,7 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     void shouldReturnNotFoundWhenAvatarDoesNotExist() {
         AuthenticatedUser user = registerAndAuthenticateUser();
 
-        given()
-                .port(port)
+        given().port(port)
                 .basePath(BASE_PATH)
                 .header("Authorization", "Bearer " + user.accessToken())
                 .accept(ContentType.JSON)
@@ -33,8 +34,7 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     void shouldDeleteAvatarSuccessfullyWhenAvatarDoesNotExist() {
         AuthenticatedUser user = registerAndAuthenticateUser();
 
-        given()
-                .port(port)
+        given().port(port)
                 .basePath(BASE_PATH)
                 .header("Authorization", "Bearer " + user.accessToken())
                 .accept(ContentType.JSON)
@@ -42,8 +42,7 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
                 .then()
                 .statusCode(HttpStatus.OK.value());
 
-        given()
-                .port(port)
+        given().port(port)
                 .basePath(BASE_PATH)
                 .header("Authorization", "Bearer " + user.accessToken())
                 .accept(ContentType.JSON)
@@ -57,8 +56,7 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     void shouldReturnBadRequestForInvalidAvatarContentType() {
         AuthenticatedUser user = registerAndAuthenticateUser();
 
-        given()
-                .port(port)
+        given().port(port)
                 .basePath(BASE_PATH)
                 .header("Authorization", "Bearer " + user.accessToken())
                 .accept(ContentType.JSON)
@@ -73,8 +71,7 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     void shouldReturnBadRequestForInvalidAvatarMagicBytes() {
         AuthenticatedUser user = registerAndAuthenticateUser();
 
-        given()
-                .port(port)
+        given().port(port)
                 .basePath(BASE_PATH)
                 .header("Authorization", "Bearer " + user.accessToken())
                 .accept(ContentType.JSON)

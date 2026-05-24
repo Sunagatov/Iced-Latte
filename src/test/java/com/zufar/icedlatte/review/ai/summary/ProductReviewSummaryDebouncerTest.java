@@ -1,8 +1,17 @@
 package com.zufar.icedlatte.review.ai.summary;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
-import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,28 +22,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
+import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewSummaryDebouncer unit tests")
 class ProductReviewSummaryDebouncerTest {
 
-    @Mock private ProductSummaryService productSummaryService;
-    @Mock private ProductReviewProductApi productReviewProductGateway;
-    @Mock private ApplicationContext applicationContext;
-    @Mock private ScheduledExecutorService scheduler;
-    @Mock private ScheduledFuture<Object> future;
-    @Mock private ScheduledFuture<Object> existingFuture;
+    @Mock
+    private ProductSummaryService productSummaryService;
+
+    @Mock
+    private ProductReviewProductApi productReviewProductGateway;
+
+    @Mock
+    private ApplicationContext applicationContext;
+
+    @Mock
+    private ScheduledExecutorService scheduler;
+
+    @Mock
+    private ScheduledFuture<Object> future;
+
+    @Mock
+    private ScheduledFuture<Object> existingFuture;
 
     private ProductReviewSummaryDebouncer debouncer;
 
@@ -45,8 +57,7 @@ class ProductReviewSummaryDebouncerTest {
                 Duration.ofMinutes(10),
                 productSummaryService,
                 productReviewProductGateway,
-                applicationContext
-        );
+                applicationContext);
     }
 
     @AfterEach

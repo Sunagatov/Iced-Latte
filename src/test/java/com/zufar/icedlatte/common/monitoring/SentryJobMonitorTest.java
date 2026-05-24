@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import io.sentry.MonitorScheduleUnit;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import io.sentry.MonitorScheduleUnit;
 
 @DisplayName("SentryJobMonitor unit tests")
 class SentryJobMonitorTest {
@@ -33,8 +34,9 @@ class SentryJobMonitorTest {
         RuntimeException exception = new RuntimeException("job failed");
 
         assertThatThrownBy(() -> monitor.run("test-job", monitor.fixedDelayConfig(60_000), () -> {
-            throw exception;
-        })).isSameAs(exception);
+                    throw exception;
+                }))
+                .isSameAs(exception);
     }
 
     @Test

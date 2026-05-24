@@ -1,19 +1,21 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import io.restassured.common.mapper.TypeRef;
-import io.restassured.response.Response;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-
-import java.util.List;
-import java.util.Map;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
+import io.restassured.common.mapper.TypeRef;
+import io.restassured.response.Response;
 
 @DisplayName("DeliveryAddressEndpoint integration tests")
 class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -29,7 +31,8 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
                 .body(addressBody("Home", "221B Baker Street", "London", "NW1 6XE"))
                 .post();
 
-        createResponse.then()
+        createResponse
+                .then()
                 .statusCode(HttpStatus.CREATED.value())
                 .body("id", notNullValue())
                 .body("label", equalTo("Home"))
@@ -67,13 +70,9 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
         String firstAddressId = firstCreateResponse.jsonPath().getString("id");
         String secondAddressId = secondCreateResponse.jsonPath().getString("id");
 
-        firstCreateResponse.then()
-                .statusCode(HttpStatus.CREATED.value())
-                .body("isDefault", equalTo(true));
+        firstCreateResponse.then().statusCode(HttpStatus.CREATED.value()).body("isDefault", equalTo(true));
 
-        secondCreateResponse.then()
-                .statusCode(HttpStatus.CREATED.value())
-                .body("isDefault", equalTo(false));
+        secondCreateResponse.then().statusCode(HttpStatus.CREATED.value()).body("isDefault", equalTo(false));
 
         given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
                 .patch("/{addressId}/default", secondAddressId)
@@ -98,11 +97,13 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
         assertEquals(2, addresses.size());
         assertEquals(1, defaultCount);
 
-        assertTrue(addresses.stream().anyMatch(address ->
-                firstAddressId.equals(address.get("id")) && Boolean.FALSE.equals(address.get("isDefault"))));
+        assertTrue(addresses.stream()
+                .anyMatch(address ->
+                        firstAddressId.equals(address.get("id")) && Boolean.FALSE.equals(address.get("isDefault"))));
 
-        assertTrue(addresses.stream().anyMatch(address ->
-                secondAddressId.equals(address.get("id")) && Boolean.TRUE.equals(address.get("isDefault"))));
+        assertTrue(addresses.stream()
+                .anyMatch(address ->
+                        secondAddressId.equals(address.get("id")) && Boolean.TRUE.equals(address.get("isDefault"))));
     }
 
     @Test
@@ -133,14 +134,13 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
                 .then()
                 .statusCode(HttpStatus.NO_CONTENT.value());
 
-        List<Map<String, Object>> remainingAddresses =
-                given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
-                        .get()
-                        .then()
-                        .statusCode(HttpStatus.OK.value())
-                        .extract()
-                        .body()
-                        .as(new TypeRef<>() {});
+        List<Map<String, Object>> remainingAddresses = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .body()
+                .as(new TypeRef<>() {});
 
         assertTrue(remainingAddresses.stream().noneMatch(address -> addressId.equals(address.get("id"))));
     }

@@ -1,5 +1,21 @@
 package com.zufar.icedlatte.user.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
@@ -10,30 +26,22 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DeliveryAddressService unit tests")
 class DeliveryAddressServiceTest {
 
-    @Mock private DeliveryAddressRepository addressRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private DeliveryAddressDtoConverter converter;
-    @InjectMocks private DeliveryAddressService service;
+    @Mock
+    private DeliveryAddressRepository addressRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private DeliveryAddressDtoConverter converter;
+
+    @InjectMocks
+    private DeliveryAddressService service;
 
     @Test
     @DisplayName("getAll returns mapped DTOs for all user addresses")
@@ -85,8 +93,7 @@ class DeliveryAddressServiceTest {
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getDeliveryAddress(userId, addressId))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.getDeliveryAddress(userId, addressId)).isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -226,8 +233,7 @@ class DeliveryAddressServiceTest {
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.delete(userId, addressId))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.delete(userId, addressId)).isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -259,7 +265,6 @@ class DeliveryAddressServiceTest {
         UUID addressId = UUID.randomUUID();
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.setDefault(userId, addressId))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.setDefault(userId, addressId)).isInstanceOf(NotFoundException.class);
     }
 }

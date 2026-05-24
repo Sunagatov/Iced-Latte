@@ -1,20 +1,21 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.Event;
-import com.stripe.net.Webhook;
-import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Event;
+import com.stripe.net.Webhook;
+import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Non-transactional webhook coordinator.
- * Parse → acquire event → delegate to business processor → mark result.
- * <p>
- * Iced Latte uses Stripe test mode only — no real money is charged.
+ * Non-transactional webhook coordinator. Parse → acquire event → delegate to business processor → mark result.
+ *
+ * <p>Iced Latte uses Stripe test mode only — no real money is charged.
  */
 @Slf4j
 @Service
@@ -47,14 +48,12 @@ public class StripeWebhookService {
             try {
                 webhookEventRecorder.markRetryableFailed(event.getId(), e.getMessage());
             } catch (Exception markerFailure) {
-                log.error("payment.webhook.failed_to_mark_failed: eventId={}",
-                        event.getId(), markerFailure);
+                log.error("payment.webhook.failed_to_mark_failed: eventId={}", event.getId(), markerFailure);
             }
             throw e; // Rethrow so Stripe retries
         }
 
-        log.info("payment.webhook.processed: eventType={}, eventId={}",
-                event.getType(), event.getId());
+        log.info("payment.webhook.processed: eventType={}, eventId={}", event.getType(), event.getId());
     }
 
     private Event parseEvent(String payload, String signature) {

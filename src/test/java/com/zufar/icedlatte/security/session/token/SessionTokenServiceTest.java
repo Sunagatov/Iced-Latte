@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.security.session.token;
 
-import com.zufar.icedlatte.common.correlation.RequestContextConstants;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
-import com.zufar.icedlatte.user.entity.UserEntity;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,25 +19,36 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.common.correlation.RequestContextConstants;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
+import com.zufar.icedlatte.user.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SessionTokenService unit tests")
 class SessionTokenServiceTest {
 
-    @Mock private JwtTokenBlacklist jwtTokenBlacklist;
-    @Mock private JwtTokenProvider jwtTokenProvider;
-    @Mock private AuthSessionService authSessionService;
-    @Mock private UserAuthenticationService userAuthenticationService;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private JwtTokenBlacklist jwtTokenBlacklist;
 
-    @InjectMocks private SessionTokenService service;
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private AuthSessionService authSessionService;
+
+    @Mock
+    private UserAuthenticationService userAuthenticationService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private SessionTokenService service;
 
     @AfterEach
     void clearMdc() {
@@ -78,12 +90,14 @@ class SessionTokenServiceTest {
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
         UserEntity user = user(userId, "rotate@example.com");
-        AuthSessionEntity session = AuthSessionEntity.builder().id(sessionId).userId(userId).build();
+        AuthSessionEntity session =
+                AuthSessionEntity.builder().id(sessionId).userId(userId).build();
         UserAuthenticationResponse response = response(newRefreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(user, sessionId)).thenReturn(newRefreshToken);
         when(jwtTokenBlacklist.hash(newRefreshToken)).thenReturn(newHash);
-        when(userAuthenticationService.buildTokenPair(user, sessionId, newRefreshToken)).thenReturn(response);
+        when(userAuthenticationService.buildTokenPair(user, sessionId, newRefreshToken))
+                .thenReturn(response);
 
         UserAuthenticationResponse result = service.rotateSessionTokens(session, oldHash, user);
 
@@ -122,11 +136,7 @@ class SessionTokenServiceTest {
     }
 
     private static UserEntity user(UUID id, String email) {
-        return UserEntity.builder()
-                .id(id)
-                .email(email)
-                .password("secret")
-                .build();
+        return UserEntity.builder().id(id).email(email).password("secret").build();
     }
 
     private static UserAuthenticationResponse response(String refreshToken) {

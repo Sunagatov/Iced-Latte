@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.user.stub;
 
+import java.util.UUID;
+
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.user.entity.Address;
-
-import java.util.UUID;
 
 public class AddressDtoTestStub {
 

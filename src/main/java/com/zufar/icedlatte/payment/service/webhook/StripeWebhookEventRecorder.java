@@ -1,13 +1,13 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 /**
- * Non-transactional coordinator for webhook event deduplication.
- * Delegates to {@link StripeWebhookEventTransactionService} so that each
- * REQUIRES_NEW transaction goes through the Spring proxy.
+ * Non-transactional coordinator for webhook event deduplication. Delegates to
+ * {@link StripeWebhookEventTransactionService} so that each REQUIRES_NEW transaction goes through the Spring proxy.
  */
 @Service
 @RequiredArgsConstructor

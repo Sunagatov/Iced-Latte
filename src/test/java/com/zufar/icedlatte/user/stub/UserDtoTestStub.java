@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.user.stub;
 
+import java.util.UUID;
+
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
 
-import java.util.UUID;
-
+@SuppressWarnings("unused")
 public class UserDtoTestStub {
 
     public static UserEntity createUserEntity() {
@@ -22,7 +23,6 @@ public class UserDtoTestStub {
         entity.setAddress(address);
         return entity;
     }
-
 
     public static UserDto createUserDto() {
         AddressDto addressDto = AddressDtoTestStub.createAddressDto();

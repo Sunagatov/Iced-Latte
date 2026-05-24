@@ -1,16 +1,18 @@
 package com.zufar.icedlatte.product.endpoint;
 
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
+
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("Product filters integration tests")
 class ProductFiltersIntegrationTest extends IntegrationTestBase {
@@ -22,10 +24,8 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        specification = given()
-                .port(port)
-                .basePath(ProductsEndpoint.PRODUCTS_URL)
-                .accept(ContentType.JSON);
+        specification =
+                given().port(port).basePath(ProductsEndpoint.PRODUCTS_URL).accept(ContentType.JSON);
     }
 
     @Test

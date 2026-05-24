@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.review.service.validator;
 
+import java.util.UUID;
+import java.util.regex.Pattern;
+
+import org.springframework.stereotype.Service;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -48,7 +50,8 @@ public class ProductReviewValidator {
     }
 
     public void validateProductReviewDeletionAllowed(final UUID productReviewId, final UUID currentUserId) {
-        var review = productReviewRepository.findById(productReviewId)
+        var review = productReviewRepository
+                .findById(productReviewId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
         if (!currentUserId.equals(review.getUserId())) {
@@ -65,8 +68,8 @@ public class ProductReviewValidator {
                     productId));
         }
         if (!productReviewRepository.existsByIdAndProductId(productReviewId, productId)) {
-            throw new NotFoundException(String.format(
-                    "Product's review with productReviewId = '%s' was not found", productReviewId));
+            throw new NotFoundException(
+                    String.format("Product's review with productReviewId = '%s' was not found", productReviewId));
         }
     }
 }

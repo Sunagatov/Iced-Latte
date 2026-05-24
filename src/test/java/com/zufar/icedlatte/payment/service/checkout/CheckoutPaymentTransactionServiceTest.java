@@ -1,5 +1,24 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
@@ -19,35 +38,31 @@ import com.zufar.icedlatte.payment.entity.PaymentProvider;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CheckoutPaymentTransactionService unit tests")
 class CheckoutPaymentTransactionServiceTest {
 
-    @Mock private PaymentRepository paymentRepository;
-    @Mock private OrderPaymentApi orderPaymentApi;
-    @Mock private OrderCheckoutApi orderCheckoutApi;
-    @Mock private CartCheckoutApi shoppingCartService;
-    @Mock private OrderDtoConverter orderDtoConverter;
-    @Mock private StripeProperties stripeProperties;
-    @InjectMocks private CheckoutPaymentTransactionService service;
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private OrderPaymentApi orderPaymentApi;
+
+    @Mock
+    private OrderCheckoutApi orderCheckoutApi;
+
+    @Mock
+    private CartCheckoutApi shoppingCartService;
+
+    @Mock
+    private OrderDtoConverter orderDtoConverter;
+
+    @Mock
+    private StripeProperties stripeProperties;
+
+    @InjectMocks
+    private CheckoutPaymentTransactionService service;
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final String IDEMPOTENCY_KEY = "test-key-123";
@@ -55,21 +70,35 @@ class CheckoutPaymentTransactionServiceTest {
     @Test
     @DisplayName("prepareCheckout creates order and payment for new checkout")
     void prepareCheckout_newCheckout_createsOrderAndPayment() {
-        CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()
-                .recipientName("John").recipientSurname("Doe");
+        CreateCheckoutRequestDto request =
+                new CreateCheckoutRequestDto().recipientName("John").recipientSurname("Doe");
 
-        var productInfo = new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
+        var productInfo =
+                new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
         var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 2);
-        CartSnapshot cart = new CartSnapshot(UUID.randomUUID(), USER_ID, List.of(cartItem), 1,
-                BigDecimal.valueOf(25.00), 2, null, null);
+        CartSnapshot cart = new CartSnapshot(
+                UUID.randomUUID(),
+                USER_ID,
+                List.of(cartItem),
+                1,
+                BigDecimal.valueOf(25.00),
+                2,
+                OffsetDateTime.now(),
+                null);
 
-        OrderSnapshot order = new OrderSnapshot(UUID.randomUUID(), USER_ID, OrderStatusSnapshot.PENDING_PAYMENT
-                , java.math.BigDecimal.valueOf(25.00), null, java.util.List.of());
+        OrderSnapshot order = new OrderSnapshot(
+                UUID.randomUUID(),
+                USER_ID,
+                OrderStatusSnapshot.PENDING_PAYMENT,
+                java.math.BigDecimal.valueOf(25.00),
+                null,
+                java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
-        when(orderDtoConverter.toCheckoutOrderRequest(request)).thenReturn(new CheckoutOrderRequest("John", "Doe", null, null, null));
+        when(orderDtoConverter.toCheckoutOrderRequest(request))
+                .thenReturn(new CheckoutOrderRequest("John", "Doe", null, null, null));
         when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
                 .thenReturn(order);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -92,17 +121,26 @@ class CheckoutPaymentTransactionServiceTest {
     @DisplayName("prepareCheckout returns existing order/payment on idempotent retry")
     void prepareCheckout_idempotentHit_returnsExisting() {
         UUID orderId = UUID.randomUUID();
-        Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
-                .providerSessionId("cs_test_existing").status(PaymentStatus.STRIPE_SESSION_CREATED).build();
-        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, OrderStatusSnapshot.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
+        Payment existingPayment = Payment.builder()
+                .orderId(orderId)
+                .userId(USER_ID)
+                .providerSessionId("cs_test_existing")
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
+        OrderSnapshot existingOrder = new OrderSnapshot(
+                orderId,
+                USER_ID,
+                OrderStatusSnapshot.PENDING_PAYMENT,
+                java.math.BigDecimal.TEN,
+                null,
+                java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
         when(orderPaymentApi.getSnapshot(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
-                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
-                IDEMPOTENCY_KEY);
+                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"), IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isTrue();
         assertThat(result.order()).isEqualTo(existingOrder);
@@ -115,17 +153,26 @@ class CheckoutPaymentTransactionServiceTest {
     @DisplayName("prepareCheckout uses fetch join for items when providerSessionId is null (retry before Stripe call)")
     void prepareCheckout_idempotentHit_noSessionId_usesFetchJoin() {
         UUID orderId = UUID.randomUUID();
-        Payment existingPayment = Payment.builder().orderId(orderId).userId(USER_ID)
-                .providerSessionId(null).status(PaymentStatus.CREATED).build();
-        OrderSnapshot existingOrder = new OrderSnapshot(orderId, USER_ID, OrderStatusSnapshot.PENDING_PAYMENT, java.math.BigDecimal.TEN, null, java.util.List.of());
+        Payment existingPayment = Payment.builder()
+                .orderId(orderId)
+                .userId(USER_ID)
+                .providerSessionId(null)
+                .status(PaymentStatus.CREATED)
+                .build();
+        OrderSnapshot existingOrder = new OrderSnapshot(
+                orderId,
+                USER_ID,
+                OrderStatusSnapshot.PENDING_PAYMENT,
+                java.math.BigDecimal.TEN,
+                null,
+                java.util.List.of());
 
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.of(existingPayment));
         when(orderPaymentApi.getSnapshotWithItems(orderId)).thenReturn(existingOrder);
 
         CheckoutPreparation result = service.prepareCheckout(
-                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
-                IDEMPOTENCY_KEY);
+                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"), IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isTrue();
         verify(orderPaymentApi).getSnapshotWithItems(orderId);
@@ -138,11 +185,13 @@ class CheckoutPaymentTransactionServiceTest {
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID))
-                .thenReturn(new CartSnapshot(UUID.randomUUID(), USER_ID, List.of(), 0, BigDecimal.ZERO, 0, null, null));
+                .thenReturn(new CartSnapshot(
+                        UUID.randomUUID(), USER_ID, List.of(), 0, BigDecimal.ZERO, 0, OffsetDateTime.now(), null));
 
         assertThatThrownBy(() -> service.prepareCheckout(
-                USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
-                IDEMPOTENCY_KEY))
+                        USER_ID,
+                        new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"),
+                        IDEMPOTENCY_KEY))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("empty");
     }
@@ -151,7 +200,8 @@ class CheckoutPaymentTransactionServiceTest {
     @DisplayName("saveStripeDetails updates payment with session ID and status")
     void saveStripeDetails_updatesPayment() {
         UUID paymentId = UUID.randomUUID();
-        Payment payment = Payment.builder().id(paymentId).status(PaymentStatus.CREATED).build();
+        Payment payment =
+                Payment.builder().id(paymentId).status(PaymentStatus.CREATED).build();
 
         when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

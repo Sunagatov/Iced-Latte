@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,16 +18,18 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisConfig unit tests")
+@SuppressWarnings("StaticImportCanBeUsed")
 class RedisConfigTest {
 
-    @Mock private RedisConnectionFactory connectionFactory;
-    @Mock private Cache cache;
+    @Mock
+    private RedisConnectionFactory connectionFactory;
+
+    @Mock
+    private Cache cache;
 
     @Test
     @DisplayName("creates a plain Jackson object mapper")
@@ -65,9 +70,8 @@ class RedisConfigTest {
         RedisCacheManager manager = config.cacheManager(connectionFactory);
         manager.afterPropertiesSet();
 
-        assertThat(manager.getCacheConfigurations()).containsKeys(
-                "productById", "productImageUrl", "productImageUrls", "brands", "sellers"
-        );
+        assertThat(manager.getCacheConfigurations())
+                .containsKeys("productById", "productImageUrl", "productImageUrls", "brands", "sellers");
 
         RedisCacheConfiguration productConfig = manager.getCacheConfigurations().get("productById");
         RedisCacheConfiguration sellersConfig = manager.getCacheConfigurations().get("sellers");
@@ -89,17 +93,17 @@ class RedisConfigTest {
         assertThat(cache).isNotNull();
         org.mockito.Mockito.when(cache.getName()).thenReturn("products");
 
-        org.assertj.core.api.Assertions.assertThatCode(() ->
-                errorHandler.handleCacheGetError(new RuntimeException("boom"), cache, "p1"))
+        org.assertj.core.api.Assertions.assertThatCode(
+                        () -> errorHandler.handleCacheGetError(new RuntimeException("boom"), cache, "p1"))
                 .doesNotThrowAnyException();
-        org.assertj.core.api.Assertions.assertThatCode(() ->
-                errorHandler.handleCachePutError(new RuntimeException("boom"), cache, "p1", "value"))
+        org.assertj.core.api.Assertions.assertThatCode(
+                        () -> errorHandler.handleCachePutError(new RuntimeException("boom"), cache, "p1", "value"))
                 .doesNotThrowAnyException();
-        org.assertj.core.api.Assertions.assertThatCode(() ->
-                errorHandler.handleCacheEvictError(new RuntimeException("boom"), cache, "p1"))
+        org.assertj.core.api.Assertions.assertThatCode(
+                        () -> errorHandler.handleCacheEvictError(new RuntimeException("boom"), cache, "p1"))
                 .doesNotThrowAnyException();
-        org.assertj.core.api.Assertions.assertThatCode(() ->
-                errorHandler.handleCacheClearError(new RuntimeException("boom"), cache))
+        org.assertj.core.api.Assertions.assertThatCode(
+                        () -> errorHandler.handleCacheClearError(new RuntimeException("boom"), cache))
                 .doesNotThrowAnyException();
     }
 }

@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.review.service;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
@@ -15,15 +25,8 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -39,9 +42,8 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ProductReviewDto create(final UUID productId,
-                                   final UUID userId,
-                                   final ProductReviewRequest productReviewRequest) {
+    public ProductReviewDto create(
+            final UUID productId, final UUID userId, final ProductReviewRequest productReviewRequest) {
         var productReviewText = productReviewRequest.getText();
 
         productReviewValidator.validateProductExists(productId);
@@ -69,9 +71,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void delete(final UUID productId,
-                       final UUID productReviewId,
-                       final UUID userId) {
+    public void delete(final UUID productId, final UUID productReviewId, final UUID userId) {
         productReviewValidator.validateProductReviewDeletionAllowed(productReviewId, userId);
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
@@ -83,17 +83,19 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public ProductReviewDto updateLike(final UUID productId,
-                                       final UUID productReviewId,
-                                       final UUID userId,
-                                       final Boolean newProductReviewLike) {
+    public ProductReviewDto updateLike(
+            final UUID productId,
+            final UUID productReviewId,
+            final UUID userId,
+            final @Nullable Boolean newProductReviewLike) {
         if (newProductReviewLike == null) {
             throw new BadRequestException(
                     "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].");
         }
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
-        Optional<ProductReviewLike> productReviewLike = productReviewLikeRepository.findByUserIdAndProductReviewId(userId, productReviewId);
+        Optional<ProductReviewLike> productReviewLike =
+                productReviewLikeRepository.findByUserIdAndProductReviewId(userId, productReviewId);
 
         productReviewLike.ifPresentOrElse(
                 entity -> {
@@ -112,16 +114,17 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                             .isLike(newProductReviewLike)
                             .build();
                     productReviewLikeRepository.saveAndFlush(newReviewLike);
-                }
-        );
+                });
 
         reviewRepository.updateLikesCount(productReviewId);
         reviewRepository.updateDislikesCount(productReviewId);
 
-        ProductReview productReview = reviewRepository.findById(productReviewId)
+        ProductReview productReview = reviewRepository
+                .findById(productReviewId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
-        return productReviewDtoConverter.toProductReviewDto(productReview, userLookupApi.getUserById(productReview.getUserId()));
+        return productReviewDtoConverter.toProductReviewDto(
+                productReview, userLookupApi.getUserById(productReview.getUserId()));
     }
 
     @Override

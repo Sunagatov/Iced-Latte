@@ -1,5 +1,25 @@
 package com.zufar.icedlatte.security.oauth.login;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
@@ -11,24 +31,6 @@ import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
-import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthLoginServiceTest {
@@ -38,13 +40,26 @@ class OAuthLoginServiceTest {
     private static final String EXISTING_EMAIL = "existing@example.com";
     private static final String NEW_EMAIL = "new@example.com";
 
-    @Mock private OAuthProviderClient providerClient;
-    @Mock private OAuthIdentityRepository oAuthIdentityRepository;
-    @Mock private UserAuthenticationApi userAuthenticationApi;
-    @Mock private UserRegistrationApi userRegistrationApi;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private SessionTokenService sessionTokenService;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private OAuthProviderClient providerClient;
+
+    @Mock
+    private OAuthIdentityRepository oAuthIdentityRepository;
+
+    @Mock
+    private UserAuthenticationApi userAuthenticationApi;
+
+    @Mock
+    private UserRegistrationApi userRegistrationApi;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private SessionTokenService sessionTokenService;
+
+    @Mock
+    private HttpServletRequest request;
 
     private OAuthLoginService service;
 
@@ -56,8 +71,7 @@ class OAuthLoginServiceTest {
                 userAuthenticationApi,
                 userRegistrationApi,
                 passwordEncoder,
-                sessionTokenService
-        );
+                sessionTokenService);
     }
 
     @Test
@@ -117,12 +131,8 @@ class OAuthLoginServiceTest {
         UserAuthenticationResponse response = handle();
         assertThat(response.getToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        verify(userRegistrationApi).registerOAuthUser(
-                eq("New"),
-                eq("User"),
-                eq(NEW_EMAIL),
-                eq("encoded-random-password")
-        );
+        verify(userRegistrationApi)
+                .registerOAuthUser(eq("New"), eq("User"), eq(NEW_EMAIL), eq("encoded-random-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
@@ -147,12 +157,8 @@ class OAuthLoginServiceTest {
         stubNoUser();
         stubNewUserSave();
         handle();
-        verify(userRegistrationApi).registerOAuthUser(
-                eq("OAuth"),
-                eq("User"),
-                eq(NEW_EMAIL),
-                eq("encoded-random-password")
-        );
+        verify(userRegistrationApi)
+                .registerOAuthUser(eq("OAuth"), eq("User"), eq(NEW_EMAIL), eq("encoded-random-password"));
     }
 
     @Test
@@ -165,12 +171,9 @@ class OAuthLoginServiceTest {
         handle();
         ArgumentCaptor<String> firstName = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> lastName = ArgumentCaptor.forClass(String.class);
-        verify(userRegistrationApi).registerOAuthUser(
-                firstName.capture(),
-                lastName.capture(),
-                eq(NEW_EMAIL),
-                eq("encoded-random-password")
-        );
+        verify(userRegistrationApi)
+                .registerOAuthUser(
+                        firstName.capture(), lastName.capture(), eq(NEW_EMAIL), eq("encoded-random-password"));
         assertThat(firstName.getValue()).isEqualTo("Ada");
         assertThat(lastName.getValue()).hasSize(128);
     }
@@ -211,8 +214,7 @@ class OAuthLoginServiceTest {
     @Test
     void rejectsExistingOauthIdentityWhenLocalUserCannotSignIn() {
         UserAuthenticationSnapshot lockedUser = new UserAuthenticationSnapshot(
-                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, false, true, true
-        );
+                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, false, true, true);
 
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubIdentity(lockedUser);
@@ -225,8 +227,7 @@ class OAuthLoginServiceTest {
     @Test
     void rejectsEmailLinkedOauthLoginWhenLocalUserCannotSignIn() {
         UserAuthenticationSnapshot disabledUser = new UserAuthenticationSnapshot(
-                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, true, true, false
-        );
+                UUID.randomUUID(), EXISTING_EMAIL, "secret", List.of("USER"), true, true, true, false);
 
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubNoIdentity();
@@ -267,8 +268,7 @@ class OAuthLoginServiceTest {
                 userAuthenticationApi,
                 userRegistrationApi,
                 passwordEncoder,
-                sessionTokenService
-        );
+                sessionTokenService);
 
         assertThat(service.findClient(OAuthProvider.GOOGLE)).isEmpty();
     }
@@ -277,18 +277,16 @@ class OAuthLoginServiceTest {
         return service.handle(OAuthProvider.GOOGLE, AUTH_CODE, request);
     }
 
-    private void stubProfile(String providerSubject,
-                             String email,
-                             boolean emailVerified,
-                             String firstName,
-                             String lastName) {
+    private void stubProfile(
+            String providerSubject, String email, boolean emailVerified, String firstName, String lastName) {
         when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
         when(providerClient.exchangeCode(AUTH_CODE))
                 .thenReturn(profile(providerSubject, email, emailVerified, firstName, lastName));
     }
 
     private void stubNoIdentity() {
-        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, OAuthLoginServiceTest.GOOGLE_SUBJECT))
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(
+                        OAuthProvider.GOOGLE, OAuthLoginServiceTest.GOOGLE_SUBJECT))
                 .thenReturn(Optional.empty());
     }
 
@@ -299,17 +297,20 @@ class OAuthLoginServiceTest {
                 .email(OAuthLoginServiceTest.EXISTING_EMAIL)
                 .userId(user.userId())
                 .build();
-        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, OAuthLoginServiceTest.GOOGLE_SUBJECT))
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(
+                        OAuthProvider.GOOGLE, OAuthLoginServiceTest.GOOGLE_SUBJECT))
                 .thenReturn(Optional.of(identity));
         when(userAuthenticationApi.findUserAuthenticationById(user.userId())).thenReturn(Optional.of(user));
     }
 
     private void stubUser(UserAuthenticationSnapshot user) {
-        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.EXISTING_EMAIL)).thenReturn(Optional.of(user));
+        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.EXISTING_EMAIL))
+                .thenReturn(Optional.of(user));
     }
 
     private void stubNoUser() {
-        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.NEW_EMAIL)).thenReturn(Optional.empty());
+        when(userAuthenticationApi.findUserAuthenticationByEmail(OAuthLoginServiceTest.NEW_EMAIL))
+                .thenReturn(Optional.empty());
     }
 
     private void stubToken() {
@@ -335,23 +336,11 @@ class OAuthLoginServiceTest {
     }
 
     private static UserAuthenticationSnapshot activeUser(UUID userId, String email, String password) {
-        return new UserAuthenticationSnapshot(
-                userId,
-                email,
-                password,
-                List.of("USER"),
-                true,
-                true,
-                true,
-                true
-        );
+        return new UserAuthenticationSnapshot(userId, email, password, List.of("USER"), true, true, true, true);
     }
 
-    private static OAuthProfile profile(String providerSubject,
-                                        String email,
-                                        boolean emailVerified,
-                                        String firstName,
-                                        String lastName) {
+    private static OAuthProfile profile(
+            String providerSubject, String email, boolean emailVerified, String firstName, String lastName) {
         return new OAuthProfile(providerSubject, email, emailVerified, firstName, lastName);
     }
 }

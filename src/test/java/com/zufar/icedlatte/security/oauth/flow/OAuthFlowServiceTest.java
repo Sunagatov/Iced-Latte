@@ -1,10 +1,14 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
-import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import java.net.URI;
+import java.util.Optional;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,20 +17,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.net.URI;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthFlowServiceTest {
 
-    @Mock private OAuthLoginService oAuthLoginService;
-    @Mock private OAuthStateStore oAuthStateStore;
-    @Mock private OAuthProviderClient oAuthProviderClient;
-    @Mock private HttpServletRequest request;
+    @Mock
+    private OAuthLoginService oAuthLoginService;
+
+    @Mock
+    private OAuthStateStore oAuthStateStore;
+
+    @Mock
+    private OAuthProviderClient oAuthProviderClient;
+
+    @Mock
+    private HttpServletRequest request;
 
     private OAuthFlowService service;
 
@@ -43,9 +52,7 @@ class OAuthFlowServiceTest {
                 .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
 
         Optional<URI> result = service.initiate(
-                OAuthProvider.GOOGLE,
-                "https://app.example.com:443/auth/google/callback?next=/checkout"
-        );
+                OAuthProvider.GOOGLE, "https://app.example.com:443/auth/google/callback?next=/checkout");
 
         assertThat(result).contains(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
@@ -88,7 +95,8 @@ class OAuthFlowServiceTest {
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request);
 
         assertThat(redirect.toString())
-                .isEqualTo("https://app.example.com/auth/google/callback?next=/checkout#token=jwt-token&refreshToken=refresh-token");
+                .isEqualTo(
+                        "https://app.example.com/auth/google/callback?next=/checkout#token=jwt-token&refreshToken=refresh-token");
     }
 
     @Test

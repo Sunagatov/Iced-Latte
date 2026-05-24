@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import com.zufar.icedlatte.common.audit.Identifiable;
+import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 
 public record SecurityUserDetails(
         UUID id,
@@ -19,8 +20,8 @@ public record SecurityUserDetails(
         boolean accountNonExpired,
         boolean accountNonLocked,
         boolean credentialsNonExpired,
-        boolean enabled
-) implements UserDetails, Identifiable {
+        boolean enabled)
+        implements UserDetails, Identifiable {
 
     public static SecurityUserDetails from(UserAuthenticationSnapshot snapshot) {
         List<GrantedAuthority> authorities = snapshot.authorities().stream()
@@ -35,8 +36,7 @@ public record SecurityUserDetails(
                 snapshot.accountNonExpired(),
                 snapshot.accountNonLocked(),
                 snapshot.credentialsNonExpired(),
-                snapshot.enabled()
-        );
+                snapshot.enabled());
     }
 
     @Override

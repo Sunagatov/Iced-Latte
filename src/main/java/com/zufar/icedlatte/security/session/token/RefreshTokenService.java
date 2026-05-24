@@ -1,20 +1,23 @@
 package com.zufar.icedlatte.security.session.token;
 
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -29,7 +32,8 @@ public class RefreshTokenService {
     private final SessionTokenService sessionTokenService;
 
     @Transactional
-    public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(HttpServletRequest request) {
+    public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(
+            HttpServletRequest request) {
         log.debug("auth.token.refreshing");
         String rawToken = jwtBearerTokenResolver.extract(request);
         String hash = jwtTokenBlacklist.hash(rawToken);
@@ -39,7 +43,8 @@ public class RefreshTokenService {
             session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
             if (jwtTokenClaims.isSessionManagedRefreshToken(rawToken)) {
-                jwtTokenClaims.extractRefreshTokenSessionId(rawToken)
+                jwtTokenClaims
+                        .extractRefreshTokenSessionId(rawToken)
                         .ifPresent(authSessionService::revokeAllForUserBySessionId);
                 throw ex;
             }

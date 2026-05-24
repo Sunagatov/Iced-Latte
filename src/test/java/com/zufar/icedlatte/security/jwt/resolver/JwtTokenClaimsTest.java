@@ -1,21 +1,24 @@
 package com.zufar.icedlatte.security.jwt.resolver;
 
-import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
-import io.jsonwebtoken.Jwts;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
+
+import io.jsonwebtoken.Jwts;
 
 @DisplayName("JwtTokenClaims unit tests")
 class JwtTokenClaimsTest {
@@ -44,8 +47,7 @@ class JwtTokenClaimsTest {
     @Test
     @DisplayName("extractAccessTokenEmail throws for invalid token")
     void extractAccessTokenEmailThrowsForInvalidToken() {
-        assertThatThrownBy(() -> claims.extractAccessTokenEmail("not.a.token"))
-                .isInstanceOf(JwtTokenException.class);
+        assertThatThrownBy(() -> claims.extractAccessTokenEmail("not.a.token")).isInstanceOf(JwtTokenException.class);
     }
 
     @Test
@@ -73,13 +75,15 @@ class JwtTokenClaimsTest {
     @Test
     @DisplayName("isSessionManagedRefreshToken returns true when ver claim is present")
     void isSessionManagedRefreshTokenReturnsTrueWhenVersionClaimIsPresent() {
-        assertThat(claims.isSessionManagedRefreshToken(buildToken(refreshKey, null, true))).isTrue();
+        assertThat(claims.isSessionManagedRefreshToken(buildToken(refreshKey, null, true)))
+                .isTrue();
     }
 
     @Test
     @DisplayName("isSessionManagedRefreshToken returns false when ver claim is absent")
     void isSessionManagedRefreshTokenReturnsFalseWhenVersionClaimIsAbsent() {
-        assertThat(claims.isSessionManagedRefreshToken(buildToken(refreshKey, null, false))).isFalse();
+        assertThat(claims.isSessionManagedRefreshToken(buildToken(refreshKey, null, false)))
+                .isFalse();
     }
 
     @Test
@@ -92,9 +96,8 @@ class JwtTokenClaimsTest {
     }
 
     private String buildToken(SecretKey key, String sessionId, boolean includeVersion) {
-        var builder = Jwts.builder()
-                .subject("user@example.com")
-                .expiration(new Date(System.currentTimeMillis() + 60_000));
+        var builder =
+                Jwts.builder().subject("user@example.com").expiration(new Date(System.currentTimeMillis() + 60_000));
         if (sessionId != null) {
             builder.claim("sid", sessionId);
         }

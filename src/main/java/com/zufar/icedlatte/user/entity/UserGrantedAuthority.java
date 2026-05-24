@@ -1,11 +1,13 @@
 package com.zufar.icedlatte.user.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.springframework.security.core.GrantedAuthority;
+
+import lombok.*;
 
 @Builder
 @Getter

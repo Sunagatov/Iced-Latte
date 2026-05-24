@@ -1,13 +1,5 @@
 package com.zufar.icedlatte.cart.exception.handler;
 
-import com.zufar.icedlatte.cart.exception.CartException;
-import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
-import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
-import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
-import com.zufar.icedlatte.common.exception.ProblemType;
-import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -15,6 +7,16 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.zufar.icedlatte.cart.exception.CartException;
+import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
+import com.zufar.icedlatte.common.exception.ProblemType;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
@@ -29,14 +31,30 @@ public class CartExceptionHandler {
         record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
 
         final String errorMessage = ex.getMessage();
-        var mapping = switch (ex) {
-            case ShoppingCartNotFoundException _ ->
-                    new ErrorMapping("exception.cart.not_found", ProblemType.CART_NOT_FOUND, "Cart not found", HttpStatus.NOT_FOUND, errorMessage);
-            case ShoppingCartItemNotFoundException _ ->
-                    new ErrorMapping("exception.cart.item_not_found", ProblemType.CART_ITEM_NOT_FOUND, "Cart item not found", HttpStatus.NOT_FOUND, errorMessage);
-            case InvalidItemProductQuantityException _ ->
-                    new ErrorMapping("exception.cart.invalid_quantity", ProblemType.CART_INVALID_QUANTITY, "Invalid quantity", HttpStatus.BAD_REQUEST, errorMessage);
-        };
+        var mapping =
+                switch (ex) {
+                    case ShoppingCartNotFoundException _ ->
+                        new ErrorMapping(
+                                "exception.cart.not_found",
+                                ProblemType.CART_NOT_FOUND,
+                                "Cart not found",
+                                HttpStatus.NOT_FOUND,
+                                errorMessage);
+                    case ShoppingCartItemNotFoundException _ ->
+                        new ErrorMapping(
+                                "exception.cart.item_not_found",
+                                ProblemType.CART_ITEM_NOT_FOUND,
+                                "Cart item not found",
+                                HttpStatus.NOT_FOUND,
+                                errorMessage);
+                    case InvalidItemProductQuantityException _ ->
+                        new ErrorMapping(
+                                "exception.cart.invalid_quantity",
+                                ProblemType.CART_INVALID_QUANTITY,
+                                "Invalid quantity",
+                                HttpStatus.BAD_REQUEST,
+                                errorMessage);
+                };
 
         HttpStatus status = mapping.status();
         log.debug("{}: status={}", mapping.logTag(), status.value());

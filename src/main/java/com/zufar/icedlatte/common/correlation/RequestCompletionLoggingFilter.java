@@ -1,14 +1,12 @@
 package com.zufar.icedlatte.common.correlation;
 
-import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.common.http.RequestPathUtils;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import java.io.IOException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
@@ -18,7 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
 
-import java.io.IOException;
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.http.RequestPathUtils;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Order(2)
@@ -28,8 +31,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
     private static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
 
-    public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, " +
-            "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
+    public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, "
+            + "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
 
     private final ClientIpExtractor clientIpExtractor;
 
@@ -46,9 +49,11 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
         long start = System.currentTimeMillis();
         try {
             filterChain.doFilter(request, response);
@@ -77,7 +82,9 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 log.error(OUTCOME, args);
             } else if (status == 404 && RequestPathUtils.isPublicInternetNoise(path)) {
                 log.debug(OUTCOME, args);
-            } else if (!authenticated && status == HttpServletResponse.SC_UNAUTHORIZED && isExpectedAnonymousAuthProbe(path)) {
+            } else if (!authenticated
+                    && status == HttpServletResponse.SC_UNAUTHORIZED
+                    && isExpectedAnonymousAuthProbe(path)) {
                 log.debug(OUTCOME, args);
             } else if (slow) {
                 log.warn(OUTCOME, args);
@@ -121,8 +128,6 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
     private static boolean isAuthenticated() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null
-                && auth.isAuthenticated()
-                && !ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
+        return auth != null && auth.isAuthenticated() && !ANONYMOUS_PRINCIPAL.equals(auth.getPrincipal());
     }
 }

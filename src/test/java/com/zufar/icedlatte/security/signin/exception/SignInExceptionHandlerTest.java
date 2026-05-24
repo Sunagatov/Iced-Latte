@@ -1,7 +1,10 @@
 package com.zufar.icedlatte.security.signin.exception;
 
-import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,16 +16,20 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SignInExceptionHandler Tests")
 class SignInExceptionHandlerTest {
 
-    @Mock private ProblemDetailFactory problemDetailFactory;
-    @Mock private HttpServletRequest request;
-    @InjectMocks private SignInExceptionHandler handler;
+    @Mock
+    private ProblemDetailFactory problemDetailFactory;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @InjectMocks
+    private SignInExceptionHandler handler;
 
     private static final ProblemDetail STUB_401 = ProblemDetail.forStatus(401);
 
@@ -31,8 +38,12 @@ class SignInExceptionHandlerTest {
     void shouldReturnConflictWhenUserRegistrationExceptionThrown() {
         var ex = new UserRegistrationException("This email is already registered.");
         var stub409 = ProblemDetail.forStatus(409);
-        when(problemDetailFactory.build("registration-failed", "Registration failed",
-                HttpStatus.CONFLICT, "This email is already registered.")).thenReturn(stub409);
+        when(problemDetailFactory.build(
+                        "registration-failed",
+                        "Registration failed",
+                        HttpStatus.CONFLICT,
+                        "This email is already registered."))
+                .thenReturn(stub409);
 
         var result = handler.handleSecurityException(ex, request);
 
@@ -43,8 +54,9 @@ class SignInExceptionHandlerTest {
     @DisplayName("Should return UNAUTHORIZED when UserAccountLockedException is thrown")
     void shouldReturnUnauthorizedWhenUserAccountLockedExceptionThrown() {
         var ex = new UserAccountLockedException(30);
-        when(problemDetailFactory.build("account-locked", "Account locked",
-                HttpStatus.UNAUTHORIZED, "User account is locked.")).thenReturn(STUB_401);
+        when(problemDetailFactory.build(
+                        "account-locked", "Account locked", HttpStatus.UNAUTHORIZED, "User account is locked."))
+                .thenReturn(STUB_401);
 
         var result = handler.handleSecurityException(ex, request);
 
@@ -55,8 +67,12 @@ class SignInExceptionHandlerTest {
     @DisplayName("Should return UNAUTHORIZED when InvalidCredentialsException is thrown")
     void shouldReturnUnauthorizedWhenInvalidCredentialsExceptionThrown() {
         var ex = new InvalidCredentialsException();
-        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
+        when(problemDetailFactory.build(
+                        "invalid-credentials",
+                        "Invalid credentials",
+                        HttpStatus.UNAUTHORIZED,
+                        "The login credentials are invalid."))
+                .thenReturn(STUB_401);
 
         var result = handler.handleSecurityException(ex, request);
 
@@ -67,8 +83,12 @@ class SignInExceptionHandlerTest {
     @DisplayName("Should return UNAUTHORIZED when AbsentBearerHeaderException is thrown")
     void shouldReturnUnauthorizedWhenAbsentBearerHeaderExceptionThrown() {
         var ex = new AbsentBearerHeaderException();
-        when(problemDetailFactory.build("auth-required", "Authentication required",
-                HttpStatus.UNAUTHORIZED, "Authentication required.")).thenReturn(STUB_401);
+        when(problemDetailFactory.build(
+                        "auth-required",
+                        "Authentication required",
+                        HttpStatus.UNAUTHORIZED,
+                        "Authentication required."))
+                .thenReturn(STUB_401);
 
         var result = handler.handleSecurityException(ex, request);
 
@@ -79,8 +99,12 @@ class SignInExceptionHandlerTest {
     @DisplayName("Should return UNAUTHORIZED when UsernameNotFoundException is thrown")
     void shouldReturnUnauthorizedWhenUsernameNotFoundExceptionThrown() {
         var ex = new UsernameNotFoundException("Username not found");
-        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
+        when(problemDetailFactory.build(
+                        "invalid-credentials",
+                        "Invalid credentials",
+                        HttpStatus.UNAUTHORIZED,
+                        "The login credentials are invalid."))
+                .thenReturn(STUB_401);
 
         var result = handler.handleSpringSecurityCredentialExceptions(ex, request);
 
@@ -91,8 +115,12 @@ class SignInExceptionHandlerTest {
     @DisplayName("Should return UNAUTHORIZED when BadCredentialsException is thrown")
     void shouldReturnUnauthorizedWhenBadCredentialsExceptionThrown() {
         var ex = new BadCredentialsException("Bad credentials.");
-        when(problemDetailFactory.build("invalid-credentials", "Invalid credentials",
-                HttpStatus.UNAUTHORIZED, "The login credentials are invalid.")).thenReturn(STUB_401);
+        when(problemDetailFactory.build(
+                        "invalid-credentials",
+                        "Invalid credentials",
+                        HttpStatus.UNAUTHORIZED,
+                        "The login credentials are invalid."))
+                .thenReturn(STUB_401);
 
         var result = handler.handleSpringSecurityCredentialExceptions(ex, request);
 

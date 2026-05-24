@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.payment.entity;
 
-import com.zufar.icedlatte.common.audit.AuditableEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
 
+import jakarta.persistence.*;
+
+import com.zufar.icedlatte.common.audit.AuditableEntity;
+
+import lombok.*;
+
 /**
- * Tracks Stripe payment details, separate from the Order entity.
- * Iced Latte uses Stripe test mode only — no real money is charged.
+ * Tracks Stripe payment details, separate from the Order entity. Iced Latte uses Stripe test mode only — no real money
+ * is charged.
  */
 @Getter
 @Setter

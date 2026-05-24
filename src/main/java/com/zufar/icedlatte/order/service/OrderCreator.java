@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.order.service;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -20,19 +32,9 @@ import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -49,9 +51,8 @@ public class OrderCreator implements OrderCheckoutApi {
     private int cancellationWindowMinutes;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public OrderDto create(final UUID userId,
-                           final CreateNewOrderRequestDto request,
-                           final @Nullable String idempotencyKey) {
+    public OrderDto create(
+            final UUID userId, final CreateNewOrderRequestDto request, final @Nullable String idempotencyKey) {
         if (idempotencyKey != null) {
             Optional<Order> existing = orderRepository.findByIdempotencyKeyAndUserId(idempotencyKey, userId);
             if (existing.isPresent()) {
@@ -95,17 +96,14 @@ public class OrderCreator implements OrderCheckoutApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public OrderSnapshot createPendingPaymentOrderSnapshot(UUID userId,
-                                                           CheckoutOrderRequest request,
-                                                           CartSnapshot cart) {
+    public OrderSnapshot createPendingPaymentOrderSnapshot(
+            UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
         Order order = createPendingPaymentOrder(userId, request, cart);
         return orderDtoConverter.toSnapshot(order);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    Order createPendingPaymentOrder(UUID userId,
-                                    CheckoutOrderRequest request,
-                                    CartSnapshot cart) {
+    Order createPendingPaymentOrder(UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
         validateCheckoutAddressInput(request.deliveryAddressId(), request.address());
 
         OrderAddress deliveryAddress = resolveDeliveryAddress(request.deliveryAddressId(), request.address(), userId);
@@ -146,9 +144,8 @@ public class OrderCreator implements OrderCheckoutApi {
         return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
     }
 
-    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId,
-                                                @Nullable AddressDto inlineAddress,
-                                                UUID userId) {
+    private OrderAddress resolveDeliveryAddress(
+            @Nullable UUID deliveryAddressId, @Nullable AddressDto inlineAddress, UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -167,9 +164,8 @@ public class OrderCreator implements OrderCheckoutApi {
                 .build();
     }
 
-    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId,
-                                                @Nullable OrderAddressRequest inlineAddress,
-                                                UUID userId) {
+    private OrderAddress resolveDeliveryAddress(
+            @Nullable UUID deliveryAddressId, @Nullable OrderAddressRequest inlineAddress, UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -201,8 +197,8 @@ public class OrderCreator implements OrderCheckoutApi {
         validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
     }
 
-    private static void validateCheckoutAddressInput(@Nullable UUID deliveryAddressId,
-                                                     @Nullable AddressDto inlineAddress) {
+    private static void validateCheckoutAddressInput(
+            @Nullable UUID deliveryAddressId, @Nullable AddressDto inlineAddress) {
         boolean hasId = deliveryAddressId != null;
         boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {
@@ -213,8 +209,8 @@ public class OrderCreator implements OrderCheckoutApi {
         }
     }
 
-    private static void validateCheckoutAddressInput(@Nullable UUID deliveryAddressId,
-                                                     @Nullable OrderAddressRequest inlineAddress) {
+    private static void validateCheckoutAddressInput(
+            @Nullable UUID deliveryAddressId, @Nullable OrderAddressRequest inlineAddress) {
         boolean hasId = deliveryAddressId != null;
         boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {

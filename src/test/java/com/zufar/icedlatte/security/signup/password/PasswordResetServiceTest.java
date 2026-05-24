@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.security.signup.password;
 
-import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
-import com.zufar.icedlatte.user.api.UserLookupApi;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
+
+import java.time.OffsetDateTime;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,19 +13,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.OffsetDateTime;
-
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PasswordResetService unit tests")
 class PasswordResetServiceTest {
 
-    @Mock private UserLookupApi userLookupApi;
-    @Mock private EmailVerificationService emailVerificationService;
+    @Mock
+    private UserLookupApi userLookupApi;
 
-    @InjectMocks private PasswordResetService service;
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
+    @InjectMocks
+    private PasswordResetService service;
 
     @Nested
     @DisplayName("requestReset")
@@ -45,8 +50,7 @@ class PasswordResetServiceTest {
         @DisplayName("swallows unknown email lookups")
         void swallowsUnknownEmailLookups() {
             String email = "missing@example.com";
-            doThrow(new UserNotFoundException(email))
-                    .when(userLookupApi).getUserByEmail(email);
+            doThrow(new UserNotFoundException(email)).when(userLookupApi).getUserByEmail(email);
 
             service.requestReset(email);
 
@@ -59,7 +63,8 @@ class PasswordResetServiceTest {
         void swallowsCooldownFailures() {
             String email = "known@example.com";
             doThrow(new TimeTokenException(email, OffsetDateTime.now().plusMinutes(1)))
-                    .when(emailVerificationService).sendPasswordResetCode(email);
+                    .when(emailVerificationService)
+                    .sendPasswordResetCode(email);
 
             service.requestReset(email);
 
@@ -73,8 +78,9 @@ class PasswordResetServiceTest {
     void confirmResetDelegatesWithProvidedTokenAndPassword() {
         service.confirmReset("reset-token", "new-password");
 
-        verify(emailVerificationService).confirmResetPasswordEmailByCode(
-                argThat(request -> request != null && "reset-token".equals(request.getToken())),
-                org.mockito.ArgumentMatchers.eq("new-password"));
+        verify(emailVerificationService)
+                .confirmResetPasswordEmailByCode(
+                        argThat(request -> request != null && "reset-token".equals(request.getToken())),
+                        org.mockito.ArgumentMatchers.eq("new-password"));
     }
 }

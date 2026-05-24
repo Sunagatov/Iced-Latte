@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.common.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("PaginationConfig unit tests")
 class PaginationConfigTest {
@@ -11,7 +11,8 @@ class PaginationConfigTest {
     @Test
     @DisplayName("exposes the documented default pagination values")
     void exposesDefaultValues() {
-        var config = new PaginationConfig(0,
+        var config = new PaginationConfig(
+                0,
                 new PaginationConfig.Products(50, "name", "desc"),
                 new PaginationConfig.Reviews(10, "createdAt", "desc"),
                 new PaginationConfig.Orders(10, 50, "createdAt", "desc"));
@@ -28,7 +29,8 @@ class PaginationConfigTest {
     @Test
     @DisplayName("supports custom pagination values")
     void supportsCustomValues() {
-        var config = new PaginationConfig(2,
+        var config = new PaginationConfig(
+                2,
                 new PaginationConfig.Products(24, "price", "asc"),
                 new PaginationConfig.Reviews(5, "likesCount", "asc"),
                 new PaginationConfig.Orders(20, 100, "updatedAt", "asc"));

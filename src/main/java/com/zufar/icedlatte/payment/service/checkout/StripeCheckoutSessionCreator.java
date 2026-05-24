@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
+
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
@@ -11,20 +21,13 @@ import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
-import jakarta.annotation.PostConstruct;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 /**
- * Creates Stripe Hosted Checkout Sessions (test mode only — no real money).
- * Receives a persisted Order, not an HttpServletRequest.
+ * Creates Stripe Hosted Checkout Sessions (test mode only — no real money). Receives a persisted Order, not an
+ * HttpServletRequest.
  */
 @Slf4j
 @Service
@@ -49,22 +52,20 @@ public class StripeCheckoutSessionCreator {
     }
 
     /**
-     * Cart-based entry point (normal checkout). Converts cart items to Stripe
-     * line items, then delegates to {@link #createFromLineItems}.
+     * Cart-based entry point (normal checkout). Converts cart items to Stripe line items, then delegates to
+     * {@link #createFromLineItems}.
      */
-    public StripeSessionResult create(OrderSnapshot order, String customerEmail,
-                                      List<CartItemSnapshot> cartItems) {
+    public StripeSessionResult create(OrderSnapshot order, String customerEmail, List<CartItemSnapshot> cartItems) {
         List<SessionCreateParams.LineItem> lineItems = lineItemConverter.toLineItems(cartItems);
         return createFromLineItems(order, customerEmail, lineItems);
     }
 
     /**
-     * Core method used by both normal checkout and idempotent retry.
-     * Accepts pre-built Stripe line items so the retry path can rebuild them
-     * from the persisted Order.items snapshot without needing the original cart.
+     * Core method used by both normal checkout and idempotent retry. Accepts pre-built Stripe line items so the retry
+     * path can rebuild them from the persisted Order.items snapshot without needing the original cart.
      */
-    public StripeSessionResult createFromLineItems(OrderSnapshot order, String customerEmail,
-                                                   List<SessionCreateParams.LineItem> lineItems) {
+    public StripeSessionResult createFromLineItems(
+            OrderSnapshot order, String customerEmail, List<SessionCreateParams.LineItem> lineItems) {
         String orderId = order.id().toString();
         String userId = order.userId().toString();
 
@@ -76,11 +77,10 @@ public class StripeCheckoutSessionCreator {
                 .setClientReferenceId(orderId)
                 .putMetadata("orderId", orderId)
                 .putMetadata("userId", userId)
-                .setPaymentIntentData(
-                        SessionCreateParams.PaymentIntentData.builder()
-                                .putMetadata("orderId", orderId)
-                                .putMetadata("userId", userId)
-                                .build())
+                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
+                        .putMetadata("orderId", orderId)
+                        .putMetadata("userId", userId)
+                        .build())
                 .addAllLineItem(lineItems)
                 .addAllShippingOption(shippingOptions())
                 .setExpiresAt(OffsetDateTime.now().plusMinutes(31).toEpochSecond())
@@ -104,30 +104,36 @@ public class StripeCheckoutSessionCreator {
                 .toList();
     }
 
-    private SessionCreateParams.ShippingOption buildShippingOption(String name,
-                                                                   long amountCents,
-                                                                   long minDays,
-                                                                   long maxDays) {
+    private SessionCreateParams.ShippingOption buildShippingOption(
+            String name, long amountCents, long minDays, long maxDays) {
         return SessionCreateParams.ShippingOption.builder()
-                .setShippingRateData(
-                        SessionCreateParams.ShippingOption.ShippingRateData.builder()
-                                .setType(SessionCreateParams.ShippingOption.ShippingRateData.Type.FIXED_AMOUNT)
-                                .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
-                                        .setAmount(amountCents)
-                                        .setCurrency(stripeProperties.currency())
-                                        .build())
-                                .setDisplayName(name)
-                                .setDeliveryEstimate(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.builder()
-                                        .setMinimum(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.Minimum.builder()
-                                                .setUnit(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.Minimum.Unit.BUSINESS_DAY)
-                                                .setValue(minDays)
-                                                .build())
-                                        .setMaximum(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.Maximum.builder()
-                                                .setUnit(SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.Maximum.Unit.BUSINESS_DAY)
-                                                .setValue(maxDays)
-                                                .build())
-                                        .build())
+                .setShippingRateData(SessionCreateParams.ShippingOption.ShippingRateData.builder()
+                        .setType(SessionCreateParams.ShippingOption.ShippingRateData.Type.FIXED_AMOUNT)
+                        .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
+                                .setAmount(amountCents)
+                                .setCurrency(stripeProperties.currency())
                                 .build())
+                        .setDisplayName(name)
+                        .setDeliveryEstimate(
+                                SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate.builder()
+                                        .setMinimum(
+                                                SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate
+                                                        .Minimum.builder()
+                                                        .setUnit(
+                                                                SessionCreateParams.ShippingOption.ShippingRateData
+                                                                        .DeliveryEstimate.Minimum.Unit.BUSINESS_DAY)
+                                                        .setValue(minDays)
+                                                        .build())
+                                        .setMaximum(
+                                                SessionCreateParams.ShippingOption.ShippingRateData.DeliveryEstimate
+                                                        .Maximum.builder()
+                                                        .setUnit(
+                                                                SessionCreateParams.ShippingOption.ShippingRateData
+                                                                        .DeliveryEstimate.Maximum.Unit.BUSINESS_DAY)
+                                                        .setValue(maxDays)
+                                                        .build())
+                                        .build())
+                        .build())
                 .build();
     }
 }

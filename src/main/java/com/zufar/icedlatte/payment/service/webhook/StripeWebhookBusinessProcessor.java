@@ -1,5 +1,11 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
@@ -10,20 +16,16 @@ import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Transactional webhook business logic, extracted into a separate bean
- * to ensure @Transactional is honored (avoids Spring self-invocation trap).
- * <p>
- * Non-retryable business failures (e.g., amount mismatch) are persisted
- * and the method returns normally — no throw inside @Transactional.
+ * Transactional webhook business logic, extracted into a separate bean to ensure @Transactional is honored (avoids
+ * Spring self-invocation trap).
+ *
+ * <p>Non-retryable business failures (e.g., amount mismatch) are persisted and the method returns normally — no throw
+ * inside @Transactional.
  */
 @Slf4j
 @Service
@@ -61,16 +63,17 @@ public class StripeWebhookBusinessProcessor {
             UUID orderId = extractOrderId(stripeSession);
             Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
             if (payment == null || payment.getStatus().isTerminal()) {
-                log.info("payment.awaiting_async.skipped: orderId={}, status={}",
-                        orderId, payment != null ? payment.getStatus() : "missing");
+                log.info(
+                        "payment.awaiting_async.skipped: orderId={}, status={}",
+                        orderId,
+                        payment != null ? payment.getStatus() : "missing");
                 return;
             }
             payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
             payment.setRawEventId(event.getId());
             payment.setLatestEventType(event.getType());
             paymentRepository.save(payment);
-            log.info("payment.awaiting_async: orderId={}, paymentStatus={}",
-                    orderId, stripeSession.getPaymentStatus());
+            log.info("payment.awaiting_async: orderId={}, paymentStatus={}", orderId, stripeSession.getPaymentStatus());
             return;
         }
         markPaid(event, stripeSession);
@@ -80,7 +83,8 @@ public class StripeWebhookBusinessProcessor {
         UUID orderId = extractOrderId(stripeSession);
 
         // PESSIMISTIC_WRITE lock — prevents concurrent processing of different events
-        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
+        Payment payment = paymentRepository
+                .findByOrderIdForUpdate(orderId)
                 .orElseThrow(() -> new IllegalStateException("No Payment for orderId=" + orderId));
 
         if (payment.getStatus().isTerminal()) {
@@ -95,9 +99,13 @@ public class StripeWebhookBusinessProcessor {
         if (stripeAmount != null && stripeCurrency != null) {
             if (!stripeAmount.equals(payment.getAmountMinor())
                     || !stripeCurrency.equalsIgnoreCase(payment.getCurrency())) {
-                log.error("payment.amount_mismatch: orderId={}, expected={}_{}, stripe={}_{}",
-                        orderId, payment.getAmountMinor(), payment.getCurrency(),
-                        stripeAmount, stripeCurrency);
+                log.error(
+                        "payment.amount_mismatch: orderId={}, expected={}_{}, stripe={}_{}",
+                        orderId,
+                        payment.getAmountMinor(),
+                        payment.getCurrency(),
+                        stripeAmount,
+                        stripeCurrency);
                 payment.setStatus(PaymentStatus.RECONCILIATION_FAILED);
                 payment.setRawEventId(event.getId());
                 payment.setLatestEventType(event.getType());
@@ -119,8 +127,7 @@ public class StripeWebhookBusinessProcessor {
 
         cartCheckoutApi.deleteCartForUser(payment.getUserId());
 
-        log.info("checkout.completed: orderId={}, paymentIntentId={}",
-                orderId, stripeSession.getPaymentIntent());
+        log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, stripeSession.getPaymentIntent());
     }
 
     private void handleExpired(Session stripeSession) {
@@ -128,8 +135,10 @@ public class StripeWebhookBusinessProcessor {
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
-            log.info("payment.expired.skipped: orderId={}, status={}",
-                    orderId, payment != null ? payment.getStatus() : "missing");
+            log.info(
+                    "payment.expired.skipped: orderId={}, status={}",
+                    orderId,
+                    payment != null ? payment.getStatus() : "missing");
             return;
         }
 
@@ -148,8 +157,10 @@ public class StripeWebhookBusinessProcessor {
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
-            log.info("payment.async_failed.skipped: orderId={}, status={}",
-                    orderId, payment != null ? payment.getStatus() : "missing");
+            log.info(
+                    "payment.async_failed.skipped: orderId={}, status={}",
+                    orderId,
+                    payment != null ? payment.getStatus() : "missing");
             return;
         }
 
@@ -162,7 +173,6 @@ public class StripeWebhookBusinessProcessor {
             log.warn("order.payment_failed.transition_failed: orderId={}", orderId);
         }
     }
-
 
     private void handleChargeRefunded(Event event) {
         var charge = event.getDataObjectDeserializer()
@@ -188,15 +198,12 @@ public class StripeWebhookBusinessProcessor {
         if (order.status() == OrderStatusSnapshot.REFUND_REQUESTED) {
             try {
                 orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed");
-                log.info("order.refund.confirmed: orderId={}, paymentIntentId={}",
-                        order.id(), paymentIntentId);
+                log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", order.id(), paymentIntentId);
             } catch (InvalidOrderStateTransitionException _) {
-                log.warn("order.refund.transition_failed: orderId={}, status={}",
-                        order.id(), order.status());
+                log.warn("order.refund.transition_failed: orderId={}, status={}", order.id(), order.status());
             }
         } else {
-            log.info("order.refund.webhook_ignored: orderId={}, status={}",
-                    order.id(), order.status());
+            log.info("order.refund.webhook_ignored: orderId={}, status={}", order.id(), order.status());
         }
     }
 
@@ -206,8 +213,10 @@ public class StripeWebhookBusinessProcessor {
                 .filter(Session.class::isInstance)
                 .map(Session.class::cast)
                 .orElseThrow(() -> {
-                    log.warn("payment.webhook.session_missing: eventType={}, eventId={}",
-                            event.getType(), event.getId());
+                    log.warn(
+                            "payment.webhook.session_missing: eventType={}, eventId={}",
+                            event.getType(),
+                            event.getId());
                     return new IllegalStateException("Stripe webhook event session data is missing.");
                 });
     }

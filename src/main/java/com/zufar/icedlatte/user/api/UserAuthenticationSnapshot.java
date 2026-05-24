@@ -11,6 +11,4 @@ public record UserAuthenticationSnapshot(
         boolean accountNonExpired,
         boolean accountNonLocked,
         boolean credentialsNonExpired,
-        boolean enabled
-) {
-}
+        boolean enabled) {}

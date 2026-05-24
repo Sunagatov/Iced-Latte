@@ -1,22 +1,24 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import io.sentry.*;
-import io.sentry.protocol.Request;
-import io.sentry.protocol.SentryTransaction;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.test.util.ReflectionTestUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import io.sentry.*;
+import io.sentry.protocol.Request;
+import io.sentry.protocol.SentryTransaction;
 
 @DisplayName("SentryConfiguration unit tests")
+@SuppressWarnings("StaticImportCanBeUsed")
 class SentryConfigurationTest {
 
     @Test
@@ -37,8 +39,7 @@ class SentryConfigurationTest {
         request.setHeaders(new HashMap<>(Map.of(
                 "Authorization", "Bearer token",
                 "Cookie", "sid=1",
-                "X-Trace-ID", "trace"
-        )));
+                "X-Trace-ID", "trace")));
         errorEvent.setRequest(request);
 
         SentryEvent result = Objects.requireNonNull(callback.execute(errorEvent, hint));
@@ -86,13 +87,13 @@ class SentryConfigurationTest {
         CustomSamplingContext customSamplingContext = new CustomSamplingContext();
 
         assertThat(callback.sample(new SamplingContext(
-                new TransactionContext("/api/v1/auth/authenticate", "http.server"), customSamplingContext)))
+                        new TransactionContext("/api/v1/auth/authenticate", "http.server"), customSamplingContext)))
                 .isEqualTo(1.0);
         assertThat(callback.sample(new SamplingContext(
-                new TransactionContext("/api/v1/products/42", "http.server"), customSamplingContext)))
+                        new TransactionContext("/api/v1/products/42", "http.server"), customSamplingContext)))
                 .isEqualTo(0.5);
         assertThat(callback.sample(new SamplingContext(
-                new TransactionContext("/actuator/info", "http.server"), customSamplingContext)))
+                        new TransactionContext("/actuator/info", "http.server"), customSamplingContext)))
                 .isEqualTo(0.1);
     }
 

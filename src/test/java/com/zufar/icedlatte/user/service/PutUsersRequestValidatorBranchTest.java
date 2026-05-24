@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 
 @DisplayName("PutUsersRequestValidator additional branch tests")
 class PutUsersRequestValidatorBranchTest {

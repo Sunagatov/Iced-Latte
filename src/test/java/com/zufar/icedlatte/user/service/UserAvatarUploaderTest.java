@@ -1,9 +1,12 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayInputStream;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,28 +17,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAvatarUploader unit tests")
 class UserAvatarUploaderTest {
 
-    @Mock private FileStorageApi fileStorageService;
-    @Mock private ObjectProvider<com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator> cloudfrontInvalidatorProvider;
-    @Mock private MultipartFile file;
+    @Mock
+    private FileStorageApi fileStorageService;
+
+    @Mock
+    private ObjectProvider<com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator> cloudfrontInvalidatorProvider;
+
+    @Mock
+    private MultipartFile file;
+
     private UserAvatarUploader uploader;
 
     private static final String BUCKET = "test-bucket";
 
     // Minimal valid JPEG header: FF D8 FF followed by padding
-    private static final byte[] JPEG_HEADER = new byte[]{
-            (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
+    private static final byte[] JPEG_HEADER =
+            new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     @BeforeEach
     void injectBucket() throws Exception {
@@ -72,8 +78,7 @@ class UserAvatarUploaderTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileStorageService.isEnabled()).thenReturn(false);
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
-                .isInstanceOf(FileUploadException.class);
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file)).isInstanceOf(FileUploadException.class);
 
         verify(fileStorageService).isEnabled();
         verify(fileStorageService, never()).store(any(), any());

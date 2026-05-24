@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.cart.endpoint;
 
-import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
-import io.restassured.response.Response;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
+import io.restassured.response.Response;
 
 @DisplayName("Shopping cart validation integration tests")
 class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -74,10 +76,7 @@ class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegration
         AuthenticatedUser user = registerAndAuthenticateUser();
 
         Response response = addItem(user);
-        String shoppingCartItemId = response.then()
-                .extract()
-                .jsonPath()
-                .getString("items[0].id");
+        String shoppingCartItemId = response.then().extract().jsonPath().getString("items[0].id");
 
         given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
                 .body("""
@@ -115,10 +114,7 @@ class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegration
         AuthenticatedUser secondUser = registerAndAuthenticateUser();
 
         Response firstResponse = addItem(firstUser);
-        String foreignItemId = firstResponse.then()
-                .extract()
-                .jsonPath()
-                .getString("items[0].id");
+        String foreignItemId = firstResponse.then().extract().jsonPath().getString("items[0].id");
 
         given(authenticatedJsonSpec(CartEndpoint.CART_URL, secondUser.accessToken()))
                 .body("""

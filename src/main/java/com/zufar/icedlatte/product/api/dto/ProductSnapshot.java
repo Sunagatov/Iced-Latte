@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.product.api.dto;
 
-import org.jspecify.annotations.Nullable;
-
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import org.jspecify.annotations.Nullable;
 
 public record ProductSnapshot(
         UUID id,
@@ -12,6 +12,4 @@ public record ProductSnapshot(
         BigDecimal price,
         @Nullable Integer quantity,
         @Nullable Boolean active,
-        @Nullable String productFileUrl
-) {
-}
+        @Nullable String productFileUrl) {}

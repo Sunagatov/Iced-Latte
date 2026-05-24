@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.review.service.validator;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import org.springframework.stereotype.Service;
+
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -19,21 +21,25 @@ public class GetReviewsRequestValidator {
 
     private final PaginationParametersValidator paginationParametersValidator;
 
-    public void validate(final Integer pageNumber,
-                         final Integer pageSize,
-                         final String sortAttribute,
-                         final String sortDirection,
-                         final List<Integer> productRatings) {
-        List<String> errors = new ArrayList<>(
-                paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
+    public void validate(
+            final Integer pageNumber,
+            final Integer pageSize,
+            final String sortAttribute,
+            final String sortDirection,
+            final List<Integer> productRatings) {
+        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
+                pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
 
         if (productRatings != null) {
-            if (productRatings.stream().anyMatch(Objects::isNull) || !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings)) {
-                errors.add(error("Some values of this product's rating list = '%s' are incorrect. Allowed 'productRating' values are '%s'."
-                        .formatted(productRatings, ALLOWED_PRODUCT_RATING_VALUES)));
+            if (productRatings.stream().anyMatch(Objects::isNull)
+                    || !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings)) {
+                errors.add(error(
+                        "Some values of this product's rating list = '%s' are incorrect. Allowed 'productRating' values are '%s'."
+                                .formatted(productRatings, ALLOWED_PRODUCT_RATING_VALUES)));
             } else if (productRatings.stream().distinct().count() < productRatings.size()) {
-                errors.add(error("This list of product's rating values '%s' has duplicates. Product's rating values must be unique."
-                        .formatted(productRatings)));
+                errors.add(error(
+                        "This list of product's rating values '%s' has duplicates. Product's rating values must be unique."
+                                .formatted(productRatings)));
             }
         }
 

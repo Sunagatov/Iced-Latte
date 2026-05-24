@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
+import java.time.Duration;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
-import java.time.Duration;
 
 @Getter
 @Setter

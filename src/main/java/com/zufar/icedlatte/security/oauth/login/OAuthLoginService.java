@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.security.oauth.login;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
@@ -12,17 +24,9 @@ import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
-import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -47,11 +51,10 @@ public class OAuthLoginService {
     }
 
     @Transactional
-    public UserAuthenticationResponse handle(OAuthProvider provider,
-                                             String authorizationCode,
-                                             HttpServletRequest httpRequest) {
-        OAuthProviderClient client = findClient(provider)
-                .orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
+    public UserAuthenticationResponse handle(
+            OAuthProvider provider, String authorizationCode, HttpServletRequest httpRequest) {
+        OAuthProviderClient client =
+                findClient(provider).orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);
 
         String providerSubject = normalizeRequired(profile.providerSubject());
@@ -73,7 +76,8 @@ public class OAuthLoginService {
         Optional<OAuthIdentityEntity> existingIdentity =
                 oAuthIdentityRepository.findByProviderAndProviderSubject(provider, providerSubject);
         UserAuthenticationSnapshot user = existingIdentity
-                .map(identity -> userAuthenticationApi.findUserAuthenticationById(identity.getUserId())
+                .map(identity -> userAuthenticationApi
+                        .findUserAuthenticationById(identity.getUserId())
                         .orElseThrow(() -> new UnauthorizedException("OAuth account is not available.")))
                 .orElseGet(() -> findOrCreateUserAndIdentity(provider, profile, providerSubject, email));
         ensureUserCanSignIn(user);
@@ -81,16 +85,13 @@ public class OAuthLoginService {
         return sessionTokenService.issueForNewSession(SecurityUserDetails.from(user), httpRequest);
     }
 
-    private UserAuthenticationSnapshot findOrCreateUserAndIdentity(OAuthProvider provider,
-                                                                   OAuthProfile profile,
-                                                                   String providerSubject,
-                                                                   String email) {
+    private UserAuthenticationSnapshot findOrCreateUserAndIdentity(
+            OAuthProvider provider, OAuthProfile profile, String providerSubject, String email) {
         Optional<UserAuthenticationSnapshot> existingUser = userAuthenticationApi.findUserAuthenticationByEmail(email);
         if (existingUser.isPresent() && !profile.emailVerified()) {
             throw new BadRequestException(provider.id() + " account email is not verified.");
         }
-        UserAuthenticationSnapshot user = existingUser
-                .orElseGet(() -> createUser(provider, profile, email));
+        UserAuthenticationSnapshot user = existingUser.orElseGet(() -> createUser(provider, profile, email));
         oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
                 .provider(provider)
                 .providerSubject(providerSubject)
@@ -100,30 +101,23 @@ public class OAuthLoginService {
         return user;
     }
 
-    private UserAuthenticationSnapshot createUser(OAuthProvider provider,
-                                                  OAuthProfile profile,
-                                                  String email) {
+    private UserAuthenticationSnapshot createUser(OAuthProvider provider, OAuthProfile profile, String email) {
         UserAuthenticationSnapshot saved = userRegistrationApi.registerOAuthUser(
                 defaultName(profile.firstName(), "OAuth"),
                 defaultName(profile.lastName(), "User"),
                 email,
-                passwordEncoder.encode(UUID.randomUUID().toString())
-        );
+                Objects.requireNonNull(passwordEncoder.encode(UUID.randomUUID().toString())));
         log.info("user.registered.oauth: provider={}, userId={}", provider.id(), saved.userId());
         return saved;
     }
 
     private void ensureUserCanSignIn(UserAuthenticationSnapshot user) {
-        if (!user.enabled()
-                || !user.accountNonLocked()
-                || !user.accountNonExpired()
-                || !user.credentialsNonExpired()) {
+        if (!user.enabled() || !user.accountNonLocked() || !user.accountNonExpired() || !user.credentialsNonExpired()) {
             throw new UnauthorizedException("OAuth account is not available.");
         }
     }
 
-    private String defaultName(String value,
-                               String fallback) {
+    private String defaultName(String value, String fallback) {
         String normalized = normalizeRequired(value);
         if (normalized == null || normalized.isBlank()) {
             return fallback;

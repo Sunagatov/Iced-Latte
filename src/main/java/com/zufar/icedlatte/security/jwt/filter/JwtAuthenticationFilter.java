@@ -1,5 +1,20 @@
 package com.zufar.icedlatte.security.jwt.filter;
 
+import java.io.IOException;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.MDC;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
@@ -15,22 +30,10 @@ import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
+
 import io.jsonwebtoken.ExpiredJwtException;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
-import org.slf4j.MDC;
-import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 @Slf4j
 @Component
@@ -49,21 +52,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return ApiPaths.AUTH_REFRESH.equals(uri)
-                || uri.startsWith(ApiPaths.AUTH_OAUTH + "/");
+        return ApiPaths.AUTH_REFRESH.equals(uri) || uri.startsWith(ApiPaths.AUTH_OAUTH + "/");
     }
 
     @Override
-    protected void doFilterInternal(@NonNull final HttpServletRequest httpRequest,
-                                    @NonNull final HttpServletResponse httpResponse,
-                                    @NonNull final FilterChain filterChain) throws IOException, ServletException {
+    protected void doFilterInternal(
+            @NonNull final HttpServletRequest httpRequest,
+            @NonNull final HttpServletResponse httpResponse,
+            @NonNull final FilterChain filterChain)
+            throws IOException, ServletException {
         try {
             var authenticationToken = jwtAuthenticationProvider.get(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            MDC.put(RequestContextConstants.USER_ID_MDC_KEY, currentUserProvider.getUserId().toString());
+            MDC.put(
+                    RequestContextConstants.USER_ID_MDC_KEY,
+                    currentUserProvider.getUserId().toString());
             try {
                 String rawToken = jwtBearerTokenResolver.extract(httpRequest);
-                jwtTokenClaims.extractAccessTokenSessionId(rawToken)
+                jwtTokenClaims
+                        .extractAccessTokenSessionId(rawToken)
                         .ifPresent(sid -> MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sid.toString()));
             } catch (Exception _) {
                 // sid is best-effort; never block the request
@@ -83,36 +90,79 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void handleAuthenticationException(HttpServletRequest httpRequest,
-                                               HttpServletResponse httpResponse,
-                                               Exception exception) throws IOException {
+    private void handleAuthenticationException(
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse, Exception exception) throws IOException {
         String requestId = MDC.get(RequestContextConstants.REQUEST_ID_MDC_KEY);
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
         String clientIp = clientIpExtractor.extract(httpRequest);
 
         // amazonq-ignore-next-line
-        var errorInfo = switch (exception) {
-            case InvalidCredentialsException _ ->
-                    new ErrorInfo(ProblemType.INVALID_CREDENTIALS, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "INVALID_CREDENTIALS");
-            case JwtTokenBlacklistedException _ ->
-                    new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Session expired. Please sign in again.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_REVOKED");
-            case ExpiredJwtException _ ->
-                    new ErrorInfo(ProblemType.SESSION_EXPIRED, "Session expired", "Authentication token has expired.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED");
-            case JwtTokenException _ ->
-                    new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID_FORMAT");
-            case UsernameNotFoundException _ ->
-                    new ErrorInfo(ProblemType.AUTH_FAILED, "Authentication failed", "Authentication failed.", HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND");
-            default ->
-                    new ErrorInfo(ProblemType.INTERNAL_ERROR, "Authentication error", "An internal server error occurred.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "AUTH_INTERNAL_ERROR");
-        };
+        var errorInfo =
+                switch (exception) {
+                    case InvalidCredentialsException _ ->
+                        new ErrorInfo(
+                                ProblemType.INVALID_CREDENTIALS,
+                                "Authentication failed",
+                                "Authentication failed.",
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "INVALID_CREDENTIALS");
+                    case JwtTokenBlacklistedException _ ->
+                        new ErrorInfo(
+                                ProblemType.SESSION_EXPIRED,
+                                "Session expired",
+                                "Session expired. Please sign in again.",
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "TOKEN_REVOKED");
+                    case ExpiredJwtException _ ->
+                        new ErrorInfo(
+                                ProblemType.SESSION_EXPIRED,
+                                "Session expired",
+                                "Authentication token has expired.",
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "TOKEN_EXPIRED");
+                    case JwtTokenException _ ->
+                        new ErrorInfo(
+                                ProblemType.AUTH_FAILED,
+                                "Authentication failed",
+                                "Authentication failed.",
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "TOKEN_INVALID_FORMAT");
+                    case UsernameNotFoundException _ ->
+                        new ErrorInfo(
+                                ProblemType.AUTH_FAILED,
+                                "Authentication failed",
+                                "Authentication failed.",
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "USER_NOT_FOUND");
+                    default ->
+                        new ErrorInfo(
+                                ProblemType.INTERNAL_ERROR,
+                                "Authentication error",
+                                "An internal server error occurred.",
+                                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                                "AUTH_INTERNAL_ERROR");
+                };
 
         if (errorInfo.statusCode() >= 500) {
-            log.error("auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
-                    errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId, exception);
+            log.error(
+                    "auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
+                    errorInfo.reasonCode(),
+                    method,
+                    path,
+                    clientIp,
+                    errorInfo.statusCode(),
+                    requestId,
+                    exception);
         } else {
-            log.warn("auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
-                    errorInfo.reasonCode(), method, path, clientIp, errorInfo.statusCode(), requestId);
+            log.warn(
+                    "auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
+                    errorInfo.reasonCode(),
+                    method,
+                    path,
+                    clientIp,
+                    errorInfo.statusCode(),
+                    requestId);
             log.debug("auth.failed.details", exception);
         }
 
@@ -123,7 +173,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setHeader("Expires", "0");
-        ObjectNode json = OBJECT_MAPPER.createObjectNode()
+        ObjectNode json = OBJECT_MAPPER
+                .createObjectNode()
                 .put("type", problemTypeUriFactory.build(errorInfo.typeSlug()))
                 .put("title", errorInfo.title())
                 .put("status", errorInfo.statusCode())
@@ -137,6 +188,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // Record for error information - Java 21 feature
-    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) { }
-
+    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) {}
 }

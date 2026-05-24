@@ -1,15 +1,16 @@
 package com.zufar.icedlatte.ratelimit.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletResponse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 
 @DisplayName("RateLimitResponseWriter unit tests")
 class RateLimitResponseWriterTest {
@@ -42,7 +43,8 @@ class RateLimitResponseWriterTest {
         long resetTimeMillis = System.currentTimeMillis() + 3_000;
         RateLimitResult result = new RateLimitResult(false, 10, 0, resetTimeMillis);
 
-        RateLimitResponseWriter.writeTooManyRequests(response, result, "https://errors.example.test/problems/rate-limited");
+        RateLimitResponseWriter.writeTooManyRequests(
+                response, result, "https://errors.example.test/problems/rate-limited");
 
         assertThat(response.getStatus()).isEqualTo(429);
         assertThat(response.getContentType()).startsWith("application/json");

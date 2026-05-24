@@ -2,10 +2,7 @@ package com.zufar.icedlatte.common.exception;
 
 import lombok.experimental.UtilityClass;
 
-/**
- * Centralized RFC 9457 problem-detail type slugs.
- * Each slug is appended to the configured problem.type-base-url.
- */
+/** Centralized RFC 9457 problem-detail type slugs. Each slug is appended to the configured problem.type-base-url. */
 @UtilityClass
 public class ProblemType {
 

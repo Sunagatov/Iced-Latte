@@ -1,20 +1,22 @@
 package com.zufar.icedlatte.security.jwt.blacklist;
 
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -33,7 +35,8 @@ public class JwtTokenBlacklist {
             return;
         }
         temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
-        log.debug("jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
+        log.debug(
+                "jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
     }
 
     public void validateNotBlacklisted(String token) {
@@ -54,8 +57,10 @@ public class JwtTokenBlacklist {
         try {
             return temporaryStore.contains(namespacedKey(token));
         } catch (RuntimeException ex) {
-            log.error("jwt.blacklist.store_error: exceptionClass={}",
-                    ex.getClass().getSimpleName(), ex);
+            log.error(
+                    "jwt.blacklist.store_error: exceptionClass={}",
+                    ex.getClass().getSimpleName(),
+                    ex);
             return true;
         }
     }
@@ -66,8 +71,7 @@ public class JwtTokenBlacklist {
 
     public String hash(String token) {
         try {
-            byte[] hash = MessageDigest.getInstance("SHA-256")
-                    .digest(token.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);

@@ -1,16 +1,16 @@
 package com.zufar.icedlatte.user.converter;
 
-import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
-import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
-import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
+import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
+import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
+import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
+
 @SuppressWarnings("NullableProblems")
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DeliveryAddressDtoConverter {
 
     @Mapping(target = "isDefault", source = "default")

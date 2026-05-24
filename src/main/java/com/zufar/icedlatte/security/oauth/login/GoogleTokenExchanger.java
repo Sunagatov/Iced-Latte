@@ -1,5 +1,15 @@
 package com.zufar.icedlatte.security.oauth.login;
 
+import java.io.IOException;
+import java.net.URI;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -9,16 +19,8 @@ import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.GoogleOAuthProperties;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.net.URI;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -42,7 +44,8 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
         this.verifier = new GoogleIdTokenVerifier.Builder(transport, json)
                 .setAudience(Collections.singletonList(clientId))
                 .build();
-        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, properties.clientSecret(), List.of(scope.split("\\s+")))
+        this.flow = new GoogleAuthorizationCodeFlow.Builder(
+                        transport, json, clientId, properties.clientSecret(), List.of(scope.split("\\s+")))
                 .setAccessType("offline")
                 .build();
     }
@@ -74,8 +77,7 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
                     payload.getEmail(),
                     Boolean.TRUE.equals(payload.getEmailVerified()),
                     (String) payload.get("given_name"),
-                    (String) payload.get("family_name")
-            );
+                    (String) payload.get("family_name"));
         } catch (GeneralSecurityException | IOException _) {
             throw new UnauthorizedException("Google authentication failed.");
         }

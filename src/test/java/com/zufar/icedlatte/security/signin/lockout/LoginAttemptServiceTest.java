@@ -1,8 +1,16 @@
 package com.zufar.icedlatte.security.signin.lockout;
 
-import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
-import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
-import com.zufar.icedlatte.user.api.UserAccessControlApi;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,25 +23,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
+import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LoginAttemptService unit tests")
 class LoginAttemptServiceTest {
 
-    @Mock private LoginAttemptRepository loginAttemptRepository;
-    @Mock private UserAccessControlApi userAccessControlApi;
+    @Mock
+    private LoginAttemptRepository loginAttemptRepository;
 
-    @InjectMocks private LoginAttemptService service;
+    @Mock
+    private UserAccessControlApi userAccessControlApi;
+
+    @InjectMocks
+    private LoginAttemptService service;
 
     private static final String USER_EMAIL = "user@example.com";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
@@ -78,7 +83,8 @@ class LoginAttemptServiceTest {
         void createsNewLoginAttemptRecordWhenMissing() {
             ArgumentCaptor<LoginAttemptEntity> captor = ArgumentCaptor.forClass(LoginAttemptEntity.class);
             when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.empty());
-            when(loginAttemptRepository.save(any(LoginAttemptEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(loginAttemptRepository.save(any(LoginAttemptEntity.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
 
             service.recordFailure(USER_EMAIL);
 
@@ -107,7 +113,8 @@ class LoginAttemptServiceTest {
             ArgumentCaptor<Instant> expirationCaptor = ArgumentCaptor.forClass(Instant.class);
             when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(existingAttempt));
             when(loginAttemptRepository.save(existingAttempt)).thenReturn(existingAttempt);
-            when(loginAttemptRepository.setUserLockedStatusAndExpiration(eq(USER_EMAIL), any(Instant.class))).thenReturn(1);
+            when(loginAttemptRepository.setUserLockedStatusAndExpiration(eq(USER_EMAIL), any(Instant.class)))
+                    .thenReturn(1);
             when(userAccessControlApi.lockAccount(USER_EMAIL)).thenReturn(1);
 
             Instant before = Instant.now();

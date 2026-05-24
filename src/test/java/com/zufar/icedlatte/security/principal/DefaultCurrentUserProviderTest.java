@@ -1,10 +1,11 @@
 package com.zufar.icedlatte.security.principal;
 
-import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
-import com.zufar.icedlatte.user.api.UserLookupApi;
-import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,11 +17,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.common.audit.Identifiable;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
+import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CurrentUserProvider unit tests")
@@ -96,8 +97,7 @@ class DefaultCurrentUserProviderTest {
 
     private static TestPrincipal authenticatedUser() {
         TestPrincipal user = new TestPrincipal(UUID.randomUUID());
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(user, null));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, null));
         return user;
     }
 

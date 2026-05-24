@@ -1,8 +1,14 @@
 package com.zufar.icedlatte.common.correlation;
 
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.List;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,18 +19,18 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RequestCompletionLoggingFilter unit tests")
+@SuppressWarnings("StaticImportCanBeUsed")
 class RequestCompletionLoggingFilterTest {
 
-    @Mock private ClientIpExtractor clientIpExtractor;
-    @InjectMocks private RequestCompletionLoggingFilter filter;
+    @Mock
+    private ClientIpExtractor clientIpExtractor;
+
+    @InjectMocks
+    private RequestCompletionLoggingFilter filter;
 
     @Test
     @DisplayName("shouldNotFilter returns true for OPTIONS requests")

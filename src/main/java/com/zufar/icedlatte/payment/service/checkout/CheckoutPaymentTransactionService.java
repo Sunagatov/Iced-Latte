@@ -1,5 +1,13 @@
 package com.zufar.icedlatte.payment.service.checkout;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -16,19 +24,13 @@ import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentProvider;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-import java.util.UUID;
 
 /**
- * Transactional methods for the checkout flow, extracted into a separate bean
- * to avoid Spring self-invocation on @Transactional (proxy-based AOP).
+ * Transactional methods for the checkout flow, extracted into a separate bean to avoid Spring self-invocation
+ * on @Transactional (proxy-based AOP).
  */
 @Slf4j
 @Service
@@ -44,9 +46,7 @@ public class CheckoutPaymentTransactionService {
     private final StripeProperties stripeProperties;
 
     @Transactional
-    public CheckoutPreparation prepareCheckout(UUID userId,
-                                               CreateCheckoutRequestDto request,
-                                               String idempotencyKey) {
+    public CheckoutPreparation prepareCheckout(UUID userId, CreateCheckoutRequestDto request, String idempotencyKey) {
         // Application-level idempotency: same user + same key → return existing
         Payment existing = paymentRepository
                 .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId)
@@ -56,14 +56,13 @@ public class CheckoutPaymentTransactionService {
             // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
             OrderSnapshot order = (existing.getProviderSessionId() == null
                     ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
-                    : orderPaymentApi.getSnapshot(existing.getOrderId())
-            );
+                    : orderPaymentApi.getSnapshot(existing.getOrderId()));
             log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
             return new CheckoutPreparation(order, existing, List.of(), true);
         }
 
         CartSnapshot cart = cartCheckoutApi.getByUserIdOrThrow(userId);
-        if (cart.items() == null || cart.items().isEmpty()) {
+        if (cart.items().isEmpty()) {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
@@ -97,5 +96,4 @@ public class CheckoutPaymentTransactionService {
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .longValueExact();
     }
-
 }

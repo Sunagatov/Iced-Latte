@@ -1,18 +1,20 @@
 package com.zufar.icedlatte.security.signin.lockout;
 
-import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
-import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
-import com.zufar.icedlatte.user.api.UserAccessControlApi;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
+import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
+import com.zufar.icedlatte.user.api.UserAccessControlApi;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -30,7 +32,8 @@ public class LoginAttemptService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void recordFailure(String userEmail) {
-        LoginAttemptEntity loginAttempt = loginAttemptRepository.findByUserEmail(userEmail)
+        LoginAttemptEntity loginAttempt = loginAttemptRepository
+                .findByUserEmail(userEmail)
                 .orElseGet(() -> {
                     log.debug("auth.login_attempts.new_record");
                     return LoginAttemptEntity.builder()
@@ -54,17 +57,16 @@ public class LoginAttemptService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void resetAfterSuccessfulAuthentication(String userEmail) {
-        loginAttemptRepository.findByUserEmail(userEmail)
-                .ifPresent(existingLoginAttempt -> {
-                    if (Boolean.TRUE.equals(existingLoginAttempt.getIsUserLocked())) {
-                        unlockUserAccount(userEmail);
-                    }
-                    existingLoginAttempt.setAttempts(0);
-                    existingLoginAttempt.setIsUserLocked(false);
-                    existingLoginAttempt.setExpirationDatetime(null);
-                    existingLoginAttempt.setLastModified(Instant.now());
-                    log.debug("auth.login_attempts.reset");
-                });
+        loginAttemptRepository.findByUserEmail(userEmail).ifPresent(existingLoginAttempt -> {
+            if (Boolean.TRUE.equals(existingLoginAttempt.getIsUserLocked())) {
+                unlockUserAccount(userEmail);
+            }
+            existingLoginAttempt.setAttempts(0);
+            existingLoginAttempt.setIsUserLocked(false);
+            existingLoginAttempt.setExpirationDatetime(null);
+            existingLoginAttempt.setLastModified(Instant.now());
+            log.debug("auth.login_attempts.reset");
+        });
     }
 
     public void unlockExpiredAccounts() {
@@ -82,10 +84,13 @@ public class LoginAttemptService {
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userAccessControlApi.lockAccount(userEmail);
         if (attemptRows == 0 || userRows == 0) {
-            log.error("auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated",
-                    attemptRows, userRows);
+            log.error(
+                    "auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated",
+                    attemptRows,
+                    userRows);
         } else {
-            log.warn("auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}",
+            log.warn(
+                    "auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}",
                     userAccountLockoutDurationMinutes);
         }
     }

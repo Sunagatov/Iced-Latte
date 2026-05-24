@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.user.service;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.openapi.dto.AddressDto;
-import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.stereotype.Service;
+
+import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +24,12 @@ public class PutUsersRequestValidator {
     private static final String PHONE_REGEXP = "^\\+[1-9]\\d{6,14}$";
     private static final String PHONE_ERROR = "Phone must be in international E.164 format, e.g. +12025550123.";
 
-    public void validate(@Nullable String firstName,
-                         @Nullable String lastName,
-                         @Nullable String phoneNumber,
-                         @Nullable LocalDate birthDate,
-                         @Nullable AddressDto addressDto) {
+    public void validate(
+            @Nullable String firstName,
+            @Nullable String lastName,
+            @Nullable String phoneNumber,
+            @Nullable LocalDate birthDate,
+            @Nullable AddressDto addressDto) {
         List<String> errors = new ArrayList<>();
 
         validateName(firstName, "First name", errors);
@@ -37,14 +40,11 @@ public class PutUsersRequestValidator {
 
         if (!errors.isEmpty()) {
             throw new BadRequestException(String.format(
-                    "PutUsersRequest parameters are incorrect. Error messages are [ %s ].",
-                    String.join(" ", errors)));
+                    "PutUsersRequest parameters are incorrect. Error messages are [ %s ].", String.join(" ", errors)));
         }
     }
 
-    private void validateName(@Nullable String name,
-                              String label,
-                              List<String> errors) {
+    private void validateName(@Nullable String name, String label, List<String> errors) {
         if (name == null) {
             errors.add(error(label + " is required."));
             return;
@@ -56,8 +56,8 @@ public class PutUsersRequestValidator {
         }
 
         if (name.length() < MIN_NAME_LENGTH || name.length() > MAX_NAME_LENGTH) {
-            errors.add(error("%s must be between %d and %d characters."
-                    .formatted(label, MIN_NAME_LENGTH, MAX_NAME_LENGTH)));
+            errors.add(error(
+                    "%s must be between %d and %d characters.".formatted(label, MIN_NAME_LENGTH, MAX_NAME_LENGTH)));
             return;
         }
 

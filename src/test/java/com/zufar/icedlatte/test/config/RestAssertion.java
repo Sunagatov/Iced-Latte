@@ -1,13 +1,14 @@
 package com.zufar.icedlatte.test.config;
 
-import io.restassured.filter.log.LogDetail;
-import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+import static org.hamcrest.Matchers.*;
+
 import org.hamcrest.Matcher;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.hamcrest.Matchers.*;
+import io.restassured.filter.log.LogDetail;
+import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 
 public final class RestAssertion {
 
@@ -25,11 +26,13 @@ public final class RestAssertion {
         assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, emptyOrNullString());
     }
 
-    public static ValidatableResponse assertRestApiBodySchemaResponse(Response response, HttpStatus httpStatusCode, String schema) {
+    public static ValidatableResponse assertRestApiBodySchemaResponse(
+            Response response, HttpStatus httpStatusCode, String schema) {
         return assertRestApiBodySchemaMatcherResponse(response, httpStatusCode, matchesJsonSchemaInClasspath(schema));
     }
 
-    private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
+    private static ValidatableResponse assertRestApiBodySchemaMatcherResponse(
+            Response response, HttpStatus httpStatusCode, Matcher<?> schemaMatcher) {
         return response.then()
                 .log()
                 .ifValidationFails(LogDetail.BODY)

@@ -1,5 +1,14 @@
 package com.zufar.icedlatte.payment.endpoint;
 
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
@@ -7,19 +16,11 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.payment.service.PaymentStatusService;
 import com.zufar.icedlatte.payment.service.checkout.CheckoutPaymentService;
 import com.zufar.icedlatte.payment.service.webhook.StripeWebhookService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
-/**
- * Stripe Hosted Checkout endpoints (test mode only — no real money).
- */
+/** Stripe Hosted Checkout endpoints (test mode only — no real money). */
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -50,8 +51,7 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     @Override
     @PostMapping("/stripe/webhook")
     public ResponseEntity<Void> processStripeWebhook(
-            @NotNull @RequestHeader("Stripe-Signature") String stripeSignature,
-            @Valid @RequestBody String body) {
+            @NotNull @RequestHeader("Stripe-Signature") String stripeSignature, @Valid @RequestBody String body) {
         stripeWebhookService.processWebhook(body, stripeSignature);
         return ResponseEntity.ok().build();
     }

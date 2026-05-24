@@ -1,14 +1,16 @@
 package com.zufar.icedlatte.order.service.lifecycle;
 
-import com.zufar.icedlatte.order.entity.OrderStatusHistory;
-import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
-import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static org.springframework.transaction.event.TransactionPhase.BEFORE_COMMIT;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import static org.springframework.transaction.event.TransactionPhase.BEFORE_COMMIT;
+import com.zufar.icedlatte.order.entity.OrderStatusHistory;
+import com.zufar.icedlatte.order.event.OrderStatusChangedEvent;
+import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -29,7 +31,10 @@ public class OrderStatusHistoryRecorder {
                 .build();
 
         repository.save(history);
-        log.debug("order.status.history.recorded: orderId={}, {} → {}",
-                event.orderId(), event.oldStatus(), event.newStatus());
+        log.debug(
+                "order.status.history.recorded: orderId={}, {} → {}",
+                event.orderId(),
+                event.oldStatus(),
+                event.newStatus());
     }
 }

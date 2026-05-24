@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Aspect
@@ -27,9 +28,13 @@ public class SlowQueryAspect {
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed >= thresholdMs) {
                 String methodName = pjp.getSignature().getName();
-                String operationType = methodName.startsWith("save") || methodName.startsWith("delete")
-                        || methodName.startsWith("update") ? "write" : "read";
-                log.warn("db.slow_query: repository={}, method={}, operation_type={}, duration_ms={}, threshold_ms={}",
+                String operationType = methodName.startsWith("save")
+                                || methodName.startsWith("delete")
+                                || methodName.startsWith("update")
+                        ? "write"
+                        : "read";
+                log.warn(
+                        "db.slow_query: repository={}, method={}, operation_type={}, duration_ms={}, threshold_ms={}",
                         pjp.getSignature().getDeclaringType().getSimpleName(),
                         methodName,
                         operationType,

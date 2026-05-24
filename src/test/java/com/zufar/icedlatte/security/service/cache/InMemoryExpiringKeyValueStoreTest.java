@@ -1,18 +1,19 @@
 package com.zufar.icedlatte.security.service.cache;
 
-import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 
 @DisplayName("InMemoryExpiringKeyValueStore unit tests")
 class InMemoryExpiringKeyValueStoreTest {
 
-    private final InMemoryExpiringKeyValueStore store = new InMemoryExpiringKeyValueStore(
-            new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+    private final InMemoryExpiringKeyValueStore store =
+            new InMemoryExpiringKeyValueStore(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
     @Test
     @DisplayName("put and get return the stored value")

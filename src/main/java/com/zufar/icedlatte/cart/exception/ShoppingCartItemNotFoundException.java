@@ -1,8 +1,8 @@
 package com.zufar.icedlatte.cart.exception;
 
-import lombok.Getter;
-
 import java.util.UUID;
+
+import lombok.Getter;
 
 @Getter
 public final class ShoppingCartItemNotFoundException extends CartException {

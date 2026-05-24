@@ -1,16 +1,18 @@
 package com.zufar.icedlatte.security.jwt.resolver;
 
-import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
-import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 
 @Service
 public class JwtTokenClaims {
@@ -19,12 +21,9 @@ public class JwtTokenClaims {
     private final JwtParser refreshTokenParser;
 
     public JwtTokenClaims(JwtSigningKeys jwtSigningKeys) {
-        this.accessTokenParser = Jwts.parser()
-                .verifyWith(jwtSigningKeys.get())
-                .build();
-        this.refreshTokenParser = Jwts.parser()
-                .verifyWith(jwtSigningKeys.getRefresh())
-                .build();
+        this.accessTokenParser = Jwts.parser().verifyWith(jwtSigningKeys.get()).build();
+        this.refreshTokenParser =
+                Jwts.parser().verifyWith(jwtSigningKeys.getRefresh()).build();
     }
 
     public String extractAccessTokenEmail(final String token) {
@@ -79,9 +78,7 @@ public class JwtTokenClaims {
 
     private Optional<UUID> extractSessionId(Claims claims) {
         String sessionId = (String) claims.get(JwtClaimNames.SESSION_ID);
-        return StringUtils.hasText(sessionId)
-                ? Optional.of(UUID.fromString(sessionId))
-                : Optional.empty();
+        return StringUtils.hasText(sessionId) ? Optional.of(UUID.fromString(sessionId)) : Optional.empty();
     }
 
     private Claims accessTokenClaims(final String token) {

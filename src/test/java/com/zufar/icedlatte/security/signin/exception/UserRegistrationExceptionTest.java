@@ -1,9 +1,9 @@
 package com.zufar.icedlatte.security.signin.exception;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("UserRegistrationException")
 class UserRegistrationExceptionTest {
@@ -11,8 +11,7 @@ class UserRegistrationExceptionTest {
     @Test
     @DisplayName("message constructor preserves message")
     void messageConstructorPreservesMessage() {
-        assertThat(new UserRegistrationException("Registration failed"))
-                .hasMessage("Registration failed");
+        assertThat(new UserRegistrationException("Registration failed")).hasMessage("Registration failed");
     }
 
     @Test

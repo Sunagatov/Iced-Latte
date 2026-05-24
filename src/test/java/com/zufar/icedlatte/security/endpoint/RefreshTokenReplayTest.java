@@ -1,11 +1,7 @@
 package com.zufar.icedlatte.security.endpoint;
 
-import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
+import static io.restassured.RestAssured.given;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static io.restassured.RestAssured.given;
+import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
+
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("Refresh Token Replay Tests")
 class RefreshTokenReplayTest extends IntegrationTestBase {
@@ -28,30 +30,34 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
 
     @BeforeEach
     void setup() {
-        spec = given()
-                .port(port)
+        spec = given().port(port)
                 .basePath("/api/v1/auth")
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
     }
 
     /**
-     * Registers, confirms, and authenticates a unique user.
-     * Returns the raw refresh token from the authenticate response.
+     * Registers, confirms, and authenticates a unique user. Returns the raw refresh token from the authenticate
+     * response.
      */
     private String registerAndGetRefreshToken(String email) {
-        UserRegistrationRequest pending = new UserRegistrationRequest(
-                "Replay", "Test", email, "!h2h3kKl22");
+        UserRegistrationRequest pending = new UserRegistrationRequest("Replay", "Test", email, "!h2h3kKl22");
         String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
 
-        given(spec).body("{\"token\":\"" + token + "\"}").post("/confirm")
-                .then().statusCode(HttpStatus.CREATED.value());
+        given(spec)
+                .body("{\"token\":\"" + token + "\"}")
+                .post("/confirm")
+                .then()
+                .statusCode(HttpStatus.CREATED.value());
 
         return given(spec)
                 .body("{\"email\":\"" + email + "\",\"password\":\"" + "!h2h3kKl22" + "\"}")
                 .post("/authenticate")
-                .then().statusCode(HttpStatus.OK.value())
-                .extract().jsonPath().getString("refreshToken");
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath()
+                .getString("refreshToken");
     }
 
     @Test
@@ -64,7 +70,8 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
         given(spec)
                 .header("Authorization", "Bearer " + originalRefreshToken)
                 .post("/refresh")
-                .then().statusCode(HttpStatus.OK.value());
+                .then()
+                .statusCode(HttpStatus.OK.value());
 
         // Second refresh with the now-rotated (stale) token — must be 401, not 500
         given(spec)

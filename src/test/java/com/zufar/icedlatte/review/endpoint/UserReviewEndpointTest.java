@@ -1,8 +1,9 @@
 package com.zufar.icedlatte.review.endpoint;
 
-import com.zufar.icedlatte.test.config.IntegrationTestBase;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
+import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.notNullValue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,9 +11,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
-import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
+import com.zufar.icedlatte.test.config.IntegrationTestBase;
+
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 
 @DisplayName("UserReviewEndpoint Tests")
 class UserReviewEndpointTest extends IntegrationTestBase {
@@ -34,8 +36,7 @@ class UserReviewEndpointTest extends IntegrationTestBase {
         if (cachedJwtToken == null) {
             cachedJwtToken = getJwtToken(port, email, password);
         }
-        specification = given()
-                .port(port)
+        specification = given().port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
                 .basePath("/api/v1/users")
                 .contentType(ContentType.JSON)
@@ -68,8 +69,7 @@ class UserReviewEndpointTest extends IntegrationTestBase {
     @Test
     @DisplayName("GET /api/v1/users/reviews without token returns 401")
     void getUserReviews_unauthenticated_returns401() {
-        given()
-                .port(port)
+        given().port(port)
                 .accept(ContentType.JSON)
                 .get("/api/v1/users/reviews")
                 .then()

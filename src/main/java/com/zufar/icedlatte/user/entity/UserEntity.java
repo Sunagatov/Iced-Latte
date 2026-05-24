@@ -1,17 +1,20 @@
 package com.zufar.icedlatte.user.entity;
 
-import com.zufar.icedlatte.common.audit.AuditableEntity;
-import com.zufar.icedlatte.common.audit.Identifiable;
-import jakarta.persistence.*;
-import lombok.*;
-import org.jspecify.annotations.NonNull;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import com.zufar.icedlatte.common.audit.AuditableEntity;
+import com.zufar.icedlatte.common.audit.Identifiable;
+
+import lombok.*;
 
 @Builder
 @Getter
