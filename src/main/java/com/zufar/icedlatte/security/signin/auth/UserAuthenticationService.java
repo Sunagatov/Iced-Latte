@@ -20,6 +20,7 @@ import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class UserAuthenticationService {
     private final LoginAttemptService loginAttemptService;
 
     public UserDetails verifyCredentials(final UserAuthenticationRequest request) {
-        String userEmail = request.getEmail();
+        String userEmail = EmailNormalizer.normalize(request.getEmail());
         String userPassword = request.getPassword();
         try {
             Authentication authentication = authenticationManager.authenticate(

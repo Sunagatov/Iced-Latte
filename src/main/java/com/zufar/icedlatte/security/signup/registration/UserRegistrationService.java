@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.signup.registration;
 
-import java.util.Locale;
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +14,7 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 
@@ -32,7 +32,7 @@ public class UserRegistrationService {
 
     @Transactional(readOnly = true)
     public void ensureEmailAvailable(final UserRegistrationRequest userRegistrationRequest) {
-        String email = normalizeEmail(userRegistrationRequest.getEmail());
+        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
         if (userRegistrationApi.existsByEmail(email)) {
             log.warn("auth.registration.failed: reason=email_already_registered");
             throw duplicateEmailException();
@@ -42,7 +42,7 @@ public class UserRegistrationService {
     @Transactional
     public UserAuthenticationResponse register(
             final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
-        String email = normalizeEmail(userRegistrationRequest.getEmail());
+        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
 
@@ -58,10 +58,6 @@ public class UserRegistrationService {
             log.warn("auth.registration.failed: reason=email_already_registered");
             throw duplicateEmailException(e);
         }
-    }
-
-    private static String normalizeEmail(String email) {
-        return email.toLowerCase(Locale.ROOT).trim();
     }
 
     private static UserRegistrationException duplicateEmailException() {

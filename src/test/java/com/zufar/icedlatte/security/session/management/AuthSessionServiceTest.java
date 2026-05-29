@@ -99,20 +99,22 @@ class AuthSessionServiceTest {
     void revokeByRefreshTokenHashRevokesSession() {
         AuthSessionEntity session =
                 AuthSessionEntity.builder().id(UUID.randomUUID()).build();
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.of(session));
 
         service.revokeByRefreshTokenHash("hash");
 
         assertThat(session.getRevokedAt()).isNotNull();
         verify(sessionRepository).save(session);
+        verify(sessionRepository).findByRefreshTokenHashForUpdate("hash");
     }
 
     @Test
     @DisplayName("revokeByRefreshTokenHash does nothing when session not found")
     void revokeByRefreshTokenHashNoOpWhenNotFound() {
-        when(sessionRepository.findByRefreshTokenHash("missing")).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenHashForUpdate("missing")).thenReturn(Optional.empty());
         service.revokeByRefreshTokenHash("missing");
         verify(sessionRepository, never()).save(any());
+        verify(sessionRepository).findByRefreshTokenHashForUpdate("missing");
     }
 
     @Test
@@ -130,19 +132,20 @@ class AuthSessionServiceTest {
         UUID userId = UUID.randomUUID();
         AuthSessionEntity session =
                 AuthSessionEntity.builder().id(sessionId).userId(userId).build();
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
         service.revokeById(sessionId, userId);
 
         assertThat(session.getRevokedAt()).isNotNull();
         verify(sessionRepository).save(session);
+        verify(sessionRepository).findByIdForUpdate(sessionId);
     }
 
     @Test
     @DisplayName("revokeById throws when session not found")
     void revokeByIdThrowsWhenNotFound() {
         UUID sessionId = UUID.randomUUID();
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.empty());
+        when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.revokeById(sessionId, UUID.randomUUID()))
                 .isInstanceOf(SessionNotFoundException.class);
     }
@@ -155,7 +158,7 @@ class AuthSessionServiceTest {
         UUID requesterId = UUID.randomUUID();
         AuthSessionEntity session =
                 AuthSessionEntity.builder().id(sessionId).userId(ownerId).build();
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
         assertThatThrownBy(() -> service.revokeById(sessionId, requesterId))
                 .isInstanceOf(SessionOwnershipException.class);
@@ -319,7 +322,7 @@ class AuthSessionServiceTest {
                 .compromised(false)
                 .revokedAt(null)
                 .build();
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(active));
+        when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(active));
 
         service.revokeAllForUserBySessionId(sessionId);
 
@@ -335,7 +338,7 @@ class AuthSessionServiceTest {
                 .userId(UUID.randomUUID())
                 .compromised(true)
                 .build();
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(compromised));
+        when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(compromised));
 
         service.revokeAllForUserBySessionId(sessionId);
 

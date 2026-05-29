@@ -50,6 +50,8 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should return UserDetails when valid credentials are provided")
     void shouldReturnUserDetailsWhenValidCredentialsProvided() {
         Authentication authentication = mock(Authentication.class);
+        when(request.getEmail()).thenReturn("  Known@Example.com ");
+        when(request.getPassword()).thenReturn("password");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
@@ -57,19 +59,25 @@ class UserAuthenticationServiceTest {
         UserDetails result = userAuthenticationService.verifyCredentials(request);
 
         assertSame(userDetails, result);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(authenticationManager)
+                .authenticate(
+                        argThat(authenticationToken -> "known@example.com".equals(authenticationToken.getPrincipal())
+                                && "password".equals(authenticationToken.getCredentials())));
     }
 
     @Test
     @DisplayName("Should throw InvalidCredentialsException when invalid credentials are provided")
     void shouldThrowInvalidCredentialsExceptionWhenInvalidCredentialsProvided() {
-        when(request.getEmail()).thenReturn("known@example.com");
+        when(request.getEmail()).thenReturn("  Known@Example.com ");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
         verify(loginAttemptService).recordFailure("known@example.com");
+        verify(authenticationManager)
+                .authenticate(
+                        argThat(authenticationToken -> "known@example.com".equals(authenticationToken.getPrincipal())));
     }
 
     @Test

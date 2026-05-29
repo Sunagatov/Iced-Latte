@@ -65,7 +65,7 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeByRefreshTokenHash(String refreshTokenHash) {
-        sessionRepository.findByRefreshTokenHash(refreshTokenHash).ifPresent(session -> {
+        sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash).ifPresent(session -> {
             revokeSession(session);
             log.info("auth.session.revoked: sessionId={}", maskSessionId(session.getId()));
         });
@@ -79,8 +79,9 @@ public class AuthSessionService {
 
     @Transactional
     public void revokeById(UUID sessionId, UUID requestingUserId) {
-        AuthSessionEntity session =
-                sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
+        AuthSessionEntity session = sessionRepository
+                .findByIdForUpdate(sessionId)
+                .orElseThrow(() -> new SessionNotFoundException(sessionId));
         if (!session.getUserId().equals(requestingUserId)) {
             throw new SessionOwnershipException(sessionId);
         }
@@ -95,7 +96,7 @@ public class AuthSessionService {
         // Guard on both revokedAt and compromised: replay path sets both before throwing,
         // so checking only revokedAt would still fire a duplicate revoke_all.
         sessionRepository
-                .findById(sessionId)
+                .findByIdForUpdate(sessionId)
                 .filter(this::isActiveSession)
                 .ifPresent(s -> revokeAllForUser(s.getUserId()));
     }

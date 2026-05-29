@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,13 @@ public class PasswordResetService {
     private final EmailVerificationService emailVerificationService;
 
     public void requestReset(String email) {
+        String normalizedEmail = EmailNormalizer.normalize(email);
         try {
-            if (userLookupApi.findUserByEmail(email).isEmpty()) {
+            if (userLookupApi.findUserByEmail(normalizedEmail).isEmpty()) {
                 log.debug("auth.password.forgot.unknown_email");
                 return;
             }
-            emailVerificationService.sendPasswordResetCode(email);
+            emailVerificationService.sendPasswordResetCode(normalizedEmail);
         } catch (TimeTokenException _) {
             // Swallow cooldown error — returning a distinct response would confirm the email exists.
             log.debug("auth.password.forgot.cooldown");

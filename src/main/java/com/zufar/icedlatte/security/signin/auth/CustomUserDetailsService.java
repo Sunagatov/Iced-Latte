@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import java.util.Locale;
-
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -9,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             log.debug("auth.user_details.empty_email");
             throw new UsernameNotFoundException("Email cannot be empty");
         }
-        String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
+        String normalizedEmail = EmailNormalizer.normalize(email);
         return userAuthenticationApi
                 .findUserAuthenticationByEmail(normalizedEmail)
                 .map(SecurityUserDetails::from)

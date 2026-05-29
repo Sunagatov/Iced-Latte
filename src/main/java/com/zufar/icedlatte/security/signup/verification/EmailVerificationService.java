@@ -22,6 +22,7 @@ import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 
@@ -53,12 +54,12 @@ public class EmailVerificationService {
     public void sendEmailVerificationCode(UserRegistrationRequest request) {
         userRegistrationService.ensureEmailAvailable(request);
         String token = generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
-        emailConfirmation.sendTemporaryCode(normalizeEmail(request.getEmail()), token);
+        emailConfirmation.sendTemporaryCode(EmailNormalizer.normalize(request.getEmail()), token);
     }
 
     public void sendPasswordResetCode(String email) {
         UserRegistrationRequest request = new UserRegistrationRequest();
-        request.setEmail(normalizeEmail(email));
+        request.setEmail(EmailNormalizer.normalize(email));
         String token = generateToken(request, TokenPurpose.PASSWORD_RESET);
         emailConfirmation.sendTemporaryCode(request.getEmail(), token);
     }
@@ -77,7 +78,7 @@ public class EmailVerificationService {
     }
 
     public String generateToken(UserRegistrationRequest request, TokenPurpose purpose) {
-        String email = normalizeEmail(request.getEmail());
+        String email = EmailNormalizer.normalize(request.getEmail());
         request.setEmail(email);
         validateCooldown(email);
         Duration ttl = tokenTtl();
@@ -163,10 +164,6 @@ public class EmailVerificationService {
 
     private Duration tokenTtl() {
         return Duration.ofMinutes(expireTimeMinutes);
-    }
-
-    private static String normalizeEmail(String email) {
-        return email.toLowerCase(Locale.ROOT).trim();
     }
 
     private static String tokenKey(TokenPurpose purpose, String token) {

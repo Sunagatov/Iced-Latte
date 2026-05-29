@@ -1,0 +1,1785 @@
+# Backend Remediation Log
+
+This document explains the security, user, address, avatar, and file-cleanup
+issues found and fixed during this chat.
+
+Security-specific issues from the same work are also documented in
+`docs/security/security-remediation-log.md`. This file repeats those findings in
+shorter form so this log is self-contained for the full chat history.
+
+The goal is not only to say "what changed", but to make each bug understandable
+for someone who is still learning Spring, JPA, transactions, and backend
+consistency.
+
+Each issue uses this structure:
+
+- What this feature is for
+- How the old system behaved
+- Why that behavior was a bug
+- A simple example
+- What the fix changed
+
+## 1. Setting an Already-Default Delivery Address Could Remove the Default
+
+### What This Feature Is For
+
+Each user can have multiple delivery addresses, but only one should be the
+default address.
+
+The default address is the address the system should automatically choose when
+the user starts an order.
+
+### How the Old System Behaved
+
+The old `setDefault(...)` method loaded the selected address, cleared every
+default address for the user, then set the selected entity to default again:
+
+```java
+var entity = addressRepository.findByIdAndUserId(addressId, userId).orElseThrow(...);
+addressRepository.clearDefaultForUser(userId);
+entity.setDefault(true);
+return converter.toDto(addressRepository.save(entity));
+```
+
+The repository method used a bulk JPQL update:
+
+```java
+@Modifying
+@Query("UPDATE DeliveryAddressEntity a SET a.isDefault = false WHERE a.user.id = :userId")
+void clearDefaultForUser(UUID userId);
+```
+
+### Why That Was a Bug
+
+JPQL bulk updates go directly to the database. They do not update the entity
+object that is already loaded in the JPA persistence context.
+
+That means Java could still think the selected address has
+`isDefault = true`, even after the database row was changed to
+`is_default = false`.
+
+If the user clicked "make default" on an address that was already default, Java
+saw no real change when `entity.setDefault(true)` ran. Because JPA thought the
+entity was already true, it might not send a second update to the database.
+
+### Simple Example
+
+```text
+Database before click:
+  Home.is_default = true
+
+Java loads Home:
+  Home.isDefault = true
+
+Bulk update runs:
+  Database Home.is_default = false
+  Java Home.isDefault is still true
+
+Code runs:
+  Home.setDefault(true)
+
+JPA sees:
+  old Java value = true
+  new Java value = true
+  no dirty change
+```
+
+Before the fix, the database could end with no default address even though the
+response object said the selected address was default.
+
+### What the Fix Changed
+
+The service now returns immediately when the selected address is already
+default:
+
+```java
+if (entity.isDefault()) {
+    return converter.toDto(entity);
+}
+addressRepository.clearDefaultForUser(userId);
+entity.setDefault(true);
+return converter.toDto(addressRepository.save(entity));
+```
+
+Now the dangerous bulk update is not run when it is not needed.
+
+If the address is already default, the method simply returns it. If the address
+is not default, the method clears the old default and saves the new one.
+
+## 2. Concurrent First Delivery Address Creation Had an Unsafe Retry
+
+### What This Feature Is For
+
+When a user adds their first delivery address, that address should automatically
+become the default address.
+
+If two requests create the first address at almost the same time, only one of
+them should become default.
+
+### How the Old System Behaved
+
+The old code checked whether the user had any addresses, then decided whether
+the new address should be default:
+
+```java
+boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
+entity.setDefault(shouldBecomeDefault);
+return converter.toDto(saveAddress(entity));
+```
+
+It tried to catch a uniqueness violation inside `saveAddress(...)`:
+
+```java
+try {
+    return addressRepository.save(entity);
+} catch (DataIntegrityViolationException ex) {
+    entity.setDefault(false);
+    return addressRepository.save(entity);
+}
+```
+
+### Why That Was a Bug
+
+With real JPA, `save(...)` often does not immediately write SQL to the database.
+The SQL may run later, during flush or transaction commit.
+
+That means the unique-index error may happen after the `try/catch` block has
+already finished. In that case, the retry code never runs.
+
+Also, once a database flush fails, the transaction is commonly marked as
+rollback-only. Retrying inside the same transaction is usually not reliable.
+
+### Simple Example
+
+```text
+Request A checks addresses: none found
+Request B checks addresses: none found
+
+Both decide:
+  "I am creating the first address, so I should be default."
+
+Request A commits first:
+  Address A is default.
+
+Request B flushes later:
+  Database rejects second default address.
+```
+
+Before the fix, the code expected the exception to happen inside `save(...)`,
+but JPA could raise it later.
+
+### What the Fix Changed
+
+The service now locks the user row before creating a delivery address:
+
+```java
+var user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new UserNotFoundException(userId));
+boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
+```
+
+`findByIdForUpdate(...)` uses a pessimistic write lock:
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT u FROM UserEntity u WHERE u.id = :userId")
+Optional<UserEntity> findByIdForUpdate(UUID userId);
+```
+
+In beginner terms: only one address-creation transaction for that user can pass
+through this section at a time.
+
+The first request creates the default address. The second request waits, then
+sees that an address already exists, so it creates a non-default address.
+
+## 3. Deleting the Default Delivery Address Left No Default Address
+
+### What This Feature Is For
+
+A user's address book should keep a simple invariant:
+
+```text
+If the user has at least one delivery address, one of them should be default.
+```
+
+### How the Old System Behaved
+
+The old delete method removed the selected address and stopped:
+
+```java
+var entity = addressRepository.findByIdAndUserId(addressId, userId).orElseThrow(...);
+addressRepository.delete(entity);
+```
+
+### Why That Was a Bug
+
+If the deleted address was the default address, the remaining addresses were all
+left with `isDefault = false`.
+
+The database row was removed correctly, but the address book was left in an
+incomplete state.
+
+### Simple Example
+
+```text
+Before delete:
+  Home = default
+  Office = not default
+
+User deletes Home.
+
+After old delete:
+  Office = not default
+```
+
+Now the user still has an address, but no default address.
+
+### What the Fix Changed
+
+The service now checks whether the address being deleted is default. If it is,
+the service selects another address for the same user and promotes it after the
+delete:
+
+```java
+var replacement = entity.isDefault()
+        ? addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId)
+        : Optional.<DeliveryAddressEntity>empty();
+
+addressRepository.delete(entity);
+
+replacement.ifPresent(address -> {
+    addressRepository.flush();
+    address.setDefault(true);
+    addressRepository.save(address);
+});
+```
+
+In beginner terms: when the default address is removed, the app chooses another
+address to become default, so the address book stays valid.
+
+## 4. Profile Address Fields Allowed Values the Database Could Not Store
+
+### What This Feature Is For
+
+The profile address API lets a user store:
+
+```text
+country
+city
+line
+postcode
+```
+
+The OpenAPI contract said these fields could be up to 128 characters.
+
+### How the Old System Behaved
+
+The OpenAPI contract allowed 128 characters:
+
+```yaml
+AddressDto:
+  properties:
+    country:
+      maxLength: 128
+    city:
+      maxLength: 128
+    line:
+      maxLength: 128
+    postcode:
+      maxLength: 128
+```
+
+But the database entity allowed only 55 characters:
+
+```java
+@Column(name = "country", nullable = false, length = 55)
+private String country;
+```
+
+The request validator checked whether address fields were present and not blank,
+but it did not reject values longer than the database column.
+
+### Why That Was a Bug
+
+The API contract and the database disagreed.
+
+A client could send a request that was valid according to OpenAPI, but the
+database could reject it later with a low-level database error.
+
+That is a bad user experience because the client should get a clear `400 Bad
+Request` when input is invalid, not a surprise database failure.
+
+### Simple Example
+
+```text
+Client sends city with 90 characters.
+
+OpenAPI says:
+  OK, max is 128.
+
+Old database column says:
+  Not OK, max is 55.
+```
+
+Before the fix, this could fail late while saving instead of failing clearly
+during validation.
+
+### What the Fix Changed
+
+The `Address` entity now matches the contract:
+
+```java
+@Column(name = "country", nullable = false, length = 128)
+private String country;
+```
+
+A Liquibase migration expands the existing database columns to 128 characters.
+
+The validator also checks the address field length:
+
+```java
+if (value.length() > MAX_ADDRESS_FIELD_LENGTH) {
+    errors.add(error(String.format(
+            "Address field `%s` must not exceed %d characters.",
+            fieldName,
+            MAX_ADDRESS_FIELD_LENGTH)));
+}
+```
+
+Now invalid data is rejected as a request problem, and valid contract data fits
+in the database.
+
+## 5. Profile Updates Replaced Address Rows and Could Leak Old Rows
+
+### What This Feature Is For
+
+`UserEntity` owns one profile address.
+
+When the user updates their profile, the profile address should be created,
+updated, or removed together with the user profile.
+
+### How the Old System Behaved
+
+The old mapper always mapped the request address to a new `Address` object:
+
+```java
+@Mapping(target = "address", source = "address", qualifiedByName = "toAddress")
+void updateEntity(@MappingTarget UserEntity entity, UpdateUserAccountRequest request);
+```
+
+The relationship used cascade, but did not use orphan removal:
+
+```java
+@OneToOne(cascade = CascadeType.ALL)
+@JoinColumn(name = "address_id", referencedColumnName = "id")
+private Address address;
+```
+
+There was also a dangerous database cascade direction:
+
+```sql
+FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE
+```
+
+### Why That Was a Bug
+
+Replacing the Java object does not automatically mean the old database row is
+deleted.
+
+Without `orphanRemoval = true`, the old address row can become unused data: no
+user points to it, but it still exists in the `address` table.
+
+The database cascade was also backwards for this ownership model. The user owns
+the address. Deleting an address row should not delete the user row that points
+to it.
+
+### Simple Example
+
+```text
+User has Address A.
+User updates profile address.
+
+Old mapper creates Address B.
+User now points to Address B.
+Address A may remain in the database unused.
+```
+
+That is a leaked row.
+
+### What the Fix Changed
+
+The relationship now explicitly says the user owns the address and old owned
+addresses should be removed:
+
+```java
+@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+@JoinColumn(name = "address_id", referencedColumnName = "id")
+private Address address;
+```
+
+The mapper now updates the existing address object in place when possible:
+
+```java
+if (entity.getAddress() == null) {
+    entity.setAddress(Address.builder()
+            .country(dto.getCountry())
+            .city(dto.getCity())
+            .line(dto.getLine())
+            .postcode(dto.getPostcode())
+            .build());
+    return;
+}
+
+entity.getAddress().update(dto.getCountry(), dto.getCity(), dto.getLine(), dto.getPostcode());
+```
+
+A migration removes the dangerous `ON DELETE CASCADE` from
+`user_details.address_id`.
+
+In beginner terms: the user profile keeps the same address row and edits it.
+When the address is removed or replaced, JPA is allowed to clean up the old row.
+
+## 6. Expired Locked Accounts Could Stay Locked in `user_details`
+
+### What This Feature Is For
+
+The application tracks login lockout in two places:
+
+```text
+login_attempts:
+  remembers failed login attempts and lock expiration
+
+user_details:
+  stores account_non_locked, used by Spring Security
+```
+
+When a lock expires, both places must agree that the user is unlocked.
+
+### How the Old System Behaved
+
+The old unlock query looked for login-attempt rows where the user was already
+marked unlocked but still had an expiration time:
+
+```java
+WHERE la.isUserLocked = false
+  AND la.expirationDatetime IS NOT NULL
+```
+
+But the security flow cleared expired login-attempt rows first. Clearing the row
+set:
+
+```text
+isUserLocked = false
+expirationDatetime = NULL
+```
+
+### Why That Was a Bug
+
+After the login-attempt row was reset, the unlock query no longer matched it
+because `expirationDatetime` was now `NULL`.
+
+That could leave the system in a split state:
+
+```text
+login_attempts says:
+  user is not locked
+
+user_details says:
+  account_non_locked = false
+```
+
+Spring Security reads `user_details.account_non_locked`, so the user could
+remain locked even after the lock expired.
+
+### Simple Example
+
+```text
+12:00 User is locked until 12:15.
+12:16 Login flow resets login_attempts.
+12:16 login_attempts.expirationDatetime becomes NULL.
+12:16 unlockUsers query looks for expirationDatetime IS NOT NULL.
+12:16 no user row is unlocked.
+```
+
+### What the Fix Changed
+
+The unlock query now targets rows that are still locked and whose expiration is
+already in the past:
+
+```java
+WHERE la.isUserLocked = true
+  AND la.expirationDatetime IS NOT NULL
+  AND la.expirationDatetime <= CURRENT_TIMESTAMP
+```
+
+The flow unlocks the user record before clearing the lock state in
+`login_attempts`.
+
+In beginner terms: the app now uses the expired-lock evidence while it still
+exists.
+
+## 7. Profile Update Contract Did Not Say Required Fields Were Required
+
+### What This Feature Is For
+
+The profile update endpoint updates the user's account details.
+
+The backend treats the operation like a full `PUT`: the request must include
+required profile fields such as first name and last name.
+
+### How the Old System Behaved
+
+The OpenAPI schema for `UpdateUserAccountRequest` did not list required fields.
+
+But the service validator rejected missing names:
+
+```java
+if (name == null) {
+    errors.add(error(label + " is required."));
+    return;
+}
+```
+
+### Why That Was a Bug
+
+The documentation and backend behavior disagreed.
+
+A client generated from OpenAPI could think this request is valid:
+
+```json
+{
+  "phoneNumber": "+12025550123"
+}
+```
+
+But the backend returned `400 Bad Request` because `firstName` and `lastName`
+were missing.
+
+### Simple Example
+
+```text
+OpenAPI says:
+  firstName is optional
+
+Backend says:
+  firstName is required
+```
+
+The client cannot reliably know what to send.
+
+### What the Fix Changed
+
+The OpenAPI contract now declares `firstName` and `lastName` as required for the
+profile update request:
+
+```yaml
+UpdateUserAccountRequest:
+  required:
+    - firstName
+    - lastName
+```
+
+The service behavior did not need to become a partial update. The contract was
+updated to describe the existing full-update behavior clearly.
+
+## 8. Account and Avatar Delete Could Leave Stale File Metadata or Objects
+
+### What This Feature Is For
+
+Users can upload an avatar. The avatar has two pieces of state:
+
+```text
+file_metadata table:
+  says which object belongs to the user
+
+S3/MinIO/object storage:
+  stores the real image bytes
+```
+
+When a user deletes their avatar or account, both pieces should eventually be
+cleaned up.
+
+### How the Old System Behaved
+
+Originally, account deletion only deleted the user row:
+
+```java
+public void deleteProfile(UUID userId) {
+    userRepository.deleteById(userId);
+}
+```
+
+That meant avatar metadata and the actual object could be left behind.
+
+Then the cleanup was moved into `deleteProfile(...)`, but the file deletion path
+still deleted the external object as part of the same user operation:
+
+```java
+fileStorageApi.deleteFile(userId);
+userRepository.deleteById(userId);
+```
+
+External object storage is not controlled by the database transaction.
+
+### Why That Was a Bug
+
+The database can roll back, but S3 or MinIO cannot roll back with it.
+
+If the real file is deleted first and the database commit fails later, the
+database may still say the avatar exists, but the file is gone.
+
+### Simple Example
+
+```text
+1. Delete avatar object from S3.
+2. Try to delete metadata/user row from PostgreSQL.
+3. PostgreSQL transaction fails.
+
+Result:
+  Database still points to the avatar.
+  S3 no longer has the avatar.
+```
+
+That creates broken avatar links.
+
+### What the Fix Changed
+
+`deleteProfile(...)` now asks file storage to delete files before deleting the
+user, but file storage no longer deletes the real object immediately.
+
+The file-storage service first deletes the metadata in the same database
+transaction, then writes a durable outbox event:
+
+```java
+List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
+int deletedRows = fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
+if (deletedRows > 0) {
+    fileMetadataList.forEach(fileMetadataDto ->
+            fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts));
+}
+```
+
+A background worker later reads the outbox event and deletes the real object:
+
+```java
+objectStorage.delete(new FileMetadataDto(
+        payload.relatedObjectId(),
+        payload.bucketName(),
+        payload.fileName()));
+outboxRepository.markDeleted(event.id(), properties.workerId());
+```
+
+In beginner terms: the database records "this file should be deleted" first.
+Only after that durable record exists does a worker delete the real file.
+
+If the worker fails, the outbox row remains retryable.
+
+### Important Implementation Details
+
+The file deletion cleanup intentionally reuses the existing `outbox_events`
+table instead of creating a second outbox table.
+
+The file deletion rows use:
+
+```text
+event_type = file.object.delete
+aggregate_type = FileObjectDeletion
+topic = internal.file.object.delete
+```
+
+The cleanup event stores the information needed to delete the object later:
+
+```text
+relatedObjectId
+bucketName
+fileName
+```
+
+The event uses a new random deletion ID as both `event_id` and `aggregate_id`.
+That detail matters because the shared `outbox_events` table has a uniqueness
+rule for aggregate/event combinations. If the file name or user ID were reused
+as the aggregate ID, repeated avatar deletes for the same user could conflict
+with older cleanup rows.
+
+The service also reads all metadata rows for the related object before deleting
+metadata:
+
+```java
+List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
+```
+
+That is deliberate. If duplicate metadata rows exist, cleanup should enqueue a
+delete event for every stored object, not only for the "preferred" metadata row
+used when reading an avatar URL.
+
+The worker has retry behavior:
+
+```text
+PENDING -> IN_PROGRESS -> PUBLISHED
+PENDING -> IN_PROGRESS -> FAILED_RETRYABLE
+PENDING -> IN_PROGRESS -> FAILED_PERMANENT
+```
+
+`PUBLISHED` is not a perfect name for file deletion because no Kafka message is
+published. It is reused because the existing shared outbox status enum already
+has `PUBLISHED` as the successful terminal state.
+
+If the worker deletes the object but crashes before marking the row successful,
+the row can be retried. That is acceptable because object deletion in S3/MinIO is
+treated as idempotent: deleting an already-deleted object should still be safe.
+
+## 9. File Deletion Outbox Initially Could Mark Work Done When Storage Was Off
+
+### What This Feature Is For
+
+The file deletion outbox worker should delete real objects from configured
+object storage.
+
+If object storage is not configured, it should not pretend deletion succeeded.
+
+### How the Old System Behaved
+
+The first outbox implementation claimed rows and called `objectStorage.delete`.
+
+In local or disabled-storage environments, the `NoOpObjectStorage` implementation
+could accept the call without deleting a real object.
+
+### Why That Was a Bug
+
+If the worker claimed an outbox row and marked it done while storage was not
+actually configured, the cleanup request was lost.
+
+Later, when real storage was configured, there would be no pending outbox row
+left to process.
+
+### Simple Example
+
+```text
+Outbox row says:
+  delete user-avatar-123
+
+Storage is disabled.
+Worker runs anyway.
+No-op delete does nothing.
+Worker marks row PUBLISHED.
+```
+
+The row is gone from the pending queue, but the real object was never deleted.
+
+### What the Fix Changed
+
+The worker now exits before claiming rows when object storage is not configured:
+
+```java
+if (!objectStorage.isConfigured()) {
+    log.warn("file.deletion_outbox.skipped: reason=object_storage_not_configured");
+    return;
+}
+```
+
+In beginner terms: if the worker cannot really delete files, it leaves the
+database reminder alone so the cleanup can happen later.
+
+## 10. Shared Outbox Rows Were Not Fully Scoped by Event Type
+
+### What This Feature Is For
+
+The `outbox_events` table is shared infrastructure.
+
+Different features can store different event types in the same table, for
+example:
+
+```text
+review.created
+file.object.delete
+```
+
+Each worker should process only the event type it owns.
+
+### How the Old System Behaved
+
+Some outbox queries selected rows by status and timing, but did not consistently
+guard every claim, reclaim, and terminal update by event type.
+
+That was acceptable when only one outbox workflow existed, but it became risky
+after file deletion started reusing the same table.
+
+### Why That Was a Bug
+
+Once multiple workflows share one table, a generic query can accidentally touch
+another workflow's rows.
+
+For example, a review publisher should never claim or mark a file-deletion row.
+
+### Simple Example
+
+```text
+outbox_events:
+  row 1: event_type = review.created
+  row 2: event_type = file.object.delete
+
+Review publisher asks:
+  give me pending rows
+
+If the query does not filter event_type:
+  it might receive row 2 by accident.
+```
+
+### What the Fix Changed
+
+Review outbox queries are now scoped to `review.created`.
+
+File deletion outbox queries are scoped to `file.object.delete`:
+
+```java
+WHERE event_type = ?
+  AND status IN ('PENDING', 'FAILED_RETRYABLE')
+```
+
+Terminal updates also check event type:
+
+```java
+WHERE id = ?
+  AND event_type = ?
+  AND status = 'IN_PROGRESS'
+  AND locked_by = ?
+```
+
+An index was added so polling by event type and status stays efficient:
+
+```sql
+CREATE INDEX IF NOT EXISTS ix_outbox_events_event_type_poll
+    ON outbox_events (event_type, status, next_attempt_at, created_at)
+    WHERE status IN ('PENDING', 'FAILED_RETRYABLE');
+```
+
+In beginner terms: each worker now clearly says "only give me my kind of job."
+
+The deep outbox review also checked these invariants:
+
+- review publishing only claims `review.created` rows
+- file deletion only claims `file.object.delete` rows
+- stale-lock reclaim queries are scoped by event type
+- final success/failure updates check row ID, event type, status, and worker ID
+- file deletion rows are not claimed when object storage is not configured
+- retryable rows respect `next_attempt_at`
+- permanent failures stop retrying after the configured max-attempt count
+
+## 11. Shared Inbox Terminal Updates Were Hardened Too
+
+### What This Feature Is For
+
+The `inbox_events` table stores incoming Kafka events until they are processed.
+
+Like outbox, it is shared infrastructure. Different consumers and event types
+can use the same table.
+
+### How the Old System Behaved
+
+The claim and reclaim queries were scoped by consumer and event type, but the
+terminal update methods were guarded only by:
+
+```text
+id
+status = IN_PROGRESS
+locked_by
+```
+
+### Why That Was a Smell
+
+The row ID came from a scoped claim, so this was not an obvious live bug. But in
+a shared infrastructure table, the final updates should carry the same ownership
+guard as the claim.
+
+That makes it harder for future changes to accidentally mark another consumer's
+row as processed, ignored, or failed.
+
+### Simple Example
+
+```text
+Worker A owns:
+  consumer = review-ai
+  event_type = review.created
+
+Final update should also say:
+  only finish rows for review-ai + review.created
+```
+
+### What the Fix Changed
+
+The inbox terminal methods now require `consumerName` and `eventType`:
+
+```java
+int markProcessed(UUID id, String workerId, String consumerName, String eventType)
+```
+
+The SQL checks those values:
+
+```sql
+WHERE id = ?
+  AND consumer_name = ?
+  AND event_type = ?
+  AND status = 'IN_PROGRESS'
+  AND locked_by = ?
+```
+
+An inbox poll index was added:
+
+```sql
+CREATE INDEX IF NOT EXISTS ix_inbox_events_consumer_event_type_poll
+    ON inbox_events (consumer_name, event_type, status, next_attempt_at, created_at)
+    WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE');
+```
+
+In beginner terms: the worker proves it still owns the row before it changes the
+row to processed, ignored, or failed.
+
+## 12. Entity Equality Treated Two New Entities as Equal
+
+### What This Feature Is For
+
+Java `equals(...)` and `hashCode()` control how objects behave in collections
+such as `Set` and `Map`.
+
+JPA entities usually receive their database ID only after they are persisted.
+Before that, the ID is `null`.
+
+### How the Old System Behaved
+
+Entities compared only their IDs using `Objects.equals(...)`:
+
+```java
+return Objects.equals(id, user.id);
+```
+
+For two new entities, both IDs are `null`, so the comparison returned `true`.
+
+### Why That Was a Bug
+
+Two different new objects should not be equal only because neither has been
+saved yet.
+
+If two new entities are added to a `Set`, Java may keep only one because it
+thinks they are the same object.
+
+### Simple Example
+
+```text
+new UserEntity().id = null
+new UserEntity().id = null
+
+Old equals result:
+  true
+```
+
+That is wrong. They are two different unsaved users.
+
+### What the Fix Changed
+
+Entity equality now returns true only when the entity has a non-null ID and that
+ID matches:
+
+```java
+return id != null && id.equals(user.id);
+```
+
+The hash code uses the entity class:
+
+```java
+return getClass().hashCode();
+```
+
+This was applied to user-related entities that had the same transient-entity
+footgun.
+
+## 13. Authentication Snapshot Exposed a Sensitive Field Too Generically
+
+### What This Feature Is For
+
+Security needs to load authentication data for a user, including the password
+hash.
+
+The password hash is not the plain password, but it is still sensitive and
+should not be casually exposed through broad APIs.
+
+### How the Old System Behaved
+
+The user API boundary exposed a record with a field named like a normal password:
+
+```java
+public record UserAuthenticationSnapshot(..., String password) {}
+```
+
+### Why That Was a Smell
+
+This was consumed internally by security, but the type lived in the user API
+package. A broad API name plus a sensitive field increases the chance that
+future code reuses it in the wrong place.
+
+### Simple Example
+
+```text
+Developer sees:
+  snapshot.password()
+
+They may think:
+  this is normal profile data
+```
+
+But it is credential material and should be treated carefully.
+
+### What the Fix Changed
+
+The field was renamed to make its meaning explicit:
+
+```java
+public record UserAuthenticationSnapshot(..., String passwordHash) {}
+```
+
+Security code now reads `passwordHash()` instead of `password()`.
+
+In beginner terms: the value is still available where authentication needs it,
+but the name warns future developers that it is a hash and sensitive.
+
+## 14. User Authorities Were Eager-Loaded Everywhere
+
+### What This Feature Is For
+
+User authorities are roles or permissions, such as:
+
+```text
+ROLE_USER
+ROLE_ADMIN
+```
+
+Authentication needs authorities, but many profile reads do not.
+
+### How the Old System Behaved
+
+The user entity loaded authorities eagerly:
+
+```java
+@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+private Set<UserGrantedAuthority> authorities;
+```
+
+### Why That Was a Smell
+
+`FetchType.EAGER` means JPA loads authorities whenever it loads a user, even
+when the caller only needs the user's profile data.
+
+That can cause unnecessary joins and extra data loading on ordinary user reads.
+
+### Simple Example
+
+```text
+Profile endpoint needs:
+  first name, last name, avatar
+
+Old entity also loads:
+  authorities
+```
+
+The data is not wrong, but the query does more work than needed.
+
+### What the Fix Changed
+
+Authorities now use the default lazy behavior for `@OneToMany`.
+
+Authentication paths use explicit repository methods with an entity graph:
+
+```java
+@EntityGraph(attributePaths = "authorities")
+@Query("SELECT u FROM UserEntity u WHERE u.email = :email")
+Optional<UserEntity> findByEmailWithAuthorities(String email);
+```
+
+In beginner terms: normal user reads do not pay for roles, but login still loads
+roles on purpose.
+
+## 15. Avatar MIME Validation Did Not Require Header and Bytes to Match
+
+### What This Feature Is For
+
+Avatar upload should allow only real image files of supported types:
+
+```text
+image/jpeg
+image/png
+image/webp
+```
+
+The request has a declared content type, and the uploaded bytes have a real file
+signature, also called magic bytes.
+
+### How the Old System Behaved
+
+The old validation checked that the declared content type was allowed, then
+separately checked that the bytes looked like some allowed image type.
+
+But it did not require those two checks to agree.
+
+### Why That Was a Bug
+
+A file could claim to be `image/png` while the bytes were actually JPEG. Both
+checks could pass separately:
+
+```text
+Declared type image/png is allowed.
+JPEG bytes are also an allowed image kind.
+```
+
+But the declaration and bytes did not match.
+
+### Simple Example
+
+```text
+HTTP header:
+  Content-Type: image/png
+
+Actual bytes:
+  JPEG file
+```
+
+Before the fix, this mismatch could be accepted.
+
+### What the Fix Changed
+
+The validator now detects the real content type from the bytes and compares it
+to the declared content type:
+
+```java
+if (detectContentType(file).filter(contentType::equals).isEmpty()) {
+    throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
+}
+```
+
+In beginner terms: if the upload says "I am PNG", the bytes must also prove "I
+am PNG."
+
+## 16. Refresh Tokens Were Blacklisted for Too Short a Time
+
+### What This Feature Is For
+
+The token blacklist is a "do not accept this token anymore" list.
+
+It is used when a token must stop working before its normal expiration time,
+for example after logout or refresh-token rotation.
+
+### How the Old System Behaved
+
+The old blacklist method always used the access-token lifetime:
+
+```java
+temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
+```
+
+### Why That Was a Bug
+
+Access tokens live for a short time. Refresh tokens live much longer.
+
+If a refresh token is blacklisted only for the access-token lifetime, the
+blacklist entry can disappear while the refresh token itself is still valid.
+
+### Simple Example
+
+```text
+12:00 Refresh token is issued. It expires tomorrow.
+12:10 Refresh token is rotated and blacklisted.
+12:25 Blacklist entry expires after the short access-token TTL.
+12:30 Old refresh token is tried again.
+```
+
+Before the fix, the old refresh token could become usable again after the
+blacklist forgot it.
+
+### What the Fix Changed
+
+The blacklist now has separate methods for access tokens and refresh tokens:
+
+```java
+blacklist(token);
+blacklistRefreshToken(token);
+```
+
+Refresh-token callers use the refresh-token TTL, so the blacklist remembers the
+blocked refresh token for as long as the token could still be accepted.
+
+## 17. JWT Validation Did Not Check Issuer and Audience
+
+### What This Feature Is For
+
+JWT validation must answer more than "is the signature valid?"
+
+It should also answer:
+
+```text
+issuer: who created this token?
+audience: who is this token for?
+```
+
+### How the Old System Behaved
+
+The parser checked only the signature:
+
+```java
+Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+```
+
+### Why That Was a Bug
+
+If another service or environment accidentally shared the signing key, a token
+from that other place could have a valid signature.
+
+Without issuer and audience checks, this backend could accept a token that was
+not created by the expected issuer or not meant for this API.
+
+### Simple Example
+
+```text
+Token A:
+  signed correctly
+  issuer = iced-latte-api
+  audience = iced-latte-frontend
+
+Token B:
+  signed correctly
+  issuer = other-service
+  audience = other-client
+```
+
+Before the fix, both could pass signature validation. After the fix, `Token B`
+is rejected.
+
+### What the Fix Changed
+
+JWT parsing now requires the configured issuer and audience. Tests cover valid
+tokens, wrong issuer, and wrong audience.
+
+## 18. OAuth Could Create Accounts with an Unverified Provider Email
+
+### What This Feature Is For
+
+OAuth login can create or link a local account using the email returned by a
+provider such as Google.
+
+### How the Old System Behaved
+
+The old code protected only the existing-local-user linking case:
+
+```java
+if (existingUser && !profile.emailVerified()) {
+    throw new UnauthorizedException(...);
+}
+```
+
+If no local user existed yet, the backend could still create a new account from
+an unverified provider email.
+
+### Why That Was a Bug
+
+The application uses email as account identity. Creating a local account for an
+email means the backend trusts that the OAuth user owns that email.
+
+If the provider has not verified the email, the backend should not trust it for
+identity.
+
+### Simple Example
+
+```text
+Google profile:
+  email = alice@example.com
+  emailVerified = false
+
+Old behavior:
+  no local user exists
+  create local account anyway
+```
+
+### What the Fix Changed
+
+`OAuthLoginService` now rejects unverified provider emails before both actions:
+
+- linking OAuth to an existing local user
+- creating a new local user
+
+The rule is now simple: no verified provider email means no OAuth login/account
+creation.
+
+## 19. Refresh-Token Rotation Was Race-Prone
+
+### What This Feature Is For
+
+Refresh-token rotation means a refresh token should be usable only once.
+
+### How the Old System Behaved
+
+The old code used read-change-save:
+
+```java
+session = repository.findByRefreshTokenHash(hash);
+session.rotateTo(newHash);
+repository.save(session);
+```
+
+### Why That Was a Bug
+
+Two requests using the same refresh token at the same time could both read the
+token as active before either request saved the rotated state.
+
+### Simple Example
+
+```text
+Request A reads refresh token R1 as active.
+Request B also reads R1 as active.
+Request A creates R2.
+Request B creates R3.
+```
+
+Before the fix, both requests could receive valid new token pairs even though
+`R1` should be single-use.
+
+### What the Fix Changed
+
+The repository now locks the auth-session row while rotating:
+
+```java
+findByRefreshTokenHashForUpdate(refreshTokenHash)
+```
+
+The first request rotates the token. The second request waits, then sees that
+the old token is no longer active.
+
+## 20. Login-Attempt Counting Was Race-Prone
+
+### What This Feature Is For
+
+Login-attempt counting locks or slows abusive login attempts after too many bad
+passwords.
+
+### How the Old System Behaved
+
+The old logic used read-increment-save:
+
+```java
+attempt.setAttempts(attempt.getAttempts() + 1);
+repository.save(attempt);
+```
+
+### Why That Was a Bug
+
+Concurrent failed-login requests could overwrite each other's increments.
+
+### Simple Example
+
+```text
+Current attempts = 3
+Request A reads 3 and saves 4.
+Request B reads 3 and saves 4.
+```
+
+There were two failures, so the correct result was `5`, not `4`.
+
+### What the Fix Changed
+
+The login-attempt row is locked during update, so concurrent requests update the
+count one at a time. First-insert collisions are also handled, so two first
+attempts for the same email do not create duplicate/conflicting rows.
+
+## 21. Email Verification and Password Reset Used Global Short Codes
+
+### What This Feature Is For
+
+Email verification and password reset tokens prove that the caller controls a
+pending email/reset flow.
+
+### How the Old System Behaved
+
+The old system used short numeric codes and keyed storage mainly by the code:
+
+```text
+email:token:<code> -> request data
+```
+
+### Why That Was a Bug
+
+Short numeric codes have limited randomness.
+
+Also, if two codes collide, one user's pending request can overwrite another
+because the code is the global key.
+
+### Simple Example
+
+```text
+Alice gets code 123456789.
+Bob also gets code 123456789.
+
+Both use the same global storage key.
+```
+
+### What the Fix Changed
+
+The system now uses long URL-safe opaque tokens.
+
+Storage is scoped by purpose, normalized email, and token:
+
+```text
+email:token:<purpose>:<normalized-email>:<token>
+```
+
+That makes guessing much harder and prevents different users/purposes from
+sharing one global token namespace.
+
+## 22. Turnstile Verification Had No Explicit HTTP Timeout
+
+### What This Feature Is For
+
+Cloudflare Turnstile verification calls an external service during login or
+registration.
+
+### How the Old System Behaved
+
+The old verifier used a default REST client:
+
+```java
+RestClient.create()
+```
+
+### Why That Was a Bug
+
+External calls can hang or become slow. Without explicit timeouts, authentication
+requests can occupy backend threads for too long.
+
+### Simple Example
+
+```text
+User submits login.
+Backend calls Cloudflare.
+Network stalls.
+Login request waits too long.
+```
+
+### What the Fix Changed
+
+`TurnstileVerifier` now builds its REST client with explicit connect and read
+timeouts. Slow external verification fails instead of hanging indefinitely.
+
+## 23. Security Imported a User Feature Internal Exception
+
+### What This Feature Is For
+
+The backend is a modular monolith. Feature packages should communicate through
+stable APIs, not through each other's internal classes.
+
+### How the Old System Behaved
+
+Security imported a user feature internal exception:
+
+```java
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
+```
+
+### Why That Was a Smell
+
+This made security depend on a user implementation detail. If the user feature
+renamed or changed that exception, security could break even though the public
+user API still worked.
+
+### Simple Example
+
+```text
+user.exception.UserNotFoundException is renamed.
+user.api still works.
+security fails to compile because it imported the internal exception.
+```
+
+### What the Fix Changed
+
+Security now talks to the user feature through `UserLookupApi`, the stable user
+boundary.
+
+The dependency direction became:
+
+```text
+security -> user.api
+```
+
+instead of:
+
+```text
+security -> user.exception
+```
+
+## 24. JWT Auth and Refresh Ignored Current Account State
+
+### What This Feature Is For
+
+Account state decides whether a user may currently authenticate:
+
+```text
+enabled
+account non-locked
+account non-expired
+credentials non-expired
+```
+
+### How the Old System Behaved
+
+The backend validated the token and loaded the user, but did not consistently
+reject users whose current account state had changed:
+
+```java
+UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+return authenticatedToken(userDetails);
+```
+
+Refresh-token handling had the same type of gap.
+
+### Why That Was a Bug
+
+Tokens can outlive account-state changes. If an admin disables or locks a user,
+old tokens should not keep working.
+
+### Simple Example
+
+```text
+11:55 User logs in.
+12:00 Admin disables the user.
+12:01 User calls API with old access token.
+12:02 User refreshes and gets new tokens.
+```
+
+Before the fix, those actions could still succeed if the token itself was valid.
+
+### What the Fix Changed
+
+`JwtAccountStatusValidator.requireActive(...)` now checks account state during:
+
+- access-token authentication
+- refresh-token handling
+
+Disabled, locked, expired, or credentials-expired accounts are rejected.
+
+## 25. Google OAuth Code Exchange Had No Explicit HTTP Timeout
+
+### What This Feature Is For
+
+Google OAuth login requires the backend to exchange a temporary Google `code`
+for Google tokens/profile data.
+
+### How the Old System Behaved
+
+The old Google OAuth exchange used default HTTP request settings:
+
+```java
+new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, secret, scopes)
+```
+
+### Why That Was a Bug
+
+Google is an external service. The backend should not let a slow Google/network
+call hold an auth request longer than intended.
+
+### Simple Example
+
+```text
+User clicks Continue with Google.
+Backend exchanges code with Google.
+Google/network is slow.
+Login request waits too long.
+```
+
+### What the Fix Changed
+
+`GoogleTokenExchanger` now sets explicit connect and read timeouts through a
+Google `HttpRequestInitializer`. The timeout values are configurable.
+
+## 26. CORS Allowed Credentials Without Rejecting Wildcards
+
+### What This Feature Is For
+
+CORS controls which browser origins may call the backend.
+
+When credentials are allowed, origins must be explicit and trusted.
+
+### How the Old System Behaved
+
+The old configuration accepted configured origin patterns directly:
+
+```java
+configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
+configuration.setAllowCredentials(corsProperties.allowCredentials());
+```
+
+### Why That Was a Bug
+
+Wildcard origins are dangerous with credentials. A broad pattern can accidentally
+allow credentialed cross-origin requests from untrusted sites.
+
+### Simple Example
+
+```text
+allow-credentials = true
+allowed-origins = *
+```
+
+That is not a safe combination.
+
+### What the Fix Changed
+
+`AppCorsConfiguration` now validates startup configuration. When credentials are
+enabled, blank origins, `null`, and origins containing `*` are rejected.
+
+Bad CORS config now fails fast.
+
+## 27. OAuth Returned Tokens in the Redirect URL Fragment
+
+### What This Feature Is For
+
+After successful OAuth login, the frontend needs the app's own token pair.
+
+### How the Old System Behaved
+
+The old redirect put tokens in the browser URL fragment:
+
+```java
+callbackBase + "#token=" + accessToken + "&refreshToken=" + refreshToken
+```
+
+### Why That Was a Bug
+
+The URL fragment is readable by frontend JavaScript and can appear in browser
+history or debugging tools.
+
+This is especially risky for refresh tokens because they live longer than access
+tokens.
+
+### Simple Example
+
+```text
+https://app.example.com/auth/google/callback#token=ACCESS&refreshToken=REFRESH
+```
+
+Any script on that callback page can read `location.hash`.
+
+### What the Fix Changed
+
+The OAuth redirect now contains only a short-lived one-time handoff code:
+
+```text
+#oauthCode=<one-time-code>
+```
+
+The frontend sends that code back to the backend. The backend returns the real
+tokens once and then removes the code from the server-side store.
+
+## 28. Email Token Length Config Was Not Bounded
+
+### What This Feature Is For
+
+Token length affects how hard verification/reset tokens are to guess.
+
+### How the Old System Behaved
+
+The old numeric token generator depended on integer math:
+
+```java
+Math.pow(10, tokenLength)
+```
+
+### Why That Was a Bug
+
+Bad configuration could make tokens too short and easy to guess. Very large
+values could also break the numeric algorithm.
+
+### Simple Example
+
+```text
+email.verification-token-length = 4
+```
+
+That gives only 10,000 possible numeric tokens, which is too weak for a security
+token.
+
+### What the Fix Changed
+
+Token generation now uses secure random bytes encoded as URL-safe text.
+
+The configured length is validated and values below the secure minimum fail
+fast.
+
+## Known Follow-Up Not Fixed in This Chat
+
+### File Upload Still Writes the External Object Before Metadata
+
+The deletion side now uses the outbox pattern, but the generic upload path still
+uploads the real object before saving metadata:
+
+```java
+objectStorage.upload(file, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
+fileMetadataRepository.deleteByRelatedObjectId(fileMetadataDto.relatedObjectId());
+fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
+```
+
+For the current avatar use case, this is lower risk because avatar file names
+are stable:
+
+```text
+user-avatar-<userId>
+```
+
+If metadata save fails after upload, the next avatar upload for the same user
+uses the same object key and can overwrite the orphaned object.
+
+For future generic file uploads with unique object names, this could become a
+real orphan-object problem:
+
+```text
+1. Upload object to S3/MinIO.
+2. Database metadata save fails.
+3. No metadata row points to the uploaded object.
+```
+
+That was not changed in this remediation because it is a separate upload-side
+compensation design. A future fix could add an upload outbox/cleanup intent or a
+best-effort compensating delete when metadata save fails.
+
+## Verification Added
+
+The fixes were covered with focused tests around the changed behavior:
+
+- refresh-token blacklist TTL
+- JWT issuer/audience validation
+- OAuth verified-email handling
+- refresh-token rotation locking
+- login-attempt locking
+- email verification/password reset token generation and namespacing
+- external HTTP timeouts for Turnstile and Google OAuth
+- CORS credentialed-origin validation
+- OAuth token handoff
+- account-state checks during JWT auth and refresh
+- delivery address default selection, deletion, and concurrency behavior
+- profile address validation and profile address mapping
+- account lock expiration synchronization
+- entity equality for transient user entities
+- avatar MIME and magic-byte validation
+- file-storage metadata deletion and outbox enqueueing
+- file deletion outbox worker retry/no-storage behavior
+- review outbox event-type scoping
+- inbox consumer/event-type scoping
+
+The latest focused verification run covered:
+
+```text
+InboxEventRepositoryTest
+ReviewCreatedInboxProcessorTest
+ReviewCreatedKafkaConsumerTest
+OutboxEventRepositoryTest
+ReviewCreatedKafkaPublisherTest
+FileStorageServiceTest
+FileDeletionOutboxWorkerTest
+FileDeletionOutboxRepositoryTest
+```
+
+`mvn spotless:check` and `git diff --check` were also run after the latest
+outbox/inbox hardening changes.

@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.oauth.login;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +20,7 @@ import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
+import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
@@ -128,7 +128,7 @@ public class OAuthLoginService {
 
     private String normalizeEmail(String email) {
         String value = normalizeRequired(email);
-        return value == null ? null : value.toLowerCase(Locale.ROOT);
+        return value == null ? null : EmailNormalizer.normalize(value);
     }
 
     private String normalizeRequired(String value) {

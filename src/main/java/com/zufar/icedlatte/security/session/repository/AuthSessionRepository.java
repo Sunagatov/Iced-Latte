@@ -17,8 +17,6 @@ import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 
 public interface AuthSessionRepository extends JpaRepository<AuthSessionEntity, UUID> {
 
-    Optional<AuthSessionEntity> findByRefreshTokenHash(String refreshTokenHash);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM AuthSessionEntity s WHERE s.refreshTokenHash = :refreshTokenHash")
     Optional<AuthSessionEntity> findByRefreshTokenHashForUpdate(@Param("refreshTokenHash") String refreshTokenHash);
@@ -26,6 +24,10 @@ public interface AuthSessionRepository extends JpaRepository<AuthSessionEntity, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM AuthSessionEntity s WHERE s.previousTokenHash = :previousTokenHash")
     Optional<AuthSessionEntity> findByPreviousTokenHashForUpdate(@Param("previousTokenHash") String previousTokenHash);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM AuthSessionEntity s WHERE s.id = :sessionId")
+    Optional<AuthSessionEntity> findByIdForUpdate(@Param("sessionId") UUID sessionId);
 
     @Query("SELECT s FROM AuthSessionEntity s " + "WHERE s.userId = :userId "
             + "AND s.revokedAt IS NULL "

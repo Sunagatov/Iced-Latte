@@ -51,6 +51,20 @@ class PasswordResetServiceTest {
         }
 
         @Test
+        @DisplayName("normalizes email before lookup and reset code generation")
+        void normalizesEmailBeforeLookupAndResetCodeGeneration() {
+            String normalizedEmail = "known@example.com";
+            when(userLookupApi.findUserByEmail(normalizedEmail))
+                    .thenReturn(
+                            Optional.of(new UserLookupSnapshot(UUID.randomUUID(), "Known", "User", normalizedEmail)));
+
+            service.requestReset("  Known@Example.com ");
+
+            verify(userLookupApi).findUserByEmail(normalizedEmail);
+            verify(emailVerificationService).sendPasswordResetCode(normalizedEmail);
+        }
+
+        @Test
         @DisplayName("swallows unknown email lookups")
         void swallowsUnknownEmailLookups() {
             String email = "missing@example.com";
