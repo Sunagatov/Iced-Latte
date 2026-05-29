@@ -39,7 +39,7 @@ Refresh token: longer life, about 24 hours
 
 The old blacklist method always used the access-token expiration:
 
-```java
+```text
 temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
 ```
 
@@ -71,7 +71,7 @@ blacklist entry was gone.
 
 The blacklist now has separate paths:
 
-```java
+```text
 blacklist(token);              // for access tokens
 blacklistRefreshToken(token);  // for refresh tokens
 ```
@@ -110,7 +110,7 @@ Was this token meant for this backend API?
 
 The parser checked only the signature:
 
-```java
+```text
 Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
 ```
 
@@ -170,7 +170,7 @@ address.
 
 The old check protected only one case: linking OAuth to an existing local user.
 
-```java
+```text
 if (existingUser && !profile.emailVerified()) {
     throw new UnauthorizedException(...);
 }
@@ -237,7 +237,7 @@ This reduces damage if an old refresh token is stolen.
 
 The old code followed a read-change-save pattern:
 
-```java
+```text
 session = repository.findByRefreshTokenHash(hash);
 session.rotateTo(newHash);
 repository.save(session);
@@ -278,7 +278,7 @@ single-use.
 
 The repository now uses pessimistic write locks:
 
-```java
+```text
 findByRefreshTokenHashForUpdate(refreshTokenHash)
 ```
 
@@ -311,7 +311,7 @@ bad passwords, the account or email can be temporarily locked.
 
 The old logic used read-increment-save:
 
-```java
+```text
 attempt.setAttempts(attempt.getAttempts() + 1);
 repository.save(attempt);
 ```
@@ -409,20 +409,21 @@ Now Alice's pending request can be overwritten by Bob's request.
 
 The system now uses long URL-safe opaque tokens instead of short numeric codes.
 
-The storage is scoped by:
-
-- purpose, such as email verification or password reset
-- normalized email
-- token
-
-Conceptually:
+The storage is scoped by token purpose and token identity:
 
 ```text
-email:token:<purpose>:<normalized-email>:<token>
+email:token:<purpose>:<token-identity>
 ```
 
-This makes collisions much less likely and prevents different purposes/users
-from sharing one global token namespace.
+The stored payload contains the normalized email and request data. Cooldown
+storage is keyed separately by normalized email:
+
+```text
+email:rate:<normalized-email>
+```
+
+This makes guessing much harder, separates verification and reset flows by
+purpose, and avoids the old short-code collision problem.
 
 ## 7. Turnstile Verification Had No Explicit HTTP Timeout
 
@@ -437,7 +438,7 @@ Turnstile token.
 
 The old verifier used a default REST client:
 
-```java
+```text
 RestClient.create()
 ```
 
@@ -484,7 +485,7 @@ feature APIs, not through each other's internal implementation classes.
 
 Security imported a user feature internal exception:
 
-```java
+```text
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 ```
 
@@ -540,7 +541,7 @@ Important flags include:
 
 The backend loaded the user from the token, but did not enforce these flags:
 
-```java
+```text
 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 return authenticatedToken(userDetails);
 ```
@@ -589,7 +590,7 @@ temporary OAuth `code` for Google tokens/profile data.
 
 The old Google flow used default HTTP request settings:
 
-```java
+```text
 new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, secret, scopes)
 ```
 
@@ -636,7 +637,7 @@ When credentials are allowed, origins must be trusted and explicit.
 
 The old configuration accepted configured origin patterns directly:
 
-```java
+```text
 configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
 configuration.setAllowCredentials(corsProperties.allowCredentials());
 ```
@@ -683,7 +684,7 @@ access/refresh tokens.
 
 The old redirect put both tokens in the URL fragment:
 
-```java
+```text
 callbackBase + "#token=" + accessToken + "&refreshToken=" + refreshToken
 ```
 
@@ -723,7 +724,7 @@ The OAuth callback now returns only a short-lived one-time handoff code:
 
 Then the frontend calls the backend:
 
-```http
+```text
 POST /api/v1/auth/oauth/token?code=<one-time-code>
 ```
 
@@ -752,7 +753,7 @@ random tokens are safer.
 
 The old numeric token generation depended on integer math:
 
-```java
+```text
 Math.pow(10, tokenLength)
 ```
 
@@ -779,3 +780,330 @@ also validates the configured length and rejects values below the minimum secure
 size.
 
 Bad config now fails fast instead of creating weak tokens.
+
+## 14. Authentication Snapshot Exposed Encoded Credentials Too Generically
+
+### What This Feature Is For
+
+Spring Security needs an encoded password when it builds `UserDetails` for
+username/password authentication.
+
+The encoded password is not the plain password, but it is still credential
+material. It should only be used by authentication code.
+
+### How the Old System Behaved
+
+The user module exposed an authentication snapshot with a field named
+`passwordHash`:
+
+```text
+public record UserAuthenticationSnapshot(..., String passwordHash) {}
+```
+
+Security consumed that field here:
+
+```text
+snapshot.passwordHash()
+```
+
+### Why That Was a Smell
+
+The value is sensitive, but the contract lived in the user API package. A future
+developer could see the snapshot type and reuse it for profile or public user
+responses by mistake.
+
+In beginner terms: the backend still needs the encoded password to check a
+login, but we do not want that value to look like normal user data.
+
+### What the Fix Changed
+
+The record field was renamed and documented as authentication-only:
+
+```text
+/**
+ * Authentication-only user view for the security module.
+ */
+public record UserAuthenticationSnapshot(..., String encodedPassword) {}
+```
+
+Security now reads:
+
+```text
+snapshot.encodedPassword()
+```
+
+This does not expose the value to public API responses. It only makes the
+internal contract clearer and harder to misuse.
+
+## 15. Email Normalization Lived Under Security Instead of a Neutral Package
+
+### What This Feature Is For
+
+Security flows normalize emails before login, registration, password reset, and
+OAuth account creation:
+
+```text
+" Alice@Example.COM " -> "alice@example.com"
+```
+
+The user module also needs the same rule when it checks or saves users.
+
+### How the Old System Behaved
+
+The shared normalizer lived in the security package:
+
+```text
+package com.zufar.icedlatte.security.util;
+```
+
+That was fine while only security used it. But once the user package needed the
+same normalization rule, importing the security utility from user would have
+created the wrong dependency direction.
+
+The first user-side fix also briefly duplicated the logic in private helper
+methods:
+
+```text
+private static String normalizeEmail(String email) {
+    return Objects.requireNonNull(email, "email must not be null")
+            .toLowerCase(Locale.ROOT)
+            .trim();
+}
+```
+
+### Why That Was a Smell
+
+Security already depends on user APIs for authentication. The user package
+should not depend back on security internals.
+
+In beginner terms: if security and user both need the same generic email cleanup
+rule, it belongs in a neutral shared package, not inside security.
+
+### What the Fix Changed
+
+The normalizer moved to:
+
+```text
+package com.zufar.icedlatte.common.util;
+```
+
+Security imports were updated from:
+
+```text
+import com.zufar.icedlatte.security.util.EmailNormalizer;
+```
+
+to:
+
+```text
+import com.zufar.icedlatte.common.util.EmailNormalizer;
+```
+
+The old `security.util.EmailNormalizer` file was deleted. The duplicated private
+helpers in user services were removed.
+
+The latest verification checked that no old `security.util.EmailNormalizer`
+imports remain and that the broader user/security-focused test run passed:
+
+```text
+Tests run: 139, Failures: 0, Errors: 0, Skipped: 0
+```
+
+## 16. Prometheus Metrics Were Public
+
+### What This Feature Is For
+
+`/actuator/prometheus` exposes application metrics in a format that Prometheus
+can scrape.
+
+Those metrics are useful for operations because they can show things like:
+
+- request counts
+- response times
+- error counts
+- JVM memory usage
+- database or HTTP client behavior
+
+### How the Old System Behaved
+
+The Spring Security configuration treated Prometheus metrics like a public
+health endpoint:
+
+```text
+.requestMatchers(
+        "/actuator/health",
+        "/actuator/info",
+        "/actuator/prometheus",
+        "/livez",
+        "/readyz")
+.permitAll()
+```
+
+The rate-limiting filter also skipped actuator paths:
+
+```text
+path.startsWith(ApiPaths.ACTUATOR_ROOT)
+```
+
+So an unauthenticated request could reach `/actuator/prometheus`, and that path
+also bypassed the normal rate limit.
+
+### Why That Was a Bug
+
+Health endpoints are usually safe to expose because they answer a small
+question:
+
+```text
+Is the application alive?
+```
+
+Prometheus metrics answer much more:
+
+```text
+Which routes exist?
+How much traffic do they receive?
+Which endpoints fail?
+How long do requests take?
+How does authentication behave under load?
+```
+
+That information is useful to engineers, but it can also help an attacker map
+the system. The problem was not that Prometheus metrics are bad. The problem was
+that they were available without authentication.
+
+### Simple Example
+
+Before the fix:
+
+```text
+GET /actuator/prometheus
+Authorization: none
+
+Result: 200 OK with internal metrics
+```
+
+A public user could inspect metrics that should normally be restricted to admins
+or monitoring infrastructure.
+
+### What the Fix Changed
+
+The public actuator allow-list now keeps only lightweight public probes:
+
+```text
+.requestMatchers("/actuator/health", "/actuator/info", "/livez", "/readyz")
+.permitAll()
+```
+
+All other actuator endpoints, including Prometheus metrics, require an admin
+role:
+
+```text
+.requestMatchers(ApiPaths.ACTUATOR_ROOT + "**").hasRole("ADMIN")
+```
+
+Tests now cover the important cases:
+
+- anonymous users cannot read `/actuator/prometheus`
+- normal non-admin users cannot read `/actuator/prometheus`
+- admin users can read `/actuator/prometheus`
+- public health probes still work without login
+
+## 17. Email Verification and Password Reset Tokens Were Visible in Cache Keys
+
+### What This Feature Is For
+
+Email verification and password reset flows create a temporary token.
+
+The backend sends the real token to the user by email. It also stores a pending
+request in temporary storage so it can validate the token later.
+
+Simple flow:
+
+```text
+1. User asks to verify email or reset password.
+2. Backend creates a temporary token.
+3. Backend emails the token to the user.
+4. User sends the token back.
+5. Backend checks the temporary storage entry.
+```
+
+### How the Old System Behaved
+
+The token was high entropy, which means it was hard to guess. But the token was
+still used directly inside the temporary storage key:
+
+```text
+private static String tokenKey(TokenPurpose purpose, String token) {
+    return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + token;
+}
+```
+
+That created keys shaped like this:
+
+```text
+email:token:password_reset:<real-reset-token>
+email:token:email_verification:<real-verification-token>
+```
+
+### Why That Was a Bug
+
+The token is the secret. Whoever has a valid password reset token can complete
+the password reset flow.
+
+Using the raw token as a cache key does not make it easier to guess from the
+outside, but it does expose the secret anywhere cache keys are visible.
+
+Cache keys can appear in places such as:
+
+- Redis admin tools
+- cache debugging output
+- operational screenshots
+- metrics or logs around cache lookups
+
+In beginner terms: the token was strong, but it was written on the label of the
+storage box. The value inside the box may be protected, but the label itself was
+still sensitive.
+
+### Simple Example
+
+Before the fix, an operator looking at Redis keys might see:
+
+```text
+email:token:password_reset:AbCDefGhIjK123...
+```
+
+That last part was the actual reset token. If copied, it could be submitted to
+the password reset endpoint while the token was still valid.
+
+### What the Fix Changed
+
+The user still receives the real token by email. The frontend and API flow do
+not need to change.
+
+But the backend no longer uses the raw token as the storage key. It hashes the
+token first:
+
+```text
+private static String tokenKey(TokenPurpose purpose, String token) {
+    return TOKEN_KEY_PREFIX
+            + purpose.name().toLowerCase(Locale.ROOT)
+            + ":"
+            + hashToken(token);
+}
+```
+
+The hash is created with SHA-256 and encoded as URL-safe text:
+
+```text
+MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8))
+```
+
+Now the storage key looks more like this:
+
+```text
+email:token:password_reset:<sha-256-token-hash>
+```
+
+When the user submits the real token, the backend hashes the submitted token and
+looks up the hashed key. That keeps the same user experience while avoiding raw
+reset or verification tokens in cache keys.

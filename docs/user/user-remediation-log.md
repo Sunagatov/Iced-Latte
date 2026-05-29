@@ -34,7 +34,7 @@ the user starts an order.
 The old `setDefault(...)` method loaded the selected address, cleared every
 default address for the user, then set the selected entity to default again:
 
-```java
+```text
 var entity = addressRepository.findByIdAndUserId(addressId, userId).orElseThrow(...);
 addressRepository.clearDefaultForUser(userId);
 entity.setDefault(true);
@@ -43,7 +43,7 @@ return converter.toDto(addressRepository.save(entity));
 
 The repository method used a bulk JPQL update:
 
-```java
+```text
 @Modifying
 @Query("UPDATE DeliveryAddressEntity a SET a.isDefault = false WHERE a.user.id = :userId")
 void clearDefaultForUser(UUID userId);
@@ -92,7 +92,7 @@ response object said the selected address was default.
 The service now returns immediately when the selected address is already
 default:
 
-```java
+```text
 if (entity.isDefault()) {
     return converter.toDto(entity);
 }
@@ -121,7 +121,7 @@ them should become default.
 The old code checked whether the user had any addresses, then decided whether
 the new address should be default:
 
-```java
+```text
 boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
 entity.setDefault(shouldBecomeDefault);
 return converter.toDto(saveAddress(entity));
@@ -129,7 +129,7 @@ return converter.toDto(saveAddress(entity));
 
 It tried to catch a uniqueness violation inside `saveAddress(...)`:
 
-```java
+```text
 try {
     return addressRepository.save(entity);
 } catch (DataIntegrityViolationException ex) {
@@ -172,7 +172,7 @@ but JPA could raise it later.
 
 The service now locks the user row before creating a delivery address:
 
-```java
+```text
 var user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new UserNotFoundException(userId));
 boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
@@ -180,7 +180,7 @@ boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
 
 `findByIdForUpdate(...)` uses a pessimistic write lock:
 
-```java
+```text
 @Lock(LockModeType.PESSIMISTIC_WRITE)
 @Query("SELECT u FROM UserEntity u WHERE u.id = :userId")
 Optional<UserEntity> findByIdForUpdate(UUID userId);
@@ -206,7 +206,7 @@ If the user has at least one delivery address, one of them should be default.
 
 The old delete method removed the selected address and stopped:
 
-```java
+```text
 var entity = addressRepository.findByIdAndUserId(addressId, userId).orElseThrow(...);
 addressRepository.delete(entity);
 ```
@@ -240,7 +240,7 @@ The service now checks whether the address being deleted is default. If it is,
 the service selects another address for the same user and promotes it after the
 delete:
 
-```java
+```text
 var replacement = entity.isDefault()
         ? addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId)
         : Optional.<DeliveryAddressEntity>empty();
@@ -276,7 +276,7 @@ The OpenAPI contract said these fields could be up to 128 characters.
 
 The OpenAPI contract allowed 128 characters:
 
-```yaml
+```text
 AddressDto:
   properties:
     country:
@@ -291,7 +291,7 @@ AddressDto:
 
 But the database entity allowed only 55 characters:
 
-```java
+```text
 @Column(name = "country", nullable = false, length = 55)
 private String country;
 ```
@@ -328,7 +328,7 @@ during validation.
 
 The `Address` entity now matches the contract:
 
-```java
+```text
 @Column(name = "country", nullable = false, length = 128)
 private String country;
 ```
@@ -337,7 +337,7 @@ A Liquibase migration expands the existing database columns to 128 characters.
 
 The validator also checks the address field length:
 
-```java
+```text
 if (value.length() > MAX_ADDRESS_FIELD_LENGTH) {
     errors.add(error(String.format(
             "Address field `%s` must not exceed %d characters.",
@@ -362,14 +362,14 @@ updated, or removed together with the user profile.
 
 The old mapper always mapped the request address to a new `Address` object:
 
-```java
+```text
 @Mapping(target = "address", source = "address", qualifiedByName = "toAddress")
 void updateEntity(@MappingTarget UserEntity entity, UpdateUserAccountRequest request);
 ```
 
 The relationship used cascade, but did not use orphan removal:
 
-```java
+```text
 @OneToOne(cascade = CascadeType.ALL)
 @JoinColumn(name = "address_id", referencedColumnName = "id")
 private Address address;
@@ -377,7 +377,7 @@ private Address address;
 
 There was also a dangerous database cascade direction:
 
-```sql
+```text
 FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE
 ```
 
@@ -411,7 +411,7 @@ That is a leaked row.
 The relationship now explicitly says the user owns the address and old owned
 addresses should be removed:
 
-```java
+```text
 @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
 @JoinColumn(name = "address_id", referencedColumnName = "id")
 private Address address;
@@ -419,7 +419,7 @@ private Address address;
 
 The mapper now updates the existing address object in place when possible:
 
-```java
+```text
 if (entity.getAddress() == null) {
     entity.setAddress(Address.builder()
             .country(dto.getCountry())
@@ -460,7 +460,7 @@ When a lock expires, both places must agree that the user is unlocked.
 The old unlock query looked for login-attempt rows where the user was already
 marked unlocked but still had an expiration time:
 
-```java
+```text
 WHERE la.isUserLocked = false
   AND la.expirationDatetime IS NOT NULL
 ```
@@ -506,7 +506,7 @@ remain locked even after the lock expired.
 The unlock query now targets rows that are still locked and whose expiration is
 already in the past:
 
-```java
+```text
 WHERE la.isUserLocked = true
   AND la.expirationDatetime IS NOT NULL
   AND la.expirationDatetime <= CURRENT_TIMESTAMP
@@ -533,7 +533,7 @@ The OpenAPI schema for `UpdateUserAccountRequest` did not list required fields.
 
 But the service validator rejected missing names:
 
-```java
+```text
 if (name == null) {
     errors.add(error(label + " is required."));
     return;
@@ -546,7 +546,7 @@ The documentation and backend behavior disagreed.
 
 A client generated from OpenAPI could think this request is valid:
 
-```json
+```text
 {
   "phoneNumber": "+12025550123"
 }
@@ -572,7 +572,7 @@ The client cannot reliably know what to send.
 The OpenAPI contract now declares `firstName` and `lastName` as required for the
 profile update request:
 
-```yaml
+```text
 UpdateUserAccountRequest:
   required:
     - firstName
@@ -603,7 +603,7 @@ cleaned up.
 
 Originally, account deletion only deleted the user row:
 
-```java
+```text
 public void deleteProfile(UUID userId) {
     userRepository.deleteById(userId);
 }
@@ -614,7 +614,7 @@ That meant avatar metadata and the actual object could be left behind.
 Then the cleanup was moved into `deleteProfile(...)`, but the file deletion path
 still deleted the external object as part of the same user operation:
 
-```java
+```text
 fileStorageApi.deleteFile(userId);
 userRepository.deleteById(userId);
 ```
@@ -650,7 +650,7 @@ user, but file storage no longer deletes the real object immediately.
 The file-storage service first deletes the metadata in the same database
 transaction, then writes a durable outbox event:
 
-```java
+```text
 List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
 int deletedRows = fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
 if (deletedRows > 0) {
@@ -661,7 +661,7 @@ if (deletedRows > 0) {
 
 A background worker later reads the outbox event and deletes the real object:
 
-```java
+```text
 objectStorage.delete(new FileMetadataDto(
         payload.relatedObjectId(),
         payload.bucketName(),
@@ -704,7 +704,7 @@ with older cleanup rows.
 The service also reads all metadata rows for the related object before deleting
 metadata:
 
-```java
+```text
 List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
 ```
 
@@ -770,7 +770,7 @@ The row is gone from the pending queue, but the real object was never deleted.
 
 The worker now exits before claiming rows when object storage is not configured:
 
-```java
+```text
 if (!objectStorage.isConfigured()) {
     log.warn("file.deletion_outbox.skipped: reason=object_storage_not_configured");
     return;
@@ -831,14 +831,14 @@ Review outbox queries are now scoped to `review.created`.
 
 File deletion outbox queries are scoped to `file.object.delete`:
 
-```java
+```text
 WHERE event_type = ?
   AND status IN ('PENDING', 'FAILED_RETRYABLE')
 ```
 
 Terminal updates also check event type:
 
-```java
+```text
 WHERE id = ?
   AND event_type = ?
   AND status = 'IN_PROGRESS'
@@ -847,7 +847,7 @@ WHERE id = ?
 
 An index was added so polling by event type and status stays efficient:
 
-```sql
+```text
 CREATE INDEX IF NOT EXISTS ix_outbox_events_event_type_poll
     ON outbox_events (event_type, status, next_attempt_at, created_at)
     WHERE status IN ('PENDING', 'FAILED_RETRYABLE');
@@ -909,13 +909,13 @@ Final update should also say:
 
 The inbox terminal methods now require `consumerName` and `eventType`:
 
-```java
+```text
 int markProcessed(UUID id, String workerId, String consumerName, String eventType)
 ```
 
 The SQL checks those values:
 
-```sql
+```text
 WHERE id = ?
   AND consumer_name = ?
   AND event_type = ?
@@ -925,7 +925,7 @@ WHERE id = ?
 
 An inbox poll index was added:
 
-```sql
+```text
 CREATE INDEX IF NOT EXISTS ix_inbox_events_consumer_event_type_poll
     ON inbox_events (consumer_name, event_type, status, next_attempt_at, created_at)
     WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE');
@@ -948,7 +948,7 @@ Before that, the ID is `null`.
 
 Entities compared only their IDs using `Objects.equals(...)`:
 
-```java
+```text
 return Objects.equals(id, user.id);
 ```
 
@@ -979,13 +979,13 @@ That is wrong. They are two different unsaved users.
 Entity equality now returns true only when the entity has a non-null ID and that
 ID matches:
 
-```java
+```text
 return id != null && id.equals(user.id);
 ```
 
 The hash code uses the entity class:
 
-```java
+```text
 return getClass().hashCode();
 ```
 
@@ -1006,7 +1006,7 @@ should not be casually exposed through broad APIs.
 
 The user API boundary exposed a record with a password-hash field:
 
-```java
+```text
 public record UserAuthenticationSnapshot(..., String passwordHash) {}
 ```
 
@@ -1033,7 +1033,10 @@ But it is credential material and should be treated carefully.
 The field was renamed to make its meaning explicit and the record now documents
 that it is authentication-only:
 
-```java
+```text
+/**
+ * Authentication-only user view for the security module.
+ */
 public record UserAuthenticationSnapshot(..., String encodedPassword) {}
 ```
 
@@ -1042,6 +1045,11 @@ Security code now reads `encodedPassword()` instead of `passwordHash()`.
 In beginner terms: the value is still available where authentication needs it,
 but the name and Javadoc warn future developers that it is encoded credential
 material and must not be reused for profile/public user responses.
+
+The important detail is that this was intentionally kept as an authentication
+contract, not a profile contract. `SecurityUserDetails` can still use the
+encoded password to let Spring Security verify a login, but normal user/profile
+responses still do not expose it.
 
 ## 14. User Authorities Were Eager-Loaded Everywhere
 
@@ -1060,7 +1068,7 @@ Authentication needs authorities, but many profile reads do not.
 
 The user entity loaded authorities eagerly:
 
-```java
+```text
 @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 private Set<UserGrantedAuthority> authorities;
 ```
@@ -1090,7 +1098,7 @@ Authorities now use the default lazy behavior for `@OneToMany`.
 
 Authentication paths use explicit repository methods with an entity graph:
 
-```java
+```text
 @EntityGraph(attributePaths = "authorities")
 @Query("SELECT u FROM UserEntity u WHERE u.email = :email")
 Optional<UserEntity> findByEmailWithAuthorities(String email);
@@ -1150,7 +1158,7 @@ Before the fix, this mismatch could be accepted.
 The validator now detects the real content type from the bytes and compares it
 to the declared content type:
 
-```java
+```text
 if (detectContentType(file).filter(contentType::equals).isEmpty()) {
     throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
 }
@@ -1172,7 +1180,7 @@ for example after logout or refresh-token rotation.
 
 The old blacklist method always used the access-token lifetime:
 
-```java
+```text
 temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
 ```
 
@@ -1199,7 +1207,7 @@ blacklist forgot it.
 
 The blacklist now has separate methods for access tokens and refresh tokens:
 
-```java
+```text
 blacklist(token);
 blacklistRefreshToken(token);
 ```
@@ -1224,7 +1232,7 @@ audience: who is this token for?
 
 The parser checked only the signature:
 
-```java
+```text
 Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
 ```
 
@@ -1269,7 +1277,7 @@ provider such as Google.
 
 The old code protected only the existing-local-user linking case:
 
-```java
+```text
 if (existingUser && !profile.emailVerified()) {
     throw new UnauthorizedException(...);
 }
@@ -1318,7 +1326,7 @@ Refresh-token rotation means a refresh token should be usable only once.
 
 The old code used read-change-save:
 
-```java
+```text
 session = repository.findByRefreshTokenHash(hash);
 session.rotateTo(newHash);
 repository.save(session);
@@ -1345,7 +1353,7 @@ Before the fix, both requests could receive valid new token pairs even though
 
 The repository now locks the auth-session row while rotating:
 
-```java
+```text
 findByRefreshTokenHashForUpdate(refreshTokenHash)
 ```
 
@@ -1363,7 +1371,7 @@ passwords.
 
 The old logic used read-increment-save:
 
-```java
+```text
 attempt.setAttempts(attempt.getAttempts() + 1);
 repository.save(attempt);
 ```
@@ -1423,14 +1431,21 @@ Both use the same global storage key.
 
 The system now uses long URL-safe opaque tokens.
 
-Storage is scoped by purpose, normalized email, and token:
+Storage is scoped by token purpose and token identity:
 
 ```text
-email:token:<purpose>:<normalized-email>:<token>
+email:token:<purpose>:<token-identity>
 ```
 
-That makes guessing much harder and prevents different users/purposes from
-sharing one global token namespace.
+The stored payload contains the normalized email and request data. Cooldown
+storage is keyed separately by normalized email:
+
+```text
+email:rate:<normalized-email>
+```
+
+That makes guessing much harder, separates verification and reset flows by
+purpose, and avoids the old short-code collision problem.
 
 ## 22. Turnstile Verification Had No Explicit HTTP Timeout
 
@@ -1443,7 +1458,7 @@ registration.
 
 The old verifier used a default REST client:
 
-```java
+```text
 RestClient.create()
 ```
 
@@ -1477,7 +1492,7 @@ stable APIs, not through each other's internal classes.
 
 Security imported a user feature internal exception:
 
-```java
+```text
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 ```
 
@@ -1530,7 +1545,7 @@ credentials non-expired
 The backend validated the token and loaded the user, but did not consistently
 reject users whose current account state had changed:
 
-```java
+```text
 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 return authenticatedToken(userDetails);
 ```
@@ -1573,7 +1588,7 @@ for Google tokens/profile data.
 
 The old Google OAuth exchange used default HTTP request settings:
 
-```java
+```text
 new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, secret, scopes)
 ```
 
@@ -1608,7 +1623,7 @@ When credentials are allowed, origins must be explicit and trusted.
 
 The old configuration accepted configured origin patterns directly:
 
-```java
+```text
 configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
 configuration.setAllowCredentials(corsProperties.allowCredentials());
 ```
@@ -1644,7 +1659,7 @@ After successful OAuth login, the frontend needs the app's own token pair.
 
 The old redirect put tokens in the browser URL fragment:
 
-```java
+```text
 callbackBase + "#token=" + accessToken + "&refreshToken=" + refreshToken
 ```
 
@@ -1685,7 +1700,7 @@ Token length affects how hard verification/reset tokens are to guess.
 
 The old numeric token generator depended on integer math:
 
-```java
+```text
 Math.pow(10, tokenLength)
 ```
 
@@ -1732,13 +1747,13 @@ token itself to say what it is for.
 Access tokens and refresh tokens were signed with different keys, but the token
 claims did not include an explicit purpose:
 
-```java
+```text
 claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
 ```
 
 Refresh tokens had a version claim:
 
-```java
+```text
 claims.put(JwtClaimNames.VERSION, 2);
 ```
 
@@ -1774,7 +1789,7 @@ Before the fix, the token type was not stated this directly inside the token.
 
 JWT claim names now define token purpose constants:
 
-```java
+```text
 public static final String TOKEN_PURPOSE = "purpose";
 public static final String ACCESS_TOKEN_PURPOSE = "access";
 public static final String REFRESH_TOKEN_PURPOSE = "refresh";
@@ -1782,32 +1797,32 @@ public static final String REFRESH_TOKEN_PURPOSE = "refresh";
 
 Access-token generation now writes:
 
-```java
+```text
 claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE);
 ```
 
 Refresh-token generation now writes:
 
-```java
+```text
 claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE);
 ```
 
 The access-token parser now requires:
 
-```java
+```text
 require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)
 ```
 
 The refresh-token parser now requires:
 
-```java
+```text
 require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
 ```
 
 `JwtSigningKeys` also rejects configuration where both token types use the same
 signing key:
 
-```java
+```text
 if (Arrays.equals(accessKeyBytes, refreshKeyBytes)) {
     throw new IllegalStateException("JWT access and refresh signing keys must be different");
 }
@@ -1828,7 +1843,7 @@ country, and postcode.
 
 The OpenAPI contract used `minLength: 1`:
 
-```yaml
+```text
 label:
   type: string
   minLength: 1
@@ -1853,16 +1868,32 @@ says "after ignoring spaces, there must still be something left."
 
 ### What the Fix Changed
 
-The delivery address OpenAPI fields now add generated `@NotBlank` validation:
+The delivery address OpenAPI fields now add generated `@NotBlank` validation.
+For example:
 
-```yaml
-x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(...)"
+```text
+label:
+  type: string
+  minLength: 1
+  maxLength: 64
+  x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address label must not be blank\")"
 ```
 
 This was added for `label`, `line`, `city`, `country`, and `postcode`.
 
+After OpenAPI generation, `DeliveryAddressRequest` now contains annotations like
+this on the generated fields:
+
+```text
+@jakarta.validation.constraints.NotBlank(message = "Address label must not be blank")
+private String label;
+```
+
 A new endpoint test sends a whitespace-only label and expects `400 Bad Request`.
 It also verifies that no address was saved.
+
+In beginner terms: the API contract still says "this field is required," but it
+now also says "spaces alone do not count as a real value."
 
 ## 31. User Registration Relied on Callers to Normalize Email
 
@@ -1874,13 +1905,13 @@ The user module creates and finds users by email address.
 
 Registration saved whatever email the caller passed:
 
-```java
+```text
 .email(email)
 ```
 
 Lookups also searched for exactly the caller-provided value:
 
-```java
+```text
 userCrudRepository.findByEmail(email)
 ```
 
@@ -1905,11 +1936,18 @@ data is checked or saved.
 
 ### What the Fix Changed
 
-`UserAccountRegistrationService` now uses the shared email normalizer before
-checking existence and before saving:
+`UserAccountRegistrationService` now normalizes email inside the user package
+before checking existence:
 
-```java
-EmailNormalizer.normalize(email)
+```text
+return userRepository.existsByEmail(
+        Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"));
+```
+
+It also normalizes before saving a new user:
+
+```text
+.email(Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"))
 ```
 
 `SingleUserProvider` now applies the same normalization before user and
@@ -1917,6 +1955,14 @@ authentication lookups.
 
 Unit tests now verify that mixed-case emails with surrounding spaces are sent to
 repositories as normalized lowercase emails.
+
+In beginner terms: even if a future caller sends `" Alice@Example.COM "`, the
+user module looks up and stores `"alice@example.com"`.
+
+One important design detail: the user package does not import a security helper
+to do this. Email normalization is now in `common.util.EmailNormalizer`, so both
+security and user code can use it without creating a backwards dependency from
+`user` to `security`.
 
 ## 32. User API Exposed an Internal Exception Type
 
@@ -1929,7 +1975,7 @@ user module.
 
 `UserLookupApi` imported an internal exception:
 
-```java
+```text
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 
 UserLookupSnapshot getUserById(UUID userId) throws UserNotFoundException;
@@ -1948,7 +1994,7 @@ private exception classes just to call the user API.
 
 The API interface no longer imports or declares the internal exception:
 
-```java
+```text
 UserLookupSnapshot getUserById(UUID userId);
 UserLookupSnapshot getUserByEmail(String email);
 ```
@@ -1957,6 +2003,548 @@ The implementation can still throw its unchecked internal exception from inside
 the user module, but the public boundary no longer advertises that internal type
 as part of the API contract.
 
+In beginner terms: the actual behavior did not change for callers that ask for a
+missing user. The cleanup is about the package boundary. The public user API is
+now less tied to the user module's internal exception package.
+
+## 33. Email Normalization Was Duplicated in the Wrong Package
+
+### What This Feature Is For
+
+Email normalization converts emails to the canonical form used by the backend:
+
+```text
+" Alice@Example.COM " -> "alice@example.com"
+```
+
+This matters anywhere the system checks, saves, or signs in with an email.
+
+### How the Old System Behaved
+
+There was already an email normalizer, but it lived in the security package:
+
+```text
+package com.zufar.icedlatte.security.util;
+
+public class EmailNormalizer {
+    public static String normalize(String email) {
+        return email == null ? null : email.toLowerCase(Locale.ROOT).trim();
+    }
+}
+```
+
+When email normalization was added inside the user package, the first fix used
+small private helper methods:
+
+```text
+private static String normalizeEmail(String email) {
+    return Objects.requireNonNull(email, "email must not be null")
+            .toLowerCase(Locale.ROOT)
+            .trim();
+}
+```
+
+That worked functionally, but it duplicated logic that already existed.
+
+### Why That Was a Smell
+
+The user package should not import from the security package. `security` depends
+on user APIs for login and registration, but user profile/account code should not
+depend back on security internals.
+
+So there were two bad options:
+
+```text
+1. Keep duplicated private normalization helpers in user.
+2. Make user import security.util.EmailNormalizer.
+```
+
+The first option duplicates logic. The second option creates the wrong module
+dependency direction.
+
+In beginner terms: if two parts of the app need the same tiny generic email
+cleanup, it should live in a neutral shared place, not inside one feature that
+the other feature has to reach into.
+
+### What the Fix Changed
+
+The normalizer was moved to `common.util`:
+
+```text
+package com.zufar.icedlatte.common.util;
+
+@UtilityClass
+public class EmailNormalizer {
+    public static String normalize(String email) {
+        return email == null ? null : email.toLowerCase(Locale.ROOT).trim();
+    }
+}
+```
+
+Security imports were updated from:
+
+```text
+import com.zufar.icedlatte.security.util.EmailNormalizer;
+```
+
+to:
+
+```text
+import com.zufar.icedlatte.common.util.EmailNormalizer;
+```
+
+The duplicated private helper methods were removed from user services, and the
+old `security.util.EmailNormalizer` file was deleted.
+
+The user package now depends only on the neutral common utility:
+
+```text
+import com.zufar.icedlatte.common.util.EmailNormalizer;
+```
+
+In beginner terms: there is now one email-normalization rule in one shared
+place, and both security and user code use that same rule.
+
+## 34. Prometheus Metrics Were Public
+
+### What This Feature Is For
+
+`/actuator/prometheus` is the endpoint Prometheus scrapes to collect backend
+metrics.
+
+Those metrics are useful for Grafana dashboards, alerting, and debugging
+production behavior.
+
+### How the Old System Behaved
+
+The old security configuration treated Prometheus like health and readiness
+checks:
+
+```text
+.requestMatchers(
+        "/actuator/health", "/actuator/info", "/actuator/prometheus", "/livez", "/readyz")
+.permitAll()
+```
+
+The rate-limiting filter also skips actuator paths:
+
+```text
+path.startsWith(ApiPaths.ACTUATOR_ROOT)
+```
+
+So an unauthenticated client could repeatedly fetch Prometheus metrics without
+normal API authentication and without normal rate limiting.
+
+### Why That Was a Bug
+
+Prometheus metrics usually do not contain passwords or full tokens, but they can
+still expose internal operational information.
+
+Examples include:
+
+```text
+route names
+request counts
+error counts
+latency patterns
+auth failure patterns
+traffic volume
+database/cache/client metric names
+```
+
+That information helps operators, but it can also help an attacker understand
+which endpoints exist, which endpoints are failing, and when the application is
+busy.
+
+In beginner terms: metrics are not the same as health checks. A health check can
+say "the app is alive." Prometheus can say much more about what the app is
+doing.
+
+### Simple Example
+
+```text
+Public user opens:
+  GET /actuator/prometheus
+
+Old behavior:
+  HTTP 200
+  response contains internal metric names and route/activity information
+```
+
+Before the fix, the backend exposed operational details to anyone who could
+reach the service.
+
+### What the Fix Changed
+
+The public allow-list now keeps only health, info, and liveness/readiness
+endpoints public:
+
+```text
+.requestMatchers("/actuator/health", "/actuator/info", "/livez", "/readyz")
+.permitAll()
+```
+
+All other actuator endpoints, including Prometheus, now fall through to the
+admin actuator rule:
+
+```text
+.requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
+.hasRole("ADMIN")
+```
+
+New tests verify the intended behavior:
+
+```text
+GET /actuator/prometheus without auth       -> 401 Unauthorized
+GET /actuator/prometheus as normal user     -> 403 Forbidden
+GET /actuator/prometheus as admin           -> 200 OK
+GET /actuator/health without auth           -> 200 OK
+```
+
+In beginner terms: basic "is the app alive?" endpoints stay public, but detailed
+metrics now require admin access.
+
+## 35. Email Verification and Password Reset Tokens Were Visible in Cache Keys
+
+### What This Feature Is For
+
+Email verification and password reset flows create a temporary token, send it to
+the user, and store a temporary server-side record so the backend can verify the
+token later.
+
+The token itself is a secret. Whoever has a valid password-reset token can prove
+they control that reset flow.
+
+### How the Old System Behaved
+
+After the earlier short-code fix, the token was long and high entropy. That was
+good.
+
+But the backend still used the raw token directly in the cache key:
+
+```text
+private static String tokenKey(TokenPurpose purpose, String token) {
+    return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + token;
+}
+```
+
+That produced keys like:
+
+```text
+email:token:password_reset:qL8xV4...realResetToken
+email:token:email_verification:Av7pK...realVerificationToken
+```
+
+The token value was not only in the email sent to the user. It was also visible
+as part of the Redis/cache key name.
+
+### Why That Was a Bug
+
+Cache keys are often easier to see than cache values.
+
+For example, keys may appear in:
+
+```text
+Redis CLI output
+cache admin tools
+debugging screenshots
+metrics/cardinality tools
+developer logs
+incident investigation notes
+```
+
+If the raw password-reset token is inside the key, anyone who can see the key
+can see the real token.
+
+The token was already hard to guess, so this was not the old "short code can be
+guessed" bug. This was an exposure bug: the secret was placed somewhere that is
+commonly inspected.
+
+### Simple Example
+
+```text
+Backend creates reset token:
+  qL8xV4-real-secret-token
+
+Old Redis/cache key:
+  email:token:password_reset:qL8xV4-real-secret-token
+
+Someone views cache keys:
+  they can copy the real reset token from the key
+```
+
+In beginner terms: even if the token is strong, we should not write the secret
+in a label that admins, tools, or logs might show.
+
+### What the Fix Changed
+
+The backend still sends the real token to the user.
+
+But before using the token as part of the cache key, it now hashes the token with
+SHA-256:
+
+```text
+private static String tokenKey(TokenPurpose purpose, String token) {
+    return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + hashToken(token);
+}
+
+private static String hashToken(String token) {
+    byte[] bytes = token.getBytes(StandardCharsets.UTF_8);
+    byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+}
+```
+
+The flow now looks like this:
+
+```text
+1. Backend creates real token:
+   qL8xV4-real-secret-token
+
+2. Backend emails real token to the user.
+
+3. Backend stores cache entry under:
+   email:token:password_reset:<sha256-hash-of-token>
+
+4. User submits the real token.
+
+5. Backend hashes the submitted token and looks up the hashed cache key.
+```
+
+So the user experience does not change. The user still receives and submits the
+same token.
+
+The internal cache key changes from:
+
+```text
+email:token:password_reset:<raw-token>
+```
+
+to:
+
+```text
+email:token:password_reset:<hashed-token>
+```
+
+The test now captures the key passed to the temporary store and checks that it
+still has the right purpose prefix but does not end with the raw token.
+
+## 36. Login Lockout Used Raw Email Input Before Normalization
+
+### What This Feature Is For
+
+Login lockout counts failed password attempts for an email address.
+
+After too many failures, the account is temporarily locked so repeated password
+guessing becomes harder.
+
+### How the Old System Behaved
+
+The login flow used the email from the request directly when it authenticated
+and when it recorded a failed attempt:
+
+```java
+String userEmail = request.getEmail();
+
+authenticationManager.authenticate(
+        UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword()));
+
+loginAttemptService.recordFailure(userEmail);
+```
+
+That meant these inputs could be treated differently:
+
+```text
+alice@example.com
+Alice@Example.COM
+ alice@example.com 
+```
+
+### Why That Was a Bug
+
+The database stores user emails in normalized form. The custom user-details
+lookup also expects normalized email behavior.
+
+If login failure tracking uses raw input, the same real email can create
+separate lockout counters. That weakens lockout because failed attempts may be
+split across different spellings of the same email.
+
+In beginner terms: the system was counting attempts against exactly what the
+attacker typed, not against the real normalized account identity.
+
+### Simple Example
+
+```text
+Attempt 1: alice@example.com
+Attempt 2: Alice@Example.COM
+Attempt 3:  alice@example.com 
+```
+
+Before the fix, those could be counted as separate values instead of one
+account.
+
+### What the Fix Changed
+
+`UserAuthenticationService` now normalizes the request email once at the start:
+
+```java
+String userEmail = EmailNormalizer.normalize(request.getEmail());
+```
+
+The normalized email is then used for authentication and failed-attempt
+tracking:
+
+```java
+UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword())
+loginAttemptService.recordFailure(userEmail);
+```
+
+`CustomUserDetailsService` also normalizes before user lookup:
+
+```java
+String normalizedEmail = EmailNormalizer.normalize(email);
+userLookupApi.findUserAuthenticationByEmail(normalizedEmail);
+```
+
+So login, lockout, reset, and user lookup now speak the same email format.
+
+## 37. Password Reset Lookup Used Raw Email Input
+
+### What This Feature Is For
+
+Password reset starts when a user enters their email address. The backend checks
+whether that user exists and then sends a reset token.
+
+### How the Old System Behaved
+
+The password reset service looked up the user with the raw email string from the
+request:
+
+```java
+userLookupApi.findUserByEmail(email);
+emailVerificationService.sendPasswordResetCode(email);
+```
+
+So these could behave differently:
+
+```text
+alice@example.com
+Alice@Example.COM
+ alice@example.com 
+```
+
+### Why That Was a Bug
+
+User lookup is exact-match at the repository boundary. If the stored email is
+`alice@example.com`, a reset request for `Alice@Example.COM` could miss the real
+user.
+
+In beginner terms: a user could type the right email with different casing or
+spaces and not receive a reset email, even though the account exists.
+
+### Simple Example
+
+```text
+Stored email:
+  alice@example.com
+
+Reset request:
+  Alice@Example.COM
+
+Old lookup:
+  find exactly "Alice@Example.COM"
+```
+
+That exact lookup may not find the existing account.
+
+### What the Fix Changed
+
+`PasswordResetService` now normalizes first:
+
+```java
+String normalizedEmail = EmailNormalizer.normalize(email);
+```
+
+Then it uses that same normalized value for both the lookup and reset email
+flow:
+
+```java
+userLookupApi.findUserByEmail(normalizedEmail);
+emailVerificationService.sendPasswordResetCode(normalizedEmail);
+```
+
+So the password reset flow now finds the same account regardless of harmless
+email casing or surrounding spaces.
+
+## 38. Session Revocation Paths Were Still Race-Prone
+
+### What This Feature Is For
+
+Session revocation is used when a refresh session must stop working.
+
+Examples:
+
+```text
+User logs out.
+User revokes one session from the session list.
+The backend detects replay and revokes related sessions.
+```
+
+### How the Old System Behaved
+
+Refresh-token rotation already used a database row lock, but some revocation
+paths still used plain reads:
+
+```java
+sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+sessionRepository.findById(sessionId)
+```
+
+Then the service mutated the entity and saved it.
+
+### Why That Was a Bug
+
+Plain reads do not stop another transaction from reading or changing the same
+session at the same time.
+
+So a logout/revoke request and a refresh request could race. One request could
+read the session as active while the other was trying to revoke or rotate it.
+That creates last-write-wins behavior where the final database state depends on
+timing.
+
+In beginner terms: we locked the door for refresh rotation, but two other
+session-changing paths were still using the unlocked door.
+
+### Simple Example
+
+```text
+Request A: refresh token rotation starts.
+Request B: logout starts.
+
+Both read the same active session without a shared lock.
+Both make changes.
+Whichever saves last decides the final state.
+```
+
+### What the Fix Changed
+
+Revocation by refresh-token hash now uses the locked repository method:
+
+```java
+sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash)
+```
+
+Revocation by session id now also locks the row:
+
+```java
+sessionRepository.findByIdForUpdate(sessionId)
+```
+
+Replay handling that looks up a session by id also uses the locked lookup.
+
+Now refresh, logout, single-session revoke, and replay cleanup all coordinate on
+the same database row lock before changing a session.
+
 ## Known Follow-Up Not Fixed in This Chat
 
 ### File Upload Still Writes the External Object Before Metadata
@@ -1964,7 +2552,7 @@ as part of the API contract.
 The deletion side now uses the outbox pattern, but the generic upload path still
 uploads the real object before saving metadata:
 
-```java
+```text
 objectStorage.upload(file, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
 fileMetadataRepository.deleteByRelatedObjectId(fileMetadataDto.relatedObjectId());
 fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
@@ -2002,7 +2590,11 @@ The fixes were covered with focused tests around the changed behavior:
 - JWT access/refresh purpose validation and separate signing-key enforcement
 - delivery address whitespace-only field rejection
 - user email normalization on registration and lookups
+- shared email normalizer moved to common utility package
 - user API boundary cleanup for internal exceptions
+- authentication snapshot encoded-password naming and auth-only documentation
+- Prometheus actuator endpoint admin-only protection
+- hashed cache keys for email verification/password reset tokens
 - OAuth verified-email handling
 - refresh-token rotation locking
 - login-attempt locking
@@ -2024,15 +2616,26 @@ The fixes were covered with focused tests around the changed behavior:
 The latest focused verification run covered:
 
 ```text
-InboxEventRepositoryTest
-ReviewCreatedInboxProcessorTest
-ReviewCreatedKafkaConsumerTest
-OutboxEventRepositoryTest
-ReviewCreatedKafkaPublisherTest
-FileStorageServiceTest
-FileDeletionOutboxWorkerTest
-FileDeletionOutboxRepositoryTest
+com.zufar.icedlatte.user.**.*Test
+CustomUserDetailsServiceTest
+UserAuthenticationServiceTest
+UserRegistrationServiceTest
+OAuthLoginServiceTest
+EmailVerificationServiceTest
+PasswordResetServiceTest
+DefaultCurrentUserProviderTest
+ProductReviewManagerTest
+ProductReviewsProviderTest
 ```
 
-`mvn spotless:check` and `git diff --check` were also run after the latest
-outbox/inbox hardening changes.
+That latest run passed with:
+
+```text
+Tests run: 139, Failures: 0, Errors: 0, Skipped: 0
+```
+
+The generated `DeliveryAddressRequest` was also checked to confirm that
+`@NotBlank` was actually generated for all delivery-address fields.
+
+`mvn spotless:check` and `git diff --check` were also run after the latest user
+and security boundary cleanup changes.
