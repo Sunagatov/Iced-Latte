@@ -55,64 +55,37 @@ class LoginAttemptServiceTest {
     class RecordFailure {
 
         @Test
-        @DisplayName("increments existing login attempt without locking below threshold")
-        void incrementsExistingLoginAttemptWithoutLockingBelowThreshold() {
-            Instant previousTimestamp = Instant.now().minusSeconds(60);
-            LoginAttemptEntity existingAttempt = LoginAttemptEntity.builder()
-                    .id(UUID.randomUUID())
-                    .userEmail(USER_EMAIL)
-                    .attempts(3)
-                    .isUserLocked(false)
-                    .lastModified(previousTimestamp)
-                    .build();
-            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(existingAttempt));
-            when(loginAttemptRepository.save(existingAttempt)).thenReturn(existingAttempt);
+        @DisplayName("records failed attempt atomically without locking below threshold")
+        void recordsFailedAttemptAtomicallyWithoutLockingBelowThreshold() {
+            when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
+                    .thenReturn(4);
 
             service.recordFailure(USER_EMAIL);
 
-            assertThat(existingAttempt.getAttempts()).isEqualTo(4);
-            assertThat(existingAttempt.getLastModified()).isAfter(previousTimestamp);
-            verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
-            verify(loginAttemptRepository).save(existingAttempt);
+            verify(loginAttemptRepository).recordFailedAttempt(eq(USER_EMAIL), any(Instant.class));
             verify(userAccessControlApi, never()).lockAccount(any());
             verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
         }
 
         @Test
-        @DisplayName("creates a new login attempt record when missing")
-        void createsNewLoginAttemptRecordWhenMissing() {
-            ArgumentCaptor<LoginAttemptEntity> captor = ArgumentCaptor.forClass(LoginAttemptEntity.class);
-            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.empty());
-            when(loginAttemptRepository.save(any(LoginAttemptEntity.class)))
-                    .thenAnswer(invocation -> invocation.getArgument(0));
+        @DisplayName("records first failed attempt with the same atomic operation")
+        void recordsFirstFailedAttemptWithSameAtomicOperation() {
+            when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
+                    .thenReturn(1);
 
             service.recordFailure(USER_EMAIL);
 
-            verify(loginAttemptRepository).findByUserEmail(USER_EMAIL);
-            verify(loginAttemptRepository).save(captor.capture());
+            verify(loginAttemptRepository).recordFailedAttempt(eq(USER_EMAIL), any(Instant.class));
             verify(userAccessControlApi, never()).lockAccount(any());
             verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
-
-            LoginAttemptEntity saved = captor.getValue();
-            assertThat(saved.getUserEmail()).isEqualTo(USER_EMAIL);
-            assertThat(saved.getAttempts()).isEqualTo(1);
-            assertThat(saved.getIsUserLocked()).isFalse();
-            assertThat(saved.getLastModified()).isNotNull();
         }
 
         @Test
         @DisplayName("locks account when attempts reach threshold")
         void locksAccountWhenAttemptsReachThreshold() {
-            LoginAttemptEntity existingAttempt = LoginAttemptEntity.builder()
-                    .id(UUID.randomUUID())
-                    .userEmail(USER_EMAIL)
-                    .attempts(4)
-                    .isUserLocked(false)
-                    .lastModified(Instant.now().minusSeconds(60))
-                    .build();
             ArgumentCaptor<Instant> expirationCaptor = ArgumentCaptor.forClass(Instant.class);
-            when(loginAttemptRepository.findByUserEmail(USER_EMAIL)).thenReturn(Optional.of(existingAttempt));
-            when(loginAttemptRepository.save(existingAttempt)).thenReturn(existingAttempt);
+            when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
+                    .thenReturn(MAX_LOGIN_ATTEMPTS);
             when(loginAttemptRepository.setUserLockedStatusAndExpiration(eq(USER_EMAIL), any(Instant.class)))
                     .thenReturn(1);
             when(userAccessControlApi.lockAccount(USER_EMAIL)).thenReturn(1);

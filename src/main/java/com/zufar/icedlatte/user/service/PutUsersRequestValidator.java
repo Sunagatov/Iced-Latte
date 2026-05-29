@@ -19,6 +19,7 @@ public class PutUsersRequestValidator {
 
     private static final int MIN_NAME_LENGTH = 2;
     private static final int MAX_NAME_LENGTH = 64;
+    private static final int MAX_ADDRESS_FIELD_LENGTH = 128;
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s'\\u2019\\-]+$");
     private static final String PHONE_REGEXP = "^\\+[1-9]\\d{6,14}$";
@@ -82,7 +83,8 @@ public class PutUsersRequestValidator {
     }
 
     private void validateAddress(@Nullable AddressDto addressDto, List<String> errors) {
-        if (addressDto == null) return;
+        if (addressDto == null)
+            return;
         boolean anyFieldPresent = addressDto.getCountry() != null
                 || addressDto.getCity() != null
                 || addressDto.getLine() != null
@@ -97,7 +99,13 @@ public class PutUsersRequestValidator {
 
     private void validateAddressField(@Nullable String value, String fieldName, List<String> errors) {
         if (value == null || value.isBlank()) {
-            errors.add(error(String.format("Address field `%s` is required and must not be blank.", fieldName)));
+            String errorMessage = "Address field `%s` is required and must not be blank.";
+            errors.add(error(String.format(errorMessage, fieldName)));
+            return;
+        }
+        if (value.length() > MAX_ADDRESS_FIELD_LENGTH) {
+            String errorMessge = "Address field `%s` must not exceed %d characters.";
+            errors.add(error(String.format(errorMessge, fieldName, MAX_ADDRESS_FIELD_LENGTH)));
         }
     }
 

@@ -57,6 +57,7 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteProfile(UUID userId) {
+        fileStorageApi.deleteFile(userId);
         userRepository.deleteById(userId);
     }
 

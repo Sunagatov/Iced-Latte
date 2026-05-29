@@ -76,4 +76,17 @@ class EmailVerificationServiceContractTest {
         assertThatCode(() -> service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("cooldown uses normalized email casing")
+    void cooldownUsesNormalizedEmailCasing() {
+        UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "John@Example.com", "Password1!");
+        UserRegistrationRequest sameEmailDifferentCase =
+                new UserRegistrationRequest("John", "Doe", " john@example.COM ", "Password1!");
+
+        service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
+
+        assertThatThrownBy(() -> service.generateToken(sameEmailDifferentCase, TokenPurpose.EMAIL_VERIFICATION))
+                .isInstanceOf(TimeTokenException.class);
+    }
 }

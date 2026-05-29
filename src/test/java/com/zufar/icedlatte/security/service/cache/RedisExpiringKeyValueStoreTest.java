@@ -37,6 +37,18 @@ class RedisExpiringKeyValueStoreTest {
     }
 
     @Test
+    @DisplayName("putIfAbsent delegates to Redis setIfAbsent with TTL")
+    void putIfAbsentDelegatesToRedisSetIfAbsentWithTtl() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent("key", "value", Duration.ofMinutes(5))).thenReturn(true);
+        RedisExpiringKeyValueStore store = new RedisExpiringKeyValueStore(redisTemplate);
+
+        assertThat(store.putIfAbsent("key", "value", Duration.ofMinutes(5))).isTrue();
+
+        verify(valueOperations).setIfAbsent("key", "value", Duration.ofMinutes(5));
+    }
+
+    @Test
     @DisplayName("get returns stored values")
     void getReturnsStoredValues() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);

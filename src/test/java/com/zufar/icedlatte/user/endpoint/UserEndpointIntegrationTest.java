@@ -81,6 +81,35 @@ class UserEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
     }
 
     @Test
+    @DisplayName("Should update user profile with address fields allowed by the OpenAPI contract")
+    void shouldUpdateUserProfileWithOpenApiLengthAddressFields() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String addressLine = "1234567890".repeat(8);
+
+        String updateBody = """
+                {
+                  "firstName": "Updated",
+                  "lastName": "Customer",
+                  "birthDate": "1994-04-16",
+                  "phoneNumber": "+447400000001",
+                  "address": {
+                    "country": "United Kingdom",
+                    "city": "London",
+                    "line": "%s",
+                    "postcode": "NW1 6XE"
+                  }
+                }
+                """.formatted(addressLine);
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(updateBody)
+                .put()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("address.line", equalTo(addressLine));
+    }
+
+    @Test
     @DisplayName("Should change password and authenticate only with the new password")
     void shouldChangePasswordAndAuthenticateOnlyWithTheNewPassword() {
         AuthenticatedUser user = registerAndAuthenticateUser();

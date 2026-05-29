@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.signup.verification;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Locale;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -31,6 +32,7 @@ public class EmailVerificationService {
 
     private static final String TOKEN_KEY_PREFIX = "email:token:";
     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
+    private static final int MAX_TOKEN_GENERATION_ATTEMPTS = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ExpiringKeyValueStore temporaryStore;
@@ -49,14 +51,14 @@ public class EmailVerificationService {
     public void sendEmailVerificationCode(UserRegistrationRequest request) {
         userRegistrationService.ensureEmailAvailable(request);
         String token = generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
-        emailConfirmation.sendTemporaryCode(request.getEmail(), token);
+        emailConfirmation.sendTemporaryCode(normalizeEmail(request.getEmail()), token);
     }
 
     public void sendPasswordResetCode(String email) {
         UserRegistrationRequest request = new UserRegistrationRequest();
-        request.setEmail(email);
+        request.setEmail(normalizeEmail(email));
         String token = generateToken(request, TokenPurpose.PASSWORD_RESET);
-        emailConfirmation.sendTemporaryCode(email, token);
+        emailConfirmation.sendTemporaryCode(request.getEmail(), token);
     }
 
     public UserAuthenticationResponse confirmEmailByCode(
@@ -73,13 +75,25 @@ public class EmailVerificationService {
     }
 
     public String generateToken(UserRegistrationRequest request, TokenPurpose purpose) {
-        String email = request.getEmail();
+        String email = normalizeEmail(request.getEmail());
+        request.setEmail(email);
         validateCooldown(email);
-        String token = nextToken();
         Duration ttl = tokenTtl();
-        temporaryStore.put(tokenKey(token), serializeEntry(new TokenEntry(request, purpose)), ttl);
-        temporaryStore.put(cooldownKey(email), OffsetDateTime.now().plus(ttl).toString(), ttl);
-        return token;
+
+        for (int attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
+            String token = nextToken();
+            String tokenKey = tokenKey(purpose, token);
+            String serializedEntry = serializeEntry(new TokenEntry(request, purpose));
+
+            if (temporaryStore.putIfAbsent(tokenKey, serializedEntry, ttl)) {
+                String value = OffsetDateTime.now().plus(ttl).toString();
+                String key = cooldownKey(email);
+                temporaryStore.put(key, value, ttl);
+                return token;
+            }
+        }
+
+        throw new IllegalStateException("Failed to allocate unique email token");
     }
 
     public UserRegistrationRequest validateToken(
@@ -87,7 +101,7 @@ public class EmailVerificationService {
         String token = confirmEmailRequest.getToken();
         validateTokenFormat(token);
         TokenEntry entry = temporaryStore
-                .take(tokenKey(token))
+                .take(tokenKey(expectedPurpose, token))
                 .map(this::deserializeEntry)
                 .orElseThrow(() -> new BadRequestException("Incorrect token"));
         if (entry.purpose() != expectedPurpose) {
@@ -133,8 +147,12 @@ public class EmailVerificationService {
         return Duration.ofMinutes(expireTimeMinutes);
     }
 
-    private static String tokenKey(String token) {
-        return TOKEN_KEY_PREFIX + token;
+    private static String normalizeEmail(String email) {
+        return email.toLowerCase(Locale.ROOT).trim();
+    }
+
+    private static String tokenKey(TokenPurpose purpose, String token) {
+        return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + token;
     }
 
     private static String cooldownKey(String email) {

@@ -24,6 +24,12 @@ public class RedisExpiringKeyValueStore implements ExpiringKeyValueStore {
     }
 
     @Override
+    public boolean putIfAbsent(String key, String value, Duration ttl) {
+        Boolean stored = redisTemplate.opsForValue().setIfAbsent(key, value, ttl);
+        return Boolean.TRUE.equals(stored);
+    }
+
+    @Override
     public Optional<String> get(String key) {
         return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }

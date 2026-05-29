@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 
@@ -32,27 +31,13 @@ public class LoginAttemptService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void recordFailure(String userEmail) {
-        LoginAttemptEntity loginAttempt = loginAttemptRepository
-                .findByUserEmail(userEmail)
-                .orElseGet(() -> {
-                    log.debug("auth.login_attempts.new_record");
-                    return LoginAttemptEntity.builder()
-                            .userEmail(userEmail)
-                            .attempts(0)
-                            .isUserLocked(false)
-                            .lastModified(Instant.now())
-                            .build();
-                });
+        int attempts = loginAttemptRepository.recordFailedAttempt(userEmail, Instant.now());
 
-        loginAttempt.setAttempts(loginAttempt.getAttempts() + 1);
-        loginAttempt.setLastModified(Instant.now());
-        loginAttemptRepository.save(loginAttempt);
-
-        int remaining = Math.max(0, maxLoginAttempts - loginAttempt.getAttempts());
-        if (loginAttempt.getAttempts() >= maxLoginAttempts) {
+        int remaining = Math.max(0, maxLoginAttempts - attempts);
+        if (attempts >= maxLoginAttempts) {
             lockUserAccount(userEmail);
         }
-        log.debug("login.failed: attempts={}, remaining={}", loginAttempt.getAttempts(), remaining);
+        log.debug("login.failed: attempts={}, remaining={}", attempts, remaining);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)

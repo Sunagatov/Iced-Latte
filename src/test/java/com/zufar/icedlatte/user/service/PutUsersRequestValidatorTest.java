@@ -43,4 +43,18 @@ class PutUsersRequestValidatorTest {
     void shouldThrowWhenCoreParametersAreIncorrect() {
         assertThrows(BadRequestException.class, () -> validator.validate(null, "s", "+7900000000b", null, null));
     }
+
+    @Test
+    @DisplayName("Should throw BadRequestException when address field exceeds contract length")
+    void shouldThrowWhenAddressFieldExceedsContractLength() {
+        AddressDto address = new AddressDto()
+                .country("Country")
+                .city("City")
+                .line("a".repeat(129))
+                .postcode("00000");
+
+        assertThrows(
+                BadRequestException.class,
+                () -> validator.validate("name", "surname", "+79000000000", LocalDate.of(2000, 12, 1), address));
+    }
 }

@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +26,7 @@ import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
@@ -173,5 +176,64 @@ class EmailVerificationServiceTest {
         assertThatThrownBy(
                         () -> service.validateToken(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(com.zufar.icedlatte.common.exception.BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("generateToken normalizes email and scopes token key by purpose")
+    void generateTokenNormalizesEmailAndScopesTokenKeyByPurpose() {
+        ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
+        EmailVerificationService serviceWithMockStore = serviceWithStore(store);
+        UserRegistrationRequest request =
+                new UserRegistrationRequest("Ada", "Lovelace", " User@Example.COM ", "Password1!");
+        when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
+        when(store.putIfAbsent(
+                        argThat(key -> key.startsWith("email:token:email_verification:")),
+                        argThat(value -> value.contains("user@example.com")),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(true);
+
+        String token = serviceWithMockStore.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
+
+        assertThat(request.getEmail()).isEqualTo("user@example.com");
+        verify(store).putIfAbsent(eq("email:token:email_verification:" + token), any(), eq(Duration.ofMinutes(15)));
+        verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
+    }
+
+    @Test
+    @DisplayName("generateToken retries instead of overwriting an existing same-purpose token")
+    void generateTokenRetriesInsteadOfOverwritingExistingSamePurposeToken() {
+        ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
+        EmailVerificationService serviceWithMockStore = serviceWithStore(store);
+        UserRegistrationRequest request =
+                new UserRegistrationRequest("Ada", "Lovelace", "user@example.com", "Password1!");
+        when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
+        when(store.putIfAbsent(
+                        argThat(key -> key.startsWith("email:token:password_reset:")),
+                        any(),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(false)
+                .thenReturn(true);
+
+        serviceWithMockStore.generateToken(request, TokenPurpose.PASSWORD_RESET);
+
+        verify(store, times(2))
+                .putIfAbsent(
+                        argThat(key -> key.startsWith("email:token:password_reset:")),
+                        any(),
+                        eq(Duration.ofMinutes(15)));
+        verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
+    }
+
+    private EmailVerificationService serviceWithStore(ExpiringKeyValueStore store) {
+        EmailVerificationService serviceWithMockStore = new EmailVerificationService(
+                store,
+                new ObjectMapper(),
+                emailConfirmation,
+                userRegistrationService,
+                userLookupApi,
+                userAccessControlApi);
+        ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
+        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 9);
+        return serviceWithMockStore;
     }
 }

@@ -40,6 +40,12 @@ public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
     }
 
     @Override
+    public boolean putIfAbsent(String key, String value, Duration ttl) {
+        CacheValue cacheValue = new CacheValue(value, Instant.now().plus(ttl));
+        return cache.asMap().putIfAbsent(key, cacheValue) == null;
+    }
+
+    @Override
     public Optional<String> get(String key) {
         CacheValue value = cache.getIfPresent(key);
         return value == null ? Optional.empty() : Optional.of(value.value());

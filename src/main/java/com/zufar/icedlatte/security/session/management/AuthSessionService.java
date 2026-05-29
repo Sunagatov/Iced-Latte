@@ -110,10 +110,8 @@ public class AuthSessionService {
         Optional<AuthSessionEntity> currentSession =
                 sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash);
         if (currentSession.isEmpty()) {
-            sessionRepository.findByPreviousTokenHashForUpdate(refreshTokenHash)
-                    .ifPresent(this::handleReplayAttempt);
+            sessionRepository.findByPreviousTokenHashForUpdate(refreshTokenHash).ifPresent(this::handleReplayAttempt);
         }
-
         AuthSessionEntity session =
                 currentSession.orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
         if (!isActiveSession(session)) {

@@ -24,6 +24,15 @@ class InMemoryExpiringKeyValueStoreTest {
     }
 
     @Test
+    @DisplayName("putIfAbsent stores only the first value")
+    void putIfAbsentStoresOnlyFirstValue() {
+        assertThat(store.putIfAbsent("key", "first", Duration.ofMinutes(5))).isTrue();
+        assertThat(store.putIfAbsent("key", "second", Duration.ofMinutes(5))).isFalse();
+
+        assertThat(store.get("key")).contains("first");
+    }
+
+    @Test
     @DisplayName("take returns and removes the stored value")
     void takeReturnsAndRemovesStoredValue() {
         store.put("key", "value", Duration.ofMinutes(5));

@@ -143,12 +143,13 @@ class UserProfileServiceTest {
     }
 
     @Test
-    @DisplayName("deleteProfile delegates to repository")
-    void deleteProfileDelegatesToRepository() {
+    @DisplayName("deleteProfile deletes avatar file and delegates to repository")
+    void deleteProfileDeletesAvatarAndDelegatesToRepository() {
         UUID userId = UUID.randomUUID();
 
         userProfileService.deleteProfile(userId);
 
+        verify(fileStorageService).deleteFile(userId);
         verify(userRepository).deleteById(userId);
     }
 
