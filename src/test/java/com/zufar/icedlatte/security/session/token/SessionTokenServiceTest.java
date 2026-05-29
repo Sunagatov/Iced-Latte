@@ -130,7 +130,7 @@ class SessionTokenServiceTest {
         UserAuthenticationResponse result = service.migrateLegacyRefreshToken(user, legacyToken, request);
 
         assertThat(result).isSameAs(response);
-        verify(jwtTokenBlacklist).blacklist(legacyToken);
+        verify(jwtTokenBlacklist).blacklistRefreshToken(legacyToken);
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }

@@ -3,7 +3,9 @@ package com.zufar.icedlatte.security.jwt.blacklist;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.HexFormat;
+import java.util.function.Supplier;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.retry.annotation.Backoff;
@@ -30,13 +32,22 @@ public class JwtTokenBlacklist {
 
     @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
     public void blacklist(String token) {
+        blacklist(token, jwtProperties::expiration);
+    }
+
+    @Retryable(retryFor = DataAccessException.class, backoff = @Backoff(delay = 100))
+    public void blacklistRefreshToken(String token) {
+        blacklist(token, jwtProperties::refreshExpiration);
+    }
+
+    private void blacklist(String token, Supplier<Duration> ttl) {
         if (!StringUtils.hasText(token)) {
             log.debug("jwt.blacklist.empty_token");
             return;
         }
-        temporaryStore.put(namespacedKey(token), "true", jwtProperties.expiration());
-        log.debug(
-                "jwt.blacklist.added: ttlSeconds={}", jwtProperties.expiration().toSeconds());
+        Duration tokenTtl = ttl.get();
+        temporaryStore.put(namespacedKey(token), "true", tokenTtl);
+        log.debug("jwt.blacklist.added: ttlSeconds={}", tokenTtl.toSeconds());
     }
 
     public void validateNotBlacklisted(String token) {

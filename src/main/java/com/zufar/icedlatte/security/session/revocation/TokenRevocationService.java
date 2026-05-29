@@ -42,7 +42,7 @@ public class TokenRevocationService {
 
     private void revokeRefreshToken(String refreshToken) {
         authSessionService.revokeByRefreshTokenHash(jwtTokenBlacklist.hash(refreshToken));
-        jwtTokenBlacklist.blacklist(refreshToken);
+        jwtTokenBlacklist.blacklistRefreshToken(refreshToken);
     }
 
     private void revokeAccessToken(HttpServletRequest request) {

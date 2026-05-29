@@ -46,7 +46,7 @@ public class SessionTokenService {
     public UserAuthenticationResponse migrateLegacyRefreshToken(
             UserDetails userDetails, String legacyRefreshToken, HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
-        jwtTokenBlacklist.blacklist(legacyRefreshToken);
+        jwtTokenBlacklist.blacklistRefreshToken(legacyRefreshToken);
         return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 

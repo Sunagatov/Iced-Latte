@@ -32,6 +32,7 @@ class JwtTokenBlacklistTest {
 
     private static final String TOKEN = "test.jwt.token";
     private static final Duration TTL = Duration.ofHours(1);
+    private static final Duration REFRESH_TTL = Duration.ofHours(24);
 
     @BeforeEach
     void setUp() {
@@ -46,6 +47,16 @@ class JwtTokenBlacklistTest {
         service.blacklist(TOKEN);
 
         verify(temporaryStore).put(eq("jwt:blacklist:" + service.hash(TOKEN)), eq("true"), eq(TTL));
+    }
+
+    @Test
+    @DisplayName("blacklistRefreshToken stores the hashed token with refresh JWT TTL")
+    void blacklistRefreshTokenStoresHashedTokenWithRefreshJwtTtl() {
+        when(jwtProperties.refreshExpiration()).thenReturn(REFRESH_TTL);
+
+        service.blacklistRefreshToken(TOKEN);
+
+        verify(temporaryStore).put(eq("jwt:blacklist:" + service.hash(TOKEN)), eq("true"), eq(REFRESH_TTL));
     }
 
     @Test

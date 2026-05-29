@@ -50,7 +50,7 @@ class TokenRevocationServiceTest {
             service.revokeTokens("refresh-token", request);
 
             verify(authSessionService).revokeByRefreshTokenHash("refresh-hash");
-            verify(jwtTokenBlacklist).blacklist("refresh-token");
+            verify(jwtTokenBlacklist).blacklistRefreshToken("refresh-token");
             verify(jwtTokenBlacklist).blacklist("access.header.payload");
         }
 
@@ -64,7 +64,7 @@ class TokenRevocationServiceTest {
 
             verify(jwtBearerTokenResolver).extract(request);
             verify(authSessionService).revokeByRefreshTokenHash("refresh-hash");
-            verify(jwtTokenBlacklist).blacklist("refresh-from-request");
+            verify(jwtTokenBlacklist).blacklistRefreshToken("refresh-from-request");
         }
 
         @Test
@@ -95,7 +95,7 @@ class TokenRevocationServiceTest {
             service.revokeTokens("refresh-token", request);
 
             verify(authSessionService).revokeByRefreshTokenHash("refresh-hash");
-            verify(jwtTokenBlacklist).blacklist("refresh-token");
+            verify(jwtTokenBlacklist).blacklistRefreshToken("refresh-token");
         }
     }
 }
