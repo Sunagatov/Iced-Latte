@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
@@ -78,7 +79,7 @@ public class OAuthFlowService {
             UserAuthenticationResponse tokens = oAuthLoginService.handle(provider, code, request);
             String handoffCode = oAuthTokenHandoffStore.store(tokens);
             return URI.create(buildCallbackUrlWithHandoffCode(callbackBase, handoffCode));
-        } catch (Exception e) {
+        } catch (BadRequestException | UnauthorizedException e) {
             log.error(
                     "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
                     provider.id(),

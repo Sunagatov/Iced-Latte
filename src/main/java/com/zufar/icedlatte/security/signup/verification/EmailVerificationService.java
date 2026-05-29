@@ -12,6 +12,7 @@ import java.util.Locale;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,6 +49,7 @@ public class EmailVerificationService {
     private final UserRegistrationService userRegistrationService;
     private final UserLookupApi userLookupApi;
     private final UserAccessControlApi userAccessControlApi;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${email.verification-token-length}")
     private int tokenLength;
@@ -70,13 +72,15 @@ public class EmailVerificationService {
 
     public UserAuthenticationResponse confirmEmailByCode(
             ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
-        UserRegistrationRequest userRegistrationRequest =
-                validateToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
-        return userRegistrationService.register(userRegistrationRequest, httpRequest);
+        TokenEntry entry = consumeToken(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
+        if (entry.encodedPassword() == null || entry.encodedPassword().isBlank()) {
+            throw new IllegalStateException("Email verification token is missing encoded password");
+        }
+        return userRegistrationService.registerWithEncodedPassword(entry.request(), entry.encodedPassword(), httpRequest);
     }
 
     public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest, String newPassword) {
-        UserRegistrationRequest request = validateToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
+        UserRegistrationRequest request = consumeToken(confirmEmailRequest, TokenPurpose.PASSWORD_RESET).request();
         var user = userLookupApi.getUserByEmail(request.getEmail());
         userAccessControlApi.changePassword(user.id(), newPassword);
     }
@@ -90,7 +94,7 @@ public class EmailVerificationService {
         for (int attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
             String token = nextToken();
             String tokenKey = tokenKey(purpose, token);
-            String serializedEntry = serializeEntry(new TokenEntry(request, purpose));
+            String serializedEntry = serializeEntry(new TokenEntry(sanitizedRequest(request), purpose, encodedPassword(request, purpose)));
 
             if (temporaryStore.putIfAbsent(tokenKey, serializedEntry, ttl)) {
                 String value = OffsetDateTime.now().plus(ttl).toString();
@@ -105,6 +109,10 @@ public class EmailVerificationService {
 
     public UserRegistrationRequest validateToken(
             ConfirmEmailRequest confirmEmailRequest, TokenPurpose expectedPurpose) {
+        return consumeToken(confirmEmailRequest, expectedPurpose).request();
+    }
+
+    private TokenEntry consumeToken(ConfirmEmailRequest confirmEmailRequest, TokenPurpose expectedPurpose) {
         String token = confirmEmailRequest.getToken();
         validateTokenFormat(token);
         TokenEntry entry = temporaryStore
@@ -115,7 +123,7 @@ public class EmailVerificationService {
             throw new BadRequestException("Incorrect token");
         }
         temporaryStore.remove(cooldownKey(entry.request().getEmail()));
-        return entry.request();
+        return entry;
     }
 
     private void validateCooldown(String email) {
@@ -167,7 +175,33 @@ public class EmailVerificationService {
     }
 
     private Duration tokenTtl() {
+        validateConfiguredTokenTtl();
         return Duration.ofMinutes(expireTimeMinutes);
+    }
+
+    private void validateConfiguredTokenTtl() {
+        if (expireTimeMinutes < 1) {
+            throw new IllegalStateException("temporary-cache.time.token must be at least 1 minute, got: "
+                    + expireTimeMinutes);
+        }
+    }
+
+    private UserRegistrationRequest sanitizedRequest(UserRegistrationRequest request) {
+        UserRegistrationRequest sanitized = new UserRegistrationRequest();
+        sanitized.setFirstName(request.getFirstName());
+        sanitized.setLastName(request.getLastName());
+        sanitized.setBirthDate(request.getBirthDate());
+        sanitized.setPhoneNumber(request.getPhoneNumber());
+        sanitized.setEmail(request.getEmail());
+        sanitized.setAddressDto(request.getAddressDto());
+        return sanitized;
+    }
+
+    private String encodedPassword(UserRegistrationRequest request, TokenPurpose purpose) {
+        if (purpose != TokenPurpose.EMAIL_VERIFICATION) {
+            return null;
+        }
+        return passwordEncoder.encode(request.getPassword());
     }
 
     private static String tokenKey(TokenPurpose purpose, String token) {
@@ -188,5 +222,5 @@ public class EmailVerificationService {
         return COOLDOWN_KEY_PREFIX + email;
     }
 
-    private record TokenEntry(UserRegistrationRequest request, TokenPurpose purpose) {}
+    private record TokenEntry(UserRegistrationRequest request, TokenPurpose purpose, String encodedPassword) {}
 }

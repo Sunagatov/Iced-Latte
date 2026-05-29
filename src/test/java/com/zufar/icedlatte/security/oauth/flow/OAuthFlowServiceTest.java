@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
@@ -131,7 +132,7 @@ class OAuthFlowServiceTest {
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
-                .thenThrow(new IllegalStateException("exchange failed"));
+                .thenThrow(new UnauthorizedException("exchange failed"));
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
 

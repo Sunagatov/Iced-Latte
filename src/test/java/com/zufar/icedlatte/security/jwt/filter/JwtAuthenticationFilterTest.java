@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
@@ -126,7 +127,7 @@ class JwtAuthenticationFilterTest {
             when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
             when(currentUserProvider.getUserId()).thenReturn(userId);
             when(jwtBearerTokenResolver.extract(request)).thenReturn("jwt-token");
-            when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenThrow(new RuntimeException("bad sid"));
+            when(jwtTokenClaims.extractAccessTokenSessionId("jwt-token")).thenThrow(new JwtTokenException("bad sid"));
             doAnswer(_ -> {
                         assertThat(MDC.get("userId")).isEqualTo(userId.toString());
                         assertThat(MDC.get("sessionId")).isNull();

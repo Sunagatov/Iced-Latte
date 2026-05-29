@@ -25,7 +25,7 @@ public record SecurityUserDetails(
 
     public static SecurityUserDetails from(UserAuthenticationSnapshot snapshot) {
         List<GrantedAuthority> authorities = snapshot.authorities().stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(SecurityUserDetails::roleAuthority)
                 .map(GrantedAuthority.class::cast)
                 .toList();
         return new SecurityUserDetails(
@@ -37,6 +37,10 @@ public record SecurityUserDetails(
                 snapshot.accountNonLocked(),
                 snapshot.credentialsNonExpired(),
                 snapshot.enabled());
+    }
+
+    private static SimpleGrantedAuthority roleAuthority(String authority) {
+        return new SimpleGrantedAuthority(authority.startsWith("ROLE_") ? authority : "ROLE_" + authority);
     }
 
     @Override

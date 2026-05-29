@@ -22,6 +22,7 @@ public class OAuthStateStore {
     private int ttlMinutes;
 
     public void store(OAuthProvider provider, String nonce, String callbackBase) {
+        validateConfiguredTtl();
         temporaryStore.put(namespacedKey(provider, nonce), callbackBase, Duration.ofMinutes(ttlMinutes));
     }
 
@@ -31,5 +32,11 @@ public class OAuthStateStore {
 
     private String namespacedKey(OAuthProvider provider, String nonce) {
         return KEY_PREFIX + provider.id() + ":" + nonce;
+    }
+
+    private void validateConfiguredTtl() {
+        if (ttlMinutes < 1) {
+            throw new IllegalStateException("oauth.state-ttl-minutes must be at least 1 minute, got: " + ttlMinutes);
+        }
     }
 }

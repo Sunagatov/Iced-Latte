@@ -1,13 +1,5 @@
 package com.zufar.icedlatte.security.signup.verification;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
@@ -18,6 +10,16 @@ import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 @DisplayName("EmailVerificationService contract tests")
 class EmailVerificationServiceContractTest {
@@ -26,6 +28,9 @@ class EmailVerificationServiceContractTest {
 
     @BeforeEach
     void setUp() {
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        org.mockito.Mockito.when(passwordEncoder.encode(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn("encoded-password");
         service = new EmailVerificationService(
                 new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(
                         1_000, 5_000, 10_000, 1_000, 10_000)),
@@ -33,7 +38,8 @@ class EmailVerificationServiceContractTest {
                 mock(com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender.class),
                 mock(UserRegistrationService.class),
                 mock(UserLookupApi.class),
-                mock(UserAccessControlApi.class));
+                mock(UserAccessControlApi.class),
+                passwordEncoder);
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 5);
         ReflectionTestUtils.setField(service, "tokenLength", 43);
     }
@@ -47,7 +53,8 @@ class EmailVerificationServiceContractTest {
         UserRegistrationRequest consumed =
                 service.validateToken(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION);
 
-        assertThat(consumed).usingRecursiveComparison().isEqualTo(request);
+        assertThat(consumed.getEmail()).isEqualTo(request.getEmail());
+        assertThat(consumed.getPassword()).isNull();
         assertThatThrownBy(() -> service.validateToken(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(BadRequestException.class);
     }

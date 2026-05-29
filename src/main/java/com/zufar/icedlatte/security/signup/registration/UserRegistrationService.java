@@ -42,16 +42,24 @@ public class UserRegistrationService {
     @Transactional
     public UserAuthenticationResponse register(
             final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
-        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
+        return registerWithEncodedPassword(userRegistrationRequest, encryptedPassword, httpRequest);
+    }
+
+    @Transactional
+    public UserAuthenticationResponse registerWithEncodedPassword(
+            final UserRegistrationRequest userRegistrationRequest,
+            final String encodedPassword,
+            final HttpServletRequest httpRequest) {
+        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
 
         try {
             UserAuthenticationSnapshot snapshot = userRegistrationApi.registerPasswordUser(
                     userRegistrationRequest.getFirstName(),
                     userRegistrationRequest.getLastName(),
                     email,
-                    encryptedPassword);
+                    Objects.requireNonNull(encodedPassword));
             log.info("auth.registration.succeeded: userId={}", snapshot.userId());
             return sessionTokenService.issueForNewSession(SecurityUserDetails.from(snapshot), httpRequest);
         } catch (DataIntegrityViolationException e) {

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,6 +54,9 @@ class EmailVerificationServiceTest {
     private UserAccessControlApi userAccessControlApi;
 
     @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
     private HttpServletRequest httpRequest;
 
     private EmailVerificationService service;
@@ -66,9 +70,11 @@ class EmailVerificationServiceTest {
                 emailConfirmation,
                 userRegistrationService,
                 userLookupApi,
-                userAccessControlApi);
+                userAccessControlApi,
+                passwordEncoder);
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(service, "tokenLength", 43);
+        lenient().when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
     }
 
     @Nested
@@ -129,13 +135,22 @@ class EmailVerificationServiceTest {
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
             UserAuthenticationResponse authResponse = new UserAuthenticationResponse();
             String token = service.generateToken(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
-            when(userRegistrationService.register(registrationRequest, httpRequest))
+            when(userRegistrationService.registerWithEncodedPassword(
+                            argThat(request -> request.getEmail().equals("john@example.com")
+                                    && request.getPassword() == null),
+                            eq("encoded-password"),
+                            eq(httpRequest)))
                     .thenReturn(authResponse);
 
             UserAuthenticationResponse result = service.confirmEmailByCode(new ConfirmEmailRequest(token), httpRequest);
 
             assertThat(result).isSameAs(authResponse);
-            verify(userRegistrationService).register(registrationRequest, httpRequest);
+            verify(userRegistrationService)
+                    .registerWithEncodedPassword(
+                            argThat(request -> request.getEmail().equals("john@example.com")
+                                    && request.getPassword() == null),
+                            eq("encoded-password"),
+                            eq(httpRequest));
         }
     }
 
@@ -201,7 +216,9 @@ class EmailVerificationServiceTest {
         when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
         when(store.putIfAbsent(
                         argThat(key -> key.startsWith("email:token:email_verification:")),
-                        argThat(value -> value.contains("user@example.com")),
+                        argThat(value -> value.contains("user@example.com")
+                                && value.contains("encoded-password")
+                                && !value.contains("Password1!")),
                         eq(Duration.ofMinutes(15))))
                 .thenReturn(true);
 
@@ -248,7 +265,8 @@ class EmailVerificationServiceTest {
                 emailConfirmation,
                 userRegistrationService,
                 userLookupApi,
-                userAccessControlApi);
+                userAccessControlApi,
+                passwordEncoder);
         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
         return serviceWithMockStore;

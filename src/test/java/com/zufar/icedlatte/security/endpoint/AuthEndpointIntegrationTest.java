@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
@@ -286,7 +287,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         String callbackBase = frontendUrl + "/auth/google/callback?next=/checkout";
 
         when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("broken-code"), any(HttpServletRequest.class)))
-                .thenThrow(new IllegalStateException("exchange failed"));
+                .thenThrow(new UnauthorizedException("exchange failed"));
 
         Response initiateResponse = given(specification)
                 .redirects()

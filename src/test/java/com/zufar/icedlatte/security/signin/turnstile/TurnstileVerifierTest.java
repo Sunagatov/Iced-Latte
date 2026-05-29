@@ -66,7 +66,7 @@ class TurnstileVerifierTest {
         @DisplayName("should throw when Cloudflare returns success=false")
         void throwWhenVerificationFails() {
             var restClient = buildMockedRestClient("{\"success\": false}");
-            var verifier = new TurnstileVerifier("test-secret", restClient);
+            var verifier = new TurnstileVerifier(true, "test-secret", restClient);
 
             assertThatThrownBy(() -> verifier.verify("invalid-token"))
                     .isInstanceOf(TurnstileVerificationException.class)
@@ -77,7 +77,7 @@ class TurnstileVerifierTest {
         @DisplayName("should pass when Cloudflare returns success=true")
         void passWhenVerificationSucceeds() {
             var restClient = buildMockedRestClient("{\"success\": true}");
-            var verifier = new TurnstileVerifier("test-secret", restClient);
+            var verifier = new TurnstileVerifier(true, "test-secret", restClient);
 
             assertThatCode(() -> verifier.verify("valid-token")).doesNotThrowAnyException();
         }
@@ -85,8 +85,19 @@ class TurnstileVerifierTest {
         @Test
         @DisplayName("should construct RestClient with explicit timeout settings")
         void constructsRestClientWithExplicitTimeoutSettings() {
-            assertThatCode(() -> new TurnstileVerifier("test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
+            assertThatCode(
+                            () -> new TurnstileVerifier(true, "test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
                     .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("should fail fast when enabled without secret key")
+        void failFastWhenEnabledWithoutSecretKey() {
+            var restClient = RestClient.builder().build();
+
+            assertThatThrownBy(() -> new TurnstileVerifier(true, "", restClient))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("turnstile.secret-key must be configured when turnstile.enabled=true");
         }
 
         private RestClient buildMockedRestClient(String responseBody) {

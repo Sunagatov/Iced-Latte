@@ -46,7 +46,7 @@ class CustomUserDetailsServiceTest {
             assertThat(result.id()).isEqualTo(user.userId());
             assertThat(result.getUsername()).isEqualTo(user.email());
             assertThat(result.getPassword()).isEqualTo(user.encodedPassword());
-            assertThat(result.getAuthorities()).extracting("authority").containsExactly("USER");
+            assertThat(result.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
             verify(userAuthenticationApi).findUserAuthenticationByEmail("john.doe@example.com");
             verifyNoMoreInteractions(userAuthenticationApi);
         }

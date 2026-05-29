@@ -28,22 +28,28 @@ public class TurnstileVerifier {
 
     private static final String VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
+    private final boolean enabled;
     private final String secretKey;
     private final RestClient restClient;
 
     @Autowired
     public TurnstileVerifier(
+            @Value("${turnstile.enabled:false}") boolean enabled,
             @Value("${turnstile.secret-key:}") String secretKey,
             @Value("${turnstile.connect-timeout:PT2S}") Duration connectTimeout,
             @Value("${turnstile.read-timeout:PT3S}") Duration readTimeout) {
-        this(secretKey, restClient(connectTimeout, readTimeout));
+        this(enabled, secretKey, restClient(connectTimeout, readTimeout));
     }
 
     TurnstileVerifier(String secretKey) {
-        this(secretKey, restClient(Duration.ofSeconds(2), Duration.ofSeconds(3)));
+        this(!secretKey.isBlank(), secretKey, restClient(Duration.ofSeconds(2), Duration.ofSeconds(3)));
     }
 
-    TurnstileVerifier(String secretKey, RestClient restClient) {
+    TurnstileVerifier(boolean enabled, String secretKey, RestClient restClient) {
+        if (enabled && secretKey.isBlank()) {
+            throw new IllegalStateException("turnstile.secret-key must be configured when turnstile.enabled=true");
+        }
+        this.enabled = enabled;
         this.secretKey = secretKey;
         this.restClient = restClient;
     }
@@ -56,7 +62,7 @@ public class TurnstileVerifier {
     }
 
     public void verify(@Nullable String token) {
-        if (secretKey.isBlank()) {
+        if (!enabled) {
             return;
         }
         if (token == null || token.isBlank()) {

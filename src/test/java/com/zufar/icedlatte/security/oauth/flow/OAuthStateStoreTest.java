@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +41,16 @@ class OAuthStateStoreTest {
 
         verify(temporaryStore)
                 .put("oauth:state:google:nonce-1", "https://example.com/callback", Duration.ofMinutes(10));
+    }
+
+    @Test
+    @DisplayName("store rejects non-positive ttl")
+    void storeRejectsNonPositiveTtl() {
+        ReflectionTestUtils.setField(cache, "ttlMinutes", 0);
+
+        assertThatThrownBy(() -> cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("oauth.state-ttl-minutes must be at least 1 minute, got: 0");
     }
 
     @Test
