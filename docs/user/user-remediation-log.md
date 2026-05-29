@@ -2595,6 +2595,9 @@ The fixes were covered with focused tests around the changed behavior:
 - authentication snapshot encoded-password naming and auth-only documentation
 - Prometheus actuator endpoint admin-only protection
 - hashed cache keys for email verification/password reset tokens
+- login lockout email normalization
+- password reset email normalization
+- session revocation row locking
 - OAuth verified-email handling
 - refresh-token rotation locking
 - login-attempt locking

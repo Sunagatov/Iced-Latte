@@ -1130,13 +1130,13 @@ say what kind of token it is.
 Access tokens and refresh tokens were issued with normal JWT claims, but not
 with an explicit purpose claim:
 
-```java
+```text
 claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
 ```
 
 Refresh tokens had a version claim:
 
-```java
+```text
 claims.put(JwtClaimNames.VERSION, 2);
 ```
 
@@ -1180,7 +1180,7 @@ exist.
 
 JWT claim names now include explicit purpose constants:
 
-```java
+```text
 public static final String TOKEN_PURPOSE = "purpose";
 public static final String ACCESS_TOKEN_PURPOSE = "access";
 public static final String REFRESH_TOKEN_PURPOSE = "refresh";
@@ -1188,25 +1188,25 @@ public static final String REFRESH_TOKEN_PURPOSE = "refresh";
 
 Access-token generation writes:
 
-```java
+```text
 claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE);
 ```
 
 Refresh-token generation writes:
 
-```java
+```text
 claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE);
 ```
 
 The access-token parser now requires:
 
-```java
+```text
 require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)
 ```
 
 The refresh-token parser now requires:
 
-```java
+```text
 require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
 ```
 
@@ -1223,7 +1223,7 @@ too many failures, the account can be temporarily locked.
 
 The login service used the request email directly:
 
-```java
+```text
 String userEmail = request.getEmail();
 
 authenticationManager.authenticate(
@@ -1263,13 +1263,13 @@ against one normalized account.
 
 `UserAuthenticationService` now normalizes the email once:
 
-```java
+```text
 String userEmail = EmailNormalizer.normalize(request.getEmail());
 ```
 
 That normalized value is used for authentication and failed-attempt tracking:
 
-```java
+```text
 UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword())
 loginAttemptService.recordFailure(userEmail);
 ```
@@ -1287,7 +1287,7 @@ that account and sends a temporary reset token.
 
 The reset service used the raw email string for lookup and reset-token sending:
 
-```java
+```text
 userLookupApi.findUserByEmail(email);
 emailVerificationService.sendPasswordResetCode(email);
 ```
@@ -1320,13 +1320,13 @@ That can fail even though the account exists.
 
 `PasswordResetService` now normalizes first:
 
-```java
+```text
 String normalizedEmail = EmailNormalizer.normalize(email);
 ```
 
 Then it uses the normalized value for both actions:
 
-```java
+```text
 userLookupApi.findUserByEmail(normalizedEmail);
 emailVerificationService.sendPasswordResetCode(normalizedEmail);
 ```
@@ -1351,7 +1351,7 @@ It happens during flows such as:
 Refresh-token rotation used pessimistic locks, but revocation paths still used
 plain reads:
 
-```java
+```text
 sessionRepository.findByRefreshTokenHash(refreshTokenHash)
 sessionRepository.findById(sessionId)
 ```
@@ -1382,13 +1382,13 @@ The last save wins.
 
 Revocation by refresh-token hash now uses:
 
-```java
+```text
 sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash)
 ```
 
 Revocation by session id now uses:
 
-```java
+```text
 sessionRepository.findByIdForUpdate(sessionId)
 ```
 
