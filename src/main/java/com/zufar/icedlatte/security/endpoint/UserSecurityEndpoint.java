@@ -15,9 +15,7 @@ import com.zufar.icedlatte.security.oauth.flow.OAuthFlowService;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.session.revocation.TokenRevocationService;
 import com.zufar.icedlatte.security.session.token.RefreshTokenService;
-import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.security.signup.password.PasswordResetService;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
@@ -52,7 +50,6 @@ public class UserSecurityEndpoint implements SecurityApi {
     public static final String USER_SECURITY_API_URL = ApiPaths.AUTH;
 
     private final UserAuthenticationService userAuthenticationService;
-    private final SessionTokenService sessionTokenService;
     private final EmailVerificationService emailVerificationService;
     private final AuthSessionService authSessionService;
     private final RefreshTokenService refreshTokenService;
@@ -60,7 +57,6 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final PasswordResetService passwordResetService;
     private final CurrentUserProvider currentUserProvider;
     private final UserRegistrationService userRegistrationService;
-    private final TurnstileVerifier turnstileVerifier;
     private final HttpServletRequest httpRequest;
     private final OAuthFlowService oAuthFlowService;
 
@@ -103,12 +99,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/register")
     public ResponseEntity<UserAuthenticationResponse> register(
             @RequestBody @Valid final UserRegistrationRequest request) {
-        turnstileVerifier.verify(request.getTurnstileToken());
         if (emailEnabled) {
             emailVerificationService.sendEmailVerificationCode(request);
             return ResponseEntity.ok().build();
         }
-        userRegistrationService.ensureEmailAvailable(request);
         return ResponseEntity.ok(userRegistrationService.register(request, httpRequest));
     }
 
@@ -124,9 +118,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(
             @Valid @RequestBody final UserAuthenticationRequest request) {
-        turnstileVerifier.verify(request.getTurnstileToken());
-        var userDetails = userAuthenticationService.verifyCredentials(request);
-        return ResponseEntity.ok(sessionTokenService.issueForNewSession(userDetails, httpRequest));
+        return ResponseEntity.ok(userAuthenticationService.authenticate(request, httpRequest));
     }
 
     @Override

@@ -25,7 +25,7 @@ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +42,7 @@ class SessionTokenServiceTest {
     private AuthSessionService authSessionService;
 
     @Mock
-    private UserAuthenticationService userAuthenticationService;
+    private LoginAttemptService loginAttemptService;
 
     @Mock
     private HttpServletRequest request;
@@ -61,22 +61,23 @@ class SessionTokenServiceTest {
         UUID userId = UUID.randomUUID();
         String refreshToken = "refresh-token";
         String refreshHash = "refresh-hash";
+        String accessToken = "access-token";
         UserEntity user = user(userId, "alice@example.com");
-        UserAuthenticationResponse response = response(refreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(refreshToken);
+        when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(refreshToken)).thenReturn(refreshHash);
         when(authSessionService.createSession(any(UUID.class), eq(userId), eq(refreshHash), eq(request)))
                 .thenAnswer(invocation -> AuthSessionEntity.builder()
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
-        when(userAuthenticationService.buildTokenPair(eq(user), any(UUID.class), eq(refreshToken)))
-                .thenReturn(response);
 
         UserAuthenticationResponse result = service.issueForNewSession(user, request);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getToken()).isEqualTo(accessToken);
+        assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
+        verify(loginAttemptService).resetAfterSuccessfulAuthentication("alice@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -89,20 +90,21 @@ class SessionTokenServiceTest {
         String oldHash = "old-hash";
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
+        String accessToken = "access-token";
         UserEntity user = user(userId, "rotate@example.com");
         AuthSessionEntity session =
                 AuthSessionEntity.builder().id(sessionId).userId(userId).build();
-        UserAuthenticationResponse response = response(newRefreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(user, sessionId)).thenReturn(newRefreshToken);
+        when(jwtTokenProvider.generateToken(user, sessionId)).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(newRefreshToken)).thenReturn(newHash);
-        when(userAuthenticationService.buildTokenPair(user, sessionId, newRefreshToken))
-                .thenReturn(response);
 
         UserAuthenticationResponse result = service.rotateSessionTokens(session, oldHash, user);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getToken()).isEqualTo(accessToken);
+        assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
         verify(authSessionService).rotateSession(oldHash, newHash);
+        verify(loginAttemptService).resetAfterSuccessfulAuthentication("rotate@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -114,23 +116,24 @@ class SessionTokenServiceTest {
         String legacyToken = "legacy-token";
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
+        String accessToken = "access-token";
         UserEntity user = user(userId, "legacy@example.com");
-        UserAuthenticationResponse response = response(newRefreshToken);
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(newRefreshToken);
+        when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(newRefreshToken)).thenReturn(newHash);
         when(authSessionService.createSession(any(UUID.class), eq(userId), eq(newHash), eq(request)))
                 .thenAnswer(invocation -> AuthSessionEntity.builder()
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
-        when(userAuthenticationService.buildTokenPair(eq(user), any(UUID.class), eq(newRefreshToken)))
-                .thenReturn(response);
 
         UserAuthenticationResponse result = service.migrateLegacyRefreshToken(user, legacyToken, request);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getToken()).isEqualTo(accessToken);
+        assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
         verify(jwtTokenBlacklist).blacklistRefreshToken(legacyToken);
+        verify(loginAttemptService).resetAfterSuccessfulAuthentication("legacy@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -139,10 +142,4 @@ class SessionTokenServiceTest {
         return UserEntity.builder().id(id).email(email).password("secret").build();
     }
 
-    private static UserAuthenticationResponse response(String refreshToken) {
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken("access-token");
-        response.setRefreshToken(refreshToken);
-        return response;
-    }
 }

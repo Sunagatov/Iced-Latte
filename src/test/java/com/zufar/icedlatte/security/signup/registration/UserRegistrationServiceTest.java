@@ -24,6 +24,7 @@ import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 
@@ -41,6 +42,9 @@ class UserRegistrationServiceTest {
     private SessionTokenService sessionTokenService;
 
     @Mock
+    private TurnstileVerifier turnstileVerifier;
+
+    @Mock
     private HttpServletRequest request;
 
     @InjectMocks
@@ -52,6 +56,7 @@ class UserRegistrationServiceTest {
         UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
         registrationRequest.setEmail("  Mixed.Case@Example.COM ");
         registrationRequest.setPassword("raw-password");
+        registrationRequest.setTurnstileToken("turnstile-token");
         registrationRequest.setFirstName("Alice");
         registrationRequest.setLastName("Example");
 
@@ -75,12 +80,27 @@ class UserRegistrationServiceTest {
 
         UserAuthenticationResponse response = service.register(registrationRequest, request);
 
+        verify(turnstileVerifier).verify("turnstile-token");
+        verify(userRegistrationApi).existsByEmail("mixed.case@example.com");
         verify(userRegistrationApi)
                 .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
 
         assertThat(response.getToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+    }
+
+    @Test
+    @DisplayName("ensureRegistrationAllowed verifies Turnstile and normalized email availability")
+    void ensureRegistrationAllowedVerifiesTurnstileAndEmailAvailability() {
+        UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
+        registrationRequest.setEmail("  Available@Example.COM ");
+        registrationRequest.setTurnstileToken("turnstile-token");
+
+        service.ensureRegistrationAllowed(registrationRequest);
+
+        verify(turnstileVerifier).verify("turnstile-token");
+        verify(userRegistrationApi).existsByEmail("available@example.com");
     }
 
     @Test

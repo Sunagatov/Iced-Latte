@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.signin.auth;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.UUID;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,10 +22,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")
@@ -35,13 +36,19 @@ class UserAuthenticationServiceTest {
     private UserAuthenticationService userAuthenticationService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
     private AuthenticationManager authenticationManager;
 
     @Mock
     private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private SessionTokenService sessionTokenService;
+
+    @Mock
+    private TurnstileVerifier turnstileVerifier;
+
+    @Mock
+    private HttpServletRequest httpRequest;
 
     private final UserAuthenticationRequest request = mock(UserAuthenticationRequest.class);
     private final UserDetails userDetails = mock(UserDetails.class);
@@ -130,22 +137,25 @@ class UserAuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("Should build session-bound token pair")
-    void shouldBuildSessionBoundTokenPair() {
-        String email = "test@example.com";
-        UUID sessionId = UUID.randomUUID();
-        String refreshToken = "raw-refresh-token";
-        String expectedAccessToken = "access-token";
+    @DisplayName("Should verify Turnstile, credentials, and issue a session-bound token pair")
+    void shouldAuthenticateAndIssueSessionBoundTokenPair() {
+        Authentication authentication = mock(Authentication.class);
+        UserAuthenticationResponse expectedResponse = new UserAuthenticationResponse();
+        expectedResponse.setToken("access-token");
+        expectedResponse.setRefreshToken("refresh-token");
 
-        when(jwtTokenProvider.generateToken(userDetails, sessionId)).thenReturn(expectedAccessToken);
-        when(userDetails.getUsername()).thenReturn(email);
+        when(request.getTurnstileToken()).thenReturn("turnstile-token");
+        when(request.getEmail()).thenReturn("  Known@Example.com ");
+        when(request.getPassword()).thenReturn("password");
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(sessionTokenService.issueForNewSession(userDetails, httpRequest)).thenReturn(expectedResponse);
 
-        UserAuthenticationResponse response =
-                userAuthenticationService.buildTokenPair(userDetails, sessionId, refreshToken);
+        UserAuthenticationResponse response = userAuthenticationService.authenticate(request, httpRequest);
 
-        assertNotNull(response);
-        assertEquals(expectedAccessToken, response.getToken());
-        assertEquals(refreshToken, response.getRefreshToken());
-        verify(loginAttemptService).resetAfterSuccessfulAuthentication(email);
+        assertSame(expectedResponse, response);
+        verify(turnstileVerifier).verify("turnstile-token");
+        verify(sessionTokenService).issueForNewSession(userDetails, httpRequest);
     }
 }

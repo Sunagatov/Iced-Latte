@@ -89,7 +89,7 @@ class EmailVerificationServiceTest {
 
             service.sendEmailVerificationCode(request);
 
-            verify(userRegistrationService).ensureEmailAvailable(request);
+            verify(userRegistrationService).ensureRegistrationAllowed(request);
             verify(emailConfirmation)
                     .sendTemporaryCode(eq("john@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
         }
@@ -101,7 +101,7 @@ class EmailVerificationServiceTest {
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass123!");
             doThrow(new UserRegistrationException("duplicate"))
                     .when(userRegistrationService)
-                    .ensureEmailAvailable(request);
+                    .ensureRegistrationAllowed(request);
 
             assertThatThrownBy(() -> service.sendEmailVerificationCode(request))
                     .isInstanceOf(UserRegistrationException.class);

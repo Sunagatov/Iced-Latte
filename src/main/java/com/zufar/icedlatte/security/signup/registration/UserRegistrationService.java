@@ -15,6 +15,7 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 
@@ -29,6 +30,13 @@ public class UserRegistrationService {
     private final UserRegistrationApi userRegistrationApi;
     private final PasswordEncoder passwordEncoder;
     private final SessionTokenService sessionTokenService;
+    private final TurnstileVerifier turnstileVerifier;
+
+    @Transactional(readOnly = true)
+    public void ensureRegistrationAllowed(final UserRegistrationRequest userRegistrationRequest) {
+        turnstileVerifier.verify(userRegistrationRequest.getTurnstileToken());
+        ensureEmailAvailable(userRegistrationRequest);
+    }
 
     @Transactional(readOnly = true)
     public void ensureEmailAvailable(final UserRegistrationRequest userRegistrationRequest) {
@@ -42,6 +50,7 @@ public class UserRegistrationService {
     @Transactional
     public UserAuthenticationResponse register(
             final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
+        ensureRegistrationAllowed(userRegistrationRequest);
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
         return registerWithEncodedPassword(userRegistrationRequest, encryptedPassword, httpRequest);

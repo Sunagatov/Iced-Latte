@@ -16,10 +16,12 @@ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SessionTokenService {
@@ -27,7 +29,7 @@ public class SessionTokenService {
     private final JwtTokenBlacklist jwtTokenBlacklist;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;
-    private final UserAuthenticationService userAuthenticationService;
+    private final LoginAttemptService loginAttemptService;
 
     public UserAuthenticationResponse issueForNewSession(UserDetails userDetails, HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
@@ -39,7 +41,7 @@ public class SessionTokenService {
         return withSessionMdc(session, () -> {
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
             authSessionService.rotateSession(currentRefreshTokenHash, jwtTokenBlacklist.hash(newRefreshToken));
-            return userAuthenticationService.buildTokenPair(userDetails, session.getId(), newRefreshToken);
+            return buildTokenPair(userDetails, session.getId(), newRefreshToken);
         });
     }
 
@@ -59,9 +61,19 @@ public class SessionTokenService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(
                 sessionId, user.getId(), jwtTokenBlacklist.hash(refreshToken), request);
-        UserAuthenticationResponse response =
-                userAuthenticationService.buildTokenPair(userDetails, session.getId(), refreshToken);
+        UserAuthenticationResponse response = buildTokenPair(userDetails, session.getId(), refreshToken);
         return new SessionAuthentication(session, response);
+    }
+
+    private UserAuthenticationResponse buildTokenPair(
+            final UserDetails userDetails, UUID sessionId, String refreshToken) {
+        String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
+        log.info("auth.sign_in.succeeded: sessionId={}", AuthSessionService.maskSessionId(sessionId));
+        loginAttemptService.resetAfterSuccessfulAuthentication(userDetails.getUsername());
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken(accessToken);
+        response.setRefreshToken(refreshToken);
+        return response;
     }
 
     private <T> T withSessionMdc(AuthSessionEntity session, Supplier<T> action) {

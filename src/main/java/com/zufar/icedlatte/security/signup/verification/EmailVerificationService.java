@@ -58,7 +58,7 @@ public class EmailVerificationService {
     private int expireTimeMinutes;
 
     public void sendEmailVerificationCode(UserRegistrationRequest request) {
-        userRegistrationService.ensureEmailAvailable(request);
+        userRegistrationService.ensureRegistrationAllowed(request);
         String token = generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
         emailConfirmation.sendTemporaryCode(EmailNormalizer.normalize(request.getEmail()), token);
     }
