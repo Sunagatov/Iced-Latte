@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.review.messaging.kafka.outbox;
+package com.zufar.icedlatte.filestorage.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,47 +11,51 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 
 import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class OutboxEventRepository {
+public class FileDeletionOutboxRepository {
 
-    private static final String REVIEW_CREATED_EVENT_TYPE = "review.created";
+    public static final String EVENT_TYPE = "file.object.delete";
+    private static final String AGGREGATE_TYPE = "FileObjectDeletion";
+    private static final int EVENT_VERSION = 1;
+    private static final String INTERNAL_TOPIC = "internal.file.object.delete";
+    private static final String EMPTY_HEADERS = "{}";
 
     private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
 
-    public void insertReviewCreatedEvent(
-            ReviewCreatedKafkaEvent event,
-            String topic,
-            String partitionKey,
-            String payload,
-            String headers,
-            int maxAttempts) {
+    public void insertDeleteObjectEvent(FileMetadataDto metadata, int maxAttempts) {
+        UUID deletionId = UUID.randomUUID();
         jdbcTemplate.update(
                 """
                 INSERT INTO outbox_events (
                     event_id, aggregate_type, aggregate_id, event_type, event_version,
                     topic, partition_key, payload, headers, status, max_attempts
                 )
-                VALUES (?, 'ProductReview', ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'PENDING', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'PENDING', ?)
                 ON CONFLICT (event_id) DO NOTHING
                 """,
-                event.eventId(),
-                event.payload().reviewId(),
-                event.eventType(),
-                event.eventVersion(),
-                topic,
-                partitionKey,
-                payload,
-                headers,
+                deletionId,
+                AGGREGATE_TYPE,
+                deletionId,
+                EVENT_TYPE,
+                EVENT_VERSION,
+                INTERNAL_TOPIC,
+                metadata.relatedObjectId().toString(),
+                toPayload(metadata),
+                EMPTY_HEADERS,
                 maxAttempts);
     }
 
-    public List<OutboxEventRow> claimPublishableEvents(int batchSize, String workerId) {
-        return jdbcTemplate.query("""
+    public List<FileDeletionOutboxRow> claimDeleteObjectEvents(int batchSize, String workerId) {
+        return jdbcTemplate.query(
+                """
                 WITH candidate AS (
                     SELECT id
                     FROM outbox_events
@@ -69,41 +73,49 @@ public class OutboxEventRepository {
                     updated_at = now()
                 FROM candidate
                 WHERE o.id = candidate.id
-                RETURNING o.id, o.event_id, o.topic, o.partition_key, o.payload::text, o.headers::text,
-                          o.attempt_count, o.max_attempts
-                """, (rs, _) -> mapRow(rs), REVIEW_CREATED_EVENT_TYPE, batchSize, workerId);
+                RETURNING o.id, o.event_id, o.payload::text, o.attempt_count, o.max_attempts
+                """,
+                (rs, _) -> mapRow(rs),
+                EVENT_TYPE,
+                batchSize,
+                workerId);
     }
 
     public int reclaimStaleLocks(Instant lockedBefore) {
-        return jdbcTemplate.update("""
+        return jdbcTemplate.update(
+                """
                 UPDATE outbox_events
                 SET status = 'FAILED_RETRYABLE',
                     locked_by = NULL,
                     locked_at = NULL,
                     next_attempt_at = now(),
                     updated_at = now()
-                WHERE status = 'IN_PROGRESS'
-                  AND event_type = ?
+                WHERE event_type = ?
+                  AND status = 'IN_PROGRESS'
                   AND locked_at < ?
-                """, REVIEW_CREATED_EVENT_TYPE, Timestamp.from(lockedBefore));
+                """,
+                EVENT_TYPE,
+                Timestamp.from(lockedBefore));
     }
 
-    public void markPublished(UUID id, String workerId, int partition, long offset) {
-        jdbcTemplate.update("""
+    public void markDeleted(UUID id, String workerId) {
+        jdbcTemplate.update(
+                """
                 UPDATE outbox_events
                 SET status = 'PUBLISHED',
                     locked_by = NULL,
                     locked_at = NULL,
                     published_at = now(),
-                    kafka_partition = ?,
-                    kafka_offset = ?,
                     last_error = NULL,
                     updated_at = now()
                 WHERE id = ?
                   AND event_type = ?
                   AND status = 'IN_PROGRESS'
                   AND locked_by = ?
-                """, partition, offset, id, REVIEW_CREATED_EVENT_TYPE, workerId);
+                """,
+                id,
+                EVENT_TYPE,
+                workerId);
     }
 
     public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
@@ -131,8 +143,17 @@ public class OutboxEventRepository {
                 nextAttemptAt == null ? null : Timestamp.from(nextAttemptAt),
                 sanitizedError(failure),
                 id,
-                REVIEW_CREATED_EVENT_TYPE,
+                EVENT_TYPE,
                 workerId);
+    }
+
+    private String toPayload(FileMetadataDto metadata) {
+        try {
+            return objectMapper.writeValueAsString(new FileObjectDeletionPayload(
+                    metadata.relatedObjectId(), metadata.bucketName(), metadata.fileName()));
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Cannot serialize file object deletion outbox payload", ex);
+        }
     }
 
     private long backoffSeconds(int attemptCount) {
@@ -144,25 +165,16 @@ public class OutboxEventRepository {
         return message.length() <= 1000 ? message : message.substring(0, 1000);
     }
 
-    private OutboxEventRow mapRow(ResultSet rs) throws SQLException {
-        return new OutboxEventRow(
+    private FileDeletionOutboxRow mapRow(ResultSet rs) throws SQLException {
+        return new FileDeletionOutboxRow(
                 rs.getObject("id", UUID.class),
                 rs.getObject("event_id", UUID.class),
-                rs.getString("topic"),
-                rs.getString("partition_key"),
                 rs.getString("payload"),
-                rs.getString("headers"),
                 rs.getInt("attempt_count"),
                 rs.getInt("max_attempts"));
     }
 
-    public record OutboxEventRow(
-            UUID id,
-            UUID eventId,
-            String topic,
-            String partitionKey,
-            String payload,
-            String headers,
-            int attemptCount,
-            int maxAttempts) {}
+    public record FileDeletionOutboxRow(UUID id, UUID eventId, String payload, int attemptCount, int maxAttempts) {}
+
+    public record FileObjectDeletionPayload(UUID relatedObjectId, String bucketName, String fileName) {}
 }

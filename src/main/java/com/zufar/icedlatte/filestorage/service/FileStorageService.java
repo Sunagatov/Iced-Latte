@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +31,8 @@ public class FileStorageService implements FileStorageApi {
     private final ObjectStorage objectStorage;
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
+    private final FileDeletionOutboxRepository fileDeletionOutboxRepository;
+    private final FileDeletionOutboxProperties fileDeletionOutboxProperties;
 
     @Override
     public boolean isEnabled() {
@@ -69,28 +71,17 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteFile(UUID relatedObjectId) {
-        findMetadata(relatedObjectId).ifPresent(fileMetadataDto -> {
-            fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
-            deleteObjectAfterCommit(fileMetadataDto);
-            log.info("file.deleted: objectId={}", relatedObjectId);
-        });
-    }
+        List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
+        if (!fileMetadataList.isEmpty()) {
+            int maxAttempts = fileDeletionOutboxProperties.maxAttempts();
 
-    private void deleteObjectAfterCommit(FileMetadataDto fileMetadataDto) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            objectStorage.delete(fileMetadataDto);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try {
-                    objectStorage.delete(fileMetadataDto);
-                } catch (RuntimeException ex) {
-                    log.error("file.object.delete_failed_after_commit: fileName={}", fileMetadataDto.fileName(), ex);
-                }
+            int deletedRows = fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
+            if (deletedRows > 0) {
+                fileMetadataList.forEach(
+                        fileMetadataDto -> fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts));
             }
-        });
+            log.info("file.deleted: objectId={}", relatedObjectId);
+        }
     }
 
     @Override
@@ -110,6 +101,12 @@ public class FileStorageService implements FileStorageApi {
 
     private Optional<FileMetadataDto> findMetadata(UUID relatedObjectId) {
         return findMetadata(List.of(relatedObjectId)).values().stream().findFirst();
+    }
+
+    private List<FileMetadataDto> findAllMetadata(UUID relatedObjectId) {
+        return fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)).stream()
+                .map(fileMetadataDtoConverter::toDto)
+                .toList();
     }
 
     private Map<UUID, FileMetadataDto> findMetadata(List<UUID> relatedObjectIds) {

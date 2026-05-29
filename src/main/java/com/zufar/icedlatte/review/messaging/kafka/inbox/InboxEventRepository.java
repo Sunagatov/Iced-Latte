@@ -55,7 +55,8 @@ public class InboxEventRepository {
         return inserted == 1;
     }
 
-    public List<InboxEventRow> claimProcessableEvents(int batchSize, String consumerName, String workerId) {
+    public List<InboxEventRow> claimProcessableEvents(
+            int batchSize, String consumerName, String eventType, String workerId) {
         return jdbcTemplate.query("""
                         WITH candidate AS (
                             SELECT id
@@ -63,6 +64,7 @@ public class InboxEventRepository {
                             WHERE status IN ('RECEIVED', 'FAILED_RETRYABLE')
                               AND (next_attempt_at IS NULL OR next_attempt_at <= now())
                               AND consumer_name = ?
+                              AND event_type = ?
                             ORDER BY created_at
                             LIMIT ?
                             FOR UPDATE SKIP LOCKED
@@ -75,10 +77,10 @@ public class InboxEventRepository {
                         FROM candidate
                         WHERE i.id = candidate.id
                         RETURNING i.id, i.event_id, i.payload::text, i.attempt_count, i.max_attempts
-                        """, (rs, _) -> mapRow(rs), consumerName, batchSize, workerId);
+                        """, (rs, _) -> mapRow(rs), consumerName, eventType, batchSize, workerId);
     }
 
-    public int reclaimStaleLocks(Instant lockedBefore) {
+    public int reclaimStaleLocks(Instant lockedBefore, String consumerName, String eventType) {
         return jdbcTemplate.update("""
                         UPDATE inbox_events
                         SET status = 'FAILED_RETRYABLE',
@@ -87,8 +89,10 @@ public class InboxEventRepository {
                             next_attempt_at = now(),
                             updated_at = now()
                         WHERE status = 'IN_PROGRESS'
+                          AND consumer_name = ?
+                          AND event_type = ?
                           AND locked_at < ?
-                        """, Timestamp.from(lockedBefore));
+                        """, consumerName, eventType, Timestamp.from(lockedBefore));
     }
 
     public void markProcessed(UUID id, String workerId) {

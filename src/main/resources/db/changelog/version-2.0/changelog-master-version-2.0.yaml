@@ -66,3 +66,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/24.05.2026.part1.create-kafka-outbox-inbox-tables.sql
       errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/29.05.2026.part1.add-outbox-event-type-poll-index.sql
+      errorIfMissing: true

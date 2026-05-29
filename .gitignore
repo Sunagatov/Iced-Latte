@@ -74,6 +74,11 @@ nb-configuration.xml
 .amazonq/
 
 ##############################
+## Local code intelligence indexes
+##############################
+.codegraph/
+
+##############################
 ## OS X
 ##############################
 .DS_Store

@@ -17,13 +17,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
@@ -40,6 +40,12 @@ public class FileStorageServiceTest {
 
     @Mock
     private FileMetadataDtoConverter fileMetadataDtoConverter;
+
+    @Mock
+    private FileDeletionOutboxRepository fileDeletionOutboxRepository;
+
+    @Mock
+    private FileDeletionOutboxProperties fileDeletionOutboxProperties;
 
     @Mock
     private MultipartFile multipartFile;
@@ -143,8 +149,8 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    @DisplayName("deleteFile removes object and metadata when metadata exists")
-    void deleteFileRemovesObjectAndMetadata() {
+    @DisplayName("deleteFile removes metadata and records object deletion")
+    void deleteFileRemovesMetadataAndRecordsObjectDeletion() {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadata entity = new FileMetadata();
         entity.setRelatedObjectId(relatedObjectId);
@@ -152,16 +158,42 @@ public class FileStorageServiceTest {
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of(entity));
         when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
+        when(fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId)).thenReturn(1);
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(10);
 
         fileStorageService.deleteFile(relatedObjectId);
 
-        verify(objectStorage).delete(metadata);
         verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(metadata, 10);
+        verify(objectStorage, never()).delete(any());
     }
 
     @Test
-    @DisplayName("deleteFile deletes object only after transaction commit")
-    void deleteFileDeletesObjectOnlyAfterCommit() {
+    @DisplayName("deleteFile records deletion for every duplicate metadata object")
+    void deleteFileRecordsDeletionForEveryDuplicateMetadataObject() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata firstEntity = new FileMetadata();
+        firstEntity.setRelatedObjectId(relatedObjectId);
+        FileMetadata secondEntity = new FileMetadata();
+        secondEntity.setRelatedObjectId(relatedObjectId);
+        FileMetadataDto first = new FileMetadataDto(relatedObjectId, "bucket", "first-key");
+        FileMetadataDto second = new FileMetadataDto(relatedObjectId, "bucket", "second-key");
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(firstEntity, secondEntity));
+        when(fileMetadataDtoConverter.toDto(firstEntity)).thenReturn(first);
+        when(fileMetadataDtoConverter.toDto(secondEntity)).thenReturn(second);
+        when(fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId)).thenReturn(2);
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(10);
+
+        fileStorageService.deleteFile(relatedObjectId);
+
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(first, 10);
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(second, 10);
+    }
+
+    @Test
+    @DisplayName("deleteFile skips outbox insert when concurrent delete already removed metadata")
+    void deleteFileSkipsOutboxInsertWhenConcurrentDeleteAlreadyRemovedMetadata() {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadata entity = new FileMetadata();
         entity.setRelatedObjectId(relatedObjectId);
@@ -169,20 +201,26 @@ public class FileStorageServiceTest {
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of(entity));
         when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
+        when(fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId)).thenReturn(0);
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(10);
 
-        TransactionSynchronizationManager.initSynchronization();
-        try {
-            fileStorageService.deleteFile(relatedObjectId);
+        fileStorageService.deleteFile(relatedObjectId);
 
-            verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
-            verify(objectStorage, never()).delete(any());
+        verify(fileDeletionOutboxRepository, never()).insertDeleteObjectEvent(any(), anyInt());
+    }
 
-            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+    @Test
+    @DisplayName("deleteFile does nothing when metadata is missing")
+    void deleteFileDoesNothingWhenMetadataIsMissing() {
+        UUID relatedObjectId = UUID.randomUUID();
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of());
 
-            verify(objectStorage).delete(metadata);
-        } finally {
-            TransactionSynchronizationManager.clearSynchronization();
-        }
+        fileStorageService.deleteFile(relatedObjectId);
+
+        verify(fileMetadataRepository, never()).deleteByRelatedObjectId(any());
+        verifyNoInteractions(fileDeletionOutboxRepository);
+        verifyNoInteractions(objectStorage);
     }
 
     @Test

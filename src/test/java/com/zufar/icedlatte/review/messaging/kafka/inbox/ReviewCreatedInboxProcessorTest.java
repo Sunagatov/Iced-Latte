@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,12 +51,16 @@ class ReviewCreatedInboxProcessorTest {
     @Test
     @DisplayName("claims only rows owned by the review AI consumer")
     void claimsOnlyRowsOwnedByReviewAiConsumer() {
-        when(inboxEventRepository.claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker"))
+        when(inboxEventRepository.claimProcessableEvents(
+                        25, "iced-latte-review-ai", "review.created", "test-inbox-worker"))
                 .thenReturn(List.of());
 
         processor.processPendingInboxEvents();
 
-        verify(inboxEventRepository).claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker");
+        verify(inboxEventRepository)
+                .reclaimStaleLocks(any(Instant.class), eq("iced-latte-review-ai"), eq("review.created"));
+        verify(inboxEventRepository)
+                .claimProcessableEvents(25, "iced-latte-review-ai", "review.created", "test-inbox-worker");
     }
 
     @Test
@@ -64,7 +70,8 @@ class ReviewCreatedInboxProcessorTest {
         UUID eventId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         String payload = objectMapper.writeValueAsString(reviewCreatedEvent(eventId, reviewId));
-        when(inboxEventRepository.claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker"))
+        when(inboxEventRepository.claimProcessableEvents(
+                        25, "iced-latte-review-ai", "review.created", "test-inbox-worker"))
                 .thenReturn(List.of(new InboxEventRepository.InboxEventRow(rowId, eventId, payload, 0, 10)));
         when(processingService.processByReviewId(reviewId))
                 .thenReturn(AsyncReviewProcessingService.ProcessingResult.IGNORED);
@@ -82,7 +89,8 @@ class ReviewCreatedInboxProcessorTest {
         UUID reviewId = UUID.randomUUID();
         String payload = objectMapper.writeValueAsString(reviewCreatedEvent(eventId, reviewId));
         IllegalStateException failure = new IllegalStateException("moderation unavailable");
-        when(inboxEventRepository.claimProcessableEvents(25, "iced-latte-review-ai", "test-inbox-worker"))
+        when(inboxEventRepository.claimProcessableEvents(
+                        25, "iced-latte-review-ai", "review.created", "test-inbox-worker"))
                 .thenReturn(List.of(new InboxEventRepository.InboxEventRow(rowId, eventId, payload, 2, 10)));
         when(processingService.processByReviewId(reviewId)).thenThrow(failure);
 

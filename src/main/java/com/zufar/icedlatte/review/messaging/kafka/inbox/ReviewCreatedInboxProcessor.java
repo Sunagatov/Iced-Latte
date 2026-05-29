@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true")
 public class ReviewCreatedInboxProcessor {
 
+    private static final String REVIEW_CREATED_EVENT_TYPE = "review.created";
+
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;
     private final InboxEventRepository inboxEventRepository;
@@ -33,13 +35,14 @@ public class ReviewCreatedInboxProcessor {
             return;
         }
         Instant lockedBefore = Instant.now().minus(inbox.staleLockTimeout());
-        int reclaimed = inboxEventRepository.reclaimStaleLocks(lockedBefore);
+        String consumerName = properties.consumerGroups().reviewAi();
+        int reclaimed = inboxEventRepository.reclaimStaleLocks(lockedBefore, consumerName, REVIEW_CREATED_EVENT_TYPE);
         if (reclaimed > 0) {
             log.warn("review.inbox.locks.reclaimed: count={}", reclaimed);
         }
-        String consumerName = properties.consumerGroups().reviewAi();
 
-        var events = inboxEventRepository.claimProcessableEvents(inbox.batchSize(), consumerName, inbox.workerId());
+        var events = inboxEventRepository.claimProcessableEvents(
+                inbox.batchSize(), consumerName, REVIEW_CREATED_EVENT_TYPE, inbox.workerId());
         for (var event : events) {
             process(event);
         }
