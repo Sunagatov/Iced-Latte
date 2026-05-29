@@ -19,6 +19,8 @@ public class AppCorsConfiguration {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        validateCredentialsOrigins();
+
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
@@ -44,5 +46,18 @@ public class AppCorsConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
+    }
+
+    private void validateCredentialsOrigins() {
+        if (!Boolean.TRUE.equals(corsProperties.allowCredentials())) {
+            return;
+        }
+        corsProperties.allowedOrigins().stream()
+                .filter(origin -> origin == null || origin.isBlank() || origin.contains("*"))
+                .findFirst()
+                .ifPresent(origin -> {
+                    String errorMessage = "CORS allow-credentials=true requires explicit allowed origins, got: ";
+                    throw new IllegalStateException(errorMessage + origin);
+                });
     }
 }

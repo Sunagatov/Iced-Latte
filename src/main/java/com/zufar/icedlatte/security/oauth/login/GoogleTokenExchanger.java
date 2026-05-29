@@ -3,16 +3,20 @@ package com.zufar.icedlatte.security.oauth.login;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
@@ -35,17 +39,25 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
     private final GoogleAuthorizationCodeFlow flow;
 
     public GoogleTokenExchanger(GoogleOAuthProperties properties) {
+        var transport = new NetHttpTransport.Builder().build();
+        var json = GsonFactory.getDefaultInstance();
+        Duration connectTimeout = properties.timeout().connectTimeout();
+        Duration readTimeout = properties.timeout().readTimeout();
+
+
         this.authServerUrl = properties.auth().server().url();
         this.clientId = properties.clientId();
         this.redirectUri = properties.redirectUri();
         this.scope = properties.scope();
-        var transport = new NetHttpTransport.Builder().build();
-        var json = GsonFactory.getDefaultInstance();
         this.verifier = new GoogleIdTokenVerifier.Builder(transport, json)
                 .setAudience(Collections.singletonList(clientId))
                 .build();
-        this.flow = new GoogleAuthorizationCodeFlow.Builder(
-                        transport, json, clientId, properties.clientSecret(), List.of(scope.split("\\s+")))
+
+        List<String> scopes = List.of(scope.split("\\s+"));
+        String clientSecret = properties.clientSecret();
+
+        this.flow = new GoogleAuthorizationCodeFlow.Builder(transport, json, clientId, clientSecret, scopes)
+                .setRequestInitializer(requestInitializer(connectTimeout, readTimeout))
                 .setAccessType("offline")
                 .build();
     }
@@ -96,5 +108,28 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
             throw new UnauthorizedException("Google authentication failed.");
         }
         return idToken.getPayload();
+    }
+
+    static HttpRequestInitializer requestInitializer(Duration connectTimeout, Duration readTimeout) {
+        int connectTimeoutMillis = toPositiveMillis(connectTimeout, "connectTimeout");
+        int readTimeoutMillis = toPositiveMillis(readTimeout, "readTimeout");
+        return request -> applyTimeouts(request, connectTimeoutMillis, readTimeoutMillis);
+    }
+
+    private static void applyTimeouts(HttpRequest request, int connectTimeoutMillis, int readTimeoutMillis) {
+        request.setConnectTimeout(connectTimeoutMillis);
+        request.setReadTimeout(readTimeoutMillis);
+    }
+
+    private static int toPositiveMillis(Duration duration, String name) {
+        Assert.notNull(duration, name + " must not be null");
+        if (duration.isZero() || duration.isNegative()) {
+            throw new IllegalArgumentException(name + " must be positive");
+        }
+        long millis = duration.toMillis();
+        if (millis > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(name + " is too large");
+        }
+        return (int) millis;
     }
 }

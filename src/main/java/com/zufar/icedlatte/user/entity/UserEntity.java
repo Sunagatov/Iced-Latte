@@ -56,7 +56,7 @@ public class UserEntity extends AuditableEntity implements UserDetails, Identifi
     @Column(name = "stripe_customer_token", unique = true, length = 64)
     private String stripeCustomerToken;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<UserGrantedAuthority> authorities;
 
     @Column(name = "account_non_expired", nullable = false)

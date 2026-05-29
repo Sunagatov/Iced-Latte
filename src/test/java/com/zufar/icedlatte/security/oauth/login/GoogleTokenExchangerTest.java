@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.api.client.googleapis.auth.oauth2.*;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.testing.http.MockHttpTransport;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.GoogleOAuthProperties;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
@@ -55,6 +58,18 @@ class GoogleTokenExchangerTest {
                 .contains("redirect_uri=https://app.example.com/callback")
                 .contains("client_id=client-id")
                 .contains("state=state-token");
+    }
+
+    @Test
+    @DisplayName("request initializer applies configured HTTP timeouts")
+    void requestInitializerAppliesConfiguredHttpTimeouts() throws IOException {
+        var initializer = GoogleTokenExchanger.requestInitializer(Duration.ofSeconds(2), Duration.ofSeconds(3));
+        var request = new MockHttpTransport()
+                .createRequestFactory(initializer)
+                .buildGetRequest(new GenericUrl("https://accounts.google.com"));
+
+        assertThat(request.getConnectTimeout()).isEqualTo(2_000);
+        assertThat(request.getReadTimeout()).isEqualTo(3_000);
     }
 
     @Test
@@ -139,7 +154,12 @@ class GoogleTokenExchangerTest {
         var auth = new GoogleOAuthProperties.Auth(
                 new GoogleOAuthProperties.Auth.Server("https://accounts.google.com/o/oauth2/v2/auth"));
         var properties = new GoogleOAuthProperties(
-                "client-id", "client-secret", "https://app.example.com/callback", "openid email profile", auth);
+                "client-id",
+                "client-secret",
+                "https://app.example.com/callback",
+                "openid email profile",
+                new GoogleOAuthProperties.Timeout(Duration.ofSeconds(2), Duration.ofSeconds(3)),
+                auth);
         GoogleTokenExchanger exchanger = new GoogleTokenExchanger(properties);
         ReflectionTestUtils.setField(exchanger, "flow", flow);
         ReflectionTestUtils.setField(exchanger, "verifier", verifier);

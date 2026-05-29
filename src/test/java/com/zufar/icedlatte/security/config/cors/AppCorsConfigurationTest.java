@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.config.cors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
@@ -78,5 +79,17 @@ class AppCorsConfigurationTest {
         assertThat(corsConfiguration).isNotNull();
         assertThat(corsConfiguration.getAllowedHeaders()).containsExactly("Authorization", "Content-Type");
         assertThat(corsConfiguration.getAllowCredentials()).isFalse();
+    }
+
+    @Test
+    @DisplayName("rejects wildcard origins when credentials are allowed")
+    void rejectsWildcardOriginsWhenCredentialsAreAllowed() {
+        var properties = new CorsProperties(
+                List.of("https://*.example.com"), List.of("GET"), List.of("Authorization"), List.of(), true, 3600L);
+        AppCorsConfiguration configuration = new AppCorsConfiguration(properties);
+
+        assertThatThrownBy(configuration::corsConfigurationSource)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("requires explicit allowed origins");
     }
 }

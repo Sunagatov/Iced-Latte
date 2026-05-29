@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,7 +57,7 @@ public class UserAvatarUploader {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
             throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
         }
-        if (!hasValidImageSignature(file)) {
+        if (detectContentType(file).filter(contentType::equals).isEmpty()) {
             log.warn("avatar.upload.rejected: reason=magic_bytes_mismatch, userId={}", userId);
             throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
         }
@@ -82,12 +83,21 @@ public class UserAvatarUploader {
         cloudfrontInvalidator.ifAvailable(invalidator -> invalidator.invalidate(fileName));
     }
 
-    private static boolean hasValidImageSignature(MultipartFile file) {
+    private static Optional<String> detectContentType(MultipartFile file) {
         try (InputStream in = file.getInputStream()) {
             byte[] h = in.readNBytes(12);
-            return isJpeg(h) || isPng(h) || isWebp(h);
+            if (isJpeg(h)) {
+                return Optional.of("image/jpeg");
+            }
+            if (isPng(h)) {
+                return Optional.of("image/png");
+            }
+            if (isWebp(h)) {
+                return Optional.of("image/webp");
+            }
+            return Optional.empty();
         } catch (IOException ex) {
-            return false;
+            return Optional.empty();
         }
     }
 

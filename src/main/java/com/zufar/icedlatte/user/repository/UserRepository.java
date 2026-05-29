@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import jakarta.persistence.LockModeType;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,6 +26,14 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    @EntityGraph(attributePaths = "authorities")
+    @Query("SELECT u FROM UserEntity u WHERE u.email = :email")
+    Optional<UserEntity> findByEmailWithAuthorities(@Param("email") String email);
+
+    @EntityGraph(attributePaths = "authorities")
+    @Query("SELECT u FROM UserEntity u WHERE u.id = :userId")
+    Optional<UserEntity> findByIdWithAuthorities(@Param("userId") UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM UserEntity u WHERE u.id = :userId")
@@ -52,9 +61,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Query("UPDATE UserEntity u " + "SET u.accountNonLocked = :accountNonLocked " + "WHERE u.email = :email")
     int setAccountLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 
-    /**
-     * Unlocks all users that have corresponding entries in the login_attempts table with is_user_locked set to false.
-     */
+    /** Unlocks all users that have corresponding expired lock entries in the login_attempts table. */
     @Modifying
     @Transactional
     @Query(

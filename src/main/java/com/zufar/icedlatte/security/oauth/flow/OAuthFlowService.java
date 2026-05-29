@@ -12,8 +12,10 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
@@ -40,6 +42,7 @@ public class OAuthFlowService {
 
     private final OAuthLoginService oAuthLoginService;
     private final OAuthStateStore oAuthStateStore;
+    private final OAuthTokenHandoffStore oAuthTokenHandoffStore;
 
     public Optional<URI> initiate(OAuthProvider provider, String redirectUrl) {
         var client = oAuthLoginService.findClient(provider);
@@ -73,7 +76,8 @@ public class OAuthFlowService {
         }
         try {
             UserAuthenticationResponse tokens = oAuthLoginService.handle(provider, code, request);
-            return URI.create(buildCallbackUrlWithFragmentTokens(callbackBase, tokens));
+            String handoffCode = oAuthTokenHandoffStore.store(tokens);
+            return URI.create(buildCallbackUrlWithHandoffCode(callbackBase, handoffCode));
         } catch (Exception e) {
             log.error(
                     "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
@@ -82,6 +86,15 @@ public class OAuthFlowService {
                     e);
             return buildFrontendErrorRedirect(callbackBase);
         }
+    }
+
+    public UserAuthenticationResponse completeTokenHandoff(String code) {
+        if (!StringUtils.hasText(code)) {
+            throw new BadRequestException("OAuth token code is required.");
+        }
+        return oAuthTokenHandoffStore
+                .consume(code)
+                .orElseThrow(() -> new BadRequestException("OAuth token code is invalid or expired."));
     }
 
     private String resolveCallbackBase(OAuthProvider provider, String redirectUrl) {
@@ -127,10 +140,8 @@ public class OAuthFlowService {
                 .toUriString();
     }
 
-    private static String buildCallbackUrlWithFragmentTokens(String callbackBase, UserAuthenticationResponse tokens) {
-        return callbackBase
-                + "#token=" + urlEncode(tokens.getToken())
-                + "&refreshToken=" + urlEncode(tokens.getRefreshToken());
+    private static String buildCallbackUrlWithHandoffCode(String callbackBase, String handoffCode) {
+        return callbackBase + "#oauthCode=" + urlEncode(handoffCode);
     }
 
     private static String generateStateNonce() {

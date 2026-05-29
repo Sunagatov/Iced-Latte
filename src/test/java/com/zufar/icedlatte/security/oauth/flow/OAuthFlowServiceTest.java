@@ -32,6 +32,9 @@ class OAuthFlowServiceTest {
     private OAuthStateStore oAuthStateStore;
 
     @Mock
+    private OAuthTokenHandoffStore oAuthTokenHandoffStore;
+
+    @Mock
     private OAuthProviderClient oAuthProviderClient;
 
     @Mock
@@ -41,7 +44,7 @@ class OAuthFlowServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OAuthFlowService(oAuthLoginService, oAuthStateStore);
+        service = new OAuthFlowService(oAuthLoginService, oAuthStateStore, oAuthTokenHandoffStore);
         ReflectionTestUtils.setField(service, "frontendUrl", "https://app.example.com");
     }
 
@@ -85,18 +88,31 @@ class OAuthFlowServiceTest {
     }
 
     @Test
-    void completeCallbackReturnsCallbackWithFragmentTokens() {
+    void completeCallbackReturnsCallbackWithOneTimeHandoffCode() {
         stubGoogleClient();
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
                 .thenReturn(tokenPair());
+        when(oAuthTokenHandoffStore.store(any(UserAuthenticationResponse.class)))
+                .thenReturn("handoff-code");
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request);
 
         assertThat(redirect.toString())
-                .isEqualTo(
-                        "https://app.example.com/auth/google/callback?next=/checkout#token=jwt-token&refreshToken=refresh-token");
+                .isEqualTo("https://app.example.com/auth/google/callback?next=/checkout#oauthCode=handoff-code");
+        assertThat(redirect.toString()).doesNotContain("jwt-token", "refresh-token");
+        verify(oAuthTokenHandoffStore).store(any(UserAuthenticationResponse.class));
+    }
+
+    @Test
+    void completeTokenHandoffConsumesStoredTokenPair() {
+        UserAuthenticationResponse tokenPair = tokenPair();
+        when(oAuthTokenHandoffStore.consume("handoff-code")).thenReturn(Optional.of(tokenPair));
+
+        UserAuthenticationResponse result = service.completeTokenHandoff("handoff-code");
+
+        assertThat(result).isSameAs(tokenPair);
     }
 
     @Test

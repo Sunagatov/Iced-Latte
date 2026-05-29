@@ -153,7 +153,8 @@ class SingleUserProviderTest {
                 .credentialsNonExpired(true)
                 .enabled(true)
                 .build();
-        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+        when(userCrudRepository.findByEmailWithAuthorities("user@example.com"))
+                .thenReturn(java.util.Optional.of(entity));
 
         var snapshot = singleUserProvider.findUserAuthenticationByEmail("user@example.com");
 
@@ -166,17 +167,18 @@ class SingleUserProviderTest {
         assertThat(snapshot.orElseThrow().accountNonLocked()).isTrue();
         assertThat(snapshot.orElseThrow().credentialsNonExpired()).isTrue();
         assertThat(snapshot.orElseThrow().enabled()).isTrue();
-        verify(userCrudRepository).findByEmail("user@example.com");
+        verify(userCrudRepository).findByEmailWithAuthorities("user@example.com");
     }
 
     @Test
     @DisplayName("findUserAuthenticationByEmail returns empty when user is missing")
     void findUserAuthenticationByEmailReturnsEmptyWhenMissing() {
-        when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
+        when(userCrudRepository.findByEmailWithAuthorities("missing@example.com"))
+                .thenReturn(java.util.Optional.empty());
 
         assertThat(singleUserProvider.findUserAuthenticationByEmail("missing@example.com"))
                 .isEmpty();
-        verify(userCrudRepository).findByEmail("missing@example.com");
+        verify(userCrudRepository).findByEmailWithAuthorities("missing@example.com");
     }
 
     @Test
@@ -194,14 +196,14 @@ class SingleUserProviderTest {
                 .credentialsNonExpired(true)
                 .enabled(true)
                 .build();
-        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
+        when(userCrudRepository.findByIdWithAuthorities(userId)).thenReturn(java.util.Optional.of(entity));
 
         var snapshot = singleUserProvider.findUserAuthenticationById(userId);
 
         assertThat(snapshot).isPresent();
         assertThat(snapshot.orElseThrow().userId()).isEqualTo(userId);
         assertThat(snapshot.orElseThrow().email()).isEqualTo("user@example.com");
-        verify(userCrudRepository).findById(userId);
+        verify(userCrudRepository).findByIdWithAuthorities(userId);
     }
 
     @Test

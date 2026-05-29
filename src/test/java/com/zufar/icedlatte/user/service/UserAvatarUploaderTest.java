@@ -42,6 +42,8 @@ class UserAvatarUploaderTest {
     // Minimal valid JPEG header: FF D8 FF followed by padding
     private static final byte[] JPEG_HEADER =
             new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private static final byte[] PNG_HEADER =
+            new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
 
     @BeforeEach
     void injectBucket() throws Exception {
@@ -103,6 +105,20 @@ class UserAvatarUploaderTest {
         UUID userId = UUID.randomUUID();
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
+
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+                .isInstanceOf(InvalidAvatarFileTypeException.class)
+                .hasMessageContaining("image/jpeg");
+
+        verify(fileStorageService, never()).store(any(), any());
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar rejects valid image bytes when content type does not match")
+    void uploadUserAvatarRejectsDeclaredTypeMismatch() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(PNG_HEADER));
 
         assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
                 .isInstanceOf(InvalidAvatarFileTypeException.class)

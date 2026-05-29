@@ -363,10 +363,14 @@ google:
   client-id: ${GOOGLE_AUTH_CLIENT_ID:}
   client-secret: ${GOOGLE_AUTH_CLIENT_SECRET:}
   redirect-uri: ${GOOGLE_AUTH_REDIRECT_URI}
+  timeout:
+    connect-timeout: ${GOOGLE_AUTH_CONNECT_TIMEOUT:PT2S}
+    read-timeout: ${GOOGLE_AUTH_READ_TIMEOUT:PT3S}
 
 # How long the OAuth "state" parameter remains valid (prevents CSRF in OAuth flow).
 oauth:
   state-ttl-minutes: 10
+  handoff-ttl: ${OAUTH_HANDOFF_TTL:PT1M}
 
 # --- AI (OpenAI-compatible API for review moderation & summaries) ---
 ai:

@@ -423,6 +423,9 @@ components:
     UpdateUserAccountRequest:
       type: "object"
       description: "Payload containing the user's updated details."
+      required:
+        - firstName
+        - lastName
       properties:
         firstName:
           type: "string"

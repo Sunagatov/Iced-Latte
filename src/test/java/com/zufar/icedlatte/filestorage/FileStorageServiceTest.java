@@ -17,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
@@ -155,6 +157,32 @@ public class FileStorageServiceTest {
 
         verify(objectStorage).delete(metadata);
         verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
+    }
+
+    @Test
+    @DisplayName("deleteFile deletes object only after transaction commit")
+    void deleteFileDeletesObjectOnlyAfterCommit() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata entity = new FileMetadata();
+        entity.setRelatedObjectId(relatedObjectId);
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(entity));
+        when(fileMetadataDtoConverter.toDto(entity)).thenReturn(metadata);
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            fileStorageService.deleteFile(relatedObjectId);
+
+            verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
+            verify(objectStorage, never()).delete(any());
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+
+            verify(objectStorage).delete(metadata);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test

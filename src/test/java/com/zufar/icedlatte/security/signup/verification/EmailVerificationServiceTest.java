@@ -179,6 +179,18 @@ class EmailVerificationServiceTest {
     }
 
     @Test
+    @DisplayName("generateToken rejects weak token length configuration")
+    void generateTokenRejectsWeakTokenLengthConfiguration() {
+        ReflectionTestUtils.setField(service, "tokenLength", 9);
+        UserRegistrationRequest request =
+                new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
+
+        assertThatThrownBy(() -> service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be at least 32");
+    }
+
+    @Test
     @DisplayName("generateToken normalizes email and scopes token key by purpose")
     void generateTokenNormalizesEmailAndScopesTokenKeyByPurpose() {
         ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);

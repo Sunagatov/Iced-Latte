@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
@@ -68,9 +70,26 @@ public class FileStorageService implements FileStorageApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteFile(UUID relatedObjectId) {
         findMetadata(relatedObjectId).ifPresent(fileMetadataDto -> {
-            objectStorage.delete(fileMetadataDto);
             fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
+            deleteObjectAfterCommit(fileMetadataDto);
             log.info("file.deleted: objectId={}", relatedObjectId);
+        });
+    }
+
+    private void deleteObjectAfterCommit(FileMetadataDto fileMetadataDto) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            objectStorage.delete(fileMetadataDto);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    objectStorage.delete(fileMetadataDto);
+                } catch (RuntimeException ex) {
+                    log.error("file.object.delete_failed_after_commit: fileName={}", fileMetadataDto.fileName(), ex);
+                }
+            }
         });
     }
 
