@@ -1708,6 +1708,113 @@ Token generation now uses secure random bytes encoded as URL-safe text.
 The configured length is validated and values below the secure minimum fail
 fast.
 
+## 29. JWT Access and Refresh Tokens Did Not Carry an Explicit Purpose
+
+### What This Feature Is For
+
+The application uses two different JWT types:
+
+```text
+access token:
+  short-lived token used to call normal API endpoints
+
+refresh token:
+  longer-lived token used only to get a new token pair
+```
+
+Even when the two token types have different signing keys, it is safer for the
+token itself to say what it is for.
+
+### How the Old System Behaved
+
+Access tokens and refresh tokens were signed with different keys, but the token
+claims did not include an explicit purpose:
+
+```java
+claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+```
+
+Refresh tokens had a version claim:
+
+```java
+claims.put(JwtClaimNames.VERSION, 2);
+```
+
+But `ver = 2` only described the refresh-token format. It did not clearly say
+"this token is a refresh token and must never be accepted as an access token."
+
+### Why That Was a Bug
+
+Security checks are easier to reason about when every token has an explicit
+purpose.
+
+Without a purpose claim, the system relies mostly on using the correct parser
+and signing key for each token type. That is good, but a future configuration or
+code mistake could weaken the boundary between access-token handling and
+refresh-token handling.
+
+There was also no startup guard preventing the access-token signing key and the
+refresh-token signing key from being configured to the same value.
+
+### Simple Example
+
+```text
+Access-token parser:
+  should accept only tokens with purpose = access
+
+Refresh-token parser:
+  should accept only tokens with purpose = refresh
+```
+
+Before the fix, the token type was not stated this directly inside the token.
+
+### What the Fix Changed
+
+JWT claim names now define token purpose constants:
+
+```java
+public static final String TOKEN_PURPOSE = "purpose";
+public static final String ACCESS_TOKEN_PURPOSE = "access";
+public static final String REFRESH_TOKEN_PURPOSE = "refresh";
+```
+
+Access-token generation now writes:
+
+```java
+claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE);
+```
+
+Refresh-token generation now writes:
+
+```java
+claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE);
+```
+
+The access-token parser now requires:
+
+```java
+require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)
+```
+
+The refresh-token parser now requires:
+
+```java
+require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
+```
+
+`JwtSigningKeys` also rejects configuration where both token types use the same
+signing key:
+
+```java
+if (Arrays.equals(accessKeyBytes, refreshKeyBytes)) {
+    throw new IllegalStateException("JWT access and refresh signing keys must be different");
+}
+```
+
+In beginner terms: an access token now carries a label saying "I am for API
+access", and a refresh token carries a label saying "I am only for refresh."
+The parser checks that label before trusting the token.
+
 ## Known Follow-Up Not Fixed in This Chat
 
 ### File Upload Still Writes the External Object Before Metadata
@@ -1750,6 +1857,7 @@ The fixes were covered with focused tests around the changed behavior:
 
 - refresh-token blacklist TTL
 - JWT issuer/audience validation
+- JWT access/refresh purpose validation and separate signing-key enforcement
 - OAuth verified-email handling
 - refresh-token rotation locking
 - login-attempt locking
