@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 
@@ -20,10 +21,17 @@ public class JwtTokenClaims {
     private final JwtParser accessTokenParser;
     private final JwtParser refreshTokenParser;
 
-    public JwtTokenClaims(JwtSigningKeys jwtSigningKeys) {
-        this.accessTokenParser = Jwts.parser().verifyWith(jwtSigningKeys.get()).build();
-        this.refreshTokenParser =
-                Jwts.parser().verifyWith(jwtSigningKeys.getRefresh()).build();
+    public JwtTokenClaims(JwtSigningKeys jwtSigningKeys, JwtProperties jwtProperties) {
+        this.accessTokenParser = Jwts.parser()
+                .verifyWith(jwtSigningKeys.get())
+                .requireIssuer(jwtProperties.issuer())
+                .requireAudience(jwtProperties.audience())
+                .build();
+        this.refreshTokenParser = Jwts.parser()
+                .verifyWith(jwtSigningKeys.getRefresh())
+                .requireIssuer(jwtProperties.issuer())
+                .requireAudience(jwtProperties.audience())
+                .build();
     }
 
     public String extractAccessTokenEmail(final String token) {

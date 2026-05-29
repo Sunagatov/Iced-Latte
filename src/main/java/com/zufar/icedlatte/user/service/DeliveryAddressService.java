@@ -84,6 +84,9 @@ public class DeliveryAddressService implements UserAddressApi {
                 .findByIdAndUserId(addressId, userId)
                 .orElseThrow(() ->
                         new NotFoundException(String.format("Delivery address with id = %s is not found.", addressId)));
+        if (entity.isDefault()) {
+            return converter.toDto(entity);
+        }
         addressRepository.clearDefaultForUser(userId);
         entity.setDefault(true);
         return converter.toDto(addressRepository.save(entity));

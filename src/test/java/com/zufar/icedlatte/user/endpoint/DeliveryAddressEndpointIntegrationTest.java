@@ -107,6 +107,43 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
     }
 
     @Test
+    @DisplayName("Should keep default address when setting the same address as default again")
+    void shouldKeepDefaultWhenSettingAlreadyDefaultAddressAgain() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        Response createResponse = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(addressBody("Home", "160 Piccadilly", "London", "W1J 9EB"))
+                .post();
+
+        String addressId = createResponse.jsonPath().getString("id");
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .patch("/{addressId}/default", addressId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(addressId))
+                .body("isDefault", equalTo(true));
+
+        List<Map<String, Object>> addresses = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .body()
+                .as(new TypeRef<>() {});
+
+        long defaultCount = addresses.stream()
+                .filter(address -> Boolean.TRUE.equals(address.get("isDefault")))
+                .count();
+
+        assertEquals(1, addresses.size());
+        assertEquals(1, defaultCount);
+        assertTrue(addresses.stream()
+                .anyMatch(address ->
+                        addressId.equals(address.get("id")) && Boolean.TRUE.equals(address.get("isDefault"))));
+    }
+
+    @Test
     @DisplayName("Should update and then delete delivery address")
     void shouldUpdateAndThenDeleteDeliveryAddress() {
         AuthenticatedUser user = registerAndAuthenticateUser();

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 
@@ -27,6 +28,9 @@ class JwtTokenClaimsTest {
     private SecretKey refreshKey;
     private JwtTokenClaims claims;
 
+    private static final String ISSUER = "iced-latte";
+    private static final String AUDIENCE = "iced-latte-client";
+
     @BeforeEach
     void setUp() {
         accessKey = io.jsonwebtoken.security.Keys.hmacShaKeyFor(new byte[64]);
@@ -34,7 +38,10 @@ class JwtTokenClaimsTest {
         JwtSigningKeys signingKeys = mock(JwtSigningKeys.class);
         when(signingKeys.get()).thenReturn(accessKey);
         when(signingKeys.getRefresh()).thenReturn(refreshKey);
-        claims = new JwtTokenClaims(signingKeys);
+        JwtProperties jwtProperties = mock(JwtProperties.class);
+        when(jwtProperties.issuer()).thenReturn(ISSUER);
+        when(jwtProperties.audience()).thenReturn(AUDIENCE);
+        claims = new JwtTokenClaims(signingKeys, jwtProperties);
     }
 
     @Test
@@ -48,6 +55,22 @@ class JwtTokenClaimsTest {
     @DisplayName("extractAccessTokenEmail throws for invalid token")
     void extractAccessTokenEmailThrowsForInvalidToken() {
         assertThatThrownBy(() -> claims.extractAccessTokenEmail("not.a.token")).isInstanceOf(JwtTokenException.class);
+    }
+
+    @Test
+    @DisplayName("extractAccessTokenEmail throws when issuer does not match")
+    void extractAccessTokenEmailThrowsWhenIssuerDoesNotMatch() {
+        assertThatThrownBy(() ->
+                        claims.extractAccessTokenEmail(buildToken(accessKey, null, false, "wrong-issuer", AUDIENCE)))
+                .isInstanceOf(JwtTokenException.class);
+    }
+
+    @Test
+    @DisplayName("extractAccessTokenEmail throws when audience does not match")
+    void extractAccessTokenEmailThrowsWhenAudienceDoesNotMatch() {
+        assertThatThrownBy(() ->
+                        claims.extractAccessTokenEmail(buildToken(accessKey, null, false, ISSUER, "wrong-audience")))
+                .isInstanceOf(JwtTokenException.class);
     }
 
     @Test
@@ -70,6 +93,22 @@ class JwtTokenClaimsTest {
     void extractRefreshTokenEmailReturnsSubject() {
         assertThat(claims.extractRefreshTokenEmail(buildToken(refreshKey, null, true)))
                 .isEqualTo("user@example.com");
+    }
+
+    @Test
+    @DisplayName("extractRefreshTokenEmail throws when issuer does not match")
+    void extractRefreshTokenEmailThrowsWhenIssuerDoesNotMatch() {
+        assertThatThrownBy(() ->
+                        claims.extractRefreshTokenEmail(buildToken(refreshKey, null, true, "wrong-issuer", AUDIENCE)))
+                .isInstanceOf(JwtTokenException.class);
+    }
+
+    @Test
+    @DisplayName("extractRefreshTokenEmail throws when audience does not match")
+    void extractRefreshTokenEmailThrowsWhenAudienceDoesNotMatch() {
+        assertThatThrownBy(() ->
+                        claims.extractRefreshTokenEmail(buildToken(refreshKey, null, true, ISSUER, "wrong-audience")))
+                .isInstanceOf(JwtTokenException.class);
     }
 
     @Test
@@ -96,8 +135,17 @@ class JwtTokenClaimsTest {
     }
 
     private String buildToken(SecretKey key, String sessionId, boolean includeVersion) {
-        var builder =
-                Jwts.builder().subject("user@example.com").expiration(new Date(System.currentTimeMillis() + 60_000));
+        return buildToken(key, sessionId, includeVersion, ISSUER, AUDIENCE);
+    }
+
+    private String buildToken(SecretKey key, String sessionId, boolean includeVersion, String issuer, String audience) {
+        var builder = Jwts.builder()
+                .subject("user@example.com")
+                .issuer(issuer)
+                .audience()
+                .add(audience)
+                .and()
+                .expiration(new Date(System.currentTimeMillis() + 60_000));
         if (sessionId != null) {
             builder.claim("sid", sessionId);
         }

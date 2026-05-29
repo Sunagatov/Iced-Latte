@@ -259,6 +259,24 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
+    @DisplayName("setDefault returns existing default without clearing defaults")
+    void setDefault_alreadyDefault_doesNotClearDefaults() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        entity.setDefault(true);
+        DeliveryAddressDto dto = new DeliveryAddressDto();
+
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+        when(converter.toDto(entity)).thenReturn(dto);
+
+        assertThat(service.setDefault(userId, addressId)).isEqualTo(dto);
+
+        verify(addressRepository, never()).clearDefaultForUser(userId);
+        verify(addressRepository, never()).save(entity);
+    }
+
+    @Test
     @DisplayName("setDefault throws NotFoundException when not found")
     void setDefault_notFound_throws() {
         UUID userId = UUID.randomUUID();
