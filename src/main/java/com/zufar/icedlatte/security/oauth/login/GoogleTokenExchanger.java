@@ -44,7 +44,6 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
         Duration connectTimeout = properties.timeout().connectTimeout();
         Duration readTimeout = properties.timeout().readTimeout();
 
-
         this.authServerUrl = properties.auth().server().url();
         this.clientId = properties.clientId();
         this.redirectUri = properties.redirectUri();

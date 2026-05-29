@@ -56,14 +56,26 @@ public class ReviewCreatedInboxProcessor {
             UUID reviewId = event.payload().reviewId();
             AsyncReviewProcessingService.ProcessingResult result = processingService.processByReviewId(reviewId);
             if (result == AsyncReviewProcessingService.ProcessingResult.IGNORED) {
-                inboxEventRepository.markIgnored(row.id(), inbox.workerId());
+                inboxEventRepository.markIgnored(row.id(), inbox.workerId(), consumerName(), REVIEW_CREATED_EVENT_TYPE);
             } else {
-                inboxEventRepository.markProcessed(row.id(), inbox.workerId());
+                inboxEventRepository.markProcessed(
+                        row.id(), inbox.workerId(), consumerName(), REVIEW_CREATED_EVENT_TYPE);
             }
             log.info("event.inbox.processing.succeeded: eventId={}, status={}", row.eventId(), result);
         } catch (Exception e) {
-            inboxEventRepository.markFailed(row.id(), inbox.workerId(), row.attemptCount(), row.maxAttempts(), e);
+            inboxEventRepository.markFailed(
+                    row.id(),
+                    inbox.workerId(),
+                    consumerName(),
+                    REVIEW_CREATED_EVENT_TYPE,
+                    row.attemptCount(),
+                    row.maxAttempts(),
+                    e);
             log.warn("event.inbox.processing.failed: eventId={}", row.eventId(), e);
         }
+    }
+
+    private String consumerName() {
+        return properties.consumerGroups().reviewAi();
     }
 }

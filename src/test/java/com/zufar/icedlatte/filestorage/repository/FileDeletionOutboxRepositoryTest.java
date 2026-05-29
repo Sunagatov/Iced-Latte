@@ -68,7 +68,13 @@ class FileDeletionOutboxRepositoryTest {
         repository.claimDeleteObjectEvents(25, "worker-1");
 
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
-        verify(jdbcTemplate).query(sql.capture(), any(org.springframework.jdbc.core.RowMapper.class), eq("file.object.delete"), eq(25), eq("worker-1"));
+        verify(jdbcTemplate)
+                .query(
+                        sql.capture(),
+                        any(org.springframework.jdbc.core.RowMapper.class),
+                        eq("file.object.delete"),
+                        eq(25),
+                        eq("worker-1"));
         assertThat(sql.getValue()).contains("FROM outbox_events");
         assertThat(sql.getValue()).contains("WHERE event_type = ?");
     }

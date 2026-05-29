@@ -51,7 +51,8 @@ public class FileDeletionOutboxWorker {
         try {
             FileObjectDeletionPayload payload =
                     objectMapper.readValue(event.payload(), FileObjectDeletionPayload.class);
-            objectStorage.delete(new FileMetadataDto(payload.relatedObjectId(), payload.bucketName(), payload.fileName()));
+            objectStorage.delete(
+                    new FileMetadataDto(payload.relatedObjectId(), payload.bucketName(), payload.fileName()));
             outboxRepository.markDeleted(event.id(), properties.workerId());
             log.info("file.deletion_outbox.deleted: eventId={}, fileName={}", event.eventId(), payload.fileName());
         } catch (IOException | RuntimeException ex) {

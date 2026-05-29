@@ -54,8 +54,7 @@ public class FileDeletionOutboxRepository {
     }
 
     public List<FileDeletionOutboxRow> claimDeleteObjectEvents(int batchSize, String workerId) {
-        return jdbcTemplate.query(
-                """
+        return jdbcTemplate.query("""
                 WITH candidate AS (
                     SELECT id
                     FROM outbox_events
@@ -74,16 +73,11 @@ public class FileDeletionOutboxRepository {
                 FROM candidate
                 WHERE o.id = candidate.id
                 RETURNING o.id, o.event_id, o.payload::text, o.attempt_count, o.max_attempts
-                """,
-                (rs, _) -> mapRow(rs),
-                EVENT_TYPE,
-                batchSize,
-                workerId);
+                """, (rs, _) -> mapRow(rs), EVENT_TYPE, batchSize, workerId);
     }
 
     public int reclaimStaleLocks(Instant lockedBefore) {
-        return jdbcTemplate.update(
-                """
+        return jdbcTemplate.update("""
                 UPDATE outbox_events
                 SET status = 'FAILED_RETRYABLE',
                     locked_by = NULL,
@@ -93,14 +87,11 @@ public class FileDeletionOutboxRepository {
                 WHERE event_type = ?
                   AND status = 'IN_PROGRESS'
                   AND locked_at < ?
-                """,
-                EVENT_TYPE,
-                Timestamp.from(lockedBefore));
+                """, EVENT_TYPE, Timestamp.from(lockedBefore));
     }
 
     public void markDeleted(UUID id, String workerId) {
-        jdbcTemplate.update(
-                """
+        jdbcTemplate.update("""
                 UPDATE outbox_events
                 SET status = 'PUBLISHED',
                     locked_by = NULL,
@@ -112,10 +103,7 @@ public class FileDeletionOutboxRepository {
                   AND event_type = ?
                   AND status = 'IN_PROGRESS'
                   AND locked_by = ?
-                """,
-                id,
-                EVENT_TYPE,
-                workerId);
+                """, id, EVENT_TYPE, workerId);
     }
 
     public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {

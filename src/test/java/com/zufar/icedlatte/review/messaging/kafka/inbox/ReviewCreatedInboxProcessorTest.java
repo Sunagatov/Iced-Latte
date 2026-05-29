@@ -78,7 +78,7 @@ class ReviewCreatedInboxProcessorTest {
 
         processor.processPendingInboxEvents();
 
-        verify(inboxEventRepository).markIgnored(rowId, "test-inbox-worker");
+        verify(inboxEventRepository).markIgnored(rowId, "test-inbox-worker", "iced-latte-review-ai", "review.created");
     }
 
     @Test
@@ -96,7 +96,8 @@ class ReviewCreatedInboxProcessorTest {
 
         processor.processPendingInboxEvents();
 
-        verify(inboxEventRepository).markFailed(rowId, "test-inbox-worker", 2, 10, failure);
+        verify(inboxEventRepository)
+                .markFailed(rowId, "test-inbox-worker", "iced-latte-review-ai", "review.created", 2, 10, failure);
     }
 
     private ReviewCreatedKafkaEvent reviewCreatedEvent(UUID eventId, UUID reviewId) {

@@ -779,4 +779,3 @@ also validates the configured length and rejects values below the minimum secure
 size.
 
 Bad config now fails fast instead of creating weak tokens.
-

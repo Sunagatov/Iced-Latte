@@ -74,7 +74,7 @@ class InboxEventRepositoryTest {
         var repository = new InboxEventRepository(jdbcTemplate);
         IllegalStateException failure = new IllegalStateException("boom");
 
-        repository.markFailed(rowId, "worker-1", 2, 10, failure);
+        repository.markFailed(rowId, "worker-1", "iced-latte-review-ai", "review.created", 2, 10, failure);
 
         verify(jdbcTemplate)
                 .update(
@@ -84,6 +84,8 @@ class InboxEventRepositoryTest {
                         any(Timestamp.class),
                         eq("IllegalStateException: boom"),
                         eq(rowId),
+                        eq("iced-latte-review-ai"),
+                        eq("review.created"),
                         eq("worker-1"));
     }
 
@@ -94,7 +96,7 @@ class InboxEventRepositoryTest {
         var repository = new InboxEventRepository(jdbcTemplate);
         IllegalStateException failure = new IllegalStateException("boom");
 
-        repository.markFailed(rowId, "worker-1", 9, 10, failure);
+        repository.markFailed(rowId, "worker-1", "iced-latte-review-ai", "review.created", 9, 10, failure);
 
         verify(jdbcTemplate)
                 .update(
@@ -104,6 +106,8 @@ class InboxEventRepositoryTest {
                         isNull(),
                         eq("IllegalStateException: boom"),
                         eq(rowId),
+                        eq("iced-latte-review-ai"),
+                        eq("review.created"),
                         eq("worker-1"));
     }
 }

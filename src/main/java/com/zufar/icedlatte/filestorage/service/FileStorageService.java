@@ -77,8 +77,8 @@ public class FileStorageService implements FileStorageApi {
 
             int deletedRows = fileMetadataRepository.deleteByRelatedObjectId(relatedObjectId);
             if (deletedRows > 0) {
-                fileMetadataList.forEach(
-                        fileMetadataDto -> fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts));
+                fileMetadataList.forEach(fileMetadataDto ->
+                        fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts));
             }
             log.info("file.deleted: objectId={}", relatedObjectId);
         }

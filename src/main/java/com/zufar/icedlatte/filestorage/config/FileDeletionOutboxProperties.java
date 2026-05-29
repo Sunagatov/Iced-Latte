@@ -15,13 +15,19 @@ import org.springframework.validation.annotation.Validated;
 public record FileDeletionOutboxProperties(
         @DefaultValue("true") boolean enabled,
         @DefaultValue("true") boolean workerEnabled,
+
         @Min(value = 1, message = "file-storage.deletion-outbox.batch-size must be positive") @DefaultValue("25")
-                int batchSize,
+        int batchSize,
+
         @Min(value = 1, message = "file-storage.deletion-outbox.max-attempts must be positive") @DefaultValue("10")
-                int maxAttempts,
+        int maxAttempts,
+
         @NotNull(message = "file-storage.deletion-outbox.poll-interval must not be null") @DefaultValue("30s")
-                Duration pollInterval,
+        Duration pollInterval,
+
         @NotNull(message = "file-storage.deletion-outbox.stale-lock-timeout must not be null") @DefaultValue("5m")
-                Duration staleLockTimeout,
-        @NotBlank(message = "file-storage.deletion-outbox.worker-id must not be blank") @DefaultValue("iced-latte-file-deletion-worker")
-                String workerId) {}
+        Duration staleLockTimeout,
+
+        @NotBlank(message = "file-storage.deletion-outbox.worker-id must not be blank")
+        @DefaultValue("iced-latte-file-deletion-worker")
+        String workerId) {}

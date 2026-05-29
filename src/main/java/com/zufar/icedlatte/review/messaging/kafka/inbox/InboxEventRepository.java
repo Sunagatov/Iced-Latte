@@ -95,15 +95,22 @@ public class InboxEventRepository {
                         """, consumerName, eventType, Timestamp.from(lockedBefore));
     }
 
-    public void markProcessed(UUID id, String workerId) {
-        markTerminal(id, workerId, "PROCESSED");
+    public void markProcessed(UUID id, String workerId, String consumerName, String eventType) {
+        markTerminal(id, workerId, consumerName, eventType, "PROCESSED");
     }
 
-    public void markIgnored(UUID id, String workerId) {
-        markTerminal(id, workerId, "IGNORED");
+    public void markIgnored(UUID id, String workerId, String consumerName, String eventType) {
+        markTerminal(id, workerId, consumerName, eventType, "IGNORED");
     }
 
-    public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
+    public void markFailed(
+            UUID id,
+            String workerId,
+            String consumerName,
+            String eventType,
+            int attemptCount,
+            int maxAttempts,
+            Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
         String status = permanent ? "FAILED_PERMANENT" : "FAILED_RETRYABLE";
@@ -113,7 +120,8 @@ public class InboxEventRepository {
         } else {
             nextAttemptAt = Timestamp.from(Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS));
         }
-        jdbcTemplate.update("""
+        jdbcTemplate.update(
+                """
                         UPDATE inbox_events
                         SET status = ?,
                             attempt_count = ?,
@@ -124,11 +132,21 @@ public class InboxEventRepository {
                             updated_at = now()
                         WHERE id = ?
                           AND status = 'IN_PROGRESS'
+                          AND consumer_name = ?
+                          AND event_type = ?
                           AND locked_by = ?
-                        """, status, nextAttemptCount, nextAttemptAt, sanitizedError(failure), id, workerId);
+                        """,
+                status,
+                nextAttemptCount,
+                nextAttemptAt,
+                sanitizedError(failure),
+                id,
+                consumerName,
+                eventType,
+                workerId);
     }
 
-    private void markTerminal(UUID id, String workerId, String status) {
+    private void markTerminal(UUID id, String workerId, String consumerName, String eventType, String status) {
         jdbcTemplate.update("""
                         UPDATE inbox_events
                         SET status = ?,
@@ -139,8 +157,10 @@ public class InboxEventRepository {
                             updated_at = now()
                         WHERE id = ?
                           AND status = 'IN_PROGRESS'
+                          AND consumer_name = ?
+                          AND event_type = ?
                           AND locked_by = ?
-                        """, status, id, workerId);
+                        """, status, id, consumerName, eventType, workerId);
     }
 
     private long backoffSeconds(int attemptCount) {
