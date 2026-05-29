@@ -31,6 +31,10 @@ public class FileDeletionOutboxWorker {
         if (!properties.enabled() || !properties.workerEnabled()) {
             return;
         }
+        if (!objectStorage.isConfigured()) {
+            log.warn("file.deletion_outbox.skipped: reason=object_storage_not_configured");
+            return;
+        }
 
         int reclaimed = outboxRepository.reclaimStaleLocks(Instant.now().minus(properties.staleLockTimeout()));
         if (reclaimed > 0) {

@@ -49,6 +49,7 @@ class FileDeletionOutboxWorkerTest {
                 objectMapper.writeValueAsString(new FileObjectDeletionPayload(relatedObjectId, "bucket", "key")),
                 0,
                 10);
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(outboxRepository.claimDeleteObjectEvents(25, WORKER_ID)).thenReturn(List.of(row));
 
         new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
@@ -71,6 +72,7 @@ class FileDeletionOutboxWorkerTest {
                 2,
                 10);
         RuntimeException failure = new IllegalStateException("storage unavailable");
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(outboxRepository.claimDeleteObjectEvents(25, WORKER_ID)).thenReturn(List.of(row));
         org.mockito.Mockito.doThrow(failure)
                 .when(objectStorage)
@@ -89,6 +91,17 @@ class FileDeletionOutboxWorkerTest {
         new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
 
         verifyNoInteractions(outboxRepository, objectStorage);
+    }
+
+    @Test
+    @DisplayName("does not claim rows when object storage is not configured")
+    void doesNotClaimRowsWhenObjectStorageIsNotConfigured() {
+        FileDeletionOutboxProperties properties = properties(true, true);
+        when(objectStorage.isConfigured()).thenReturn(false);
+
+        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
+
+        verifyNoInteractions(outboxRepository);
     }
 
     private static FileDeletionOutboxProperties properties(boolean enabled, boolean workerEnabled) {
