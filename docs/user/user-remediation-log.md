@@ -2343,7 +2343,7 @@ guessing becomes harder.
 The login flow used the email from the request directly when it authenticated
 and when it recorded a failed attempt:
 
-```java
+```text
 String userEmail = request.getEmail();
 
 authenticationManager.authenticate(
@@ -2357,7 +2357,7 @@ That meant these inputs could be treated differently:
 ```text
 alice@example.com
 Alice@Example.COM
- alice@example.com 
+" alice@example.com "
 ```
 
 ### Why That Was a Bug
@@ -2377,7 +2377,7 @@ attacker typed, not against the real normalized account identity.
 ```text
 Attempt 1: alice@example.com
 Attempt 2: Alice@Example.COM
-Attempt 3:  alice@example.com 
+Attempt 3: " alice@example.com "
 ```
 
 Before the fix, those could be counted as separate values instead of one
@@ -2387,21 +2387,21 @@ account.
 
 `UserAuthenticationService` now normalizes the request email once at the start:
 
-```java
+```text
 String userEmail = EmailNormalizer.normalize(request.getEmail());
 ```
 
 The normalized email is then used for authentication and failed-attempt
 tracking:
 
-```java
+```text
 UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword())
 loginAttemptService.recordFailure(userEmail);
 ```
 
 `CustomUserDetailsService` also normalizes before user lookup:
 
-```java
+```text
 String normalizedEmail = EmailNormalizer.normalize(email);
 userLookupApi.findUserAuthenticationByEmail(normalizedEmail);
 ```
@@ -2420,7 +2420,7 @@ whether that user exists and then sends a reset token.
 The password reset service looked up the user with the raw email string from the
 request:
 
-```java
+```text
 userLookupApi.findUserByEmail(email);
 emailVerificationService.sendPasswordResetCode(email);
 ```
@@ -2461,14 +2461,14 @@ That exact lookup may not find the existing account.
 
 `PasswordResetService` now normalizes first:
 
-```java
+```text
 String normalizedEmail = EmailNormalizer.normalize(email);
 ```
 
 Then it uses that same normalized value for both the lookup and reset email
 flow:
 
-```java
+```text
 userLookupApi.findUserByEmail(normalizedEmail);
 emailVerificationService.sendPasswordResetCode(normalizedEmail);
 ```
@@ -2495,7 +2495,7 @@ The backend detects replay and revokes related sessions.
 Refresh-token rotation already used a database row lock, but some revocation
 paths still used plain reads:
 
-```java
+```text
 sessionRepository.findByRefreshTokenHash(refreshTokenHash)
 sessionRepository.findById(sessionId)
 ```
@@ -2530,13 +2530,13 @@ Whichever saves last decides the final state.
 
 Revocation by refresh-token hash now uses the locked repository method:
 
-```java
+```text
 sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash)
 ```
 
 Revocation by session id now also locks the row:
 
-```java
+```text
 sessionRepository.findByIdForUpdate(sessionId)
 ```
 

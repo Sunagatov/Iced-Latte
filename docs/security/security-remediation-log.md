@@ -1107,3 +1107,292 @@ email:token:password_reset:<sha-256-token-hash>
 When the user submits the real token, the backend hashes the submitted token and
 looks up the hashed key. That keeps the same user experience while avoiding raw
 reset or verification tokens in cache keys.
+
+## 18. JWT Access and Refresh Tokens Did Not Carry an Explicit Purpose
+
+### What This Feature Is For
+
+The application uses two JWT types:
+
+```text
+access token:
+  short-lived token used to call normal API endpoints
+
+refresh token:
+  longer-lived token used only to get a new access/refresh token pair
+```
+
+Even when those tokens use different signing keys, the token itself should still
+say what kind of token it is.
+
+### How the Old System Behaved
+
+Access tokens and refresh tokens were issued with normal JWT claims, but not
+with an explicit purpose claim:
+
+```java
+claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+```
+
+Refresh tokens had a version claim:
+
+```java
+claims.put(JwtClaimNames.VERSION, 2);
+```
+
+But `ver = 2` only described the refresh-token format version. It did not mean
+"this token is allowed only in the refresh flow."
+
+The parser checked signature, issuer, and audience, but did not require:
+
+```text
+purpose = access
+purpose = refresh
+```
+
+### Why That Was a Bug
+
+The access-token parser should only accept access tokens. The refresh-token
+parser should only accept refresh tokens.
+
+Before the fix, that separation mainly depended on using different signing keys.
+That is good, but it is not defensive enough. If the access-token secret and
+refresh-token secret were ever accidentally configured to the same value, a
+longer-lived refresh token could be accepted where an access token was expected.
+
+In beginner terms: the tokens had different keys, but they did not carry a clear
+label saying "I am an access token" or "I am a refresh token."
+
+### Simple Example
+
+```text
+Access-token parser:
+  should accept only purpose=access
+
+Refresh-token parser:
+  should accept only purpose=refresh
+```
+
+Before the fix, the parser could not check that label because the label did not
+exist.
+
+### What the Fix Changed
+
+JWT claim names now include explicit purpose constants:
+
+```java
+public static final String TOKEN_PURPOSE = "purpose";
+public static final String ACCESS_TOKEN_PURPOSE = "access";
+public static final String REFRESH_TOKEN_PURPOSE = "refresh";
+```
+
+Access-token generation writes:
+
+```java
+claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE);
+```
+
+Refresh-token generation writes:
+
+```java
+claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE);
+```
+
+The access-token parser now requires:
+
+```java
+require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)
+```
+
+The refresh-token parser now requires:
+
+```java
+require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
+```
+
+Startup validation also rejects identical access and refresh signing keys.
+
+## 19. Login Lockout Used Raw Email Input Before Normalization
+
+### What This Feature Is For
+
+Login lockout counts failed password attempts for a user email address. After
+too many failures, the account can be temporarily locked.
+
+### How the Old System Behaved
+
+The login service used the request email directly:
+
+```java
+String userEmail = request.getEmail();
+
+authenticationManager.authenticate(
+        UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword()));
+
+loginAttemptService.recordFailure(userEmail);
+```
+
+The same real email could arrive in different textual forms:
+
+```text
+alice@example.com
+Alice@Example.COM
+" alice@example.com "
+```
+
+### Why That Was a Bug
+
+Lockout must count attempts against the real account identity, not against the
+exact string the attacker typed.
+
+If raw email input is used, failed attempts can be split across multiple casing
+or spacing variants. That can weaken lockout during burst attacks.
+
+### Simple Example
+
+```text
+Failed attempt 1: alice@example.com
+Failed attempt 2: Alice@Example.COM
+Failed attempt 3: " alice@example.com "
+```
+
+Before the fix, those could be counted separately instead of being counted
+against one normalized account.
+
+### What the Fix Changed
+
+`UserAuthenticationService` now normalizes the email once:
+
+```java
+String userEmail = EmailNormalizer.normalize(request.getEmail());
+```
+
+That normalized value is used for authentication and failed-attempt tracking:
+
+```java
+UsernamePasswordAuthenticationToken.unauthenticated(userEmail, request.getPassword())
+loginAttemptService.recordFailure(userEmail);
+```
+
+`CustomUserDetailsService` also normalizes email before user lookup.
+
+## 20. Password Reset Lookup Used Raw Email Input
+
+### What This Feature Is For
+
+Password reset starts when a user enters an email address. The backend looks up
+that account and sends a temporary reset token.
+
+### How the Old System Behaved
+
+The reset service used the raw email string for lookup and reset-token sending:
+
+```java
+userLookupApi.findUserByEmail(email);
+emailVerificationService.sendPasswordResetCode(email);
+```
+
+### Why That Was a Bug
+
+The user lookup is exact-match at the repository layer. If the stored email is
+normalized, then casing or surrounding spaces in the request can make a real
+account look missing.
+
+In beginner terms: the user typed the right email, but the backend compared the
+wrong string.
+
+### Simple Example
+
+```text
+Stored account email:
+  alice@example.com
+
+Reset request:
+  Alice@Example.COM
+
+Old lookup:
+  find exactly "Alice@Example.COM"
+```
+
+That can fail even though the account exists.
+
+### What the Fix Changed
+
+`PasswordResetService` now normalizes first:
+
+```java
+String normalizedEmail = EmailNormalizer.normalize(email);
+```
+
+Then it uses the normalized value for both actions:
+
+```java
+userLookupApi.findUserByEmail(normalizedEmail);
+emailVerificationService.sendPasswordResetCode(normalizedEmail);
+```
+
+So password reset now follows the same email identity rule as login and user
+lookup.
+
+## 21. Session Revocation Paths Were Still Race-Prone
+
+### What This Feature Is For
+
+Session revocation stops a refresh session from being used again.
+
+It happens during flows such as:
+
+- logout
+- single-session revoke
+- refresh-token replay cleanup
+
+### How the Old System Behaved
+
+Refresh-token rotation used pessimistic locks, but revocation paths still used
+plain reads:
+
+```java
+sessionRepository.findByRefreshTokenHash(refreshTokenHash)
+sessionRepository.findById(sessionId)
+```
+
+Then the service changed the session row.
+
+### Why That Was a Bug
+
+Plain reads do not coordinate with another transaction changing the same session
+row. A refresh request and a logout/revoke request could both read the same
+session as active and then save competing changes.
+
+That is the same kind of last-write-wins race that refresh-token rotation had
+already fixed.
+
+### Simple Example
+
+```text
+Request A refreshes the token.
+Request B logs out the same session.
+
+Both read the active session.
+Both change it.
+The last save wins.
+```
+
+### What the Fix Changed
+
+Revocation by refresh-token hash now uses:
+
+```java
+sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash)
+```
+
+Revocation by session id now uses:
+
+```java
+sessionRepository.findByIdForUpdate(sessionId)
+```
+
+Replay cleanup also uses the locked id lookup.
+
+Now all important session mutation paths acquire the row lock before changing
+the session.
