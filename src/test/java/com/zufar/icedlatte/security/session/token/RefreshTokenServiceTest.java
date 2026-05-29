@@ -23,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
@@ -49,6 +50,9 @@ class RefreshTokenServiceTest {
 
     @Mock
     private SessionTokenService sessionTokenService;
+
+    @Mock
+    private JwtAccountStatusValidator jwtAccountStatusValidator;
 
     @Mock
     private HttpServletRequest request;
@@ -85,6 +89,7 @@ class RefreshTokenServiceTest {
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isSameAs(responseBody);
+            verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
         }
 
@@ -111,7 +116,33 @@ class RefreshTokenServiceTest {
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isSameAs(responseBody);
+            verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
+        }
+
+        @Test
+        @DisplayName("rejects managed refresh when loaded user account is inactive")
+        void rejectsManagedRefreshWhenLoadedUserAccountIsInactive() {
+            String rawToken = "raw-refresh-token";
+            String oldHash = "old-hash";
+            String email = "locked@example.com";
+            var user = user(email);
+            AuthSessionEntity session = AuthSessionEntity.builder()
+                    .id(UUID.randomUUID())
+                    .userId(UUID.randomUUID())
+                    .build();
+            JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("User account is not active");
+
+            when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
+            when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
+            when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
+            when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
+            when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
+            doThrow(failure).when(jwtAccountStatusValidator).requireActive(user);
+
+            assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
+
+            verifyNoInteractions(sessionTokenService);
         }
 
         @Test
@@ -140,6 +171,10 @@ class RefreshTokenServiceTest {
                 .id(java.util.UUID.randomUUID())
                 .email(email)
                 .password("secret")
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .enabled(true)
                 .build();
     }
 

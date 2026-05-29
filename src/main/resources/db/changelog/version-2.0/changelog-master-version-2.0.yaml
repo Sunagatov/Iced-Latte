@@ -37,6 +37,8 @@ databaseChangeLog:
       file: db/changelog/version-2.0/add-file-metadata-related-object-id-index.sql
   - include:
       file: db/changelog/version-2.0/expand-profile-address-columns.sql
+  - include:
+      file: db/changelog/version-2.0/remove-user-address-delete-cascade.sql
 
   # ========== ORDER MODULE ENHANCEMENTS ==========
   - include:

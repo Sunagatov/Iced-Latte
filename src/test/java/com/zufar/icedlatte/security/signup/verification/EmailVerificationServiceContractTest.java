@@ -35,7 +35,7 @@ class EmailVerificationServiceContractTest {
                 mock(UserLookupApi.class),
                 mock(UserAccessControlApi.class));
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 5);
-        ReflectionTestUtils.setField(service, "tokenLength", 9);
+        ReflectionTestUtils.setField(service, "tokenLength", 43);
     }
 
     @Test

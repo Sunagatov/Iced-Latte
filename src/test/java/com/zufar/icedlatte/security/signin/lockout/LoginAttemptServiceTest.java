@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -170,8 +171,9 @@ class LoginAttemptServiceTest {
 
         service.unlockExpiredAccounts();
 
-        verify(loginAttemptRepository).resetLockedAccounts();
-        verify(userAccessControlApi).unlockExpiredAccounts();
+        InOrder inOrder = inOrder(userAccessControlApi, loginAttemptRepository);
+        inOrder.verify(userAccessControlApi).unlockExpiredAccounts();
+        inOrder.verify(loginAttemptRepository).resetLockedAccounts();
         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }
 
@@ -183,6 +185,7 @@ class LoginAttemptServiceTest {
 
         assertThatThrownBy(service::unlockExpiredAccounts).isSameAs(exception);
 
+        verify(userAccessControlApi).unlockExpiredAccounts();
         verify(loginAttemptRepository).resetLockedAccounts();
         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }

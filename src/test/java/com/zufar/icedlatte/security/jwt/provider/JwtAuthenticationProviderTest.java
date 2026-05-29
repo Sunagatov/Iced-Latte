@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 
@@ -36,11 +38,18 @@ class JwtAuthenticationProviderTest {
     @Mock
     private JwtTokenBlacklist jwtTokenBlacklist;
 
+    @Mock
+    private JwtAccountStatusValidator jwtAccountStatusValidator;
+
     @Test
     @DisplayName("successfully authenticates user and attaches request details")
     void successfullyAuthenticatesUserAndAttachesRequestDetails() {
         JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
-                jwtBearerTokenResolver, jwtTokenClaims, userDetailsService, jwtTokenBlacklist);
+                jwtBearerTokenResolver,
+                jwtTokenClaims,
+                userDetailsService,
+                jwtTokenBlacklist,
+                jwtAccountStatusValidator);
         MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         httpRequest.setRemoteAddr("203.0.113.10");
         UserDetails userDetails = new User("test@example.com", "password", Collections.emptyList());
@@ -60,6 +69,37 @@ class JwtAuthenticationProviderTest {
         verify(jwtTokenBlacklist).validateNotBlacklisted(jwtToken);
         verify(jwtTokenClaims).extractAccessTokenEmail(jwtToken);
         verify(userDetailsService).loadUserByUsername(userEmail);
-        verifyNoMoreInteractions(jwtBearerTokenResolver, jwtTokenBlacklist, jwtTokenClaims, userDetailsService);
+        verify(jwtAccountStatusValidator).requireActive(userDetails);
+        verifyNoMoreInteractions(
+                jwtBearerTokenResolver,
+                jwtTokenBlacklist,
+                jwtTokenClaims,
+                userDetailsService,
+                jwtAccountStatusValidator);
+    }
+
+    @Test
+    @DisplayName("rejects access token when loaded user account is inactive")
+    void rejectsAccessTokenWhenLoadedUserAccountIsInactive() {
+        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
+                jwtBearerTokenResolver,
+                jwtTokenClaims,
+                userDetailsService,
+                jwtTokenBlacklist,
+                jwtAccountStatusValidator);
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        UserDetails userDetails = new User("locked@example.com", "password", Collections.emptyList());
+        String jwtToken = "mockJwtToken";
+        String userEmail = "locked@example.com";
+        JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("User account is not active");
+
+        when(jwtBearerTokenResolver.extract(httpRequest)).thenReturn(jwtToken);
+        when(jwtTokenClaims.extractAccessTokenEmail(jwtToken)).thenReturn(userEmail);
+        when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
+        doThrow(failure).when(jwtAccountStatusValidator).requireActive(userDetails);
+
+        assertThatThrownBy(() -> jwtAuthenticationProvider.get(httpRequest)).isSameAs(failure);
+
+        verify(jwtAccountStatusValidator).requireActive(userDetails);
     }
 }

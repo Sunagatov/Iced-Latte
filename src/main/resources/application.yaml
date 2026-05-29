@@ -213,8 +213,8 @@ spring:
 # Email feature flag & verification settings (SMTP config is above under spring.mail).
 email:
   enabled: ${EMAIL_ENABLED:false}
-  # Length of the numeric code sent to the user's email for verification.
-  verification-token-length: 9
+  # Length of the URL-safe opaque token sent to the user's email for verification.
+  verification-token-length: 43
 
 # Short-lived in-memory store for email verification tokens.
 temporary-cache:

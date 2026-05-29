@@ -34,6 +34,13 @@ public class Address implements Serializable {
     @Column(name = "postcode", nullable = false, length = 128)
     private String postcode;
 
+    public void update(String country, String city, String line, String postcode) {
+        this.country = country;
+        this.city = city;
+        this.line = line;
+        this.postcode = postcode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -54,12 +54,13 @@ public class LoginAttemptService {
         });
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void unlockExpiredAccounts() {
         log.debug("scheduler.unlock.start");
 
+        userAccessControlApi.unlockExpiredAccounts();
         int released = loginAttemptRepository.resetLockedAccounts();
         log.debug("scheduler.unlock.released: count={}", released);
-        userAccessControlApi.unlockExpiredAccounts();
 
         log.debug("scheduler.unlock.finish");
     }

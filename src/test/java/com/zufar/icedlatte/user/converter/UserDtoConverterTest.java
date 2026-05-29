@@ -13,7 +13,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.zufar.icedlatte.openapi.dto.AddressDto;
+import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
+import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.stub.UserDtoTestStub;
 
@@ -54,5 +57,38 @@ class UserDtoConverterTest {
         assertEquals(entity.getAddress().getLine(), dto.getAddress().getLine());
         assertEquals(entity.getAddress().getCity(), dto.getAddress().getCity());
         assertEquals(entity.getAddress().getCountry(), dto.getAddress().getCountry());
+    }
+
+    @Test
+    @DisplayName("updateEntity should update existing address instead of replacing it")
+    void updateEntityShouldUpdateExistingAddressInsteadOfReplacingIt() {
+        Address existingAddress = Address.builder()
+                .country("United Kingdom")
+                .city("London")
+                .line("221B Baker Street")
+                .postcode("NW1 6XE")
+                .build();
+        UserEntity entity = UserEntity.builder()
+                .firstName("Old")
+                .lastName("Name")
+                .address(existingAddress)
+                .build();
+        AddressDto newAddress = new AddressDto();
+        newAddress.setCountry("France");
+        newAddress.setCity("Paris");
+        newAddress.setLine("10 Rue de Rivoli");
+        newAddress.setPostcode("75001");
+        UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+        request.setFirstName("New");
+        request.setLastName("Name");
+        request.setAddress(newAddress);
+
+        userDtoConverter.updateEntity(entity, request);
+
+        assertEquals(existingAddress, entity.getAddress());
+        assertEquals("France", existingAddress.getCountry());
+        assertEquals("Paris", existingAddress.getCity());
+        assertEquals("10 Rue de Rivoli", existingAddress.getLine());
+        assertEquals("75001", existingAddress.getPostcode());
     }
 }

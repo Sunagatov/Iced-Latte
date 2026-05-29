@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
@@ -30,6 +31,7 @@ public class RefreshTokenService {
     private final UserDetailsService userDetailsService;
     private final AuthSessionService authSessionService;
     private final SessionTokenService sessionTokenService;
+    private final JwtAccountStatusValidator jwtAccountStatusValidator;
 
     @Transactional
     public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(
@@ -51,6 +53,7 @@ public class RefreshTokenService {
             log.warn("auth.token.refresh_legacy_migrate: reason=token_invalidated");
             String userEmail = extractRefreshTokenEmail(rawToken);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            jwtAccountStatusValidator.requireActive(userDetails);
             var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);
             log.info("auth.token.refresh_legacy_migrated");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -58,6 +61,7 @@ public class RefreshTokenService {
 
         String userEmail = extractRefreshTokenEmail(rawToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        jwtAccountStatusValidator.requireActive(userDetails);
         var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
         log.debug("auth.token.refreshed");
         return ResponseEntity.ok(response);

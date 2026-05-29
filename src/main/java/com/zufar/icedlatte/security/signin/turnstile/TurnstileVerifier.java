@@ -1,10 +1,9 @@
 package com.zufar.icedlatte.security.signin.turnstile;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+import java.time.Duration;
+
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -13,7 +12,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
-import java.time.Duration;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Verifies Cloudflare Turnstile tokens via the siteverify API. Disabled (no-op) when {@code turnstile.secret-key} is

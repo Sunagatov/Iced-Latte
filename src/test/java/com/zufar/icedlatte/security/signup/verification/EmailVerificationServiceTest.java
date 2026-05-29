@@ -67,7 +67,7 @@ class EmailVerificationServiceTest {
                 userLookupApi,
                 userAccessControlApi);
         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
-        ReflectionTestUtils.setField(service, "tokenLength", 9);
+        ReflectionTestUtils.setField(service, "tokenLength", 43);
     }
 
     @Nested
@@ -84,7 +84,7 @@ class EmailVerificationServiceTest {
 
             verify(userRegistrationService).ensureEmailAvailable(request);
             verify(emailConfirmation)
-                    .sendTemporaryCode(eq("john@example.com"), argThat(token -> token.matches("\\d{9}")));
+                    .sendTemporaryCode(eq("john@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
         }
 
         @Test
@@ -113,7 +113,7 @@ class EmailVerificationServiceTest {
             service.sendPasswordResetCode("user@example.com");
 
             verify(emailConfirmation)
-                    .sendTemporaryCode(eq("user@example.com"), argThat(token -> token.matches("\\d{9}")));
+                    .sendTemporaryCode(eq("user@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
         }
     }
 
@@ -160,14 +160,14 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken returns a 9 digit token")
-    void generateTokenReturnsNineDigitToken() {
+    @DisplayName("generateToken returns an opaque URL-safe token")
+    void generateTokenReturnsOpaqueUrlSafeToken() {
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
 
         String token = service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
 
-        assertThat(token).hasSize(9).matches("\\d{9}");
+        assertThat(token).hasSize(43).matches("[A-Za-z0-9_-]{43}");
     }
 
     @Test
@@ -233,7 +233,11 @@ class EmailVerificationServiceTest {
                 userLookupApi,
                 userAccessControlApi);
         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
-        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 9);
+        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
         return serviceWithMockStore;
+    }
+
+    private static boolean isOpaqueToken(String token) {
+        return token != null && token.matches("[A-Za-z0-9_-]{43}");
     }
 }

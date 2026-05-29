@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.signup.verification;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.Locale;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +34,7 @@ public class EmailVerificationService {
     private static final String TOKEN_KEY_PREFIX = "email:token:";
     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
     private static final int MAX_TOKEN_GENERATION_ATTEMPTS = 5;
+    private static final int MIN_TOKEN_LENGTH = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ExpiringKeyValueStore temporaryStore;
@@ -134,13 +136,29 @@ public class EmailVerificationService {
     }
 
     private String nextToken() {
-        return String.format("%0" + tokenLength + "d", RANDOM.nextInt((int) Math.pow(10, tokenLength)));
+        validateConfiguredTokenLength();
+        byte[] randomBytes = new byte[(int) Math.ceil(tokenLength * 6 / 8.0)];
+        RANDOM.nextBytes(randomBytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        return token.length() > tokenLength ? token.substring(0, tokenLength) : token;
     }
 
     private void validateTokenFormat(String token) {
-        if (token == null || token.length() != tokenLength || !token.chars().allMatch(Character::isDigit)) {
-            throw new BadRequestException("Incorrect token format, token must be " + "#".repeat(tokenLength));
+        validateConfiguredTokenLength();
+        if (token == null || token.length() != tokenLength || !token.chars().allMatch(this::isUrlSafeTokenChar)) {
+            throw new BadRequestException("Incorrect token format");
         }
+    }
+
+    private void validateConfiguredTokenLength() {
+        if (tokenLength < MIN_TOKEN_LENGTH) {
+            throw new IllegalStateException(
+                    "email.verification-token-length must be at least " + MIN_TOKEN_LENGTH + ", got: " + tokenLength);
+        }
+    }
+
+    private boolean isUrlSafeTokenChar(int value) {
+        return Character.isLetterOrDigit(value) || value == '-' || value == '_';
     }
 
     private Duration tokenTtl() {
