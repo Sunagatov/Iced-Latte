@@ -7,6 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -144,6 +149,46 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
     }
 
     @Test
+    @DisplayName("Should create exactly one default address when first addresses are created concurrently")
+    void shouldCreateExactlyOneDefaultAddressForConcurrentFirstAddressRequests() throws Exception {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        CountDownLatch startGate = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<Response> homeFuture = executor.submit(() -> createAddressWhenReleased(
+                    startGate, user.accessToken(), addressBody("Home", "1 Thread Lane", "London", "SE1 1AA")));
+            Future<Response> officeFuture = executor.submit(() -> createAddressWhenReleased(
+                    startGate, user.accessToken(), addressBody("Office", "2 Thread Lane", "London", "SE1 2AA")));
+
+            startGate.countDown();
+
+            Response homeResponse = homeFuture.get(10, TimeUnit.SECONDS);
+            Response officeResponse = officeFuture.get(10, TimeUnit.SECONDS);
+
+            homeResponse.then().statusCode(HttpStatus.CREATED.value());
+            officeResponse.then().statusCode(HttpStatus.CREATED.value());
+
+            List<Map<String, Object>> addresses = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                    .get()
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .extract()
+                    .body()
+                    .as(new TypeRef<>() {});
+
+            long defaultCount = addresses.stream()
+                    .filter(address -> Boolean.TRUE.equals(address.get("isDefault")))
+                    .count();
+
+            assertEquals(2, addresses.size());
+            assertEquals(1, defaultCount);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     @DisplayName("Should update and then delete delivery address")
     void shouldUpdateAndThenDeleteDeliveryAddress() {
         AuthenticatedUser user = registerAndAuthenticateUser();
@@ -180,6 +225,12 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
                 .as(new TypeRef<>() {});
 
         assertTrue(remainingAddresses.stream().noneMatch(address -> addressId.equals(address.get("id"))));
+    }
+
+    private Response createAddressWhenReleased(CountDownLatch startGate, String accessToken, String body)
+            throws InterruptedException {
+        startGate.await();
+        return given(authenticatedJsonSpec(BASE_PATH, accessToken)).body(body).post();
     }
 
     private String addressBody(String label, String line, String city, String postcode) {

@@ -181,7 +181,8 @@ class AuthSessionServiceTest {
                 .userId(UUID.randomUUID())
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("oldHash")).thenReturn(Optional.of(compromised));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("oldHash")).thenReturn(Optional.empty());
+        when(sessionRepository.findByPreviousTokenHashForUpdate("oldHash")).thenReturn(Optional.of(compromised));
 
         assertThatThrownBy(() -> service.findActiveByHash("oldHash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -197,7 +198,8 @@ class AuthSessionServiceTest {
                 .compromised(true)
                 .revokedAt(OffsetDateTime.now().minusMinutes(5))
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("oldHash")).thenReturn(Optional.of(compromised));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("oldHash")).thenReturn(Optional.empty());
+        when(sessionRepository.findByPreviousTokenHashForUpdate("oldHash")).thenReturn(Optional.of(compromised));
 
         assertThatThrownBy(() -> service.findActiveByHash("oldHash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -210,8 +212,8 @@ class AuthSessionServiceTest {
     @Test
     @DisplayName("findActiveByHash throws when session not found")
     void findActiveByHashThrowsWhenNotFound() {
-        when(sessionRepository.findByPreviousTokenHash("hash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.empty());
+        when(sessionRepository.findByPreviousTokenHashForUpdate("hash")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findActiveByHash("hash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -228,8 +230,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("hash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(revoked));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.of(revoked));
 
         assertThatThrownBy(() -> service.findActiveByHash("hash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -247,8 +248,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("hash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(revoked));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.of(revoked));
 
         assertThatThrownBy(() -> service.findActiveByHash("hash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -268,8 +268,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().minusHours(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("hash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(expired));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.of(expired));
 
         assertThatThrownBy(() -> service.findActiveByHash("hash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
@@ -285,8 +284,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("hash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("hash")).thenReturn(Optional.of(active));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("hash")).thenReturn(Optional.of(active));
 
         assertThat(service.findActiveByHash("hash")).isEqualTo(active);
     }
@@ -301,8 +299,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByPreviousTokenHash("oldHash")).thenReturn(Optional.empty());
-        when(sessionRepository.findByRefreshTokenHash("oldHash")).thenReturn(Optional.of(active));
+        when(sessionRepository.findByRefreshTokenHashForUpdate("oldHash")).thenReturn(Optional.of(active));
 
         service.rotateSession("oldHash", "newHash");
 

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.DeliveryAddressDto;
@@ -105,7 +104,7 @@ class DeliveryAddressServiceTest {
         DeliveryAddressEntity entity = new DeliveryAddressEntity();
         DeliveryAddressDto dto = new DeliveryAddressDto();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
         when(converter.toEntity(request)).thenReturn(entity);
         when(addressRepository.existsByUserId(userId)).thenReturn(false);
         when(addressRepository.save(entity)).thenReturn(entity);
@@ -115,7 +114,7 @@ class DeliveryAddressServiceTest {
         assertThat(entity.isDefault()).isTrue();
         assertThat(entity.getUser()).isSameAs(user);
         var inOrder = inOrder(userRepository, addressRepository, converter);
-        inOrder.verify(userRepository).findById(userId);
+        inOrder.verify(userRepository).findByIdForUpdate(userId);
         inOrder.verify(addressRepository).existsByUserId(userId);
         inOrder.verify(converter).toEntity(request);
         inOrder.verify(addressRepository).save(entity);
@@ -130,7 +129,7 @@ class DeliveryAddressServiceTest {
         DeliveryAddressRequest request = new DeliveryAddressRequest();
         DeliveryAddressEntity entity = new DeliveryAddressEntity();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
         when(converter.toEntity(request)).thenReturn(entity);
         when(addressRepository.existsByUserId(userId)).thenReturn(true);
         when(addressRepository.save(entity)).thenReturn(entity);
@@ -145,32 +144,33 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
-    @DisplayName("create retries as non-default when concurrent first-default insert wins")
-    void create_concurrentDefaultConflict_retriesAsNonDefault() {
+    @DisplayName("create checks existing addresses after locking user row")
+    void create_locksUserBeforeCheckingExistingAddresses() {
         UUID userId = UUID.randomUUID();
         UserEntity user = new UserEntity();
         DeliveryAddressRequest request = new DeliveryAddressRequest();
         DeliveryAddressEntity entity = new DeliveryAddressEntity();
         DeliveryAddressDto dto = new DeliveryAddressDto();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
         when(converter.toEntity(request)).thenReturn(entity);
         when(addressRepository.existsByUserId(userId)).thenReturn(false);
-        when(addressRepository.save(entity))
-                .thenThrow(new DataIntegrityViolationException("duplicate default"))
-                .thenReturn(entity);
+        when(addressRepository.save(entity)).thenReturn(entity);
         when(converter.toDto(entity)).thenReturn(dto);
 
         assertThat(service.create(userId, request)).isEqualTo(dto);
-        assertThat(entity.isDefault()).isFalse();
-        verify(addressRepository, times(2)).save(entity);
+        assertThat(entity.isDefault()).isTrue();
+        var inOrder = inOrder(userRepository, addressRepository);
+        inOrder.verify(userRepository).findByIdForUpdate(userId);
+        inOrder.verify(addressRepository).existsByUserId(userId);
+        verify(addressRepository).save(entity);
     }
 
     @Test
     @DisplayName("create throws UserNotFoundException when user does not exist")
     void create_userNotFound_throws() {
         UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(userId, new DeliveryAddressRequest()))
                 .isInstanceOf(UserNotFoundException.class);

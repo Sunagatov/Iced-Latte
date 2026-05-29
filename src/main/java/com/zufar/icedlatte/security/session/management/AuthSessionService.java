@@ -1,15 +1,5 @@
 package com.zufar.icedlatte.security.session.management;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.SessionInfo;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
@@ -18,9 +8,17 @@ import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.repository.AuthSessionRepository;
 import com.zufar.icedlatte.security.signin.exception.SessionNotFoundException;
 import com.zufar.icedlatte.security.signin.exception.SessionOwnershipException;
-
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -109,11 +107,15 @@ public class AuthSessionService {
 
     @Transactional
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
-        sessionRepository.findByPreviousTokenHash(refreshTokenHash).ifPresent(this::handleReplayAttempt);
+        Optional<AuthSessionEntity> currentSession =
+                sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash);
+        if (currentSession.isEmpty()) {
+            sessionRepository.findByPreviousTokenHashForUpdate(refreshTokenHash)
+                    .ifPresent(this::handleReplayAttempt);
+        }
 
-        AuthSessionEntity session = sessionRepository
-                .findByRefreshTokenHash(refreshTokenHash)
-                .orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
+        AuthSessionEntity session =
+                currentSession.orElseThrow(() -> new JwtTokenBlacklistedException("Refresh token not found"));
         if (!isActiveSession(session)) {
             handleRevokedOrCompromisedSession(session);
         }

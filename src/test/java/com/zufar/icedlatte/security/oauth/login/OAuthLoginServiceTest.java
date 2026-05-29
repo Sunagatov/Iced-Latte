@@ -141,13 +141,14 @@ class OAuthLoginServiceTest {
     }
 
     @Test
-    void createsNewUserWhenUnverifiedProviderEmailDoesNotExistLocally() {
+    void rejectsCreatingNewUserWhenProviderEmailIsUnverified() {
         stubProfile(GOOGLE_SUBJECT, NEW_EMAIL, false, "New", "User");
-        stubNoIdentity();
-        stubNoUser();
-        stubNewUserSave();
-        handle();
-        verify(userRegistrationApi).registerOAuthUser(any(), any(), any(), any());
+
+        assertThatThrownBy(this::handle)
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("google account email is not verified.");
+
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test
@@ -203,12 +204,12 @@ class OAuthLoginServiceTest {
     @Test
     void rejectsLinkingWhenUnverifiedProviderEmailExistsLocally() {
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, false, "New", "User");
-        stubNoIdentity();
-        stubUser(activeUser());
 
         assertThatThrownBy(this::handle)
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("google account email is not verified.");
+
+        verifyNoInteractions(oAuthIdentityRepository, userAuthenticationApi, userRegistrationApi, sessionTokenService);
     }
 
     @Test

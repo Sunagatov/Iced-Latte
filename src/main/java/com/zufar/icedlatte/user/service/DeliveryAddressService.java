@@ -3,7 +3,6 @@ package com.zufar.icedlatte.user.service;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +12,6 @@ import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
-import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -47,12 +45,12 @@ public class DeliveryAddressService implements UserAddressApi {
 
     @Transactional
     public DeliveryAddressDto create(UUID userId, DeliveryAddressRequest request) {
-        var user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        var user = userRepository.findByIdForUpdate(userId).orElseThrow(() -> new UserNotFoundException(userId));
         boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
         var entity = converter.toEntity(request);
         entity.setUser(user);
         entity.setDefault(shouldBecomeDefault);
-        return converter.toDto(saveAddress(entity));
+        return converter.toDto(addressRepository.save(entity));
     }
 
     @Transactional
@@ -90,18 +88,5 @@ public class DeliveryAddressService implements UserAddressApi {
         addressRepository.clearDefaultForUser(userId);
         entity.setDefault(true);
         return converter.toDto(addressRepository.save(entity));
-    }
-
-    private DeliveryAddressEntity saveAddress(DeliveryAddressEntity entity) {
-        try {
-            return addressRepository.save(entity);
-        } catch (DataIntegrityViolationException ex) {
-            if (!entity.isDefault()) {
-                throw ex;
-            }
-            // Another request created the first default address concurrently.
-            entity.setDefault(false);
-            return addressRepository.save(entity);
-        }
     }
 }

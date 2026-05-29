@@ -72,6 +72,9 @@ public class OAuthLoginService {
         if (email.length() > MAX_EMAIL_LENGTH) {
             throw new BadRequestException(provider.id() + " account email is too long.");
         }
+        if (!profile.emailVerified()) {
+            throw new BadRequestException(provider.id() + " account email is not verified.");
+        }
 
         Optional<OAuthIdentityEntity> existingIdentity =
                 oAuthIdentityRepository.findByProviderAndProviderSubject(provider, providerSubject);
@@ -80,6 +83,7 @@ public class OAuthLoginService {
                         .findUserAuthenticationById(identity.getUserId())
                         .orElseThrow(() -> new UnauthorizedException("OAuth account is not available.")))
                 .orElseGet(() -> findOrCreateUserAndIdentity(provider, profile, providerSubject, email));
+
         ensureUserCanSignIn(user);
 
         return sessionTokenService.issueForNewSession(SecurityUserDetails.from(user), httpRequest);
@@ -88,9 +92,6 @@ public class OAuthLoginService {
     private UserAuthenticationSnapshot findOrCreateUserAndIdentity(
             OAuthProvider provider, OAuthProfile profile, String providerSubject, String email) {
         Optional<UserAuthenticationSnapshot> existingUser = userAuthenticationApi.findUserAuthenticationByEmail(email);
-        if (existingUser.isPresent() && !profile.emailVerified()) {
-            throw new BadRequestException(provider.id() + " account email is not verified.");
-        }
         UserAuthenticationSnapshot user = existingUser.orElseGet(() -> createUser(provider, profile, email));
         oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
                 .provider(provider)
