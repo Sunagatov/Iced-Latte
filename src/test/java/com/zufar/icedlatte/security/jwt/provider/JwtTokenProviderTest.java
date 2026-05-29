@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 
@@ -30,7 +31,7 @@ class JwtTokenProviderTest {
 
     // 64-byte base64 key (512 bits) — required for HS512
     private static final String SECRET = Base64.getEncoder().encodeToString(new byte[64]);
-    private static final String REFRESH_SECRET = Base64.getEncoder().encodeToString(new byte[64]);
+    private static final String REFRESH_SECRET = refreshSecret();
 
     private JwtTokenProvider tokenProvider;
     private SecretKey signingKey;
@@ -65,6 +66,7 @@ class JwtTokenProviderTest {
                 .parseSignedClaims(token)
                 .getPayload();
         assertThat(claims.getSubject()).isEqualTo("alice@example.com");
+        assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE)).isEqualTo(JwtClaimNames.ACCESS_TOKEN_PURPOSE);
     }
 
     @Test
@@ -86,6 +88,21 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    @DisplayName("Generated refresh token contains refresh purpose")
+    void generateRefreshTokenContainsRefreshPurpose() {
+        String token = tokenProvider.generateRefreshToken(user("carol@example.com"), UUID.randomUUID());
+
+        SecretKey refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(REFRESH_SECRET));
+        Claims claims = Jwts.parser()
+                .verifyWith(refreshKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE)).isEqualTo(JwtClaimNames.REFRESH_TOKEN_PURPOSE);
+    }
+
+    @Test
     @DisplayName("Access token with extra claims includes those claims")
     void generateTokenWithExtraClaimsIncludesThem() {
         String token = tokenProvider.generateToken(java.util.Map.of("role", "ADMIN"), user("dave@example.com"), null);
@@ -96,5 +113,11 @@ class JwtTokenProviderTest {
                 .parseSignedClaims(token)
                 .getPayload();
         assertThat(claims.get("role")).isEqualTo("ADMIN");
+    }
+
+    private static String refreshSecret() {
+        byte[] bytes = new byte[64];
+        bytes[0] = 1;
+        return Base64.getEncoder().encodeToString(bytes);
     }
 }

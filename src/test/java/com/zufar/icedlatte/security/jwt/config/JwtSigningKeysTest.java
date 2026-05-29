@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.Base64;
@@ -41,5 +42,23 @@ class JwtSigningKeysTest {
         assertThat(provider.getRefresh().getEncoded()).isEqualTo(expectedRefresh.getEncoded());
         assertThat(provider.get().getEncoded())
                 .isNotEqualTo(provider.getRefresh().getEncoded());
+    }
+
+    @Test
+    @DisplayName("rejects identical access and refresh signing keys")
+    void rejectsIdenticalSigningKeys() {
+        String secret = Base64.getEncoder().encodeToString(new byte[64]);
+        JwtProperties properties = new JwtProperties(
+                "Authorization",
+                secret,
+                secret,
+                Duration.ofMinutes(15),
+                Duration.ofDays(7),
+                "iced-latte",
+                "iced-latte-client");
+
+        assertThatThrownBy(() -> new JwtSigningKeys(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be different");
     }
 }

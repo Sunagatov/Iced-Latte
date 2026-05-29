@@ -26,11 +26,13 @@ public class JwtTokenClaims {
                 .verifyWith(jwtSigningKeys.get())
                 .requireIssuer(jwtProperties.issuer())
                 .requireAudience(jwtProperties.audience())
+                .require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)
                 .build();
         this.refreshTokenParser = Jwts.parser()
                 .verifyWith(jwtSigningKeys.getRefresh())
                 .requireIssuer(jwtProperties.issuer())
                 .requireAudience(jwtProperties.audience())
+                .require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
                 .build();
     }
 

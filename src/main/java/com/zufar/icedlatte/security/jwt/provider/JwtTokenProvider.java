@@ -36,6 +36,7 @@ public class JwtTokenProvider {
     public String generateToken(final Map<String, Object> extraClaims, final UserDetails userDetails, UUID sessionId) {
         Map<String, Object> claims = new HashMap<>(extraClaims);
         claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+        claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.ACCESS_TOKEN_PURPOSE);
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
@@ -45,6 +46,7 @@ public class JwtTokenProvider {
     public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+        claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE);
         claims.put(JwtClaimNames.VERSION, 2);
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());

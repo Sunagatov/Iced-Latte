@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
@@ -74,6 +75,14 @@ class JwtTokenClaimsTest {
     }
 
     @Test
+    @DisplayName("extractAccessTokenEmail throws when token purpose is refresh")
+    void extractAccessTokenEmailThrowsWhenPurposeIsRefresh() {
+        assertThatThrownBy(() -> claims.extractAccessTokenEmail(
+                        buildToken(accessKey, null, false, ISSUER, AUDIENCE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)))
+                .isInstanceOf(JwtTokenException.class);
+    }
+
+    @Test
     @DisplayName("extractAccessTokenSessionId returns UUID when sid claim is present")
     void extractAccessTokenSessionIdReturnsSid() {
         UUID sessionId = UUID.randomUUID();
@@ -112,6 +121,14 @@ class JwtTokenClaimsTest {
     }
 
     @Test
+    @DisplayName("extractRefreshTokenEmail throws when token purpose is access")
+    void extractRefreshTokenEmailThrowsWhenPurposeIsAccess() {
+        assertThatThrownBy(() -> claims.extractRefreshTokenEmail(
+                        buildToken(refreshKey, null, true, ISSUER, AUDIENCE, JwtClaimNames.ACCESS_TOKEN_PURPOSE)))
+                .isInstanceOf(JwtTokenException.class);
+    }
+
+    @Test
     @DisplayName("isSessionManagedRefreshToken returns true when ver claim is present")
     void isSessionManagedRefreshTokenReturnsTrueWhenVersionClaimIsPresent() {
         assertThat(claims.isSessionManagedRefreshToken(buildToken(refreshKey, null, true)))
@@ -135,13 +152,21 @@ class JwtTokenClaimsTest {
     }
 
     private String buildToken(SecretKey key, String sessionId, boolean includeVersion) {
-        return buildToken(key, sessionId, includeVersion, ISSUER, AUDIENCE);
+        String purpose = includeVersion ? JwtClaimNames.REFRESH_TOKEN_PURPOSE : JwtClaimNames.ACCESS_TOKEN_PURPOSE;
+        return buildToken(key, sessionId, includeVersion, ISSUER, AUDIENCE, purpose);
     }
 
     private String buildToken(SecretKey key, String sessionId, boolean includeVersion, String issuer, String audience) {
+        String purpose = includeVersion ? JwtClaimNames.REFRESH_TOKEN_PURPOSE : JwtClaimNames.ACCESS_TOKEN_PURPOSE;
+        return buildToken(key, sessionId, includeVersion, issuer, audience, purpose);
+    }
+
+    private String buildToken(
+            SecretKey key, String sessionId, boolean includeVersion, String issuer, String audience, String purpose) {
         var builder = Jwts.builder()
                 .subject("user@example.com")
                 .issuer(issuer)
+                .claim(JwtClaimNames.TOKEN_PURPOSE, purpose)
                 .audience()
                 .add(audience)
                 .and()
