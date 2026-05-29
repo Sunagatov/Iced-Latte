@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
@@ -20,7 +21,6 @@ import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
-import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
@@ -65,7 +65,7 @@ public class OAuthLoginService {
             throw new BadRequestException(provider.id() + " account subject is too long.");
         }
 
-        String email = normalizeEmail(profile.email());
+        String email = EmailNormalizer.normalize(profile.email());
         if (email == null || email.isBlank()) {
             throw new BadRequestException(provider.id() + " account has no email.");
         }
@@ -124,11 +124,6 @@ public class OAuthLoginService {
             return fallback;
         }
         return normalized.length() > MAX_NAME_LENGTH ? normalized.substring(0, MAX_NAME_LENGTH) : normalized;
-    }
-
-    private String normalizeEmail(String email) {
-        String value = normalizeRequired(email);
-        return value == null ? null : EmailNormalizer.normalize(value);
     }
 
     private String normalizeRequired(String value) {

@@ -68,12 +68,13 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserEntityByEmail returns entity by email")
-    void getUserEntityByEmailReturnsEntity() {
+    @DisplayName("getUserEntityByEmail normalizes email before lookup")
+    void getUserEntityByEmailNormalizesEmailBeforeLookup() {
         UserEntity entity = UserEntity.builder().email("user@example.com").build();
         when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
 
-        assertThat(singleUserProvider.getUserEntityByEmail("user@example.com")).isSameAs(entity);
+        assertThat(singleUserProvider.getUserEntityByEmail(" User@Example.COM "))
+                .isSameAs(entity);
         verify(userCrudRepository).findByEmail("user@example.com");
     }
 
@@ -108,7 +109,7 @@ class SingleUserProviderTest {
                 .build();
         when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
 
-        var snapshot = singleUserProvider.findUserByEmail("user@example.com");
+        var snapshot = singleUserProvider.findUserByEmail(" User@Example.COM ");
 
         assertThat(snapshot).isPresent();
         assertThat(snapshot.orElseThrow().id()).isEqualTo(entity.getId());
@@ -156,12 +157,12 @@ class SingleUserProviderTest {
         when(userCrudRepository.findByEmailWithAuthorities("user@example.com"))
                 .thenReturn(java.util.Optional.of(entity));
 
-        var snapshot = singleUserProvider.findUserAuthenticationByEmail("user@example.com");
+        var snapshot = singleUserProvider.findUserAuthenticationByEmail(" User@Example.COM ");
 
         assertThat(snapshot).isPresent();
         assertThat(snapshot.orElseThrow().userId()).isEqualTo(entity.getId());
         assertThat(snapshot.orElseThrow().email()).isEqualTo(entity.getEmail());
-        assertThat(snapshot.orElseThrow().passwordHash()).isEqualTo(entity.getPassword());
+        assertThat(snapshot.orElseThrow().encodedPassword()).isEqualTo(entity.getPassword());
         assertThat(snapshot.orElseThrow().authorities()).containsExactly("USER");
         assertThat(snapshot.orElseThrow().accountNonExpired()).isTrue();
         assertThat(snapshot.orElseThrow().accountNonLocked()).isTrue();

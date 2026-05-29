@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.security.signup.verification;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
@@ -22,7 +26,6 @@ import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
-import com.zufar.icedlatte.security.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 
@@ -34,6 +37,7 @@ public class EmailVerificationService {
 
     private static final String TOKEN_KEY_PREFIX = "email:token:";
     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
+    private static final String TOKEN_HASH_ALGORITHM = "SHA-256";
     private static final int MAX_TOKEN_GENERATION_ATTEMPTS = 5;
     private static final int MIN_TOKEN_LENGTH = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -167,7 +171,17 @@ public class EmailVerificationService {
     }
 
     private static String tokenKey(TokenPurpose purpose, String token) {
-        return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + token;
+        return TOKEN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + hashToken(token);
+    }
+
+    private static String hashToken(String token) {
+        try {
+            byte[] bytes = token.getBytes(StandardCharsets.UTF_8);
+            byte[] digest = MessageDigest.getInstance(TOKEN_HASH_ALGORITHM).digest(bytes);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(TOKEN_HASH_ALGORITHM + " is not available", e);
+        }
     }
 
     private static String cooldownKey(String email) {

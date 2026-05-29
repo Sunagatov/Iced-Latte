@@ -609,26 +609,31 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address label must not be blank\")"
           example: "Home"
         line:
           type: string
           minLength: 1
           maxLength: 256
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address line must not be blank\")"
           example: "123 Coffee St"
         city:
           type: string
           minLength: 1
           maxLength: 128
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address city must not be blank\")"
           example: "London"
         country:
           type: string
           minLength: 1
           maxLength: 128
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address country must not be blank\")"
           example: "United Kingdom"
         postcode:
           type: string
           minLength: 1
           maxLength: 16
+          x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(message = \"Address postcode must not be blank\")"
           example: "E1 6AN"
 
     ErrorResponse:

@@ -35,8 +35,9 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
         assertNotNull(response.getToken());
         assertNotNull(response.getRefreshToken());
 
-        final UserEntity savedUser =
-                userRepository.findByEmail("john.doe@example.com").orElse(null);
+        final UserEntity savedUser = userRepository
+                .findByEmailWithAuthorities("john.doe@example.com")
+                .orElse(null);
         assertNotNull(savedUser);
         assertEquals("John", savedUser.getFirstName());
         assertEquals("Doe", savedUser.getLastName());

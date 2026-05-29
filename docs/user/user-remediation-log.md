@@ -1004,10 +1004,10 @@ should not be casually exposed through broad APIs.
 
 ### How the Old System Behaved
 
-The user API boundary exposed a record with a field named like a normal password:
+The user API boundary exposed a record with a password-hash field:
 
 ```java
-public record UserAuthenticationSnapshot(..., String password) {}
+public record UserAuthenticationSnapshot(..., String passwordHash) {}
 ```
 
 ### Why That Was a Smell
@@ -1020,7 +1020,7 @@ future code reuses it in the wrong place.
 
 ```text
 Developer sees:
-  snapshot.password()
+  snapshot.passwordHash()
 
 They may think:
   this is normal profile data
@@ -1030,16 +1030,18 @@ But it is credential material and should be treated carefully.
 
 ### What the Fix Changed
 
-The field was renamed to make its meaning explicit:
+The field was renamed to make its meaning explicit and the record now documents
+that it is authentication-only:
 
 ```java
-public record UserAuthenticationSnapshot(..., String passwordHash) {}
+public record UserAuthenticationSnapshot(..., String encodedPassword) {}
 ```
 
-Security code now reads `passwordHash()` instead of `password()`.
+Security code now reads `encodedPassword()` instead of `passwordHash()`.
 
 In beginner terms: the value is still available where authentication needs it,
-but the name warns future developers that it is a hash and sensitive.
+but the name and Javadoc warn future developers that it is encoded credential
+material and must not be reused for profile/public user responses.
 
 ## 14. User Authorities Were Eager-Loaded Everywhere
 
@@ -1815,6 +1817,146 @@ In beginner terms: an access token now carries a label saying "I am for API
 access", and a refresh token carries a label saying "I am only for refresh."
 The parser checks that label before trusting the token.
 
+## 30. Delivery Address Fields Accepted Whitespace-Only Text
+
+### What This Feature Is For
+
+Delivery addresses require real text for fields like label, street line, city,
+country, and postcode.
+
+### How the Old System Behaved
+
+The OpenAPI contract used `minLength: 1`:
+
+```yaml
+label:
+  type: string
+  minLength: 1
+```
+
+That generated validation similar to "must be at least one character." A value
+like this passed because it has three characters:
+
+```text
+"   "
+```
+
+`DeliveryAddressService` then saved that value directly.
+
+### Why That Was a Bug
+
+Whitespace is not a real address value. A user could create an address whose
+label or postcode looked empty in the UI, but the backend still stored it.
+
+In beginner terms: the old check counted spaces as text. We needed a check that
+says "after ignoring spaces, there must still be something left."
+
+### What the Fix Changed
+
+The delivery address OpenAPI fields now add generated `@NotBlank` validation:
+
+```yaml
+x-field-extra-annotation: "@jakarta.validation.constraints.NotBlank(...)"
+```
+
+This was added for `label`, `line`, `city`, `country`, and `postcode`.
+
+A new endpoint test sends a whitespace-only label and expects `400 Bad Request`.
+It also verifies that no address was saved.
+
+## 31. User Registration Relied on Callers to Normalize Email
+
+### What This Feature Is For
+
+The user module creates and finds users by email address.
+
+### How the Old System Behaved
+
+Registration saved whatever email the caller passed:
+
+```java
+.email(email)
+```
+
+Lookups also searched for exactly the caller-provided value:
+
+```java
+userCrudRepository.findByEmail(email)
+```
+
+Security callers already normalized emails today, but the user API boundary can
+be reused by future code.
+
+### Why That Was a Bug
+
+PostgreSQL's normal unique constraint treats these as different strings:
+
+```text
+Alice@example.com
+alice@example.com
+```
+
+So a future caller that forgot to normalize could create duplicate accounts for
+the same real email.
+
+In beginner terms: the system was trusting every caller to clean the email
+first. The safer place to do that is inside the user package, right before user
+data is checked or saved.
+
+### What the Fix Changed
+
+`UserAccountRegistrationService` now uses the shared email normalizer before
+checking existence and before saving:
+
+```java
+EmailNormalizer.normalize(email)
+```
+
+`SingleUserProvider` now applies the same normalization before user and
+authentication lookups.
+
+Unit tests now verify that mixed-case emails with surrounding spaces are sent to
+repositories as normalized lowercase emails.
+
+## 32. User API Exposed an Internal Exception Type
+
+### What This Feature Is For
+
+The `user.api` package is the stable boundary other packages use to talk to the
+user module.
+
+### How the Old System Behaved
+
+`UserLookupApi` imported an internal exception:
+
+```java
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
+
+UserLookupSnapshot getUserById(UUID userId) throws UserNotFoundException;
+```
+
+### Why That Was a Smell
+
+The repository architecture says `api/` should expose stable interfaces,
+records, and DTOs. Importing `user.exception.UserNotFoundException` makes the
+public boundary depend on an internal implementation detail.
+
+In beginner terms: other packages should not need to know the user module's
+private exception classes just to call the user API.
+
+### What the Fix Changed
+
+The API interface no longer imports or declares the internal exception:
+
+```java
+UserLookupSnapshot getUserById(UUID userId);
+UserLookupSnapshot getUserByEmail(String email);
+```
+
+The implementation can still throw its unchecked internal exception from inside
+the user module, but the public boundary no longer advertises that internal type
+as part of the API contract.
+
 ## Known Follow-Up Not Fixed in This Chat
 
 ### File Upload Still Writes the External Object Before Metadata
@@ -1858,6 +2000,9 @@ The fixes were covered with focused tests around the changed behavior:
 - refresh-token blacklist TTL
 - JWT issuer/audience validation
 - JWT access/refresh purpose validation and separate signing-key enforcement
+- delivery address whitespace-only field rejection
+- user email normalization on registration and lookups
+- user API boundary cleanup for internal exceptions
 - OAuth verified-email handling
 - refresh-token rotation locking
 - login-attempt locking

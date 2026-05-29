@@ -58,8 +58,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Should initiate Google auth and redirect back with token pair using Redis-backed state")
-    void shouldInitiateGoogleAuthAndRedirectBackWithTokenPairUsingRedisBackedState() {
+    @DisplayName("Should initiate Google auth and redirect back with one-time token handoff code")
+    void shouldInitiateGoogleAuthAndRedirectBackWithOneTimeTokenHandoffCode() {
         String callbackBase = frontendUrl + "/auth/google/callback";
 
         when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("valid-code"), any(HttpServletRequest.class)))
@@ -81,20 +81,30 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         String state = extractState(initiateResponse);
         assertNotNull(state);
 
-        given(specification)
+        Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
-                .get("/oauth/google/callback")
+                .get("/oauth/google/callback");
+
+        callbackResponse
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header(
-                        "Location",
-                        allOf(
-                                containsString(callbackBase),
-                                containsString("#token=jwt-token"),
-                                containsString("refreshToken=refresh-token")));
+                .header("Location", allOf(containsString(callbackBase), containsString("#oauthCode=")))
+                .header("Location", not(containsString("jwt-token")))
+                .header("Location", not(containsString("refresh-token")));
+
+        String handoffCode = extractOAuthCode(callbackResponse);
+        assertNotNull(handoffCode);
+
+        given(specification)
+                .queryParam("code", handoffCode)
+                .post("/oauth/token")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("token", equalTo("jwt-token"))
+                .body("refreshToken", equalTo("refresh-token"));
     }
 
     @Test
@@ -114,20 +124,19 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         String state = extractState(initiateResponse);
         assertNotNull(state);
 
-        given(specification)
+        Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
-                .get("/oauth/google/callback")
+                .get("/oauth/google/callback");
+
+        callbackResponse
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
-                .header(
-                        "Location",
-                        allOf(
-                                containsString(callbackBase),
-                                containsString("#token=jwt-token"),
-                                containsString("refreshToken=refresh-token")));
+                .header("Location", allOf(containsString(callbackBase), containsString("#oauthCode=")))
+                .header("Location", not(containsString("jwt-token")))
+                .header("Location", not(containsString("refresh-token")));
     }
 
     @Test
@@ -185,20 +194,23 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         String state = extractState(initiateResponse);
         assertNotNull(state);
 
-        given(specification)
+        Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
-                .get("/oauth/google/callback")
+                .get("/oauth/google/callback");
+
+        callbackResponse
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header(
                         "Location",
                         allOf(
                                 containsString(frontendUrl + "/auth/google/callback"),
-                                containsString("#token=safe-jwt"),
-                                containsString("refreshToken=safe-refresh"),
+                                containsString("#oauthCode="),
+                                not(containsString("safe-jwt")),
+                                not(containsString("safe-refresh")),
                                 not(containsString("evil.example.com"))));
     }
 
@@ -217,19 +229,22 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         String state = extractState(initiateResponse);
         assertNotNull(state);
 
-        given(specification)
+        Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
-                .get("/oauth/google/callback")
+                .get("/oauth/google/callback");
+
+        callbackResponse
                 .then()
                 .statusCode(HttpStatus.FOUND.value())
                 .header(
                         "Location",
                         allOf(
                                 containsString(frontendUrl + "/auth/google/callback"),
-                                containsString("#token=safe-jwt"),
+                                containsString("#oauthCode="),
+                                not(containsString("safe-jwt")),
                                 not(containsString("/profile"))));
     }
 
@@ -305,6 +320,15 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .build()
                 .getQueryParams()
                 .getFirst("state");
+    }
+
+    private String extractOAuthCode(Response response) {
+        String location = response.getHeader("Location");
+        int marker = location.indexOf("#oauthCode=");
+        if (marker < 0) {
+            return null;
+        }
+        return location.substring(marker + "#oauthCode=".length());
     }
 
     private URI googleAuthUri(String state) {

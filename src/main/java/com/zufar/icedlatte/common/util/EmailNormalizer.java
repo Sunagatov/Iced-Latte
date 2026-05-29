@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.util;
+package com.zufar.icedlatte.common.util;
 
 import java.util.Locale;
 

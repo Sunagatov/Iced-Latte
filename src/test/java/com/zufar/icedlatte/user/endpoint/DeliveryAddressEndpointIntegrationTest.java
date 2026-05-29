@@ -60,6 +60,24 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
     }
 
     @Test
+    @DisplayName("Should reject delivery address fields that contain only whitespace")
+    void shouldRejectWhitespaceOnlyDeliveryAddressFields() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(addressBody("   ", "221B Baker Street", "London", "NW1 6XE"))
+                .post()
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("", hasSize(0));
+    }
+
+    @Test
     @DisplayName("Should switch default address to another saved address")
     void shouldSwitchDefaultAddressToAnotherSavedAddress() {
         AuthenticatedUser user = registerAndAuthenticateUser();

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -191,8 +192,8 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken normalizes email and scopes token key by purpose")
-    void generateTokenNormalizesEmailAndScopesTokenKeyByPurpose() {
+    @DisplayName("generateToken normalizes email and scopes hashed token key by purpose")
+    void generateTokenNormalizesEmailAndScopesHashedTokenKeyByPurpose() {
         ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
         EmailVerificationService serviceWithMockStore = serviceWithStore(store);
         UserRegistrationRequest request =
@@ -207,7 +208,11 @@ class EmailVerificationServiceTest {
         String token = serviceWithMockStore.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
-        verify(store).putIfAbsent(eq("email:token:email_verification:" + token), any(), eq(Duration.ofMinutes(15)));
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(store).putIfAbsent(keyCaptor.capture(), any(), eq(Duration.ofMinutes(15)));
+        assertThat(keyCaptor.getValue())
+                .startsWith("email:token:email_verification:")
+                .doesNotEndWith(token);
         verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
     }
 

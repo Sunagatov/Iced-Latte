@@ -115,8 +115,7 @@ public class SpringSecurityConfiguration {
                         .permitAll()
                         .requestMatchers(ApiPaths.DOCS_ROOT + "**")
                         .permitAll()
-                        .requestMatchers(
-                                "/actuator/health", "/actuator/info", "/actuator/prometheus", "/livez", "/readyz")
+                        .requestMatchers("/actuator/health", "/actuator/info", "/livez", "/readyz")
                         .permitAll()
                         .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
                         .hasRole("ADMIN")

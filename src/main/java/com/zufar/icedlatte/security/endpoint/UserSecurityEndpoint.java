@@ -82,6 +82,7 @@ public class UserSecurityEndpoint implements SecurityApi {
                 .build();
     }
 
+    @Override
     @PostMapping("/oauth/token")
     public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(@RequestParam String code) {
         return ResponseEntity.ok(oAuthFlowService.completeTokenHandoff(code));

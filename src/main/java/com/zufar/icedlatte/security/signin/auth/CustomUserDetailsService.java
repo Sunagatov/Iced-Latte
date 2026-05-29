@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.zufar.icedlatte.security.util.EmailNormalizer;
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 
 import lombok.RequiredArgsConstructor;

@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 import com.zufar.icedlatte.user.entity.Authority;
@@ -24,7 +25,8 @@ public class UserAccountRegistrationService implements UserRegistrationApi {
     @Override
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmail(
+                Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"));
     }
 
     @Override
@@ -46,7 +48,7 @@ public class UserAccountRegistrationService implements UserRegistrationApi {
         UserEntity user = UserEntity.builder()
                 .firstName(firstName)
                 .lastName(lastName)
-                .email(email)
+                .email(Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"))
                 .password(encodedPassword)
                 .oauthUser(oauthUser)
                 .build();

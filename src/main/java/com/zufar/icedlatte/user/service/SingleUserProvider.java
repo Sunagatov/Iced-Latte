@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
@@ -43,13 +44,18 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     @Override
     @Transactional(readOnly = true)
     public Optional<UserLookupSnapshot> findUserByEmail(final String email) {
-        return userCrudRepository.findByEmail(email).map(this::toLookupSnapshot);
+        return userCrudRepository
+                .findByEmail(Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"))
+                .map(this::toLookupSnapshot);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<UserAuthenticationSnapshot> findUserAuthenticationByEmail(final String email) {
-        return userCrudRepository.findByEmailWithAuthorities(email).map(this::toAuthenticationSnapshot);
+        return userCrudRepository
+                .findByEmailWithAuthorities(
+                        Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null"))
+                .map(this::toAuthenticationSnapshot);
     }
 
     @Override
@@ -65,7 +71,8 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
 
     @Transactional(readOnly = true)
     public UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
-        return userCrudRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+        String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
+        return userCrudRepository.findByEmail(normalizedEmail).orElseThrow(() -> new UserNotFoundException(email));
     }
 
     public UserDto getUserDtoById(final UUID userId) throws UserNotFoundException {

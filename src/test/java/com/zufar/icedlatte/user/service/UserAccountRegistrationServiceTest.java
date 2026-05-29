@@ -30,11 +30,11 @@ class UserAccountRegistrationServiceTest {
     private UserAccountRegistrationService service;
 
     @Test
-    @DisplayName("existsByEmail delegates to repository")
-    void existsByEmailDelegatesToRepository() {
+    @DisplayName("existsByEmail normalizes email before repository lookup")
+    void existsByEmailNormalizesEmailBeforeRepositoryLookup() {
         when(userRepository.existsByEmail("user@example.com")).thenReturn(true);
 
-        assertThat(service.existsByEmail("user@example.com")).isTrue();
+        assertThat(service.existsByEmail(" User@Example.COM ")).isTrue();
         verify(userRepository).existsByEmail("user@example.com");
     }
 
@@ -48,7 +48,7 @@ class UserAccountRegistrationServiceTest {
                     return user;
                 });
 
-        var snapshot = service.registerPasswordUser("Alice", "Example", "alice@example.com", "encoded-password");
+        var snapshot = service.registerPasswordUser("Alice", "Example", " Alice@Example.COM ", "encoded-password");
 
         ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).saveAndFlush(userCaptor.capture());
@@ -70,7 +70,7 @@ class UserAccountRegistrationServiceTest {
 
         assertThat(snapshot.userId()).isEqualTo(savedUser.getId());
         assertThat(snapshot.email()).isEqualTo("alice@example.com");
-        assertThat(snapshot.passwordHash()).isEqualTo("encoded-password");
+        assertThat(snapshot.encodedPassword()).isEqualTo("encoded-password");
         assertThat(snapshot.authorities()).containsExactly(Authority.USER.name());
     }
 
