@@ -4,6 +4,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;
-import com.zufar.icedlatte.user.exception.UserNotFoundException;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PasswordResetService unit tests")
@@ -39,10 +41,12 @@ class PasswordResetServiceTest {
         @DisplayName("sends a reset code for a known user")
         void sendsResetCodeForKnownUser() {
             String email = "known@example.com";
+            when(userLookupApi.findUserByEmail(email))
+                    .thenReturn(Optional.of(new UserLookupSnapshot(UUID.randomUUID(), "Known", "User", email)));
 
             service.requestReset(email);
 
-            verify(userLookupApi).getUserByEmail(email);
+            verify(userLookupApi).findUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
 
@@ -50,11 +54,11 @@ class PasswordResetServiceTest {
         @DisplayName("swallows unknown email lookups")
         void swallowsUnknownEmailLookups() {
             String email = "missing@example.com";
-            doThrow(new UserNotFoundException(email)).when(userLookupApi).getUserByEmail(email);
+            when(userLookupApi.findUserByEmail(email)).thenReturn(Optional.empty());
 
             service.requestReset(email);
 
-            verify(userLookupApi).getUserByEmail(email);
+            verify(userLookupApi).findUserByEmail(email);
             verifyNoInteractions(emailVerificationService);
         }
 
@@ -62,13 +66,15 @@ class PasswordResetServiceTest {
         @DisplayName("swallows cooldown failures to avoid account enumeration")
         void swallowsCooldownFailures() {
             String email = "known@example.com";
+            when(userLookupApi.findUserByEmail(email))
+                    .thenReturn(Optional.of(new UserLookupSnapshot(UUID.randomUUID(), "Known", "User", email)));
             doThrow(new TimeTokenException(email, OffsetDateTime.now().plusMinutes(1)))
                     .when(emailVerificationService)
                     .sendPasswordResetCode(email);
 
             service.requestReset(email);
 
-            verify(userLookupApi).getUserByEmail(email);
+            verify(userLookupApi).findUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
     }

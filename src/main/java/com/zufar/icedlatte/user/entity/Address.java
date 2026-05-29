@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.user.entity;
 
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -39,11 +38,11 @@ public class Address implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Address address)) return false;
-        return Objects.equals(addressId, address.addressId);
+        return addressId != null && addressId.equals(address.addressId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(addressId);
+        return getClass().hashCode();
     }
 }

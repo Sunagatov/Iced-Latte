@@ -227,6 +227,47 @@ class DeliveryAddressServiceTest {
     }
 
     @Test
+    @DisplayName("delete promotes another address when deleting default")
+    void delete_defaultAddress_promotesAnotherAddress() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        entity.setDefault(true);
+        DeliveryAddressEntity replacement = new DeliveryAddressEntity();
+        replacement.setDefault(false);
+
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+        when(addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId))
+                .thenReturn(Optional.of(replacement));
+
+        service.delete(userId, addressId);
+
+        verify(addressRepository).delete(entity);
+        verify(addressRepository).flush();
+        assertThat(replacement.isDefault()).isTrue();
+        verify(addressRepository).save(replacement);
+        verify(addressRepository).findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId);
+    }
+
+    @Test
+    @DisplayName("delete does not promote another address when deleting non-default")
+    void delete_nonDefaultAddress_doesNotPromoteAnotherAddress() {
+        UUID userId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        entity.setDefault(false);
+
+        when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
+
+        service.delete(userId, addressId);
+
+        verify(addressRepository).delete(entity);
+        verify(addressRepository, never()).flush();
+        verify(addressRepository, never()).findFirstByUserIdAndIdNotOrderByIdAsc(any(), any());
+        verify(addressRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("delete throws NotFoundException when not found")
     void delete_notFound_throws() {
         UUID userId = UUID.randomUUID();

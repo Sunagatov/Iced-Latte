@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.user.entity;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -47,11 +46,11 @@ public class DeliveryAddressEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof DeliveryAddressEntity that)) return false;
-        return Objects.equals(id, that.id);
+        return id != null && id.equals(that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return getClass().hashCode();
     }
 }

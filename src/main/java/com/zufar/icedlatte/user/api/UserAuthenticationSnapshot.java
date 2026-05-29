@@ -6,7 +6,7 @@ import java.util.UUID;
 public record UserAuthenticationSnapshot(
         UUID userId,
         String email,
-        String password,
+        String passwordHash,
         List<String> authorities,
         boolean accountNonExpired,
         boolean accountNonLocked,

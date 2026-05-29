@@ -83,8 +83,7 @@ public class PutUsersRequestValidator {
     }
 
     private void validateAddress(@Nullable AddressDto addressDto, List<String> errors) {
-        if (addressDto == null)
-            return;
+        if (addressDto == null) return;
         boolean anyFieldPresent = addressDto.getCountry() != null
                 || addressDto.getCity() != null
                 || addressDto.getLine() != null

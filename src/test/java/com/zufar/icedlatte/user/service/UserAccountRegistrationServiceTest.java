@@ -70,7 +70,7 @@ class UserAccountRegistrationServiceTest {
 
         assertThat(snapshot.userId()).isEqualTo(savedUser.getId());
         assertThat(snapshot.email()).isEqualTo("alice@example.com");
-        assertThat(snapshot.password()).isEqualTo("encoded-password");
+        assertThat(snapshot.passwordHash()).isEqualTo("encoded-password");
         assertThat(snapshot.authorities()).containsExactly(Authority.USER.name());
     }
 

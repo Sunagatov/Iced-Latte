@@ -31,7 +31,7 @@ public record SecurityUserDetails(
         return new SecurityUserDetails(
                 snapshot.userId(),
                 snapshot.email(),
-                snapshot.password(),
+                snapshot.passwordHash(),
                 authorities,
                 snapshot.accountNonExpired(),
                 snapshot.accountNonLocked(),

@@ -98,6 +98,34 @@ class SingleUserProviderTest {
     }
 
     @Test
+    @DisplayName("findUserByEmail returns lookup snapshot when present")
+    void findUserByEmailReturnsLookupSnapshotWhenPresent() {
+        UserEntity entity = UserEntity.builder()
+                .id(UUID.randomUUID())
+                .firstName("Grace")
+                .lastName("Hopper")
+                .email("user@example.com")
+                .build();
+        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
+
+        var snapshot = singleUserProvider.findUserByEmail("user@example.com");
+
+        assertThat(snapshot).isPresent();
+        assertThat(snapshot.orElseThrow().id()).isEqualTo(entity.getId());
+        verify(userCrudRepository).findByEmail("user@example.com");
+    }
+
+    @Test
+    @DisplayName("findUserByEmail returns empty when missing")
+    void findUserByEmailReturnsEmptyWhenMissing() {
+        when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
+
+        assertThat(singleUserProvider.findUserByEmail("missing@example.com")).isEmpty();
+
+        verify(userCrudRepository).findByEmail("missing@example.com");
+    }
+
+    @Test
     @DisplayName("getUserDtoById returns OpenAPI dto for same-module profile usage")
     void getUserDtoByIdReturnsDto() {
         UUID userId = UUID.randomUUID();
@@ -132,7 +160,7 @@ class SingleUserProviderTest {
         assertThat(snapshot).isPresent();
         assertThat(snapshot.orElseThrow().userId()).isEqualTo(entity.getId());
         assertThat(snapshot.orElseThrow().email()).isEqualTo(entity.getEmail());
-        assertThat(snapshot.orElseThrow().password()).isEqualTo(entity.getPassword());
+        assertThat(snapshot.orElseThrow().passwordHash()).isEqualTo(entity.getPassword());
         assertThat(snapshot.orElseThrow().authorities()).containsExactly("USER");
         assertThat(snapshot.orElseThrow().accountNonExpired()).isTrue();
         assertThat(snapshot.orElseThrow().accountNonLocked()).isTrue();

@@ -42,6 +42,12 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<UserLookupSnapshot> findUserByEmail(final String email) {
+        return userCrudRepository.findByEmail(email).map(this::toLookupSnapshot);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<UserAuthenticationSnapshot> findUserAuthenticationByEmail(final String email) {
         return userCrudRepository.findByEmail(email).map(this::toAuthenticationSnapshot);
     }

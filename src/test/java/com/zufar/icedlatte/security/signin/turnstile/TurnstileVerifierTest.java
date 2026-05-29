@@ -6,12 +6,13 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -65,7 +66,7 @@ class TurnstileVerifierTest {
         @DisplayName("should throw when Cloudflare returns success=false")
         void throwWhenVerificationFails() {
             var restClient = buildMockedRestClient("{\"success\": false}");
-            ReflectionTestUtils.setField(verifier, "restClient", restClient);
+            var verifier = new TurnstileVerifier("test-secret", restClient);
 
             assertThatThrownBy(() -> verifier.verify("invalid-token"))
                     .isInstanceOf(TurnstileVerificationException.class)
@@ -76,9 +77,16 @@ class TurnstileVerifierTest {
         @DisplayName("should pass when Cloudflare returns success=true")
         void passWhenVerificationSucceeds() {
             var restClient = buildMockedRestClient("{\"success\": true}");
-            ReflectionTestUtils.setField(verifier, "restClient", restClient);
+            var verifier = new TurnstileVerifier("test-secret", restClient);
 
             assertThatCode(() -> verifier.verify("valid-token")).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("should construct RestClient with explicit timeout settings")
+        void constructsRestClientWithExplicitTimeoutSettings() {
+            assertThatCode(() -> new TurnstileVerifier("test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
+                    .doesNotThrowAnyException();
         }
 
         private RestClient buildMockedRestClient(String responseBody) {

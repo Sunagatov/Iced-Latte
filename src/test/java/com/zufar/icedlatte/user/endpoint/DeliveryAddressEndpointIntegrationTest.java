@@ -227,6 +227,49 @@ class DeliveryAddressEndpointIntegrationTest extends AuthenticatedUserIntegratio
         assertTrue(remainingAddresses.stream().noneMatch(address -> addressId.equals(address.get("id"))));
     }
 
+    @Test
+    @DisplayName("Should promote another address when default delivery address is deleted")
+    void shouldPromoteAnotherAddressWhenDefaultDeliveryAddressIsDeleted() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        Response firstCreateResponse = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(addressBody("Home", "10 Downing Street", "London", "SW1A 2AA"))
+                .post();
+
+        Response secondCreateResponse = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(addressBody("Office", "1 Canada Square", "London", "E14 5AB"))
+                .post();
+
+        String firstAddressId = firstCreateResponse.jsonPath().getString("id");
+        String secondAddressId = secondCreateResponse.jsonPath().getString("id");
+
+        firstCreateResponse.then().statusCode(HttpStatus.CREATED.value()).body("isDefault", equalTo(true));
+        secondCreateResponse.then().statusCode(HttpStatus.CREATED.value()).body("isDefault", equalTo(false));
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .delete("/{addressId}", firstAddressId)
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+
+        List<Map<String, Object>> remainingAddresses = given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .body()
+                .as(new TypeRef<>() {});
+
+        long defaultCount = remainingAddresses.stream()
+                .filter(address -> Boolean.TRUE.equals(address.get("isDefault")))
+                .count();
+
+        assertEquals(1, remainingAddresses.size());
+        assertEquals(1, defaultCount);
+        assertTrue(remainingAddresses.stream()
+                .anyMatch(address ->
+                        secondAddressId.equals(address.get("id")) && Boolean.TRUE.equals(address.get("isDefault"))));
+    }
+
     private Response createAddressWhenReleased(CountDownLatch startGate, String accessToken, String body)
             throws InterruptedException {
         startGate.await();

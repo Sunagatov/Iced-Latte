@@ -19,6 +19,8 @@ public interface DeliveryAddressRepository extends JpaRepository<DeliveryAddress
 
     Optional<DeliveryAddressEntity> findByIdAndUserId(UUID id, UUID userId);
 
+    Optional<DeliveryAddressEntity> findFirstByUserIdAndIdNotOrderByIdAsc(UUID userId, UUID id);
+
     @Modifying
     @Query("UPDATE DeliveryAddressEntity a SET a.isDefault = false WHERE a.user.id = :userId")
     void clearDefaultForUser(@Param("userId") UUID userId);

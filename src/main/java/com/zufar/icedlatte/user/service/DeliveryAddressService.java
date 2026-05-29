@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.user.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import com.zufar.icedlatte.openapi.dto.DeliveryAddressRequest;
 import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
+import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -73,7 +75,15 @@ public class DeliveryAddressService implements UserAddressApi {
                 .findByIdAndUserId(addressId, userId)
                 .orElseThrow(() ->
                         new NotFoundException(String.format("Delivery address with id = %s is not found.", addressId)));
+        var replacement = entity.isDefault()
+                ? addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId)
+                : Optional.<DeliveryAddressEntity>empty();
         addressRepository.delete(entity);
+        replacement.ifPresent(address -> {
+            addressRepository.flush();
+            address.setDefault(true);
+            addressRepository.save(address);
+        });
     }
 
     @Transactional
