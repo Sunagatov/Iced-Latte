@@ -25,6 +25,9 @@ class ProductReviewProductGatewayTest {
     @Mock
     private ProductInfoRepository productInfoRepository;
 
+    @Mock
+    private ProductCacheEvictor productCacheEvictor;
+
     @InjectMocks
     private ProductReviewProductGateway gateway;
 
@@ -48,6 +51,7 @@ class ProductReviewProductGatewayTest {
 
         verify(productInfoRepository).updateAverageRating(productId);
         verify(productInfoRepository).updateReviewsCount(productId);
+        verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
     }
 
     @Test
@@ -57,6 +61,7 @@ class ProductReviewProductGatewayTest {
 
         verify(productInfoRepository).updateAllAverageRatings();
         verify(productInfoRepository).updateAllReviewsCounts();
+        verify(productCacheEvictor).clearProductByIdAfterCommit();
     }
 
     @Test
@@ -69,6 +74,7 @@ class ProductReviewProductGatewayTest {
         gateway.updateAiSummary(productId, "summary");
 
         verify(productInfoRepository).save(product);
+        verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
     }
 
     @Test

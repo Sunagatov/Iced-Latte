@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductReviewProductGateway implements ProductReviewProductApi {
 
     private final ProductInfoRepository productInfoRepository;
+    private final ProductCacheEvictor productCacheEvictor;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
@@ -31,6 +32,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     public void refreshReviewAggregates(final UUID productId) {
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);
+        productCacheEvictor.evictProductByIdAfterCommit(productId);
     }
 
     @Override
@@ -39,6 +41,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     public void refreshAllReviewAggregates() {
         productInfoRepository.updateAllAverageRatings();
         productInfoRepository.updateAllReviewsCounts();
+        productCacheEvictor.clearProductByIdAfterCommit();
     }
 
     @Override
@@ -49,5 +52,6 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
             product.setAiSummary(summary);
             productInfoRepository.save(product);
         });
+        productCacheEvictor.evictProductByIdAfterCommit(productId);
     }
 }

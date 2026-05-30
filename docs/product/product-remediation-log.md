@@ -205,10 +205,21 @@ changes:
 - `updateAiSummary(productId, summary)` evicts `productById` for that product ID
 - `refreshAllReviewAggregates()` evicts all `productById` entries
 
+The product package also schedules explicit after-commit cache eviction:
+
+- single-product changes evict the matching `productById` key after commit
+- all-product aggregate refresh clears `productById` after commit
+
+That makes cache changes line up with successful database transaction commits
+and closes the window where an early eviction could allow stale data to be
+recached before the database update is visible.
+
 ### How It Was Verified
 
 `ProductReviewProductGatewayTest` was added to cover review aggregate refresh
-and AI summary update behavior.
+and AI summary update behavior. `ProductCacheEvictorTest` verifies immediate
+eviction outside transactions and deferred eviction/clear after transaction
+commit.
 
 ## 6. Product Entity Constraints Were Weaker Than the Business Model
 
