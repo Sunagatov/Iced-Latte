@@ -3,7 +3,9 @@ package com.zufar.icedlatte.product.service;
 import static com.zufar.icedlatte.product.specification.ProductSpecifications.*;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
@@ -44,8 +47,9 @@ public class ProductService implements ProductCatalogApi {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     @Cacheable(cacheNames = "productById", key = "#productId")
     public ProductInfoDto getProductDtoById(final UUID productId) {
-        var product =
-                productInfoRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+        var product = productInfoRepository
+                .findByIdAndActiveTrue(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
         return productPictureLinkUpdater.update(productInfoDtoConverter.toDto(product));
     }
 
@@ -62,7 +66,8 @@ public class ProductService implements ProductCatalogApi {
         if (ids.isEmpty()) {
             return List.of();
         }
-        List<ProductInfoDto> products = productInfoRepository.findAllById(ids).stream()
+        validateProductIds(ids);
+        List<ProductInfoDto> products = productInfoRepository.findAllByIdInAndActiveTrue(ids).stream()
                 .map(productInfoDtoConverter::toDto)
                 .toList();
         List<ProductInfoDto> productsWithImages = productPictureLinkUpdater.updateBatch(products);
@@ -98,7 +103,8 @@ public class ProductService implements ProductCatalogApi {
                 maxPrice,
                 minimumAverageRating,
                 brandNames,
-                sellerNames);
+                sellerNames,
+                keyword);
 
         int page = pageNumber != null ? pageNumber : paginationConfig.defaultPageNumber();
         int size = pageSize != null ? pageSize : paginationConfig.products().defaultPageSize();
@@ -112,6 +118,7 @@ public class ProductService implements ProductCatalogApi {
         BigDecimal minAvg = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);
 
         Specification<ProductInfo> spec = Specification.allOf(
+                activeSpec(),
                 minPriceSpec(minPrice),
                 maxPriceSpec(maxPrice),
                 minRatingSpec(minAvg),
@@ -150,6 +157,15 @@ public class ProductService implements ProductCatalogApi {
     @Override
     @Transactional(readOnly = true)
     public boolean existsById(final UUID productId) {
-        return productInfoRepository.existsById(productId);
+        return productInfoRepository.existsByIdAndActiveTrue(productId);
+    }
+
+    private static void validateProductIds(List<UUID> ids) {
+        if (ids.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestException("Product ids must not contain null values.");
+        }
+        if (new HashSet<>(ids).size() != ids.size()) {
+            throw new BadRequestException("Product ids must not contain duplicate values.");
+        }
     }
 }

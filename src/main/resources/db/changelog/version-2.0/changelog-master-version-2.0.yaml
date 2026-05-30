@@ -41,6 +41,9 @@ databaseChangeLog:
       file: db/changelog/version-2.0/remove-user-address-delete-cascade.sql
   - include:
       file: db/changelog/version-2.0/add-user-granted-authority-user-fk.sql
+  - include:
+      file: db/changelog/version-2.0/30.05.2026.part1.harden-product-catalog-constraints.sql
+      errorIfMissing: true
 
   # ========== ORDER MODULE ENHANCEMENTS ==========
   - include:

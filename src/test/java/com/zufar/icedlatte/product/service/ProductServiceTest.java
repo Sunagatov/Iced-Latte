@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
@@ -48,7 +49,6 @@ class ProductServiceTest {
     private PaginationConfig paginationConfig;
 
     @Mock
-    @SuppressWarnings("unused")
     private GetProductsRequestValidator getProductsRequestValidator;
 
     @InjectMocks
@@ -66,14 +66,14 @@ class ProductServiceTest {
             ProductInfoDto converted = new ProductInfoDto();
             ProductInfoDto enriched = new ProductInfoDto();
 
-            when(productInfoRepository.findById(productId)).thenReturn(Optional.of(product));
+            when(productInfoRepository.findByIdAndActiveTrue(productId)).thenReturn(Optional.of(product));
             when(productInfoDtoConverter.toDto(product)).thenReturn(converted);
             when(productPictureLinkUpdater.update(converted)).thenReturn(enriched);
 
             ProductInfoDto result = productService.getProductDtoById(productId);
 
             assertThat(result).isSameAs(enriched);
-            verify(productInfoRepository).findById(productId);
+            verify(productInfoRepository).findByIdAndActiveTrue(productId);
             verify(productInfoDtoConverter).toDto(product);
             verify(productPictureLinkUpdater).update(converted);
         }
@@ -82,7 +82,7 @@ class ProductServiceTest {
         @DisplayName("throws ProductNotFoundException when the product does not exist")
         void throwsWhenNotFound() {
             UUID productId = UUID.randomUUID();
-            when(productInfoRepository.findById(productId)).thenReturn(Optional.empty());
+            when(productInfoRepository.findByIdAndActiveTrue(productId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> productService.getProductDtoById(productId))
                     .isInstanceOf(ProductNotFoundException.class)
@@ -115,7 +115,8 @@ class ProductServiceTest {
             ProductInfoDto dto2 = new ProductInfoDto();
             dto2.setId(id2);
 
-            when(productInfoRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(p1, p2));
+            when(productInfoRepository.findAllByIdInAndActiveTrue(List.of(id1, id2)))
+                    .thenReturn(List.of(p1, p2));
             when(productInfoDtoConverter.toDto(p1)).thenReturn(dto1);
             when(productInfoDtoConverter.toDto(p2)).thenReturn(dto2);
             when(productPictureLinkUpdater.updateBatch(List.of(dto1, dto2))).thenReturn(List.of(dto1, dto2));
@@ -133,13 +134,26 @@ class ProductServiceTest {
             ProductInfoDto dto1 = new ProductInfoDto();
             dto1.setId(id1);
 
-            when(productInfoRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(p1));
+            when(productInfoRepository.findAllByIdInAndActiveTrue(List.of(id1, id2)))
+                    .thenReturn(List.of(p1));
             when(productInfoDtoConverter.toDto(p1)).thenReturn(dto1);
             when(productPictureLinkUpdater.updateBatch(List.of(dto1))).thenReturn(List.of(dto1));
 
             assertThatThrownBy(() -> productService.getProductDtosByIds(List.of(id1, id2)))
                     .isInstanceOf(ProductNotFoundException.class)
                     .hasMessageContaining(id2.toString());
+        }
+
+        @Test
+        @DisplayName("rejects duplicate requested product ids")
+        void duplicateProductIds_throwsBadRequest() {
+            UUID id = UUID.randomUUID();
+
+            assertThatThrownBy(() -> productService.getProductDtosByIds(List.of(id, id)))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("duplicate");
+
+            verifyNoInteractions(productInfoRepository, productInfoDtoConverter, productPictureLinkUpdater);
         }
     }
 
@@ -172,6 +186,7 @@ class ProductServiceTest {
             Pageable pageable = pageableCaptor.getValue();
             assertThat(pageable.getPageNumber()).isEqualTo(1);
             assertThat(pageable.getPageSize()).isEqualTo(10);
+            verify(getProductsRequestValidator).validate(1, 10, "price", "asc", null, null, null, null, null, "latte");
         }
 
         @Test
@@ -220,6 +235,18 @@ class ProductServiceTest {
             when(productInfoRepository.findDistinctBrandNames()).thenReturn(List.of("X", "Y"));
             assertThat(productService.getBrandNames()).containsExactly("X", "Y");
             verify(productInfoRepository).findDistinctBrandNames();
+            verifyNoMoreInteractions(productInfoRepository);
+        }
+
+        @Test
+        @DisplayName("existsById only reports active products")
+        void existsByIdUsesActiveProductLookup() {
+            UUID productId = UUID.randomUUID();
+            when(productInfoRepository.existsByIdAndActiveTrue(productId)).thenReturn(true);
+
+            assertThat(productService.existsById(productId)).isTrue();
+
+            verify(productInfoRepository).existsByIdAndActiveTrue(productId);
             verifyNoMoreInteractions(productInfoRepository);
         }
     }

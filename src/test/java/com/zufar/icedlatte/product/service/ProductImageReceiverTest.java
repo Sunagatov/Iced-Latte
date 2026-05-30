@@ -88,7 +88,7 @@ class ProductImageReceiverTest {
         @DisplayName("returns repository image URLs in repository order")
         void returnsRepositoryImageUrlsInRepositoryOrder() {
             UUID productId = UUID.randomUUID();
-            when(productImageRepository.findByProductIdOrderByPosition(productId))
+            when(productImageRepository.findByProductIdOrderByPositionAscIdAsc(productId))
                     .thenReturn(List.of(
                             new ProductImage(UUID.randomUUID(), productId, "url-1", (short) 1),
                             new ProductImage(UUID.randomUUID(), productId, "url-2", (short) 2)));
@@ -96,7 +96,7 @@ class ProductImageReceiverTest {
             List<String> result = receiver.getProductImageUrls(productId);
 
             assertThat(result).containsExactly("url-1", "url-2");
-            verify(productImageRepository).findByProductIdOrderByPosition(productId);
+            verify(productImageRepository).findByProductIdOrderByPositionAscIdAsc(productId);
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 
@@ -104,11 +104,11 @@ class ProductImageReceiverTest {
         @DisplayName("returns an empty list when the repository has no images")
         void returnsEmptyListWhenRepositoryHasNoImages() {
             UUID productId = UUID.randomUUID();
-            when(productImageRepository.findByProductIdOrderByPosition(productId))
+            when(productImageRepository.findByProductIdOrderByPositionAscIdAsc(productId))
                     .thenReturn(List.of());
 
             assertThat(receiver.getProductImageUrls(productId)).isEmpty();
-            verify(productImageRepository).findByProductIdOrderByPosition(productId);
+            verify(productImageRepository).findByProductIdOrderByPositionAscIdAsc(productId);
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }
@@ -122,7 +122,8 @@ class ProductImageReceiverTest {
         void groupsImageUrlsByProductIdInRepositoryOrder() {
             UUID productId1 = UUID.randomUUID();
             UUID productId2 = UUID.randomUUID();
-            when(productImageRepository.findByProductIdInOrderByPosition(List.of(productId1, productId2)))
+            when(productImageRepository.findByProductIdInOrderByProductIdAscPositionAscIdAsc(
+                            List.of(productId1, productId2)))
                     .thenReturn(List.of(
                             new ProductImage(UUID.randomUUID(), productId1, "p1-1", (short) 1),
                             new ProductImage(UUID.randomUUID(), productId1, "p1-2", (short) 2),
@@ -132,7 +133,8 @@ class ProductImageReceiverTest {
 
             assertThat(result).containsEntry(productId1, List.of("p1-1", "p1-2"));
             assertThat(result).containsEntry(productId2, List.of("p2-1"));
-            verify(productImageRepository).findByProductIdInOrderByPosition(List.of(productId1, productId2));
+            verify(productImageRepository)
+                    .findByProductIdInOrderByProductIdAscPositionAscIdAsc(List.of(productId1, productId2));
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
     }

@@ -3,12 +3,17 @@ package com.zufar.icedlatte.product.endpoint;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
+import com.zufar.icedlatte.product.entity.ProductInfo;
+import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
 import io.restassured.http.ContentType;
@@ -19,6 +24,9 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
 
     @LocalServerPort
     protected Integer port;
+
+    @Autowired
+    private ProductInfoRepository productInfoRepository;
 
     private RequestSpecification specification;
 
@@ -88,5 +96,38 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .body("detail", not(nullValue()));
+    }
+
+    @Test
+    @DisplayName("Should not expose inactive products")
+    void shouldNotExposeInactiveProducts() {
+        ProductInfo inactiveProduct = new ProductInfo();
+        inactiveProduct.setName("Hidden Smoke Test Coffee");
+        inactiveProduct.setDescription("Inactive product used by catalog visibility tests.");
+        inactiveProduct.setPrice(BigDecimal.valueOf(11.99));
+        inactiveProduct.setQuantity(5);
+        inactiveProduct.setActive(false);
+        inactiveProduct.setAverageRating(BigDecimal.ZERO);
+        inactiveProduct.setReviewsCount(0);
+        inactiveProduct.setBrandName("Hidden Brand");
+        inactiveProduct.setSellerName("Hidden Seller");
+        inactiveProduct.setOriginCountry("Testland");
+        inactiveProduct.setWeight(250);
+        inactiveProduct.setLength(100);
+        inactiveProduct.setWidth(80);
+        inactiveProduct.setHeight(40);
+        inactiveProduct.setSoldProductsCount(1);
+        inactiveProduct.setDiscount(0);
+        inactiveProduct.setPopularityScore(1);
+        ProductInfo saved = productInfoRepository.saveAndFlush(inactiveProduct);
+
+        given(specification)
+                .queryParam("keyword", "Hidden Smoke Test Coffee")
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("products.name", not(hasItem("Hidden Smoke Test Coffee")));
+
+        given(specification).get("/{productId}", saved.getId()).then().statusCode(HttpStatus.NOT_FOUND.value());
     }
 }

@@ -40,15 +40,16 @@ class GetProductsRequestValidatorTest {
                             BigDecimal.TEN,
                             3,
                             List.of("Brand"),
-                            List.of("Seller")))
+                            List.of("Seller"),
+                            "latte"))
                     .doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("rejects negative min price")
         void rejectsNegativeMinPrice() {
-            assertThatThrownBy(() ->
-                            validator.validate(0, 10, "name", "asc", BigDecimal.valueOf(-1), null, null, null, null))
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", BigDecimal.valueOf(-1), null, null, null, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("minPrice");
         }
@@ -56,8 +57,8 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects negative max price")
         void rejectsNegativeMaxPrice() {
-            assertThatThrownBy(() ->
-                            validator.validate(0, 10, "name", "asc", null, BigDecimal.valueOf(-5), null, null, null))
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", null, BigDecimal.valueOf(-5), null, null, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("maxPrice");
         }
@@ -65,8 +66,8 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects min price greater than max price")
         void rejectsMinPriceGreaterThanMaxPrice() {
-            assertThatThrownBy(() ->
-                            validator.validate(0, 10, "name", "asc", BigDecimal.TEN, BigDecimal.ONE, null, null, null))
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", BigDecimal.TEN, BigDecimal.ONE, null, null, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("maxPrice");
         }
@@ -74,7 +75,7 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects unsupported minimum average rating")
         void rejectsUnsupportedMinimumAverageRating() {
-            assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc", null, null, 6, null, null))
+            assertThatThrownBy(() -> validator.validate(0, 10, "name", "asc", null, null, 6, null, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("minimumAverageRating");
         }
@@ -84,7 +85,7 @@ class GetProductsRequestValidatorTest {
         void acceptsValidMinimumAverageRatingValues() {
             for (int rating = 1; rating <= 5; rating++) {
                 final int current = rating;
-                assertThatCode(() -> validator.validate(0, 10, "name", "asc", null, null, current, null, null))
+                assertThatCode(() -> validator.validate(0, 10, "name", "asc", null, null, current, null, null, null))
                         .doesNotThrowAnyException();
             }
         }
@@ -92,8 +93,8 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects blank brand name")
         void rejectsBlankBrandName() {
-            assertThatThrownBy(() ->
-                            validator.validate(0, 10, "name", "asc", null, null, null, List.of("Brand", ""), null))
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", null, null, null, List.of("Brand", ""), null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("brandNames");
         }
@@ -101,8 +102,8 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects duplicate brand names")
         void rejectsDuplicateBrandNames() {
-            assertThatThrownBy(() ->
-                            validator.validate(0, 10, "name", "asc", null, null, null, List.of("Brand", "Brand"), null))
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", null, null, null, List.of("Brand", "Brand"), null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("brandNames");
         }
@@ -111,7 +112,7 @@ class GetProductsRequestValidatorTest {
         @DisplayName("rejects duplicate seller names")
         void rejectsDuplicateSellerNames() {
             assertThatThrownBy(() -> validator.validate(
-                            0, 10, "name", "asc", null, null, null, null, List.of("Seller", "Seller")))
+                            0, 10, "name", "asc", null, null, null, null, List.of("Seller", "Seller"), null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("sellerNames");
         }
@@ -119,7 +120,7 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("rejects invalid sort attribute")
         void rejectsInvalidSortAttribute() {
-            assertThatThrownBy(() -> validator.validate(0, 10, "unknown", "asc", null, null, null, null, null))
+            assertThatThrownBy(() -> validator.validate(0, 10, "unknown", "asc", null, null, null, null, null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("sortAttribute");
         }
@@ -127,8 +128,17 @@ class GetProductsRequestValidatorTest {
         @Test
         @DisplayName("allows null page size because provider applies default")
         void allowsNullPageSizeBecauseProviderAppliesDefault() {
-            assertThatCode(() -> validator.validate(0, null, "name", "asc", null, null, null, null, null))
+            assertThatCode(() -> validator.validate(0, null, "name", "asc", null, null, null, null, null, null))
                     .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("rejects keyword longer than the public API contract allows")
+        void rejectsTooLongKeyword() {
+            assertThatThrownBy(() ->
+                            validator.validate(0, 10, "name", "asc", null, null, null, null, null, "a".repeat(201)))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("keyword");
         }
 
         @Test
@@ -143,7 +153,8 @@ class GetProductsRequestValidatorTest {
                             BigDecimal.valueOf(-2),
                             6,
                             List.of(""),
-                            List.of("Seller", "Seller")))
+                            List.of("Seller", "Seller"),
+                            "a".repeat(201)))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("PageNumber")
                     .hasMessageContaining("PageSize")
@@ -152,7 +163,8 @@ class GetProductsRequestValidatorTest {
                     .hasMessageContaining("maxPrice")
                     .hasMessageContaining("minimumAverageRating")
                     .hasMessageContaining("brandNames")
-                    .hasMessageContaining("sellerNames");
+                    .hasMessageContaining("sellerNames")
+                    .hasMessageContaining("keyword");
         }
     }
 }

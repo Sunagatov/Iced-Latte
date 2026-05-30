@@ -20,6 +20,7 @@ public class GetProductsRequestValidator {
     private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES =
             Set.of("name", "price", "quantity", "averageRating", "reviewsCount", "brandName", "sellerName");
     private static final Set<Integer> ALLOWED_MINIMUM_AVERAGE_RATING_VALUES = Set.of(1, 2, 3, 4, 5);
+    private static final int MAX_KEYWORD_LENGTH = 200;
 
     private final PaginationParametersValidator paginationParametersValidator;
 
@@ -32,13 +33,15 @@ public class GetProductsRequestValidator {
             final @Nullable BigDecimal maxPrice,
             final @Nullable Integer minimumAverageRating,
             final @Nullable List<String> brandNames,
-            final @Nullable List<String> sellerNames) {
+            final @Nullable List<String> sellerNames,
+            final @Nullable String keyword) {
 
         List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
                 pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
         errors.addAll(validateMinMaxPrice(minPrice, maxPrice));
         errors.addAll(validateNameList(brandNames, "brandNames"));
         errors.addAll(validateNameList(sellerNames, "sellerNames"));
+        errors.addAll(validateKeyword(keyword));
         if (minimumAverageRating != null && !ALLOWED_MINIMUM_AVERAGE_RATING_VALUES.contains(minimumAverageRating)) {
             errors.add(error("'%s' is incorrect 'minimumAverageRating' value. Allowed values are '%s'."
                     .formatted(minimumAverageRating, ALLOWED_MINIMUM_AVERAGE_RATING_VALUES)));
@@ -75,6 +78,14 @@ public class GetProductsRequestValidator {
             errors.add(error("'%s' has duplicates. Values must be unique.".formatted(fieldName)));
         }
         return errors;
+    }
+
+    private static List<String> validateKeyword(@Nullable String keyword) {
+        if (keyword != null && keyword.length() > MAX_KEYWORD_LENGTH) {
+            return List.of(error("'%s' is too long 'keyword'. Maximum length is %s characters."
+                    .formatted(keyword, MAX_KEYWORD_LENGTH)));
+        }
+        return List.of();
     }
 
     private static String error(String message) {

@@ -9,7 +9,7 @@ import com.zufar.icedlatte.product.entity.ProductImage;
 
 public interface ProductImageRepository extends JpaRepository<ProductImage, UUID> {
 
-    List<ProductImage> findByProductIdOrderByPosition(UUID productId);
+    List<ProductImage> findByProductIdOrderByPositionAscIdAsc(UUID productId);
 
-    List<ProductImage> findByProductIdInOrderByPosition(List<UUID> productIds);
+    List<ProductImage> findByProductIdInOrderByProductIdAscPositionAscIdAsc(List<UUID> productIds);
 }

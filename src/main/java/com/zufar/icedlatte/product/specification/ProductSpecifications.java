@@ -2,6 +2,7 @@ package com.zufar.icedlatte.product.specification;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.data.jpa.domain.Specification;
 
@@ -13,6 +14,10 @@ import lombok.experimental.UtilityClass;
 public class ProductSpecifications {
 
     private static final Specification<ProductInfo> NONE = (_, _, _) -> null;
+
+    public static Specification<ProductInfo> activeSpec() {
+        return (r, _, cb) -> cb.isTrue(r.get("active"));
+    }
 
     public static Specification<ProductInfo> minPriceSpec(BigDecimal minPrice) {
         return minPrice == null ? NONE : (r, _, cb) -> cb.greaterThanOrEqualTo(r.get("price"), minPrice);
@@ -40,7 +45,11 @@ public class ProductSpecifications {
 
     public static Specification<ProductInfo> nameContainsSpec(String keyword) {
         if (keyword == null || keyword.isBlank()) return NONE;
-        String pattern = "%" + keyword.toLowerCase() + "%";
-        return (r, _, cb) -> cb.like(cb.lower(r.get("name")), pattern);
+        String pattern = "%" + escapeLike(keyword.toLowerCase(Locale.ROOT).trim()) + "%";
+        return (r, _, cb) -> cb.like(cb.lower(r.get("name")), pattern, '\\');
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }

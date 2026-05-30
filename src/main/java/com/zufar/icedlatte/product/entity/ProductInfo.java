@@ -49,16 +49,16 @@ public class ProductInfo extends AuditableEntity {
     @Column(name = "price", nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "quantity")
+    @Column(name = "quantity", nullable = false)
     private int quantity;
 
-    @Column(name = "active")
+    @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(name = "average_rating", precision = 2, scale = 1)
+    @Column(name = "average_rating", nullable = false, precision = 2, scale = 1)
     private BigDecimal averageRating;
 
-    @Column(name = "reviews_count")
+    @Column(name = "reviews_count", nullable = false)
     private Integer reviewsCount;
 
     @Column(name = "brand_name", nullable = false, length = 64)
@@ -70,29 +70,29 @@ public class ProductInfo extends AuditableEntity {
     @Column(name = "origin_country", nullable = false, length = 128)
     private String originCountry;
 
-    @Column(name = "weight")
+    @Column(name = "weight", nullable = false)
     private int weight;
 
-    @Column(name = "size_length")
+    @Column(name = "size_length", nullable = false)
     private int length;
 
-    @Column(name = "size_width")
+    @Column(name = "size_width", nullable = false)
     private int width;
 
-    @Column(name = "size_height")
+    @Column(name = "size_height", nullable = false)
     private int height;
 
-    @Column(name = "sold_products_count")
+    @Column(name = "sold_products_count", nullable = false)
     private int soldProductsCount;
 
-    @Column(name = "discount")
+    @Column(name = "discount", nullable = false)
     private int discount;
 
     @CreationTimestamp
     @Column(name = "date_added", nullable = false, updatable = false)
     private LocalDateTime dateAdded;
 
-    @Column(name = "popularity_score")
+    @Column(name = "popularity_score", nullable = false)
     private int popularityScore;
 
     @Column(name = "ai_summary", columnDefinition = "TEXT")
@@ -102,6 +102,7 @@ public class ProductInfo extends AuditableEntity {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (!(object instanceof ProductInfo productInfo)) return false;
+        if (id == null || productInfo.id == null) return false;
         return Objects.equals(id, productInfo.id);
     }
 

@@ -53,14 +53,14 @@ public class ProductImageReceiver {
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "productImageUrls", key = "#productId")
     public List<String> getProductImageUrls(final UUID productId) {
-        return productImageRepository.findByProductIdOrderByPosition(productId).stream()
+        return productImageRepository.findByProductIdOrderByPositionAscIdAsc(productId).stream()
                 .map(ProductImage::getUrl)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Map<UUID, List<String>> getProductImageUrlsBatch(final List<UUID> productIds) {
-        return productImageRepository.findByProductIdInOrderByPosition(productIds).stream()
+        return productImageRepository.findByProductIdInOrderByProductIdAscPositionAscIdAsc(productIds).stream()
                 .collect(Collectors.groupingBy(
                         ProductImage::getProductId, Collectors.mapping(ProductImage::getUrl, Collectors.toList())));
     }
