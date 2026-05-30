@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultCurrentUserProvider implements CurrentUserProvider {
+public class DefaultCurrentUserProvider implements CurrentUserProvider, CurrentUserIdProvider {
 
     private final UserLookupApi userLookupApi;
 

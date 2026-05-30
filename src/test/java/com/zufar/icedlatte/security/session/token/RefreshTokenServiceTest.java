@@ -26,6 +26,7 @@ import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService unit tests")
@@ -165,15 +166,8 @@ class RefreshTokenServiceTest {
     }
 
     private static org.springframework.security.core.userdetails.UserDetails user(String email) {
-        return com.zufar.icedlatte.user.entity.UserEntity.builder()
-                .id(java.util.UUID.randomUUID())
-                .email(email)
-                .password("secret")
-                .accountNonExpired(true)
-                .accountNonLocked(true)
-                .credentialsNonExpired(true)
-                .enabled(true)
-                .build();
+        return new SecurityUserDetails(
+                java.util.UUID.randomUUID(), email, "secret", java.util.List.of(), true, true, true, true);
     }
 
     private static UserAuthenticationResponse response() {

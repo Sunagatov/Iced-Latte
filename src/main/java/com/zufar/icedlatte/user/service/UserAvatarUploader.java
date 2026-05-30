@@ -14,9 +14,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 
@@ -27,20 +27,19 @@ import lombok.extern.slf4j.Slf4j;
 public class UserAvatarUploader {
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
     private final FileStorageApi fileStorageApi;
-    private final ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator;
+    private final ObjectProvider<FileCacheInvalidationApi> cacheInvalidator;
 
     public UserAvatarUploader(
-            FileStorageApi fileStorageApi, ObjectProvider<AwsCloudFrontInvalidator> cloudfrontInvalidator) {
+            FileStorageApi fileStorageApi, ObjectProvider<FileCacheInvalidationApi> cacheInvalidator) {
         this.fileStorageApi = fileStorageApi;
-        this.cloudfrontInvalidator = cloudfrontInvalidator;
+        this.cacheInvalidator = cacheInvalidator;
     }
 
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
-
-    private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
@@ -80,7 +79,7 @@ public class UserAvatarUploader {
     }
 
     private void invalidateAvatarCache(String fileName) {
-        cloudfrontInvalidator.ifAvailable(invalidator -> invalidator.invalidate(fileName));
+        cacheInvalidator.ifAvailable(invalidator -> invalidator.invalidate(fileName));
     }
 
     private static Optional<String> detectContentType(MultipartFile file) {

@@ -93,12 +93,6 @@ public class UserProfileService implements UserAccessControlApi {
         return userRepository.setAccountLockedStatus(email, true);
     }
 
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void unlockExpiredAccounts() {
-        userRepository.unlockUsers();
-    }
-
     @Transactional(readOnly = true)
     public Optional<String> findAvatarLink(UUID userId) {
         return fileStorageApi.findFileUrl(userId);

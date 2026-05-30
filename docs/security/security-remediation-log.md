@@ -1396,3 +1396,459 @@ Replay cleanup also uses the locked id lookup.
 
 Now all important session mutation paths acquire the row lock before changing
 the session.
+
+## 22. Security Endpoint Was at Risk of Becoming an Application-Service Dumping Ground
+
+### What This Feature Is For
+
+`UserSecurityEndpoint` is the HTTP adapter for the generated security OpenAPI
+contract. It translates HTTP requests into calls to focused security services.
+
+It should know about HTTP details such as:
+
+- route parameters
+- request bodies
+- response status codes
+- redirect responses
+
+It should not own deep authentication, registration, token, or session logic.
+
+### How the Old Refactor Direction Could Have Behaved
+
+During the cleanup, one possible direction was to add extra flow-service fields
+to the endpoint, such as:
+
+```text
+AuthenticationFlowService
+RegistrationFlowService
+SessionFlowService
+```
+
+That would have reduced some direct dependencies in the controller, but only by
+creating thin wrapper services around already focused services.
+
+### Why That Would Have Been a Code Smell
+
+This was not a runtime security exploit. It was a maintainability and coupling
+risk.
+
+Thin flow wrappers can look like cleaner dependency injection, but they often
+hide the real design instead of improving it. If the wrapper only forwards calls
+to another service, it adds another class to understand without adding a real
+domain boundary.
+
+### Simple Example
+
+```text
+Endpoint -> RegistrationFlowService -> UserRegistrationService
+```
+
+If `RegistrationFlowService` does not own real registration policy, transaction
+boundaries, or domain decisions, then it is only indirection.
+
+### What the Fix Changed
+
+The extra flow services were removed. The endpoint now calls the concrete
+services that own each behavior:
+
+- `UserAuthenticationService` owns username/password authentication.
+- `UserRegistrationService` owns immediate password-user registration.
+- `EmailVerificationService` owns email verification and password reset email
+  flows.
+- `RefreshTokenService` owns refresh-token handling.
+- `TokenRevocationService` owns logout token revocation.
+- `AuthSessionService` owns session listing and revocation.
+- `OAuthFlowService` owns OAuth redirect and handoff flow.
+
+This keeps the design simple:
+
+```text
+HTTP endpoint -> cohesive application/domain service
+```
+
+The endpoint still has several dependencies because the generated `SecurityApi`
+groups many auth routes into one controller. Splitting it today would add more
+adapter code without improving the public contract.
+
+## 23. Refresh Token Service Leaked Web-Layer Response Decisions
+
+### What This Feature Is For
+
+`RefreshTokenService` handles refresh-token business behavior:
+
+- read the submitted refresh token
+- validate token claims
+- find or migrate the session
+- rotate the refresh token
+- reject replayed or invalid tokens
+
+The HTTP endpoint should decide the HTTP response shape.
+
+### How the Old System Behaved
+
+The refresh-token service returned a web response type:
+
+```text
+ResponseEntity<UserAuthenticationResponse>
+```
+
+That meant the service had to know about HTTP status codes and response
+wrapping.
+
+### Why That Was a Code Smell
+
+This mixed application logic with web adapter logic.
+
+The service should not need Spring MVC response types to express:
+
+```text
+Refresh succeeded and maybe migrated a legacy token.
+```
+
+When a service returns `ResponseEntity`, it becomes harder to reuse and harder
+to test as pure application behavior.
+
+### Simple Example
+
+```text
+Service decides: 200 OK or 201 CREATED
+Endpoint only forwards it
+```
+
+That puts HTTP policy inside the service.
+
+### What the Fix Changed
+
+The service now returns a small result record:
+
+```text
+RefreshTokenResult(response, migratedLegacyToken)
+```
+
+The endpoint maps that result to HTTP:
+
+```text
+migrated legacy token -> 201 CREATED
+normal refresh        -> 200 OK
+```
+
+This keeps the boundary clearer:
+
+```text
+RefreshTokenService: refresh-token decision
+UserSecurityEndpoint: HTTP status mapping
+```
+
+## 24. Email Verification Service Mixed Workflow and Token Storage Mechanics
+
+### What This Feature Is For
+
+Email verification and password reset both need temporary, one-time tokens.
+
+There are two separate concerns:
+
+- workflow: when to send email, when to register, when to reset password
+- token mechanics: generate token, hash token key, store payload, enforce TTL,
+  enforce cooldown, consume token once
+
+### How the Old System Behaved
+
+`EmailVerificationService` carried too much of both concerns. It was responsible
+for workflow and for lower-level token storage behavior.
+
+### Why That Was a Code Smell
+
+This was a single-responsibility problem.
+
+The workflow service is easier to reason about when it reads like the business
+process:
+
+```text
+send verification token
+consume verification token
+complete registration
+```
+
+Token generation, hashing, serialization, cooldown, and TTL validation are
+mechanics. Keeping them in the same class makes the workflow harder to audit.
+
+### Simple Example
+
+```text
+confirmEmailByCode(...)
+  parse token
+  deserialize token payload
+  check token purpose
+  remove cooldown key
+  build registration request
+  register user
+```
+
+That mixes too many levels of detail in one method/class.
+
+### What the Fix Changed
+
+Token mechanics were moved into `EmailTokenService` and `EmailTokenEntry`.
+
+`EmailVerificationService` now coordinates the workflow:
+
+- generate email verification token
+- generate password reset token
+- consume the right token purpose
+- call registration or password update services
+
+`EmailTokenService` owns the mechanics:
+
+- normalize email before token storage
+- enforce cooldown by normalized email
+- generate long URL-safe opaque tokens
+- store hashed token keys
+- scope token keys by purpose
+- serialize/deserialize token entries
+- consume tokens once
+
+This gives the code higher cohesion without adding a speculative abstraction.
+
+## 25. OAuth Token Handoff Reused JWT Refresh Secret by Default
+
+### What This Feature Is For
+
+OAuth callback handling cannot safely place access and refresh tokens directly
+in a redirect URL query string. The backend stores the token pair temporarily
+and gives the frontend a short-lived handoff code.
+
+The handoff payload is encrypted before being stored.
+
+### How the Old System Behaved
+
+The handoff store derived its encryption key from the JWT refresh-token secret.
+
+That worked cryptographically if the refresh secret was strong, but it coupled
+two different purposes:
+
+```text
+JWT signing secret
+OAuth handoff encryption key
+```
+
+### Why That Was a Code Smell
+
+Secrets should have narrow purpose where practical.
+
+If one secret is reused for multiple security mechanisms, future rotation and
+incident response become harder. A handoff encryption concern should not be
+tightly coupled to refresh-token signing.
+
+### Simple Example
+
+```text
+Need to rotate OAuth handoff encryption.
+But the key is derived from JWT refresh secret.
+Now refresh-token signing is affected too.
+```
+
+That is unnecessary coupling.
+
+### What the Fix Changed
+
+The handoff store now accepts:
+
+```text
+oauth.handoff-encryption-key
+```
+
+If that value is configured, it is used for handoff encryption. If it is blank,
+the code keeps the previous refresh-secret fallback so existing environments do
+not break immediately.
+
+This improves separation while keeping deployment compatibility.
+
+## 26. Refresh-Token Logic Needed to Keep Login Attempt State Out of Session Token Issuing
+
+### What This Feature Is For
+
+Login-attempt tracking protects password authentication from guessing attacks.
+Session-token issuing creates and rotates tokens after authentication or refresh
+has already been accepted.
+
+These are different responsibilities.
+
+### How the Risk Appeared During Review
+
+One possible cleanup direction was to move login-attempt behavior into
+`SessionTokenService`, because authentication eventually issues session tokens.
+
+### Why That Would Have Been a Code Smell
+
+That would couple password-auth failure tracking to token issuing.
+
+`SessionTokenService` should not know why a user is receiving tokens. Tokens can
+be issued after:
+
+- password login
+- OAuth login
+- email-confirmed registration
+- refresh-token migration
+- refresh-token rotation
+
+Only password authentication needs login-attempt tracking.
+
+### Simple Example
+
+```text
+OAuth login succeeds.
+SessionTokenService issues tokens.
+```
+
+If login-attempt state lived inside `SessionTokenService`, OAuth and refresh
+paths would depend on password-login concerns they do not use.
+
+### What the Fix Changed
+
+Login-attempt behavior remains in `UserAuthenticationService` and
+`LoginAttemptService`.
+
+`SessionTokenService` only:
+
+- creates managed sessions
+- generates access/refresh token pairs
+- rotates refresh tokens
+- migrates legacy refresh tokens
+- binds session IDs to logging MDC while issuing tokens
+
+This keeps token issuing cohesive and avoids unnecessary coupling.
+
+## 27. User Authority Nullability Could Break Authentication Snapshots
+
+### What This Feature Is For
+
+The security package consumes `UserAuthenticationSnapshot` from the user
+feature. That snapshot includes authority names used by Spring Security.
+
+Authority names are expected to be non-null strings such as:
+
+```text
+USER
+ADMIN
+```
+
+### How the Code Behaved
+
+Two nullability warnings were found in the user feature:
+
+```text
+UserEntity.addAuthority(...)
+SingleUserProvider.toAuthenticationSnapshot(...)
+```
+
+`UserEntity.addAuthority(...)` compared authority names while assuming the new
+authority name was non-null.
+
+`SingleUserProvider.toAuthenticationSnapshot(...)` mapped authority names into
+`List<String>` while the analyzer could not prove those names were non-null.
+
+### Why That Was a Bug
+
+This is not in the `security` package, but it affects security identity data.
+
+If a malformed `UserGrantedAuthority` ever had a null authority enum, then
+Spring Security authority mapping could fail with a `NullPointerException` or
+produce an invalid authentication snapshot.
+
+### Simple Example
+
+```text
+UserGrantedAuthority.authority = null
+toAuthenticationSnapshot(...)
+  maps getAuthority()
+  returns null inside List<String>
+SecurityUserDetails.from(snapshot)
+  tries to turn null into GrantedAuthority
+```
+
+That makes authentication data fragile.
+
+### What the Fix Changed
+
+The code now enforces the invariant explicitly:
+
+```text
+authority name must not be null
+```
+
+`UserEntity.addAuthority(...)` fails fast if the authority name is null before
+duplicate checking.
+
+`SingleUserProvider.toAuthenticationSnapshot(...)` fails fast if any stored
+authority name is null before building `UserAuthenticationSnapshot`.
+
+This keeps bad identity data from silently crossing into the security module.
+
+## 28. Follow-Up Security Package Audit Found No Required Refactor
+
+### What This Feature Is For
+
+After the cleanup, the full `com.zufar.icedlatte.security` package was reviewed
+again for:
+
+- SOLID
+- YAGNI
+- KISS
+- high cohesion
+- loose coupling
+- overengineering
+
+### What Was Checked
+
+The audit checked:
+
+- controller/service boundaries
+- service dependency counts
+- broad exception handling
+- web-layer types leaking into services
+- direct cross-feature imports
+- mutable configuration injection
+- token/session/OAuth/signup/signin responsibilities
+- tests covering the security behavior
+
+### What the Audit Found
+
+No required security-package refactor remained.
+
+The following items were noted but intentionally not changed:
+
+- `UserSecurityEndpoint` has many dependencies because it implements the
+  generated `SecurityApi`; splitting it now would add adapter indirection.
+- `JwtAuthenticationFilter` is long because it owns filter-level authentication
+  error mapping; extracting a helper today would be mostly aesthetic.
+- `AuthSessionService` is one of the larger classes, but it is cohesive around
+  session creation, rotation, revocation, replay detection, and session listing.
+- Some classes still use `@Value` fields; constructor-bound properties would be
+  cleaner if the configuration grows, but a refactor now would be low-value.
+
+### Why No Further Fix Was Applied
+
+Security cleanup should not chase line counts or dependency counts blindly.
+
+Adding more classes can make a package look cleaner while making it harder to
+understand. The review favored the simplest design that keeps real boundaries:
+
+```text
+HTTP adapter -> focused service -> repository/cache/provider
+```
+
+### Verification
+
+The focused security verification suite passed:
+
+```text
+Tests run: 161, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+The follow-up user identity nullability verification also passed:
+
+```text
+Tests run: 40, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```

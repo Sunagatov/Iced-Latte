@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
@@ -30,7 +31,7 @@ class UserAvatarUploaderTest {
     private FileStorageApi fileStorageService;
 
     @Mock
-    private ObjectProvider<com.zufar.icedlatte.filestorage.aws.AwsCloudFrontInvalidator> cloudfrontInvalidatorProvider;
+    private ObjectProvider<FileCacheInvalidationApi> cacheInvalidatorProvider;
 
     @Mock
     private MultipartFile file;
@@ -47,7 +48,7 @@ class UserAvatarUploaderTest {
 
     @BeforeEach
     void injectBucket() throws Exception {
-        uploader = new UserAvatarUploader(fileStorageService, cloudfrontInvalidatorProvider);
+        uploader = new UserAvatarUploader(fileStorageService, cacheInvalidatorProvider);
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
         field.setAccessible(true);
         field.set(uploader, BUCKET);

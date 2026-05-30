@@ -75,9 +75,10 @@ public class PutUsersRequestValidator {
 
     private void validateBirthDate(@Nullable LocalDate birthDate, List<String> errors) {
         if (birthDate == null) return;
-        if (!birthDate.isBefore(LocalDate.now())) {
+        LocalDate today = LocalDate.now();
+        if (!birthDate.isBefore(today)) {
             errors.add(error("Date of birth must be in the past."));
-        } else if (birthDate.isAfter(LocalDate.now().minusYears(13))) {
+        } else if (birthDate.isAfter(today.minusYears(13))) {
             errors.add(error("You must be at least 13 years old."));
         }
     }
@@ -103,8 +104,8 @@ public class PutUsersRequestValidator {
             return;
         }
         if (value.length() > MAX_ADDRESS_FIELD_LENGTH) {
-            String errorMessge = "Address field `%s` must not exceed %d characters.";
-            errors.add(error(String.format(errorMessge, fieldName, MAX_ADDRESS_FIELD_LENGTH)));
+            String errorMessage = "Address field `%s` must not exceed %d characters.";
+            errors.add(error(String.format(errorMessage, fieldName, MAX_ADDRESS_FIELD_LENGTH)));
         }
     }
 

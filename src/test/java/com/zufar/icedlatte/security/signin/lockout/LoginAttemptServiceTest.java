@@ -167,12 +167,15 @@ class LoginAttemptServiceTest {
     @Test
     @DisplayName("unlockExpiredAccounts resets stale lock records and unlocks users")
     void unlockExpiredAccountsResetsStaleLockRecordsAndUnlocksUsers() {
+        when(loginAttemptRepository.findExpiredLockedUserEmails()).thenReturn(java.util.List.of(USER_EMAIL));
+        when(userAccessControlApi.unlockAccount(USER_EMAIL)).thenReturn(1);
         when(loginAttemptRepository.resetLockedAccounts()).thenReturn(2);
 
         service.unlockExpiredAccounts();
 
         InOrder inOrder = inOrder(userAccessControlApi, loginAttemptRepository);
-        inOrder.verify(userAccessControlApi).unlockExpiredAccounts();
+        inOrder.verify(loginAttemptRepository).findExpiredLockedUserEmails();
+        inOrder.verify(userAccessControlApi).unlockAccount(USER_EMAIL);
         inOrder.verify(loginAttemptRepository).resetLockedAccounts();
         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }
@@ -185,7 +188,7 @@ class LoginAttemptServiceTest {
 
         assertThatThrownBy(service::unlockExpiredAccounts).isSameAs(exception);
 
-        verify(userAccessControlApi).unlockExpiredAccounts();
+        verify(loginAttemptRepository).findExpiredLockedUserEmails();
         verify(loginAttemptRepository).resetLockedAccounts();
         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
     }

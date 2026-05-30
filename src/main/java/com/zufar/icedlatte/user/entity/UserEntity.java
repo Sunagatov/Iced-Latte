@@ -8,9 +8,6 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.common.audit.Identifiable;
 
@@ -24,7 +21,7 @@ import lombok.*;
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "user_details")
-public class UserEntity extends AuditableEntity implements UserDetails, Identifiable {
+public class UserEntity extends AuditableEntity implements Identifiable {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -74,12 +71,6 @@ public class UserEntity extends AuditableEntity implements UserDetails, Identifi
 
     @Column(name = "oauth_user", nullable = false)
     private boolean oauthUser;
-
-    @Override
-    @NonNull
-    public String getUsername() {
-        return email;
-    }
 
     public void addAuthority(UserGrantedAuthority authority) {
         Objects.requireNonNull(authority, "authority must not be null");

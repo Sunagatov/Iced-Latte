@@ -58,7 +58,7 @@ public class LoginAttemptService {
     public void unlockExpiredAccounts() {
         log.debug("scheduler.unlock.start");
 
-        userAccessControlApi.unlockExpiredAccounts();
+        loginAttemptRepository.findExpiredLockedUserEmails().forEach(this::unlockUserAccount);
         int released = loginAttemptRepository.resetLockedAccounts();
         log.debug("scheduler.unlock.released: count={}", released);
 

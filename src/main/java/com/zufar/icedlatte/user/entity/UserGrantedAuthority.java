@@ -4,8 +4,6 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 
-import org.springframework.security.core.GrantedAuthority;
-
 import lombok.*;
 
 @Builder
@@ -15,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_granted_authority")
-public class UserGrantedAuthority implements GrantedAuthority {
+public class UserGrantedAuthority {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -30,7 +28,6 @@ public class UserGrantedAuthority implements GrantedAuthority {
     @Column(name = "authority", nullable = false, length = 32)
     private Authority authority;
 
-    @Override
     public String getAuthority() {
         return authority.name();
     }

@@ -25,7 +25,7 @@ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SessionTokenService unit tests")
@@ -58,7 +58,7 @@ class SessionTokenServiceTest {
         String refreshToken = "refresh-token";
         String refreshHash = "refresh-hash";
         String accessToken = "access-token";
-        UserEntity user = user(userId, "alice@example.com");
+        SecurityUserDetails user = user(userId, "alice@example.com");
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(refreshToken);
         when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
@@ -86,7 +86,7 @@ class SessionTokenServiceTest {
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
         String accessToken = "access-token";
-        UserEntity user = user(userId, "rotate@example.com");
+        SecurityUserDetails user = user(userId, "rotate@example.com");
         AuthSessionEntity session =
                 AuthSessionEntity.builder().id(sessionId).userId(userId).build();
 
@@ -111,7 +111,7 @@ class SessionTokenServiceTest {
         String newRefreshToken = "new-refresh";
         String newHash = "new-hash";
         String accessToken = "access-token";
-        UserEntity user = user(userId, "legacy@example.com");
+        SecurityUserDetails user = user(userId, "legacy@example.com");
 
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(newRefreshToken);
         when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
@@ -131,8 +131,8 @@ class SessionTokenServiceTest {
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
 
-    private static UserEntity user(UUID id, String email) {
-        return UserEntity.builder().id(id).email(email).password("secret").build();
+    private static SecurityUserDetails user(UUID id, String email) {
+        return new SecurityUserDetails(id, email, "secret", java.util.List.of(), true, true, true, true);
     }
 
 }

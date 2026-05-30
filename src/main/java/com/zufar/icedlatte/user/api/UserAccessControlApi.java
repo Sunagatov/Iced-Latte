@@ -13,6 +13,4 @@ public interface UserAccessControlApi {
     int lockAccount(String email);
 
     int unlockAccount(String email);
-
-    void unlockExpiredAccounts();
 }

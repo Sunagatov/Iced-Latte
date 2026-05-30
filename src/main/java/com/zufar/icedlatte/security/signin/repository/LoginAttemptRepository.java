@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.signin.repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +39,15 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
             + "WHERE la.userEmail = :email")
     int setUserLockedStatusAndExpiration(
             @Param("email") String userEmail, @Param("expiration") Instant expirationDatetime);
+
+    @Query("""
+            SELECT la.userEmail
+            FROM LoginAttemptEntity la
+            WHERE la.isUserLocked = true
+            AND la.expirationDatetime IS NOT NULL
+            AND la.expirationDatetime <= CURRENT_TIMESTAMP
+            """)
+    List<String> findExpiredLockedUserEmails();
 
     /** Resets the locked accounts whose lockout expiration time has passed. */
     // amazonq-ignore-next-line

@@ -14,8 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.zufar.icedlatte.openapi.dto.UserDto;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.Authority;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
@@ -28,9 +26,6 @@ class SingleUserProviderTest {
 
     @Mock
     private UserRepository userCrudRepository;
-
-    @Mock
-    private UserDtoConverter userDtoConverter;
 
     @InjectMocks
     private SingleUserProvider singleUserProvider;
@@ -124,20 +119,6 @@ class SingleUserProviderTest {
         assertThat(singleUserProvider.findUserByEmail("missing@example.com")).isEmpty();
 
         verify(userCrudRepository).findByEmail("missing@example.com");
-    }
-
-    @Test
-    @DisplayName("getUserDtoById returns OpenAPI dto for same-module profile usage")
-    void getUserDtoByIdReturnsDto() {
-        UUID userId = UUID.randomUUID();
-        UserEntity entity = UserEntity.builder().id(userId).build();
-        UserDto dto = new UserDto().id(userId);
-        when(userCrudRepository.findById(userId)).thenReturn(java.util.Optional.of(entity));
-        when(userDtoConverter.toDto(entity)).thenReturn(dto);
-
-        assertThat(singleUserProvider.getUserDtoById(userId)).isSameAs(dto);
-        verify(userCrudRepository).findById(userId);
-        verify(userDtoConverter).toDto(entity);
     }
 
     @Test

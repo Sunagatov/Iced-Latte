@@ -12,9 +12,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
@@ -34,7 +34,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserProfileService userProfileService;
     private final UserAvatarUploader userAvatarUploader;
     private final DeliveryAddressService deliveryAddressService;
-    private final CurrentUserProvider currentUserProvider;
+    private final CurrentUserIdProvider currentUserIdProvider;
 
     @Override
     @GetMapping
@@ -150,6 +150,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     private UUID currentUserId() {
-        return currentUserProvider.getUserId();
+        return currentUserIdProvider.getUserId();
     }
 }

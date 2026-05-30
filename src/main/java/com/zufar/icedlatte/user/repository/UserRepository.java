@@ -40,7 +40,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByIdForUpdate(@Param("userId") UUID userId);
 
     /**
-     * Updates the locked status of a user based on the given email.
+     * Updates the password of a user by id.
      *
      * @param newPassword The new password of the user.
      * @param userId The id of the user.
@@ -61,11 +61,4 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Query("UPDATE UserEntity u " + "SET u.accountNonLocked = :accountNonLocked " + "WHERE u.email = :email")
     int setAccountLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 
-    /** Unlocks all users that have corresponding expired lock entries in the login_attempts table. */
-    @Modifying
-    @Transactional
-    @Query(
-            value =
-                    "UPDATE UserEntity u SET u.accountNonLocked = true WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = true AND la.expirationDatetime IS NOT NULL AND la.expirationDatetime <= CURRENT_TIMESTAMP)")
-    void unlockUsers();
 }

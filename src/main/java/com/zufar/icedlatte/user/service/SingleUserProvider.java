@@ -1,12 +1,10 @@
 package com.zufar.icedlatte.user.service;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
-import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -25,7 +23,6 @@ import java.util.UUID;
 public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi {
 
     private final UserRepository userCrudRepository;
-    private final UserDtoConverter userDtoConverter;
 
     @Override
     @Transactional(readOnly = true)
@@ -71,10 +68,6 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     public UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
         String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
         return userCrudRepository.findByEmail(normalizedEmail).orElseThrow(() -> new UserNotFoundException(email));
-    }
-
-    public UserDto getUserDtoById(final UUID userId) throws UserNotFoundException {
-        return userDtoConverter.toDto(getUserEntityById(userId));
     }
 
     private UserLookupSnapshot toLookupSnapshot(UserEntity user) {

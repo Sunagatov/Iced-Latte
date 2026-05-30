@@ -30,9 +30,9 @@ import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
-import com.zufar.icedlatte.user.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationFilter")
@@ -85,7 +85,7 @@ class JwtAuthenticationFilterTest {
         void authenticatesRequestEnrichesMdcAndClearsAfterChain() throws ServletException, IOException {
             UUID userId = UUID.randomUUID();
             UUID sessionId = UUID.randomUUID();
-            UserEntity user = UserEntity.builder().id(userId).build();
+            SecurityUserDetails user = user(userId);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(user, "credentials", user.getAuthorities());
             MockHttpServletRequest request = request("/api/v1/me");
@@ -117,7 +117,7 @@ class JwtAuthenticationFilterTest {
         @DisplayName("continues when session-id extraction fails after successful authentication")
         void continuesWhenSessionIdExtractionFailsAfterSuccessfulAuthentication() throws ServletException, IOException {
             UUID userId = UUID.randomUUID();
-            UserEntity user = UserEntity.builder().id(userId).build();
+            SecurityUserDetails user = user(userId);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(user, "credentials", user.getAuthorities());
             MockHttpServletRequest request = request("/api/v1/me");
@@ -193,6 +193,11 @@ class JwtAuthenticationFilterTest {
         request.setMethod("GET");
         request.setRequestURI(uri);
         return request;
+    }
+
+    private static SecurityUserDetails user(UUID userId) {
+        return new SecurityUserDetails(
+                userId, "user@example.com", "credentials", java.util.List.of(), true, true, true, true);
     }
 
     private static final class TestableJwtAuthenticationFilter extends JwtAuthenticationFilter {
