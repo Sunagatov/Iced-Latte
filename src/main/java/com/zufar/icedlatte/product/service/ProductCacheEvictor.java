@@ -10,6 +10,18 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Evicts product caches after the surrounding database transaction commits.
+ *
+ * <p>This class is intentionally more explicit than a plain {@code @CacheEvict}. Product review changes update cached
+ * fields on {@code ProductInfo}, such as average rating, review count, and AI summary. If the cache is evicted before
+ * the transaction commits, another request can miss the cache, read the old database row, and put that old value back
+ * into {@code productById}. Then the database commit succeeds, but the cache still contains stale product data.
+ *
+ * <p>By registering eviction in {@link TransactionSynchronization#afterCommit()}, the cache is cleared only after the
+ * database change is visible to later transactions. When no transaction synchronization is active, eviction runs
+ * immediately; this keeps the helper useful in unit tests and non-transactional maintenance code.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductCacheEvictor {
