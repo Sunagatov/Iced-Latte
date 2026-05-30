@@ -644,11 +644,17 @@ That creates broken avatar links.
 
 ### What the Fix Changed
 
-`deleteProfile(...)` now asks file storage to delete files before deleting the
-user, but file storage no longer deletes the real object immediately.
+`deleteProfile(...)` now deletes the user row first and registers profile cleanup
+to run only after the database transaction commits.
 
-The file-storage service first deletes the metadata in the same database
-transaction, then writes a durable outbox event:
+In beginner terms: the database change is allowed to finish first. Only after
+the delete is committed does the app ask for session revocation and avatar
+cleanup. If the database transaction rolls back, the external cleanup is not
+triggered for a user that still exists.
+
+The file-storage service also no longer deletes the real object immediately.
+It first deletes the metadata in the same database transaction, then writes a
+durable outbox event:
 
 ```text
 List<FileMetadataDto> fileMetadataList = findAllMetadata(relatedObjectId);
@@ -2580,6 +2586,352 @@ real orphan-object problem:
 That was not changed in this remediation because it is a separate upload-side
 compensation design. A future fix could add an upload outbox/cleanup intent or a
 best-effort compensating delete when metadata save fails.
+
+## 39. Admin Users Could Not Be Represented by the User Authority Enum
+
+### What This Feature Is For
+
+The security configuration protects admin endpoints with admin-role checks:
+
+```text
+hasRole("ADMIN")
+```
+
+That requires the application to be able to persist and load an admin authority
+for a user.
+
+### How the Old System Behaved
+
+The user authority enum contained only:
+
+```text
+USER
+```
+
+So even though the security rules expected an admin role, the user module could
+not represent `ADMIN` as a normal persisted authority.
+
+### Why That Was a Bug
+
+An authorization rule is only useful if the account model can express the
+required role.
+
+Before the fix, a database-backed admin account could not be modeled cleanly
+through the `Authority` enum.
+
+### Simple Example
+
+```text
+Security rule:
+  /api/v1/admin/orders requires ADMIN
+
+User authority enum:
+  only USER exists
+```
+
+The application had a role check that the user role model could not satisfy.
+
+### What the Fix Changed
+
+`Authority` now includes:
+
+```text
+ADMIN
+USER
+```
+
+This lets the user module persist the same authority names that security expects
+to authorize admin endpoints.
+
+## 40. Persisted Authorities Did Not Match Spring `hasRole(...)` Names
+
+### What This Feature Is For
+
+Spring Security's `hasRole("ADMIN")` check expects a granted authority named:
+
+```text
+ROLE_ADMIN
+```
+
+But the database stores role names without the Spring prefix:
+
+```text
+ADMIN
+USER
+```
+
+### How the Old System Behaved
+
+Authentication snapshots carried authority names like:
+
+```text
+USER
+```
+
+Those values were converted directly into Spring granted authorities.
+
+### Why That Was a Bug
+
+If Spring receives `USER`, then `hasRole("USER")` does not match it. Spring's
+role check looks for `ROLE_USER`.
+
+The result is that a valid persisted user role can fail authorization checks
+because the runtime granted-authority name is missing the prefix Spring expects.
+
+### Simple Example
+
+```text
+Database role:
+  USER
+
+Spring check:
+  hasRole("USER")
+
+Spring internally checks for:
+  ROLE_USER
+```
+
+Before the fix, the names did not line up.
+
+### What the Fix Changed
+
+`SecurityUserDetails` now prefixes snapshot authorities with `ROLE_` when
+needed.
+
+In beginner terms: the database keeps simple enum names, while the Spring
+security object gets the exact authority names Spring's role checks expect.
+
+## 41. User Authority Equality Collapsed Different Users' Same Role
+
+### What This Feature Is For
+
+`UserGrantedAuthority` represents one user's role row.
+
+Two users can both have the `USER` role, but those are still two different
+database rows owned by two different users.
+
+### How the Old System Behaved
+
+`UserGrantedAuthority.equals(...)` compared only the authority value:
+
+```text
+return authority == that.authority;
+```
+
+That means these two rows compared equal:
+
+```text
+alice -> USER
+bob   -> USER
+```
+
+### Why That Was a Bug
+
+Entity equality should not collapse two different persisted rows just because
+one business field has the same value.
+
+This is especially risky with sets and persistence collections. A collection can
+drop one item because Java thinks the two role rows are the same object.
+
+### Simple Example
+
+```text
+Set<UserGrantedAuthority> roles = new HashSet<>();
+roles.add(aliceUserRole);
+roles.add(bobUserRole);
+
+Old result:
+  set size could be 1
+```
+
+That is wrong because the rows belong to different users.
+
+### What the Fix Changed
+
+`UserGrantedAuthority` now follows the same persisted-ID equality pattern as the
+other user entities:
+
+```text
+return userAuthorityId != null && userAuthorityId.equals(that.userAuthorityId);
+```
+
+Duplicate role names for the same user are prevented separately by user-level
+add logic and a database uniqueness constraint.
+
+## 42. User Authority Rows Had No User Foreign Key or Per-User Uniqueness
+
+### What This Feature Is For
+
+Every row in `user_granted_authority` should belong to a real user.
+
+A user should also not need duplicate rows for the same authority:
+
+```text
+same user + same authority = only one row
+```
+
+### How the Old System Behaved
+
+The authority table had a `user_id`, but the database did not enforce a foreign
+key back to `user_details`.
+
+It also did not enforce uniqueness for `(user_id, authority)`.
+
+### Why That Was a Bug
+
+Without a foreign key, the database can contain orphan authority rows that point
+to no real user.
+
+Without the uniqueness constraint, the same user can have duplicate copies of
+the same authority. That makes authorization data harder to reason about and can
+hide application bugs.
+
+### Simple Example
+
+```text
+user_details:
+  no row with id = 1111
+
+user_granted_authority:
+  user_id = 1111, authority = USER
+```
+
+The authority row is meaningless because the user does not exist.
+
+### What the Fix Changed
+
+A migration now:
+
+- deletes orphan authority rows
+- removes duplicate `(user_id, authority)` rows
+- adds a foreign key from `user_granted_authority.user_id` to `user_details.id`
+- adds a unique constraint on `(user_id, authority)`
+
+In beginner terms: the database now protects the same invariant the Java code
+expects.
+
+## 43. Default-Address Delete and Change Were Not Serialized Per User
+
+### What This Feature Is For
+
+Only one delivery address should be default for a user.
+
+Creating the first address already used a user-row lock so concurrent requests
+could not both decide to create the default address.
+
+### How the Old System Behaved
+
+`create(...)` locked the user row, but `delete(...)` and `setDefault(...)` did
+not use the same per-user lock.
+
+### Why That Was a Bug
+
+Default-address operations all update the same per-user invariant:
+
+```text
+at most one default address
+if addresses remain, one should be default
+```
+
+If one request deletes the current default while another request changes the
+default, both transactions can read stale state and then write conflicting
+updates.
+
+### Simple Example
+
+```text
+Request A:
+  delete current default address
+
+Request B:
+  set another address as default
+
+Both operate at the same time without a shared user-level lock.
+```
+
+The database unique index helps prevent two defaults, but the service should
+also serialize the business decision about which row should become default.
+
+### What the Fix Changed
+
+`delete(...)` and `setDefault(...)` now lock the user row before reading and
+mutating delivery-address default state.
+
+In beginner terms: all operations that choose or replace a user's default
+address now enter the same one-at-a-time section for that user.
+
+## 44. Account Deletion Could Revoke Sessions or Delete Avatar State Before Commit
+
+### What This Feature Is For
+
+Deleting an account should remove the user record and clean up related external
+state, such as sessions and avatar files.
+
+### How the Old System Behaved
+
+The cleanup could run inside the same service method before the user-delete
+transaction had committed.
+
+### Why That Was a Bug
+
+Session revocation and object-storage cleanup are external side effects. They
+are not automatically rolled back if the database transaction rolls back.
+
+That can leave the system inconsistent:
+
+```text
+database rollback:
+  user still exists
+
+external cleanup already ran:
+  sessions revoked or avatar object scheduled for deletion
+```
+
+### What the Fix Changed
+
+`deleteProfile(...)` now deletes the user row and registers cleanup to run after
+the transaction commits.
+
+If transaction synchronization is not active, the cleanup still runs
+immediately, which keeps plain unit-test or non-transactional behavior simple.
+
+Cleanup failures are logged instead of failing an already-committed account
+delete.
+
+## 45. Authentication Snapshot Assumed Authorities Were Always Loaded
+
+### What This Feature Is For
+
+`SingleUserProvider` builds an authentication snapshot that security uses for
+login and token flows.
+
+That snapshot includes user authorities.
+
+### How the Old System Behaved
+
+The conversion code streamed `user.getAuthorities()` directly.
+
+### Why That Was a Bug
+
+Authentication paths must load authorities intentionally. If a future repository
+change accidentally returns a user without loaded authorities, the code would
+fail with a less helpful null-pointer error.
+
+More importantly, it would be unclear whether the bug was "user has no roles" or
+"authentication loaded the wrong shape of user."
+
+### What the Fix Changed
+
+The conversion now fails fast with an explicit message if authorities are
+absent:
+
+```text
+Objects.requireNonNull(user.getAuthorities(), "user authorities must not be null")
+```
+
+In beginner terms: authentication code now makes the required data shape clear.
+If a future query forgets authorities, the failure points directly at that
+contract.
 
 ## Verification Added
 
