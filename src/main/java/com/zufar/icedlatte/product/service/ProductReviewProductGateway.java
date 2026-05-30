@@ -22,7 +22,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     public boolean exists(final UUID productId) {
-        return productInfoRepository.existsByIdAndActiveTrue(productId);
+        return productInfoRepository.existsById(productId);
     }
 
     @Override

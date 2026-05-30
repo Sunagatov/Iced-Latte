@@ -110,8 +110,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         String path = request.getRequestURI();
         return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith(ApiPaths.ACTUATOR_ROOT)
+                || isActuatorPath(path)
                 || path.startsWith(ApiPaths.DOCS_ROOT);
+    }
+
+    private boolean isActuatorPath(String path) {
+        return path.startsWith(ApiPaths.ACTUATOR_ROOT)
+                || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
     }
 
     @Override

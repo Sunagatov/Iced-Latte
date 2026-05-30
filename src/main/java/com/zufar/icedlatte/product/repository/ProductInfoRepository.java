@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.product.repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,16 +13,10 @@ import com.zufar.icedlatte.product.entity.ProductInfo;
 
 public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>, JpaSpecificationExecutor<ProductInfo> {
 
-    Optional<ProductInfo> findByIdAndActiveTrue(UUID productId);
-
-    List<ProductInfo> findAllByIdInAndActiveTrue(List<UUID> productIds);
-
-    boolean existsByIdAndActiveTrue(UUID productId);
-
-    @Query("SELECT DISTINCT p.sellerName FROM ProductInfo p WHERE p.active = true ORDER BY p.sellerName")
+    @Query("SELECT DISTINCT p.sellerName FROM ProductInfo p ORDER BY p.sellerName")
     List<String> findDistinctSellerNames();
 
-    @Query("SELECT DISTINCT p.brandName FROM ProductInfo p WHERE p.active = true ORDER BY p.brandName")
+    @Query("SELECT DISTINCT p.brandName FROM ProductInfo p ORDER BY p.brandName")
     List<String> findDistinctBrandNames();
 
     @Modifying

@@ -66,6 +66,38 @@ logging:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# RATE LIMITING — relaxed for local browser/E2E runs
+# ─────────────────────────────────────────────────────────────────────────────
+security:
+  rate-limit:
+    global:
+      max-requests: 100000
+      window-duration: PT1M
+    auth:
+      max-requests: 100000
+      window-duration: PT1M
+    search:
+      max-requests: 100000
+      window-duration: PT1M
+    telemetry:
+      max-requests: 100000
+      window-duration: PT1M
+    pre-auth:
+      max-requests: 100000
+      window-duration: PT1M
+    payment:
+      max-requests: 100000
+      window-duration: PT1M
+    write:
+      max-requests: 100000
+      window-duration: PT1M
+    file-upload:
+      max-requests: 100000
+      window-duration: PT1M
+    ban-threshold: 100000
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # KAFKA — disabled for local contributor development
 # ─────────────────────────────────────────────────────────────────────────────
 kafka:

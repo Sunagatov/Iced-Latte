@@ -15,10 +15,6 @@ public class ProductSpecifications {
 
     private static final Specification<ProductInfo> NONE = (_, _, _) -> null;
 
-    public static Specification<ProductInfo> activeSpec() {
-        return (r, _, cb) -> cb.isTrue(r.get("active"));
-    }
-
     public static Specification<ProductInfo> minPriceSpec(BigDecimal minPrice) {
         return minPrice == null ? NONE : (r, _, cb) -> cb.greaterThanOrEqualTo(r.get("price"), minPrice);
     }

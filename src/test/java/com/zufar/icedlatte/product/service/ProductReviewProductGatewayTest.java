@@ -29,14 +29,14 @@ class ProductReviewProductGatewayTest {
     private ProductReviewProductGateway gateway;
 
     @Test
-    @DisplayName("exists only reports active products")
-    void existsUsesActiveProductLookup() {
+    @DisplayName("exists delegates to repository")
+    void existsDelegatesToRepository() {
         UUID productId = UUID.randomUUID();
-        when(productInfoRepository.existsByIdAndActiveTrue(productId)).thenReturn(true);
+        when(productInfoRepository.existsById(productId)).thenReturn(true);
 
         gateway.exists(productId);
 
-        verify(productInfoRepository).existsByIdAndActiveTrue(productId);
+        verify(productInfoRepository).existsById(productId);
     }
 
     @Test

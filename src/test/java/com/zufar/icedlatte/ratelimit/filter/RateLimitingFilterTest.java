@@ -255,6 +255,8 @@ class RateLimitingFilterTest {
     void actuatorAndDocsAreSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health")))
                 .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/actuator/health")))
+                .isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui")))
                 .isTrue();
     }
