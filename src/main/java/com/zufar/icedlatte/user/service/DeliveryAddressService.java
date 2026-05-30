@@ -14,6 +14,7 @@ import com.zufar.icedlatte.user.api.UserAddressApi;
 import com.zufar.icedlatte.user.api.UserAddressSnapshot;
 import com.zufar.icedlatte.user.converter.DeliveryAddressDtoConverter;
 import com.zufar.icedlatte.user.entity.DeliveryAddressEntity;
+import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.DeliveryAddressRepository;
 import com.zufar.icedlatte.user.repository.UserRepository;
@@ -47,7 +48,7 @@ public class DeliveryAddressService implements UserAddressApi {
 
     @Transactional
     public DeliveryAddressDto create(UUID userId, DeliveryAddressRequest request) {
-        var user = userRepository.findByIdForUpdate(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        var user = lockUser(userId);
         boolean shouldBecomeDefault = !addressRepository.existsByUserId(userId);
         var entity = converter.toEntity(request);
         entity.setUser(user);
@@ -71,6 +72,7 @@ public class DeliveryAddressService implements UserAddressApi {
 
     @Transactional
     public void delete(UUID userId, UUID addressId) {
+        lockUser(userId);
         var entity = addressRepository
                 .findByIdAndUserId(addressId, userId)
                 .orElseThrow(() ->
@@ -88,6 +90,7 @@ public class DeliveryAddressService implements UserAddressApi {
 
     @Transactional
     public DeliveryAddressDto setDefault(UUID userId, UUID addressId) {
+        lockUser(userId);
         var entity = addressRepository
                 .findByIdAndUserId(addressId, userId)
                 .orElseThrow(() ->
@@ -98,5 +101,9 @@ public class DeliveryAddressService implements UserAddressApi {
         addressRepository.clearDefaultForUser(userId);
         entity.setDefault(true);
         return converter.toDto(addressRepository.save(entity));
+    }
+
+    private UserEntity lockUser(UUID userId) {
+        return userRepository.findByIdForUpdate(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 }

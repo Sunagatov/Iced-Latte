@@ -8,15 +8,13 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
@@ -36,6 +34,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserProfileService userProfileService;
     private final UserAvatarUploader userAvatarUploader;
     private final DeliveryAddressService deliveryAddressService;
+    private final CurrentUserProvider currentUserProvider;
 
     @Override
     @GetMapping
@@ -151,10 +150,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     }
 
     private UUID currentUserId() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof Identifiable principal)) {
-            throw new UnauthorizedException("Authentication required.");
-        }
-        return principal.getId();
+        return currentUserProvider.getUserId();
     }
 }

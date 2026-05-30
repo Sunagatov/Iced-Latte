@@ -219,10 +219,12 @@ class DeliveryAddressServiceTest {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         DeliveryAddressEntity entity = new DeliveryAddressEntity();
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
 
         service.delete(userId, addressId);
 
+        verify(userRepository).findByIdForUpdate(userId);
         verify(addressRepository).delete(entity);
     }
 
@@ -236,6 +238,7 @@ class DeliveryAddressServiceTest {
         DeliveryAddressEntity replacement = new DeliveryAddressEntity();
         replacement.setDefault(false);
 
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
         when(addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId))
                 .thenReturn(Optional.of(replacement));
@@ -257,6 +260,7 @@ class DeliveryAddressServiceTest {
         DeliveryAddressEntity entity = new DeliveryAddressEntity();
         entity.setDefault(false);
 
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
 
         service.delete(userId, addressId);
@@ -272,6 +276,7 @@ class DeliveryAddressServiceTest {
     void delete_notFound_throws() {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(userId, addressId)).isInstanceOf(NotFoundException.class);
@@ -286,13 +291,15 @@ class DeliveryAddressServiceTest {
         entity.setDefault(false);
         DeliveryAddressDto dto = new DeliveryAddressDto();
 
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
         when(addressRepository.save(entity)).thenReturn(entity);
         when(converter.toDto(entity)).thenReturn(dto);
 
         assertThat(service.setDefault(userId, addressId)).isEqualTo(dto);
         assertThat(entity.isDefault()).isTrue();
-        var inOrder = inOrder(addressRepository, converter);
+        var inOrder = inOrder(userRepository, addressRepository, converter);
+        inOrder.verify(userRepository).findByIdForUpdate(userId);
         inOrder.verify(addressRepository).findByIdAndUserId(addressId, userId);
         inOrder.verify(addressRepository).clearDefaultForUser(userId);
         inOrder.verify(addressRepository).save(entity);
@@ -308,6 +315,7 @@ class DeliveryAddressServiceTest {
         entity.setDefault(true);
         DeliveryAddressDto dto = new DeliveryAddressDto();
 
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.of(entity));
         when(converter.toDto(entity)).thenReturn(dto);
 
@@ -322,6 +330,7 @@ class DeliveryAddressServiceTest {
     void setDefault_notFound_throws() {
         UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(new UserEntity()));
         when(addressRepository.findByIdAndUserId(addressId, userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.setDefault(userId, addressId)).isInstanceOf(NotFoundException.class);

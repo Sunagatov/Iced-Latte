@@ -39,6 +39,8 @@ databaseChangeLog:
       file: db/changelog/version-2.0/expand-profile-address-columns.sql
   - include:
       file: db/changelog/version-2.0/remove-user-address-delete-cascade.sql
+  - include:
+      file: db/changelog/version-2.0/add-user-granted-authority-user-fk.sql
 
   # ========== ORDER MODULE ENHANCEMENTS ==========
   - include:

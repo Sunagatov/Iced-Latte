@@ -143,14 +143,15 @@ class UserProfileServiceTest {
     }
 
     @Test
-    @DisplayName("deleteProfile deletes avatar file and delegates to repository")
-    void deleteProfileDeletesAvatarAndDelegatesToRepository() {
+    @DisplayName("deleteProfile deletes user and then requests post-delete cleanup")
+    void deleteProfileDeletesUserAndRequestsCleanup() {
         UUID userId = UUID.randomUUID();
 
         userProfileService.deleteProfile(userId);
 
-        verify(fileStorageService).deleteFile(userId);
         verify(userRepository).deleteById(userId);
+        verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        verify(fileStorageService).deleteFile(userId);
     }
 
     @Test

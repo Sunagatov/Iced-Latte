@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.entity;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -81,8 +82,16 @@ public class UserEntity extends AuditableEntity implements UserDetails, Identifi
     }
 
     public void addAuthority(UserGrantedAuthority authority) {
+        Objects.requireNonNull(authority, "authority must not be null");
         if (this.authorities == null) {
             this.authorities = new HashSet<>();
+        }
+        String authorityName = Objects.requireNonNull(authority.getAuthority(), "authority name must not be null");
+        boolean alreadyGranted = this.authorities.stream()
+                .map(UserGrantedAuthority::getAuthority)
+                .anyMatch(authorityName::equals);
+        if (alreadyGranted) {
+            return;
         }
         this.authorities.add(authority);
         authority.setUser(this);

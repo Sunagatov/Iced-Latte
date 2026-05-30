@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.user.entity;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -40,11 +39,11 @@ public class UserGrantedAuthority implements GrantedAuthority {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof UserGrantedAuthority that)) return false;
-        return authority == that.authority;
+        return userAuthorityId != null && userAuthorityId.equals(that.userAuthorityId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(authority);
+        return getClass().hashCode();
     }
 }

@@ -16,6 +16,7 @@ class UserEntityEqualityTest {
         assertThat(new Address()).isNotEqualTo(new Address());
         assertThat(new DeliveryAddressEntity()).isNotEqualTo(new DeliveryAddressEntity());
         assertThat(new UserEntity()).isNotEqualTo(new UserEntity());
+        assertThat(new UserGrantedAuthority()).isNotEqualTo(new UserGrantedAuthority());
     }
 
     @Test
@@ -29,5 +30,19 @@ class UserEntityEqualityTest {
                 .isEqualTo(DeliveryAddressEntity.builder().id(id).build());
         assertThat(UserEntity.builder().id(id).build())
                 .isEqualTo(UserEntity.builder().id(id).build());
+        assertThat(UserGrantedAuthority.builder().userAuthorityId(id).build())
+                .isEqualTo(UserGrantedAuthority.builder().userAuthorityId(id).build());
+    }
+
+    @Test
+    @DisplayName("addAuthority ignores duplicate authority names for the same user")
+    void addAuthorityIgnoresDuplicateAuthorityNamesForSameUser() {
+        UserEntity user = new UserEntity();
+
+        user.addAuthority(UserGrantedAuthority.builder().authority(Authority.USER).build());
+        user.addAuthority(UserGrantedAuthority.builder().authority(Authority.USER).build());
+
+        assertThat(user.getAuthorities()).hasSize(1);
+        assertThat(user.getAuthorities().iterator().next().getUser()).isSameAs(user);
     }
 }

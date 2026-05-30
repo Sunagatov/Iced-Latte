@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
@@ -23,7 +25,9 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserProfileService implements UserAccessControlApi {
@@ -57,8 +61,8 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteProfile(UUID userId) {
-        fileStorageApi.deleteFile(userId);
         userRepository.deleteById(userId);
+        cleanUpDeletedProfileAfterCommit(userId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -109,5 +113,31 @@ public class UserProfileService implements UserAccessControlApi {
         UserDto userDto = userDtoConverter.toDto(userEntity);
         userDto.setAvatarLink(findAvatarLink(userEntity.getId()).orElse(null));
         return userDto;
+    }
+
+    private void cleanUpDeletedProfileAfterCommit(UUID userId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            cleanUpDeletedProfile(userId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cleanUpDeletedProfile(userId);
+            }
+        });
+    }
+
+    private void cleanUpDeletedProfile(UUID userId) {
+        try {
+            eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        } catch (RuntimeException ex) {
+            log.warn("user.profile.session_revocation_after_delete_failed: userId={}", userId, ex);
+        }
+        try {
+            fileStorageApi.deleteFile(userId);
+        } catch (RuntimeException ex) {
+            log.warn("user.profile.avatar_delete_after_delete_failed: userId={}", userId, ex);
+        }
     }
 }
