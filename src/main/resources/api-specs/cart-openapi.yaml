@@ -248,7 +248,7 @@ components:
           type: "string"
           format: "uuid"
         productInfo:
-          $ref: "product-openapi.yaml#/components/schemas/ProductSummaryDto"
+          $ref: "#/components/schemas/ProductSummaryDto"
         productQuantity:
           type: "integer"
           format: "int32"
@@ -258,6 +258,27 @@ components:
         - id
         - productInfo
         - productQuantity
+    ProductSummaryDto:
+      type: "object"
+      description: "Summary information about a product for cart views."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Unique identifier for the product."
+        name:
+          type: "string"
+          description: "Name of the product."
+        price:
+          type: "number"
+          description: "Price of the product."
+        productFileUrl:
+          type: "string"
+          description: "URL of the product's primary image or file."
+      required:
+        - id
+        - name
+        - price
     UpdateProductQuantityInShoppingCartItemRequest:
       type: "object"
       properties:
