@@ -156,6 +156,16 @@ class ProductServiceTest {
         }
 
         @Test
+        @DisplayName("rejects a null product id list")
+        void nullProductIdList_throwsBadRequest() {
+            assertThatThrownBy(() -> productService.getProductDtosByIds(null))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("null");
+
+            verifyNoInteractions(productInfoRepository, productInfoDtoConverter, productPictureLinkUpdater);
+        }
+
+        @Test
         @DisplayName("rejects null requested product ids")
         void nullProductIds_throwsBadRequest() {
             UUID id = UUID.randomUUID();

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -91,6 +92,15 @@ class GetProductsRequestValidatorTest {
         }
 
         @Test
+        @DisplayName("rejects null brand name")
+        void rejectsNullBrandName() {
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", null, null, null, Arrays.asList("Brand", null), null, null))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("brandNames");
+        }
+
+        @Test
         @DisplayName("rejects blank brand name")
         void rejectsBlankBrandName() {
             assertThatThrownBy(() -> validator.validate(
@@ -106,6 +116,15 @@ class GetProductsRequestValidatorTest {
                             0, 10, "name", "asc", null, null, null, List.of("Brand", "Brand"), null, null))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("brandNames");
+        }
+
+        @Test
+        @DisplayName("rejects null seller name")
+        void rejectsNullSellerName() {
+            assertThatThrownBy(() -> validator.validate(
+                            0, 10, "name", "asc", null, null, null, null, Arrays.asList("Seller", null), null))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("sellerNames");
         }
 
         @Test

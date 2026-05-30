@@ -1,15 +1,15 @@
 package com.zufar.icedlatte.product.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("ProductCacheEvictor unit tests")
 class ProductCacheEvictorTest {
@@ -50,8 +50,7 @@ class ProductCacheEvictorTest {
 
         assertThat(cache.get(productId, String.class)).isEqualTo("cached-product");
 
-        TransactionSynchronizationManager.getSynchronizations()
-                .forEach(TransactionSynchronization::afterCommit);
+        TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
 
         assertThat(cache.get(productId)).isNull();
     }
@@ -70,8 +69,7 @@ class ProductCacheEvictorTest {
         assertThat(cache.get("first", String.class)).isEqualTo("cached-product-1");
         assertThat(cache.get("second", String.class)).isEqualTo("cached-product-2");
 
-        TransactionSynchronizationManager.getSynchronizations()
-                .forEach(TransactionSynchronization::afterCommit);
+        TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
 
         assertThat(cache.get("first")).isNull();
         assertThat(cache.get("second")).isNull();

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -32,8 +33,8 @@ public class GetProductsRequestValidator {
             final @Nullable BigDecimal minPrice,
             final @Nullable BigDecimal maxPrice,
             final @Nullable Integer minimumAverageRating,
-            final @Nullable List<String> brandNames,
-            final @Nullable List<String> sellerNames,
+            final @Nullable List<@Nullable String> brandNames,
+            final @Nullable List<@Nullable String> sellerNames,
             final @Nullable String keyword) {
 
         List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
@@ -69,9 +70,12 @@ public class GetProductsRequestValidator {
         return errors;
     }
 
-    private static List<String> validateNameList(@Nullable List<String> names, String fieldName) {
+    private static List<String> validateNameList(@Nullable List<@Nullable String> names, String fieldName) {
         List<String> errors = new ArrayList<>();
-        if (names != null && names.stream().anyMatch(String::isBlank)) {
+        if (names != null && names.stream().anyMatch(Objects::isNull)) {
+            errors.add(error("Some values of '%s' are null. Values must be non-null.".formatted(fieldName)));
+        }
+        if (names != null && names.stream().filter(Objects::nonNull).anyMatch(String::isBlank)) {
             errors.add(error("Some values of '%s' are blank. Values must be non-blank.".formatted(fieldName)));
         }
         if (names != null && names.stream().distinct().count() < names.size()) {

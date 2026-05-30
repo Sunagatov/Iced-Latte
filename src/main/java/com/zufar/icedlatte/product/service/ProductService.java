@@ -54,31 +54,35 @@ public class ProductService implements ProductCatalogApi {
 
     @Override
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public List<ProductSnapshot> getProductsByIds(final List<UUID> ids) {
+    public List<ProductSnapshot> getProductsByIds(final @Nullable List<@Nullable UUID> ids) {
         return getProductDtosByIds(ids).stream()
                 .map(productInfoDtoConverter::toSnapshot)
                 .toList();
     }
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
-    public List<ProductInfoDto> getProductDtosByIds(final List<UUID> ids) {
-        if (ids.isEmpty()) {
+    public List<ProductInfoDto> getProductDtosByIds(final @Nullable List<@Nullable UUID> ids) {
+        validateProductIds(ids);
+        List<@Nullable UUID> nonNullIds = Objects.requireNonNull(ids);
+        List<UUID> validatedIds =
+                nonNullIds.stream().map(Objects::requireNonNull).toList();
+        if (validatedIds.isEmpty()) {
             return List.of();
         }
-        validateProductIds(ids);
-        List<ProductInfoDto> products = productInfoRepository.findAllById(ids).stream()
+        List<ProductInfoDto> products = productInfoRepository.findAllById(validatedIds).stream()
                 .map(productInfoDtoConverter::toDto)
                 .toList();
         List<ProductInfoDto> productsWithImages = productPictureLinkUpdater.updateBatch(products);
 
         var productsById =
                 productsWithImages.stream().collect(Collectors.toMap(ProductInfoDto::getId, Function.identity()));
-        List<UUID> missing =
-                ids.stream().filter(id -> !productsById.containsKey(id)).toList();
+        List<UUID> missing = validatedIds.stream()
+                .filter(id -> !productsById.containsKey(id))
+                .toList();
         if (!missing.isEmpty()) {
             throw new ProductNotFoundException(missing);
         }
-        return ids.stream().map(productsById::get).toList();
+        return validatedIds.stream().map(productsById::get).toList();
     }
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
@@ -158,7 +162,10 @@ public class ProductService implements ProductCatalogApi {
         return productInfoRepository.existsById(productId);
     }
 
-    private static void validateProductIds(List<@Nullable UUID> ids) {
+    private static void validateProductIds(@Nullable List<@Nullable UUID> ids) {
+        if (ids == null) {
+            throw new BadRequestException("Product ids must not be null.");
+        }
         if (ids.stream().anyMatch(Objects::isNull)) {
             throw new BadRequestException("Product ids must not contain null values.");
         }

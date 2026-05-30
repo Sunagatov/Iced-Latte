@@ -45,12 +45,12 @@ class ProductSpecificationsTest {
     }
 
     @Nested
-    @DisplayName("active filters")
-    class ActiveFilters {
+    @DisplayName("populated filters")
+    class PopulatedFilters {
 
         @Test
-        @DisplayName("creates active specifications for populated numeric filters")
-        void createsActiveSpecificationsForPopulatedNumericFilters() {
+        @DisplayName("creates specifications for populated numeric filters")
+        void createsSpecificationsForPopulatedNumericFilters() {
             assertThat(ProductSpecifications.minPriceSpec(BigDecimal.ONE)).isNotNull();
             assertThat(ProductSpecifications.maxPriceSpec(BigDecimal.TEN)).isNotNull();
             assertThat(ProductSpecifications.minRatingSpec(BigDecimal.valueOf(4.5)))
@@ -58,15 +58,15 @@ class ProductSpecificationsTest {
         }
 
         @Test
-        @DisplayName("creates active specifications for populated list filters")
-        void createsActiveSpecificationsForPopulatedListFilters() {
+        @DisplayName("creates specifications for populated list filters")
+        void createsSpecificationsForPopulatedListFilters() {
             assertThat(ProductSpecifications.brandNamesSpec(List.of("Brand"))).isNotNull();
             assertThat(ProductSpecifications.sellerNamesSpec(List.of("Seller"))).isNotNull();
         }
 
         @Test
-        @DisplayName("creates an active specification for a non-blank keyword")
-        void createsActiveSpecificationForNonBlankKeyword() {
+        @DisplayName("creates a specification for a non-blank keyword")
+        void createsSpecificationForNonBlankKeyword() {
             assertThat(ProductSpecifications.nameContainsSpec("latte")).isNotNull();
         }
     }
