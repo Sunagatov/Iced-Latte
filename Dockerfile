@@ -13,8 +13,10 @@ ARG BUILD_PROFILE
 WORKDIR /workspace
 
 # Copy only build metadata first for better dependency-layer caching.
-# Copy the POM first so dependency resolution can stay cached across source edits.
+# Copy the POM and Maven JVM config first so Docker builds use the same JDK
+# module flags as local builds.
 COPY pom.xml ./
+COPY .mvn ./.mvn
 
 # Prime Maven dependencies.
 # Warm the Maven cache via BuildKit. This is best-effort only: if go-offline misses
