@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,13 +94,27 @@ public class OAuthLoginService {
             OAuthProvider provider, OAuthProfile profile, String providerSubject, String email) {
         Optional<UserAuthenticationSnapshot> existingUser = userAuthenticationApi.findUserAuthenticationByEmail(email);
         UserAuthenticationSnapshot user = existingUser.orElseGet(() -> createUser(provider, profile, email));
-        oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
-                .provider(provider)
-                .providerSubject(providerSubject)
-                .email(email)
-                .userId(user.userId())
-                .build());
+        try {
+            oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
+                    .provider(provider)
+                    .providerSubject(providerSubject)
+                    .email(email)
+                    .userId(user.userId())
+                    .build());
+        } catch (DataIntegrityViolationException ex) {
+            log.info("auth.oauth.identity_race: provider={}", provider.id());
+            return loadUserFromExistingIdentity(provider, providerSubject);
+        }
         return user;
+    }
+
+    private UserAuthenticationSnapshot loadUserFromExistingIdentity(OAuthProvider provider, String providerSubject) {
+        OAuthIdentityEntity identity = oAuthIdentityRepository
+                .findByProviderAndProviderSubject(provider, providerSubject)
+                .orElseThrow(() -> new UnauthorizedException("OAuth account is not available."));
+        return userAuthenticationApi
+                .findUserAuthenticationById(identity.getUserId())
+                .orElseThrow(() -> new UnauthorizedException("OAuth account is not available."));
     }
 
     private UserAuthenticationSnapshot createUser(OAuthProvider provider, OAuthProfile profile, String email) {

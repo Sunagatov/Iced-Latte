@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
@@ -37,8 +35,8 @@ public class EmailTokenService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ExpiringKeyValueStore temporaryStore;
-    private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
+    private final EmailTokenPayloadProtector tokenPayloadProtector;
 
     @Value("${email.verification-token-length}")
     private int tokenLength;
@@ -55,10 +53,10 @@ public class EmailTokenService {
         for (int attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
             String token = nextToken();
             String tokenKey = tokenKey(purpose, token);
-            String serializedEntry =
-                    serializeEntry(new EmailTokenEntry(sanitizedRequest(request), purpose, encodedPassword(request, purpose)));
+            String protectedEntry = tokenPayloadProtector.protect(
+                    new EmailTokenEntry(sanitizedRequest(request), purpose, encodedPassword(request, purpose)));
 
-            if (temporaryStore.putIfAbsent(tokenKey, serializedEntry, ttl)) {
+            if (temporaryStore.putIfAbsent(tokenKey, protectedEntry, ttl)) {
                 temporaryStore.put(cooldownKey(email), OffsetDateTime.now().plus(ttl).toString(), ttl);
                 return token;
             }
@@ -72,7 +70,7 @@ public class EmailTokenService {
         validateTokenFormat(token);
         EmailTokenEntry entry = temporaryStore
                 .take(tokenKey(expectedPurpose, token))
-                .map(this::deserializeEntry)
+                .map(tokenPayloadProtector::unprotect)
                 .orElseThrow(() -> new BadRequestException("Incorrect token"));
         if (entry.purpose() != expectedPurpose) {
             throw new BadRequestException("Incorrect token");
@@ -85,22 +83,6 @@ public class EmailTokenService {
         temporaryStore.get(cooldownKey(email)).map(OffsetDateTime::parse).ifPresent(expiry -> {
             throw new TimeTokenException(email, expiry);
         });
-    }
-
-    private String serializeEntry(EmailTokenEntry entry) {
-        try {
-            return objectMapper.writeValueAsString(entry);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize email token entry", e);
-        }
-    }
-
-    private EmailTokenEntry deserializeEntry(String rawEntry) {
-        try {
-            return objectMapper.readValue(rawEntry, EmailTokenEntry.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to deserialize email token entry", e);
-        }
     }
 
     private String nextToken() {
@@ -174,6 +156,6 @@ public class EmailTokenService {
     }
 
     private static String cooldownKey(String email) {
-        return COOLDOWN_KEY_PREFIX + email;
+        return COOLDOWN_KEY_PREFIX + hashToken(email);
     }
 }

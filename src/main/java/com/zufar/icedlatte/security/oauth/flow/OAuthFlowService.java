@@ -174,12 +174,16 @@ public class OAuthFlowService {
                     .build()
                     .getQueryParams()
                     .getFirst(NEXT_QUERY_PARAM);
-            if (next != null && !next.isBlank()) {
+            if (isSafeRelativePath(next)) {
                 redirectBuilder.queryParam(NEXT_QUERY_PARAM, next);
             }
             return URI.create(redirectBuilder.build(true).toUriString());
         } catch (URISyntaxException _) {
             return buildSignInErrorRedirect(AUTH_FAILED_ERROR);
         }
+    }
+
+    private static boolean isSafeRelativePath(String next) {
+        return StringUtils.hasText(next) && next.startsWith("/") && !next.startsWith("//");
     }
 }

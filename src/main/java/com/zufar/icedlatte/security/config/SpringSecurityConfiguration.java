@@ -58,6 +58,14 @@ public class SpringSecurityConfiguration {
     private static final String PRODUCT_REVIEW_ITEM_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*";
     private static final String PRODUCT_REVIEW_LIKES_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*/likes";
     private static final String PRODUCT_REVIEWS_STATISTICS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/statistics";
+    private static final String AUTH_REGISTER_URL = ApiPaths.AUTH + "/register";
+    private static final String AUTH_CONFIRM_URL = ApiPaths.AUTH + "/confirm";
+    private static final String AUTH_LOGOUT_URL = ApiPaths.AUTH + "/logout";
+    private static final String AUTH_PASSWORD_FORGOT_URL = ApiPaths.AUTH + "/password/forgot";
+    private static final String AUTH_PASSWORD_CHANGE_URL = ApiPaths.AUTH + "/password/change";
+    private static final String AUTH_OAUTH_TOKEN_URL = ApiPaths.AUTH_OAUTH + "/token";
+    private static final String AUTH_OAUTH_PROVIDER_PATTERN = ApiPaths.AUTH_OAUTH + "/*";
+    private static final String AUTH_OAUTH_CALLBACK_PATTERN = ApiPaths.AUTH_OAUTH + "/*/callback";
 
     private final ProblemTypeUriFactory problemTypeUriFactory;
 
@@ -109,7 +117,17 @@ public class SpringSecurityConfiguration {
                         .requestMatchers(
                                 HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
                         .permitAll()
-                        .requestMatchers(ApiPaths.AUTH_ALL_PATTERN)
+                        .requestMatchers(
+                                AUTH_REGISTER_URL,
+                                AUTH_CONFIRM_URL,
+                                ApiPaths.AUTH_AUTHENTICATE,
+                                ApiPaths.AUTH_REFRESH,
+                                AUTH_LOGOUT_URL,
+                                AUTH_PASSWORD_FORGOT_URL,
+                                AUTH_PASSWORD_CHANGE_URL,
+                                AUTH_OAUTH_TOKEN_URL,
+                                AUTH_OAUTH_PROVIDER_PATTERN,
+                                AUTH_OAUTH_CALLBACK_PATTERN)
                         .permitAll()
                         .requestMatchers(ApiPaths.PRODUCTS_PATTERN)
                         .permitAll()

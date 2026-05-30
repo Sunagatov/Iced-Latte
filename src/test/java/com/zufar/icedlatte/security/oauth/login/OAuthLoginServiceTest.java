@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -138,6 +139,33 @@ class OAuthLoginServiceTest {
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
         assertThat(savedIdentities.getValue().getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
         assertThat(savedIdentities.getValue().getUserId()).isEqualTo(newUser.userId());
+    }
+
+    @Test
+    void recoversWhenConcurrentCallbackCreatesOauthIdentityFirst() {
+        UserAuthenticationSnapshot existingUser = activeUser(UUID.randomUUID(), NEW_EMAIL, "secret");
+        OAuthIdentityEntity existingIdentity = OAuthIdentityEntity.builder()
+                .provider(OAuthProvider.GOOGLE)
+                .providerSubject(GOOGLE_SUBJECT)
+                .email(NEW_EMAIL)
+                .userId(existingUser.userId())
+                .build();
+        stubProfile(GOOGLE_SUBJECT, NEW_EMAIL, true, "New", "User");
+        when(oAuthIdentityRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, GOOGLE_SUBJECT))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(existingIdentity));
+        when(userAuthenticationApi.findUserAuthenticationByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
+        when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(existingUser);
+        when(oAuthIdentityRepository.save(any(OAuthIdentityEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate identity"));
+        when(userAuthenticationApi.findUserAuthenticationById(existingUser.userId())).thenReturn(Optional.of(existingUser));
+        stubToken();
+
+        UserAuthenticationResponse response = handle();
+
+        assertThat(response.getToken()).isEqualTo("access-token");
+        verify(userAuthenticationApi).findUserAuthenticationById(existingUser.userId());
     }
 
     @Test

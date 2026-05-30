@@ -28,6 +28,7 @@ import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
@@ -76,8 +77,9 @@ class EmailVerificationServiceTest {
     }
 
     private EmailTokenService tokenService(ExpiringKeyValueStore store) {
+        ObjectMapper objectMapper = new ObjectMapper();
         EmailTokenService tokenService = new EmailTokenService(
-                store, new ObjectMapper(), passwordEncoder);
+                store, passwordEncoder, tokenPayloadProtector(objectMapper));
         ReflectionTestUtils.setField(tokenService, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(tokenService, "tokenLength", 43);
         return tokenService;
@@ -219,11 +221,14 @@ class EmailVerificationServiceTest {
         EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", " User@Example.COM ", "Password1!");
-        when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
+        when(store.get(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com"))))
+                .thenReturn(Optional.empty());
         when(store.putIfAbsent(
                         argThat(key -> key.startsWith("email:token:email_verification:")),
-                        argThat(value -> value.contains("user@example.com")
-                                && value.contains("encoded-password")
+                        argThat(value -> !value.contains("user@example.com")
+                                && !value.contains("Ada")
+                                && !value.contains("Lovelace")
+                                && !value.contains("encoded-password")
                                 && !value.contains("Password1!")),
                         eq(Duration.ofMinutes(15))))
                 .thenReturn(true);
@@ -236,7 +241,7 @@ class EmailVerificationServiceTest {
         assertThat(keyCaptor.getValue())
                 .startsWith("email:token:email_verification:")
                 .doesNotEndWith(token);
-        verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
+        verify(store).put(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")), any(), eq(Duration.ofMinutes(15)));
     }
 
     @Test
@@ -246,7 +251,7 @@ class EmailVerificationServiceTest {
         EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", "user@example.com", "Password1!");
-        when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
+        when(store.get(argThat(key -> key.startsWith("email:rate:")))).thenReturn(Optional.empty());
         when(store.putIfAbsent(
                         argThat(key -> key.startsWith("email:token:password_reset:")),
                         any(),
@@ -261,17 +266,33 @@ class EmailVerificationServiceTest {
                         argThat(key -> key.startsWith("email:token:password_reset:")),
                         any(),
                         eq(Duration.ofMinutes(15)));
-        verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
+        verify(store).put(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")), any(), eq(Duration.ofMinutes(15)));
     }
 
     private EmailTokenService tokenServiceWithStore(ExpiringKeyValueStore store) {
+        ObjectMapper objectMapper = new ObjectMapper();
         EmailTokenService serviceWithMockStore = new EmailTokenService(
                 store,
-                new ObjectMapper(),
-                passwordEncoder);
+                passwordEncoder,
+                tokenPayloadProtector(objectMapper));
         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
         return serviceWithMockStore;
+    }
+
+    private static EmailTokenPayloadProtector tokenPayloadProtector(ObjectMapper objectMapper) {
+        return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), "");
+    }
+
+    private static JwtProperties jwtProperties() {
+        return new JwtProperties(
+                "Authorization",
+                "NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=",
+                "NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA0MDRFNTM1MjY2NTU2QTU4NkUzMjcyMzU3NTM4NzgyRjQxM0E0NDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==",
+                Duration.ofMinutes(30),
+                Duration.ofHours(24),
+                "iced-latte",
+                "iced-latte-users");
     }
 
     private static boolean isOpaqueToken(String token) {

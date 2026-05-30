@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "spring.data.redis.host")
+@ConditionalOnProperty(name = "security.temporary-store.mode", havingValue = "redis", matchIfMissing = true)
 public class RedisExpiringKeyValueStore implements ExpiringKeyValueStore {
 
     private final RedisTemplate<String, String> redisTemplate;

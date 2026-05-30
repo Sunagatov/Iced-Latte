@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@ConditionalOnMissingBean(ExpiringKeyValueStore.class)
+@ConditionalOnProperty(name = "security.temporary-store.mode", havingValue = "memory")
 @EnableConfigurationProperties(CaffeineSizeProperties.class)
 public class InMemoryExpiringKeyValueStore implements ExpiringKeyValueStore {
 

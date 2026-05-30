@@ -140,6 +140,32 @@ class OAuthFlowServiceTest {
     }
 
     @Test
+    void completeCallbackDropsExternalNextWhenLoginFails() {
+        stubGoogleClient();
+        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn("https://app.example.com/auth/google/callback?next=https://evil.example.com");
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
+                .thenThrow(new UnauthorizedException("exchange failed"));
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed");
+    }
+
+    @Test
+    void completeCallbackDropsProtocolRelativeNextWhenLoginFails() {
+        stubGoogleClient();
+        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn("https://app.example.com/auth/google/callback?next=//evil.example.com");
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
+                .thenThrow(new UnauthorizedException("exchange failed"));
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed");
+    }
+
+    @Test
     void completeCallbackReturnsMissingCodeRedirectBeforeConsumingState() {
         stubGoogleClient();
 

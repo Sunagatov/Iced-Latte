@@ -28,6 +28,16 @@ class SecurityDefaultDenyIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("unknown auth API paths require authentication by default")
+    void unknownAuthApiPathsRequireAuthenticationByDefault() {
+        given().port(port)
+                .accept(ContentType.JSON)
+                .get("/api/v1/auth/internal/recalculate-prices")
+                .then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
+    }
+
+    @Test
     @DisplayName("non API paths are not public by default")
     void nonApiPathsAreDeniedByDefault() {
         given().port(port)
