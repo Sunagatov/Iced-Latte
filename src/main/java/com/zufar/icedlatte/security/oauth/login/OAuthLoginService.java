@@ -52,7 +52,10 @@ public class OAuthLoginService {
     }
 
     @Transactional
-    public AuthenticationTokens handle(OAuthProvider provider, String authorizationCode, HttpServletRequest httpRequest) {
+    public AuthenticationTokens handle(
+            OAuthProvider provider,
+            String authorizationCode,
+            HttpServletRequest httpRequest) {
         OAuthProviderClient client =
                 findClient(provider).orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);

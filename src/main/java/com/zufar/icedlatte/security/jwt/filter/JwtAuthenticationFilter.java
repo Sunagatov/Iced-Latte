@@ -10,25 +10,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
-import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.config.SecurityProblemResponseWriter;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
-import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtBearerTokenResolver jwtBearerTokenResolver;
     private final ClientIpExtractor clientIpExtractor;
     private final SecurityProblemResponseWriter problemResponseWriter;
+    private final JwtAuthenticationFailureMapper failureMapper;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -92,85 +88,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = httpRequest.getRequestURI();
         String clientIp = clientIpExtractor.extract(httpRequest);
 
-        // amazonq-ignore-next-line
-        var errorInfo =
-                switch (exception) {
-                    case InvalidCredentialsException _ ->
-                        new ErrorInfo(
-                                ProblemType.INVALID_CREDENTIALS,
-                                "Authentication failed",
-                                "Authentication failed.",
-                                HttpServletResponse.SC_UNAUTHORIZED,
-                                "INVALID_CREDENTIALS");
-                    case JwtTokenBlacklistedException _ ->
-                        new ErrorInfo(
-                                ProblemType.SESSION_EXPIRED,
-                                "Session expired",
-                                "Session expired. Please sign in again.",
-                                HttpServletResponse.SC_UNAUTHORIZED,
-                                "TOKEN_REVOKED");
-                    case ExpiredJwtException _ ->
-                        new ErrorInfo(
-                                ProblemType.SESSION_EXPIRED,
-                                "Session expired",
-                                "Authentication token has expired.",
-                                HttpServletResponse.SC_UNAUTHORIZED,
-                                "TOKEN_EXPIRED");
-                    case JwtTokenException _ ->
-                        new ErrorInfo(
-                                ProblemType.AUTH_FAILED,
-                                "Authentication failed",
-                                "Authentication failed.",
-                                HttpServletResponse.SC_UNAUTHORIZED,
-                                "TOKEN_INVALID_FORMAT");
-                    case UsernameNotFoundException _ ->
-                        new ErrorInfo(
-                                ProblemType.AUTH_FAILED,
-                                "Authentication failed",
-                                "Authentication failed.",
-                                HttpServletResponse.SC_UNAUTHORIZED,
-                                "USER_NOT_FOUND");
-                    default ->
-                        new ErrorInfo(
-                                ProblemType.INTERNAL_ERROR,
-                                "Authentication error",
-                                "An internal server error occurred.",
-                                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                                "AUTH_INTERNAL_ERROR");
-                };
+        JwtAuthenticationFailure failure = failureMapper.map(exception);
 
-        if (errorInfo.statusCode() >= 500) {
+        if (failure.statusCode() >= 500) {
             log.error(
                     "auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
-                    errorInfo.reasonCode(),
+                    failure.reasonCode(),
                     method,
                     path,
                     clientIp,
-                    errorInfo.statusCode(),
+                    failure.statusCode(),
                     requestId,
                     exception);
         } else {
             log.warn(
                     "auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
-                    errorInfo.reasonCode(),
+                    failure.reasonCode(),
                     method,
                     path,
                     clientIp,
-                    errorInfo.statusCode(),
+                    failure.statusCode(),
                     requestId);
             log.debug("auth.failed.details", exception);
         }
 
         problemResponseWriter.write(
                 httpResponse,
-                errorInfo.statusCode(),
-                errorInfo.typeSlug(),
-                errorInfo.title(),
-                errorInfo.detail(),
+                failure.statusCode(),
+                failure.typeSlug(),
+                failure.title(),
+                failure.detail(),
                 path,
                 requestId);
     }
-
-    // Record for error information - Java 21 feature
-    private record ErrorInfo(String typeSlug, String title, String detail, int statusCode, String reasonCode) {}
 }

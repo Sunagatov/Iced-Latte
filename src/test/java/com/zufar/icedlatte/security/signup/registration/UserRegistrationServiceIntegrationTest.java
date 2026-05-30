@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import com.zufar.icedlatte.user.entity.UserEntity;

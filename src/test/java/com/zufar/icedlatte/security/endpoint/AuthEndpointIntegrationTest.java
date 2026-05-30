@@ -22,10 +22,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
 import io.restassured.response.Response;

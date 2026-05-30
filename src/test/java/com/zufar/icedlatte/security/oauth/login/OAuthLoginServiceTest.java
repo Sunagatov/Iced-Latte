@@ -23,11 +23,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
@@ -159,7 +159,8 @@ class OAuthLoginServiceTest {
         when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(existingUser);
         when(oAuthIdentityRepository.save(any(OAuthIdentityEntity.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate identity"));
-        when(userAuthenticationApi.findUserAuthenticationById(existingUser.userId())).thenReturn(Optional.of(existingUser));
+        when(userAuthenticationApi.findUserAuthenticationById(existingUser.userId()))
+                .thenReturn(Optional.of(existingUser));
         stubToken();
 
         AuthenticationTokens response = handle();

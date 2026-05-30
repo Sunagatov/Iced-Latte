@@ -14,10 +14,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 @DisplayName("OAuthTokenHandoffStore unit tests")
 class OAuthTokenHandoffStoreTest {

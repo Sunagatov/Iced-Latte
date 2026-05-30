@@ -25,13 +25,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
@@ -68,18 +68,14 @@ class EmailVerificationServiceTest {
         emailTokenService = tokenService(new InMemoryExpiringKeyValueStore(
                 new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)));
         service = new EmailVerificationService(
-                emailConfirmation,
-                emailTokenService,
-                userRegistrationService,
-                userLookupApi,
-                userAccessControlApi);
+                emailConfirmation, emailTokenService, userRegistrationService, userLookupApi, userAccessControlApi);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
     }
 
     private EmailTokenService tokenService(ExpiringKeyValueStore store) {
         ObjectMapper objectMapper = new ObjectMapper();
-        EmailTokenService tokenService = new EmailTokenService(
-                store, passwordEncoder, tokenPayloadProtector(objectMapper));
+        EmailTokenService tokenService =
+                new EmailTokenService(store, passwordEncoder, tokenPayloadProtector(objectMapper));
         ReflectionTestUtils.setField(tokenService, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(tokenService, "tokenLength", 43);
         return tokenService;
@@ -144,8 +140,8 @@ class EmailVerificationServiceTest {
             AuthenticationTokens authResponse = new AuthenticationTokens("access-token", "refresh-token");
             String token = emailTokenService.generate(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
             when(userRegistrationService.completeEmailVerifiedRegistration(
-                            argThat(request -> request.getEmail().equals("john@example.com")
-                                    && request.getPassword() == null),
+                            argThat(request ->
+                                    request.getEmail().equals("john@example.com") && request.getPassword() == null),
                             eq("encoded-password"),
                             eq(httpRequest)))
                     .thenReturn(authResponse);
@@ -155,8 +151,8 @@ class EmailVerificationServiceTest {
             assertThat(result).isSameAs(authResponse);
             verify(userRegistrationService)
                     .completeEmailVerifiedRegistration(
-                            argThat(request -> request.getEmail().equals("john@example.com")
-                                    && request.getPassword() == null),
+                            argThat(request ->
+                                    request.getEmail().equals("john@example.com") && request.getPassword() == null),
                             eq("encoded-password"),
                             eq(httpRequest));
         }
@@ -197,8 +193,8 @@ class EmailVerificationServiceTest {
     @Test
     @DisplayName("validateToken rejects invalid token format")
     void validateTokenRejectsInvalidTokenFormat() {
-        assertThatThrownBy(
-                        () -> emailTokenService.consume(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(() ->
+                        emailTokenService.consume(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(com.zufar.icedlatte.common.exception.BadRequestException.class);
     }
 
@@ -241,7 +237,11 @@ class EmailVerificationServiceTest {
         assertThat(keyCaptor.getValue())
                 .startsWith("email:token:email_verification:")
                 .doesNotEndWith(token);
-        verify(store).put(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")), any(), eq(Duration.ofMinutes(15)));
+        verify(store)
+                .put(
+                        argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")),
+                        any(),
+                        eq(Duration.ofMinutes(15)));
     }
 
     @Test
@@ -266,15 +266,17 @@ class EmailVerificationServiceTest {
                         argThat(key -> key.startsWith("email:token:password_reset:")),
                         any(),
                         eq(Duration.ofMinutes(15)));
-        verify(store).put(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")), any(), eq(Duration.ofMinutes(15)));
+        verify(store)
+                .put(
+                        argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")),
+                        any(),
+                        eq(Duration.ofMinutes(15)));
     }
 
     private EmailTokenService tokenServiceWithStore(ExpiringKeyValueStore store) {
         ObjectMapper objectMapper = new ObjectMapper();
-        EmailTokenService serviceWithMockStore = new EmailTokenService(
-                store,
-                passwordEncoder,
-                tokenPayloadProtector(objectMapper));
+        EmailTokenService serviceWithMockStore =
+                new EmailTokenService(store, passwordEncoder, tokenPayloadProtector(objectMapper));
         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
         return serviceWithMockStore;

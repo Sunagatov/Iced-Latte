@@ -41,5 +41,4 @@ class EmailTokenPayloadProtector {
             throw new IllegalStateException("Failed to deserialize email token entry", e);
         }
     }
-
 }

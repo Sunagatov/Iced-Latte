@@ -39,17 +39,32 @@ public class EmailVerificationService {
         emailConfirmation.sendTemporaryCode(request.getEmail(), token);
     }
 
-    public AuthenticationTokens confirmEmailByCode(ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
+    public AuthenticationTokens confirmEmailByCode(
+            ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
         EmailTokenEntry entry = emailTokenService.consume(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
-        if (entry.encodedPassword() == null || entry.encodedPassword().isBlank()) {
+        EmailRegistrationPayload registration = entry.registration();
+        if (registration == null) {
+            throw new IllegalStateException("Email verification token is missing registration payload");
+        }
+        String encodedPassword = entry.encodedPassword();
+        if (encodedPassword == null || encodedPassword.isBlank()) {
             throw new IllegalStateException("Email verification token is missing encoded password");
         }
-        return userRegistrationService.completeEmailVerifiedRegistration(entry.request(), entry.encodedPassword(), httpRequest);
+        UserRegistrationRequest registrationRequest = toRegistrationRequest(registration);
+        return userRegistrationService.completeEmailVerifiedRegistration(registrationRequest, encodedPassword, httpRequest);
     }
 
     public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest, String newPassword) {
-        UserRegistrationRequest request = emailTokenService.consume(confirmEmailRequest, TokenPurpose.PASSWORD_RESET).request();
-        var user = userLookupApi.getUserByEmail(request.getEmail());
+        EmailTokenEntry entry = emailTokenService.consume(confirmEmailRequest, TokenPurpose.PASSWORD_RESET);
+        var user = userLookupApi.getUserByEmail(entry.email());
         userAccessControlApi.changePassword(user.id(), newPassword);
+    }
+
+    private static UserRegistrationRequest toRegistrationRequest(EmailRegistrationPayload registration) {
+        UserRegistrationRequest request = new UserRegistrationRequest();
+        request.setFirstName(registration.firstName());
+        request.setLastName(registration.lastName());
+        request.setEmail(registration.email());
+        return request;
     }
 }

@@ -26,7 +26,8 @@ public class SecurityRouteAuthorization {
     private static final String AUTH_OAUTH_PROVIDER_PATTERN = ApiPaths.AUTH_OAUTH + "/*";
     private static final String AUTH_OAUTH_CALLBACK_PATTERN = ApiPaths.AUTH_OAUTH + "/*/callback";
 
-    public void authorize(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+    public void authorize(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth.requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
                 .authenticated()
                 .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL)

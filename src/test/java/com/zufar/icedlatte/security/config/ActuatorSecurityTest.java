@@ -1,15 +1,17 @@
 package com.zufar.icedlatte.security.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.common.correlation.CorrelationFilter;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.security.config.ActuatorSecurityTest.TestBeans;
-import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+import java.util.List;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,11 +35,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import java.io.IOException;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.security.config.ActuatorSecurityTest.TestBeans;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 
 @SpringJUnitWebConfig(
         classes = {

@@ -37,7 +37,12 @@ public class OAuthTokenHandoffStore {
             @Value("${oauth.handoff-encryption-key:}") String handoffEncryptionKey) {
         this.temporaryStore = temporaryStore;
         this.objectMapper = objectMapper;
-        String keySource = StringUtils.hasText(handoffEncryptionKey) ? handoffEncryptionKey : jwtProperties.refreshSecret();
+        String keySource;
+        if (StringUtils.hasText(handoffEncryptionKey)) {
+            keySource = handoffEncryptionKey;
+        } else {
+            keySource = jwtProperties.refreshSecret();
+        }
         this.protector = new AesGcmStringProtector(keySource, PAYLOAD_DESCRIPTION);
     }
 
@@ -49,7 +54,10 @@ public class OAuthTokenHandoffStore {
     }
 
     public Optional<AuthenticationTokens> consume(String code) {
-        return temporaryStore.take(namespacedKey(code)).map(protector::unprotect).map(this::deserialize);
+        return temporaryStore
+                .take(namespacedKey(code))
+                .map(protector::unprotect)
+                .map(this::deserialize);
     }
 
     private static String newHandoffCode() {

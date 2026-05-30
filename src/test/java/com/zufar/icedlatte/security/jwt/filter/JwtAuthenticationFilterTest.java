@@ -217,7 +217,8 @@ class JwtAuthenticationFilterTest {
                     jwtBearerTokenResolver,
                     clientIpExtractor,
                     new SecurityProblemResponseWriter(
-                            new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
+                            new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")),
+                    new JwtAuthenticationFailureMapper());
         }
 
         private boolean shouldSkip(MockHttpServletRequest request) {

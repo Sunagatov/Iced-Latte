@@ -15,13 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthFlowServiceTest {
@@ -45,8 +44,11 @@ class OAuthFlowServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OAuthFlowService(oAuthLoginService, oAuthStateStore, oAuthTokenHandoffStore);
-        ReflectionTestUtils.setField(service, "frontendUrl", "https://app.example.com");
+        service = new OAuthFlowService(
+                oAuthLoginService,
+                oAuthStateStore,
+                oAuthTokenHandoffStore,
+                new OAuthRedirectService("https://app.example.com"));
     }
 
     @Test
@@ -95,8 +97,7 @@ class OAuthFlowServiceTest {
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
                 .thenReturn(tokenPair());
-        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class)))
-                .thenReturn("handoff-code");
+        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request);
 

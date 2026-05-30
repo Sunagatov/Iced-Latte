@@ -1,14 +1,17 @@
 package com.zufar.icedlatte.security.session.token;
 
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,15 +21,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService unit tests")

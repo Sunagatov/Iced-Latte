@@ -53,11 +53,15 @@ public class EmailTokenService {
         for (int attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
             String token = nextToken();
             String tokenKey = tokenKey(purpose, token);
-            String protectedEntry = tokenPayloadProtector.protect(
-                    new EmailTokenEntry(sanitizedRequest(request), purpose, encodedPassword(request, purpose)));
+            String encodedPassword = encodedPassword(request, purpose);
+            EmailRegistrationPayload registration = registrationPayload(request, purpose);
+            EmailTokenEntry emailTokenEntry = new EmailTokenEntry(email, registration, purpose, encodedPassword);
+            String protectedEntry = tokenPayloadProtector.protect(emailTokenEntry);
 
             if (temporaryStore.putIfAbsent(tokenKey, protectedEntry, ttl)) {
-                temporaryStore.put(cooldownKey(email), OffsetDateTime.now().plus(ttl).toString(), ttl);
+                String value = OffsetDateTime.now().plus(ttl).toString();
+                String key = cooldownKey(email);
+                temporaryStore.put(key, value, ttl);
                 return token;
             }
         }
@@ -75,7 +79,7 @@ public class EmailTokenService {
         if (entry.purpose() != expectedPurpose) {
             throw new BadRequestException("Incorrect token");
         }
-        temporaryStore.remove(cooldownKey(entry.request().getEmail()));
+        temporaryStore.remove(cooldownKey(entry.email()));
         return entry;
     }
 
@@ -118,20 +122,16 @@ public class EmailTokenService {
 
     private void validateConfiguredTokenTtl() {
         if (expireTimeMinutes < 1) {
-            throw new IllegalStateException("temporary-cache.time.token must be at least 1 minute, got: "
-                    + expireTimeMinutes);
+            String errorMessage = "temporary-cache.time.token must be at least 1 minute, got: ";
+            throw new IllegalStateException(errorMessage + expireTimeMinutes);
         }
     }
 
-    private UserRegistrationRequest sanitizedRequest(UserRegistrationRequest request) {
-        UserRegistrationRequest sanitized = new UserRegistrationRequest();
-        sanitized.setFirstName(request.getFirstName());
-        sanitized.setLastName(request.getLastName());
-        sanitized.setBirthDate(request.getBirthDate());
-        sanitized.setPhoneNumber(request.getPhoneNumber());
-        sanitized.setEmail(request.getEmail());
-        sanitized.setAddressDto(request.getAddressDto());
-        return sanitized;
+    private EmailRegistrationPayload registrationPayload(UserRegistrationRequest request, TokenPurpose purpose) {
+        if (purpose != TokenPurpose.EMAIL_VERIFICATION) {
+            return null;
+        }
+        return new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), request.getEmail());
     }
 
     private String encodedPassword(UserRegistrationRequest request, TokenPurpose purpose) {

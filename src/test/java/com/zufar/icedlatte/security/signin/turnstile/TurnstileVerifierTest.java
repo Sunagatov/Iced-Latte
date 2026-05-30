@@ -85,8 +85,8 @@ class TurnstileVerifierTest {
         @Test
         @DisplayName("should construct RestClient with explicit timeout settings")
         void constructsRestClientWithExplicitTimeoutSettings() {
-            assertThatCode(
-                            () -> new TurnstileVerifier(true, "test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
+            assertThatCode(() ->
+                            new TurnstileVerifier(true, "test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
                     .doesNotThrowAnyException();
         }
 

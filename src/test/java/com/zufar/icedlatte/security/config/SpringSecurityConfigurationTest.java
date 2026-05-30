@@ -25,11 +25,10 @@ import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 @DisplayName("SpringSecurityConfiguration")
 class SpringSecurityConfigurationTest {
 
-    private final SpringSecurityConfiguration configuration =
-            new SpringSecurityConfiguration(
-                    new SecurityRouteAuthorization(),
-                    new SecurityProblemResponseWriter(
-                            new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
+    private final SpringSecurityConfiguration configuration = new SpringSecurityConfiguration(
+            new SecurityRouteAuthorization(),
+            new SecurityProblemResponseWriter(
+                    new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
 
     @Test
     @DisplayName("disables duplicate servlet registration for correlation filter")

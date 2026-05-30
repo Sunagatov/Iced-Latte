@@ -1,5 +1,18 @@
 package com.zufar.icedlatte.security.signup.verification;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+
+import java.time.Duration;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
@@ -8,17 +21,6 @@ import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
-import java.time.Duration;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 @DisplayName("EmailTokenService contract tests")
 class EmailTokenServiceContractTest {
@@ -46,11 +48,11 @@ class EmailTokenServiceContractTest {
         UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
 
         String token = service.generate(request, TokenPurpose.EMAIL_VERIFICATION);
-        UserRegistrationRequest consumed =
-                service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION).request();
+        EmailTokenEntry consumed = service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION);
 
-        assertThat(consumed.getEmail()).isEqualTo(request.getEmail());
-        assertThat(consumed.getPassword()).isNull();
+        assertThat(consumed.email()).isEqualTo(request.getEmail());
+        assertThat(consumed.registration().email()).isEqualTo(request.getEmail());
+        assertThat(consumed.encodedPassword()).isEqualTo("encoded-password");
         assertThatThrownBy(() -> service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(BadRequestException.class);
     }
