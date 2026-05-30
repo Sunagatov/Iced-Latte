@@ -38,26 +38,24 @@ public class UserRegistrationService {
         ensureEmailAvailable(userRegistrationRequest);
     }
 
-    @Transactional(readOnly = true)
-    public void ensureEmailAvailable(final UserRegistrationRequest userRegistrationRequest) {
-        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
-        if (userRegistrationApi.existsByEmail(email)) {
-            log.warn("auth.registration.failed: reason=email_already_registered");
-            throw duplicateEmailException();
-        }
-    }
-
     @Transactional
     public UserAuthenticationResponse register(
             final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
         ensureRegistrationAllowed(userRegistrationRequest);
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
-        return registerWithEncodedPassword(userRegistrationRequest, encryptedPassword, httpRequest);
+        return persistPasswordUser(userRegistrationRequest, encryptedPassword, httpRequest);
     }
 
     @Transactional
-    public UserAuthenticationResponse registerWithEncodedPassword(
+    public UserAuthenticationResponse completeEmailVerifiedRegistration(
+            final UserRegistrationRequest userRegistrationRequest,
+            final String encodedPassword,
+            final HttpServletRequest httpRequest) {
+        return persistPasswordUser(userRegistrationRequest, encodedPassword, httpRequest);
+    }
+
+    private UserAuthenticationResponse persistPasswordUser(
             final UserRegistrationRequest userRegistrationRequest,
             final String encodedPassword,
             final HttpServletRequest httpRequest) {
@@ -74,6 +72,14 @@ public class UserRegistrationService {
         } catch (DataIntegrityViolationException e) {
             log.warn("auth.registration.failed: reason=email_already_registered");
             throw duplicateEmailException(e);
+        }
+    }
+
+    private void ensureEmailAvailable(final UserRegistrationRequest userRegistrationRequest) {
+        String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
+        if (userRegistrationApi.existsByEmail(email)) {
+            log.warn("auth.registration.failed: reason=email_already_registered");
+            throw duplicateEmailException();
         }
     }
 

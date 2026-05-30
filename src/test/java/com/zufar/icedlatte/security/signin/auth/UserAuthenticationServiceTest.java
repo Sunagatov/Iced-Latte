@@ -157,5 +157,6 @@ class UserAuthenticationServiceTest {
         assertSame(expectedResponse, response);
         verify(turnstileVerifier).verify("turnstile-token");
         verify(sessionTokenService).issueForNewSession(userDetails, httpRequest);
+        verify(loginAttemptService).resetAfterSuccessfulAuthentication("known@example.com");
     }
 }

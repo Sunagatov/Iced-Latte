@@ -16,7 +16,6 @@ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,6 @@ public class SessionTokenService {
     private final JwtTokenBlacklist jwtTokenBlacklist;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;
-    private final LoginAttemptService loginAttemptService;
 
     public UserAuthenticationResponse issueForNewSession(UserDetails userDetails, HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
@@ -68,8 +66,7 @@ public class SessionTokenService {
     private UserAuthenticationResponse buildTokenPair(
             final UserDetails userDetails, UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
-        log.info("auth.sign_in.succeeded: sessionId={}", AuthSessionService.maskSessionId(sessionId));
-        loginAttemptService.resetAfterSuccessfulAuthentication(userDetails.getUsername());
+        log.info("auth.session.token_pair.issued: sessionId={}", AuthSessionService.maskSessionId(sessionId));
         UserAuthenticationResponse response = new UserAuthenticationResponse();
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);

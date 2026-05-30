@@ -25,7 +25,6 @@ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 import com.zufar.icedlatte.user.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,9 +39,6 @@ class SessionTokenServiceTest {
 
     @Mock
     private AuthSessionService authSessionService;
-
-    @Mock
-    private LoginAttemptService loginAttemptService;
 
     @Mock
     private HttpServletRequest request;
@@ -77,7 +73,6 @@ class SessionTokenServiceTest {
 
         assertThat(result.getToken()).isEqualTo(accessToken);
         assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
-        verify(loginAttemptService).resetAfterSuccessfulAuthentication("alice@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -104,7 +99,6 @@ class SessionTokenServiceTest {
         assertThat(result.getToken()).isEqualTo(accessToken);
         assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
         verify(authSessionService).rotateSession(oldHash, newHash);
-        verify(loginAttemptService).resetAfterSuccessfulAuthentication("rotate@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -133,7 +127,6 @@ class SessionTokenServiceTest {
         assertThat(result.getToken()).isEqualTo(accessToken);
         assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
         verify(jwtTokenBlacklist).blacklistRefreshToken(legacyToken);
-        verify(loginAttemptService).resetAfterSuccessfulAuthentication("legacy@example.com");
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }

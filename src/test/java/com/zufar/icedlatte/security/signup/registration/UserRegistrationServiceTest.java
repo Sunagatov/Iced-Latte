@@ -104,16 +104,18 @@ class UserRegistrationServiceTest {
     }
 
     @Test
-    @DisplayName("ensureEmailAvailable rejects existing normalized email")
-    void ensureEmailAvailableRejectsExistingNormalizedEmail() {
+    @DisplayName("ensureRegistrationAllowed rejects existing normalized email")
+    void ensureRegistrationAllowedRejectsExistingNormalizedEmail() {
         UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
         registrationRequest.setEmail("  Duplicate@Example.COM ");
+        registrationRequest.setTurnstileToken("turnstile-token");
         when(userRegistrationApi.existsByEmail("duplicate@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.ensureEmailAvailable(registrationRequest))
+        assertThatThrownBy(() -> service.ensureRegistrationAllowed(registrationRequest))
                 .isInstanceOf(UserRegistrationException.class)
                 .hasMessage("This email is already registered. Please sign in or use a different email.");
 
+        verify(turnstileVerifier).verify("turnstile-token");
         verify(userRegistrationApi).existsByEmail("duplicate@example.com");
     }
 

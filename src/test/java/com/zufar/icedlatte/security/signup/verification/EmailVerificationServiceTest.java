@@ -135,7 +135,7 @@ class EmailVerificationServiceTest {
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
             UserAuthenticationResponse authResponse = new UserAuthenticationResponse();
             String token = service.generateToken(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
-            when(userRegistrationService.registerWithEncodedPassword(
+            when(userRegistrationService.completeEmailVerifiedRegistration(
                             argThat(request -> request.getEmail().equals("john@example.com")
                                     && request.getPassword() == null),
                             eq("encoded-password"),
@@ -146,7 +146,7 @@ class EmailVerificationServiceTest {
 
             assertThat(result).isSameAs(authResponse);
             verify(userRegistrationService)
-                    .registerWithEncodedPassword(
+                    .completeEmailVerifiedRegistration(
                             argThat(request -> request.getEmail().equals("john@example.com")
                                     && request.getPassword() == null),
                             eq("encoded-password"),

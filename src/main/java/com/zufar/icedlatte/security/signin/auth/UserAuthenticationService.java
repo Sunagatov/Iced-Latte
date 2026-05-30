@@ -42,6 +42,7 @@ public class UserAuthenticationService {
             final UserAuthenticationRequest request, final HttpServletRequest httpRequest) {
         turnstileVerifier.verify(request.getTurnstileToken());
         UserDetails userDetails = verifyCredentials(request);
+        loginAttemptService.resetAfterSuccessfulAuthentication(EmailNormalizer.normalize(request.getEmail()));
         return sessionTokenService.issueForNewSession(userDetails, httpRequest);
     }
 
