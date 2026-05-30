@@ -2,7 +2,6 @@ package com.zufar.icedlatte.product.service;
 
 import java.util.UUID;
 
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -27,7 +26,6 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     }
 
     @Override
-    @CacheEvict(cacheNames = "productById", key = "#productId")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshReviewAggregates(final UUID productId) {
         productInfoRepository.updateAverageRating(productId);
@@ -36,7 +34,6 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     }
 
     @Override
-    @CacheEvict(cacheNames = "productById", allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshAllReviewAggregates() {
         productInfoRepository.updateAllAverageRatings();
@@ -45,7 +42,6 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     }
 
     @Override
-    @CacheEvict(cacheNames = "productById", key = "#productId")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void updateAiSummary(final UUID productId, final String summary) {
         productInfoRepository.findById(productId).ifPresent(product -> {

@@ -142,14 +142,12 @@ public class ProductService implements ProductCatalogApi {
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 
-    @Override
     @Cacheable(cacheNames = "sellers")
     @Transactional(readOnly = true)
     public List<String> getSellerNames() {
         return productInfoRepository.findDistinctSellerNames();
     }
 
-    @Override
     @Cacheable(cacheNames = "brands")
     @Transactional(readOnly = true)
     public List<String> getBrandNames() {

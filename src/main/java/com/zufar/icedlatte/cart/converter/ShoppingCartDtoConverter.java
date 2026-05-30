@@ -12,18 +12,13 @@ import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class ShoppingCartDtoConverter {
-
-    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     public ShoppingCartDto toDto(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
         List<ShoppingCartItemDto> itemDtos = cart.getItems() == null
@@ -59,8 +54,16 @@ public class ShoppingCartDtoConverter {
     private ShoppingCartItemDto toItemDto(ShoppingCartItem item, ProductSnapshot productInfo) {
         return new ShoppingCartItemDto()
                 .id(item.getId())
-                .productInfo(productInfoDtoConverter.toSummaryDto(productInfo))
+                .productInfo(toSummaryDto(productInfo))
                 .productQuantity(item.getProductQuantity());
+    }
+
+    private static ProductSummaryDto toSummaryDto(ProductSnapshot productInfo) {
+        return new ProductSummaryDto()
+                .id(productInfo.id())
+                .name(productInfo.name())
+                .price(productInfo.price())
+                .productFileUrl(productInfo.productFileUrl());
     }
 
     public CartSnapshot toSnapshot(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {

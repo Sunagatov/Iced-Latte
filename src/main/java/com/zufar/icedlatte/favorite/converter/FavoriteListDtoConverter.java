@@ -11,15 +11,9 @@ import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
-
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class FavoriteListDtoConverter {
-
-    private final ProductInfoDtoConverter productInfoDtoConverter;
 
     public ListOfFavoriteProductsDto toDto(
             final FavoriteListEntity entity, final Map<UUID, ProductSnapshot> productsById) {
@@ -28,9 +22,17 @@ public class FavoriteListDtoConverter {
                 .filter(productsById::containsKey)
                 .distinct()
                 .map(productsById::get)
-                .map(productInfoDtoConverter::toSummaryDto)
+                .map(FavoriteListDtoConverter::toSummaryDto)
                 .toList();
 
         return new ListOfFavoriteProductsDto(products);
+    }
+
+    private static ProductSummaryDto toSummaryDto(ProductSnapshot productInfo) {
+        return new ProductSummaryDto()
+                .id(productInfo.id())
+                .name(productInfo.name())
+                .price(productInfo.price())
+                .productFileUrl(productInfo.productFileUrl());
     }
 }

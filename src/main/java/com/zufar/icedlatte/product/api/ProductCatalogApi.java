@@ -13,9 +13,5 @@ public interface ProductCatalogApi {
 
     List<ProductSnapshot> getProductsByIds(List<UUID> ids);
 
-    List<String> getSellerNames();
-
-    List<String> getBrandNames();
-
     boolean existsById(UUID productId);
 }

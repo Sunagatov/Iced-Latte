@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.product.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.annotation.CacheEvict;
 
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
@@ -75,27 +73,5 @@ class ProductReviewProductGatewayTest {
 
         verify(productInfoRepository).save(product);
         verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
-    }
-
-    @Test
-    @DisplayName("product cache is evicted when a single product aggregate changes")
-    void refreshReviewAggregatesEvictsProductCache() throws NoSuchMethodException {
-        CacheEvict cacheEvict = ProductReviewProductGateway.class
-                .getMethod("refreshReviewAggregates", UUID.class)
-                .getAnnotation(CacheEvict.class);
-
-        assertThat(cacheEvict.cacheNames()).containsExactly("productById");
-        assertThat(cacheEvict.key()).isEqualTo("#productId");
-    }
-
-    @Test
-    @DisplayName("product cache is cleared when all product aggregates change")
-    void refreshAllReviewAggregatesClearsProductCache() throws NoSuchMethodException {
-        CacheEvict cacheEvict = ProductReviewProductGateway.class
-                .getMethod("refreshAllReviewAggregates")
-                .getAnnotation(CacheEvict.class);
-
-        assertThat(cacheEvict.cacheNames()).containsExactly("productById");
-        assertThat(cacheEvict.allEntries()).isTrue();
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
-import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 
@@ -33,8 +32,6 @@ public interface ProductInfoDtoConverter {
     ProductListWithPaginationInfoDto toProductPaginationDto(Page<ProductInfoDto> pageProductResponseDto);
 
     ProductSnapshot toSnapshot(ProductInfoDto dto);
-
-    ProductSummaryDto toSummaryDto(ProductSnapshot snapshot);
 
     @Named("roundAverageRatingValue")
     default @Nullable BigDecimal roundAverageRatingValue(@Nullable BigDecimal averageRating) {

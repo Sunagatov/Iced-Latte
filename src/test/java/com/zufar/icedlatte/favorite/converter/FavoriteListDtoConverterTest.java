@@ -10,18 +10,15 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 
 class FavoriteListDtoConverterTest {
 
-    private final FavoriteListDtoConverter converter =
-            new FavoriteListDtoConverter(Mappers.getMapper(ProductInfoDtoConverter.class));
+    private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter();
 
     @Test
     @DisplayName("converts entity to ListOfFavoriteProductsDto with product details")

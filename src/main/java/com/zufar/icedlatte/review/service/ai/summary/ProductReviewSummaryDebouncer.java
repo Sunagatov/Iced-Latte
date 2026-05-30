@@ -7,7 +7,6 @@ import java.util.concurrent.*;
 import jakarta.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -73,7 +72,6 @@ public class ProductReviewSummaryDebouncer {
         pendingDebounce.put(productId, future);
     }
 
-    @CacheEvict(cacheNames = "productById", key = "#productId")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void runSummary(UUID productId) {
         pendingDebounce.remove(productId);
