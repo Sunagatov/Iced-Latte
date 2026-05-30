@@ -31,11 +31,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -108,6 +110,20 @@ class GlobalExceptionHandlerTest {
                     .thenReturn(expected);
 
             ResponseEntity<ProblemDetail> result = handler.handleUnhandledException(ex);
+
+            assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(result.getBody()).isEqualTo(expected);
+        }
+
+        @Test
+        @DisplayName("returns declared status for response status exceptions")
+        void returnsDeclaredStatusForResponseStatusExceptions() {
+            ResponseStatusException ex = new ResponseStatusException(HttpStatus.NOT_FOUND, "Unsupported provider");
+            ProblemDetail expected = stub(404);
+            when(problemDetailFactory.build("about:blank", "Not Found", HttpStatus.NOT_FOUND, "Unsupported provider"))
+                    .thenReturn(expected);
+
+            ResponseEntity<ProblemDetail> result = handler.handleResponseStatusException(ex);
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
             assertThat(result.getBody()).isEqualTo(expected);
@@ -188,6 +204,24 @@ class GlobalExceptionHandlerTest {
                     .thenReturn(expected);
 
             ProblemDetail result = handler.handleMissingServletRequestParameterException(ex);
+
+            assertThat(result).isEqualTo(expected);
+        }
+
+        @Test
+        @DisplayName("returns 400 for missing request header")
+        void returns400ForMissingRequestHeader() {
+            MissingRequestHeaderException ex =
+                    new MissingRequestHeaderException("Stripe-Signature", dummyMethodParameter());
+            ProblemDetail expected = stub(400);
+            when(problemDetailFactory.build(
+                            "missing-header",
+                            "Missing header",
+                            HttpStatus.BAD_REQUEST,
+                            "Required header 'Stripe-Signature' is missing."))
+                    .thenReturn(expected);
+
+            ProblemDetail result = handler.handleMissingRequestHeaderException(ex);
 
             assertThat(result).isEqualTo(expected);
         }
@@ -299,5 +333,14 @@ class GlobalExceptionHandlerTest {
         when(violation.getPropertyPath()).thenReturn(propertyPath);
         when(violation.getMessage()).thenReturn("must be greater than 0");
         return violation;
+    }
+
+    private static MethodParameter dummyMethodParameter() {
+        try {
+            Method method = Object.class.getDeclaredMethod("toString");
+            return new MethodParameter(method, -1);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 }

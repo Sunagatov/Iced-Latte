@@ -13,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
@@ -159,6 +161,17 @@ public class GlobalExceptionHandler {
                 "Required parameter '" + exception.getParameterName() + "' is missing.");
     }
 
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleMissingRequestHeaderException(final MissingRequestHeaderException exception) {
+        log.debug("exception.missing_header: header={}, status=400", exception.getHeaderName());
+        return problemDetailFactory.build(
+                "missing-header",
+                "Missing header",
+                HttpStatus.BAD_REQUEST,
+                "Required header '" + exception.getHeaderName() + "' is missing.");
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
@@ -200,6 +213,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.METHOD_NOT_ALLOWED,
                 "HTTP method '" + RequestPathUtils.sanitize(exception.getMethod()) + "' is not supported.");
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(pd);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> handleResponseStatusException(final ResponseStatusException exception) {
+        HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
+        String detail = exception.getReason() != null ? exception.getReason() : status.getReasonPhrase();
+        log.debug(
+                "exception.response_status: exceptionClass={}, status={}",
+                exception.getClass().getSimpleName(),
+                status.value());
+        ProblemDetail pd = problemDetailFactory.build("about:blank", status.getReasonPhrase(), status, detail);
+        return ResponseEntity.status(status).body(pd);
     }
 
     @ExceptionHandler(Exception.class)

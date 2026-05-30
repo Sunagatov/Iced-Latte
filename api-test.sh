@@ -7,7 +7,7 @@ set -uo pipefail
 
 BASE_URL="${1:-http://localhost:8083}"
 API="$BASE_URL/api/v1"
-API_TEST_DELAY_SECONDS="${API_TEST_DELAY_SECONDS:-1.1}"
+API_TEST_DELAY_SECONDS="${API_TEST_DELAY_SECONDS:-1.5}"
 
 # ── Colours & symbols ────────────────────────────────────────────
 GRN='\033[0;32m'; RED='\033[0;31m'; YLW='\033[0;33m'
@@ -100,6 +100,34 @@ req POST "$API/auth/authenticate" \
     -d '{"email":"olivia@example.com","password":"wrong"}'
 assert "Login with wrong password (rejected)" "401" "400"
 
+req POST "$API/auth/authenticate" \
+    -H "Content-Type: application/json" \
+    -d '{"email":"not-an-email","password":""}'
+assert "Login with malformed payload (rejected)" "400"
+
+req POST "$API/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"firstName":"Olivia","lastName":"Taylor","email":"olivia@example.com","password":"Password123"}'
+assert "Register duplicate email (rejected)" "400" "409"
+
+req POST "$API/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"firstName":"O","lastName":"","email":"bad","password":"weak"}'
+assert "Register invalid payload (rejected)" "400"
+
+req POST "$API/auth/password/forgot" \
+    -H "Content-Type: application/json" \
+    -d '{"email":"not-an-email"}'
+assert "Forgot password invalid email (rejected)" "400"
+
+req POST "$API/auth/password/change" \
+    -H "Content-Type: application/json" \
+    -d '{"code":"invalid","password":"Password123"}'
+assert "Password reset invalid code (rejected)" "400"
+
+req GET "$API/auth/oauth/unsupported"
+assert "Unsupported OAuth provider (not found)" "404"
+
 if [[ -n "$REFRESH_TOKEN" ]]; then
     req POST "$API/auth/refresh" -H "Authorization: Bearer $REFRESH_TOKEN"
     assert "Token refresh" "200"
@@ -112,6 +140,18 @@ assert "Refresh with invalid token (rejected)" "401" "403"
 
 req GET "$API/users"
 assert "Protected endpoint without token (rejected)" "401" "403"
+
+if [[ -n "$JWT_TOKEN" ]]; then
+    req GET "$API/auth/sessions" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "List auth sessions" "200"
+
+    req DELETE "$API/auth/sessions/00000000-0000-0000-0000-000000000000" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Revoke missing session (not found)" "404"
+else
+    skip "List auth sessions"
+    skip "Revoke missing session"
+fi
 
 # ════════════════════════════════════════════════════════════════
 #  PRODUCTS  (public)
@@ -140,8 +180,20 @@ assert "Products with price/sort filters" "200"
 req GET "$API/products?page=0&size=3&sort_attribute=averageRating&sort_direction=desc&minimum_average_rating=1"
 assert "Products filtered by min rating" "200"
 
+req GET "$API/products?page=-1&size=3"
+assert "Products invalid page (rejected)" "400"
+
+req GET "$API/products?page=0&size=3&sort_attribute=unknown"
+assert "Products invalid sort attribute (rejected)" "400"
+
+req GET "$API/products?page=0&size=3&minimum_average_rating=9"
+assert "Products invalid rating filter (rejected)" "400"
+
 req GET "$API/products/00000000-0000-0000-0000-000000000000"
 assert "Get non-existent product (not found)" "404" "400"
+
+req GET "$API/products/not-a-uuid"
+assert "Get malformed product ID (rejected)" "400"
 
 req GET "$API/products/sellers"
 assert "List sellers" "200"
@@ -154,8 +206,14 @@ if [[ -n "$PRODUCT_ID" ]]; then
         -H "Content-Type: application/json" \
         -d "{\"productIds\":[\"$PRODUCT_ID\"]}"
     assert "Get products by IDs" "200"
+
+    req POST "$API/products/ids" \
+        -H "Content-Type: application/json" \
+        -d '{"productIds":[]}'
+    assert "Get products by empty IDs (rejected)" "400"
 else
     skip "Get products by IDs"
+    skip "Get products by empty IDs"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -176,8 +234,17 @@ else
         -d '{"firstName":"Olivia","lastName":"Example","phoneNumber":"+1234567890"}'
     assert "Update user profile" "200"
 
+    req PUT "$API/users" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"firstName":"O","lastName":"","phoneNumber":"+1234567890"}'
+    assert "Update user profile invalid payload (rejected)" "400"
+
     req GET "$API/users/avatar" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get avatar link" "200" "404"
+
+    req DELETE "$API/users/avatar" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Delete missing avatar (not found or no-op)" "200" "204" "404"
 
     req PATCH "$API/users" \
         -H "Authorization: Bearer $JWT_TOKEN" \
@@ -195,10 +262,24 @@ if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get cart"; skip "Add item to cart"
     skip "Update cart item quantity"; skip "Delete cart item"
 else
+    req GET "$API/cart"
+    assert "Get cart without token (rejected)" "401" "403"
+
     req GET "$API/cart" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get cart" "200" "404"
 
     if [[ -n "$PRODUCT_ID" ]]; then
+        req POST "$API/cart/items" \
+            -H "Authorization: Bearer $JWT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"items\":[{\"productId\":\"$PRODUCT_ID\",\"productQuantity\":0}]}"
+        assert "Add zero quantity cart item (rejected)" "400"
+
+        req POST "$API/cart/items" \
+            -H "Content-Type: application/json" \
+            -d "{\"items\":[{\"productId\":\"$PRODUCT_ID\",\"productQuantity\":1}]}"
+        assert "Add cart item without token (rejected)" "401" "403"
+
         req POST "$API/cart/items" \
             -H "Authorization: Bearer $JWT_TOKEN" \
             -H "Content-Type: application/json" \
@@ -213,6 +294,18 @@ else
     else
         skip "Add item to cart"
     fi
+
+    req PATCH "$API/cart/items" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"shoppingCartItemId":"00000000-0000-0000-0000-000000000000","productQuantityChange":1}'
+    assert "Update missing cart item (not found)" "404"
+
+    req DELETE "$API/cart/items" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"shoppingCartItemIds":[]}'
+    assert "Delete empty cart item list (rejected)" "400"
 
     if [[ -n "$CART_ITEM_ID" ]]; then
         req PATCH "$API/cart/items" \
@@ -240,6 +333,15 @@ section "Favorites"
 if [[ -z "$JWT_TOKEN" || -z "$PRODUCT_ID" ]]; then
     skip "Add to favorites"; skip "Get favorites"; skip "Remove from favorites"
 else
+    req GET "$API/favorites"
+    assert "Get favorites without token (rejected)" "401" "403"
+
+    req POST "$API/favorites" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"productIds":[]}'
+    assert "Add empty favorites list (rejected)" "400"
+
     req POST "$API/favorites" \
         -H "Authorization: Bearer $JWT_TOKEN" \
         -H "Content-Type: application/json" \
@@ -251,6 +353,10 @@ else
 
     req DELETE "$API/favorites/$PRODUCT_ID" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Remove product from favorites" "200"
+
+    req DELETE "$API/favorites/00000000-0000-0000-0000-000000000000" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Remove missing favorite (not found or no-op)" "200" "404"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -265,8 +371,20 @@ if [[ -n "$PRODUCT_ID" ]]; then
     req GET "$API/products/$PRODUCT_ID/reviews/statistics"
     assert "Review statistics (public)" "200"
 
-    req GET "$API/products/$PRODUCT_ID/reviews?sortAttribute=productRating&sortDirection=desc"
+    req GET "$API/products/$PRODUCT_ID/reviews?sort_attribute=productRating&sort_direction=desc"
     assert "Reviews sorted by rating desc" "200"
+
+    req GET "$API/products/$PRODUCT_ID/reviews?productRatings=1,1"
+    assert "Reviews duplicate rating filter (rejected)" "400"
+
+    req GET "$API/products/$PRODUCT_ID/reviews?productRatings=9"
+    assert "Reviews invalid rating filter (rejected)" "400"
+
+    req GET "$API/products/$PRODUCT_ID/reviews?sort_attribute=unknown"
+    assert "Reviews invalid sort attribute (rejected)" "400"
+
+    req GET "$API/products/00000000-0000-0000-0000-000000000000/reviews/statistics"
+    assert "Review statistics missing product (not found)" "404"
 else
     skip "List product reviews"; skip "Review statistics"; skip "Reviews sorted by rating"
 fi
@@ -274,6 +392,17 @@ fi
 if [[ -z "$JWT_TOKEN" || -z "$PRODUCT_ID" ]]; then
     skip "Get own review"; skip "Add review"; skip "Like review"; skip "Delete review"
 else
+    req POST "$API/products/$PRODUCT_ID/reviews" \
+        -H "Content-Type: application/json" \
+        -d '{"text":"Unauthorized review","rating":5}'
+    assert "Add review without token (rejected)" "401" "403"
+
+    req POST "$API/products/$PRODUCT_ID/reviews" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"text":"","rating":9}'
+    assert "Add invalid review (rejected)" "400"
+
     req GET "$API/products/$PRODUCT_ID/review" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get own review before create" "200" "404"
 
@@ -306,6 +435,12 @@ else
         skip "Like a review" "review was not created by this test run"
         skip "Delete own review" "review was not created by this test run"
     fi
+
+    req POST "$API/products/$PRODUCT_ID/reviews/00000000-0000-0000-0000-000000000000/likes" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"isLike":true}'
+    assert "Like missing review (not found)" "404"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -320,6 +455,22 @@ if [[ -z "$JWT_TOKEN" ]]; then
 else
     req GET "$API/users/addresses" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get delivery addresses" "200"
+
+    req POST "$API/users/addresses" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"label":"","line":"","city":"","country":"","postcode":""}'
+    assert "Create delivery address invalid payload (rejected)" "400"
+
+    req PUT "$API/users/addresses/00000000-0000-0000-0000-000000000000" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"label":"Missing","line":"1 Test St","city":"London","country":"UK","postcode":"SW1A 1AA"}'
+    assert "Update missing delivery address (not found)" "404"
+
+    req PATCH "$API/users/addresses/00000000-0000-0000-0000-000000000000/default" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Set missing default address (not found)" "404"
 
     req POST "$API/users/addresses" \
         -H "Authorization: Bearer $JWT_TOKEN" \
@@ -363,6 +514,10 @@ else
     req GET "$API/users/reviews?page=0&size=5&sort_attribute=createdAt&sort_direction=desc" \
         -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get user reviews" "200"
+
+    req GET "$API/users/reviews?page=-1&size=5" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get user reviews invalid page (rejected)" "400"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -373,11 +528,44 @@ section "Orders"
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get orders"; skip "Get orders filtered by status"
 else
+    req GET "$API/orders"
+    assert "Get orders without token (rejected)" "401" "403"
+
     req GET "$API/orders" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get orders" "200" "404"
 
     req GET "$API/orders?status=CREATED&status=PAID" -H "Authorization: Bearer $JWT_TOKEN"
     assert "Get orders filtered by status" "200" "404"
+
+    req GET "$API/orders?status=NOT_A_STATUS" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get orders invalid status (rejected)" "400"
+
+    req GET "$API/orders/00000000-0000-0000-0000-000000000000" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get missing order (not found)" "404"
+
+    req GET "$API/orders/00000000-0000-0000-0000-000000000000/history" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get missing order history (not found)" "404"
+
+    req POST "$API/orders/00000000-0000-0000-0000-000000000000/cancel" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Cancel missing order (not found)" "404"
+
+    req POST "$API/orders/00000000-0000-0000-0000-000000000000/refund" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"reason":"test"}'
+    assert "Refund missing order (not found)" "404"
+
+    req POST "$API/orders/00000000-0000-0000-0000-000000000000/reorder" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Reorder missing order (not found)" "404"
+
+    req POST "$API/orders" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"recipientName":"O","recipientSurname":"","address":{"country":"","city":"","line":"","postcode":""}}'
+    assert "Create order invalid payload (rejected)" "400"
+
+    req GET "$API/admin/orders" -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Admin orders as normal user (forbidden)" "403"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -388,8 +576,21 @@ section "Payment"
 if [[ -z "$JWT_TOKEN" ]]; then
     skip "Create Stripe session (smoke)"
 else
-    req POST "$API/payment" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Create Stripe session (smoke)" "200" "400" "404"
+    req POST "$API/payment/checkout" \
+        -H "Authorization: Bearer $JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -H "Idempotency-Key: api-test-checkout" \
+        -d '{"recipientName":"Olivia","recipientSurname":"Example"}'
+    assert "Create Stripe checkout (smoke)" "200" "400" "404"
+
+    req GET "$API/payment/checkout/00000000-0000-0000-0000-000000000000/status" \
+        -H "Authorization: Bearer $JWT_TOKEN"
+    assert "Get checkout status missing/disabled (smoke)" "400" "404"
+
+    req POST "$API/payment/stripe/webhook" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+    assert "Stripe webhook missing signature (rejected or disabled)" "400" "404"
 fi
 
 # ════════════════════════════════════════════════════════════════
