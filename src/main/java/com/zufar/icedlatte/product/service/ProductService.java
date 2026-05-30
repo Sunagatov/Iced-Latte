@@ -5,7 +5,6 @@ import static com.zufar.icedlatte.product.specification.ProductSpecifications.*;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -159,9 +158,6 @@ public class ProductService implements ProductCatalogApi {
     }
 
     private static void validateProductIds(List<UUID> ids) {
-        if (ids.stream().anyMatch(Objects::isNull)) {
-            throw new BadRequestException("Product ids must not contain null values.");
-        }
         if (new HashSet<>(ids).size() != ids.size()) {
             throw new BadRequestException("Product ids must not contain duplicate values.");
         }
