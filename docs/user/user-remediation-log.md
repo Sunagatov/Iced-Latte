@@ -2436,7 +2436,7 @@ So these could behave differently:
 ```text
 alice@example.com
 Alice@Example.COM
- alice@example.com 
+ alice@example.com
 ```
 
 ### Why That Was a Bug

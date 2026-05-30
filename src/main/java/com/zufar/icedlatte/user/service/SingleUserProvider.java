@@ -1,5 +1,13 @@
 package com.zufar.icedlatte.user.service;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
@@ -9,14 +17,8 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 import com.zufar.icedlatte.user.entity.UserGrantedAuthority;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -75,11 +77,11 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     }
 
     private UserAuthenticationSnapshot toAuthenticationSnapshot(UserEntity user) {
-        List<String> authorities = Objects.requireNonNull(user.getAuthorities(), "user authorities must not be null")
-                .stream()
-                .map(UserGrantedAuthority::getAuthority)
-                .map(authority -> Objects.requireNonNull(authority, "authority name must not be null"))
-                .toList();
+        List<String> authorities =
+                Objects.requireNonNull(user.getAuthorities(), "user authorities must not be null").stream()
+                        .map(UserGrantedAuthority::getAuthority)
+                        .map(authority -> Objects.requireNonNull(authority, "authority name must not be null"))
+                        .toList();
         return new UserAuthenticationSnapshot(
                 user.getId(),
                 user.getEmail(),

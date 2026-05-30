@@ -109,14 +109,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String method = request.getMethod();
         String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method)
-                || isActuatorPath(path)
-                || path.startsWith(ApiPaths.DOCS_ROOT);
+        return "OPTIONS".equalsIgnoreCase(method) || isActuatorPath(path) || path.startsWith(ApiPaths.DOCS_ROOT);
     }
 
     private boolean isActuatorPath(String path) {
-        return path.startsWith(ApiPaths.ACTUATOR_ROOT)
-                || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+        return path.startsWith(ApiPaths.ACTUATOR_ROOT) || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
     }
 
     @Override

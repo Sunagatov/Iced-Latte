@@ -57,6 +57,17 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Should treat SQL wildcard characters in keyword as literal text")
+    void shouldTreatSqlWildcardCharactersInKeywordAsLiteralText() {
+        given(specification)
+                .queryParam("keyword", "%")
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("products", empty());
+    }
+
+    @Test
     @DisplayName("Should return bad request when min price is greater than max price")
     void shouldReturnBadRequestWhenMinPriceIsGreaterThanMaxPrice() {
         given(specification)
@@ -89,5 +100,4 @@ class ProductFiltersIntegrationTest extends IntegrationTestBase {
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .body("detail", not(nullValue()));
     }
-
 }

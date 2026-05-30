@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -150,6 +151,18 @@ class ProductServiceTest {
             assertThatThrownBy(() -> productService.getProductDtosByIds(List.of(id, id)))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("duplicate");
+
+            verifyNoInteractions(productInfoRepository, productInfoDtoConverter, productPictureLinkUpdater);
+        }
+
+        @Test
+        @DisplayName("rejects null requested product ids")
+        void nullProductIds_throwsBadRequest() {
+            UUID id = UUID.randomUUID();
+
+            assertThatThrownBy(() -> productService.getProductDtosByIds(Arrays.asList(id, null)))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("null");
 
             verifyNoInteractions(productInfoRepository, productInfoDtoConverter, productPictureLinkUpdater);
         }

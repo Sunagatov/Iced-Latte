@@ -4,7 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "security.temporary-store")
-public record TemporaryStoreProperties(@DefaultValue("redis") Mode mode) {
+public record TemporaryStoreProperties(
+        @DefaultValue("redis") Mode mode) {
 
     public TemporaryStoreProperties {
         if (mode == null) {

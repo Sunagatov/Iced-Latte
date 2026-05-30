@@ -39,8 +39,10 @@ class UserEntityEqualityTest {
     void addAuthorityIgnoresDuplicateAuthorityNamesForSameUser() {
         UserEntity user = new UserEntity();
 
-        user.addAuthority(UserGrantedAuthority.builder().authority(Authority.USER).build());
-        user.addAuthority(UserGrantedAuthority.builder().authority(Authority.USER).build());
+        user.addAuthority(
+                UserGrantedAuthority.builder().authority(Authority.USER).build());
+        user.addAuthority(
+                UserGrantedAuthority.builder().authority(Authority.USER).build());
 
         assertThat(user.getAuthorities()).hasSize(1);
         assertThat(user.getAuthorities().iterator().next().getUser()).isSameAs(user);

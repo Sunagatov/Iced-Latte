@@ -51,7 +51,8 @@ public class EmailVerificationService {
             throw new IllegalStateException("Email verification token is missing encoded password");
         }
         UserRegistrationRequest registrationRequest = toRegistrationRequest(registration);
-        return userRegistrationService.completeEmailVerifiedRegistration(registrationRequest, encodedPassword, httpRequest);
+        return userRegistrationService.completeEmailVerifiedRegistration(
+                registrationRequest, encodedPassword, httpRequest);
     }
 
     public void confirmResetPasswordEmailByCode(ConfirmEmailRequest confirmEmailRequest, String newPassword) {
