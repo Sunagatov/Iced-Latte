@@ -7,6 +7,7 @@ set -uo pipefail
 
 BASE_URL="${1:-http://localhost:8083}"
 API="$BASE_URL/api/v1"
+API_TEST_DELAY_SECONDS="${API_TEST_DELAY_SECONDS:-1.1}"
 
 # ── Colours & symbols ────────────────────────────────────────────
 GRN='\033[0;32m'; RED='\033[0;31m'; YLW='\033[0;33m'
@@ -23,6 +24,7 @@ BODY=""
 PRODUCT_ID=""
 CART_ITEM_ID=""
 REVIEW_ID=""
+REVIEW_CREATED_BY_TEST=false
 
 TOTAL=0; PASSED=0; FAILED=0; SKIPPED=0
 declare -a FAILURES=()
@@ -48,7 +50,7 @@ _BODY_FILE=$(mktemp)
 trap 'rm -f "$_BODY_FILE"' EXIT
 
 req() {
-    sleep 0.4   # stay under rate limit
+    sleep "$API_TEST_DELAY_SECONDS"   # stay under rate limit
     local method="$1"; shift
     local url="$1";    shift
     CODE=$(curl -sk -X "$method" "$url" "$@" -w "%{http_code}" -o "$_BODY_FILE" 2>/dev/null) || CODE="000"
@@ -84,7 +86,6 @@ if [[ "$CODE" == "200" ]]; then
     REFRESH_TOKEN=$(json_val refreshToken)
     if [[ -n "$JWT_TOKEN" ]]; then
         pass "Login -> 200"
-        info "token: ${JWT_TOKEN:0:32}..."
     else
         fail "Login -> token missing in response" "$BODY"
     fi
@@ -107,7 +108,7 @@ else
 fi
 
 req POST "$API/auth/refresh" -H "Authorization: Bearer invalid.token.here"
-assert "Refresh with invalid token (rejected)" "401" "403" "500"
+assert "Refresh with invalid token (rejected)" "401" "403"
 
 req GET "$API/users"
 assert "Protected endpoint without token (rejected)" "401" "403"
@@ -181,8 +182,8 @@ else
     req PATCH "$API/users" \
         -H "Authorization: Bearer $JWT_TOKEN" \
         -H "Content-Type: application/json" \
-        -d '{"oldPassword":"p@ss1logic11","newPassword":"p@ss1logic11"}'
-    assert "Change password (same)" "200"
+        -d '{"oldPassword":"WrongPassword1","newPassword":"AnotherPassword1"}'
+    assert "Change password with wrong old password (rejected)" "401" "403"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -274,7 +275,7 @@ if [[ -z "$JWT_TOKEN" || -z "$PRODUCT_ID" ]]; then
     skip "Get own review"; skip "Add review"; skip "Like review"; skip "Delete review"
 else
     req GET "$API/products/$PRODUCT_ID/review" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Get own review" "200"
+    assert "Get own review before create" "200" "404"
 
     req POST "$API/products/$PRODUCT_ID/reviews" \
         -H "Authorization: Bearer $JWT_TOKEN" \
@@ -282,17 +283,16 @@ else
         -d '{"text":"Great coffee, highly recommend!","rating":5}'
     if [[ "$CODE" == "200" ]]; then
         REVIEW_ID=$(json_val productReviewId)
+        REVIEW_CREATED_BY_TEST=true
         pass "Add product review -> 200"
         [[ -n "$REVIEW_ID" ]] && info "review id: $REVIEW_ID"
     elif [[ "$CODE" == "400" ]]; then
         pass "Add product review -> 400 (already exists - expected)"
-        req GET "$API/products/$PRODUCT_ID/review" -H "Authorization: Bearer $JWT_TOKEN"
-        [[ "$CODE" == "200" ]] && REVIEW_ID=$(json_val productReviewId)
     else
         assert "Add product review" "200" "400"
     fi
 
-    if [[ -n "$REVIEW_ID" ]]; then
+    if [[ "$REVIEW_CREATED_BY_TEST" == true && -n "$REVIEW_ID" ]]; then
         req POST "$API/products/$PRODUCT_ID/reviews/$REVIEW_ID/likes" \
             -H "Authorization: Bearer $JWT_TOKEN" \
             -H "Content-Type: application/json" \
@@ -303,7 +303,8 @@ else
             -H "Authorization: Bearer $JWT_TOKEN"
         assert "Delete own review" "200"
     else
-        skip "Like a review"; skip "Delete own review"
+        skip "Like a review" "review was not created by this test run"
+        skip "Delete own review" "review was not created by this test run"
     fi
 fi
 
@@ -373,10 +374,10 @@ if [[ -z "$JWT_TOKEN" ]]; then
     skip "Get orders"; skip "Get orders filtered by status"
 else
     req GET "$API/orders" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Get orders" "200" "404" "500"
+    assert "Get orders" "200" "404"
 
     req GET "$API/orders?status=CREATED&status=PAID" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Get orders filtered by status" "200" "404" "500"
+    assert "Get orders filtered by status" "200" "404"
 fi
 
 # ════════════════════════════════════════════════════════════════
@@ -388,7 +389,7 @@ if [[ -z "$JWT_TOKEN" ]]; then
     skip "Create Stripe session (smoke)"
 else
     req POST "$API/payment" -H "Authorization: Bearer $JWT_TOKEN"
-    assert "Create Stripe session (smoke)" "200" "400" "404" "500"
+    assert "Create Stripe session (smoke)" "200" "400" "404"
 fi
 
 # ════════════════════════════════════════════════════════════════
