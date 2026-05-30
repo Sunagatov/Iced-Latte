@@ -10,14 +10,14 @@ import com.zufar.icedlatte.security.crypto.AesGcmStringProtector;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 
 @Component
-public class EmailTokenPayloadProtector {
+class EmailTokenPayloadProtector {
 
     private static final String PAYLOAD_DESCRIPTION = "email token entry";
 
     private final ObjectMapper objectMapper;
     private final AesGcmStringProtector protector;
 
-    public EmailTokenPayloadProtector(
+    EmailTokenPayloadProtector(
             ObjectMapper objectMapper,
             JwtProperties jwtProperties,
             @Value("${email.token-encryption-key:}") String tokenEncryptionKey) {
@@ -26,7 +26,7 @@ public class EmailTokenPayloadProtector {
         this.protector = new AesGcmStringProtector(keySource, PAYLOAD_DESCRIPTION);
     }
 
-    public String protect(EmailTokenEntry entry) {
+    String protect(EmailTokenEntry entry) {
         try {
             return protector.protect(objectMapper.writeValueAsString(entry));
         } catch (JsonProcessingException e) {
@@ -34,7 +34,7 @@ public class EmailTokenPayloadProtector {
         }
     }
 
-    public EmailTokenEntry unprotect(String protectedEntry) {
+    EmailTokenEntry unprotect(String protectedEntry) {
         try {
             return objectMapper.readValue(protector.unprotect(protectedEntry), EmailTokenEntry.class);
         } catch (JsonProcessingException e) {
