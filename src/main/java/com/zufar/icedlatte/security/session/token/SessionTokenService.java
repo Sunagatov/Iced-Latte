@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
@@ -29,12 +28,12 @@ public class SessionTokenService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;
 
-    public UserAuthenticationResponse issueForNewSession(UserDetails userDetails, HttpServletRequest request) {
+    public AuthenticationTokens issueForNewSession(UserDetails userDetails, HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
         return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 
-    public UserAuthenticationResponse rotateSessionTokens(
+    public AuthenticationTokens rotateSessionTokens(
             AuthSessionEntity session, String currentRefreshTokenHash, UserDetails userDetails) {
         return withSessionMdc(session, () -> {
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
@@ -43,7 +42,7 @@ public class SessionTokenService {
         });
     }
 
-    public UserAuthenticationResponse migrateLegacyRefreshToken(
+    public AuthenticationTokens migrateLegacyRefreshToken(
             UserDetails userDetails, String legacyRefreshToken, HttpServletRequest request) {
         SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
         jwtTokenBlacklist.blacklistRefreshToken(legacyRefreshToken);
@@ -59,18 +58,14 @@ public class SessionTokenService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(
                 sessionId, user.getId(), jwtTokenBlacklist.hash(refreshToken), request);
-        UserAuthenticationResponse response = buildTokenPair(userDetails, session.getId(), refreshToken);
+        AuthenticationTokens response = buildTokenPair(userDetails, session.getId(), refreshToken);
         return new SessionAuthentication(session, response);
     }
 
-    private UserAuthenticationResponse buildTokenPair(
-            final UserDetails userDetails, UUID sessionId, String refreshToken) {
+    private AuthenticationTokens buildTokenPair(final UserDetails userDetails, UUID sessionId, String refreshToken) {
         String accessToken = jwtTokenProvider.generateToken(userDetails, sessionId);
         log.info("auth.session.token_pair.issued: sessionId={}", AuthSessionService.maskSessionId(sessionId));
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(accessToken);
-        response.setRefreshToken(refreshToken);
-        return response;
+        return new AuthenticationTokens(accessToken, refreshToken);
     }
 
     private <T> T withSessionMdc(AuthSessionEntity session, Supplier<T> action) {
@@ -92,5 +87,5 @@ public class SessionTokenService {
         MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
     }
 
-    private record SessionAuthentication(AuthSessionEntity session, UserAuthenticationResponse response) {}
+    private record SessionAuthentication(AuthSessionEntity session, AuthenticationTokens response) {}
 }

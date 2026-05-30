@@ -23,7 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
@@ -81,9 +81,9 @@ class OAuthLoginServiceTest {
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubIdentity(existingUser);
         stubToken();
-        UserAuthenticationResponse response = handle();
-        assertThat(response.getToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+        AuthenticationTokens response = handle();
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
     }
 
@@ -94,8 +94,8 @@ class OAuthLoginServiceTest {
         stubNoIdentity();
         stubUser(existingUser);
         stubToken();
-        UserAuthenticationResponse response = handle();
-        assertThat(response.getToken()).isEqualTo("access-token");
+        AuthenticationTokens response = handle();
+        assertThat(response.accessToken()).isEqualTo("access-token");
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
         OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
@@ -129,9 +129,9 @@ class OAuthLoginServiceTest {
         UserAuthenticationSnapshot newUser = activeUser(UUID.randomUUID(), NEW_EMAIL, "encoded-random-password");
         when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(newUser);
         when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
-        UserAuthenticationResponse response = handle();
-        assertThat(response.getToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+        AuthenticationTokens response = handle();
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
         verify(userRegistrationApi)
                 .registerOAuthUser(eq("New"), eq("User"), eq(NEW_EMAIL), eq("encoded-random-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
@@ -162,9 +162,9 @@ class OAuthLoginServiceTest {
         when(userAuthenticationApi.findUserAuthenticationById(existingUser.userId())).thenReturn(Optional.of(existingUser));
         stubToken();
 
-        UserAuthenticationResponse response = handle();
+        AuthenticationTokens response = handle();
 
-        assertThat(response.getToken()).isEqualTo("access-token");
+        assertThat(response.accessToken()).isEqualTo("access-token");
         verify(userAuthenticationApi).findUserAuthenticationById(existingUser.userId());
     }
 
@@ -302,7 +302,7 @@ class OAuthLoginServiceTest {
         assertThat(service.findClient(OAuthProvider.GOOGLE)).isEmpty();
     }
 
-    private UserAuthenticationResponse handle() {
+    private AuthenticationTokens handle() {
         return service.handle(OAuthProvider.GOOGLE, AUTH_CODE, request);
     }
 
@@ -353,11 +353,8 @@ class OAuthLoginServiceTest {
         when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
     }
 
-    private static UserAuthenticationResponse tokenPair() {
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken("access-token");
-        response.setRefreshToken("refresh-token");
-        return response;
+    private static AuthenticationTokens tokenPair() {
+        return new AuthenticationTokens("access-token", "refresh-token");
     }
 
     private static UserAuthenticationSnapshot activeUser() {

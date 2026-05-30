@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
@@ -39,7 +39,7 @@ public class UserRegistrationService {
     }
 
     @Transactional
-    public UserAuthenticationResponse register(
+    public AuthenticationTokens register(
             final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
         ensureRegistrationAllowed(userRegistrationRequest);
         String encryptedPassword =
@@ -48,14 +48,14 @@ public class UserRegistrationService {
     }
 
     @Transactional
-    public UserAuthenticationResponse completeEmailVerifiedRegistration(
+    public AuthenticationTokens completeEmailVerifiedRegistration(
             final UserRegistrationRequest userRegistrationRequest,
             final String encodedPassword,
             final HttpServletRequest httpRequest) {
         return persistPasswordUser(userRegistrationRequest, encodedPassword, httpRequest);
     }
 
-    private UserAuthenticationResponse persistPasswordUser(
+    private AuthenticationTokens persistPasswordUser(
             final UserRegistrationRequest userRegistrationRequest,
             final String encodedPassword,
             final HttpServletRequest httpRequest) {

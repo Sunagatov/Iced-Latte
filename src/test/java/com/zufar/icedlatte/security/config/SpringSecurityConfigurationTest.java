@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
@@ -25,7 +26,10 @@ import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 class SpringSecurityConfigurationTest {
 
     private final SpringSecurityConfiguration configuration =
-            new SpringSecurityConfiguration(new ProblemTypeUriFactory("https://errors.example.test/problems"));
+            new SpringSecurityConfiguration(
+                    new SecurityRouteAuthorization(),
+                    new SecurityProblemResponseWriter(
+                            new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
 
     @Test
     @DisplayName("disables duplicate servlet registration for correlation filter")

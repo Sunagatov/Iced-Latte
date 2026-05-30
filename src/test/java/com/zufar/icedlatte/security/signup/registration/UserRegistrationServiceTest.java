@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
@@ -69,16 +69,14 @@ class UserRegistrationServiceTest {
                 true,
                 true,
                 true);
-        UserAuthenticationResponse tokenPair = new UserAuthenticationResponse();
-        tokenPair.setToken("access-token");
-        tokenPair.setRefreshToken("refresh-token");
+        AuthenticationTokens tokenPair = new AuthenticationTokens("access-token", "refresh-token");
 
         when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
         when(userRegistrationApi.registerPasswordUser(any(), any(), any(), any()))
                 .thenReturn(snapshot);
         when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair);
 
-        UserAuthenticationResponse response = service.register(registrationRequest, request);
+        AuthenticationTokens response = service.register(registrationRequest, request);
 
         verify(turnstileVerifier).verify("turnstile-token");
         verify(userRegistrationApi).existsByEmail("mixed.case@example.com");
@@ -86,8 +84,8 @@ class UserRegistrationServiceTest {
                 .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(request));
 
-        assertThat(response.getToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
     }
 
     @Test

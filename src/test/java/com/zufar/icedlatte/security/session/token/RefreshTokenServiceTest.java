@@ -1,14 +1,14 @@
 package com.zufar.icedlatte.security.session.token;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import java.util.Optional;
-import java.util.UUID;
-
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
+import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,15 +18,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
-import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
-import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService unit tests")
@@ -74,7 +74,7 @@ class RefreshTokenServiceTest {
             var sessionId = UUID.randomUUID();
             AuthSessionEntity session =
                     AuthSessionEntity.builder().id(sessionId).userId(userId).build();
-            UserAuthenticationResponse responseBody = response();
+            AuthenticationTokens responseBody = response();
 
             when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
             when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
@@ -87,7 +87,7 @@ class RefreshTokenServiceTest {
             RefreshTokenResult response = service.refresh(request);
 
             assertThat(response.migratedLegacyToken()).isFalse();
-            assertThat(response.response()).isSameAs(responseBody);
+            assertThat(response.tokens()).isSameAs(responseBody);
             verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
         }
@@ -99,7 +99,7 @@ class RefreshTokenServiceTest {
             String oldHash = "legacy-hash";
             String email = "legacy@example.com";
             var user = user(email);
-            UserAuthenticationResponse responseBody = response();
+            AuthenticationTokens responseBody = response();
 
             when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
             when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
@@ -114,7 +114,7 @@ class RefreshTokenServiceTest {
             RefreshTokenResult response = service.refresh(request);
 
             assertThat(response.migratedLegacyToken()).isTrue();
-            assertThat(response.response()).isSameAs(responseBody);
+            assertThat(response.tokens()).isSameAs(responseBody);
             verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
         }
@@ -170,10 +170,7 @@ class RefreshTokenServiceTest {
                 java.util.UUID.randomUUID(), email, "secret", java.util.List.of(), true, true, true, true);
     }
 
-    private static UserAuthenticationResponse response() {
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken("access-token");
-        response.setRefreshToken("new-refresh-token");
-        return response;
+    private static AuthenticationTokens response() {
+        return new AuthenticationTokens("access-token", "new-refresh-token");
     }
 }

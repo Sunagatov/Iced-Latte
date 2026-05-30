@@ -23,9 +23,11 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.config.SecurityProblemResponseWriter;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
@@ -214,7 +216,8 @@ class JwtAuthenticationFilterTest {
                     jwtTokenClaims,
                     jwtBearerTokenResolver,
                     clientIpExtractor,
-                    new ProblemTypeUriFactory("https://errors.example.test/problems"));
+                    new SecurityProblemResponseWriter(
+                            new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
         }
 
         private boolean shouldSkip(MockHttpServletRequest request) {

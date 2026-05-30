@@ -17,9 +17,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +76,7 @@ public class OAuthFlowService {
             return buildSignInErrorRedirect(INVALID_STATE_ERROR);
         }
         try {
-            UserAuthenticationResponse tokens = oAuthLoginService.handle(provider, code, request);
+            AuthenticationTokens tokens = oAuthLoginService.handle(provider, code, request);
             String handoffCode = oAuthTokenHandoffStore.store(tokens);
             return URI.create(buildCallbackUrlWithHandoffCode(callbackBase, handoffCode));
         } catch (BadRequestException | UnauthorizedException e) {
@@ -89,7 +89,7 @@ public class OAuthFlowService {
         }
     }
 
-    public UserAuthenticationResponse completeTokenHandoff(String code) {
+    public AuthenticationTokens completeTokenHandoff(String code) {
         if (!StringUtils.hasText(code)) {
             throw new BadRequestException("OAuth token code is required.");
         }

@@ -3,7 +3,6 @@ package com.zufar.icedlatte.security.config;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import java.time.Duration;
-import java.time.Instant;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,8 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -34,12 +31,8 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.session.DisableEncodeUrlFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.CorrelationFilter;
 import com.zufar.icedlatte.common.exception.ProblemType;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
@@ -50,24 +43,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SpringSecurityConfiguration {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String STRIPE_WEBHOOK_URL = ApiPaths.PAYMENT + "/stripe/webhook";
-    private static final String SHIPPING_URL_PATTERN = "/api/v1/shipping/**";
-    private static final String PRODUCT_REVIEW_URL_PATTERN = ApiPaths.PRODUCTS + "/*/review";
-    private static final String PRODUCT_REVIEWS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews";
-    private static final String PRODUCT_REVIEW_ITEM_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*";
-    private static final String PRODUCT_REVIEW_LIKES_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*/likes";
-    private static final String PRODUCT_REVIEWS_STATISTICS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/statistics";
-    private static final String AUTH_REGISTER_URL = ApiPaths.AUTH + "/register";
-    private static final String AUTH_CONFIRM_URL = ApiPaths.AUTH + "/confirm";
-    private static final String AUTH_LOGOUT_URL = ApiPaths.AUTH + "/logout";
-    private static final String AUTH_PASSWORD_FORGOT_URL = ApiPaths.AUTH + "/password/forgot";
-    private static final String AUTH_PASSWORD_CHANGE_URL = ApiPaths.AUTH + "/password/change";
-    private static final String AUTH_OAUTH_TOKEN_URL = ApiPaths.AUTH_OAUTH + "/token";
-    private static final String AUTH_OAUTH_PROVIDER_PATTERN = ApiPaths.AUTH_OAUTH + "/*";
-    private static final String AUTH_OAUTH_CALLBACK_PATTERN = ApiPaths.AUTH_OAUTH + "/*/callback";
-
-    private final ProblemTypeUriFactory problemTypeUriFactory;
+    private final SecurityRouteAuthorization routeAuthorization;
+    private final SecurityProblemResponseWriter problemResponseWriter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -88,61 +65,7 @@ public class SpringSecurityConfiguration {
                         .referrerPolicy(referrer -> referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .contentTypeOptions(withDefaults()))
-                .authorizeHttpRequests(auth -> auth.requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
-                        .authenticated()
-                        .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL)
-                        .authenticated()
-                        .requestMatchers(ApiPaths.CART_PATTERN)
-                        .authenticated()
-                        .requestMatchers(STRIPE_WEBHOOK_URL)
-                        .permitAll()
-                        .requestMatchers(ApiPaths.PAYMENT_PATTERN)
-                        .authenticated()
-                        .requestMatchers(ApiPaths.USERS_PATTERN)
-                        .authenticated()
-                        .requestMatchers(ApiPaths.FAVORITES_PATTERN)
-                        .authenticated()
-                        .requestMatchers(ApiPaths.ORDERS_PATTERN)
-                        .authenticated()
-                        .requestMatchers(SHIPPING_URL_PATTERN)
-                        .authenticated()
-                        .requestMatchers(PRODUCT_REVIEW_URL_PATTERN)
-                        .authenticated()
-                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEWS_URL_PATTERN)
-                        .authenticated()
-                        .requestMatchers(HttpMethod.DELETE, PRODUCT_REVIEW_ITEM_URL_PATTERN)
-                        .authenticated()
-                        .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN)
-                        .authenticated()
-                        .requestMatchers(
-                                HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
-                        .permitAll()
-                        .requestMatchers(
-                                AUTH_REGISTER_URL,
-                                AUTH_CONFIRM_URL,
-                                ApiPaths.AUTH_AUTHENTICATE,
-                                ApiPaths.AUTH_REFRESH,
-                                AUTH_LOGOUT_URL,
-                                AUTH_PASSWORD_FORGOT_URL,
-                                AUTH_PASSWORD_CHANGE_URL,
-                                AUTH_OAUTH_TOKEN_URL,
-                                AUTH_OAUTH_PROVIDER_PATTERN,
-                                AUTH_OAUTH_CALLBACK_PATTERN)
-                        .permitAll()
-                        .requestMatchers(ApiPaths.PRODUCTS_PATTERN)
-                        .permitAll()
-                        .requestMatchers(ApiPaths.DOCS_ROOT + "**")
-                        .permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info", "/livez", "/readyz")
-                        .permitAll()
-                        .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
-                        .hasRole("ADMIN")
-                        .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN)
-                        .hasRole("ADMIN")
-                        .requestMatchers(ApiPaths.API_ROOT + "/**")
-                        .authenticated()
-                        .anyRequest()
-                        .denyAll())
+                .authorizeHttpRequests(routeAuthorization::authorize)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, _) -> writeErrorResponse(
                                 response,
@@ -204,23 +127,10 @@ public class SpringSecurityConfiguration {
         return new Argon2PasswordEncoder(16, 32, 1, memory, iterations);
     }
 
-    private void writeErrorResponse(HttpServletResponse response, int status, String message, String path)
+    private void writeErrorResponse(HttpServletResponse response, int status, String detail, String path)
             throws java.io.IOException {
-        response.setStatus(status);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
         String typeSlug = status == 401 ? ProblemType.AUTH_REQUIRED : ProblemType.ACCESS_DENIED;
         String title = status == 401 ? "Authentication required" : "Access denied";
-        ObjectNode json = OBJECT_MAPPER
-                .createObjectNode()
-                .put("type", problemTypeUriFactory.build(typeSlug))
-                .put("title", title)
-                .put("status", status)
-                .put("detail", message)
-                .put("instance", path)
-                .put("timestamp", Instant.now().toString());
-        byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(json);
-        response.setContentLength(bytes.length);
-        response.getOutputStream().write(bytes);
+        problemResponseWriter.write(response, status, typeSlug, title, detail, path, null);
     }
 }

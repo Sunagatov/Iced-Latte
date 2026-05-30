@@ -14,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
@@ -37,16 +37,14 @@ class OAuthTokenHandoffStoreTest {
     @Test
     @DisplayName("stores tokens behind one-time opaque code")
     void storesTokensBehindOneTimeOpaqueCode() {
-        UserAuthenticationResponse tokens = new UserAuthenticationResponse();
-        tokens.setToken("access-token");
-        tokens.setRefreshToken("refresh-token");
+        AuthenticationTokens tokens = new AuthenticationTokens("access-token", "refresh-token");
 
         String code = store.store(tokens);
 
         assertThat(code).matches("[A-Za-z0-9_-]{43}");
         assertThat(store.consume(code)).hasValueSatisfying(result -> {
-            assertThat(result.getToken()).isEqualTo("access-token");
-            assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
+            assertThat(result.accessToken()).isEqualTo("access-token");
+            assertThat(result.refreshToken()).isEqualTo("refresh-token");
         });
         assertThat(store.consume(code)).isEmpty();
     }
@@ -58,9 +56,7 @@ class OAuthTokenHandoffStoreTest {
         OAuthTokenHandoffStore encryptedStore =
                 new OAuthTokenHandoffStore(temporaryStore, new ObjectMapper(), jwtProperties(), handoffEncryptionKey());
         ReflectionTestUtils.setField(encryptedStore, "ttl", Duration.ofMinutes(1));
-        UserAuthenticationResponse tokens = new UserAuthenticationResponse();
-        tokens.setToken("access-token");
-        tokens.setRefreshToken("refresh-token");
+        AuthenticationTokens tokens = new AuthenticationTokens("access-token", "refresh-token");
 
         encryptedStore.store(tokens);
 

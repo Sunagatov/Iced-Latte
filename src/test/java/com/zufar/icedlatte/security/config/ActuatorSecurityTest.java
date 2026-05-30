@@ -1,17 +1,15 @@
 package com.zufar.icedlatte.security.config;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.IOException;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.correlation.CorrelationFilter;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.security.config.ActuatorSecurityTest.TestBeans;
+import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,13 +33,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import com.zufar.icedlatte.common.correlation.CorrelationFilter;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.security.config.ActuatorSecurityTest.TestBeans;
-import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
+import java.io.IOException;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringJUnitWebConfig(
-        classes = {SpringSecurityConfiguration.class, TestBeans.class, ActuatorSecurityTest.ActuatorController.class})
+        classes = {
+            SpringSecurityConfiguration.class,
+            SecurityRouteAuthorization.class,
+            SecurityProblemResponseWriter.class,
+            TestBeans.class,
+            ActuatorSecurityTest.ActuatorController.class
+        })
 @DisplayName("Actuator security")
 class ActuatorSecurityTest {
 
@@ -167,6 +172,11 @@ class ActuatorSecurityTest {
         @Bean
         ProblemTypeUriFactory problemTypeUriFactory() {
             return new ProblemTypeUriFactory("https://errors.example.test/problems");
+        }
+
+        @Bean
+        ObjectMapper objectMapper() {
+            return new ObjectMapper();
         }
 
         @Bean

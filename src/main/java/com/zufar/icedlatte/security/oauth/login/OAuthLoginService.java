@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
@@ -52,8 +52,7 @@ public class OAuthLoginService {
     }
 
     @Transactional
-    public UserAuthenticationResponse handle(
-            OAuthProvider provider, String authorizationCode, HttpServletRequest httpRequest) {
+    public AuthenticationTokens handle(OAuthProvider provider, String authorizationCode, HttpServletRequest httpRequest) {
         OAuthProviderClient client =
                 findClient(provider).orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);

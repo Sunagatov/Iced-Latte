@@ -22,7 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
@@ -341,10 +341,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .toUri();
     }
 
-    private UserAuthenticationResponse tokenPair(String token, String refreshToken) {
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken(token);
-        response.setRefreshToken(refreshToken);
-        return response;
+    private AuthenticationTokens tokenPair(String token, String refreshToken) {
+        return new AuthenticationTokens(token, refreshToken);
     }
 }

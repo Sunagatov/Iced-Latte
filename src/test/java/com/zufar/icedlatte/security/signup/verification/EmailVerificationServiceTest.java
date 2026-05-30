@@ -25,7 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
@@ -141,7 +141,7 @@ class EmailVerificationServiceTest {
         void consumesEmailVerificationTokenAndRegistersUser() {
             UserRegistrationRequest registrationRequest =
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
-            UserAuthenticationResponse authResponse = new UserAuthenticationResponse();
+            AuthenticationTokens authResponse = new AuthenticationTokens("access-token", "refresh-token");
             String token = emailTokenService.generate(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
             when(userRegistrationService.completeEmailVerifiedRegistration(
                             argThat(request -> request.getEmail().equals("john@example.com")
@@ -150,7 +150,7 @@ class EmailVerificationServiceTest {
                             eq(httpRequest)))
                     .thenReturn(authResponse);
 
-            UserAuthenticationResponse result = service.confirmEmailByCode(new ConfirmEmailRequest(token), httpRequest);
+            AuthenticationTokens result = service.confirmEmailByCode(new ConfirmEmailRequest(token), httpRequest);
 
             assertThat(result).isSameAs(authResponse);
             verify(userRegistrationService)

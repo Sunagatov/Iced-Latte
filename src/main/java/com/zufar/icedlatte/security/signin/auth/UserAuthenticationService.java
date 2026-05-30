@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
@@ -38,8 +38,7 @@ public class UserAuthenticationService {
     private final SessionTokenService sessionTokenService;
     private final TurnstileVerifier turnstileVerifier;
 
-    public UserAuthenticationResponse authenticate(
-            final UserAuthenticationRequest request, final HttpServletRequest httpRequest) {
+    public AuthenticationTokens authenticate(final UserAuthenticationRequest request, final HttpServletRequest httpRequest) {
         turnstileVerifier.verify(request.getTurnstileToken());
         UserDetails userDetails = verifyCredentials(request);
         loginAttemptService.resetAfterSuccessfulAuthentication(EmailNormalizer.normalize(request.getEmail()));

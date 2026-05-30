@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
@@ -95,7 +95,7 @@ class OAuthFlowServiceTest {
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
                 .thenReturn(tokenPair());
-        when(oAuthTokenHandoffStore.store(any(UserAuthenticationResponse.class)))
+        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class)))
                 .thenReturn("handoff-code");
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request);
@@ -103,15 +103,15 @@ class OAuthFlowServiceTest {
         assertThat(redirect.toString())
                 .isEqualTo("https://app.example.com/auth/google/callback?next=/checkout#oauthCode=handoff-code");
         assertThat(redirect.toString()).doesNotContain("jwt-token", "refresh-token");
-        verify(oAuthTokenHandoffStore).store(any(UserAuthenticationResponse.class));
+        verify(oAuthTokenHandoffStore).store(any(AuthenticationTokens.class));
     }
 
     @Test
     void completeTokenHandoffConsumesStoredTokenPair() {
-        UserAuthenticationResponse tokenPair = tokenPair();
+        AuthenticationTokens tokenPair = tokenPair();
         when(oAuthTokenHandoffStore.consume("handoff-code")).thenReturn(Optional.of(tokenPair));
 
-        UserAuthenticationResponse result = service.completeTokenHandoff("handoff-code");
+        AuthenticationTokens result = service.completeTokenHandoff("handoff-code");
 
         assertThat(result).isSameAs(tokenPair);
     }
@@ -179,10 +179,7 @@ class OAuthFlowServiceTest {
         when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
     }
 
-    private static UserAuthenticationResponse tokenPair() {
-        UserAuthenticationResponse response = new UserAuthenticationResponse();
-        response.setToken("jwt-token");
-        response.setRefreshToken("refresh-token");
-        return response;
+    private static AuthenticationTokens tokenPair() {
+        return new AuthenticationTokens("jwt-token", "refresh-token");
     }
 }

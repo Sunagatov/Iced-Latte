@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
@@ -39,8 +39,7 @@ public class EmailVerificationService {
         emailConfirmation.sendTemporaryCode(request.getEmail(), token);
     }
 
-    public UserAuthenticationResponse confirmEmailByCode(
-            ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
+    public AuthenticationTokens confirmEmailByCode(ConfirmEmailRequest confirmEmailRequest, HttpServletRequest httpRequest) {
         EmailTokenEntry entry = emailTokenService.consume(confirmEmailRequest, TokenPurpose.EMAIL_VERIFICATION);
         if (entry.encodedPassword() == null || entry.encodedPassword().isBlank()) {
             throw new IllegalStateException("Email verification token is missing encoded password");

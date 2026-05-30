@@ -21,7 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
@@ -140,9 +140,7 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should verify Turnstile, credentials, and issue a session-bound token pair")
     void shouldAuthenticateAndIssueSessionBoundTokenPair() {
         Authentication authentication = mock(Authentication.class);
-        UserAuthenticationResponse expectedResponse = new UserAuthenticationResponse();
-        expectedResponse.setToken("access-token");
-        expectedResponse.setRefreshToken("refresh-token");
+        AuthenticationTokens expectedResponse = new AuthenticationTokens("access-token", "refresh-token");
 
         when(request.getTurnstileToken()).thenReturn("turnstile-token");
         when(request.getEmail()).thenReturn("  Known@Example.com ");
@@ -152,7 +150,7 @@ class UserAuthenticationServiceTest {
         when(authentication.getPrincipal()).thenReturn(userDetails);
         when(sessionTokenService.issueForNewSession(userDetails, httpRequest)).thenReturn(expectedResponse);
 
-        UserAuthenticationResponse response = userAuthenticationService.authenticate(request, httpRequest);
+        AuthenticationTokens response = userAuthenticationService.authenticate(request, httpRequest);
 
         assertSame(expectedResponse, response);
         verify(turnstileVerifier).verify("turnstile-token");

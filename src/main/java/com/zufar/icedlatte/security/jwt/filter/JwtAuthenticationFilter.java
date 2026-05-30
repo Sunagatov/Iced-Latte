@@ -9,20 +9,17 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.exception.ProblemType;
-import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.config.SecurityProblemResponseWriter;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
@@ -40,14 +37,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final CurrentUserProvider currentUserProvider;
     private final JwtTokenClaims jwtTokenClaims;
     private final JwtBearerTokenResolver jwtBearerTokenResolver;
     private final ClientIpExtractor clientIpExtractor;
-    private final ProblemTypeUriFactory problemTypeUriFactory;
+    private final SecurityProblemResponseWriter problemResponseWriter;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -166,25 +161,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.debug("auth.failed.details", exception);
         }
 
-        httpResponse.setStatus(errorInfo.statusCode());
-        httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        httpResponse.setCharacterEncoding("UTF-8");
-        httpResponse.setHeader("X-Content-Type-Options", "nosniff");
-        httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        httpResponse.setHeader("Pragma", "no-cache");
-        httpResponse.setHeader("Expires", "0");
-        ObjectNode json = OBJECT_MAPPER
-                .createObjectNode()
-                .put("type", problemTypeUriFactory.build(errorInfo.typeSlug()))
-                .put("title", errorInfo.title())
-                .put("status", errorInfo.statusCode())
-                .put("detail", errorInfo.detail())
-                .put("instance", path)
-                .put("timestamp", java.time.Instant.now().toString())
-                .put("requestId", requestId);
-        byte[] responseBytes = OBJECT_MAPPER.writeValueAsBytes(json);
-        httpResponse.setContentLength(responseBytes.length);
-        httpResponse.getOutputStream().write(responseBytes);
+        problemResponseWriter.write(
+                httpResponse,
+                errorInfo.statusCode(),
+                errorInfo.typeSlug(),
+                errorInfo.title(),
+                errorInfo.detail(),
+                path,
+                requestId);
     }
 
     // Record for error information - Java 21 feature

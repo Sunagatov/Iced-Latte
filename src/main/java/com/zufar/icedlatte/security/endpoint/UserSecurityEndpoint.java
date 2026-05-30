@@ -14,6 +14,7 @@ import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.flow.OAuthFlowService;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.session.revocation.TokenRevocationService;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.RefreshTokenResult;
 import com.zufar.icedlatte.security.session.token.RefreshTokenService;
 import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
@@ -93,7 +94,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/oauth/token")
     public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(@RequestParam String code) {
-        return ResponseEntity.ok(oAuthFlowService.completeTokenHandoff(code));
+        return ResponseEntity.ok(toResponse(oAuthFlowService.completeTokenHandoff(code)));
     }
 
     @Override
@@ -104,7 +105,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             emailVerificationService.sendEmailVerificationCode(request);
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.ok(userRegistrationService.register(request, httpRequest));
+        return ResponseEntity.ok(toResponse(userRegistrationService.register(request, httpRequest)));
     }
 
     @Override
@@ -112,14 +113,15 @@ public class UserSecurityEndpoint implements SecurityApi {
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(
             @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
         var response = emailVerificationService.confirmEmailByCode(confirmEmailRequest, httpRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(response));
     }
 
     @Override
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(
             @Valid @RequestBody final UserAuthenticationRequest request) {
-        return ResponseEntity.ok(userAuthenticationService.authenticate(request, httpRequest));
+        AuthenticationTokens authenticationTokens = userAuthenticationService.authenticate(request, httpRequest);
+        return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 
     @Override
@@ -128,7 +130,7 @@ public class UserSecurityEndpoint implements SecurityApi {
         RefreshTokenResult result = refreshTokenService.refresh(httpRequest);
         return ResponseEntity
                 .status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
-                .body(result.response());
+                .body(toResponse(result.tokens()));
     }
 
     @Override
@@ -178,5 +180,12 @@ public class UserSecurityEndpoint implements SecurityApi {
         return OAuthProvider.fromId(provider)
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth provider is not supported."));
+    }
+
+    private static UserAuthenticationResponse toResponse(AuthenticationTokens tokens) {
+        UserAuthenticationResponse response = new UserAuthenticationResponse();
+        response.setToken(tokens.accessToken());
+        response.setRefreshToken(tokens.refreshToken());
+        return response;
     }
 }

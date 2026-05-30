@@ -1,15 +1,12 @@
 package com.zufar.icedlatte.security.session.token;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.UUID;
-
+import com.zufar.icedlatte.common.correlation.RequestContextConstants;
+import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
+import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionService;
+import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,13 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 
-import com.zufar.icedlatte.common.correlation.RequestContextConstants;
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
-import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
-import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
-import com.zufar.icedlatte.security.session.management.AuthSessionService;
-import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SessionTokenService unit tests")
@@ -69,10 +66,10 @@ class SessionTokenServiceTest {
                         .userId(userId)
                         .build());
 
-        UserAuthenticationResponse result = service.issueForNewSession(user, request);
+        AuthenticationTokens result = service.issueForNewSession(user, request);
 
-        assertThat(result.getToken()).isEqualTo(accessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(result.accessToken()).isEqualTo(accessToken);
+        assertThat(result.refreshToken()).isEqualTo(refreshToken);
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }
@@ -94,10 +91,10 @@ class SessionTokenServiceTest {
         when(jwtTokenProvider.generateToken(user, sessionId)).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(newRefreshToken)).thenReturn(newHash);
 
-        UserAuthenticationResponse result = service.rotateSessionTokens(session, oldHash, user);
+        AuthenticationTokens result = service.rotateSessionTokens(session, oldHash, user);
 
-        assertThat(result.getToken()).isEqualTo(accessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
+        assertThat(result.accessToken()).isEqualTo(accessToken);
+        assertThat(result.refreshToken()).isEqualTo(newRefreshToken);
         verify(authSessionService).rotateSession(oldHash, newHash);
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
@@ -122,10 +119,10 @@ class SessionTokenServiceTest {
                         .userId(userId)
                         .build());
 
-        UserAuthenticationResponse result = service.migrateLegacyRefreshToken(user, legacyToken, request);
+        AuthenticationTokens result = service.migrateLegacyRefreshToken(user, legacyToken, request);
 
-        assertThat(result.getToken()).isEqualTo(accessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(newRefreshToken);
+        assertThat(result.accessToken()).isEqualTo(accessToken);
+        assertThat(result.refreshToken()).isEqualTo(newRefreshToken);
         verify(jwtTokenBlacklist).blacklistRefreshToken(legacyToken);
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();

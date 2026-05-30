@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
@@ -31,9 +31,9 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
         final UserRegistrationRequest request =
                 new UserRegistrationRequest("John", "Doe", "john.doe@example.com", "Password123!");
 
-        final UserAuthenticationResponse response = userRegistrationService.register(request, MOCK_REQUEST);
-        assertNotNull(response.getToken());
-        assertNotNull(response.getRefreshToken());
+        final AuthenticationTokens response = userRegistrationService.register(request, MOCK_REQUEST);
+        assertNotNull(response.accessToken());
+        assertNotNull(response.refreshToken());
 
         final UserEntity savedUser = userRepository
                 .findByEmailWithAuthorities("john.doe@example.com")
