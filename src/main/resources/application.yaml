@@ -372,6 +372,7 @@ google:
 oauth:
   state-ttl-minutes: 10
   handoff-ttl: ${OAUTH_HANDOFF_TTL:PT1M}
+  handoff-encryption-key: ${OAUTH_HANDOFF_ENCRYPTION_KEY:}
 
 # --- AI (OpenAI-compatible API for review moderation & summaries) ---
 ai:

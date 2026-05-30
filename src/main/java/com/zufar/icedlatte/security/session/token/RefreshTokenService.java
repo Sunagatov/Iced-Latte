@@ -2,8 +2,6 @@ package com.zufar.icedlatte.security.session.token;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -34,8 +32,7 @@ public class RefreshTokenService {
     private final JwtAccountStatusValidator jwtAccountStatusValidator;
 
     @Transactional
-    public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(
-            HttpServletRequest request) {
+    public RefreshTokenResult refresh(HttpServletRequest request) {
         log.debug("auth.token.refreshing");
         String rawToken = jwtBearerTokenResolver.extract(request);
         String hash = jwtTokenBlacklist.hash(rawToken);
@@ -56,7 +53,7 @@ public class RefreshTokenService {
             jwtAccountStatusValidator.requireActive(userDetails);
             var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);
             log.info("auth.token.refresh_legacy_migrated");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return new RefreshTokenResult(response, true);
         }
 
         String userEmail = extractRefreshTokenEmail(rawToken);
@@ -64,7 +61,7 @@ public class RefreshTokenService {
         jwtAccountStatusValidator.requireActive(userDetails);
         var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
         log.debug("auth.token.refreshed");
-        return ResponseEntity.ok(response);
+        return new RefreshTokenResult(response, false);
     }
 
     private String extractRefreshTokenEmail(String rawToken) {

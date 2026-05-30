@@ -16,8 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
@@ -85,10 +83,10 @@ class RefreshTokenServiceTest {
             when(sessionTokenService.rotateSessionTokens(session, oldHash, user))
                     .thenReturn(responseBody);
 
-            ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
+            RefreshTokenResult response = service.refresh(request);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isSameAs(responseBody);
+            assertThat(response.migratedLegacyToken()).isFalse();
+            assertThat(response.response()).isSameAs(responseBody);
             verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
         }
@@ -112,10 +110,10 @@ class RefreshTokenServiceTest {
             when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, request))
                     .thenReturn(responseBody);
 
-            ResponseEntity<UserAuthenticationResponse> response = service.refresh(request);
+            RefreshTokenResult response = service.refresh(request);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-            assertThat(response.getBody()).isSameAs(responseBody);
+            assertThat(response.migratedLegacyToken()).isTrue();
+            assertThat(response.response()).isSameAs(responseBody);
             verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
         }

@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
 import io.restassured.http.ContentType;
@@ -24,7 +24,7 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
     private Integer port;
 
     @Autowired
-    private EmailVerificationService emailVerificationService;
+    private EmailTokenService emailTokenService;
 
     private RequestSpecification spec;
 
@@ -42,7 +42,7 @@ class RefreshTokenReplayTest extends IntegrationTestBase {
      */
     private String registerAndGetRefreshToken(String email) {
         UserRegistrationRequest pending = new UserRegistrationRequest("Replay", "Test", email, "!h2h3kKl22");
-        String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         given(spec)
                 .body("{\"token\":\"" + token + "\"}")

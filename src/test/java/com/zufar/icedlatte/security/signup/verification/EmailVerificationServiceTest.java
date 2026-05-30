@@ -60,21 +60,27 @@ class EmailVerificationServiceTest {
     private HttpServletRequest httpRequest;
 
     private EmailVerificationService service;
+    private EmailTokenService emailTokenService;
 
     @BeforeEach
     void setUp() {
+        emailTokenService = tokenService(new InMemoryExpiringKeyValueStore(
+                new com.zufar.icedlatte.common.config.CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)));
         service = new EmailVerificationService(
-                new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(
-                        1_000, 5_000, 10_000, 1_000, 10_000)),
-                new ObjectMapper(),
                 emailConfirmation,
+                emailTokenService,
                 userRegistrationService,
                 userLookupApi,
-                userAccessControlApi,
-                passwordEncoder);
-        ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
-        ReflectionTestUtils.setField(service, "tokenLength", 43);
+                userAccessControlApi);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
+    }
+
+    private EmailTokenService tokenService(ExpiringKeyValueStore store) {
+        EmailTokenService tokenService = new EmailTokenService(
+                store, new ObjectMapper(), passwordEncoder);
+        ReflectionTestUtils.setField(tokenService, "expireTimeMinutes", 15);
+        ReflectionTestUtils.setField(tokenService, "tokenLength", 43);
+        return tokenService;
     }
 
     @Nested
@@ -134,7 +140,7 @@ class EmailVerificationServiceTest {
             UserRegistrationRequest registrationRequest =
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
             UserAuthenticationResponse authResponse = new UserAuthenticationResponse();
-            String token = service.generateToken(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
+            String token = emailTokenService.generate(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
             when(userRegistrationService.completeEmailVerifiedRegistration(
                             argThat(request -> request.getEmail().equals("john@example.com")
                                     && request.getPassword() == null),
@@ -165,7 +171,7 @@ class EmailVerificationServiceTest {
             registrationRequest.setEmail("user@example.com");
             UUID userId = UUID.randomUUID();
             var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "user@example.com");
-            String token = service.generateToken(registrationRequest, TokenPurpose.PASSWORD_RESET);
+            String token = emailTokenService.generate(registrationRequest, TokenPurpose.PASSWORD_RESET);
             when(userLookupApi.getUserByEmail("user@example.com")).thenReturn(user);
 
             service.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(token), "newPass123!");
@@ -181,7 +187,7 @@ class EmailVerificationServiceTest {
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
 
-        String token = service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generate(request, TokenPurpose.EMAIL_VERIFICATION);
 
         assertThat(token).hasSize(43).matches("[A-Za-z0-9_-]{43}");
     }
@@ -190,18 +196,18 @@ class EmailVerificationServiceTest {
     @DisplayName("validateToken rejects invalid token format")
     void validateTokenRejectsInvalidTokenFormat() {
         assertThatThrownBy(
-                        () -> service.validateToken(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
+                        () -> emailTokenService.consume(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(com.zufar.icedlatte.common.exception.BadRequestException.class);
     }
 
     @Test
     @DisplayName("generateToken rejects weak token length configuration")
     void generateTokenRejectsWeakTokenLengthConfiguration() {
-        ReflectionTestUtils.setField(service, "tokenLength", 9);
+        ReflectionTestUtils.setField(emailTokenService, "tokenLength", 9);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
 
-        assertThatThrownBy(() -> service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(() -> emailTokenService.generate(request, TokenPurpose.EMAIL_VERIFICATION))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be at least 32");
     }
@@ -210,7 +216,7 @@ class EmailVerificationServiceTest {
     @DisplayName("generateToken normalizes email and scopes hashed token key by purpose")
     void generateTokenNormalizesEmailAndScopesHashedTokenKeyByPurpose() {
         ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
-        EmailVerificationService serviceWithMockStore = serviceWithStore(store);
+        EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", " User@Example.COM ", "Password1!");
         when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
@@ -222,7 +228,7 @@ class EmailVerificationServiceTest {
                         eq(Duration.ofMinutes(15))))
                 .thenReturn(true);
 
-        String token = serviceWithMockStore.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = serviceWithMockStore.generate(request, TokenPurpose.EMAIL_VERIFICATION);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -237,7 +243,7 @@ class EmailVerificationServiceTest {
     @DisplayName("generateToken retries instead of overwriting an existing same-purpose token")
     void generateTokenRetriesInsteadOfOverwritingExistingSamePurposeToken() {
         ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
-        EmailVerificationService serviceWithMockStore = serviceWithStore(store);
+        EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", "user@example.com", "Password1!");
         when(store.get("email:rate:user@example.com")).thenReturn(Optional.empty());
@@ -248,7 +254,7 @@ class EmailVerificationServiceTest {
                 .thenReturn(false)
                 .thenReturn(true);
 
-        serviceWithMockStore.generateToken(request, TokenPurpose.PASSWORD_RESET);
+        serviceWithMockStore.generate(request, TokenPurpose.PASSWORD_RESET);
 
         verify(store, times(2))
                 .putIfAbsent(
@@ -258,14 +264,10 @@ class EmailVerificationServiceTest {
         verify(store).put(eq("email:rate:user@example.com"), any(), eq(Duration.ofMinutes(15)));
     }
 
-    private EmailVerificationService serviceWithStore(ExpiringKeyValueStore store) {
-        EmailVerificationService serviceWithMockStore = new EmailVerificationService(
+    private EmailTokenService tokenServiceWithStore(ExpiringKeyValueStore store) {
+        EmailTokenService serviceWithMockStore = new EmailTokenService(
                 store,
                 new ObjectMapper(),
-                emailConfirmation,
-                userRegistrationService,
-                userLookupApi,
-                userAccessControlApi,
                 passwordEncoder);
         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
         ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);

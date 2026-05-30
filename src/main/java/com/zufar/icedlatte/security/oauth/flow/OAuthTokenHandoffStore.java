@@ -18,6 +18,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,10 +44,17 @@ public class OAuthTokenHandoffStore {
     private Duration ttl;
 
     public OAuthTokenHandoffStore(
-            ExpiringKeyValueStore temporaryStore, ObjectMapper objectMapper, JwtProperties jwtProperties) {
+            ExpiringKeyValueStore temporaryStore,
+            ObjectMapper objectMapper,
+            JwtProperties jwtProperties,
+            @Value("${oauth.handoff-encryption-key:}") String handoffEncryptionKey) {
         this.temporaryStore = temporaryStore;
         this.objectMapper = objectMapper;
-        this.encryptionKey = deriveEncryptionKey(jwtProperties.refreshSecret());
+        if (StringUtils.hasText(handoffEncryptionKey)) {
+            this.encryptionKey = deriveEncryptionKey(handoffEncryptionKey);
+        } else {
+            this.encryptionKey = deriveEncryptionKey(jwtProperties.refreshSecret());
+        }
     }
 
     public String store(UserAuthenticationResponse tokens) {

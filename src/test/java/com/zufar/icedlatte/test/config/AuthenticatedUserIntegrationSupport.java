@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -21,7 +21,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     protected Integer port;
 
     @Autowired
-    private EmailVerificationService emailVerificationService;
+    private EmailTokenService emailTokenService;
 
     protected RequestSpecification jsonSpec(String basePath) {
         return given().port(port)
@@ -45,7 +45,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     protected AuthenticatedUser registerAndAuthenticateUser(
             String firstName, String lastName, String email, String password) {
         UserRegistrationRequest pending = new UserRegistrationRequest(firstName, lastName, email, password);
-        String confirmationToken = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String confirmationToken = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         var response = given(jsonSpec(AUTH_BASE_PATH))
                 .body("""

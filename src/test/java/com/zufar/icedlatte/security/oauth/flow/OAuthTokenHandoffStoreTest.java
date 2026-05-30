@@ -29,7 +29,8 @@ class OAuthTokenHandoffStoreTest {
         store = new OAuthTokenHandoffStore(
                 new InMemoryExpiringKeyValueStore(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
-                jwtProperties());
+                jwtProperties(),
+                handoffEncryptionKey());
         ReflectionTestUtils.setField(store, "ttl", Duration.ofMinutes(1));
     }
 
@@ -55,7 +56,7 @@ class OAuthTokenHandoffStoreTest {
     void doesNotStoreBearerTokensAsPlaintext() {
         ExpiringKeyValueStore temporaryStore = mock(ExpiringKeyValueStore.class);
         OAuthTokenHandoffStore encryptedStore =
-                new OAuthTokenHandoffStore(temporaryStore, new ObjectMapper(), jwtProperties());
+                new OAuthTokenHandoffStore(temporaryStore, new ObjectMapper(), jwtProperties(), handoffEncryptionKey());
         ReflectionTestUtils.setField(encryptedStore, "ttl", Duration.ofMinutes(1));
         UserAuthenticationResponse tokens = new UserAuthenticationResponse();
         tokens.setToken("access-token");
@@ -79,5 +80,9 @@ class OAuthTokenHandoffStoreTest {
                 Duration.ofHours(24),
                 "iced-latte",
                 "iced-latte-client");
+    }
+
+    private static String handoffEncryptionKey() {
+        return "NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=";
     }
 }

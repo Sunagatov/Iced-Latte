@@ -14,6 +14,7 @@ import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.flow.OAuthFlowService;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.session.revocation.TokenRevocationService;
+import com.zufar.icedlatte.security.session.token.RefreshTokenResult;
 import com.zufar.icedlatte.security.session.token.RefreshTokenService;
 import com.zufar.icedlatte.security.signin.auth.UserAuthenticationService;
 import com.zufar.icedlatte.security.signup.password.PasswordResetService;
@@ -124,7 +125,10 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
-        return refreshTokenService.refresh(httpRequest);
+        RefreshTokenResult result = refreshTokenService.refresh(httpRequest);
+        return ResponseEntity
+                .status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
+                .body(result.response());
     }
 
     @Override

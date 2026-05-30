@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
-import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
+import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
 import io.restassured.http.ContentType;
@@ -29,7 +29,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     protected Integer port;
 
     @Autowired
-    private EmailVerificationService emailVerificationService;
+    private EmailTokenService emailTokenService;
 
     private static final String SECURITY_SCHEMA = "security/model/schema/security-schema.json";
     private static final String SECURITY_SCHEMA_FAILED = "security/model/schema/security-schema-failed.json";
@@ -180,7 +180,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     void shouldFailRegistrationImmediatelyWhenConfirmedEmailAlreadyExists() {
         String uniqueEmail = "confirmed.duplicate." + System.currentTimeMillis() + "@gmail.com";
         UserRegistrationRequest pending = new UserRegistrationRequest("Jon", "Smith", uniqueEmail, "!h2h3kKl");
-        String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail
                 + "\",\"password\":\"!h2h3kKl\"}";
 
@@ -264,7 +264,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     void shouldAuthenticateUser() {
         UserRegistrationRequest pending =
                 new UserRegistrationRequest("Auth", "Registr", "AuthReg@gmail.com", "!h2h3kKl22");
-        String token = emailVerificationService.generateToken(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
 
         given(specification)
                 .body("{\"token\":\"" + token + "\"}")
