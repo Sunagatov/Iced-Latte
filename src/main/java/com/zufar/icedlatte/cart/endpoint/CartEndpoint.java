@@ -1,15 +1,22 @@
 package com.zufar.icedlatte.cart.endpoint;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
 import com.zufar.icedlatte.cart.service.ShoppingCartService;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
 import com.zufar.icedlatte.openapi.dto.DeleteItemsFromShoppingCartRequest;
+import com.zufar.icedlatte.openapi.dto.NewShoppingCartItemDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.UpdateProductQuantityInShoppingCartItemRequest;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
@@ -34,7 +41,8 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(
             @Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
         var userId = currentUserProvider.getUserId();
-        var shoppingCart = shoppingCartService.addOpenApiItems(userId, request.getItems());
+        Set<AddCartItemRequest> cartItemRequests = toAddCartItemRequests(request);
+        var shoppingCart = shoppingCartService.addItemsToCart(userId, cartItemRequests);
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }
@@ -65,8 +73,17 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     public ResponseEntity<ShoppingCartDto> deleteItemsFromShoppingCart(
             @Valid @RequestBody final DeleteItemsFromShoppingCartRequest request) {
         var userId = currentUserProvider.getUserId();
-        var shoppingCart = shoppingCartService.deleteItems(request, userId);
+        List<UUID> shoppingCartItemIds = request.getShoppingCartItemIds();
+        var shoppingCart = shoppingCartService.deleteItems(shoppingCartItemIds, userId);
         log.debug("cart.items.deleted");
         return ResponseEntity.ok(shoppingCart);
+    }
+
+    private static Set<AddCartItemRequest> toAddCartItemRequests(AddNewItemsToShoppingCartRequest request) {
+        return request.getItems().stream().map(CartEndpoint::toAddCartItemRequest).collect(Collectors.toSet());
+    }
+
+    private static AddCartItemRequest toAddCartItemRequest(NewShoppingCartItemDto item) {
+        return new AddCartItemRequest(item.getProductId(), item.getProductQuantity());
     }
 }

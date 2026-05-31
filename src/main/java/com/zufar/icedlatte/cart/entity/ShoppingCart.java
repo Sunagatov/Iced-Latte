@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Formula;
 
 import lombok.*;
 
@@ -43,13 +42,6 @@ public class ShoppingCart {
             orphanRemoval = true,
             fetch = FetchType.LAZY)
     private Set<ShoppingCartItem> items;
-
-    @Formula("(SELECT COUNT(*) FROM shopping_cart_item sci WHERE sci.shopping_cart_id = id)")
-    private Integer itemsQuantity;
-
-    @Formula(
-            "(SELECT COALESCE(SUM(sci.products_quantity), 0) FROM shopping_cart_item sci WHERE sci.shopping_cart_id = id)")
-    private Integer productsQuantity;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

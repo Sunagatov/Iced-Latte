@@ -1,15 +1,18 @@
 package com.zufar.icedlatte.cart.stub;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CartDtoTestStub {
 
@@ -61,8 +64,6 @@ public class CartDtoTestStub {
         shoppingCart.setId(UUID.randomUUID());
         shoppingCart.setUserId(userId);
         shoppingCart.setItems(items);
-        shoppingCart.setItemsQuantity(3);
-        shoppingCart.setProductsQuantity(6);
         shoppingCart.setCreatedAt(OffsetDateTime.now());
         shoppingCart.setClosedAt(OffsetDateTime.now().plusHours(2));
 
@@ -75,8 +76,6 @@ public class CartDtoTestStub {
         shoppingCart.setId(UUID.randomUUID());
         shoppingCart.setUserId(userId);
         shoppingCart.setItems(new HashSet<>());
-        shoppingCart.setItemsQuantity(0);
-        shoppingCart.setProductsQuantity(0);
         shoppingCart.setCreatedAt(OffsetDateTime.now());
         return shoppingCart;
     }
@@ -90,17 +89,5 @@ public class CartDtoTestStub {
                 new ProductSnapshot(
                         THIRD_PRODUCT_ID, "Third test name", "Desc", BigDecimal.valueOf(3.3), 10, true, null));
         return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
-    }
-
-    public static ShoppingCartDto createShoppingCartDto() {
-        UUID userId = UUID.fromString("ebd4d43f-3152-4af5-86dd-526a002cbbc3");
-        ShoppingCartDto dto = new ShoppingCartDto();
-        dto.setUserId(userId);
-        dto.setItemsQuantity(2);
-        dto.setProductsQuantity(3);
-        dto.setItemsTotalPrice(new BigDecimal("5.50"));
-        dto.setCreatedAt(OffsetDateTime.now());
-        dto.setClosedAt(OffsetDateTime.now().plusHours(2));
-        return dto;
     }
 }
