@@ -40,10 +40,10 @@ public class OAuthRedirectService {
             if (!sameOrigin || !expectedPath) {
                 return defaultCallbackBase(provider);
             }
+            return allowedCallbackBase(incoming);
         } catch (URISyntaxException _) {
             return defaultCallbackBase(provider);
         }
-        return redirectUrl;
     }
 
     URI signInErrorRedirect(String errorCode) {
@@ -75,7 +75,15 @@ public class OAuthRedirectService {
     }
 
     String callbackUrlWithHandoffCode(String callbackBase, String handoffCode) {
-        return callbackBase + "#oauthCode=" + URLEncoder.encode(handoffCode, StandardCharsets.UTF_8);
+        String encodedCode = URLEncoder.encode(handoffCode, StandardCharsets.UTF_8);
+        try {
+            return UriComponentsBuilder.fromUri(new URI(callbackBase))
+                    .fragment("oauthCode=" + encodedCode)
+                    .build(true)
+                    .toUriString();
+        } catch (URISyntaxException _) {
+            return callbackBase.split("#", 2)[0] + "#oauthCode=" + encodedCode;
+        }
     }
 
     private String defaultCallbackBase(OAuthProvider provider) {
@@ -83,6 +91,23 @@ public class OAuthRedirectService {
                 .path(provider.callbackPath())
                 .build()
                 .toUriString();
+    }
+
+    private String allowedCallbackBase(URI incoming) {
+        UriComponentsBuilder builder = UriComponentsBuilder.newInstance()
+                .scheme(incoming.getScheme())
+                .host(incoming.getHost())
+                .path(incoming.getPath());
+        if (incoming.getPort() != -1) {
+            builder.port(incoming.getPort());
+        }
+
+        String next =
+                UriComponentsBuilder.fromUri(incoming).build().getQueryParams().getFirst(NEXT_QUERY_PARAM);
+        if (isSafeRelativePath(next)) {
+            builder.queryParam(NEXT_QUERY_PARAM, next);
+        }
+        return builder.build(true).toUriString();
     }
 
     private static int effectivePort(URI uri) {
@@ -97,6 +122,19 @@ public class OAuthRedirectService {
     }
 
     private static boolean isSafeRelativePath(String next) {
-        return StringUtils.hasText(next) && next.startsWith("/") && !next.startsWith("//");
+        if (!StringUtils.hasText(next) || next.contains("\\")) {
+            return false;
+        }
+        try {
+            URI uri = new URI(next);
+            String path = uri.getPath();
+            return uri.getScheme() == null
+                    && uri.getRawAuthority() == null
+                    && path != null
+                    && path.startsWith("/")
+                    && !path.startsWith("//");
+        } catch (URISyntaxException _) {
+            return false;
+        }
     }
 }

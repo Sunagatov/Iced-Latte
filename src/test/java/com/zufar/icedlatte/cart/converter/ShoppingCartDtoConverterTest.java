@@ -70,4 +70,13 @@ class ShoppingCartDtoConverterTest {
         assertThatThrownBy(() -> converter.toDto(cart, productsById))
                 .isInstanceOf(CartProductSnapshotMissingException.class);
     }
+
+    @Test
+    @DisplayName("Should fail when cart items are not initialized")
+    void shouldFailWhenCartItemsAreNotInitialized() {
+        ShoppingCart cart = new ShoppingCart();
+        cart.setId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> converter.toDto(cart, Map.of())).isInstanceOf(NullPointerException.class);
+    }
 }

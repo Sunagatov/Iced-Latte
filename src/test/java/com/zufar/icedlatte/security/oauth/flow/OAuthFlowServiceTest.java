@@ -93,6 +93,23 @@ class OAuthFlowServiceTest {
     }
 
     @Test
+    void initiateDropsUnsafeNextFromAllowedCallback() {
+        stubGoogleClient();
+        when(oAuthProviderClient.buildAuthorizationUri(anyString()))
+                .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
+
+        service.initiate(
+                OAuthProvider.GOOGLE,
+                "https://app.example.com/auth/google/callback?next=https://evil.example.com",
+                request,
+                response);
+
+        ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
+        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        assertThat(callbackBase.getValue()).isEqualTo("https://app.example.com/auth/google/callback");
+    }
+
+    @Test
     void initiateReturnsEmptyWhenProviderClientIsNotRegistered() {
         when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
@@ -108,7 +125,7 @@ class OAuthFlowServiceTest {
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
-                .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
                 .thenReturn(tokenPair());
         when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
@@ -120,6 +137,23 @@ class OAuthFlowServiceTest {
         assertThat(redirect.toString()).doesNotContain("jwt-token", "refresh-token");
         verify(oAuthTokenHandoffStore).store(any(AuthenticationTokens.class));
         verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
+    }
+
+    @Test
+    void completeCallbackReplacesExistingFragmentWithOneTimeHandoffCode() {
+        stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
+        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback#old"));
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
+                .thenReturn(tokenPair());
+        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
+
+        assertThat(redirect.toString())
+                .isEqualTo("https://app.example.com/auth/google/callback#oauthCode=handoff-code");
     }
 
     @Test
@@ -137,7 +171,7 @@ class OAuthFlowServiceTest {
         stubGoogleClient();
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "missing"))
                 .thenReturn(true);
-        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "missing")).thenReturn(null);
+        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "missing")).thenReturn(Optional.empty());
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "missing", request, response);
 
@@ -165,7 +199,7 @@ class OAuthFlowServiceTest {
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
-                .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
@@ -180,7 +214,7 @@ class OAuthFlowServiceTest {
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
-                .thenReturn("https://app.example.com/auth/google/callback?next=https://evil.example.com");
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=https://evil.example.com"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
@@ -195,7 +229,7 @@ class OAuthFlowServiceTest {
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
-                .thenReturn("https://app.example.com/auth/google/callback?next=//evil.example.com");
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=//evil.example.com"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 

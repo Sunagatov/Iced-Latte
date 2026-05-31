@@ -105,6 +105,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto deleteItems(final DeleteItemsFromShoppingCartRequest request, final UUID userId) {
         List<UUID> itemIds = request.getShoppingCartItemIds();
+        validateDeleteItemIds(itemIds);
         shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
         log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
         return getByUserId(userId);
@@ -179,8 +180,9 @@ public class ShoppingCartService implements CartCheckoutApi {
             return List.of();
         }
 
+        Set<UUID> catalogProductIds = productCatalogApi.findExistingProductIds(newProductIds);
         List<UUID> missingIds = newProductIds.stream()
-                .filter(productId -> !productCatalogApi.existsById(productId))
+                .filter(productId -> !catalogProductIds.contains(productId))
                 .toList();
         if (!missingIds.isEmpty()) {
             throw new CartProductNotFoundException(missingIds);
@@ -231,11 +233,14 @@ public class ShoppingCartService implements CartCheckoutApi {
             throw new InvalidCartItemRequestException("Cart items to add must not be empty.");
         }
         for (NewShoppingCartItemDto item : itemsToAdd) {
-            Integer productQuantity = item.getProductQuantity();
-            if (productQuantity == null) {
-                throw new InvalidCartItemRequestException("Product quantity must not be null.");
-            }
+            int productQuantity = item.getProductQuantity();
             validateProductQuantity(productQuantity);
+        }
+    }
+
+    private static void validateDeleteItemIds(List<UUID> itemIds) {
+        if (itemIds.isEmpty()) {
+            throw new InvalidCartItemRequestException("Cart item ids to delete must not be empty.");
         }
     }
 

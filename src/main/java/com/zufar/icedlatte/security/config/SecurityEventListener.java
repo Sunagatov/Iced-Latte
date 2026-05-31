@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.config;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SecurityEventListener {
 
     private static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
+    private static final String UNKNOWN_PRINCIPAL = "unknown";
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
@@ -36,7 +38,7 @@ public class SecurityEventListener {
             path = sanitize(normalizePath(sra.getRequest().getRequestURI()));
         }
 
-        String principal = event.getAuthentication().get().getName();
+        String principal = resolvePrincipal(event);
 
         if (isExpectedAnonymousDeny(principal, path)) {
             log.debug("auth.denied: method={}, path={}, principal={}", method, path, principal);
@@ -48,6 +50,18 @@ public class SecurityEventListener {
     private static boolean isExpectedAnonymousDeny(String principal, String path) {
         return ANONYMOUS_PRINCIPAL.equals(principal)
                 && (ApiPaths.USERS.equals(path) || ApiPaths.CART.equals(path) || ApiPaths.FAVORITES.equals(path));
+    }
+
+    private static String resolvePrincipal(AuthorizationDeniedEvent<?> event) {
+        try {
+            Authentication authentication = event.getAuthentication().get();
+            if (authentication.getName() == null || authentication.getName().isBlank()) {
+                return UNKNOWN_PRINCIPAL;
+            }
+            return authentication.getName();
+        } catch (RuntimeException _) {
+            return UNKNOWN_PRINCIPAL;
+        }
     }
 
     private static String normalizePath(String value) {

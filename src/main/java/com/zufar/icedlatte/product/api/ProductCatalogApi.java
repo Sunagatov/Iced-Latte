@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.product.api;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
@@ -14,4 +15,6 @@ public interface ProductCatalogApi {
     List<ProductSnapshot> getProductsByIds(List<UUID> ids);
 
     boolean existsById(UUID productId);
+
+    Set<UUID> findExistingProductIds(Set<UUID> productIds);
 }

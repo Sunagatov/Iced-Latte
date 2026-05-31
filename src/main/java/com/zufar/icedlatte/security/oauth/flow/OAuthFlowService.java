@@ -15,6 +15,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 import lombok.RequiredArgsConstructor;
@@ -43,12 +44,13 @@ public class OAuthFlowService {
             log.warn("auth.oauth.disabled: provider={}", provider.id());
             return Optional.empty();
         }
+        OAuthProviderClient providerClient = client.orElseThrow();
         log.info("auth.oauth.initiate: provider={}", provider.id());
         String callbackBase = oAuthRedirectService.resolveCallbackBase(provider, redirectUrl);
         String nonce = generateStateNonce();
         oAuthStateStore.store(provider, nonce, callbackBase);
         oAuthStateCookieService.bind(request, response, provider, nonce, oAuthStateStore.stateTtl());
-        return Optional.of(client.get().buildAuthorizationUri(nonce));
+        return Optional.of(providerClient.buildAuthorizationUri(nonce));
     }
 
     public URI completeCallback(
@@ -75,23 +77,24 @@ public class OAuthFlowService {
             oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
-        String callbackBase = oAuthStateStore.consume(provider, state);
+        Optional<String> callbackBase = oAuthStateStore.consume(provider, state);
         oAuthStateCookieService.clear(request, response, provider);
-        if (callbackBase == null) {
+        if (callbackBase.isEmpty()) {
             log.info("auth.oauth.callback.invalid-state: provider={}", provider.id());
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
+        String callbackUrl = callbackBase.orElseThrow();
         try {
             AuthenticationTokens tokens = oAuthLoginService.handle(provider, code, request);
             String handoffCode = oAuthTokenHandoffStore.store(tokens);
-            return URI.create(oAuthRedirectService.callbackUrlWithHandoffCode(callbackBase, handoffCode));
+            return URI.create(oAuthRedirectService.callbackUrlWithHandoffCode(callbackUrl, handoffCode));
         } catch (BadRequestException | UnauthorizedException e) {
             log.error(
                     "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
                     provider.id(),
                     e.getClass().getSimpleName(),
                     e);
-            return oAuthRedirectService.frontendErrorRedirect(callbackBase);
+            return oAuthRedirectService.frontendErrorRedirect(callbackUrl);
         }
     }
 

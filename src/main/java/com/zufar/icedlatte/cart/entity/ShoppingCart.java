@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Formula;
 
@@ -60,12 +61,14 @@ public class ShoppingCart {
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (!(object instanceof ShoppingCart that)) return false;
+        if (object == null || Hibernate.getClass(this) != Hibernate.getClass(object)) return false;
+        ShoppingCart that = (ShoppingCart) object;
+        if (id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Hibernate.getClass(this).hashCode();
     }
 }

@@ -70,7 +70,7 @@ class OAuthStateStoreTest {
     void consumeReturnsStoredCallback() {
         when(temporaryStore.take("oauth:state:google:nonce-1")).thenReturn(Optional.of("https://example.com/callback"));
 
-        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isEqualTo("https://example.com/callback");
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).contains("https://example.com/callback");
     }
 
     @Test
@@ -78,14 +78,14 @@ class OAuthStateStoreTest {
     void consumeUsesProviderSpecificKey() {
         when(temporaryStore.take("oauth:state:google:nonce-1")).thenReturn(Optional.empty());
 
-        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isNull();
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "nonce-1")).isEmpty();
     }
 
     @Test
-    @DisplayName("consume returns null when the nonce is absent")
-    void consumeReturnsNullWhenNonceIsAbsent() {
+    @DisplayName("consume returns empty when the nonce is absent")
+    void consumeReturnsEmptyWhenNonceIsAbsent() {
         when(temporaryStore.take("oauth:state:google:missing")).thenReturn(Optional.empty());
 
-        assertThat(cache.consume(OAuthProvider.GOOGLE, "missing")).isNull();
+        assertThat(cache.consume(OAuthProvider.GOOGLE, "missing")).isEmpty();
     }
 }

@@ -3,6 +3,8 @@ package com.zufar.icedlatte.cart.converter;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -21,14 +23,15 @@ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 public class ShoppingCartDtoConverter {
 
     public ShoppingCartDto toDto(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
-        List<ShoppingCartItemDto> itemDtos = cart.getItems() == null
-                ? List.of()
-                : cart.getItems().stream()
-                        .map(item -> {
-                            var product = requireProductSnapshot(item, productsById);
-                            return toItemDto(item, product);
-                        })
-                        .toList();
+        String errorMessage = "Cart items must not be null";
+        Set<ShoppingCartItem> cartItems = cart.getItems();
+
+        List<ShoppingCartItemDto> itemDtos = Objects.requireNonNull(cartItems, errorMessage).stream()
+                .map(item -> {
+                    var product = requireProductSnapshot(item, productsById);
+                    return toItemDto(item, product);
+                })
+                .toList();
 
         BigDecimal itemsTotalPrice = itemDtos.stream()
                 .map(item -> item.getProductInfo().getPrice().multiply(BigDecimal.valueOf(item.getProductQuantity())))
@@ -66,14 +69,13 @@ public class ShoppingCartDtoConverter {
     }
 
     public CartSnapshot toSnapshot(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
-        List<CartItemSnapshot> items = cart.getItems() == null
-                ? List.of()
-                : cart.getItems().stream()
-                        .map(item -> {
-                            var product = requireProductSnapshot(item, productsById);
-                            return new CartItemSnapshot(item.getId(), product, item.getProductQuantity());
-                        })
-                        .toList();
+        String errorMessage = "Cart items must not be null";
+        List<CartItemSnapshot> items = Objects.requireNonNull(cart.getItems(), errorMessage).stream()
+                .map(item -> {
+                    var product = requireProductSnapshot(item, productsById);
+                    return new CartItemSnapshot(item.getId(), product, item.getProductQuantity());
+                })
+                .toList();
 
         BigDecimal totalPrice = items.stream()
                 .map(item -> item.product().price().multiply(BigDecimal.valueOf(item.productQuantity())))

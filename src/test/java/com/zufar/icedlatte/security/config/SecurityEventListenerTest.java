@@ -79,6 +79,23 @@ class SecurityEventListenerTest {
         });
     }
 
+    @Test
+    @DisplayName("logs denied events with unknown principal when authentication is absent")
+    void logsDeniedEventsWithUnknownPrincipalWhenAuthenticationIsAbsent() {
+        ListAppender<ILoggingEvent> appender = attachAppender();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/admin");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        var event = deniedEvent(null);
+
+        listener.onAuthorizationDenied(event);
+
+        assertThat(appender.list).singleElement().satisfies(loggingEvent -> {
+            assertThat(loggingEvent.getLevel()).isEqualTo(Level.WARN);
+            assertThat(loggingEvent.getFormattedMessage())
+                    .isEqualTo("auth.denied: method=GET, path=/api/v1/admin, principal=unknown");
+        });
+    }
+
     private static AuthorizationDeniedEvent<Object> deniedEvent(TestingAuthenticationToken authentication) {
         Supplier<org.springframework.security.core.Authentication> supplier = () -> authentication;
         return new AuthorizationDeniedEvent<>(supplier, new Object(), new AuthorizationDecision(false));

@@ -251,7 +251,7 @@ class EmailVerificationServiceTest {
 
         String token = serviceWithMockStore.generate(request, TokenPurpose.EMAIL_VERIFICATION);
 
-        assertThat(request.getEmail()).isEqualTo("user@example.com");
+        assertThat(request.getEmail()).isEqualTo(" User@Example.COM ");
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(store).putIfAbsent(keyCaptor.capture(), any(), eq(Duration.ofMinutes(15)));
         assertThat(keyCaptor.getValue())

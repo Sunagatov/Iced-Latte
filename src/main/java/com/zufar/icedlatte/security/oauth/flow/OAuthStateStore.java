@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
@@ -22,8 +23,8 @@ public class OAuthStateStore {
         temporaryStore.put(namespacedKey(provider, nonce), callbackBase, stateTtl());
     }
 
-    public String consume(OAuthProvider provider, String nonce) {
-        return temporaryStore.take(namespacedKey(provider, nonce)).orElse(null);
+    public Optional<String> consume(OAuthProvider provider, String nonce) {
+        return temporaryStore.take(namespacedKey(provider, nonce));
     }
 
     Duration stateTtl() {

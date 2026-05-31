@@ -40,7 +40,6 @@ public class EmailTokenService {
 
     public String generate(UserRegistrationRequest request, TokenPurpose purpose) {
         String email = EmailNormalizer.normalize(request.getEmail());
-        request.setEmail(email);
         validateCooldown(email);
         Duration ttl = tokenTtl();
 
@@ -48,7 +47,7 @@ public class EmailTokenService {
             String token = nextToken();
             String tokenKey = tokenKey(purpose, token);
             String encodedPassword = encodedPassword(request, purpose);
-            EmailRegistrationPayload registration = registrationPayload(request, purpose);
+            EmailRegistrationPayload registration = registrationPayload(request, purpose, email);
             EmailTokenEntry emailTokenEntry = new EmailTokenEntry(email, registration, purpose, encodedPassword);
             String protectedEntry = tokenPayloadProtector.protect(emailTokenEntry);
 
@@ -106,11 +105,12 @@ public class EmailTokenService {
         return Duration.ofMinutes(temporaryTokenProperties.time().token());
     }
 
-    private EmailRegistrationPayload registrationPayload(UserRegistrationRequest request, TokenPurpose purpose) {
+    private EmailRegistrationPayload registrationPayload(
+            UserRegistrationRequest request, TokenPurpose purpose, String email) {
         if (purpose != TokenPurpose.EMAIL_VERIFICATION) {
             return null;
         }
-        return new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), request.getEmail());
+        return new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), email);
     }
 
     private String encodedPassword(UserRegistrationRequest request, TokenPurpose purpose) {

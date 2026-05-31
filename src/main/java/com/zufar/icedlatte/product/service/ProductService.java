@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -162,6 +163,15 @@ public class ProductService implements ProductCatalogApi {
     @Transactional(readOnly = true)
     public boolean existsById(final UUID productId) {
         return productInfoRepository.existsById(productId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UUID> findExistingProductIds(final Set<UUID> productIds) {
+        if (productIds.isEmpty()) {
+            return Set.of();
+        }
+        return productInfoRepository.findExistingIds(productIds);
     }
 
     private static void validateProductIds(@Nullable List<@Nullable UUID> ids) {

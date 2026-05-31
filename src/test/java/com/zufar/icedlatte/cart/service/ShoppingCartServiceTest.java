@@ -3,18 +3,17 @@ package com.zufar.icedlatte.cart.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -49,26 +48,30 @@ class ShoppingCartServiceTest {
     @Mock
     private ProductCatalogApi productCatalogApi;
 
-    @Mock
-    private ShoppingCartDtoConverter shoppingCartDtoConverter;
-
-    @InjectMocks
     private ShoppingCartService shoppingCartService;
+
+    @BeforeEach
+    void setUp() {
+        shoppingCartService = new ShoppingCartService(
+                shoppingCartRepository, shoppingCartItemRepository, productCatalogApi, new ShoppingCartDtoConverter());
+    }
 
     @Test
     @DisplayName("getByUserId returns the existing cart dto")
     void getByUserIdReturnsExistingCartDto() {
         UUID userId = UUID.randomUUID();
         ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
-        ShoppingCartDto expectedDto = CartDtoTestStub.createShoppingCartDto();
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedDto);
+        when(productCatalogApi.getProductsByIds(any()))
+                .thenReturn(
+                        CartDtoTestStub.createProductsById().values().stream().toList());
 
         ShoppingCartDto result = shoppingCartService.getByUserId(userId);
 
-        assertThat(result).isEqualTo(expectedDto);
+        assertThat(result.getId()).isEqualTo(shoppingCart.getId());
+        assertThat(result.getItems()).hasSize(3);
+        assertThat(result.getProductsQuantity()).isEqualTo(6);
     }
 
     @Test
@@ -80,17 +83,15 @@ class ShoppingCartServiceTest {
                 .items(new HashSet<>())
                 .createdAt(OffsetDateTime.now())
                 .build();
-        ShoppingCartDto expectedDto = new ShoppingCartDto();
-        expectedDto.setItems(List.of());
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.empty());
         when(shoppingCartRepository.saveAndFlush(any(ShoppingCart.class))).thenReturn(savedCart);
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedDto);
 
         ShoppingCartDto result = shoppingCartService.getByUserId(userId);
 
-        assertThat(result).isEqualTo(expectedDto);
+        assertThat(result.getUserId()).isEqualTo(userId);
+        assertThat(result.getItems()).isEmpty();
         ArgumentCaptor<ShoppingCart> captor = ArgumentCaptor.forClass(ShoppingCart.class);
         verify(shoppingCartRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(userId);
@@ -116,6 +117,7 @@ class ShoppingCartServiceTest {
 
         ShoppingCart shoppingCart = new ShoppingCart();
         shoppingCart.setId(UUID.randomUUID());
+        shoppingCart.setUserId(userId);
         ShoppingCartItem existingItem = ShoppingCartItem.builder()
                 .id(UUID.randomUUID())
                 .shoppingCart(shoppingCart)
@@ -132,19 +134,19 @@ class ShoppingCartServiceTest {
         newProductToAdd.setProductId(newProductId);
         newProductToAdd.setProductQuantity(3);
 
-        ProductSnapshot newProductDto = productDto(newProductId, BigDecimal.valueOf(3.5));
-        ShoppingCartDto expectedDto = new ShoppingCartDto();
+        ProductSnapshot existingProduct = productDto(existingProductId, BigDecimal.valueOf(1.5));
+        ProductSnapshot newProduct = productDto(newProductId, BigDecimal.valueOf(3.5));
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
-        when(productCatalogApi.existsById(newProductId)).thenReturn(true);
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(newProductDto));
+        when(productCatalogApi.findExistingProductIds(Set.of(newProductId))).thenReturn(Set.of(newProductId));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(existingProduct, newProduct));
         when(shoppingCartRepository.saveAndFlush(shoppingCart)).thenReturn(shoppingCart);
-        when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedDto);
 
         ShoppingCartDto result =
                 shoppingCartService.addOpenApiItems(userId, Set.of(existingProductToAdd, newProductToAdd));
 
-        assertThat(result).isEqualTo(expectedDto);
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getProductsQuantity()).isEqualTo(6);
         assertThat(existingItem.getProductQuantity()).isEqualTo(3);
         assertThat(shoppingCart.getItems()).hasSize(2);
     }
@@ -163,7 +165,7 @@ class ShoppingCartServiceTest {
         itemToAdd.setProductQuantity(1);
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
-        when(productCatalogApi.existsById(missingProductId)).thenReturn(false);
+        when(productCatalogApi.findExistingProductIds(Set.of(missingProductId))).thenReturn(Set.of());
 
         assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(CartProductNotFoundException.class);
@@ -177,8 +179,7 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of()))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
-        verifyNoInteractions(
-                shoppingCartRepository, shoppingCartItemRepository, productCatalogApi, shoppingCartDtoConverter);
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
 
     @Test
@@ -190,8 +191,7 @@ class ShoppingCartServiceTest {
                         shoppingCartService.addItems(userId, Set.of(new AddCartItemRequest(UUID.randomUUID(), 100))))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
-        verifyNoInteractions(
-                shoppingCartRepository, shoppingCartItemRepository, productCatalogApi, shoppingCartDtoConverter);
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
 
     @Test
@@ -207,8 +207,7 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
-        verifyNoInteractions(
-                shoppingCartRepository, shoppingCartItemRepository, productCatalogApi, shoppingCartDtoConverter);
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
 
     @Test
@@ -235,7 +234,7 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.addOpenApiItems(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
-        verify(shoppingCartRepository, never()).save(any(ShoppingCart.class));
+        verify(shoppingCartRepository, never()).saveAndFlush(any(ShoppingCart.class));
     }
 
     @Test
@@ -244,22 +243,24 @@ class ShoppingCartServiceTest {
         int productQuantityChange = 5;
         ShoppingCartItem shoppingCartItem = CartDtoTestStub.createShoppingCartItem();
         UUID userId = UUID.randomUUID();
-        ShoppingCartDto cartDto = CartDtoTestStub.createShoppingCartDto();
 
         ShoppingCart cart = shoppingCartItem.getShoppingCart();
+        cart.setId(UUID.randomUUID());
+        cart.setUserId(userId);
         cart.setItems(new HashSet<>(Set.of(shoppingCartItem)));
 
         when(shoppingCartItemRepository.findByIdAndShoppingCartUserId(shoppingCartItem.getId(), userId))
                 .thenReturn(Optional.of(shoppingCartItem));
         when(shoppingCartItemRepository.save(shoppingCartItem)).thenReturn(shoppingCartItem);
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(cartDto);
+        when(productCatalogApi.getProductsByIds(any()))
+                .thenReturn(List.of(productDto(shoppingCartItem.getProductId(), BigDecimal.valueOf(2.5))));
 
         ShoppingCartDto result =
                 shoppingCartService.updateItemQuantity(shoppingCartItem.getId(), userId, productQuantityChange);
 
-        assertThat(result).isEqualTo(cartDto);
+        assertThat(result.getItems()).hasSize(1);
+        assertThat(result.getItems().getFirst().getProductQuantity()).isEqualTo(10);
         verify(shoppingCartItemRepository).save(shoppingCartItem);
     }
 
@@ -276,7 +277,7 @@ class ShoppingCartServiceTest {
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
         verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
-        verifyNoInteractions(shoppingCartRepository, shoppingCartDtoConverter);
+        verifyNoInteractions(shoppingCartRepository);
     }
 
     @Test
@@ -292,7 +293,7 @@ class ShoppingCartServiceTest {
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
         verify(shoppingCartItemRepository, never()).save(any(ShoppingCartItem.class));
-        verifyNoInteractions(shoppingCartRepository, shoppingCartDtoConverter);
+        verifyNoInteractions(shoppingCartRepository);
     }
 
     @Test
@@ -317,16 +318,29 @@ class ShoppingCartServiceTest {
         DeleteItemsFromShoppingCartRequest request = new DeleteItemsFromShoppingCartRequest();
         request.shoppingCartItemIds(itemIdsForDelete);
         ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
-        ShoppingCartDto expectedResult = CartDtoTestStub.createShoppingCartDto();
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(shoppingCartDtoConverter.toDto(any(ShoppingCart.class), anyMap())).thenReturn(expectedResult);
+        when(productCatalogApi.getProductsByIds(any()))
+                .thenReturn(
+                        CartDtoTestStub.createProductsById().values().stream().toList());
 
         ShoppingCartDto actualResult = shoppingCartService.deleteItems(request, userId);
 
-        assertThat(actualResult).isEqualTo(expectedResult);
+        assertThat(actualResult.getItems()).hasSize(3);
         verify(shoppingCartItemRepository).deleteByIdInAndUserId(itemIdsForDelete, userId);
+    }
+
+    @Test
+    @DisplayName("deleteItems rejects empty item ids before touching repositories")
+    void deleteItemsRejectsEmptyItemIds() {
+        UUID userId = UUID.randomUUID();
+        DeleteItemsFromShoppingCartRequest request = new DeleteItemsFromShoppingCartRequest();
+        request.shoppingCartItemIds(List.of());
+
+        assertThatThrownBy(() -> shoppingCartService.deleteItems(request, userId))
+                .isInstanceOf(InvalidCartItemRequestException.class);
+
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
 
     private static ProductSnapshot productDto(UUID id, BigDecimal price) {

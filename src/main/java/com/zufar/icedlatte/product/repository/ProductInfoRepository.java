@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.product.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,9 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
 
     @Query("SELECT DISTINCT p.brandName FROM ProductInfo p ORDER BY p.brandName")
     List<String> findDistinctBrandNames();
+
+    @Query("SELECT p.id FROM ProductInfo p WHERE p.id IN :ids")
+    Set<UUID> findExistingIds(@Param("ids") Set<UUID> ids);
 
     @Modifying
     @Query(nativeQuery = true, value = """
