@@ -3,24 +3,17 @@ package com.zufar.icedlatte.payment.service;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import com.stripe.exception.StripeException;
-import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.payment.entity.Payment;
-import com.zufar.icedlatte.payment.entity.PaymentStatus;
+import com.zufar.icedlatte.payment.exception.PaymentAccessDeniedException;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
-import com.zufar.icedlatte.payment.service.checkout.StripeSessionGateway;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Status polling for the success page.
@@ -32,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
  * Session.retrieve() directly and updates the status. Real payment systems always have a reconciliation fallback —
  * never rely on a single delivery mechanism for money.
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -40,24 +32,22 @@ public class PaymentStatusService {
 
     private final OrderPaymentApi orderPaymentApi;
     private final PaymentRepository paymentRepository;
-    private final CartCheckoutApi cartCheckoutApi;
     private final CurrentUserProvider currentUserProvider;
-    private final TransactionTemplate transactionTemplate;
-    private final StripeSessionGateway stripeSessionGateway;
+    private final PaymentReconciliationService paymentReconciliationService;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         OrderSnapshot order = orderPaymentApi.getSnapshot(orderId);
 
         var currentUser = currentUserProvider.get();
         if (!order.userId().equals(currentUser.id())) {
-            throw new OrderAccessDeniedException();
+            throw new PaymentAccessDeniedException();
         }
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
 
         // Fallback: if webhook hasn't arrived yet, check Stripe directly.
         if (payment != null && !payment.getStatus().isTerminal() && payment.getProviderSessionId() != null) {
-            trySyncFromStripe(payment);
+            paymentReconciliationService.trySyncPaidStatus(payment);
             // Re-read after potential update
             order = orderPaymentApi.getSnapshot(orderId);
             payment = paymentRepository.findByOrderId(orderId).orElse(payment);
@@ -73,62 +63,5 @@ public class PaymentStatusService {
         }
 
         return dto;
-    }
-
-    /**
-     * Calls Stripe Session.retrieve() and updates local status if Stripe confirms payment. This is the reconciliation
-     * fallback — the webhook is the primary path.
-     */
-    private void trySyncFromStripe(Payment payment) {
-        try {
-            Session session = stripeSessionGateway.retrieve(payment.getProviderSessionId());
-            if ("paid".equals(session.getPaymentStatus())) {
-                syncPaidStatus(payment.getOrderId(), session);
-            }
-        } catch (StripeException e) {
-            log.warn("payment.sync.stripe_error: orderId={}, error={}", payment.getOrderId(), e.getMessage());
-        }
-    }
-
-    /**
-     * Updates payment/order to PAID inside a programmatic transaction. Uses TransactionTemplate instead
-     * of @Transactional to avoid the Spring self-invocation trap (calling a @Transactional method from within the same
-     * class bypasses the proxy).
-     */
-    private void syncPaidStatus(UUID orderId, Session session) {
-        transactionTemplate.executeWithoutResult(status -> {
-            Payment locked = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
-            if (locked == null || locked.getStatus().isTerminal()) {
-                return;
-            }
-
-            // Reconciliation guard: verify amount/currency
-            Long stripeAmount = session.getAmountTotal();
-            String stripeCurrency = session.getCurrency();
-            String paymentIntent = session.getPaymentIntent();
-            if (stripeAmount == null
-                    || stripeCurrency == null
-                    || paymentIntent == null
-                    || !stripeAmount.equals(locked.getAmountMinor())
-                    || !stripeCurrency.equalsIgnoreCase(locked.getCurrency())) {
-                log.error("payment.sync.reconciliation_failed: orderId={}", orderId);
-                locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
-                locked.setLatestEventType("sync.session.retrieve");
-                paymentRepository.save(locked);
-                return;
-            }
-
-            locked.setProviderPaymentIntentId(paymentIntent);
-            locked.setStatus(PaymentStatus.PAID);
-            locked.setLatestEventType("sync.session.retrieve");
-            paymentRepository.save(locked);
-
-            orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed (sync fallback)");
-            orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
-
-            cartCheckoutApi.deleteCartForUser(locked.getUserId());
-
-            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
-        });
     }
 }

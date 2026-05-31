@@ -20,6 +20,7 @@ import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
+import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -73,7 +74,7 @@ public class CheckoutPaymentTransactionService {
                 .build();
         payment = paymentRepository.saveAndFlush(payment);
 
-        return new CheckoutPreparation(order, payment, cart.items(), false);
+        return new CheckoutPreparation(order, toSnapshot(payment), cart.items(), false);
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +88,7 @@ public class CheckoutPaymentTransactionService {
                             ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
                             : orderPaymentApi.getSnapshot(existing.getOrderId()));
                     log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
-                    return new CheckoutPreparation(order, existing, List.of(), true);
+                    return new CheckoutPreparation(order, toSnapshot(existing), List.of(), true);
                 });
     }
 
@@ -103,6 +104,10 @@ public class CheckoutPaymentTransactionService {
         return amount.multiply(BigDecimal.valueOf(100))
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .longValueExact();
+    }
+
+    private CheckoutPaymentSnapshot toSnapshot(Payment payment) {
+        return new CheckoutPaymentSnapshot(payment.getId(), payment.getProviderSessionId());
     }
 
     private CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {

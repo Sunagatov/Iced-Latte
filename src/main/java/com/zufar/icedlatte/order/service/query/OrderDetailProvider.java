@@ -19,6 +19,7 @@ import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
@@ -137,20 +138,20 @@ public class OrderDetailProvider implements OrderPaymentApi {
 
     @Override
     @Transactional
-    public void confirmPayment(@NonNull UUID orderId, @NonNull String reason) {
-        orderStatusTransitioner.transition(orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, null, reason);
+    public boolean confirmPayment(@NonNull UUID orderId, @NonNull String reason) {
+        return transitionPaymentOrder(orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, reason);
     }
 
     @Override
     @Transactional
-    public void expirePayment(@NonNull UUID orderId, @NonNull String reason) {
-        orderStatusTransitioner.transition(orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, null, reason);
+    public boolean expirePayment(@NonNull UUID orderId, @NonNull String reason) {
+        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, reason);
     }
 
     @Override
     @Transactional
-    public void failPayment(@NonNull UUID orderId, @NonNull String reason) {
-        orderStatusTransitioner.transition(orderId, OrderEvent.PAYMENT_FAILED_EVENT, null, reason);
+    public boolean failPayment(@NonNull UUID orderId, @NonNull String reason) {
+        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_FAILED_EVENT, reason);
     }
 
     @Override
@@ -163,8 +164,17 @@ public class OrderDetailProvider implements OrderPaymentApi {
 
     @Override
     @Transactional
-    public void confirmRefund(@NonNull UUID orderId, @NonNull String reason) {
-        orderStatusTransitioner.transition(orderId, OrderEvent.REFUND_CONFIRMED, null, reason);
+    public boolean confirmRefund(@NonNull UUID orderId, @NonNull String reason) {
+        return transitionPaymentOrder(orderId, OrderEvent.REFUND_CONFIRMED, reason);
+    }
+
+    private boolean transitionPaymentOrder(UUID orderId, OrderEvent event, String reason) {
+        try {
+            orderStatusTransitioner.transition(orderId, event, null, reason);
+            return true;
+        } catch (InvalidOrderStateTransitionException _) {
+            return false;
+        }
     }
 
     private boolean canCancel(Order order) {

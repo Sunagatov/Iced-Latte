@@ -64,6 +64,8 @@ class StripeWebhookBusinessProcessorTest {
                 .build();
 
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(orderPaymentApi.confirmPayment(ORDER_ID, "Stripe payment confirmed"))
+                .thenReturn(true);
 
         processor.process(event);
 
@@ -382,6 +384,7 @@ class StripeWebhookBusinessProcessorTest {
                 .build();
 
         when(orderPaymentApi.findByStripePaymentIntentId("pi_refund")).thenReturn(Optional.of(order));
+        when(orderPaymentApi.confirmRefund(ORDER_ID, "Stripe refund confirmed")).thenReturn(true);
         when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

@@ -19,11 +19,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
@@ -31,6 +31,7 @@ import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
+import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.entity.Payment;
@@ -96,20 +97,26 @@ class CheckoutPaymentTransactionServiceTest {
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
         when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
                 .thenReturn(order);
-        when(paymentRepository.saveAndFlush(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(paymentRepository.saveAndFlush(any(Payment.class))).thenAnswer(inv -> {
+            Payment payment = inv.getArgument(0);
+            payment.setId(UUID.randomUUID());
+            return payment;
+        });
         when(stripeProperties.currency()).thenReturn("usd");
 
         CheckoutPreparation result = service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
 
         assertThat(result.existing()).isFalse();
         assertThat(result.order()).isEqualTo(order);
-        assertThat(result.payment().getStatus()).isEqualTo(PaymentStatus.CREATED);
-        assertThat(result.payment().getProvider()).isEqualTo(PaymentProvider.STRIPE);
-        assertThat(result.payment().getCurrency()).isEqualTo("usd");
+        assertThat(result.payment().id()).isNotNull();
+        assertThat(result.payment().providerSessionId()).isNull();
 
         ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
         verify(paymentRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getCheckoutIdempotencyKey()).isEqualTo(IDEMPOTENCY_KEY);
+        assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.CREATED);
+        assertThat(captor.getValue().getProvider()).isEqualTo(PaymentProvider.STRIPE);
+        assertThat(captor.getValue().getCurrency()).isEqualTo("usd");
 
         ArgumentCaptor<CheckoutOrderRequest> orderRequestCaptor = ArgumentCaptor.forClass(CheckoutOrderRequest.class);
         verify(orderCheckoutApi).createPendingPaymentOrderSnapshot(eq(USER_ID), orderRequestCaptor.capture(), eq(cart));
@@ -121,7 +128,9 @@ class CheckoutPaymentTransactionServiceTest {
     @DisplayName("prepareCheckout returns existing order/payment on idempotent retry")
     void prepareCheckout_idempotentHit_returnsExisting() {
         UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
         Payment existingPayment = Payment.builder()
+                .id(paymentId)
                 .orderId(orderId)
                 .userId(USER_ID)
                 .providerSessionId("cs_test_existing")
@@ -144,7 +153,7 @@ class CheckoutPaymentTransactionServiceTest {
 
         assertThat(result.existing()).isTrue();
         assertThat(result.order()).isEqualTo(existingOrder);
-        assertThat(result.payment()).isEqualTo(existingPayment);
+        assertThat(result.payment()).isEqualTo(new CheckoutPaymentSnapshot(paymentId, "cs_test_existing"));
         assertThat(result.cartItems()).isEmpty();
         verify(shoppingCartService, never()).getByUserIdOrThrow(any());
     }

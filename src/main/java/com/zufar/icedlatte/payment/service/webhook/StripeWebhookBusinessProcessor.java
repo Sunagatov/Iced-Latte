@@ -12,7 +12,6 @@ import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
-import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -123,14 +122,14 @@ public class StripeWebhookBusinessProcessor {
         payment.setLatestEventType(event.getType());
         paymentRepository.save(payment);
 
-        orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed");
-
-        // Store stripePaymentIntentId on Order for refund lookup
-        orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
-
-        cartCheckoutApi.deleteCartForUser(payment.getUserId());
-
-        log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
+        if (orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed")) {
+            // Store stripePaymentIntentId on Order for refund lookup
+            orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
+            cartCheckoutApi.deleteCartForUser(payment.getUserId());
+            log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
+        } else {
+            log.warn("checkout.completed.order_transition_failed: orderId={}", orderId);
+        }
     }
 
     private void handleExpired(Session stripeSession) {
@@ -148,9 +147,7 @@ public class StripeWebhookBusinessProcessor {
         payment.setStatus(PaymentStatus.EXPIRED);
         paymentRepository.save(payment);
 
-        try {
-            orderPaymentApi.expirePayment(orderId, "Stripe session expired");
-        } catch (InvalidOrderStateTransitionException _) {
+        if (!orderPaymentApi.expirePayment(orderId, "Stripe session expired")) {
             log.warn("order.expire.transition_failed: orderId={}", orderId);
         }
     }
@@ -170,9 +167,7 @@ public class StripeWebhookBusinessProcessor {
         payment.setStatus(PaymentStatus.FAILED);
         paymentRepository.save(payment);
 
-        try {
-            orderPaymentApi.failPayment(orderId, "Stripe async payment failed");
-        } catch (InvalidOrderStateTransitionException _) {
+        if (!orderPaymentApi.failPayment(orderId, "Stripe async payment failed")) {
             log.warn("order.payment_failed.transition_failed: orderId={}", orderId);
         }
     }
@@ -199,8 +194,7 @@ public class StripeWebhookBusinessProcessor {
 
         OrderSnapshot order = orderOpt.get();
         if (order.status() == OrderStatusSnapshot.REFUND_REQUESTED) {
-            try {
-                orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed");
+            if (orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed")) {
                 paymentRepository.findByOrderIdForUpdate(order.id()).ifPresent(payment -> {
                     payment.setStatus(PaymentStatus.REFUNDED);
                     payment.setRawEventId(event.getId());
@@ -208,7 +202,7 @@ public class StripeWebhookBusinessProcessor {
                     paymentRepository.save(payment);
                 });
                 log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", order.id(), paymentIntentId);
-            } catch (InvalidOrderStateTransitionException _) {
+            } else {
                 log.warn("order.refund.transition_failed: orderId={}, status={}", order.id(), order.status());
             }
         } else {

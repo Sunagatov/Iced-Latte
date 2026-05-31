@@ -3,27 +3,25 @@ package com.zufar.icedlatte.order.api;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Narrow contract exposed to the payment module. Payment can only: look up order snapshots and notify order about
  * payment outcomes.
  */
 public interface OrderPaymentApi {
 
-    OrderSnapshot getSnapshot(@NonNull UUID orderId);
+    OrderSnapshot getSnapshot(UUID orderId);
 
-    OrderSnapshot getSnapshotWithItems(@NonNull UUID orderId);
+    OrderSnapshot getSnapshotWithItems(UUID orderId);
 
-    Optional<OrderSnapshot> findByStripePaymentIntentId(@NonNull String paymentIntentId);
+    Optional<OrderSnapshot> findByStripePaymentIntentId(String paymentIntentId);
 
-    void confirmPayment(@NonNull UUID orderId, @NonNull String reason);
+    boolean confirmPayment(UUID orderId, String reason);
 
-    void expirePayment(@NonNull UUID orderId, @NonNull String reason);
+    boolean expirePayment(UUID orderId, String reason);
 
-    void failPayment(@NonNull UUID orderId, @NonNull String reason);
+    boolean failPayment(UUID orderId, String reason);
 
-    void assignPaymentIntent(@NonNull UUID orderId, @NonNull String stripePaymentIntentId);
+    void assignPaymentIntent(UUID orderId, String stripePaymentIntentId);
 
-    void confirmRefund(@NonNull UUID orderId, @NonNull String reason);
+    boolean confirmRefund(UUID orderId, String reason);
 }

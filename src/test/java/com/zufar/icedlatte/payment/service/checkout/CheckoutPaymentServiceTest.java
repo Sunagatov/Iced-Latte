@@ -24,10 +24,9 @@ import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
+import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
-import com.zufar.icedlatte.payment.entity.Payment;
-import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 
@@ -92,12 +91,7 @@ class CheckoutPaymentServiceTest {
         UUID userId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         UUID paymentId = UUID.randomUUID();
-        Payment payment = Payment.builder()
-                .id(paymentId)
-                .orderId(orderId)
-                .userId(userId)
-                .status(PaymentStatus.CREATED)
-                .build();
+        CheckoutPaymentSnapshot payment = new CheckoutPaymentSnapshot(paymentId, null);
         OrderSnapshot order = new OrderSnapshot(
                 orderId, userId, OrderStatusSnapshot.PENDING_PAYMENT, BigDecimal.TEN, null, List.of());
         CheckoutPreparation existing = new CheckoutPreparation(order, payment, List.of(), true);

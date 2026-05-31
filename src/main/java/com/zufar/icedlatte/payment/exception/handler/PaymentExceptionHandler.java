@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.stripe.exception.AuthenticationException;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.payment.exception.PaymentAccessDeniedException;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 import com.zufar.icedlatte.payment.exception.PaymentException;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
@@ -38,6 +39,13 @@ public class PaymentExceptionHandler {
                                 "Payment event failed",
                                 HttpStatus.BAD_REQUEST,
                                 "Payment event could not be verified.");
+                    case PaymentAccessDeniedException _ ->
+                        new ErrorMapping(
+                                "exception.payment.access_denied",
+                                ProblemType.ACCESS_DENIED,
+                                "Access denied",
+                                HttpStatus.FORBIDDEN,
+                                "Access denied.");
                     case StripeSessionCreationException e -> {
                         if (e.getCause() instanceof AuthenticationException) {
                             log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);

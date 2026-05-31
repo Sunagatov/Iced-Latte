@@ -16,9 +16,9 @@ import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
+import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
-import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
@@ -69,7 +69,7 @@ public class CheckoutPaymentService {
                 stripeSessionCreator.create(prepared.order(), user.email(), prepared.cartItems());
 
         // Stage 3: DB transaction — save Stripe details
-        txService.saveStripeDetails(prepared.payment().getId(), stripeResult);
+        txService.saveStripeDetails(prepared.payment().id(), stripeResult);
 
         log.info(
                 "checkout.created: orderId={}, stripeSessionId={}",
@@ -96,19 +96,19 @@ public class CheckoutPaymentService {
      * any @Transactional method.
      */
     private CheckoutResponseDto resolveExistingCheckout(CheckoutPreparation prepared, String customerEmail) {
-        Payment payment = prepared.payment();
+        CheckoutPaymentSnapshot payment = prepared.payment();
 
         // Case A: Stripe session already created — retrieve and return URL
-        if (payment.getProviderSessionId() != null) {
+        if (payment.providerSessionId() != null) {
             try {
-                Session session = stripeSessionGateway.retrieve(payment.getProviderSessionId());
+                Session session = stripeSessionGateway.retrieve(payment.providerSessionId());
                 if ("expired".equals(session.getStatus())) {
                     throw new BadRequestException(
                             "Previous checkout session expired. Please retry with a new Idempotency-Key.");
                 }
                 return new CheckoutResponseDto()
                         .orderId(prepared.order().id())
-                        .stripeSessionId(payment.getProviderSessionId())
+                        .stripeSessionId(payment.providerSessionId())
                         .checkoutUrl(URI.create(session.getUrl()));
             } catch (StripeException e) {
                 throw new StripeSessionCreationException("Failed to retrieve existing session", e);
@@ -123,7 +123,7 @@ public class CheckoutPaymentService {
 
         StripeSessionResult stripeResult = stripeSessionCreator.createFromLineItems(order, customerEmail, lineItems);
 
-        txService.saveStripeDetails(payment.getId(), stripeResult);
+        txService.saveStripeDetails(payment.id(), stripeResult);
 
         return new CheckoutResponseDto()
                 .orderId(order.id())
