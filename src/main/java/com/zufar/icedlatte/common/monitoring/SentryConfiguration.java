@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.common.monitoring;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
-
-import com.zufar.icedlatte.common.http.ApiPaths;
 
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
@@ -23,6 +25,12 @@ public class SentryConfiguration {
 
     @Value("${spring.application.version:unknown}")
     private String applicationVersion;
+
+    @Value("${sentry.trace-critical-path-prefixes:}")
+    private String traceCriticalPathPrefixes;
+
+    @Value("${sentry.trace-user-facing-path-prefixes:}")
+    private String traceUserFacingPathPrefixes;
 
     @Bean
     public SentryOptions.BeforeSendCallback beforeSendCallback() {
@@ -53,15 +61,11 @@ public class SentryConfiguration {
             var transactionContext = samplingContext.getTransactionContext();
             var transactionName = transactionContext.getName();
 
-            // Sample 100% of critical endpoints
-            if (transactionName.contains(ApiPaths.AUTH_ROOT_PREFIX)
-                    || transactionName.contains(ApiPaths.PAYMENT + "/")
-                    || transactionName.contains(ApiPaths.ORDERS + "/")) {
+            if (containsAnyConfiguredPrefix(transactionName, traceCriticalPathPrefixes)) {
                 return 1.0;
             }
 
-            // Sample 50% of user-facing endpoints
-            if (transactionName.contains(ApiPaths.PRODUCTS + "/") || transactionName.contains(ApiPaths.CART + "/")) {
+            if (containsAnyConfiguredPrefix(transactionName, traceUserFacingPathPrefixes)) {
                 return 0.5;
             }
 
@@ -106,5 +110,19 @@ public class SentryConfiguration {
     private void addCustomTags(SentryEvent event) {
         event.setTag("application", applicationName);
         event.setTag("version", applicationVersion);
+    }
+
+    private static boolean containsAnyConfiguredPrefix(String value, String rawPrefixes) {
+        return configuredPrefixes(rawPrefixes).stream().anyMatch(value::contains);
+    }
+
+    private static Set<String> configuredPrefixes(String rawPrefixes) {
+        if (rawPrefixes == null || rawPrefixes.isBlank()) {
+            return Set.of();
+        }
+        return Stream.of(rawPrefixes.split(","))
+                .map(String::trim)
+                .filter(prefix -> !prefix.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

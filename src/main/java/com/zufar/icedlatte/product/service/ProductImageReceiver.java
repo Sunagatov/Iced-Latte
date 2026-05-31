@@ -10,7 +10,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
+import com.zufar.icedlatte.product.config.ProductCacheConfigurationProvider;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 
@@ -27,16 +28,16 @@ public class ProductImageReceiver {
     @Value("${product.placeholder-image-url}")
     private String placeholderImageUrl;
 
-    private final FileStorageApi fileStorageApi;
+    private final FileUrlResolverApi fileUrlResolverApi;
     private final ProductImageRepository productImageRepository;
 
     @Cacheable(
-            cacheNames = "productImageUrl",
+            cacheNames = ProductCacheConfigurationProvider.PRODUCT_IMAGE_URL,
             key = "#productId",
             unless = "#result == @productImageReceiver.getPlaceholderImageUrl()")
     public String getProductFileUrl(final UUID productId) {
         try {
-            return fileStorageApi.findFileUrl(productId).orElseGet(() -> {
+            return fileUrlResolverApi.findFileUrl(productId).orElseGet(() -> {
                 log.debug("product.image.not_found: productId={}", productId);
                 return placeholderImageUrl;
             });
@@ -51,7 +52,7 @@ public class ProductImageReceiver {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = "productImageUrls", key = "#productId")
+    @Cacheable(cacheNames = ProductCacheConfigurationProvider.PRODUCT_IMAGE_URLS, key = "#productId")
     public List<String> getProductImageUrls(final UUID productId) {
         return productImageRepository.findByProductIdOrderByPositionAscIdAsc(productId).stream()
                 .map(ProductImage::getUrl)
@@ -68,7 +69,7 @@ public class ProductImageReceiver {
     public Map<UUID, String> getProductFileUrls(final List<UUID> productIds) {
         Map<UUID, String> fileUrls;
         try {
-            fileUrls = fileStorageApi.findFileUrls(productIds);
+            fileUrls = fileUrlResolverApi.findFileUrls(productIds);
         } catch (RuntimeException ex) {
             log.error(
                     "product.images.error: count={}, exceptionClass={}",

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
@@ -29,12 +29,12 @@ public class UserAvatarUploader {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
-    private final FileStorageApi fileStorageApi;
+    private final FileStorageWriterApi fileStorageWriterApi;
     private final ObjectProvider<FileCacheInvalidationApi> cacheInvalidator;
 
     public UserAvatarUploader(
-            FileStorageApi fileStorageApi, ObjectProvider<FileCacheInvalidationApi> cacheInvalidator) {
-        this.fileStorageApi = fileStorageApi;
+            FileStorageWriterApi fileStorageWriterApi, ObjectProvider<FileCacheInvalidationApi> cacheInvalidator) {
+        this.fileStorageWriterApi = fileStorageWriterApi;
         this.cacheInvalidator = cacheInvalidator;
     }
 
@@ -72,10 +72,10 @@ public class UserAvatarUploader {
     }
 
     private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {
-        if (!fileStorageApi.isEnabled()) {
+        if (!fileStorageWriterApi.isEnabled()) {
             throw new FileUploadException(fileName, new IllegalStateException("File storage is not configured"));
         }
-        fileStorageApi.store(file, new FileMetadataDto(userId, bucketName, fileName));
+        fileStorageWriterApi.store(file, new FileMetadataDto(userId, bucketName, fileName));
     }
 
     private void invalidateAvatarCache(String fileName) {

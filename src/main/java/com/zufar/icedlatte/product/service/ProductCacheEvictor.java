@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.zufar.icedlatte.product.config.ProductCacheConfigurationProvider;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -26,13 +28,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductCacheEvictor {
 
-    private static final String PRODUCT_BY_ID_CACHE = "productById";
-
     private final CacheManager cacheManager;
 
     public void evictProductByIdAfterCommit(UUID productId) {
         runAfterCommit(() -> {
-            Cache cache = cacheManager.getCache(PRODUCT_BY_ID_CACHE);
+            Cache cache = cacheManager.getCache(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
             if (cache != null) {
                 cache.evict(productId);
             }
@@ -41,7 +41,7 @@ public class ProductCacheEvictor {
 
     public void clearProductByIdAfterCommit() {
         runAfterCommit(() -> {
-            Cache cache = cacheManager.getCache(PRODUCT_BY_ID_CACHE);
+            Cache cache = cacheManager.getCache(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
             if (cache != null) {
                 cache.clear();
             }

@@ -3,6 +3,10 @@ package com.zufar.icedlatte.common.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisConfig unit tests")
-@SuppressWarnings("StaticImportCanBeUsed")
 class RedisConfigTest {
 
     @Mock
@@ -34,7 +37,7 @@ class RedisConfigTest {
     @Test
     @DisplayName("creates a plain Jackson object mapper")
     void createsObjectMapper() {
-        RedisConfig config = new RedisConfig(new CacheProperties());
+        RedisConfig config = new RedisConfig(new CacheProperties(), List.of());
 
         ObjectMapper objectMapper = config.objectMapper();
 
@@ -44,7 +47,7 @@ class RedisConfigTest {
     @Test
     @DisplayName("creates a string-based RedisTemplate bound to the provided connection factory")
     void createsStringRedisTemplate() {
-        RedisConfig config = new RedisConfig(new CacheProperties());
+        RedisConfig config = new RedisConfig(new CacheProperties(), List.of());
 
         RedisTemplate<String, String> template = config.redisTemplate(connectionFactory);
 
@@ -64,7 +67,10 @@ class RedisConfigTest {
         properties.setBrandsTtl(Duration.ofSeconds(75));
         properties.setSellersTtl(Duration.ofSeconds(90));
 
-        RedisConfig config = new RedisConfig(properties);
+        RedisConfig config = new RedisConfig(
+                properties,
+                List.of(new TestCacheConfigurationProvider(
+                        Set.of("productById", "productImageUrl", "productImageUrls", "brands", "sellers"))));
         ReflectionTestUtils.setField(config, "appVersion", "42");
 
         RedisCacheManager manager = config.cacheManager(connectionFactory);
@@ -86,7 +92,7 @@ class RedisConfigTest {
     @Test
     @DisplayName("cache error handler swallows cache operation failures")
     void cacheErrorHandlerSwallowsFailures() {
-        RedisConfig config = new RedisConfig(new CacheProperties());
+        RedisConfig config = new RedisConfig(new CacheProperties(), List.of());
         CacheErrorHandler errorHandler = config.errorHandler();
         assertThat(errorHandler).isNotNull();
 
@@ -105,5 +111,18 @@ class RedisConfigTest {
         org.assertj.core.api.Assertions.assertThatCode(
                         () -> errorHandler.handleCacheClearError(new RuntimeException("boom"), cache))
                 .doesNotThrowAnyException();
+    }
+
+    private record TestCacheConfigurationProvider(Set<String> cacheNames) implements CacheConfigurationProvider {
+
+        @Override
+        public Map<String, RedisCacheConfiguration> redisCacheConfigurations(
+                RedisCacheConfiguration baseConfiguration) {
+            return cacheNames.stream()
+                    .collect(java.util.stream.Collectors.toMap(
+                            Function.identity(),
+                            cacheName -> baseConfiguration.entryTtl(
+                                    cacheName.isBlank() ? Duration.ZERO : Duration.ofSeconds(30))));
+        }
     }
 }

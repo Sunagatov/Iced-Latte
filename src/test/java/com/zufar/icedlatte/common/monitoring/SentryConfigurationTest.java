@@ -123,6 +123,9 @@ class SentryConfigurationTest {
         SentryConfiguration configuration = new SentryConfiguration();
         ReflectionTestUtils.setField(configuration, "applicationName", "iced-latte");
         ReflectionTestUtils.setField(configuration, "applicationVersion", "2026.04");
+        ReflectionTestUtils.setField(
+                configuration, "traceCriticalPathPrefixes", "/api/v1/auth/,/api/v1/payment/,/api/v1/orders/");
+        ReflectionTestUtils.setField(configuration, "traceUserFacingPathPrefixes", "/api/v1/products/,/api/v1/cart/");
         return configuration;
     }
 }

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.product.service;
 import static com.zufar.icedlatte.product.specification.ProductSpecifications.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import com.zufar.icedlatte.product.config.ProductCacheConfigurationProvider;
 import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.exception.ProductNotFoundException;
@@ -45,7 +47,7 @@ public class ProductService implements ProductCatalogApi {
     private final GetProductsRequestValidator getProductsRequestValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
-    @Cacheable(cacheNames = "productById", key = "#productId")
+    @Cacheable(cacheNames = ProductCacheConfigurationProvider.PRODUCT_BY_ID, key = "#productId")
     public ProductInfoDto getProductDtoById(final UUID productId) {
         var product =
                 productInfoRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
@@ -64,8 +66,10 @@ public class ProductService implements ProductCatalogApi {
     public List<ProductInfoDto> getProductDtosByIds(final @Nullable List<@Nullable UUID> ids) {
         validateProductIds(ids);
         List<@Nullable UUID> nonNullIds = Objects.requireNonNull(ids);
-        List<UUID> validatedIds =
-                nonNullIds.stream().map(Objects::requireNonNull).toList();
+        List<UUID> validatedIds = new ArrayList<>(nonNullIds.size());
+        for (@Nullable UUID id : nonNullIds) {
+            validatedIds.add(Objects.requireNonNull(id));
+        }
         if (validatedIds.isEmpty()) {
             return List.of();
         }
@@ -142,13 +146,13 @@ public class ProductService implements ProductCatalogApi {
         return productInfoDtoConverter.toProductPaginationDto(result);
     }
 
-    @Cacheable(cacheNames = "sellers")
+    @Cacheable(cacheNames = ProductCacheConfigurationProvider.SELLERS)
     @Transactional(readOnly = true)
     public List<String> getSellerNames() {
         return productInfoRepository.findDistinctSellerNames();
     }
 
-    @Cacheable(cacheNames = "brands")
+    @Cacheable(cacheNames = ProductCacheConfigurationProvider.BRANDS)
     @Transactional(readOnly = true)
     public List<String> getBrandNames() {
         return productInfoRepository.findDistinctBrandNames();

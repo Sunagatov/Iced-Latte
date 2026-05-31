@@ -2,7 +2,7 @@ package com.zufar.icedlatte.common.exception;
 
 import lombok.experimental.UtilityClass;
 
-/** Centralized RFC 9457 problem-detail type slugs. Each slug is appended to the configured problem.type-base-url. */
+/** Common RFC 9457 problem-detail type slugs. Each slug is appended to the configured problem.type-base-url. */
 @UtilityClass
 public class ProblemType {
 
@@ -31,8 +31,6 @@ public class ProblemType {
     public static final String CART_NOT_FOUND = "cart-not-found";
     public static final String CART_ITEM_NOT_FOUND = "cart-item-not-found";
     public static final String CART_INVALID_QUANTITY = "cart-invalid-quantity";
-
-    // Products & Reviews
 
     // Validation & Files
     public static final String VALIDATION_FAILED = "validation-failed";

@@ -3,12 +3,13 @@ package com.zufar.icedlatte.filestorage.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.exception.FileListException;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,17 +28,17 @@ public class NoOpObjectStorage implements ObjectStorage {
     }
 
     @Override
-    public void upload(@NonNull MultipartFile file, @NonNull String bucketName, @NonNull String fileName) {
-        log.debug("file.upload.skipped: reason=aws_not_configured, bucket={}, key={}", bucketName, fileName);
+    public void upload(MultipartFile file, String bucketName, String fileName) {
+        throw new FileUploadException(fileName, new IllegalStateException("File storage is not configured"));
     }
 
     @Override
-    public void uploadDirectory(@NonNull String bucketName, @NonNull String directoryPath) {
-        log.debug("file.dir_upload.skipped: reason=aws_not_configured, bucket={}, path={}", bucketName, directoryPath);
+    public void uploadDirectory(String bucketName, String directoryPath) {
+        throw new FileUploadException(directoryPath, new IllegalStateException("File storage is not configured"));
     }
 
     @Override
-    public void delete(@NonNull FileMetadataDto fileMetadataDto) {
+    public void delete(FileMetadataDto fileMetadataDto) {
         log.debug(
                 "file.delete.skipped: reason=aws_not_configured, bucket={}, key={}",
                 fileMetadataDto.bucketName(),
@@ -45,7 +46,7 @@ public class NoOpObjectStorage implements ObjectStorage {
     }
 
     @Override
-    public @NonNull Optional<String> getUrl(@NonNull FileMetadataDto fileMetadataDto) {
+    public Optional<String> getUrl(FileMetadataDto fileMetadataDto) {
         log.debug(
                 "file.url.skipped: reason=aws_not_configured, bucket={}, key={}",
                 fileMetadataDto.bucketName(),
@@ -54,8 +55,7 @@ public class NoOpObjectStorage implements ObjectStorage {
     }
 
     @Override
-    public @NonNull List<String> listObjectKeys(@NonNull String bucketName) {
-        log.debug("file.list.skipped: reason=aws_not_configured, bucket={}", bucketName);
-        return List.of();
+    public List<String> listObjectKeys(String bucketName) {
+        throw new FileListException(bucketName, new IllegalStateException("File storage is not configured"));
     }
 }

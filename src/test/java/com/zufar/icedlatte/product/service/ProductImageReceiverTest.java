@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 
@@ -29,7 +29,7 @@ class ProductImageReceiverTest {
     private static final String PLACEHOLDER = "/assets/images/product-placeholder.png";
 
     @Mock
-    private FileStorageApi fileStorageService;
+    private FileUrlResolverApi fileStorageService;
 
     @Mock
     private ProductImageRepository productImageRepository;

@@ -9,12 +9,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,10 +23,14 @@ import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
 import com.zufar.icedlatte.filestorage.entity.FileMetadata;
+import com.zufar.icedlatte.filestorage.exception.FileListException;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
+import com.zufar.icedlatte.filestorage.service.FileMetadataSelectionPolicy;
 import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
+import com.zufar.icedlatte.filestorage.service.StorageKeyMetadataParser;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FileStorageService unit tests")
@@ -50,8 +54,19 @@ public class FileStorageServiceTest {
     @Mock
     private MultipartFile multipartFile;
 
-    @InjectMocks
     private FileStorageService fileStorageService;
+
+    @BeforeEach
+    void setUp() {
+        fileStorageService = new FileStorageService(
+                objectStorage,
+                fileMetadataRepository,
+                fileMetadataDtoConverter,
+                fileDeletionOutboxRepository,
+                fileDeletionOutboxProperties,
+                new FileMetadataSelectionPolicy(),
+                new StorageKeyMetadataParser());
+    }
 
     @Test
     @DisplayName("store uploads object and replaces metadata")
@@ -59,6 +74,7 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
         FileMetadata entity = new FileMetadata();
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of());
         when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(entity);
@@ -78,6 +94,7 @@ public class FileStorageServiceTest {
         FileMetadataDto oldMetadata = new FileMetadataDto(relatedObjectId, "bucket", "old-key");
         FileMetadataDto newMetadata = new FileMetadataDto(relatedObjectId, "bucket", "new-key");
         FileMetadata newEntity = new FileMetadata();
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of(oldEntity));
         when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(oldMetadata);
@@ -95,6 +112,7 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadata oldEntity = fileMetadataEntity(relatedObjectId);
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of(oldEntity));
         when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(metadata);
@@ -111,6 +129,7 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
         RuntimeException failure = new IllegalStateException("database down");
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
                 .thenReturn(List.of());
         when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(new FileMetadata());
@@ -123,11 +142,38 @@ public class FileStorageServiceTest {
     }
 
     @Test
+    @DisplayName("store rejects writes when object storage is disabled")
+    void storeRejectsWritesWhenObjectStorageIsDisabled() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(objectStorage.isConfigured()).thenReturn(false);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> fileStorageService.store(multipartFile, metadata))
+                .isInstanceOf(FileUploadException.class);
+
+        verifyNoInteractions(fileMetadataRepository, fileDeletionOutboxRepository);
+    }
+
+    @Test
     @DisplayName("storeDirectory delegates to object storage")
     void storeDirectoryDelegates() throws IOException {
+        when(objectStorage.isConfigured()).thenReturn(true);
+
         fileStorageService.storeDirectory("bucket", "/tmp/assets");
 
         verify(objectStorage).uploadDirectory("bucket", "/tmp/assets");
+    }
+
+    @Test
+    @DisplayName("refreshBucketIndex rejects listing when object storage is disabled")
+    void refreshBucketIndexRejectsListingWhenObjectStorageIsDisabled() {
+        when(objectStorage.isConfigured()).thenReturn(false);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> fileStorageService.refreshBucketIndex("bucket"))
+                .isInstanceOf(FileListException.class);
+
+        verify(fileMetadataRepository, never()).deleteByBucketName(any());
+        verify(fileMetadataRepository, never()).saveAll(any());
     }
 
     @Nested
@@ -284,6 +330,7 @@ public class FileStorageServiceTest {
         List<FileMetadataDto> metadata =
                 List.of(new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/key"));
         List<FileMetadata> entities = List.of(new FileMetadata());
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of("product_" + relatedObjectId + "/key"));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(entities);
 
@@ -300,6 +347,7 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         List<FileMetadataDto> metadata =
                 List.of(new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/cover.jpg"));
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(objectStorage.listObjectKeys("bucket"))
                 .thenReturn(List.of("product_" + relatedObjectId + "/cover.jpg", "invalid-key"));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
@@ -318,6 +366,7 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadataDto preferred =
                 new FileMetadataDto(relatedObjectId, "bucket", "product_" + relatedObjectId + "/card_logo.webp");
+        when(objectStorage.isConfigured()).thenReturn(true);
         when(objectStorage.listObjectKeys("bucket"))
                 .thenReturn(List.of(
                         "product_" + relatedObjectId + "/card_logo.png",

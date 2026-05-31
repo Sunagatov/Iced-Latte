@@ -68,9 +68,9 @@ class ProductReviewsProviderTest {
         productId = UUID.randomUUID();
         userId = UUID.randomUUID();
 
-        var field = ProductReviewsProvider.class.getDeclaredField("paginationConfig");
-        field.setAccessible(true);
-        field.set(provider, paginationConfig);
+        var paginationConfigField = ProductReviewsProvider.class.getDeclaredField("paginationConfig");
+        paginationConfigField.setAccessible(true);
+        paginationConfigField.set(provider, paginationConfig);
     }
 
     @Test

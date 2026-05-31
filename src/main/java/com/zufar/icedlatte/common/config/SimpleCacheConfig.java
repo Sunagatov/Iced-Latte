@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.common.config;
 
+import java.util.List;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
@@ -12,9 +14,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SimpleCacheConfig {
 
+    private final List<CacheConfigurationProvider> cacheConfigurationProviders;
+
     @Bean
     @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("productById", "brands", "sellers", "productImageUrl", "productImageUrls");
+        String[] cacheNames = cacheConfigurationProviders.stream()
+                .flatMap(provider -> provider.cacheNames().stream())
+                .distinct()
+                .toArray(String[]::new);
+        return new ConcurrentMapCacheManager(cacheNames);
     }
 }

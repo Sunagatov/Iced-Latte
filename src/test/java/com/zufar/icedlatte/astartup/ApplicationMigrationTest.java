@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.dao.DataAccessResourceFailureException;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.BucketIndexMaintenanceApi;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -28,7 +28,7 @@ class ApplicationMigrationTest {
     private static final String DEFAULT_DIRECTORY_PATH = "/seed/products";
 
     @Mock
-    private FileStorageApi fileStorageService;
+    private BucketIndexMaintenanceApi fileStorageService;
 
     @Mock
     private ApplicationArguments args;

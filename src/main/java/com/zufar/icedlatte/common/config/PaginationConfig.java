@@ -9,6 +9,7 @@ public record PaginationConfig(
         @DefaultValue Products products,
         @DefaultValue Reviews reviews,
         @DefaultValue Orders orders) {
+
     public record Products(
             @DefaultValue("50") int defaultPageSize,
             @DefaultValue("name") String defaultSortAttribute,

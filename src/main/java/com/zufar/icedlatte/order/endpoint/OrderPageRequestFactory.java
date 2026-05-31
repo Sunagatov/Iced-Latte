@@ -25,12 +25,11 @@ class OrderPageRequestFactory {
     private final PaginationParametersValidator paginationParametersValidator;
 
     Pageable build(Integer page, Integer size, String sortBy, String sortDirection) {
-        PaginationConfig.Orders defaults = paginationConfig.orders();
         List<String> errors = new ArrayList<>(
                 paginationParametersValidator.validate(page, size, sortBy, sortDirection, ALLOWED_SORT_ATTRIBUTES));
-        if (size != null && size > defaults.maxPageSize()) {
+        if (size != null && size > paginationConfig.orders().maxPageSize()) {
             errors.add(error("'%s' is the incorrect 'size' value. Maximum allowed 'size' value is '%s'."
-                    .formatted(size, defaults.maxPageSize())));
+                    .formatted(size, paginationConfig.orders().maxPageSize())));
         }
         if (!errors.isEmpty()) {
             throw new BadRequestException("Order pagination parameters are incorrect. Error messages are [ %s ]."
@@ -39,9 +38,11 @@ class OrderPageRequestFactory {
 
         return PageRequestFactory.of(
                 page != null ? page : paginationConfig.defaultPageNumber(),
-                size != null ? size : defaults.defaultPageSize(),
-                sortBy != null ? sortBy : defaults.defaultSortAttribute(),
-                sortDirection != null ? sortDirection : defaults.defaultSortDirection());
+                size != null ? size : paginationConfig.orders().defaultPageSize(),
+                sortBy != null ? sortBy : paginationConfig.orders().defaultSortAttribute(),
+                sortDirection != null
+                        ? sortDirection
+                        : paginationConfig.orders().defaultSortDirection());
     }
 
     private static String error(String message) {

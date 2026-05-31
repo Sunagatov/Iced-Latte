@@ -11,10 +11,13 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.zufar.icedlatte.product.config.ProductCacheConfigurationProvider;
+
 @DisplayName("ProductCacheEvictor unit tests")
 class ProductCacheEvictorTest {
 
-    private final ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager("productById");
+    private final ConcurrentMapCacheManager cacheManager =
+            new ConcurrentMapCacheManager(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
     private final ProductCacheEvictor evictor = new ProductCacheEvictor(cacheManager);
 
     @AfterEach
@@ -28,7 +31,7 @@ class ProductCacheEvictorTest {
     @DisplayName("evicts product cache immediately when no transaction synchronization is active")
     void evictsImmediatelyWithoutTransactionSynchronization() {
         UUID productId = UUID.randomUUID();
-        var cache = cacheManager.getCache("productById");
+        var cache = cacheManager.getCache(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
         assertThat(cache).isNotNull();
         cache.put(productId, "cached-product");
 
@@ -41,7 +44,7 @@ class ProductCacheEvictorTest {
     @DisplayName("defers product cache eviction until transaction commit")
     void defersEvictionUntilTransactionCommit() {
         UUID productId = UUID.randomUUID();
-        var cache = cacheManager.getCache("productById");
+        var cache = cacheManager.getCache(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
         assertThat(cache).isNotNull();
         cache.put(productId, "cached-product");
 
@@ -58,7 +61,7 @@ class ProductCacheEvictorTest {
     @Test
     @DisplayName("clears product cache after transaction commit")
     void clearsProductCacheAfterTransactionCommit() {
-        var cache = cacheManager.getCache("productById");
+        var cache = cacheManager.getCache(ProductCacheConfigurationProvider.PRODUCT_BY_ID);
         assertThat(cache).isNotNull();
         cache.put("first", "cached-product-1");
         cache.put("second", "cached-product-2");

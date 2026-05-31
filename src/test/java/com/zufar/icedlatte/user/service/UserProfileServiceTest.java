@@ -19,7 +19,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
@@ -47,7 +48,10 @@ class UserProfileServiceTest {
     private PutUsersRequestValidator putUsersRequestValidator;
 
     @Mock
-    private FileStorageApi fileStorageService;
+    private FileUrlResolverApi fileUrlResolverApi;
+
+    @Mock
+    private FileStorageWriterApi fileStorageWriterApi;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -71,7 +75,7 @@ class UserProfileServiceTest {
 
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(userDto);
-            when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
+            when(fileUrlResolverApi.findFileUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
 
             UserDto result = userProfileService.getProfile(userId);
 
@@ -108,7 +112,7 @@ class UserProfileServiceTest {
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(expectedDto);
-            when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
+            when(fileUrlResolverApi.findFileUrl(userId)).thenReturn(Optional.of("https://cdn.example.com/avatar.jpg"));
 
             UserDto result = userProfileService.updateProfile(userId, request);
 
@@ -133,7 +137,7 @@ class UserProfileServiceTest {
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(userEntity);
             when(userRepository.save(userEntity)).thenReturn(userEntity);
             when(userDtoConverter.toDto(userEntity)).thenReturn(new UserDto());
-            when(fileStorageService.findFileUrl(userId)).thenReturn(Optional.empty());
+            when(fileUrlResolverApi.findFileUrl(userId)).thenReturn(Optional.empty());
 
             userProfileService.updateProfile(userId, request);
 
@@ -151,7 +155,7 @@ class UserProfileServiceTest {
 
         verify(userRepository).deleteById(userId);
         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
-        verify(fileStorageService).deleteFile(userId);
+        verify(fileStorageWriterApi).deleteFile(userId);
     }
 
     @Test
@@ -159,7 +163,7 @@ class UserProfileServiceTest {
     void findAvatarLinkDelegatesToFileStorage() {
         UUID userId = UUID.randomUUID();
         Optional<String> avatarLink = Optional.of("https://cdn.example.com/avatar.jpg");
-        when(fileStorageService.findFileUrl(userId)).thenReturn(avatarLink);
+        when(fileUrlResolverApi.findFileUrl(userId)).thenReturn(avatarLink);
 
         assertThat(userProfileService.findAvatarLink(userId)).isEqualTo(avatarLink);
     }
@@ -171,7 +175,7 @@ class UserProfileServiceTest {
 
         userProfileService.deleteAvatar(userId);
 
-        verify(fileStorageService).deleteFile(userId);
+        verify(fileStorageWriterApi).deleteFile(userId);
     }
 
     @Nested

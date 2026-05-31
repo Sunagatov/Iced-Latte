@@ -17,6 +17,8 @@ import com.zufar.icedlatte.filestorage.api.FileStorageApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.converter.FileMetadataDtoConverter;
+import com.zufar.icedlatte.filestorage.exception.FileListException;
+import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
 
@@ -33,6 +35,8 @@ public class FileStorageService implements FileStorageApi {
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
     private final FileDeletionOutboxRepository fileDeletionOutboxRepository;
     private final FileDeletionOutboxProperties fileDeletionOutboxProperties;
+    private final FileMetadataSelectionPolicy fileMetadataSelectionPolicy;
+    private final StorageKeyMetadataParser storageKeyMetadataParser;
 
     @Override
     public boolean isEnabled() {
@@ -42,6 +46,7 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void store(MultipartFile file, FileMetadataDto fileMetadataDto) {
+        requireStorageEnabledForUpload(fileMetadataDto.fileName());
         List<FileMetadataDto> existingMetadata = findAllMetadata(fileMetadataDto.relatedObjectId());
         objectStorage.upload(file, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
         try {
@@ -57,6 +62,7 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void storeDirectory(String bucketName, String directoryPath) throws IOException {
+        requireStorageEnabledForUpload(directoryPath);
         objectStorage.uploadDirectory(bucketName, directoryPath);
     }
 
@@ -94,11 +100,14 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshBucketIndex(String bucketName) {
+        requireStorageEnabledForListing(bucketName);
         List<FileMetadataDto> fileMetadataList = objectStorage.listObjectKeys(bucketName).stream()
-                .map(fileName -> toFileMetadata(fileName, bucketName))
+                .map(fileName -> storageKeyMetadataParser.parse(fileName, bucketName))
                 .flatMap(Optional::stream)
                 .collect(Collectors.toMap(
-                        FileMetadataDto::relatedObjectId, metadata -> metadata, this::selectPreferredMetadata))
+                        FileMetadataDto::relatedObjectId,
+                        metadata -> metadata,
+                        fileMetadataSelectionPolicy::selectPreferred))
                 .values()
                 .stream()
                 .toList();
@@ -108,6 +117,18 @@ public class FileStorageService implements FileStorageApi {
 
     private Optional<FileMetadataDto> findMetadata(UUID relatedObjectId) {
         return findMetadata(List.of(relatedObjectId)).values().stream().findFirst();
+    }
+
+    private void requireStorageEnabledForUpload(String fileName) {
+        if (!objectStorage.isConfigured()) {
+            throw new FileUploadException(fileName, new IllegalStateException("File storage is not configured"));
+        }
+    }
+
+    private void requireStorageEnabledForListing(String bucketName) {
+        if (!objectStorage.isConfigured()) {
+            throw new FileListException(bucketName, new IllegalStateException("File storage is not configured"));
+        }
     }
 
     private void enqueueReplacedObjects(List<FileMetadataDto> existingMetadata, FileMetadataDto replacementMetadata) {
@@ -146,66 +167,8 @@ public class FileStorageService implements FileStorageApi {
         return fileMetadataRepository.findByRelatedObjectIdIn(relatedObjectIds).stream()
                 .map(fileMetadataDtoConverter::toDto)
                 .collect(Collectors.toMap(
-                        FileMetadataDto::relatedObjectId, metadata -> metadata, this::selectPreferredMetadata));
-    }
-
-    private FileMetadataDto selectPreferredMetadata(FileMetadataDto first, FileMetadataDto second) {
-        FileMetadataDto preferred = compareMetadata(first, second) <= 0 ? first : second;
-        FileMetadataDto skipped = preferred == first ? second : first;
-        log.warn(
-                "storage.metadata.duplicate_related_object: objectId={}, selected={}, skipped={}",
-                preferred.relatedObjectId(),
-                preferred.fileName(),
-                skipped.fileName());
-        return preferred;
-    }
-
-    private int compareMetadata(FileMetadataDto first, FileMetadataDto second) {
-        int rankComparison = Integer.compare(metadataRank(first), metadataRank(second));
-        if (rankComparison != 0) {
-            return rankComparison;
-        }
-        return first.fileName().compareTo(second.fileName());
-    }
-
-    private int metadataRank(FileMetadataDto metadata) {
-        String fileName = metadata.fileName().toLowerCase();
-        String baseName = fileName.substring(fileName.lastIndexOf('/') + 1);
-        switch (baseName) {
-            case "card_logo.webp" -> {
-                return 0;
-            }
-            case "card_logo.png" -> {
-                return 1;
-            }
-            case "card_logo.jpg", "card_logo.jpeg" -> {
-                return 2;
-            }
-        }
-        if (fileName.endsWith(".webp")) {
-            return 3;
-        }
-        if (fileName.endsWith(".png")) {
-            return 4;
-        }
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-            return 5;
-        }
-        return 6;
-    }
-
-    private Optional<FileMetadataDto> toFileMetadata(String fileName, String bucketName) {
-        String[] parts = fileName.split("/");
-        String[] packageName = parts[0].split("_");
-        if (packageName.length < 2) {
-            log.warn("storage.key.skipped: key={}", fileName);
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
-        } catch (IllegalArgumentException ex) {
-            log.warn("storage.key.invalid_uuid: key={}", fileName);
-            return Optional.empty();
-        }
+                        FileMetadataDto::relatedObjectId,
+                        metadata -> metadata,
+                        fileMetadataSelectionPolicy::selectPreferred));
     }
 }

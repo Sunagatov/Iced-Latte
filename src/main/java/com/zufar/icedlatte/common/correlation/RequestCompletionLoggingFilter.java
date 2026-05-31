@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.common.correlation;
 
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,6 +41,12 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
     @Value("${logging.slow-request-threshold-ms:1000}")
     private long slowRequestThresholdMs;
+
+    @Value("${logging.access.debug-success-paths:}")
+    private String debugSuccessPaths;
+
+    @Value("${logging.access.expected-anonymous-unauthorized-paths:}")
+    private String expectedAnonymousUnauthorizedPaths;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -90,7 +99,7 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 log.warn(OUTCOME, args);
             } else if (status >= 400) {
                 log.debug(OUTCOME, args);
-            } else if (isPollingEndpoint(path)) {
+            } else if (isDebugSuccessPath(path)) {
                 log.debug(OUTCOME, args);
             } else {
                 log.info(OUTCOME, args);
@@ -98,23 +107,22 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         }
     }
 
-    // Endpoints that are polled frequently by the frontend and produce repetitive 2xx lines.
-    // Logged at DEBUG to reduce noise; operators can promote to INFO via logging.level.http.access=INFO.
-    private static boolean isPollingEndpoint(String path) {
-        return ApiPaths.PRODUCTS_BRANDS.equals(path)
-                || ApiPaths.PRODUCTS_SELLERS.equals(path)
-                || ApiPaths.USERS.equals(path)
-                || ApiPaths.CART.equals(path)
-                || ApiPaths.FAVORITES.equals(path);
+    private boolean isDebugSuccessPath(String path) {
+        return configuredPaths(debugSuccessPaths).contains(path);
     }
 
-    // Expected anonymous bootstrap / probe flow from the frontend.
-    // These are not operationally interesting at WARN when the user is simply unauthenticated.
-    private static boolean isExpectedAnonymousAuthProbe(String path) {
-        return ApiPaths.AUTH_REFRESH.equals(path)
-                || ApiPaths.USERS.equals(path)
-                || ApiPaths.CART.equals(path)
-                || ApiPaths.FAVORITES.equals(path);
+    private boolean isExpectedAnonymousAuthProbe(String path) {
+        return configuredPaths(expectedAnonymousUnauthorizedPaths).contains(path);
+    }
+
+    private static Set<String> configuredPaths(String rawPaths) {
+        if (rawPaths == null || rawPaths.isBlank()) {
+            return Set.of();
+        }
+        return Stream.of(rawPaths.split(","))
+                .map(String::trim)
+                .filter(path -> !path.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private static String resolvePathTemplate(HttpServletRequest request) {

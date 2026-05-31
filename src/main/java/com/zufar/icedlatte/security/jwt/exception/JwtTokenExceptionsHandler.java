@@ -26,7 +26,7 @@ public class JwtTokenExceptionsHandler {
     public ProblemDetail handleJwtTokenException(final JwtTokenException exception) {
         log.debug("auth.rejected: reason=invalid_token, status=401");
         return problemDetailFactory.build(
-                "auth-failed", "Authentication failed", HttpStatus.UNAUTHORIZED, "Authentication failed.");
+                ProblemType.AUTH_FAILED, "Authentication failed", HttpStatus.UNAUTHORIZED, "Authentication failed.");
     }
 
     @ExceptionHandler(JwtTokenBlacklistedException.class)

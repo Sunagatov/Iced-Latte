@@ -18,7 +18,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
@@ -28,7 +28,7 @@ import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 class UserAvatarUploaderTest {
 
     @Mock
-    private FileStorageApi fileStorageService;
+    private FileStorageWriterApi fileStorageService;
 
     @Mock
     private ObjectProvider<FileCacheInvalidationApi> cacheInvalidatorProvider;

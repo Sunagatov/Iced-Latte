@@ -2,6 +2,8 @@ package com.zufar.icedlatte.common.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
 
 @DisplayName("SimpleCacheConfig unit tests")
 class SimpleCacheConfigTest {
@@ -16,7 +19,7 @@ class SimpleCacheConfigTest {
     private static final Set<String> EXPECTED_CACHE_NAMES =
             Set.of("productById", "brands", "sellers", "productImageUrl", "productImageUrls");
 
-    private final SimpleCacheConfig config = new SimpleCacheConfig();
+    private final SimpleCacheConfig config = new SimpleCacheConfig(List.of(new TestCacheConfigurationProvider()));
 
     @Test
     @DisplayName("cacheManager exposes the expected named caches")
@@ -46,5 +49,19 @@ class SimpleCacheConfigTest {
         assertThat(productByIdCache.get("b1")).isNull();
         assertThat(brandsCache.get("b1", String.class)).isEqualTo("value-2");
         assertThat(brandsCache.get("p1")).isNull();
+    }
+
+    private static final class TestCacheConfigurationProvider implements CacheConfigurationProvider {
+
+        @Override
+        public Set<String> cacheNames() {
+            return EXPECTED_CACHE_NAMES;
+        }
+
+        @Override
+        public Map<String, RedisCacheConfiguration> redisCacheConfigurations(
+                RedisCacheConfiguration baseConfiguration) {
+            return Map.of();
+        }
     }
 }

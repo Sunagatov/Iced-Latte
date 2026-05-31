@@ -13,7 +13,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
@@ -36,7 +37,8 @@ public class UserProfileService implements UserAccessControlApi {
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
     private final PutUsersRequestValidator putUsersRequestValidator;
-    private final FileStorageApi fileStorageApi;
+    private final FileUrlResolverApi fileUrlResolverApi;
+    private final FileStorageWriterApi fileStorageWriterApi;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -95,12 +97,12 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(readOnly = true)
     public Optional<String> findAvatarLink(UUID userId) {
-        return fileStorageApi.findFileUrl(userId);
+        return fileUrlResolverApi.findFileUrl(userId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteAvatar(UUID userId) {
-        fileStorageApi.deleteFile(userId);
+        fileStorageWriterApi.deleteFile(userId);
     }
 
     private UserDto toProfileDto(UserEntity userEntity) {
@@ -129,7 +131,7 @@ public class UserProfileService implements UserAccessControlApi {
             log.warn("user.profile.session_revocation_after_delete_failed: userId={}", userId, ex);
         }
         try {
-            fileStorageApi.deleteFile(userId);
+            fileStorageWriterApi.deleteFile(userId);
         } catch (RuntimeException ex) {
             log.warn("user.profile.avatar_delete_after_delete_failed: userId={}", userId, ex);
         }

@@ -2,6 +2,8 @@ package com.zufar.icedlatte.common.config;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,12 +25,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.JavaType;
-import tools.jackson.databind.type.TypeFactory;
 
 @Slf4j
 @Configuration
@@ -43,6 +42,7 @@ public class RedisConfig implements CachingConfigurer {
                     .build();
 
     private final CacheProperties cacheProperties;
+    private final List<CacheConfigurationProvider> cacheConfigurationProviders;
 
     @Value("${spring.application.version:1}")
     private String appVersion;
@@ -56,49 +56,25 @@ public class RedisConfig implements CachingConfigurer {
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         log.info("cache.mode: Redis");
 
-        tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
-        TypeFactory tf = mapper.getTypeFactory();
-
-        JavaType listOfString = tf.constructCollectionType(List.class, String.class);
-
-        var productSerializer = new JacksonJsonRedisSerializer<>(mapper, ProductInfoDto.class);
+        var mapper = new tools.jackson.databind.ObjectMapper();
         var stringSerializer = new JacksonJsonRedisSerializer<>(mapper, String.class);
-        var listStringSerializer = new JacksonJsonRedisSerializer<>(mapper, listOfString);
 
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
                 .prefixCacheNameWith("v" + appVersion + ":")
                 .disableCachingNullValues();
 
-        return RedisCacheManager.builder(connectionFactory)
+        RedisCacheManager.RedisCacheManagerBuilder builder = RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(base.entryTtl(cacheProperties.getDefaultTtl())
                         .serializeValuesWith(
-                                RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
-                .withCacheConfiguration(
-                        "productById",
-                        base.entryTtl(cacheProperties.getProductTtl())
-                                .serializeValuesWith(
-                                        RedisSerializationContext.SerializationPair.fromSerializer(productSerializer)))
-                .withCacheConfiguration(
-                        "productImageUrl",
-                        base.entryTtl(cacheProperties.getImageUrlTtl())
-                                .serializeValuesWith(
-                                        RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)))
-                .withCacheConfiguration(
-                        "productImageUrls",
-                        base.entryTtl(cacheProperties.getImageUrlsTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                                        listStringSerializer)))
-                .withCacheConfiguration(
-                        "brands",
-                        base.entryTtl(cacheProperties.getBrandsTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                                        listStringSerializer)))
-                .withCacheConfiguration(
-                        "sellers",
-                        base.entryTtl(cacheProperties.getSellersTtl())
-                                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                                        listStringSerializer)))
-                .build();
+                                RedisSerializationContext.SerializationPair.fromSerializer(stringSerializer)));
+
+        cacheConfigurationProviders.stream()
+                .map(provider -> provider.redisCacheConfigurations(base))
+                .map(Map::entrySet)
+                .flatMap(Set::stream)
+                .forEach(entry -> builder.withCacheConfiguration(entry.getKey(), entry.getValue()));
+
+        return builder.build();
     }
 
     @Bean

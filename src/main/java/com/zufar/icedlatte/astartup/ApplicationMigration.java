@@ -8,7 +8,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
-import com.zufar.icedlatte.filestorage.api.FileStorageApi;
+import com.zufar.icedlatte.filestorage.api.BucketIndexMaintenanceApi;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ApplicationMigration implements ApplicationRunner {
 
-    private final FileStorageApi fileStorageApi;
+    private final BucketIndexMaintenanceApi bucketIndexMaintenanceApi;
     private final MigrationProperties migrationProperties;
     private final ProductImageMigrationProperties productImageMigrationProperties;
 
@@ -40,7 +40,7 @@ public class ApplicationMigration implements ApplicationRunner {
                 && !productBucket.isEmpty()
                 && directoryPath != null
                 && !directoryPath.isEmpty()
-                && fileStorageApi.isEnabled();
+                && bucketIndexMaintenanceApi.isEnabled();
     }
 
     private void runMigration() {
@@ -56,7 +56,7 @@ public class ApplicationMigration implements ApplicationRunner {
         try {
             log.info("migration.upload.start: path={}", directoryPath());
             long t0 = System.nanoTime();
-            fileStorageApi.storeDirectory(productBucket(), directoryPath());
+            bucketIndexMaintenanceApi.storeDirectory(productBucket(), directoryPath());
             long durationMs = Duration.ofNanos(System.nanoTime() - t0).toMillis();
             log.info(
                     "migration.upload.finish: bucket={}, path={}, durationMs={}",
@@ -78,7 +78,7 @@ public class ApplicationMigration implements ApplicationRunner {
 
     private void refreshMetadataIndex() {
         try {
-            fileStorageApi.refreshBucketIndex(productBucket());
+            bucketIndexMaintenanceApi.refreshBucketIndex(productBucket());
             log.info("migration.metadata.refreshed: bucket={}", productBucket());
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
             log.warn(
