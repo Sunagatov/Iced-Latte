@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.cart.converter;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
+import com.zufar.icedlatte.cart.exception.CartProductSnapshotMissingException;
 import com.zufar.icedlatte.cart.stub.CartDtoTestStub;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
@@ -56,5 +58,16 @@ class ShoppingCartDtoConverterTest {
         assertEquals(BigDecimal.ZERO, result.getItemsTotalPrice());
         assertEquals(emptyCart.getCreatedAt(), result.getCreatedAt());
         assertEquals(emptyCart.getClosedAt(), result.getClosedAt());
+    }
+
+    @Test
+    @DisplayName("Should fail when product snapshot is missing for a cart item")
+    void shouldFailWhenProductSnapshotIsMissingForCartItem() {
+        ShoppingCart cart = CartDtoTestStub.createShoppingCart();
+        Map<UUID, ProductSnapshot> productsById = CartDtoTestStub.createProductsById();
+        productsById.remove(CartDtoTestStub.FIRST_PRODUCT_ID);
+
+        assertThatThrownBy(() -> converter.toDto(cart, productsById))
+                .isInstanceOf(CartProductSnapshotMissingException.class);
     }
 }

@@ -31,6 +31,9 @@ public class ProblemType {
     public static final String CART_NOT_FOUND = "cart-not-found";
     public static final String CART_ITEM_NOT_FOUND = "cart-item-not-found";
     public static final String CART_INVALID_QUANTITY = "cart-invalid-quantity";
+    public static final String CART_INVALID_ITEM_REQUEST = "cart-invalid-item-request";
+    public static final String CART_PRODUCT_NOT_FOUND = "cart-product-not-found";
+    public static final String CART_PRODUCT_SNAPSHOT_MISSING = "cart-product-snapshot-missing";
 
     // Validation & Files
     public static final String VALIDATION_FAILED = "validation-failed";

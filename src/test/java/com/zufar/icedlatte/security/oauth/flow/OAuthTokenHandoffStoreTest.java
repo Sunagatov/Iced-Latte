@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.oauth.flow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -62,6 +63,18 @@ class OAuthTokenHandoffStoreTest {
                         startsWith("oauth:handoff:"),
                         argThat(value -> !value.contains("access-token") && !value.contains("refresh-token")),
                         eq(Duration.ofMinutes(1)));
+    }
+
+    @Test
+    @DisplayName("rejects malformed handoff code before cache lookup")
+    void rejectsMalformedHandoffCodeBeforeCacheLookup() {
+        ExpiringKeyValueStore temporaryStore = mock(ExpiringKeyValueStore.class);
+        OAuthTokenHandoffStore encryptedStore = new OAuthTokenHandoffStore(
+                temporaryStore, new ObjectMapper(), jwtProperties(), properties(handoffEncryptionKey()));
+
+        assertThat(encryptedStore.consume("not-a-valid-handoff-code")).isEmpty();
+
+        verify(temporaryStore, never()).take(anyString());
     }
 
     private static JwtProperties jwtProperties() {

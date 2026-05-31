@@ -62,14 +62,17 @@ public class OAuthFlowService {
         }
         if (code == null || code.isBlank()) {
             log.debug("auth.oauth.callback.missing-code: provider={}", provider.id());
+            oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(MISSING_CODE_ERROR);
         }
         if (state == null || state.isBlank()) {
             log.debug("auth.oauth.callback.missing-state: provider={}", provider.id());
+            oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
         if (!oAuthStateCookieService.matches(request, provider, state)) {
             log.info("auth.oauth.callback.state-cookie-mismatch: provider={}", provider.id());
+            oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
         String callbackBase = oAuthStateStore.consume(provider, state);

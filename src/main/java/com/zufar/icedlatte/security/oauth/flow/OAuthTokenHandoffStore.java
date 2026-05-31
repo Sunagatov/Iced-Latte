@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.oauth.flow;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,7 @@ public class OAuthTokenHandoffStore {
     private static final String KEY_PREFIX = "oauth:handoff:";
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String PAYLOAD_DESCRIPTION = "OAuth token handoff";
+    private static final Pattern HANDOFF_CODE_PATTERN = Pattern.compile("[A-Za-z0-9_-]{43}");
 
     private final ExpiringKeyValueStore temporaryStore;
     private final ObjectMapper objectMapper;
@@ -50,6 +52,9 @@ public class OAuthTokenHandoffStore {
     }
 
     public Optional<AuthenticationTokens> consume(String code) {
+        if (!isValidHandoffCode(code)) {
+            return Optional.empty();
+        }
         return temporaryStore
                 .take(namespacedKey(code))
                 .map(protector::unprotect)
@@ -80,5 +85,9 @@ public class OAuthTokenHandoffStore {
 
     private static String namespacedKey(String code) {
         return KEY_PREFIX + code;
+    }
+
+    private static boolean isValidHandoffCode(String code) {
+        return code != null && HANDOFF_CODE_PATTERN.matcher(code).matches();
     }
 }

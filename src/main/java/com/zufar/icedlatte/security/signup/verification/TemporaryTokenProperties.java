@@ -16,9 +16,12 @@ public record TemporaryTokenProperties(@Valid @NotNull Time time) {
         }
     }
 
-    public record Time(int token) {
+    public record Time(Integer token) {
 
         public Time {
+            if (token == null) {
+                throw new IllegalArgumentException("temporary-cache.time.token must not be null");
+            }
             if (token < 1) {
                 throw new IllegalArgumentException("temporary-cache.time.token must be at least 1 minute");
             }

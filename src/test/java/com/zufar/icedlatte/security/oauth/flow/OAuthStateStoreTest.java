@@ -50,6 +50,14 @@ class OAuthStateStoreTest {
     }
 
     @Test
+    @DisplayName("properties reject null state ttl")
+    void propertiesRejectNullStateTtl() {
+        assertThatThrownBy(() -> new OAuthFlowProperties(null, Duration.ofMinutes(1), ""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("oauth.state-ttl-minutes must not be null");
+    }
+
+    @Test
     @DisplayName("properties reject null handoff ttl")
     void propertiesRejectNullHandoffTtl() {
         assertThatThrownBy(() -> new OAuthFlowProperties(10, null, ""))

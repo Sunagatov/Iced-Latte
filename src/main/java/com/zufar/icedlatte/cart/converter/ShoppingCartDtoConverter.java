@@ -3,7 +3,6 @@ package com.zufar.icedlatte.cart.converter;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -12,6 +11,7 @@ import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.cart.exception.CartProductSnapshotMissingException;
 import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
@@ -24,9 +24,8 @@ public class ShoppingCartDtoConverter {
         List<ShoppingCartItemDto> itemDtos = cart.getItems() == null
                 ? List.of()
                 : cart.getItems().stream()
-                        .filter(item -> productsById.containsKey(item.getProductId()))
                         .map(item -> {
-                            var product = Objects.requireNonNull(productsById.get(item.getProductId()));
+                            var product = requireProductSnapshot(item, productsById);
                             return toItemDto(item, product);
                         })
                         .toList();
@@ -70,9 +69,8 @@ public class ShoppingCartDtoConverter {
         List<CartItemSnapshot> items = cart.getItems() == null
                 ? List.of()
                 : cart.getItems().stream()
-                        .filter(item -> productsById.containsKey(item.getProductId()))
                         .map(item -> {
-                            var product = Objects.requireNonNull(productsById.get(item.getProductId()));
+                            var product = requireProductSnapshot(item, productsById);
                             return new CartItemSnapshot(item.getId(), product, item.getProductQuantity());
                         })
                         .toList();
@@ -93,5 +91,14 @@ public class ShoppingCartDtoConverter {
                 productsQuantity,
                 cart.getCreatedAt(),
                 cart.getClosedAt());
+    }
+
+    private static ProductSnapshot requireProductSnapshot(
+            ShoppingCartItem item, Map<UUID, ProductSnapshot> productsById) {
+        ProductSnapshot product = productsById.get(item.getProductId());
+        if (product == null) {
+            throw new CartProductSnapshotMissingException(item.getProductId());
+        }
+        return product;
     }
 }

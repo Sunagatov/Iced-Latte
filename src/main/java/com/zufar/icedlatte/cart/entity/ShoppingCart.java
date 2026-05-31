@@ -40,7 +40,7 @@ public class ShoppingCart {
                 CascadeType.DETACH
             },
             orphanRemoval = true,
-            fetch = FetchType.EAGER)
+            fetch = FetchType.LAZY)
     private Set<ShoppingCartItem> items;
 
     @Formula("(SELECT COUNT(*) FROM shopping_cart_item sci WHERE sci.shopping_cart_id = id)")

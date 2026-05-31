@@ -207,11 +207,27 @@ class EmailVerificationServiceTest {
     }
 
     @Test
+    @DisplayName("email token properties reject missing token length")
+    void emailTokenPropertiesRejectMissingTokenLength() {
+        assertThatThrownBy(() -> new EmailTokenProperties(null, ""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("email.verification-token-length must not be null");
+    }
+
+    @Test
     @DisplayName("temporary token properties reject missing time configuration")
     void temporaryTokenPropertiesRejectMissingTimeConfiguration() {
         assertThatThrownBy(() -> new TemporaryTokenProperties(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("temporary-cache.time must not be null");
+    }
+
+    @Test
+    @DisplayName("temporary token properties reject missing token ttl")
+    void temporaryTokenPropertiesRejectMissingTokenTtl() {
+        assertThatThrownBy(() -> new TemporaryTokenProperties(new TemporaryTokenProperties.Time(null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("temporary-cache.time.token must not be null");
     }
 
     @Test

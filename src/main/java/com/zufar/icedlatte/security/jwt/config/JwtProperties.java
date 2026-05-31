@@ -26,4 +26,14 @@ public record JwtProperties(
 
         @NotBlank(message = "JWT issuer cannot be blank") String issuer,
 
-        @NotBlank(message = "JWT audience cannot be blank") String audience) {}
+        @NotBlank(message = "JWT audience cannot be blank") String audience) {
+
+    public JwtProperties {
+        if (expiration != null && (expiration.isZero() || expiration.isNegative())) {
+            throw new IllegalArgumentException("jwt.expiration must be positive");
+        }
+        if (refreshExpiration != null && (refreshExpiration.isZero() || refreshExpiration.isNegative())) {
+            throw new IllegalArgumentException("jwt.refresh-expiration must be positive");
+        }
+    }
+}

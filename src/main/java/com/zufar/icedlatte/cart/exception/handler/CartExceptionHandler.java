@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.zufar.icedlatte.cart.exception.CartException;
+import com.zufar.icedlatte.cart.exception.CartProductNotFoundException;
+import com.zufar.icedlatte.cart.exception.CartProductSnapshotMissingException;
+import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
 import com.zufar.icedlatte.cart.exception.InvalidItemProductQuantityException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
@@ -28,8 +31,6 @@ public class CartExceptionHandler {
 
     @ExceptionHandler(CartException.class)
     public ResponseEntity<ProblemDetail> handleCartException(final CartException ex) {
-        record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
-
         final String errorMessage = ex.getMessage();
         var mapping =
                 switch (ex) {
@@ -54,6 +55,27 @@ public class CartExceptionHandler {
                                 "Invalid quantity",
                                 HttpStatus.BAD_REQUEST,
                                 errorMessage);
+                    case InvalidCartItemRequestException _ ->
+                        new ErrorMapping(
+                                "exception.cart.invalid_item_request",
+                                ProblemType.CART_INVALID_ITEM_REQUEST,
+                                "Invalid cart item request",
+                                HttpStatus.BAD_REQUEST,
+                                errorMessage);
+                    case CartProductNotFoundException _ ->
+                        new ErrorMapping(
+                                "exception.cart.product_not_found",
+                                ProblemType.CART_PRODUCT_NOT_FOUND,
+                                "Product not found",
+                                HttpStatus.NOT_FOUND,
+                                errorMessage);
+                    case CartProductSnapshotMissingException _ ->
+                        new ErrorMapping(
+                                "exception.cart.product_snapshot_missing",
+                                ProblemType.CART_PRODUCT_SNAPSHOT_MISSING,
+                                "Cart product data unavailable",
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                errorMessage);
                 };
 
         HttpStatus status = mapping.status();
@@ -61,4 +83,6 @@ public class CartExceptionHandler {
         return ResponseEntity.status(status)
                 .body(problemDetailFactory.build(mapping.typeSlug(), mapping.title(), status, mapping.detail()));
     }
+
+    private record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
 }

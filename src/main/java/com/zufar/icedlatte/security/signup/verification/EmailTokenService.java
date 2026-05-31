@@ -30,7 +30,6 @@ public class EmailTokenService {
     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
     private static final String TOKEN_HASH_ALGORITHM = "SHA-256";
     private static final int MAX_TOKEN_GENERATION_ATTEMPTS = 5;
-    private static final int MIN_TOKEN_LENGTH = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ExpiringKeyValueStore temporaryStore;
@@ -85,7 +84,6 @@ public class EmailTokenService {
     }
 
     private String nextToken() {
-        validateConfiguredTokenLength();
         int tokenLength = emailTokenProperties.verificationTokenLength();
         byte[] randomBytes = new byte[(int) Math.ceil(tokenLength * 6 / 8.0)];
         RANDOM.nextBytes(randomBytes);
@@ -94,18 +92,9 @@ public class EmailTokenService {
     }
 
     private void validateTokenFormat(String token) {
-        validateConfiguredTokenLength();
         int tokenLength = emailTokenProperties.verificationTokenLength();
         if (token == null || token.length() != tokenLength || !token.chars().allMatch(this::isUrlSafeTokenChar)) {
             throw new BadRequestException("Incorrect token format");
-        }
-    }
-
-    private void validateConfiguredTokenLength() {
-        int tokenLength = emailTokenProperties.verificationTokenLength();
-        if (tokenLength < MIN_TOKEN_LENGTH) {
-            throw new IllegalStateException(
-                    "email.verification-token-length must be at least " + MIN_TOKEN_LENGTH + ", got: " + tokenLength);
         }
     }
 

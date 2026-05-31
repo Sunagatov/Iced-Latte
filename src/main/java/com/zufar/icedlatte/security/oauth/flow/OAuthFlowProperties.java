@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "oauth")
 public record OAuthFlowProperties(
-        int stateTtlMinutes,
+        Integer stateTtlMinutes,
 
         @NotNull(message = "OAuth handoff TTL must not be null")
         Duration handoffTtl,
@@ -18,6 +18,9 @@ public record OAuthFlowProperties(
         String handoffEncryptionKey) {
 
     public OAuthFlowProperties {
+        if (stateTtlMinutes == null) {
+            throw new IllegalArgumentException("oauth.state-ttl-minutes must not be null");
+        }
         if (stateTtlMinutes < 1) {
             throw new IllegalArgumentException("oauth.state-ttl-minutes must be at least 1 minute");
         }

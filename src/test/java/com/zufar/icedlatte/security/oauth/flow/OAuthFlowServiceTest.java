@@ -155,6 +155,7 @@ class OAuthFlowServiceTest {
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=invalid_state");
         verifyNoInteractions(oAuthStateStore, oAuthTokenHandoffStore);
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
         verify(oAuthLoginService, never()).handle(any(), anyString(), any());
     }
 
@@ -211,6 +212,18 @@ class OAuthFlowServiceTest {
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=missing_code");
         verifyNoInteractions(oAuthStateStore);
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
+    }
+
+    @Test
+    void completeCallbackClearsStateCookieWhenStateIsMissing() {
+        stubGoogleClient();
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", " ", request, response);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=invalid_state");
+        verifyNoInteractions(oAuthStateStore);
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
     }
 
     private void stubGoogleClient() {

@@ -162,7 +162,7 @@ class RefreshTokenServiceTest {
 
             assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
 
-            verify(authSessionService).revokeAllForUserBySessionId(sessionId);
+            verify(authSessionService).revokeAllForCompromisedUserBySessionId(sessionId);
             verifyNoInteractions(userDetailsService, sessionTokenService);
         }
     }

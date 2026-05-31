@@ -44,7 +44,7 @@ public class RefreshTokenService {
             if (jwtTokenClaims.isSessionManagedRefreshToken(rawToken)) {
                 jwtTokenClaims
                         .extractRefreshTokenSessionId(rawToken)
-                        .ifPresent(authSessionService::revokeAllForUserBySessionId);
+                        .ifPresent(authSessionService::revokeAllForCompromisedUserBySessionId);
                 throw ex;
             }
             log.warn("auth.token.refresh_legacy_migrate: reason=token_invalidated");

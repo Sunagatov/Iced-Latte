@@ -89,15 +89,13 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void revokeAllForUserBySessionId(UUID sessionId) {
-        // findActiveByHash already revoked all sessions and logged replay_detected.
-        // This path handles legacy (non-session-managed) tokens that bypass that flow.
+    public void revokeAllForCompromisedUserBySessionId(UUID sessionId) {
         // Guard on both revokedAt and compromised: replay path sets both before throwing,
-        // so checking only revokedAt would still fire a duplicate revoke_all.
+        // so checking only revokedAt would still fire a duplicate revoke_all_compromised.
         sessionRepository
                 .findByIdForUpdate(sessionId)
                 .filter(this::isActiveSession)
-                .ifPresent(s -> revokeAllForUser(s.getUserId()));
+                .ifPresent(s -> revokeAllForCompromisedUser(s.getUserId()));
     }
 
     public List<AuthSessionEntity> listActiveSessions(UUID userId) {
@@ -133,7 +131,7 @@ public class AuthSessionService {
                     "auth.session.replay_detected: sessionId={}, userId={}",
                     maskSessionId(session.getId()),
                     session.getUserId());
-            revokeAllForUser(session.getUserId());
+            revokeAllForCompromisedUser(session.getUserId());
         } else {
             log.warn(
                     "auth.session.replay_repeated: sessionId={}, userId={}",
@@ -150,7 +148,7 @@ public class AuthSessionService {
                     "auth.session.reuse_detected: sessionId={}, userId={}",
                     maskSessionId(session.getId()),
                     session.getUserId());
-            revokeAllForUser(session.getUserId());
+            revokeAllForCompromisedUser(session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been revoked");
     }
@@ -167,6 +165,11 @@ public class AuthSessionService {
     private void revokeSession(AuthSessionEntity session) {
         session.setRevokedAt(now());
         sessionRepository.save(session);
+    }
+
+    private void revokeAllForCompromisedUser(UUID userId) {
+        sessionRepository.markCompromisedAndRevokeAllByUserId(userId, now());
+        log.info("auth.session.revoked_all_compromised: userId={}", userId);
     }
 
     private OffsetDateTime expiresAt(OffsetDateTime now) {

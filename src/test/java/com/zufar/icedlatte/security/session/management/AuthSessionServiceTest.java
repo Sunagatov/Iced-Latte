@@ -123,6 +123,7 @@ class AuthSessionServiceTest {
         UUID userId = UUID.randomUUID();
         service.revokeAllForUser(userId);
         verify(sessionRepository).revokeAllByUserId(eq(userId), any(OffsetDateTime.class));
+        verify(sessionRepository, never()).markCompromisedAndRevokeAllByUserId(any(), any());
     }
 
     @Test
@@ -190,6 +191,9 @@ class AuthSessionServiceTest {
         assertThatThrownBy(() -> service.findActiveByHash("oldHash"))
                 .isInstanceOf(JwtTokenBlacklistedException.class)
                 .hasMessageContaining("rotated");
+
+        assertThat(compromised.isCompromised()).isTrue();
+        verify(sessionRepository).markCompromisedAndRevokeAllByUserId(eq(compromised.getUserId()), any());
     }
 
     @Test
@@ -210,6 +214,7 @@ class AuthSessionServiceTest {
 
         verify(sessionRepository, never()).save(any(AuthSessionEntity.class));
         verify(sessionRepository, never()).revokeAllByUserId(any(UUID.class), any(OffsetDateTime.class));
+        verify(sessionRepository, never()).markCompromisedAndRevokeAllByUserId(any(), any());
     }
 
     @Test
@@ -259,7 +264,7 @@ class AuthSessionServiceTest {
 
         assertThat(revoked.isCompromised()).isTrue();
         verify(sessionRepository).save(revoked);
-        verify(sessionRepository).revokeAllByUserId(eq(userId), any(OffsetDateTime.class));
+        verify(sessionRepository).markCompromisedAndRevokeAllByUserId(eq(userId), any(OffsetDateTime.class));
     }
 
     @Test
@@ -310,8 +315,8 @@ class AuthSessionServiceTest {
     }
 
     @Test
-    @DisplayName("revokeAllForUserBySessionId revokes sessions only for active uncompromised session")
-    void revokeAllForUserBySessionIdRevokesOnlyForActiveSession() {
+    @DisplayName("revokeAllForCompromisedUserBySessionId marks sessions compromised only for active session")
+    void revokeAllForCompromisedUserBySessionIdMarksCompromisedOnlyForActiveSession() {
         UUID sessionId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         AuthSessionEntity active = AuthSessionEntity.builder()
@@ -322,14 +327,15 @@ class AuthSessionServiceTest {
                 .build();
         when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(active));
 
-        service.revokeAllForUserBySessionId(sessionId);
+        service.revokeAllForCompromisedUserBySessionId(sessionId);
 
-        verify(sessionRepository).revokeAllByUserId(eq(userId), any(OffsetDateTime.class));
+        verify(sessionRepository).markCompromisedAndRevokeAllByUserId(eq(userId), any(OffsetDateTime.class));
+        verify(sessionRepository, never()).revokeAllByUserId(any(UUID.class), any(OffsetDateTime.class));
     }
 
     @Test
-    @DisplayName("revokeAllForUserBySessionId does nothing for compromised session")
-    void revokeAllForUserBySessionIdNoOpForCompromisedSession() {
+    @DisplayName("revokeAllForCompromisedUserBySessionId does nothing for compromised session")
+    void revokeAllForCompromisedUserBySessionIdNoOpForCompromisedSession() {
         UUID sessionId = UUID.randomUUID();
         AuthSessionEntity compromised = AuthSessionEntity.builder()
                 .id(sessionId)
@@ -338,9 +344,10 @@ class AuthSessionServiceTest {
                 .build();
         when(sessionRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(compromised));
 
-        service.revokeAllForUserBySessionId(sessionId);
+        service.revokeAllForCompromisedUserBySessionId(sessionId);
 
         verify(sessionRepository, never()).revokeAllByUserId(any(UUID.class), any(OffsetDateTime.class));
+        verify(sessionRepository, never()).markCompromisedAndRevokeAllByUserId(any(), any());
     }
 
     private static ListAppender<ILoggingEvent> attachAppender() {
