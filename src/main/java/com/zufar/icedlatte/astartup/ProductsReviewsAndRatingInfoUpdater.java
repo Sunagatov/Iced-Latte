@@ -1,10 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import java.time.Duration;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -21,38 +19,29 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ProductsReviewsAndRatingInfoUpdater implements ApplicationRunner {
 
-    @Value("${migration.ratings.enabled:false}")
-    private boolean enabled;
-
-    @Value("${migration.timeout-minutes:5}")
-    private int timeoutMinutes;
-
     private final ProductReviewProductApi productReviewProductApi;
     private final ReviewMaintenanceApi reviewMaintenanceApi;
     private final TransactionTemplate transactionTemplate;
+    private final MigrationProperties migrationProperties;
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
-        if (!enabled) {
+        if (!migrationProperties.ratings().enabled()) {
             log.info("migration.ratings.skipped: reason=disabled");
             return;
         }
-        var executor = Executors.newVirtualThreadPerTaskExecutor();
-        Runnable runnableJob = () -> transactionTemplate.executeWithoutResult(_ -> {
+        StartupTaskRunner.runAsync(
+                "ratings startup migration", migrationProperties.timeout(), this::refreshReviewMetadata);
+    }
+
+    private void refreshReviewMetadata() {
+        transactionTemplate.executeWithoutResult(_ -> {
             log.info("migration.ratings.start");
-            long t0 = System.currentTimeMillis();
+            long t0 = System.nanoTime();
             productReviewProductApi.refreshAllReviewAggregates();
             reviewMaintenanceApi.refreshAllCounts();
-            log.info("migration.ratings.finish: durationMs={}", System.currentTimeMillis() - t0);
+            long duration = Duration.ofNanos(System.nanoTime() - t0).toMillis();
+            log.info("migration.ratings.finish: durationMs={}", duration);
         });
-
-        CompletableFuture.runAsync(runnableJob, executor)
-                .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
-                .whenComplete((_, e) -> {
-                    executor.close();
-                    if (e != null) {
-                        log.error("migration.ratings.error: message={}", e.getMessage(), e);
-                    }
-                });
     }
 }

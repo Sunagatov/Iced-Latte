@@ -2,22 +2,24 @@ package com.zufar.icedlatte.filestorage.aws;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
+import com.zufar.icedlatte.filestorage.exception.FileListException;
 import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
@@ -39,14 +41,9 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @ConditionalOnBean(S3Client.class)
 public class AwsObjectStorage implements ObjectStorage {
 
-    @Value("${spring.aws.link-expiration-time}")
-    private String linkExpirationTime;
-
-    @Value("${spring.aws.public-url-base:}")
-    private String publicUrlBase;
-
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+    private final AwsProperties awsProperties;
 
     @Override
     public boolean isConfigured() {
@@ -89,17 +86,14 @@ public class AwsObjectStorage implements ObjectStorage {
 
     @Override
     public void uploadDirectory(@NonNull String bucketName, @NonNull String directoryPath) throws IOException {
-        Path normalizedPath = Paths.get(directoryPath).normalize();
-        if (!normalizedPath
-                .toFile()
-                .getCanonicalPath()
-                .startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
+        Path normalizedPath = Paths.get(directoryPath).normalize().toRealPath(LinkOption.NOFOLLOW_LINKS);
+        if (!Files.isDirectory(normalizedPath, LinkOption.NOFOLLOW_LINKS)) {
             throw new BadRequestException("Invalid directory path.");
         }
 
         try (var pathStream = Files.walk(normalizedPath)) {
             pathStream
-                    .filter(Files::isRegularFile)
+                    .filter(filePath -> Files.isRegularFile(filePath, LinkOption.NOFOLLOW_LINKS))
                     .forEach(filePath -> uploadFilePath(bucketName, normalizedPath, filePath));
         }
     }
@@ -135,12 +129,12 @@ public class AwsObjectStorage implements ObjectStorage {
 
     @Override
     public @NonNull Optional<String> getUrl(@NonNull FileMetadataDto fileMetadataDto) {
-        if (StringUtils.hasText(publicUrlBase)) {
-            return Optional.of(publicUrlBase.stripTrailing() + "/" + fileMetadataDto.fileName());
+        if (StringUtils.hasText(awsProperties.publicUrlBase())) {
+            return Optional.of(publicUrl(fileMetadataDto));
         }
         try {
             String url = s3Presigner
-                    .presignGetObject(r -> r.signatureDuration(Duration.parse(linkExpirationTime))
+                    .presignGetObject(r -> r.signatureDuration(awsProperties.linkExpirationTime())
                             .getObjectRequest(
                                     g -> g.bucket(fileMetadataDto.bucketName()).key(fileMetadataDto.fileName())))
                     .url()
@@ -171,15 +165,25 @@ public class AwsObjectStorage implements ObjectStorage {
                     bucketName,
                     ex.getClass().getSimpleName(),
                     ex);
-            return List.of();
+            throw new FileListException(bucketName, ex);
         } catch (SdkClientException ex) {
             log.error(
                     "aws.s3.list.unreachable: bucket={}, exceptionClass={}",
                     bucketName,
                     ex.getClass().getSimpleName(),
                     ex);
-            return List.of();
+            throw new FileListException(bucketName, ex);
         }
+    }
+
+    private String publicUrl(FileMetadataDto fileMetadataDto) {
+        String baseUrl = awsProperties.publicUrlBase().stripTrailing();
+        String bucketName = fileMetadataDto.bucketName();
+        String encodedFileName = UriUtils.encodePath(fileMetadataDto.fileName(), StandardCharsets.UTF_8);
+        if (baseUrl.endsWith("/" + bucketName)) {
+            return baseUrl + "/" + encodedFileName;
+        }
+        return baseUrl + "/" + bucketName + "/" + encodedFileName;
     }
 
     private void uploadFilePath(String bucketName, Path normalizedPath, Path filePath) {

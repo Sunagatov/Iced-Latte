@@ -42,9 +42,16 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void store(MultipartFile file, FileMetadataDto fileMetadataDto) {
+        List<FileMetadataDto> existingMetadata = findAllMetadata(fileMetadataDto.relatedObjectId());
         objectStorage.upload(file, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
-        fileMetadataRepository.deleteByRelatedObjectId(fileMetadataDto.relatedObjectId());
-        fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
+        try {
+            fileMetadataRepository.deleteByRelatedObjectId(fileMetadataDto.relatedObjectId());
+            fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
+            enqueueReplacedObjects(existingMetadata, fileMetadataDto);
+        } catch (RuntimeException ex) {
+            deleteUploadedObjectAfterMetadataFailure(fileMetadataDto, ex);
+            throw ex;
+        }
     }
 
     @Override
@@ -101,6 +108,32 @@ public class FileStorageService implements FileStorageApi {
 
     private Optional<FileMetadataDto> findMetadata(UUID relatedObjectId) {
         return findMetadata(List.of(relatedObjectId)).values().stream().findFirst();
+    }
+
+    private void enqueueReplacedObjects(List<FileMetadataDto> existingMetadata, FileMetadataDto replacementMetadata) {
+        int maxAttempts = fileDeletionOutboxProperties.maxAttempts();
+        existingMetadata.stream()
+                .filter(existing -> !sameObject(existing, replacementMetadata))
+                .forEach(existing -> fileDeletionOutboxRepository.insertDeleteObjectEvent(existing, maxAttempts));
+    }
+
+    private boolean sameObject(FileMetadataDto first, FileMetadataDto second) {
+        return first.bucketName().equals(second.bucketName())
+                && first.fileName().equals(second.fileName());
+    }
+
+    private void deleteUploadedObjectAfterMetadataFailure(FileMetadataDto uploadedMetadata, RuntimeException failure) {
+        try {
+            objectStorage.delete(uploadedMetadata);
+        } catch (RuntimeException cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+            log.warn(
+                    "file.upload.cleanup_failed: objectId={}, bucket={}, key={}",
+                    uploadedMetadata.relatedObjectId(),
+                    uploadedMetadata.bucketName(),
+                    uploadedMetadata.fileName(),
+                    cleanupFailure);
+        }
     }
 
     private List<FileMetadataDto> findAllMetadata(UUID relatedObjectId) {

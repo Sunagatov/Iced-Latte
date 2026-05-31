@@ -6,14 +6,11 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.AdminOrderStatusUpdateDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
 import com.zufar.icedlatte.openapi.dto.OrderPageDto;
@@ -39,7 +36,7 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
     private final OrderStatusTransitioner statusTransitioner;
     private final OrderDtoConverter orderDtoConverter;
     private final CurrentUserProvider currentUserProvider;
-    private final PaginationConfig paginationConfig;
+    private final OrderPageRequestFactory orderPageRequestFactory;
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
@@ -54,12 +51,7 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
             @RequestParam(required = false) final Integer year,
             @RequestParam(required = false) final LocalDate dateFrom,
             @RequestParam(required = false) final LocalDate dateTo) {
-        PaginationConfig.Orders defaults = paginationConfig.orders();
-        Pageable pageable = PageRequestFactory.of(
-                page != null ? page : paginationConfig.defaultPageNumber(),
-                size != null ? Math.min(size, defaults.maxPageSize()) : defaults.defaultPageSize(),
-                sortBy != null ? sortBy : defaults.defaultSortAttribute(),
-                sortDirection != null ? sortDirection : defaults.defaultSortDirection());
+        var pageable = orderPageRequestFactory.build(page, size, sortBy, sortDirection);
         return ResponseEntity.ok(orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
     }
 

@@ -25,6 +25,13 @@ public class FileStorageExceptionHandler {
 
         var mapping =
                 switch (ex) {
+                    case FileListException _ ->
+                        new ErrorMapping(
+                                "exception.file.list_failed",
+                                ProblemType.FILE_LIST_FAILED,
+                                "File listing failed",
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "File storage is not available.");
                     case FileReadException _ ->
                         new ErrorMapping(
                                 "exception.file.read_failed",

@@ -3,19 +3,20 @@ package com.zufar.icedlatte.astartup;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.filestorage.api.FileStorageApi;
-import com.zufar.icedlatte.filestorage.exception.FileReadException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -23,6 +24,8 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationMigration unit tests")
 class ApplicationMigrationTest {
+
+    private static final String DEFAULT_DIRECTORY_PATH = "/seed/products";
 
     @Mock
     private FileStorageApi fileStorageService;
@@ -34,11 +37,7 @@ class ApplicationMigrationTest {
 
     @BeforeEach
     void setUp() {
-        migration = new ApplicationMigration(fileStorageService);
-        ReflectionTestUtils.setField(migration, "productPictureBucket", "products-bucket");
-        ReflectionTestUtils.setField(migration, "directoryPath", "/seed/products");
-        ReflectionTestUtils.setField(migration, "uploadEnabled", true);
-        ReflectionTestUtils.setField(migration, "timeoutMinutes", 5);
+        migration = migration(true, Duration.ofSeconds(5), "products-bucket");
     }
 
     @Nested
@@ -48,7 +47,7 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("skips immediately when AWS migration is not configured")
         void skipsWhenAwsConfigurationIsIncomplete() {
-            ReflectionTestUtils.setField(migration, "productPictureBucket", "");
+            migration = migration(true, Duration.ofSeconds(5), "");
 
             migration.run(args);
 
@@ -69,103 +68,108 @@ class ApplicationMigrationTest {
         @Test
         @DisplayName("when upload is disabled it still refreshes metadata")
         void uploadDisabledStillRefreshesMetadata() {
-            ReflectionTestUtils.setField(migration, "uploadEnabled", false);
+            migration = migration(false, Duration.ofSeconds(5), "products-bucket");
             when(fileStorageService.isEnabled()).thenReturn(true);
 
             migration.run(args);
 
-            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
             verify(fileStorageService).isEnabled();
-            verifyNoMoreInteractions(fileStorageService);
-        }
-    }
-
-    @Nested
-    @DisplayName("uploadFiles")
-    class UploadFiles {
-
-        @Test
-        @DisplayName("uploads the configured directory to the configured bucket")
-        void uploadsConfiguredDirectory() throws Exception {
-            invokeVoid("uploadFiles");
-
-            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
             verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
-        @DisplayName("swallows file upload failures")
-        void swallowsFileUploadFailures() throws Exception {
+        @DisplayName("uploads files before refreshing metadata")
+        void uploadsFilesBeforeRefreshingMetadata() throws Exception {
+            when(fileStorageService.isEnabled()).thenReturn(true);
+
+            migration.run(args);
+
+            InOrder inOrder = inOrder(fileStorageService);
+            inOrder.verify(fileStorageService).isEnabled();
+            inOrder.verify(fileStorageService, timeout(1000)).storeDirectory("products-bucket", "/seed/products");
+            inOrder.verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
+            verifyNoMoreInteractions(fileStorageService);
+        }
+
+        @Test
+        @DisplayName("continues to refresh existing metadata after upload failure")
+        void continuesToRefreshExistingMetadataAfterUploadFailure() throws Exception {
+            when(fileStorageService.isEnabled()).thenReturn(true);
             doThrow(new FileUploadException("seed.zip", new RuntimeException("boom")))
                     .when(fileStorageService)
                     .storeDirectory("products-bucket", "/seed/products");
 
-            assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
+            assertThatCode(() -> migration.run(args)).doesNotThrowAnyException();
 
-            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
+            verify(fileStorageService).isEnabled();
+            verify(fileStorageService, timeout(1000)).storeDirectory("products-bucket", "/seed/products");
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
             verifyNoMoreInteractions(fileStorageService);
         }
 
         @Test
-        @DisplayName("swallows file read failures")
-        void swallowsFileReadFailures() throws Exception {
-            doThrow(new FileReadException("seed.zip", new RuntimeException("boom")))
-                    .when(fileStorageService)
-                    .storeDirectory("products-bucket", "/seed/products");
-
-            assertThatCode(() -> invokeVoid("uploadFiles")).doesNotThrowAnyException();
-
-            verify(fileStorageService).storeDirectory("products-bucket", "/seed/products");
-            verifyNoMoreInteractions(fileStorageService);
-        }
-    }
-
-    @Nested
-    @DisplayName("refreshMetadataIndex")
-    class RefreshMetadataIndex {
-
-        @Test
-        @DisplayName("refreshes metadata from storage")
-        void refreshesMetadataFromStorage() {
-            invokeVoid("refreshMetadataIndex");
-
-            verify(fileStorageService).refreshBucketIndex("products-bucket");
-            verifyNoMoreInteractions(fileStorageService);
-        }
-
-        @Test
-        @DisplayName("swallows SDK failures")
-        void swallowsSdkFailures() {
+        @DisplayName("does not propagate storage metadata refresh failures")
+        void doesNotPropagateStorageMetadataRefreshFailures() {
+            migration = migration(false, Duration.ofSeconds(5), "products-bucket");
+            when(fileStorageService.isEnabled()).thenReturn(true);
             doThrow(SdkClientException.create("unreachable"))
                     .when(fileStorageService)
                     .refreshBucketIndex("products-bucket");
 
-            assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
+            assertThatCode(() -> migration.run(args)).doesNotThrowAnyException();
 
-            verify(fileStorageService).refreshBucketIndex("products-bucket");
+            verify(fileStorageService).isEnabled();
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
             verifyNoMoreInteractions(fileStorageService);
         }
-    }
-
-    @Nested
-    @DisplayName("refreshMetadataIndex persistence")
-    class RefreshMetadataPersistence {
 
         @Test
-        @DisplayName("swallows persistence failures")
-        void swallowsPersistenceFailures() {
+        @DisplayName("does not propagate metadata persistence failures")
+        void doesNotPropagateMetadataPersistenceFailures() {
+            migration = migration(false, Duration.ofSeconds(5), "products-bucket");
+            when(fileStorageService.isEnabled()).thenReturn(true);
             doThrow(new DataAccessResourceFailureException("db down"))
                     .when(fileStorageService)
                     .refreshBucketIndex("products-bucket");
 
-            assertThatCode(() -> invokeVoid("refreshMetadataIndex")).doesNotThrowAnyException();
+            assertThatCode(() -> migration.run(args)).doesNotThrowAnyException();
 
-            verify(fileStorageService).refreshBucketIndex("products-bucket");
+            verify(fileStorageService).isEnabled();
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
+            verifyNoMoreInteractions(fileStorageService);
+        }
+
+        @Test
+        @DisplayName("does not block startup when metadata refresh times out")
+        void doesNotBlockStartupWhenMetadataRefreshTimesOut() {
+            migration = migration(false, Duration.ofMillis(10), "products-bucket");
+            when(fileStorageService.isEnabled()).thenReturn(true);
+            doAnswer(_ -> {
+                        Thread.sleep(Duration.ofSeconds(5));
+                        return null;
+                    })
+                    .when(fileStorageService)
+                    .refreshBucketIndex("products-bucket");
+
+            assertThatCode(() -> migration.run(args)).doesNotThrowAnyException();
+
+            verify(fileStorageService).isEnabled();
+            verify(fileStorageService, timeout(1000)).refreshBucketIndex("products-bucket");
             verifyNoMoreInteractions(fileStorageService);
         }
     }
 
-    private void invokeVoid(String methodName, Object... args) {
-        ReflectionTestUtils.invokeMethod(migration, methodName, args);
+    private ApplicationMigration migration(boolean uploadEnabled, Duration timeout, String bucket) {
+        return new ApplicationMigration(
+                fileStorageService,
+                new MigrationProperties(
+                        new MigrationProperties.Upload(uploadEnabled),
+                        new MigrationProperties.Ratings(false),
+                        timeout,
+                        null),
+                new ProductImageMigrationProperties(
+                        new ProductImageMigrationProperties.Buckets(bucket),
+                        new ProductImageMigrationProperties.DefaultImageDirectory(DEFAULT_DIRECTORY_PATH)));
     }
 }

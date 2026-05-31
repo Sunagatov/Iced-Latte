@@ -4,16 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.cloudfront.model.CreateInvalidationRequest;
@@ -25,13 +24,10 @@ class AwsCloudFrontInvalidatorTest {
     @Mock
     private CloudFrontClient cloudFrontClient;
 
-    @InjectMocks
-    private AwsCloudFrontInvalidator invalidator;
-
     @Test
     @DisplayName("skips invalidation when the distribution ID is not configured")
     void skipsInvalidationWhenDistributionIdIsNotConfigured() {
-        ReflectionTestUtils.setField(invalidator, "distributionId", " ");
+        AwsCloudFrontInvalidator invalidator = new AwsCloudFrontInvalidator(cloudFrontClient, properties(" "));
 
         invalidator.invalidate("images/avatar.jpg");
 
@@ -41,7 +37,8 @@ class AwsCloudFrontInvalidatorTest {
     @Test
     @DisplayName("creates a one-path invalidation for the requested key")
     void createsOnePathInvalidationForRequestedKey() {
-        ReflectionTestUtils.setField(invalidator, "distributionId", "distribution-123");
+        AwsCloudFrontInvalidator invalidator =
+                new AwsCloudFrontInvalidator(cloudFrontClient, properties("distribution-123"));
 
         invalidator.invalidate("images/avatar.jpg");
 
@@ -61,5 +58,20 @@ class AwsCloudFrontInvalidatorTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static ArgumentCaptor<Consumer<CreateInvalidationRequest.Builder>> consumerCaptor() {
         return (ArgumentCaptor) ArgumentCaptor.forClass(Consumer.class);
+    }
+
+    private static AwsProperties properties(String distributionId) {
+        return new AwsProperties(
+                "access-key",
+                "secret-key",
+                "eu-west-2",
+                "",
+                "",
+                distributionId,
+                Duration.ofHours(1),
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(60),
+                Duration.ofSeconds(15));
     }
 }

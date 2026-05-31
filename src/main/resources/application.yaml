@@ -148,7 +148,6 @@ spring:
   # ───────────────────────────────────────────────────────────────────────────
   aws:
     enabled: ${AWS_ENABLED:false}
-    account-id: ${AWS_ACCOUNT_ID:}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
@@ -167,9 +166,6 @@ spring:
     connect-timeout: 10s
     api-call-attempt-timeout: 15s
     api-call-timeout: 60s
-    write-timeout: 60s
-    # Use HTTPS for S3 requests (disable only for local MinIO over HTTP).
-    secure: true
     # Local directory with seed product images used during data migration.
     default-image-directory:
       products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}

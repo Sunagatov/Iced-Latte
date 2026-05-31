@@ -3,9 +3,9 @@ package com.zufar.icedlatte.filestorage.aws;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 
@@ -19,14 +19,13 @@ import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 @ConditionalOnBean(CloudFrontClient.class)
 public class AwsCloudFrontInvalidator implements FileCacheInvalidationApi {
 
-    @Value("${spring.aws.cloudfront-distribution-id:}")
-    private String distributionId;
-
     private final CloudFrontClient cloudFrontClient;
+    private final AwsProperties awsProperties;
 
     @Override
     public void invalidate(@NonNull String fileKey) {
-        if (!org.springframework.util.StringUtils.hasText(distributionId)) {
+        String distributionId = awsProperties.cloudfrontDistributionId();
+        if (!StringUtils.hasText(distributionId)) {
             log.warn("cloudfront.invalidation.skipped: reason=distribution_id_not_configured");
             return;
         }

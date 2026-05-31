@@ -66,8 +66,12 @@ public class OAuthLoginService {
             throw new BadRequestException(provider.id() + " account subject is too long.");
         }
 
-        String email = EmailNormalizer.normalize(profile.email());
-        if (email == null || email.isBlank()) {
+        String rawEmail = profile.email();
+        if (rawEmail == null || rawEmail.isBlank()) {
+            throw new BadRequestException(provider.id() + " account has no email.");
+        }
+        String email = EmailNormalizer.normalize(rawEmail);
+        if (email.isBlank()) {
             throw new BadRequestException(provider.id() + " account has no email.");
         }
         if (email.length() > MAX_EMAIL_LENGTH) {

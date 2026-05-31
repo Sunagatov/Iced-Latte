@@ -22,14 +22,18 @@ public record AwsProperties(
 
         String endpointUrl,
 
+        String publicUrlBase,
+
+        String cloudfrontDistributionId,
+
+        @NotNull(message = "AWS link-expiration-time must not be null") @DefaultValue("1h")
+        Duration linkExpirationTime,
+
         @NotNull(message = "AWS read-timeout must not be null") @DefaultValue("10s")
         Duration readTimeout,
 
         @NotNull(message = "AWS connect-timeout must not be null") @DefaultValue("10s")
         Duration connectTimeout,
-
-        @NotNull(message = "AWS write-timeout must not be null") @DefaultValue("60s")
-        Duration writeTimeout,
 
         @NotNull(message = "AWS api-call-timeout must not be null") @DefaultValue("60s")
         Duration apiCallTimeout,

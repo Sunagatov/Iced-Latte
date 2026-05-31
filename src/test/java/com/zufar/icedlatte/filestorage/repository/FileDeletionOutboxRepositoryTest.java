@@ -15,9 +15,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
@@ -59,7 +61,7 @@ class FileDeletionOutboxRepositoryTest {
                         eq("{}"),
                         eq(10));
         assertThat(sql.getValue()).contains("INSERT INTO outbox_events");
-        assertThat(sql.getValue()).contains("ON CONFLICT (event_id)");
+        assertThat(sql.getValue()).contains("ON CONFLICT (aggregate_type, aggregate_id, event_type, event_version)");
     }
 
     @Test
@@ -71,7 +73,7 @@ class FileDeletionOutboxRepositoryTest {
         verify(jdbcTemplate)
                 .query(
                         sql.capture(),
-                        any(org.springframework.jdbc.core.RowMapper.class),
+                        ArgumentMatchers.<RowMapper<FileDeletionOutboxRepository.FileDeletionOutboxRow>>any(),
                         eq("file.object.delete"),
                         eq(25),
                         eq("worker-1"));

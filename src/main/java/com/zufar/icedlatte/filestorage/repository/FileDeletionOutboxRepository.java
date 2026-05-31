@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.filestorage.repository;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -31,7 +32,7 @@ public class FileDeletionOutboxRepository {
     private final ObjectMapper objectMapper;
 
     public void insertDeleteObjectEvent(FileMetadataDto metadata, int maxAttempts) {
-        UUID deletionId = UUID.randomUUID();
+        UUID deletionId = deletionId(metadata);
         jdbcTemplate.update(
                 """
                 INSERT INTO outbox_events (
@@ -39,7 +40,7 @@ public class FileDeletionOutboxRepository {
                     topic, partition_key, payload, headers, status, max_attempts
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'PENDING', ?)
-                ON CONFLICT (event_id) DO NOTHING
+                ON CONFLICT (aggregate_type, aggregate_id, event_type, event_version) DO NOTHING
                 """,
                 deletionId,
                 AGGREGATE_TYPE,
@@ -51,6 +52,11 @@ public class FileDeletionOutboxRepository {
                 toPayload(metadata),
                 EMPTY_HEADERS,
                 maxAttempts);
+    }
+
+    private UUID deletionId(FileMetadataDto metadata) {
+        String key = metadata.relatedObjectId() + "\0" + metadata.bucketName() + "\0" + metadata.fileName();
+        return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 
     public List<FileDeletionOutboxRow> claimDeleteObjectEvents(int batchSize, String workerId) {

@@ -83,12 +83,48 @@ class ClientIpExtractorTest {
         }
 
         @Test
+        @DisplayName("falls back to remote address when XFF contains invalid IPv4 literal")
+        void fallsBackToRemoteAddressWhenXffContainsInvalidIpv4Literal() {
+            setTrustedProxies(List.of("10.0.0.1"));
+            HttpServletRequest request = request("10.0.0.1", "999.999.999.999");
+
+            assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
+        @DisplayName("falls back to remote address when XFF contains IPv4 with leading zeroes")
+        void fallsBackToRemoteAddressWhenXffContainsIpv4WithLeadingZeroes() {
+            setTrustedProxies(List.of("10.0.0.1"));
+            HttpServletRequest request = request("10.0.0.1", "001.002.003.004");
+
+            assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
         @DisplayName("accepts valid IPv6 address in XFF")
         void acceptsValidIpv6AddressInXff() {
             setTrustedProxies(List.of("10.0.0.1"));
             HttpServletRequest request = request("10.0.0.1", "2001:db8::1");
 
             assertThat(extractor.extract(request)).isEqualTo("2001:db8::1");
+        }
+
+        @Test
+        @DisplayName("falls back to remote address when XFF contains malformed IPv6 literal")
+        void fallsBackToRemoteAddressWhenXffContainsMalformedIpv6Literal() {
+            setTrustedProxies(List.of("10.0.0.1"));
+            HttpServletRequest request = request("10.0.0.1", "2001:db8:::1");
+
+            assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
+        @DisplayName("falls back to remote address when XFF contains scoped IPv6 literal")
+        void fallsBackToRemoteAddressWhenXffContainsScopedIpv6Literal() {
+            setTrustedProxies(List.of("10.0.0.1"));
+            HttpServletRequest request = request("10.0.0.1", "fe80::1%en0");
+
+            assertThat(extractor.extract(request)).isEqualTo("10.0.0.1");
         }
 
         @Test

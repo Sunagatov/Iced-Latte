@@ -31,6 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(name = "google.enabled", havingValue = "true")
 public class GoogleTokenExchanger implements OAuthProviderClient {
 
+    private static final String MISSING_ID_TOKEN_MESSAGE =
+            "Google authentication failed: token response did not include a valid ID token.";
+    private static final String UNVERIFIABLE_ID_TOKEN_MESSAGE =
+            "Google authentication failed: ID token could not be verified.";
+    private static final String MISSING_IDENTITY_FIELDS_MESSAGE =
+            "Google authentication failed: ID token is missing required identity fields.";
+    private static final String EXCHANGE_FAILED_MESSAGE =
+            "Google authentication failed: authorization code exchange or ID token verification failed.";
+
     private final String authServerUrl;
     private final String clientId;
     private final String redirectUri;
@@ -83,6 +92,9 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
     public OAuthProfile exchangeCode(String authorizationCode) {
         try {
             GoogleIdToken.Payload payload = exchange(authorizationCode);
+            if (payload == null || payload.getSubject() == null || payload.getEmail() == null) {
+                throw new UnauthorizedException(MISSING_IDENTITY_FIELDS_MESSAGE);
+            }
             return new OAuthProfile(
                     payload.getSubject(),
                     payload.getEmail(),
@@ -90,7 +102,7 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
                     (String) payload.get("given_name"),
                     (String) payload.get("family_name"));
         } catch (GeneralSecurityException | IOException _) {
-            throw new UnauthorizedException("Google authentication failed.");
+            throw new UnauthorizedException(EXCHANGE_FAILED_MESSAGE);
         }
     }
 
@@ -100,11 +112,11 @@ public class GoogleTokenExchanger implements OAuthProviderClient {
                 .execute();
         Object rawIdToken = tokenResponse.get("id_token");
         if (!(rawIdToken instanceof String idTokenValue) || idTokenValue.isBlank()) {
-            throw new UnauthorizedException("Google authentication failed.");
+            throw new UnauthorizedException(MISSING_ID_TOKEN_MESSAGE);
         }
         GoogleIdToken idToken = verifier.verify(idTokenValue);
         if (idToken == null) {
-            throw new UnauthorizedException("Google authentication failed.");
+            throw new UnauthorizedException(UNVERIFIABLE_ID_TOKEN_MESSAGE);
         }
         return idToken.getPayload();
     }

@@ -91,9 +91,11 @@ class AWSConfigTest {
                 "secret-key",
                 "eu-west-2",
                 endpointUrl,
+                "",
+                "",
+                Duration.ofHours(1),
                 Duration.ofSeconds(10),
                 Duration.ofSeconds(10),
-                Duration.ofSeconds(60),
                 Duration.ofSeconds(60),
                 Duration.ofSeconds(15)));
     }

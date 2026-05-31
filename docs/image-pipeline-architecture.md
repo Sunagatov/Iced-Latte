@@ -53,7 +53,7 @@ Runs on boot as an `ApplicationRunner`. Executes asynchronously on a virtual thr
 1. **(Optional) Upload** — if `migration.upload.enabled=true`, uploads local `seed/products/` directory to S3.
 2. **Refresh metadata index** — calls `FileStorageService.refreshBucketIndex(bucketName)`.
 
-**⚠️ Async timing:** The migration runs in a `CompletableFuture` on a virtual thread. The app reports healthy (healthcheck passes) **before** the migration completes. This means:
+**Async timing:** The migration runs on a virtual thread. The app may report healthy before the migration completes. This means:
 - Requests hitting the API immediately after restart may get placeholder images
 - Wait for `migration.metadata.refreshed` in logs before verifying
 - The migration has a configurable timeout (`migration.timeout-minutes: 5`)
@@ -161,9 +161,11 @@ Two URL strategies:
 
 1. **Public URL (preferred):** If `spring.aws.public-url-base` is set:
    ```
-   publicUrlBase + "/" + fileName
+   publicUrlBase + "/" + bucketName + "/" + fileName
    → https://fzvwwpzdudxrdzwbucaw.supabase.co/storage/v1/object/public/iced-latte-products/Latte_uuid/card_logo.png
    ```
+
+   If the configured base URL already ends with the bucket name, the bucket segment is not duplicated.
 
 2. **Pre-signed URL (fallback):** If no public base, generates a time-limited signed URL via `S3Presigner`.
 

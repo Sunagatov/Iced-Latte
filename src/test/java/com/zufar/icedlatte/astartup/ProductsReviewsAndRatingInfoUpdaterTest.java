@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +16,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -42,10 +42,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
 
     @BeforeEach
     void setUp() {
-        updater = new ProductsReviewsAndRatingInfoUpdater(
-                productReviewProductGateway, reviewMaintenanceApi, transactionTemplate);
-        ReflectionTestUtils.setField(updater, "enabled", true);
-        ReflectionTestUtils.setField(updater, "timeoutMinutes", 5);
+        updater = updater(true, Duration.ofSeconds(5));
     }
 
     @Nested
@@ -55,7 +52,7 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         @Test
         @DisplayName("skips when ratings migration is disabled")
         void skipsWhenDisabled() {
-            ReflectionTestUtils.setField(updater, "enabled", false);
+            updater = updater(false, Duration.ofSeconds(5));
 
             updater.run(args);
 
@@ -63,8 +60,8 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         }
 
         @Test
-        @DisplayName("executes all rating backfill updates inside the transaction callback")
-        void executesAllUpdatesInTransaction() {
+        @DisplayName("refreshes all rating and review metadata in order")
+        void refreshesAllRatingAndReviewMetadataInOrder() {
             doAnswer(invocation -> {
                         Consumer<TransactionStatus> callback = invocation.getArgument(0);
                         callback.accept(null);
@@ -83,9 +80,27 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
         }
 
         @Test
-        @DisplayName("does not propagate async transaction failures to the caller")
-        void doesNotPropagateAsyncFailures() {
+        @DisplayName("does not propagate async transaction failures to the startup caller")
+        void doesNotPropagateAsyncTransactionFailuresToStartupCaller() {
             doThrow(new IllegalStateException("boom")).when(transactionTemplate).executeWithoutResult(any());
+
+            assertThatCode(() -> updater.run(args)).doesNotThrowAnyException();
+
+            verify(transactionTemplate, timeout(1000)).executeWithoutResult(any());
+            verifyNoInteractions(reviewMaintenanceApi);
+            verifyNoMoreInteractions(transactionTemplate, productReviewProductGateway, reviewMaintenanceApi);
+        }
+
+        @Test
+        @DisplayName("does not block startup when ratings migration times out")
+        void doesNotBlockStartupWhenRatingsMigrationTimesOut() {
+            updater = updater(true, Duration.ofMillis(10));
+            doAnswer(_ -> {
+                        Thread.sleep(Duration.ofSeconds(5));
+                        return null;
+                    })
+                    .when(transactionTemplate)
+                    .executeWithoutResult(any());
 
             assertThatCode(() -> updater.run(args)).doesNotThrowAnyException();
 
@@ -93,5 +108,17 @@ class ProductsReviewsAndRatingInfoUpdaterTest {
             verifyNoInteractions(productReviewProductGateway, reviewMaintenanceApi);
             verifyNoMoreInteractions(transactionTemplate);
         }
+    }
+
+    private ProductsReviewsAndRatingInfoUpdater updater(boolean ratingsEnabled, Duration timeout) {
+        return new ProductsReviewsAndRatingInfoUpdater(
+                productReviewProductGateway,
+                reviewMaintenanceApi,
+                transactionTemplate,
+                new MigrationProperties(
+                        new MigrationProperties.Upload(false),
+                        new MigrationProperties.Ratings(ratingsEnabled),
+                        timeout,
+                        null));
     }
 }

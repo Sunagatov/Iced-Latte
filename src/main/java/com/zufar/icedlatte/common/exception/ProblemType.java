@@ -38,6 +38,7 @@ public class ProblemType {
     public static final String VALIDATION_FAILED = "validation-failed";
     public static final String FILE_TOO_LARGE = "file-too-large";
     public static final String FILE_READ_FAILED = "file-read-failed";
+    public static final String FILE_LIST_FAILED = "file-list-failed";
     public static final String FILE_UPLOAD_FAILED = "file-upload-failed";
 
     // Payment

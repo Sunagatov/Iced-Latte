@@ -1,10 +1,8 @@
 package com.zufar.icedlatte.astartup;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import java.time.Duration;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.dao.DataAccessException;
@@ -22,19 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ApplicationMigration implements ApplicationRunner {
 
-    @Value("${spring.aws.buckets.products:}")
-    private String productPictureBucket;
-
-    @Value("${spring.aws.default-image-directory.products:}")
-    private String directoryPath;
-
-    @Value("${migration.upload.enabled:false}")
-    private boolean uploadEnabled;
-
-    @Value("${migration.timeout-minutes:5}")
-    private int timeoutMinutes;
-
     private final FileStorageApi fileStorageApi;
+    private final MigrationProperties migrationProperties;
+    private final ProductImageMigrationProperties productImageMigrationProperties;
 
     @Override
     public void run(@NonNull ApplicationArguments args) {
@@ -42,42 +30,38 @@ public class ApplicationMigration implements ApplicationRunner {
             log.info("migration.aws.skipped: reason=not_configured");
             return;
         }
-        var executor = Executors.newVirtualThreadPerTaskExecutor();
-        Runnable uploadFilesJob =
-                uploadEnabled ? this::uploadFiles : () -> log.info("migration.upload.skipped: reason=disabled");
-
-        CompletableFuture.runAsync(uploadFilesJob, executor)
-                .thenRunAsync(this::refreshMetadataIndex, executor)
-                .orTimeout(timeoutMinutes, java.util.concurrent.TimeUnit.MINUTES)
-                .whenComplete((_, e) -> {
-                    executor.close();
-                    if (e != null) {
-                        log.error(
-                                "migration.aws.error: exceptionClass={}",
-                                e.getClass().getSimpleName(),
-                                e);
-                    }
-                });
+        StartupTaskRunner.runAsync("AWS startup migration", migrationProperties.timeout(), this::runMigration);
     }
 
     private boolean isAwsConfigured() {
-        return productPictureBucket != null
-                && !productPictureBucket.isEmpty()
+        String productBucket = productBucket();
+        String directoryPath = directoryPath();
+        return productBucket != null
+                && !productBucket.isEmpty()
                 && directoryPath != null
                 && !directoryPath.isEmpty()
                 && fileStorageApi.isEnabled();
     }
 
+    private void runMigration() {
+        if (migrationProperties.upload().enabled()) {
+            uploadFiles();
+        } else {
+            log.info("migration.upload.skipped: reason=disabled");
+        }
+        refreshMetadataIndex();
+    }
+
     private void uploadFiles() {
         try {
-            log.info("migration.upload.start: path={}", directoryPath);
-            long t0 = System.currentTimeMillis();
-            fileStorageApi.storeDirectory(productPictureBucket, directoryPath);
-            long durationMs = System.currentTimeMillis() - t0;
+            log.info("migration.upload.start: path={}", directoryPath());
+            long t0 = System.nanoTime();
+            fileStorageApi.storeDirectory(productBucket(), directoryPath());
+            long durationMs = Duration.ofNanos(System.nanoTime() - t0).toMillis();
             log.info(
                     "migration.upload.finish: bucket={}, path={}, durationMs={}",
-                    productPictureBucket,
-                    directoryPath,
+                    productBucket(),
+                    directoryPath(),
                     durationMs);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
@@ -94,8 +78,8 @@ public class ApplicationMigration implements ApplicationRunner {
 
     private void refreshMetadataIndex() {
         try {
-            fileStorageApi.refreshBucketIndex(productPictureBucket);
-            log.info("migration.metadata.refreshed: bucket={}", productPictureBucket);
+            fileStorageApi.refreshBucketIndex(productBucket());
+            log.info("migration.metadata.refreshed: bucket={}", productBucket());
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
             log.warn(
                     "migration.metadata.refresh_error: exceptionClass={}",
@@ -107,5 +91,13 @@ public class ApplicationMigration implements ApplicationRunner {
                     e.getClass().getSimpleName(),
                     e);
         }
+    }
+
+    private String productBucket() {
+        return productImageMigrationProperties.productBucket();
+    }
+
+    private String directoryPath() {
+        return productImageMigrationProperties.productDirectoryPath();
     }
 }

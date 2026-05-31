@@ -90,6 +90,7 @@ class UserAuthenticationServiceTest {
     @Test
     @DisplayName("Should throw UserAccountLockedException when user account is locked")
     void shouldThrowUserAccountLockedExceptionWhenUserAccountIsLocked() {
+        when(request.getEmail()).thenReturn("locked@example.com");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new LockedException("User account is locked"));
 
@@ -101,6 +102,7 @@ class UserAuthenticationServiceTest {
     @Test
     @DisplayName("Should throw InvalidCredentialsException when user email is not found")
     void shouldThrowInvalidCredentialsExceptionWhenUserEmailIsNotFound() {
+        when(request.getEmail()).thenReturn("missing@example.com");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new UsernameNotFoundException("missing"));
 
@@ -113,6 +115,7 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should throw InvalidCredentialsException when principal is not UserDetails")
     void shouldThrowInvalidCredentialsExceptionWhenPrincipalIsNotUserDetails() {
         Authentication authentication = mock(Authentication.class);
+        when(request.getEmail()).thenReturn("known@example.com");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn("plain-string-principal");
@@ -126,6 +129,7 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should rethrow unexpected authentication exceptions")
     void shouldRethrowUnexpectedAuthenticationExceptions() {
         AuthenticationException failure = new AuthenticationException("boom") {};
+        when(request.getEmail()).thenReturn("known@example.com");
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(failure);
 

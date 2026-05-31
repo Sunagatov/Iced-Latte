@@ -6,15 +6,12 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.common.pagination.PageRequestFactory;
 import com.zufar.icedlatte.openapi.dto.*;
 import com.zufar.icedlatte.order.service.OrderCreator;
 import com.zufar.icedlatte.order.service.OrderReorderService;
@@ -40,7 +37,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
     private final OrderCreator orderCreator;
     private final OrderStatusTransitioner orderStatusTransitioner;
     private final OrderReorderService orderReorderService;
-    private final PaginationConfig paginationConfig;
+    private final OrderPageRequestFactory orderPageRequestFactory;
 
     @Override
     @GetMapping
@@ -54,12 +51,7 @@ public class OrderEndpoint implements com.zufar.icedlatte.openapi.order.api.Orde
             @RequestParam(required = false) final LocalDate dateFrom,
             @RequestParam(required = false) final LocalDate dateTo) {
         var userId = currentUserProvider.getUserId();
-        var defaults = paginationConfig.orders();
-        Pageable pageable = PageRequestFactory.of(
-                page != null ? page : paginationConfig.defaultPageNumber(),
-                size != null ? Math.min(size, defaults.maxPageSize()) : defaults.defaultPageSize(),
-                sortBy != null ? sortBy : defaults.defaultSortAttribute(),
-                sortDirection != null ? sortDirection : defaults.defaultSortDirection());
+        var pageable = orderPageRequestFactory.build(page, size, sortBy, sortDirection);
         var result = orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable);
         return ResponseEntity.ok(result);
     }

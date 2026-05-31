@@ -59,6 +59,8 @@ public class FileStorageServiceTest {
         UUID relatedObjectId = UUID.randomUUID();
         FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
         FileMetadata entity = new FileMetadata();
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of());
         when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(entity);
 
         fileStorageService.store(multipartFile, metadata);
@@ -66,6 +68,58 @@ public class FileStorageServiceTest {
         verify(objectStorage).upload(multipartFile, "bucket", "key");
         verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
         verify(fileMetadataRepository).save(entity);
+    }
+
+    @Test
+    @DisplayName("store records deletion for replaced object metadata")
+    void storeRecordsDeletionForReplacedObjectMetadata() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata oldEntity = fileMetadataEntity(relatedObjectId);
+        FileMetadataDto oldMetadata = new FileMetadataDto(relatedObjectId, "bucket", "old-key");
+        FileMetadataDto newMetadata = new FileMetadataDto(relatedObjectId, "bucket", "new-key");
+        FileMetadata newEntity = new FileMetadata();
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(oldEntity));
+        when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(oldMetadata);
+        when(fileMetadataDtoConverter.toEntity(newMetadata)).thenReturn(newEntity);
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(10);
+
+        fileStorageService.store(multipartFile, newMetadata);
+
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(oldMetadata, 10);
+    }
+
+    @Test
+    @DisplayName("store does not record deletion when replacing the same object key")
+    void storeDoesNotRecordDeletionForSameObjectKey() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata oldEntity = fileMetadataEntity(relatedObjectId);
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(oldEntity));
+        when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(metadata);
+        when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(new FileMetadata());
+
+        fileStorageService.store(multipartFile, metadata);
+
+        verify(fileDeletionOutboxRepository, never()).insertDeleteObjectEvent(any(), anyInt());
+    }
+
+    @Test
+    @DisplayName("store deletes uploaded object when metadata persistence fails")
+    void storeDeletesUploadedObjectWhenMetadataPersistenceFails() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        RuntimeException failure = new IllegalStateException("database down");
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of());
+        when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(new FileMetadata());
+        when(fileMetadataRepository.save(any())).thenThrow(failure);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> fileStorageService.store(multipartFile, metadata))
+                .isSameAs(failure);
+
+        verify(objectStorage).delete(metadata);
     }
 
     @Test

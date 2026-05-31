@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.util;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -18,10 +19,6 @@ public class ClientIpExtractor {
 
     // Matches only literal IPv4 addresses — no hostnames, no DNS resolution.
     private static final Pattern IPV4 = Pattern.compile("^(\\d{1,3}\\.){3}\\d{1,3}$");
-
-    // Requires at least two colon-separated groups of 1–4 hex digits, covering full, compressed,
-    // and mixed IPv4-in-IPv6 forms while rejecting bare strings like ":" or "abc".
-    private static final Pattern IPV6 = Pattern.compile("^[0-9a-fA-F]{0,4}(:[0-9a-fA-F]{0,4}){2,7}(%[\\w.]+)?$");
 
     @Value("${security.rate-limit.trusted-proxies:${security.trusted-proxies:}}")
     private List<String> trustedProxies;
@@ -145,6 +142,37 @@ public class ClientIpExtractor {
     }
 
     private static boolean isLiteralIp(String ip) {
-        return IPV4.matcher(ip).matches() || IPV6.matcher(ip).matches();
+        return isLiteralIpv4(ip) || isLiteralIpv6(ip);
+    }
+
+    private static boolean isLiteralIpv4(String ip) {
+        if (!IPV4.matcher(ip).matches()) {
+            return false;
+        }
+        String[] octets = ip.split("\\.");
+        for (String octet : octets) {
+            if (octet.length() > 1 && octet.startsWith("0")) {
+                return false;
+            }
+            int value = Integer.parseInt(octet);
+            if (value > 255) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isLiteralIpv6(String ip) {
+        if (!ip.contains(":")) {
+            return false;
+        }
+        if (ip.contains("%")) {
+            return false;
+        }
+        try {
+            return InetAddress.getByName(ip) instanceof Inet6Address;
+        } catch (Exception _) {
+            return false;
+        }
     }
 }

@@ -42,6 +42,24 @@ class FileStorageExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("handleFileStorageException returns SERVICE_UNAVAILABLE for FileListException")
+    void handleFileListException() {
+        FileListException ex = new FileListException("products", new RuntimeException("list failed"));
+        ProblemDetail expected = ProblemDetail.forStatus(503);
+        when(problemDetailFactory.build(
+                        ProblemType.FILE_LIST_FAILED,
+                        "File listing failed",
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "File storage is not available."))
+                .thenReturn(expected);
+
+        ResponseEntity<ProblemDetail> result = handler.handleFileStorageException(ex);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(result.getBody()).isEqualTo(expected);
+    }
+
+    @Test
     @DisplayName("handleFileStorageException returns INTERNAL_SERVER_ERROR for FileUploadException")
     void handleFileUploadException() {
         FileUploadException ex = new FileUploadException("file.txt", new RuntimeException("upload failed"));

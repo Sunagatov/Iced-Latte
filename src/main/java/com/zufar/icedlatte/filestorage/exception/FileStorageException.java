@@ -5,7 +5,7 @@ import lombok.Getter;
 /** Sealed base for all file-storage exceptions. Enables exhaustive pattern matching in switch expressions (Java 25). */
 @Getter
 public abstract sealed class FileStorageException extends RuntimeException
-        permits FileReadException, FileUploadException {
+        permits FileListException, FileReadException, FileUploadException {
 
     private final String fileName;
 

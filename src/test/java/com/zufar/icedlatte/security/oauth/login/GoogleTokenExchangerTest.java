@@ -120,6 +120,64 @@ class GoogleTokenExchangerTest {
     }
 
     @Test
+    @DisplayName("exchangeCode rejects Google payloads without required identity fields")
+    void exchangeCodeRejectsGooglePayloadsWithoutRequiredIdentityFields() throws GeneralSecurityException, IOException {
+        GoogleTokenExchanger exchanger = exchangerWithMocks();
+        GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+        payload.setSubject("google-subject");
+        payload.setEmail(null);
+        payload.setEmailVerified(true);
+
+        when(flow.newTokenRequest("auth-code")).thenReturn(tokenRequest);
+        when(tokenRequest.setRedirectUri("https://app.example.com/callback")).thenReturn(tokenRequest);
+        when(tokenRequest.execute()).thenReturn(tokenResponse);
+        when(tokenResponse.get("id_token")).thenReturn("id-token");
+        when(verifier.verify("id-token")).thenReturn(idToken);
+        when(idToken.getPayload()).thenReturn(payload);
+
+        assertThatThrownBy(() -> exchanger.exchangeCode("auth-code"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Google authentication failed: ID token is missing required identity fields.");
+    }
+
+    @Test
+    @DisplayName("exchangeCode rejects Google ID tokens without payload")
+    void exchangeCodeRejectsGoogleIdTokensWithoutPayload() throws GeneralSecurityException, IOException {
+        GoogleTokenExchanger exchanger = exchangerWithMocks();
+
+        when(flow.newTokenRequest("auth-code")).thenReturn(tokenRequest);
+        when(tokenRequest.setRedirectUri("https://app.example.com/callback")).thenReturn(tokenRequest);
+        when(tokenRequest.execute()).thenReturn(tokenResponse);
+        when(tokenResponse.get("id_token")).thenReturn("id-token");
+        when(verifier.verify("id-token")).thenReturn(idToken);
+        when(idToken.getPayload()).thenReturn(null);
+
+        assertThatThrownBy(() -> exchanger.exchangeCode("auth-code"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Google authentication failed: ID token is missing required identity fields.");
+    }
+
+    @Test
+    @DisplayName("exchangeCode rejects Google payloads without subject")
+    void exchangeCodeRejectsGooglePayloadsWithoutSubject() throws GeneralSecurityException, IOException {
+        GoogleTokenExchanger exchanger = exchangerWithMocks();
+        GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+        payload.setEmail("user@example.com");
+        payload.setEmailVerified(true);
+
+        when(flow.newTokenRequest("auth-code")).thenReturn(tokenRequest);
+        when(tokenRequest.setRedirectUri("https://app.example.com/callback")).thenReturn(tokenRequest);
+        when(tokenRequest.execute()).thenReturn(tokenResponse);
+        when(tokenResponse.get("id_token")).thenReturn("id-token");
+        when(verifier.verify("id-token")).thenReturn(idToken);
+        when(idToken.getPayload()).thenReturn(payload);
+
+        assertThatThrownBy(() -> exchanger.exchangeCode("auth-code"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Google authentication failed: ID token is missing required identity fields.");
+    }
+
+    @Test
     @DisplayName("exchange rejects unverifiable ID tokens")
     void exchangeRejectsUnverifiableIdTokens() throws GeneralSecurityException, IOException {
         GoogleTokenExchanger exchanger = exchangerWithMocks();
@@ -132,7 +190,7 @@ class GoogleTokenExchangerTest {
 
         assertThatThrownBy(() -> exchanger.exchange("auth-code"))
                 .isInstanceOf(UnauthorizedException.class)
-                .hasMessage("Google authentication failed.");
+                .hasMessage("Google authentication failed: ID token could not be verified.");
     }
 
     @Test
@@ -147,7 +205,7 @@ class GoogleTokenExchangerTest {
 
         assertThatThrownBy(() -> exchanger.exchange("auth-code"))
                 .isInstanceOf(UnauthorizedException.class)
-                .hasMessage("Google authentication failed.");
+                .hasMessage("Google authentication failed: token response did not include a valid ID token.");
     }
 
     private GoogleTokenExchanger exchangerWithMocks() {
