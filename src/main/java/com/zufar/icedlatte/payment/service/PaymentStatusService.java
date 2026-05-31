@@ -16,6 +16,7 @@ import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+import com.zufar.icedlatte.payment.service.checkout.StripeSessionGateway;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class PaymentStatusService {
     private final CartCheckoutApi cartCheckoutApi;
     private final CurrentUserProvider currentUserProvider;
     private final TransactionTemplate transactionTemplate;
+    private final StripeSessionGateway stripeSessionGateway;
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         OrderSnapshot order = orderPaymentApi.getSnapshot(orderId);
@@ -79,7 +81,7 @@ public class PaymentStatusService {
      */
     private void trySyncFromStripe(Payment payment) {
         try {
-            Session session = Session.retrieve(payment.getProviderSessionId());
+            Session session = stripeSessionGateway.retrieve(payment.getProviderSessionId());
             if ("paid".equals(session.getPaymentStatus())) {
                 syncPaidStatus(payment.getOrderId(), session);
             }
@@ -103,27 +105,30 @@ public class PaymentStatusService {
             // Reconciliation guard: verify amount/currency
             Long stripeAmount = session.getAmountTotal();
             String stripeCurrency = session.getCurrency();
-            if (stripeAmount != null && stripeCurrency != null) {
-                if (!stripeAmount.equals(locked.getAmountMinor())
-                        || !stripeCurrency.equalsIgnoreCase(locked.getCurrency())) {
-                    log.error("payment.sync.amount_mismatch: orderId={}", orderId);
-                    locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
-                    paymentRepository.save(locked);
-                    return;
-                }
+            String paymentIntent = session.getPaymentIntent();
+            if (stripeAmount == null
+                    || stripeCurrency == null
+                    || paymentIntent == null
+                    || !stripeAmount.equals(locked.getAmountMinor())
+                    || !stripeCurrency.equalsIgnoreCase(locked.getCurrency())) {
+                log.error("payment.sync.reconciliation_failed: orderId={}", orderId);
+                locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
+                locked.setLatestEventType("sync.session.retrieve");
+                paymentRepository.save(locked);
+                return;
             }
 
-            locked.setProviderPaymentIntentId(session.getPaymentIntent());
+            locked.setProviderPaymentIntentId(paymentIntent);
             locked.setStatus(PaymentStatus.PAID);
             locked.setLatestEventType("sync.session.retrieve");
             paymentRepository.save(locked);
 
             orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed (sync fallback)");
-            orderPaymentApi.assignPaymentIntent(orderId, session.getPaymentIntent());
+            orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
 
             cartCheckoutApi.deleteCartForUser(locked.getUserId());
 
-            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, session.getPaymentIntent());
+            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
         });
     }
 }

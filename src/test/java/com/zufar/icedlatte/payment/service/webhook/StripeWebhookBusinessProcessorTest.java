@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,11 +17,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.stripe.model.Charge;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
+import com.zufar.icedlatte.order.api.OrderSnapshot;
+import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
@@ -133,6 +137,30 @@ class StripeWebhookBusinessProcessorTest {
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
         verify(orderPaymentApi, never()).confirmPayment(any(), any());
+    }
+
+    @Test
+    @DisplayName("Paid session with missing reconciliation data sets RECONCILIATION_FAILED")
+    void markPaid_missingAmount_setsReconciliationFailed() {
+        Event event = mockEvent("checkout.session.completed", "evt_missing_amount");
+        Session session = mockSession("paid", null, "usd", "pi_test_123");
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
+        verify(orderPaymentApi, never()).confirmPayment(any(), any());
+        verify(shoppingCartService, never()).deleteCartForUser(any());
     }
 
     @Test
@@ -332,6 +360,39 @@ class StripeWebhookBusinessProcessorTest {
         verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
+    @Test
+    @DisplayName("charge.refunded confirms refund and marks payment REFUNDED")
+    void chargeRefunded_refundRequested_marksPaymentRefunded() {
+        Event event = mockEvent("charge.refunded", "evt_refund");
+        Charge charge = mock(Charge.class);
+        when(charge.getPaymentIntent()).thenReturn("pi_refund");
+        mockEventObject(event, charge);
+        OrderSnapshot order = new OrderSnapshot(
+                ORDER_ID,
+                USER_ID,
+                OrderStatusSnapshot.REFUND_REQUESTED,
+                java.math.BigDecimal.TEN,
+                "pi_refund",
+                List.of());
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .providerPaymentIntentId("pi_refund")
+                .status(PaymentStatus.PAID)
+                .build();
+
+        when(orderPaymentApi.findByStripePaymentIntentId("pi_refund")).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        processor.process(event);
+
+        verify(orderPaymentApi).confirmRefund(ORDER_ID, "Stripe refund confirmed");
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(payment.getRawEventId()).isEqualTo("evt_refund");
+        assertThat(payment.getLatestEventType()).isEqualTo("charge.refunded");
+    }
+
     // --- Helpers ---
 
     private Event mockEvent(String type, String eventId) {
@@ -353,8 +414,12 @@ class StripeWebhookBusinessProcessorTest {
     }
 
     private void mockEventSession(Event event, Session session) {
+        mockEventObject(event, session);
+    }
+
+    private void mockEventObject(Event event, com.stripe.model.StripeObject object) {
         EventDataObjectDeserializer deserializer = mock(EventDataObjectDeserializer.class);
         when(event.getDataObjectDeserializer()).thenReturn(deserializer);
-        when(deserializer.getObject()).thenReturn(Optional.of(session));
+        when(deserializer.getObject()).thenReturn(Optional.of(object));
     }
 }

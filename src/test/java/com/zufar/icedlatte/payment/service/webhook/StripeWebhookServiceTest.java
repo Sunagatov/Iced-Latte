@@ -11,8 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 
 import ch.qos.logback.classic.Level;
@@ -32,6 +32,9 @@ class StripeWebhookServiceTest {
     @SuppressWarnings("unused")
     private StripeWebhookBusinessProcessor webhookBusinessProcessor;
 
+    @Mock
+    private StripeProperties stripeProperties;
+
     @InjectMocks
     private StripeWebhookService stripeWebhookService;
 
@@ -45,7 +48,7 @@ class StripeWebhookServiceTest {
     @DisplayName("invalid signature uses safe exception message and safe warning log")
     void invalidSignatureUsesSafeMessageAndSafeLog() {
         ListAppender<ILoggingEvent> appender = attachAppender();
-        ReflectionTestUtils.setField(stripeWebhookService, "webhookSecret", "whsec_test");
+        org.mockito.Mockito.when(stripeProperties.webhookSecret()).thenReturn("whsec_test");
         String signature = "t=123,v1=secret-signature";
 
         assertThatThrownBy(() -> stripeWebhookService.processWebhook("{\"id\":\"evt_1\"}", signature))

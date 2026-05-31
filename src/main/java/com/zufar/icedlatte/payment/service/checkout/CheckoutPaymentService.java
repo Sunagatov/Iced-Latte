@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.stripe.exception.StripeException;
@@ -41,6 +42,7 @@ public class CheckoutPaymentService {
     private final CurrentUserProvider currentUserProvider;
     private final CheckoutPaymentTransactionService txService;
     private final StripeCheckoutSessionCreator stripeSessionCreator;
+    private final StripeSessionGateway stripeSessionGateway;
     private final StripeSessionLineItemListConverter lineItemConverter;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
@@ -55,7 +57,7 @@ public class CheckoutPaymentService {
         UUID userId = user.id();
 
         // Stage 1: DB transaction — validate, create order + payment, commit
-        CheckoutPreparation prepared = txService.prepareCheckout(userId, request, idempotencyKey);
+        CheckoutPreparation prepared = prepareCheckout(userId, request, idempotencyKey);
 
         // Idempotent retry: don't call Stripe with empty line items
         if (prepared.existing()) {
@@ -80,6 +82,15 @@ public class CheckoutPaymentService {
                 .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
     }
 
+    private CheckoutPreparation prepareCheckout(UUID userId, CreateCheckoutRequestDto request, String idempotencyKey) {
+        try {
+            return txService.prepareCheckout(userId, request, idempotencyKey);
+        } catch (DataIntegrityViolationException e) {
+            log.info("checkout.idempotency_collision: userId={}, key={}", userId, idempotencyKey);
+            return txService.findExistingCheckout(userId, idempotencyKey).orElseThrow(() -> e);
+        }
+    }
+
     /**
      * Handles idempotent retry. Session.retrieve() is a remote Stripe API call and MUST remain outside
      * any @Transactional method.
@@ -90,7 +101,7 @@ public class CheckoutPaymentService {
         // Case A: Stripe session already created — retrieve and return URL
         if (payment.getProviderSessionId() != null) {
             try {
-                Session session = Session.retrieve(payment.getProviderSessionId());
+                Session session = stripeSessionGateway.retrieve(payment.getProviderSessionId());
                 if ("expired".equals(session.getStatus())) {
                     throw new BadRequestException(
                             "Previous checkout session expired. Please retry with a new Idempotency-Key.");

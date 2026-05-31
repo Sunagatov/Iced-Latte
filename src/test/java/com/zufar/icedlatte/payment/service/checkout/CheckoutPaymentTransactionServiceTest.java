@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
@@ -29,7 +30,6 @@ import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
-import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -54,9 +54,6 @@ class CheckoutPaymentTransactionServiceTest {
 
     @Mock
     private CartCheckoutApi shoppingCartService;
-
-    @Mock
-    private OrderDtoConverter orderDtoConverter;
 
     @Mock
     private StripeProperties stripeProperties;
@@ -97,11 +94,9 @@ class CheckoutPaymentTransactionServiceTest {
         when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
                 .thenReturn(Optional.empty());
         when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
-        when(orderDtoConverter.toCheckoutOrderRequest(request))
-                .thenReturn(new CheckoutOrderRequest("John", "Doe", null, null, null));
         when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
                 .thenReturn(order);
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(paymentRepository.saveAndFlush(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
         when(stripeProperties.currency()).thenReturn("usd");
 
         CheckoutPreparation result = service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
@@ -113,8 +108,13 @@ class CheckoutPaymentTransactionServiceTest {
         assertThat(result.payment().getCurrency()).isEqualTo("usd");
 
         ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
+        verify(paymentRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getCheckoutIdempotencyKey()).isEqualTo(IDEMPOTENCY_KEY);
+
+        ArgumentCaptor<CheckoutOrderRequest> orderRequestCaptor = ArgumentCaptor.forClass(CheckoutOrderRequest.class);
+        verify(orderCheckoutApi).createPendingPaymentOrderSnapshot(eq(USER_ID), orderRequestCaptor.capture(), eq(cart));
+        assertThat(orderRequestCaptor.getValue().recipientName()).isEqualTo("John");
+        assertThat(orderRequestCaptor.getValue().recipientSurname()).isEqualTo("Doe");
     }
 
     @Test
@@ -194,6 +194,39 @@ class CheckoutPaymentTransactionServiceTest {
                         IDEMPOTENCY_KEY))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("empty");
+    }
+
+    @Test
+    @DisplayName("prepareCheckout rejects inline address with missing required fields")
+    void prepareCheckout_incompleteInlineAddress_throws() {
+        CreateCheckoutRequestDto request = new CreateCheckoutRequestDto()
+                .recipientName("A")
+                .recipientSurname("B")
+                .address(new AddressDto().city("London").line("123 Coffee St").postcode("E1 6AN"));
+
+        var productInfo =
+                new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
+        var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 1);
+        CartSnapshot cart = new CartSnapshot(
+                UUID.randomUUID(),
+                USER_ID,
+                List.of(cartItem),
+                1,
+                BigDecimal.valueOf(12.50),
+                1,
+                OffsetDateTime.now(),
+                null);
+
+        when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
+                .thenReturn(Optional.empty());
+        when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
+
+        assertThatThrownBy(() -> service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("country");
+
+        verify(orderCheckoutApi, never()).createPendingPaymentOrderSnapshot(any(), any(), any());
+        verify(paymentRepository, never()).saveAndFlush(any());
     }
 
     @Test

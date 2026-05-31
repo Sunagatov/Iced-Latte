@@ -3,6 +3,7 @@ package com.zufar.icedlatte.payment.service.checkout;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,12 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
-import com.zufar.icedlatte.order.converter.OrderDtoConverter;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
@@ -42,23 +44,14 @@ public class CheckoutPaymentTransactionService {
     private final OrderPaymentApi orderPaymentApi;
     private final OrderCheckoutApi orderCheckoutApi;
     private final CartCheckoutApi cartCheckoutApi;
-    private final OrderDtoConverter orderDtoConverter;
     private final StripeProperties stripeProperties;
 
     @Transactional
     public CheckoutPreparation prepareCheckout(UUID userId, CreateCheckoutRequestDto request, String idempotencyKey) {
         // Application-level idempotency: same user + same key → return existing
-        Payment existing = paymentRepository
-                .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId)
-                .orElse(null);
-        if (existing != null) {
-            // Do NOT read the live cart — it may be deleted after successful payment.
-            // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
-            OrderSnapshot order = (existing.getProviderSessionId() == null
-                    ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
-                    : orderPaymentApi.getSnapshot(existing.getOrderId()));
-            log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
-            return new CheckoutPreparation(order, existing, List.of(), true);
+        Optional<CheckoutPreparation> existing = findExistingCheckout(userId, idempotencyKey);
+        if (existing.isPresent()) {
+            return existing.get();
         }
 
         CartSnapshot cart = cartCheckoutApi.getByUserIdOrThrow(userId);
@@ -66,7 +59,7 @@ public class CheckoutPaymentTransactionService {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        CheckoutOrderRequest checkoutOrderRequest = orderDtoConverter.toCheckoutOrderRequest(request);
+        CheckoutOrderRequest checkoutOrderRequest = toCheckoutOrderRequest(request);
         OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(userId, checkoutOrderRequest, cart);
 
         Payment payment = Payment.builder()
@@ -78,9 +71,24 @@ public class CheckoutPaymentTransactionService {
                 .currency(stripeProperties.currency())
                 .checkoutIdempotencyKey(idempotencyKey)
                 .build();
-        payment = paymentRepository.save(payment);
+        payment = paymentRepository.saveAndFlush(payment);
 
         return new CheckoutPreparation(order, payment, cart.items(), false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CheckoutPreparation> findExistingCheckout(UUID userId, String idempotencyKey) {
+        return paymentRepository
+                .findByCheckoutIdempotencyKeyAndUserId(idempotencyKey, userId)
+                .map(existing -> {
+                    // Do NOT read the live cart — it may be deleted after successful payment.
+                    // Use fetch join when Stripe session wasn't created yet — retry path needs Order.items.
+                    OrderSnapshot order = (existing.getProviderSessionId() == null
+                            ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
+                            : orderPaymentApi.getSnapshot(existing.getOrderId()));
+                    log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
+                    return new CheckoutPreparation(order, existing, List.of(), true);
+                });
     }
 
     @Transactional
@@ -95,5 +103,32 @@ public class CheckoutPaymentTransactionService {
         return amount.multiply(BigDecimal.valueOf(100))
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .longValueExact();
+    }
+
+    private CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
+        return new CheckoutOrderRequest(
+                request.getRecipientName(),
+                request.getRecipientSurname(),
+                request.getRecipientPhone(),
+                request.getDeliveryAddressId(),
+                toOrderAddressRequest(request.getAddress()));
+    }
+
+    private OrderAddressRequest toOrderAddressRequest(AddressDto address) {
+        if (address == null) {
+            return null;
+        }
+        return new OrderAddressRequest(
+                requireAddressPart(address.getCountry(), "country"),
+                requireAddressPart(address.getCity(), "city"),
+                requireAddressPart(address.getLine(), "line"),
+                requireAddressPart(address.getPostcode(), "postcode"));
+    }
+
+    private String requireAddressPart(String value, String fieldName) {
+        if (value == null) {
+            throw new BadRequestException("Address field '" + fieldName + "' must be provided.");
+        }
+        return value;
     }
 }

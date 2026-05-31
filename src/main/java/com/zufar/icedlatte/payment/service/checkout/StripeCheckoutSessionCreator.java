@@ -3,17 +3,13 @@ package com.zufar.icedlatte.payment.service.checkout;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import jakarta.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
-import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
@@ -39,17 +35,10 @@ public class StripeCheckoutSessionCreator {
 
     private final StripeSessionLineItemListConverter lineItemConverter;
     private final StripeProperties stripeProperties;
-
-    @Value("${stripe.secret-key}")
-    private String stripeSecretKey;
+    private final StripeSessionGateway stripeSessionGateway;
 
     @Value("${frontend.url}")
     private String frontendUrl;
-
-    @PostConstruct
-    private void initStripe() {
-        Stripe.apiKey = stripeSecretKey;
-    }
 
     /**
      * Cart-based entry point (normal checkout). Converts cart items to Stripe line items, then delegates to
@@ -86,12 +75,8 @@ public class StripeCheckoutSessionCreator {
                 .setExpiresAt(OffsetDateTime.now().plusMinutes(31).toEpochSecond())
                 .build();
 
-        RequestOptions requestOptions = RequestOptions.builder()
-                .setIdempotencyKey("checkout-session:" + orderId)
-                .build();
-
         try {
-            Session session = Session.create(params, requestOptions);
+            Session session = stripeSessionGateway.create(params, "checkout-session:" + orderId);
             return new StripeSessionResult(session.getId(), session.getUrl());
         } catch (StripeException e) {
             throw new StripeSessionCreationException(e.getMessage(), e);

@@ -1,12 +1,13 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
+import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "stripe.enabled", havingValue = "true")
+@EnableConfigurationProperties(StripeProperties.class)
 @SuppressWarnings("unused") // Spring injects this service and configuration fields are framework-managed.
 public class StripeWebhookService {
 
     private final StripeWebhookEventRecorder webhookEventRecorder;
     private final StripeWebhookBusinessProcessor webhookBusinessProcessor;
-
-    @Value("${stripe.webhook-secret}")
-    private String webhookSecret;
+    private final StripeProperties stripeProperties;
 
     public void processWebhook(String payload, String stripeSignature) {
         Event event = parseEvent(payload, stripeSignature);
@@ -58,7 +58,7 @@ public class StripeWebhookService {
 
     private Event parseEvent(String payload, String signature) {
         try {
-            return Webhook.constructEvent(payload, signature, webhookSecret);
+            return Webhook.constructEvent(payload, signature, stripeProperties.webhookSecret());
         } catch (SignatureVerificationException _) {
             log.warn("payment.webhook.signature_invalid");
             throw new PaymentEventProcessingException();

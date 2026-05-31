@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class StripeWebhookEventTransactionService {
 
+    private static final Duration PROCESSING_STALE_AFTER = Duration.ofMinutes(5);
+
     private final StripeWebhookEventRepository repository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -34,9 +37,13 @@ class StripeWebhookEventTransactionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryReacquireRetryableEvent(String eventId) {
+        OffsetDateTime staleBefore = OffsetDateTime.now().minus(PROCESSING_STALE_AFTER);
         return repository
                 .findById(eventId)
-                .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED)
+                .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED
+                        || (evt.getStatus() == WebhookEventStatus.PROCESSING
+                                && evt.getReceivedAt() != null
+                                && evt.getReceivedAt().isBefore(staleBefore)))
                 .map(evt -> {
                     evt.setStatus(WebhookEventStatus.PROCESSING);
                     evt.setFailureReason(null);
