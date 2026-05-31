@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -53,12 +52,27 @@ class FavoriteServiceTest {
         response.setProducts(List.of());
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
 
         var result = favoriteService.getEnrichedFavoriteList(userId);
 
         assertThat(result).isSameAs(response);
+    }
+
+    @Test
+    @DisplayName("getEnrichedFavoriteList returns empty DTO when list does not exist")
+    void getEnrichedFavoriteListReturnsEmptyDtoWhenListDoesNotExist() {
+        UUID userId = UUID.randomUUID();
+        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
+        response.setProducts(List.of());
+
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(favoriteListDtoConverter.toDto(List.of())).thenReturn(response);
+
+        var result = favoriteService.getEnrichedFavoriteList(userId);
+
+        assertThat(result).isSameAs(response);
+        verifyNoInteractions(productCatalogApi);
     }
 
     @Test
@@ -80,8 +94,7 @@ class FavoriteServiceTest {
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 
@@ -110,8 +123,7 @@ class FavoriteServiceTest {
                 .thenReturn(Optional.of(createdList))
                 .thenReturn(Optional.of(createdList));
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
-        when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
+        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 

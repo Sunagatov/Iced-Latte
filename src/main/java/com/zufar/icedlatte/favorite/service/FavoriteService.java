@@ -3,7 +3,6 @@ package com.zufar.icedlatte.favorite.service;
 import static java.util.Comparator.comparing;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -36,9 +35,10 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
-        FavoriteListEntity entity =
-                favoriteRepository.findByUserId(userId).orElseGet(() -> createNewFavoriteList(userId));
-        return toEnrichedDto(entity);
+        return favoriteRepository
+                .findByUserId(userId)
+                .map(this::toEnrichedDto)
+                .orElseGet(() -> favoriteListDtoConverter.toDto(List.of()));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -85,14 +85,12 @@ public class FavoriteService {
     }
 
     private ListOfFavoriteProductsDto toEnrichedDto(FavoriteListEntity entity) {
-        List<UUID> productIds = entity.getFavoriteItems().stream()
-                .map(FavoriteItemEntity::getProductId)
-                .sorted(comparing(UUID::toString))
-                .toList();
-        Map<UUID, ProductSnapshot> productsById = productCatalogApi.getProductsByIds(productIds).stream()
-                .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
-
-        return favoriteListDtoConverter.toDto(entity, productsById);
+        List<UUID> productIds = extractSortedProductIds(entity);
+        if (productIds.isEmpty()) {
+            return favoriteListDtoConverter.toDto(List.of());
+        }
+        List<ProductSnapshot> existingProducts = productCatalogApi.getProductsByIds(productIds);
+        return favoriteListDtoConverter.toDto(existingProducts);
     }
 
     private void validateProductsExist(Set<UUID> productIds) {
@@ -115,17 +113,18 @@ public class FavoriteService {
         favoriteRepository.flush();
     }
 
-    private FavoriteListEntity createNewFavoriteList(UUID userId) {
-        return FavoriteListEntity.builder()
-                .userId(userId)
-                .favoriteItems(new HashSet<>())
-                .build();
-    }
-
     private Set<UUID> extractProductIds(FavoriteListEntity entity) {
         return entity.getFavoriteItems().stream()
                 .map(FavoriteItemEntity::getProductId)
                 .collect(Collectors.toSet());
+    }
+
+    private List<UUID> extractSortedProductIds(FavoriteListEntity entity) {
+        return entity.getFavoriteItems().stream()
+                .map(FavoriteItemEntity::getProductId)
+                .distinct()
+                .sorted(comparing(UUID::toString))
+                .toList();
     }
 
     private static void validateRequestSize(ListOfFavoriteProducts request) {

@@ -1,41 +1,27 @@
 package com.zufar.icedlatte.favorite.converter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
-import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FavoriteListDtoConverterTest {
 
     private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter();
 
     @Test
-    @DisplayName("converts entity to ListOfFavoriteProductsDto with product details")
-    void convertEntityToDto() {
+    @DisplayName("converts product snapshots to ListOfFavoriteProductsDto")
+    void convertSnapshotsToDto() {
         UUID productId = UUID.randomUUID();
 
-        FavoriteListEntity entity = FavoriteListEntity.builder()
-                .id(UUID.randomUUID())
-                .userId(UUID.randomUUID())
-                .favoriteItems(Set.of(FavoriteItemEntity.builder()
-                        .id(UUID.randomUUID())
-                        .productId(productId)
-                        .build()))
-                .updatedAt(OffsetDateTime.now())
-                .build();
-
-        ListOfFavoriteProductsDto result = converter.toDto(entity, Map.of(productId, productSnapshot(productId)));
+        ListOfFavoriteProductsDto result = converter.toDto(List.of(productSnapshot(productId)));
 
         assertThat(result.getProducts()).hasSize(1);
         assertThat(result.getProducts().getFirst().getId()).isEqualTo(productId);
@@ -43,30 +29,15 @@ class FavoriteListDtoConverterTest {
     }
 
     @Test
-    @DisplayName("filters out items whose product is not in the map")
-    void filtersOutMissingProducts() {
-        UUID knownId = UUID.randomUUID();
-        UUID unknownId = UUID.randomUUID();
+    @DisplayName("sorts products by id")
+    void sortsProductsById() {
+        UUID secondId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID firstId = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
-        FavoriteListEntity entity = FavoriteListEntity.builder()
-                .id(UUID.randomUUID())
-                .userId(UUID.randomUUID())
-                .favoriteItems(Set.of(
-                        FavoriteItemEntity.builder()
-                                .id(UUID.randomUUID())
-                                .productId(knownId)
-                                .build(),
-                        FavoriteItemEntity.builder()
-                                .id(UUID.randomUUID())
-                                .productId(unknownId)
-                                .build()))
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        ListOfFavoriteProductsDto result =
+                converter.toDto(List.of(productSnapshot(secondId), productSnapshot(firstId)));
 
-        ListOfFavoriteProductsDto result = converter.toDto(entity, Map.of(knownId, productSnapshot(knownId)));
-
-        assertThat(result.getProducts()).hasSize(1);
-        assertThat(result.getProducts().getFirst().getId()).isEqualTo(knownId);
+        assertThat(result.getProducts()).extracting(ProductSummaryDto::getId).containsExactly(firstId, secondId);
     }
 
     private static ProductSnapshot productSnapshot(UUID id) {

@@ -36,15 +36,19 @@ public class FavoriteItemEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FavoriteItemEntity that)) return false;
-        if (favoriteListEntity == null
-                || productId == null
-                || that.favoriteListEntity == null
-                || that.productId == null) return false;
-        return Objects.equals(favoriteListEntity, that.favoriteListEntity) && Objects.equals(productId, that.productId);
+        UUID favoriteListId = favoriteListId();
+        UUID thatFavoriteListId = that.favoriteListId();
+        if (favoriteListId == null || productId == null || thatFavoriteListId == null || that.productId == null)
+            return false;
+        return Objects.equals(favoriteListId, thatFavoriteListId) && Objects.equals(productId, that.productId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(favoriteListEntity, productId);
+        return Objects.hash(favoriteListId(), productId);
+    }
+
+    private UUID favoriteListId() {
+        return favoriteListEntity == null ? null : favoriteListEntity.getId();
     }
 }
