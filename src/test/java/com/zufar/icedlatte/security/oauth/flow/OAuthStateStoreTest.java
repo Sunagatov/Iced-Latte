@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
@@ -30,8 +29,7 @@ class OAuthStateStoreTest {
 
     @BeforeEach
     void setUp() {
-        cache = new OAuthStateStore(temporaryStore);
-        ReflectionTestUtils.setField(cache, "ttlMinutes", 10);
+        cache = new OAuthStateStore(temporaryStore, new OAuthFlowProperties(10, Duration.ofMinutes(1), ""));
     }
 
     @Test
@@ -46,11 +44,17 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("store rejects non-positive ttl")
     void storeRejectsNonPositiveTtl() {
-        ReflectionTestUtils.setField(cache, "ttlMinutes", 0);
+        assertThatThrownBy(() -> new OAuthFlowProperties(0, Duration.ofMinutes(1), ""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("oauth.state-ttl-minutes must be at least 1 minute");
+    }
 
-        assertThatThrownBy(() -> cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("oauth.state-ttl-minutes must be at least 1 minute, got: 0");
+    @Test
+    @DisplayName("properties reject null handoff ttl")
+    void propertiesRejectNullHandoffTtl() {
+        assertThatThrownBy(() -> new OAuthFlowProperties(10, null, ""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("oauth.handoff-ttl must not be null");
     }
 
     @Test

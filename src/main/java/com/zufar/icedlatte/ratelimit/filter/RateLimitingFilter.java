@@ -64,6 +64,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         assertPositive("payment", properties.getPayment());
         assertPositive("write", properties.getWrite());
         assertPositive("file-upload", properties.getFileUpload());
+        assertPositiveBanConfiguration(properties);
     }
 
     private static void assertPositive(String bucketName, Bucket bucket) {
@@ -88,6 +89,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitProperties properties,
             ProblemTypeUriFactory problemTypeUriFactory,
             CaffeineSizeProperties caffeineSizeProperties) {
+        assertPositiveBanConfiguration(properties);
         this.openRateLimiter = openRateLimiter;
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
@@ -131,7 +133,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     false,
                     0,
                     0,
-                    System.currentTimeMillis() + properties.getBanDuration().toMillis());
+                    System.currentTimeMillis() + properties.getBanDuration().toMillis(),
+                    properties.getBanDuration().toSeconds());
             RateLimitResponseWriter.writeTooManyRequests(
                     response, banResult, problemTypeUriFactory.build(ProblemType.RATE_LIMITED));
             return;
@@ -238,7 +241,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return switch (path) {
             case String uri
             when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
-            case String uri when uri.startsWith(ApiPaths.USERS_PASSWORD_RESET) -> RateLimitCategory.AUTH;
+            case String uri when isPasswordResetPath(uri) -> RateLimitCategory.AUTH;
             case String uri
             when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
             case String uri
@@ -257,17 +260,33 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 && (path.endsWith("/avatar") || path.contains("/images"));
     }
 
-    // #2: Password reset is now a strict pre-auth path
     private boolean isStrictPreAuthPath(String path) {
         return path.equals(ApiPaths.AUTH_AUTHENTICATE)
                 || path.equals(ApiPaths.AUTH + "/register")
-                || path.startsWith(ApiPaths.USERS_PASSWORD_RESET);
+                || isPasswordResetPath(path);
     }
 
     private boolean isGlobalAuthPath(String path) {
         return path.startsWith(ApiPaths.AUTH_OAUTH + "/")
                 || path.equals(ApiPaths.AUTH_AUTHENTICATE)
                 || path.equals(ApiPaths.AUTH + "/register");
+    }
+
+    private boolean isPasswordResetPath(String path) {
+        return path.equals(ApiPaths.AUTH_PASSWORD_FORGOT) || path.equals(ApiPaths.AUTH_PASSWORD_CHANGE);
+    }
+
+    private static void assertPositiveBanConfiguration(RateLimitProperties properties) {
+        if (properties.getBanThreshold() <= 0) {
+            throw new IllegalStateException(
+                    "security.rate-limit.ban-threshold must be > 0, got: " + properties.getBanThreshold());
+        }
+        if (properties.getBanDuration() == null
+                || properties.getBanDuration().isZero()
+                || properties.getBanDuration().isNegative()) {
+            throw new IllegalStateException(
+                    "security.rate-limit.ban-duration must be positive, got: " + properties.getBanDuration());
+        }
     }
 
     private Identity resolveIdentity(HttpServletRequest request, String ip) {

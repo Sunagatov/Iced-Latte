@@ -87,7 +87,8 @@ public class RateLimitingConfiguration {
                 long pttl = ((Number) result.get(1)).longValue();
                 long resetTimeMillis = System.currentTimeMillis() + Math.max(0, pttl);
                 int remaining = (int) Math.max(0, maxTokens - count);
-                return new RateLimitResult(count <= maxTokens, maxTokens, remaining, resetTimeMillis);
+                return new RateLimitResult(
+                        count <= maxTokens, maxTokens, remaining, resetTimeMillis, windowSeconds(windowDuration));
             } catch (Exception e) {
                 logRepeatedLimiterFailure("rate_limit.redis_error", key, policy, e, policy == FailPolicy.OPEN);
                 boolean allowed = policy == FailPolicy.OPEN;
@@ -95,7 +96,8 @@ public class RateLimitingConfiguration {
                         allowed,
                         maxTokens,
                         allowed ? maxTokens : 0,
-                        System.currentTimeMillis() + windowDuration.toMillis());
+                        System.currentTimeMillis() + windowDuration.toMillis(),
+                        windowSeconds(windowDuration));
             }
         };
     }
@@ -125,7 +127,8 @@ public class RateLimitingConfiguration {
                         allowed,
                         maxTokens,
                         allowed ? maxTokens : 0,
-                        System.currentTimeMillis() + windowDuration.toMillis());
+                        System.currentTimeMillis() + windowDuration.toMillis(),
+                        windowSeconds(windowDuration));
             }
         }
 
@@ -148,23 +151,45 @@ public class RateLimitingConfiguration {
                 long resetTimeMillis = windowStartMillis + windowMillis;
                 long current = ++count;
                 int remaining = (int) Math.max(0, maxTokens - current);
-                return new RateLimitResult(current <= maxTokens, maxTokens, remaining, resetTimeMillis);
+                return new RateLimitResult(
+                        current <= maxTokens, maxTokens, remaining, resetTimeMillis, windowSeconds(windowMillis));
             }
         }
+    }
+
+    private static long windowSeconds(Duration windowDuration) {
+        return Math.max(1, windowDuration.toSeconds());
+    }
+
+    private static long windowSeconds(long windowMillis) {
+        return Math.max(1, TimeUnit.MILLISECONDS.toSeconds(windowMillis));
     }
 
     private static void logRepeatedLimiterFailure(
             String event, String key, FailPolicy policy, Exception exception, boolean warnOnFirst) {
         String exceptionClass = exception.getClass().getSimpleName();
         String dedupKey = event + "|" + policy + "|" + exceptionClass;
+        String logKey = redactKeyForLog(key);
         if (LOGGED_LIMITER_ERRORS.asMap().putIfAbsent(dedupKey, Boolean.TRUE) == null) {
             if (warnOnFirst) {
-                log.warn("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass);
+                log.warn("{}: key={}, policy={}, exceptionClass={}", event, logKey, policy, exceptionClass);
             } else {
-                log.error("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass, exception);
+                log.error("{}: key={}, policy={}, exceptionClass={}", event, logKey, policy, exceptionClass, exception);
             }
         } else {
-            log.debug("{}: key={}, policy={}, exceptionClass={}", event, key, policy, exceptionClass);
+            log.debug("{}: key={}, policy={}, exceptionClass={}", event, logKey, policy, exceptionClass);
         }
+    }
+
+    private static String redactKeyForLog(String key) {
+        if (key == null) {
+            return "";
+        }
+        String userMarker = ":user:";
+        int userMarkerIndex = key.indexOf(userMarker);
+        if (userMarkerIndex < 0) {
+            return key;
+        }
+        return key.substring(0, userMarkerIndex + userMarker.length()) + "<redacted>";
     }
 }

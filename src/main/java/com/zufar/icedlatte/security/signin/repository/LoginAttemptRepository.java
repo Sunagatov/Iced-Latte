@@ -19,13 +19,14 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttemptEntity
 
     @Query(value = """
                     INSERT INTO login_attempts (id, user_email, attempts, is_user_locked, last_modified)
-                    VALUES (gen_random_uuid(), :email, 1, false, :now)
+                    SELECT gen_random_uuid(), :email, 1, false, :now
+                    WHERE EXISTS (SELECT 1 FROM user_details WHERE email = :email)
                     ON CONFLICT (user_email) DO UPDATE
                     SET attempts = login_attempts.attempts + 1,
                         last_modified = EXCLUDED.last_modified
                     RETURNING attempts
                     """, nativeQuery = true)
-    int recordFailedAttempt(@Param("email") String userEmail, @Param("now") Instant now);
+    List<Integer> recordFailedAttempt(@Param("email") String userEmail, @Param("now") Instant now);
 
     /**
      * Locks the user and sets an expiration datetime for the lock.

@@ -53,7 +53,7 @@ class SpringSecurityConfigurationTest {
     }
 
     @Test
-    @DisplayName("builds DAO authentication provider with explicit user-not-found behavior")
+    @DisplayName("builds DAO authentication provider with hidden user-not-found behavior")
     void buildsDaoAuthenticationProviderWithExplicitUserNotFoundBehavior() {
         UserDetailsService userDetailsService = username -> User.withUsername(username)
                 .password("encoded")
@@ -65,7 +65,7 @@ class SpringSecurityConfigurationTest {
 
         assertThat(provider).isInstanceOf(DaoAuthenticationProvider.class);
         DaoAuthenticationProvider daoProvider = (DaoAuthenticationProvider) provider;
-        assertThat(daoProvider.isHideUserNotFoundExceptions()).isFalse();
+        assertThat(daoProvider.isHideUserNotFoundExceptions()).isTrue();
     }
 
     @Test

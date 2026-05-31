@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.signin.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -19,6 +18,7 @@ import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptProperties;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
@@ -30,13 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserAuthenticationService {
 
-    @Value("${login-attempts.lockout-duration-minutes}")
-    private int userAccountLockoutDurationMinutes;
-
     private final AuthenticationManager authenticationManager;
     private final LoginAttemptService loginAttemptService;
     private final SessionTokenService sessionTokenService;
     private final TurnstileVerifier turnstileVerifier;
+    private final LoginAttemptProperties loginAttemptProperties;
 
     public AuthenticationTokens authenticate(
             final UserAuthenticationRequest request, final HttpServletRequest httpRequest) {
@@ -57,17 +55,12 @@ public class UserAuthenticationService {
                 throw new InvalidCredentialsException();
             }
             return userDetails;
-        } catch (UsernameNotFoundException exception) {
-            // Unknown email — do not persist a DB row for a non-existent account.
-            // Request-level rate limiting still applies before authentication.
-            log.debug("auth.failed: reason=user_not_found");
-            throw new InvalidCredentialsException(exception);
-        } catch (BadCredentialsException exception) {
+        } catch (UsernameNotFoundException | BadCredentialsException exception) {
             loginAttemptService.recordFailure(userEmail);
             throw new InvalidCredentialsException(exception);
         } catch (LockedException exception) {
             log.debug("auth.failed: reason=account_locked");
-            throw new UserAccountLockedException(userAccountLockoutDurationMinutes);
+            throw new UserAccountLockedException(loginAttemptProperties.lockoutDurationMinutes());
         } catch (AuthenticationException exception) {
             log.error("auth.error: exceptionClass={}", exception.getClass().getSimpleName(), exception);
             throw exception;

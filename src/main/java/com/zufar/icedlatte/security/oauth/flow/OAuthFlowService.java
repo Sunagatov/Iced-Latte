@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -33,8 +34,10 @@ public class OAuthFlowService {
     private final OAuthStateStore oAuthStateStore;
     private final OAuthTokenHandoffStore oAuthTokenHandoffStore;
     private final OAuthRedirectService oAuthRedirectService;
+    private final OAuthStateCookieService oAuthStateCookieService;
 
-    public Optional<URI> initiate(OAuthProvider provider, String redirectUrl) {
+    public Optional<URI> initiate(
+            OAuthProvider provider, String redirectUrl, HttpServletRequest request, HttpServletResponse response) {
         var client = oAuthLoginService.findClient(provider);
         if (client.isEmpty()) {
             log.warn("auth.oauth.disabled: provider={}", provider.id());
@@ -44,10 +47,16 @@ public class OAuthFlowService {
         String callbackBase = oAuthRedirectService.resolveCallbackBase(provider, redirectUrl);
         String nonce = generateStateNonce();
         oAuthStateStore.store(provider, nonce, callbackBase);
+        oAuthStateCookieService.bind(request, response, provider, nonce, oAuthStateStore.stateTtl());
         return Optional.of(client.get().buildAuthorizationUri(nonce));
     }
 
-    public URI completeCallback(OAuthProvider provider, String code, String state, HttpServletRequest request) {
+    public URI completeCallback(
+            OAuthProvider provider,
+            String code,
+            String state,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         if (oAuthLoginService.findClient(provider).isEmpty()) {
             return oAuthRedirectService.signInErrorRedirect(PROVIDER_DISABLED_ERROR);
         }
@@ -59,7 +68,12 @@ public class OAuthFlowService {
             log.debug("auth.oauth.callback.missing-state: provider={}", provider.id());
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
+        if (!oAuthStateCookieService.matches(request, provider, state)) {
+            log.info("auth.oauth.callback.state-cookie-mismatch: provider={}", provider.id());
+            return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
+        }
         String callbackBase = oAuthStateStore.consume(provider, state);
+        oAuthStateCookieService.clear(request, response, provider);
         if (callbackBase == null) {
             log.info("auth.oauth.callback.invalid-state: provider={}", provider.id());
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);

@@ -52,8 +52,7 @@ public class AuthSessionService {
     }
 
     @Transactional
-    public void rotateSession(String oldRefreshTokenHash, String newRefreshTokenHash) {
-        AuthSessionEntity session = findActiveByHash(oldRefreshTokenHash);
+    public void rotateSession(AuthSessionEntity session, String oldRefreshTokenHash, String newRefreshTokenHash) {
         OffsetDateTime now = now();
         session.setPreviousTokenHash(oldRefreshTokenHash);
         session.setRefreshTokenHash(newRefreshTokenHash);

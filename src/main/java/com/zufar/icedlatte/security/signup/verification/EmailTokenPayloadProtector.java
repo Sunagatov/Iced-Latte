@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.signup.verification;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -18,11 +17,11 @@ class EmailTokenPayloadProtector {
     private final AesGcmStringProtector protector;
 
     EmailTokenPayloadProtector(
-            ObjectMapper objectMapper,
-            JwtProperties jwtProperties,
-            @Value("${email.token-encryption-key:}") String tokenEncryptionKey) {
+            ObjectMapper objectMapper, JwtProperties jwtProperties, EmailTokenProperties emailTokenProperties) {
         this.objectMapper = objectMapper;
-        String keySource = StringUtils.hasText(tokenEncryptionKey) ? tokenEncryptionKey : jwtProperties.refreshSecret();
+        String keySource = StringUtils.hasText(emailTokenProperties.tokenEncryptionKey())
+                ? emailTokenProperties.tokenEncryptionKey()
+                : jwtProperties.refreshSecret();
         this.protector = new AesGcmStringProtector(keySource, PAYLOAD_DESCRIPTION);
     }
 

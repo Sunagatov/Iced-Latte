@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Locale;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,12 +36,8 @@ public class EmailTokenService {
     private final ExpiringKeyValueStore temporaryStore;
     private final PasswordEncoder passwordEncoder;
     private final EmailTokenPayloadProtector tokenPayloadProtector;
-
-    @Value("${email.verification-token-length}")
-    private int tokenLength;
-
-    @Value("${temporary-cache.time.token}")
-    private int expireTimeMinutes;
+    private final EmailTokenProperties emailTokenProperties;
+    private final TemporaryTokenProperties temporaryTokenProperties;
 
     public String generate(UserRegistrationRequest request, TokenPurpose purpose) {
         String email = EmailNormalizer.normalize(request.getEmail());
@@ -91,6 +86,7 @@ public class EmailTokenService {
 
     private String nextToken() {
         validateConfiguredTokenLength();
+        int tokenLength = emailTokenProperties.verificationTokenLength();
         byte[] randomBytes = new byte[(int) Math.ceil(tokenLength * 6 / 8.0)];
         RANDOM.nextBytes(randomBytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
@@ -99,12 +95,14 @@ public class EmailTokenService {
 
     private void validateTokenFormat(String token) {
         validateConfiguredTokenLength();
+        int tokenLength = emailTokenProperties.verificationTokenLength();
         if (token == null || token.length() != tokenLength || !token.chars().allMatch(this::isUrlSafeTokenChar)) {
             throw new BadRequestException("Incorrect token format");
         }
     }
 
     private void validateConfiguredTokenLength() {
+        int tokenLength = emailTokenProperties.verificationTokenLength();
         if (tokenLength < MIN_TOKEN_LENGTH) {
             throw new IllegalStateException(
                     "email.verification-token-length must be at least " + MIN_TOKEN_LENGTH + ", got: " + tokenLength);
@@ -116,15 +114,7 @@ public class EmailTokenService {
     }
 
     private Duration tokenTtl() {
-        validateConfiguredTokenTtl();
-        return Duration.ofMinutes(expireTimeMinutes);
-    }
-
-    private void validateConfiguredTokenTtl() {
-        if (expireTimeMinutes < 1) {
-            String errorMessage = "temporary-cache.time.token must be at least 1 minute, got: ";
-            throw new IllegalStateException(errorMessage + expireTimeMinutes);
-        }
+        return Duration.ofMinutes(temporaryTokenProperties.time().token());
     }
 
     private EmailRegistrationPayload registrationPayload(UserRegistrationRequest request, TokenPurpose purpose) {

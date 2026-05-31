@@ -302,9 +302,7 @@ class AuthSessionServiceTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .compromised(false)
                 .build();
-        when(sessionRepository.findByRefreshTokenHashForUpdate("oldHash")).thenReturn(Optional.of(active));
-
-        service.rotateSession("oldHash", "newHash");
+        service.rotateSession(active, "oldHash", "newHash");
 
         assertThat(active.getRefreshTokenHash()).isEqualTo("newHash");
         assertThat(active.getPreviousTokenHash()).isEqualTo("oldHash");

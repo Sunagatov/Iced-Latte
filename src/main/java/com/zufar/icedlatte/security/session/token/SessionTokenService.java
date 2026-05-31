@@ -37,7 +37,7 @@ public class SessionTokenService {
             AuthSessionEntity session, String currentRefreshTokenHash, UserDetails userDetails) {
         return withSessionMdc(session, () -> {
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails, session.getId());
-            authSessionService.rotateSession(currentRefreshTokenHash, jwtTokenBlacklist.hash(newRefreshToken));
+            authSessionService.rotateSession(session, currentRefreshTokenHash, jwtTokenBlacklist.hash(newRefreshToken));
             return buildTokenPair(userDetails, session.getId(), newRefreshToken);
         });
     }

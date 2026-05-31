@@ -12,6 +12,7 @@ import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 
@@ -39,7 +40,7 @@ public class JwtTokenClaims {
     public String extractAccessTokenEmail(final String token) {
         try {
             return extractEmail(accessTokenClaims(token), "Missing email in JWT token");
-        } catch (JwtTokenException ex) {
+        } catch (ExpiredJwtException | JwtTokenException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new JwtTokenException("Failed to extract email from JWT token", ex);
@@ -57,7 +58,7 @@ public class JwtTokenClaims {
     public String extractRefreshTokenEmail(final String token) {
         try {
             return extractEmail(refreshTokenClaims(token), "Refresh token has no subject");
-        } catch (JwtTokenException ex) {
+        } catch (ExpiredJwtException | JwtTokenException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new JwtTokenException("Invalid refresh token", ex);

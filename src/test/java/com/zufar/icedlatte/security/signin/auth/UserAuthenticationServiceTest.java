@@ -25,6 +25,7 @@ import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
+import com.zufar.icedlatte.security.signin.lockout.LoginAttemptProperties;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
 import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
@@ -46,6 +47,9 @@ class UserAuthenticationServiceTest {
 
     @Mock
     private TurnstileVerifier turnstileVerifier;
+
+    @Mock
+    private LoginAttemptProperties loginAttemptProperties;
 
     @Mock
     private HttpServletRequest httpRequest;
@@ -91,6 +95,7 @@ class UserAuthenticationServiceTest {
     @DisplayName("Should throw UserAccountLockedException when user account is locked")
     void shouldThrowUserAccountLockedExceptionWhenUserAccountIsLocked() {
         when(request.getEmail()).thenReturn("locked@example.com");
+        when(loginAttemptProperties.lockoutDurationMinutes()).thenReturn(60);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new LockedException("User account is locked"));
 
@@ -108,7 +113,7 @@ class UserAuthenticationServiceTest {
 
         assertThrows(InvalidCredentialsException.class, () -> userAuthenticationService.verifyCredentials(request));
 
-        verifyNoInteractions(loginAttemptService);
+        verify(loginAttemptService).recordFailure("missing@example.com");
     }
 
     @Test

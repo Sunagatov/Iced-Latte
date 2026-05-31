@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,12 @@ class OAuthFlowServiceTest {
     @Mock
     private HttpServletRequest request;
 
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private OAuthStateCookieService oAuthStateCookieService;
+
     private OAuthFlowService service;
 
     @BeforeEach
@@ -48,7 +55,8 @@ class OAuthFlowServiceTest {
                 oAuthLoginService,
                 oAuthStateStore,
                 oAuthTokenHandoffStore,
-                new OAuthRedirectService("https://app.example.com"));
+                new OAuthRedirectService("https://app.example.com"),
+                oAuthStateCookieService);
     }
 
     @Test
@@ -58,11 +66,15 @@ class OAuthFlowServiceTest {
                 .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
 
         Optional<URI> result = service.initiate(
-                OAuthProvider.GOOGLE, "https://app.example.com:443/auth/google/callback?next=/checkout");
+                OAuthProvider.GOOGLE,
+                "https://app.example.com:443/auth/google/callback?next=/checkout",
+                request,
+                response);
 
         assertThat(result).contains(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
         verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        verify(oAuthStateCookieService).bind(eq(request), eq(response), eq(OAuthProvider.GOOGLE), anyString(), any());
         assertThat(callbackBase.getValue())
                 .isEqualTo("https://app.example.com:443/auth/google/callback?next=/checkout");
     }
@@ -73,7 +85,7 @@ class OAuthFlowServiceTest {
         when(oAuthProviderClient.buildAuthorizationUri(anyString()))
                 .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
 
-        service.initiate(OAuthProvider.GOOGLE, "https://evil.example.com/auth/google/callback");
+        service.initiate(OAuthProvider.GOOGLE, "https://evil.example.com/auth/google/callback", request, response);
 
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
         verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
@@ -84,7 +96,7 @@ class OAuthFlowServiceTest {
     void initiateReturnsEmptyWhenProviderClientIsNotRegistered() {
         when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
-        Optional<URI> result = service.initiate(OAuthProvider.GOOGLE, null);
+        Optional<URI> result = service.initiate(OAuthProvider.GOOGLE, null, request, response);
 
         assertThat(result).isEmpty();
         verifyNoInteractions(oAuthStateStore, oAuthProviderClient);
@@ -93,18 +105,21 @@ class OAuthFlowServiceTest {
     @Test
     void completeCallbackReturnsCallbackWithOneTimeHandoffCode() {
         stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
                 .thenReturn(tokenPair());
         when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
 
         assertThat(redirect.toString())
                 .isEqualTo("https://app.example.com/auth/google/callback?next=/checkout#oauthCode=handoff-code");
         assertThat(redirect.toString()).doesNotContain("jwt-token", "refresh-token");
         verify(oAuthTokenHandoffStore).store(any(AuthenticationTokens.class));
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
     }
 
     @Test
@@ -120,22 +135,40 @@ class OAuthFlowServiceTest {
     @Test
     void completeCallbackReturnsInvalidStateRedirectWhenStateWasNotStored() {
         stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "missing"))
+                .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "missing")).thenReturn(null);
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "missing", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "missing", request, response);
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=invalid_state");
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
+    }
+
+    @Test
+    void completeCallbackRejectsStateWhenStateCookieDoesNotMatch() {
+        stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(false);
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=invalid_state");
+        verifyNoInteractions(oAuthStateStore, oAuthTokenHandoffStore);
+        verify(oAuthLoginService, never()).handle(any(), anyString(), any());
     }
 
     @Test
     void completeCallbackReturnsAuthFailedRedirectAndPreservesNextWhenLoginFails() {
         stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=/checkout");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed&next=/checkout");
     }
@@ -143,12 +176,14 @@ class OAuthFlowServiceTest {
     @Test
     void completeCallbackDropsExternalNextWhenLoginFails() {
         stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=https://evil.example.com");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed");
     }
@@ -156,12 +191,14 @@ class OAuthFlowServiceTest {
     @Test
     void completeCallbackDropsProtocolRelativeNextWhenLoginFails() {
         stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn("https://app.example.com/auth/google/callback?next=//evil.example.com");
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed");
     }
@@ -170,7 +207,7 @@ class OAuthFlowServiceTest {
     void completeCallbackReturnsMissingCodeRedirectBeforeConsumingState() {
         stubGoogleClient();
 
-        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, " ", "state-token", request);
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, " ", "state-token", request, response);
 
         assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=missing_code");
         verifyNoInteractions(oAuthStateStore);

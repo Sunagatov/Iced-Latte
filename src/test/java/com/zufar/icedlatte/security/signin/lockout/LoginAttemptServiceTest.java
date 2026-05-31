@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +23,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.security.signin.entity.LoginAttemptEntity;
 import com.zufar.icedlatte.security.signin.repository.LoginAttemptRepository;
@@ -38,6 +38,9 @@ class LoginAttemptServiceTest {
     @Mock
     private UserAccessControlApi userAccessControlApi;
 
+    @Mock
+    private LoginAttemptProperties properties;
+
     @InjectMocks
     private LoginAttemptService service;
 
@@ -47,8 +50,8 @@ class LoginAttemptServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(service, "maxLoginAttempts", MAX_LOGIN_ATTEMPTS);
-        ReflectionTestUtils.setField(service, "userAccountLockoutDurationMinutes", LOCKOUT_MINUTES);
+        lenient().when(properties.maxAttempts()).thenReturn(MAX_LOGIN_ATTEMPTS);
+        lenient().when(properties.lockoutDurationMinutes()).thenReturn(LOCKOUT_MINUTES);
     }
 
     @Nested
@@ -59,7 +62,7 @@ class LoginAttemptServiceTest {
         @DisplayName("records failed attempt atomically without locking below threshold")
         void recordsFailedAttemptAtomicallyWithoutLockingBelowThreshold() {
             when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
-                    .thenReturn(4);
+                    .thenReturn(List.of(4));
 
             service.recordFailure(USER_EMAIL);
 
@@ -72,7 +75,7 @@ class LoginAttemptServiceTest {
         @DisplayName("records first failed attempt with the same atomic operation")
         void recordsFirstFailedAttemptWithSameAtomicOperation() {
             when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
-                    .thenReturn(1);
+                    .thenReturn(List.of(1));
 
             service.recordFailure(USER_EMAIL);
 
@@ -86,7 +89,7 @@ class LoginAttemptServiceTest {
         void locksAccountWhenAttemptsReachThreshold() {
             ArgumentCaptor<Instant> expirationCaptor = ArgumentCaptor.forClass(Instant.class);
             when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
-                    .thenReturn(MAX_LOGIN_ATTEMPTS);
+                    .thenReturn(List.of(MAX_LOGIN_ATTEMPTS));
             when(loginAttemptRepository.setUserLockedStatusAndExpiration(eq(USER_EMAIL), any(Instant.class)))
                     .thenReturn(1);
             when(userAccessControlApi.lockAccount(USER_EMAIL)).thenReturn(1);
@@ -103,6 +106,19 @@ class LoginAttemptServiceTest {
             assertThat(expiration)
                     .isAfterOrEqualTo(before.plus(LOCKOUT_MINUTES, ChronoUnit.MINUTES))
                     .isBeforeOrEqualTo(after.plus(LOCKOUT_MINUTES, ChronoUnit.MINUTES));
+        }
+
+        @Test
+        @DisplayName("does not lock or fail when user email is absent")
+        void doesNotLockOrFailWhenUserEmailIsAbsent() {
+            when(loginAttemptRepository.recordFailedAttempt(eq(USER_EMAIL), any(Instant.class)))
+                    .thenReturn(List.of());
+
+            service.recordFailure(USER_EMAIL);
+
+            verify(loginAttemptRepository).recordFailedAttempt(eq(USER_EMAIL), any(Instant.class));
+            verify(userAccessControlApi, never()).lockAccount(any());
+            verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
         }
     }
 

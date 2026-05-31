@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -63,6 +64,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final CurrentUserProvider currentUserProvider;
     private final UserRegistrationService userRegistrationService;
     private final HttpServletRequest httpRequest;
+    private final HttpServletResponse httpResponse;
     private final OAuthFlowService oAuthFlowService;
 
     @Value("${email.enabled:false}")
@@ -74,7 +76,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             @PathVariable String provider, @Valid @RequestParam(required = false) URI redirectUrl) {
         OAuthProvider oAuthProvider = parseProvider(provider);
         return oAuthFlowService
-                .initiate(oAuthProvider, redirectUrl == null ? null : redirectUrl.toString())
+                .initiate(oAuthProvider, redirectUrl == null ? null : redirectUrl.toString(), httpRequest, httpResponse)
                 .map(authUri -> ResponseEntity.status(HttpStatus.FOUND)
                         .location(authUri)
                         .<Void>build())
@@ -90,7 +92,7 @@ public class UserSecurityEndpoint implements SecurityApi {
             @Valid @RequestParam(required = false) String state) {
         OAuthProvider oAuthProvider = parseProvider(provider);
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(oAuthFlowService.completeCallback(oAuthProvider, code, state, httpRequest))
+                .location(oAuthFlowService.completeCallback(oAuthProvider, code, state, httpRequest, httpResponse))
                 .build();
     }
 

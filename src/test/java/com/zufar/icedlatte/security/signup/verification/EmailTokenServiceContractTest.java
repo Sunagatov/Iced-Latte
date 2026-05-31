@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -37,9 +36,9 @@ class EmailTokenServiceContractTest {
                 new InMemoryExpiringKeyValueStore(new com.zufar.icedlatte.common.config.CaffeineSizeProperties(
                         1_000, 5_000, 10_000, 1_000, 10_000)),
                 passwordEncoder,
-                tokenPayloadProtector(objectMapper));
-        ReflectionTestUtils.setField(service, "expireTimeMinutes", 5);
-        ReflectionTestUtils.setField(service, "tokenLength", 43);
+                tokenPayloadProtector(objectMapper),
+                new EmailTokenProperties(43, ""),
+                new TemporaryTokenProperties(new TemporaryTokenProperties.Time(5)));
     }
 
     @Test
@@ -96,7 +95,7 @@ class EmailTokenServiceContractTest {
     }
 
     private static EmailTokenPayloadProtector tokenPayloadProtector(ObjectMapper objectMapper) {
-        return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), "");
+        return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), new EmailTokenProperties(43, ""));
     }
 
     private static JwtProperties jwtProperties() {

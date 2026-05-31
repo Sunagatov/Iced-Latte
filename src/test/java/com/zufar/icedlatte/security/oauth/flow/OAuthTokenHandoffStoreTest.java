@@ -10,7 +10,6 @@ import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
@@ -30,8 +29,7 @@ class OAuthTokenHandoffStoreTest {
                 new InMemoryExpiringKeyValueStore(new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)),
                 new ObjectMapper(),
                 jwtProperties(),
-                handoffEncryptionKey());
-        ReflectionTestUtils.setField(store, "ttl", Duration.ofMinutes(1));
+                properties(handoffEncryptionKey()));
     }
 
     @Test
@@ -53,9 +51,8 @@ class OAuthTokenHandoffStoreTest {
     @DisplayName("does not store bearer tokens as plaintext")
     void doesNotStoreBearerTokensAsPlaintext() {
         ExpiringKeyValueStore temporaryStore = mock(ExpiringKeyValueStore.class);
-        OAuthTokenHandoffStore encryptedStore =
-                new OAuthTokenHandoffStore(temporaryStore, new ObjectMapper(), jwtProperties(), handoffEncryptionKey());
-        ReflectionTestUtils.setField(encryptedStore, "ttl", Duration.ofMinutes(1));
+        OAuthTokenHandoffStore encryptedStore = new OAuthTokenHandoffStore(
+                temporaryStore, new ObjectMapper(), jwtProperties(), properties(handoffEncryptionKey()));
         AuthenticationTokens tokens = new AuthenticationTokens("access-token", "refresh-token");
 
         encryptedStore.store(tokens);
@@ -80,5 +77,9 @@ class OAuthTokenHandoffStoreTest {
 
     private static String handoffEncryptionKey() {
         return "NDA0RTYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNBNDQ0Mjg0NzJCNEI2MjUwNjQ1MzY3NTY2QjU5NzA=";
+    }
+
+    private static OAuthFlowProperties properties(String handoffEncryptionKey) {
+        return new OAuthFlowProperties(10, Duration.ofMinutes(1), handoffEncryptionKey);
     }
 }

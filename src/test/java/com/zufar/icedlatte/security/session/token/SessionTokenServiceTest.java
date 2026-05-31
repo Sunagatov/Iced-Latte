@@ -97,7 +97,7 @@ class SessionTokenServiceTest {
 
         assertThat(result.accessToken()).isEqualTo(accessToken);
         assertThat(result.refreshToken()).isEqualTo(newRefreshToken);
-        verify(authSessionService).rotateSession(oldHash, newHash);
+        verify(authSessionService).rotateSession(session, oldHash, newHash);
         assertThat(MDC.get(RequestContextConstants.USER_ID_MDC_KEY)).isNull();
         assertThat(MDC.get(RequestContextConstants.SESSION_ID_MDC_KEY)).isNull();
     }

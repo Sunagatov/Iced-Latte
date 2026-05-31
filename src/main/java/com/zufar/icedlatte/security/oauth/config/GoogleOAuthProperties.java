@@ -27,6 +27,7 @@ public record GoogleOAuthProperties(
         @Valid @NotNull(message = "Google timeout config must not be null")
         Timeout timeout,
 
+        @Valid @NotNull(message = "Google auth config must not be null")
         Auth auth) {
 
     public record Timeout(
@@ -36,7 +37,9 @@ public record GoogleOAuthProperties(
             @NotNull(message = "Google read-timeout must not be null")
             Duration readTimeout) {}
 
-    public record Auth(Server server) {
+    public record Auth(
+            @Valid @NotNull(message = "Google auth server config must not be null")
+            Server server) {
         public record Server(
                 @NotBlank(message = "Google auth server url must not be blank")
                 String url) {}

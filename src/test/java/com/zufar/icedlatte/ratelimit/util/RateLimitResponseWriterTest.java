@@ -22,7 +22,7 @@ class RateLimitResponseWriterTest {
     void writesRateLimitHeaders() {
         MockHttpServletResponse response = new MockHttpServletResponse();
         long resetTimeMillis = System.currentTimeMillis() + 30_000;
-        RateLimitResult result = new RateLimitResult(true, 60, -5, resetTimeMillis);
+        RateLimitResult result = new RateLimitResult(true, 60, -5, resetTimeMillis, 60);
 
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
@@ -32,7 +32,7 @@ class RateLimitResponseWriterTest {
         long resetSeconds = Long.parseLong(Objects.requireNonNull(response.getHeader("X-RateLimit-Reset")));
         assertThat(resetSeconds).isBetween(28L, 31L);
         // IETF structured fields
-        assertThat(response.getHeader("RateLimit-Policy")).startsWith("\"default\";q=60;w=");
+        assertThat(response.getHeader("RateLimit-Policy")).isEqualTo("\"default\";q=60;w=60");
         assertThat(response.getHeader("RateLimit")).startsWith("\"default\";r=0;t=");
     }
 

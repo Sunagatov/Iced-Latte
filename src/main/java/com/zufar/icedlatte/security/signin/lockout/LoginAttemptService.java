@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.signin.lockout;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,21 +20,21 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class LoginAttemptService {
 
-    @Value("${login-attempts.max-attempts}")
-    private int maxLoginAttempts;
-
-    @Value("${login-attempts.lockout-duration-minutes}")
-    private int userAccountLockoutDurationMinutes;
-
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserAccessControlApi userAccessControlApi;
+    private final LoginAttemptProperties properties;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void recordFailure(String userEmail) {
-        int attempts = loginAttemptRepository.recordFailedAttempt(userEmail, Instant.now());
+        List<Integer> recordedAttempts = loginAttemptRepository.recordFailedAttempt(userEmail, Instant.now());
+        if (recordedAttempts.isEmpty()) {
+            log.debug("login.failed_attempt.not_recorded: reason=user_not_found");
+            return;
+        }
 
-        int remaining = Math.max(0, maxLoginAttempts - attempts);
-        if (attempts >= maxLoginAttempts) {
+        int attempts = recordedAttempts.getFirst();
+        int remaining = Math.max(0, properties.maxAttempts() - attempts);
+        if (attempts >= properties.maxAttempts()) {
             lockUserAccount(userEmail);
         }
         log.debug("login.failed: attempts={}, remaining={}", attempts, remaining);
@@ -66,7 +66,7 @@ public class LoginAttemptService {
     }
 
     private void lockUserAccount(String userEmail) {
-        Instant expirationDatetime = Instant.now().plus(userAccountLockoutDurationMinutes, ChronoUnit.MINUTES);
+        Instant expirationDatetime = Instant.now().plus(properties.lockoutDurationMinutes(), ChronoUnit.MINUTES);
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userAccessControlApi.lockAccount(userEmail);
         if (attemptRows == 0 || userRows == 0) {
@@ -77,7 +77,7 @@ public class LoginAttemptService {
         } else {
             log.warn(
                     "auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}",
-                    userAccountLockoutDurationMinutes);
+                    properties.lockoutDurationMinutes());
         }
     }
 

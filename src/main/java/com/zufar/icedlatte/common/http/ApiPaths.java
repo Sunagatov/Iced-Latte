@@ -14,12 +14,13 @@ public class ApiPaths {
     public static final String AUTH_AUTHENTICATE = AUTH + "/authenticate";
     public static final String AUTH_REFRESH = AUTH + "/refresh";
     public static final String AUTH_LOGOUT_ALL = AUTH + "/logout-all";
+    public static final String AUTH_PASSWORD_FORGOT = AUTH + "/password/forgot";
+    public static final String AUTH_PASSWORD_CHANGE = AUTH + "/password/change";
     public static final String AUTH_OAUTH = AUTH + "/oauth";
     public static final String AUTH_SESSIONS_PATTERN = AUTH + "/sessions/**";
 
     public static final String USERS = "/api/v1/users";
     public static final String USERS_PATTERN = USERS + "/**";
-    public static final String USERS_PASSWORD_RESET = USERS + "/password/reset";
 
     public static final String PRODUCTS = "/api/v1/products";
     public static final String PRODUCTS_PATTERN = PRODUCTS + "/**";

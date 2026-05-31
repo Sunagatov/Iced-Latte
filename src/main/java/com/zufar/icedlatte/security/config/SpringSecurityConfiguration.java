@@ -94,6 +94,14 @@ public class SpringSecurityConfiguration {
         return registration;
     }
 
+    @Bean
+    public FilterRegistrationBean<Filter> rateLimitingFilterRegistration(
+            @Qualifier("rateLimitingFilter") Filter filter) {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     // amazonq-ignore-next-line
     @Bean
     public AuthenticationProvider authenticationProvider(
@@ -101,7 +109,7 @@ public class SpringSecurityConfiguration {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
         // amazonq-ignore-next-line
         authenticationProvider.setPasswordEncoder(passwordEncoder);
-        authenticationProvider.setHideUserNotFoundExceptions(false);
+        authenticationProvider.setHideUserNotFoundExceptions(true);
         return authenticationProvider;
     }
 

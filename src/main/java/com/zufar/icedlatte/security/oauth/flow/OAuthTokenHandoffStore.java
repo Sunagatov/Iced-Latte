@@ -1,11 +1,9 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.Base64;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -26,20 +24,19 @@ public class OAuthTokenHandoffStore {
     private final ExpiringKeyValueStore temporaryStore;
     private final ObjectMapper objectMapper;
     private final AesGcmStringProtector protector;
-
-    @Value("${oauth.handoff-ttl:PT1M}")
-    private Duration ttl;
+    private final OAuthFlowProperties properties;
 
     public OAuthTokenHandoffStore(
             ExpiringKeyValueStore temporaryStore,
             ObjectMapper objectMapper,
             JwtProperties jwtProperties,
-            @Value("${oauth.handoff-encryption-key:}") String handoffEncryptionKey) {
+            OAuthFlowProperties properties) {
         this.temporaryStore = temporaryStore;
         this.objectMapper = objectMapper;
+        this.properties = properties;
         String keySource;
-        if (StringUtils.hasText(handoffEncryptionKey)) {
-            keySource = handoffEncryptionKey;
+        if (StringUtils.hasText(properties.handoffEncryptionKey())) {
+            keySource = properties.handoffEncryptionKey();
         } else {
             keySource = jwtProperties.refreshSecret();
         }
@@ -47,9 +44,8 @@ public class OAuthTokenHandoffStore {
     }
 
     public String store(AuthenticationTokens tokens) {
-        validateConfiguredTtl();
         String code = newHandoffCode();
-        temporaryStore.put(namespacedKey(code), protector.protect(serialize(tokens)), ttl);
+        temporaryStore.put(namespacedKey(code), protector.protect(serialize(tokens)), properties.handoffTtl());
         return code;
     }
 
@@ -79,12 +75,6 @@ public class OAuthTokenHandoffStore {
             return objectMapper.readValue(raw, AuthenticationTokens.class);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to deserialize OAuth token handoff", e);
-        }
-    }
-
-    private void validateConfiguredTtl() {
-        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
-            throw new IllegalStateException("oauth.handoff-ttl must be positive");
         }
     }
 

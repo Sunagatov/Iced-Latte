@@ -81,7 +81,8 @@ class RateLimitingFilterTest {
         "/api/v1/telemetry/report,     telemetry",
         "/api/v1/payment,              payment",
         "/api/v1/payment/stripe/webhook, payment",
-        "/api/v1/users/password/reset, auth",
+        "/api/v1/auth/password/forgot, auth",
+        "/api/v1/auth/password/change, auth",
         "/api/v1/cart,                 global",
         "/api/v1/users/me,             global",
     })
@@ -328,6 +329,44 @@ class RateLimitingFilterTest {
     }
 
     @Test
+    @DisplayName("validation rejects non-positive ban threshold")
+    void validateRejectsNonPositiveBanThreshold() {
+        RateLimitProperties properties = properties();
+        properties.setBanThreshold(0);
+
+        assertThatThrownBy(() -> new RateLimitingFilter(
+                        openRateLimiter,
+                        closedRateLimiter,
+                        new SimpleMeterRegistry(),
+                        clientIpExtractor,
+                        authenticatedRequestIdentityProvider,
+                        properties,
+                        problemTypeUriFactory,
+                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ban-threshold must be > 0");
+    }
+
+    @Test
+    @DisplayName("validation rejects non-positive ban duration")
+    void validateRejectsNonPositiveBanDuration() {
+        RateLimitProperties properties = properties();
+        properties.setBanDuration(Duration.ZERO);
+
+        assertThatThrownBy(() -> new RateLimitingFilter(
+                        openRateLimiter,
+                        closedRateLimiter,
+                        new SimpleMeterRegistry(),
+                        clientIpExtractor,
+                        authenticatedRequestIdentityProvider,
+                        properties,
+                        problemTypeUriFactory,
+                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ban-duration must be positive");
+    }
+
+    @Test
     @DisplayName("strict pre-auth bucket blocks login before flood and primary rules")
     void strictPreAuthBucketBlocksLogin() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
@@ -376,14 +415,15 @@ class RateLimitingFilterTest {
                 .tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any());
     }
 
-    @Test
-    @DisplayName("password reset is blocked by strict pre-auth bucket")
-    void passwordResetBlockedByStrictPreAuth() throws Exception {
+    @ParameterizedTest
+    @CsvSource({"/api/v1/auth/password/forgot", "/api/v1/auth/password/change"})
+    @DisplayName("password reset endpoints are blocked by strict pre-auth bucket")
+    void passwordResetBlockedByStrictPreAuth(String path) throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(closedRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("auth:ip:")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(false, 10, 0, RESET_MILLIS));
 
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/users/password/reset");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", path);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, mock(FilterChain.class));

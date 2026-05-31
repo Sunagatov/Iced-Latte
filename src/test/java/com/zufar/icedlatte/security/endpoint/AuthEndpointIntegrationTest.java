@@ -35,6 +35,7 @@ import io.restassured.specification.RequestSpecification;
 class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
     private static final String BASE_PATH = "/api/v1/auth";
+    private static final String GOOGLE_OAUTH_STATE_COOKIE = "iced_latte_oauth_state_google";
 
     @LocalServerPort
     private Integer port;
@@ -80,11 +81,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                         allOf(containsString("state="), containsString("client_id="), containsString("redirect_uri=")));
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback");
@@ -123,11 +127,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/oauth/google");
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback");
@@ -155,11 +162,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/oauth/google");
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "first-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
@@ -169,6 +179,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
         given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "second-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")
@@ -193,11 +204,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/oauth/google");
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback");
@@ -228,11 +242,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/oauth/google");
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         Response callbackResponse = given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "safe-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback");
@@ -296,11 +313,14 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .get("/oauth/google");
 
         String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GOOGLE_OAUTH_STATE_COOKIE);
         assertNotNull(state);
+        assertNotNull(stateCookie);
 
         given(specification)
                 .redirects()
                 .follow(false)
+                .cookie(GOOGLE_OAUTH_STATE_COOKIE, stateCookie)
                 .queryParam("code", "broken-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback")

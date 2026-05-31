@@ -21,7 +21,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
@@ -74,11 +73,12 @@ class EmailVerificationServiceTest {
 
     private EmailTokenService tokenService(ExpiringKeyValueStore store) {
         ObjectMapper objectMapper = new ObjectMapper();
-        EmailTokenService tokenService =
-                new EmailTokenService(store, passwordEncoder, tokenPayloadProtector(objectMapper));
-        ReflectionTestUtils.setField(tokenService, "expireTimeMinutes", 15);
-        ReflectionTestUtils.setField(tokenService, "tokenLength", 43);
-        return tokenService;
+        return new EmailTokenService(
+                store,
+                passwordEncoder,
+                tokenPayloadProtector(objectMapper),
+                new EmailTokenProperties(43, ""),
+                new TemporaryTokenProperties(new TemporaryTokenProperties.Time(15)));
     }
 
     @Nested
@@ -201,13 +201,17 @@ class EmailVerificationServiceTest {
     @Test
     @DisplayName("generateToken rejects weak token length configuration")
     void generateTokenRejectsWeakTokenLengthConfiguration() {
-        ReflectionTestUtils.setField(emailTokenService, "tokenLength", 9);
-        UserRegistrationRequest request =
-                new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
-
-        assertThatThrownBy(() -> emailTokenService.generate(request, TokenPurpose.EMAIL_VERIFICATION))
-                .isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> new EmailTokenProperties(9, ""))
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("must be at least 32");
+    }
+
+    @Test
+    @DisplayName("temporary token properties reject missing time configuration")
+    void temporaryTokenPropertiesRejectMissingTimeConfiguration() {
+        assertThatThrownBy(() -> new TemporaryTokenProperties(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("temporary-cache.time must not be null");
     }
 
     @Test
@@ -275,15 +279,16 @@ class EmailVerificationServiceTest {
 
     private EmailTokenService tokenServiceWithStore(ExpiringKeyValueStore store) {
         ObjectMapper objectMapper = new ObjectMapper();
-        EmailTokenService serviceWithMockStore =
-                new EmailTokenService(store, passwordEncoder, tokenPayloadProtector(objectMapper));
-        ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
-        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
-        return serviceWithMockStore;
+        return new EmailTokenService(
+                store,
+                passwordEncoder,
+                tokenPayloadProtector(objectMapper),
+                new EmailTokenProperties(43, ""),
+                new TemporaryTokenProperties(new TemporaryTokenProperties.Time(15)));
     }
 
     private static EmailTokenPayloadProtector tokenPayloadProtector(ObjectMapper objectMapper) {
-        return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), "");
+        return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), new EmailTokenProperties(43, ""));
     }
 
     private static JwtProperties jwtProperties() {

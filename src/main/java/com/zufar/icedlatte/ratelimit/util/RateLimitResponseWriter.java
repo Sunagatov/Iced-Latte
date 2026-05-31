@@ -32,7 +32,8 @@ public class RateLimitResponseWriter {
         response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, result.remaining())));
         response.setHeader("X-RateLimit-Reset", String.valueOf(resetSeconds));
         // IETF draft-ietf-httpapi-ratelimit-headers-08 structured fields
-        response.setHeader("RateLimit-Policy", "\"default\";q=" + result.limit() + ";w=" + Math.max(1, resetSeconds));
+        response.setHeader(
+                "RateLimit-Policy", "\"default\";q=" + result.limit() + ";w=" + Math.max(1, result.windowSeconds()));
         response.setHeader("RateLimit", "\"default\";r=" + Math.max(0, result.remaining()) + ";t=" + resetSeconds);
     }
 
