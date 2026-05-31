@@ -8,13 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+import com.zufar.icedlatte.payment.service.PaymentConfirmationService;
+import com.zufar.icedlatte.payment.service.PaymentConfirmationSource;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class StripeWebhookBusinessProcessor {
 
     private final OrderPaymentApi orderPaymentApi;
     private final PaymentRepository paymentRepository;
-    private final CartCheckoutApi cartCheckoutApi;
+    private final PaymentConfirmationService paymentConfirmationService;
 
     @Transactional
     public void process(Event event) {
@@ -75,65 +76,11 @@ public class StripeWebhookBusinessProcessor {
             log.info("payment.awaiting_async: orderId={}, paymentStatus={}", orderId, stripeSession.getPaymentStatus());
             return;
         }
-        markPaid(event, stripeSession);
-    }
-
-    private void markPaid(Event event, Session stripeSession) {
         UUID orderId = extractOrderId(stripeSession);
-
-        // PESSIMISTIC_WRITE lock — prevents concurrent processing of different events
-        Payment payment = paymentRepository
-                .findByOrderIdForUpdate(orderId)
-                .orElseThrow(() -> new IllegalStateException("No Payment for orderId=" + orderId));
-
-        if (payment.getStatus().isTerminal()) {
-            log.info("payment.paid.skipped_terminal: orderId={}, status={}", orderId, payment.getStatus());
-            return;
-        }
-
-        // Reconciliation guard: verify amount/currency match.
-        // On mismatch: persist RECONCILIATION_FAILED and return normally (no throw).
-        Long stripeAmount = stripeSession.getAmountTotal();
-        String stripeCurrency = stripeSession.getCurrency();
-        String paymentIntent = stripeSession.getPaymentIntent();
-        if (stripeAmount == null
-                || stripeCurrency == null
-                || paymentIntent == null
-                || !stripeAmount.equals(payment.getAmountMinor())
-                || !stripeCurrency.equalsIgnoreCase(payment.getCurrency())) {
-            log.error(
-                    "payment.reconciliation_failed: orderId={}, expected={}_{}, stripe={}_{}, paymentIntentPresent={}",
-                    orderId,
-                    payment.getAmountMinor(),
-                    payment.getCurrency(),
-                    stripeAmount,
-                    stripeCurrency,
-                    paymentIntent != null);
-            payment.setStatus(PaymentStatus.RECONCILIATION_FAILED);
-            payment.setRawEventId(event.getId());
-            payment.setLatestEventType(event.getType());
-            paymentRepository.save(payment);
-            return; // TX commits — RECONCILIATION_FAILED is persisted
-        }
-
-        payment.setProviderPaymentIntentId(paymentIntent);
-        payment.setRawEventId(event.getId());
-        payment.setLatestEventType(event.getType());
-
-        if (!orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed")) {
-            payment.setStatus(PaymentStatus.RECONCILIATION_FAILED);
-            paymentRepository.save(payment);
-            log.warn("checkout.completed.order_transition_failed: orderId={}", orderId);
-            return;
-        }
-
-        payment.setStatus(PaymentStatus.PAID);
-        paymentRepository.save(payment);
-
-        // Store stripePaymentIntentId on Order for refund lookup
-        orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
-        cartCheckoutApi.deleteCartForUser(payment.getUserId());
-        log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
+        paymentConfirmationService.confirmPaid(
+                orderId,
+                stripeSession,
+                new PaymentConfirmationSource(event.getId(), event.getType(), "Stripe payment confirmed"));
     }
 
     private void handleExpired(Session stripeSession) {

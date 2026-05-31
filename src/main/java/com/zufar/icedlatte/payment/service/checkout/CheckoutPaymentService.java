@@ -19,7 +19,7 @@ import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
-import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
+import com.zufar.icedlatte.payment.exception.StripeSessionException;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 
@@ -60,24 +60,27 @@ public class CheckoutPaymentService {
         CheckoutPreparation prepared = prepareCheckout(userId, request, idempotencyKey);
 
         // Idempotent retry: don't call Stripe with empty line items
-        if (prepared.existing()) {
-            return resolveExistingCheckout(prepared, user.email());
+        if (prepared instanceof CheckoutPreparation.ExistingCheckout existingCheckout) {
+            return resolveExistingCheckout(existingCheckout, user.email());
         }
 
+        CheckoutPreparation.NewCheckout newCheckout = (CheckoutPreparation.NewCheckout) prepared;
+
         // Stage 2: Outside transaction — call Stripe
+        OrderSnapshot orderSnapshot = newCheckout.order();
         StripeSessionResult stripeResult =
-                stripeSessionCreator.create(prepared.order(), user.email(), prepared.cartItems());
+                stripeSessionCreator.create(orderSnapshot, user.email(), newCheckout.cartItems());
 
         // Stage 3: DB transaction — save Stripe details
-        txService.saveStripeDetails(prepared.payment().id(), stripeResult);
+        txService.saveStripeDetails(newCheckout.payment().id(), stripeResult);
 
         log.info(
                 "checkout.created: orderId={}, stripeSessionId={}",
-                prepared.order().id(),
+                orderSnapshot.id(),
                 stripeResult.sessionId());
 
         return new CheckoutResponseDto()
-                .orderId(prepared.order().id())
+                .orderId(orderSnapshot.id())
                 .stripeSessionId(stripeResult.sessionId())
                 .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
     }
@@ -95,7 +98,8 @@ public class CheckoutPaymentService {
      * Handles idempotent retry. Session.retrieve() is a remote Stripe API call and MUST remain outside
      * any @Transactional method.
      */
-    private CheckoutResponseDto resolveExistingCheckout(CheckoutPreparation prepared, String customerEmail) {
+    private CheckoutResponseDto resolveExistingCheckout(
+            CheckoutPreparation.ExistingCheckout prepared, String customerEmail) {
         CheckoutPaymentSnapshot payment = prepared.payment();
 
         // Case A: Stripe session already created — retrieve and return URL
@@ -111,7 +115,7 @@ public class CheckoutPaymentService {
                         .stripeSessionId(payment.providerSessionId())
                         .checkoutUrl(URI.create(session.getUrl()));
             } catch (StripeException e) {
-                throw new StripeSessionCreationException("Failed to retrieve existing session", e);
+                throw new StripeSessionException("Failed to retrieve existing session", e);
             }
         }
 

@@ -94,7 +94,7 @@ class CheckoutPaymentServiceTest {
         CheckoutPaymentSnapshot payment = new CheckoutPaymentSnapshot(paymentId, null);
         OrderSnapshot order = new OrderSnapshot(
                 orderId, userId, OrderStatusSnapshot.PENDING_PAYMENT, BigDecimal.TEN, null, List.of());
-        CheckoutPreparation existing = new CheckoutPreparation(order, payment, List.of(), true);
+        CheckoutPreparation existing = new CheckoutPreparation.ExistingCheckout(order, payment);
 
         when(currentUserProvider.get()).thenReturn(new CurrentUserSnapshot(userId, "user@example.com"));
         when(txService.prepareCheckout(userId, request, "same-key"))

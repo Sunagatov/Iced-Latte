@@ -17,6 +17,9 @@ import lombok.experimental.UtilityClass;
 public class OrderSpecifications {
 
     public static Specification<Order> belongsToUser(UUID userId) {
+        if (userId == null) {
+            return null;
+        }
         return (root, _, cb) -> cb.equal(root.get("userId"), userId);
     }
 

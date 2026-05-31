@@ -31,7 +31,10 @@ public class OrderExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ProblemDetail handleTypeMismatch(final MethodArgumentTypeMismatchException ignored) {
+    public ProblemDetail handleTypeMismatch(final MethodArgumentTypeMismatchException ex) {
+        if (ex.getRequiredType() != OrderStatus.class) {
+            throw ex;
+        }
         log.debug("exception.order.type_mismatch: status=400");
         return problemDetailFactory.build(
                 ProblemType.INVALID_PARAMETER,

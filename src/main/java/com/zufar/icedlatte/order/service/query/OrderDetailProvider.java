@@ -3,11 +3,9 @@ package com.zufar.icedlatte.order.service.query;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,50 +13,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.order.api.OrderPaymentApi;
-import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
-import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
 import com.zufar.icedlatte.order.exception.OrderNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.repository.OrderStatusHistoryRepository;
-import com.zufar.icedlatte.order.service.lifecycle.OrderStatusTransitioner;
 import com.zufar.icedlatte.order.specification.OrderSpecifications;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class OrderDetailProvider implements OrderPaymentApi {
+public class OrderDetailProvider {
 
     private static final Set<OrderStatus> CANCELLABLE = Set.of(OrderStatus.CREATED, OrderStatus.PAID);
 
     private final OrderRepository orderRepository;
     private final OrderDtoConverter orderDtoConverter;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
-    private final OrderStatusTransitioner orderStatusTransitioner;
-
-    @Override
-    @Transactional(readOnly = true)
-    public @NonNull OrderSnapshot getSnapshot(@NonNull UUID orderId) {
-        Order order = findById(orderId);
-        return orderDtoConverter.toSnapshot(order);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public @NonNull OrderSnapshot getSnapshotWithItems(@NonNull UUID orderId) {
-        Order order = findByIdWithItems(orderId);
-        return orderDtoConverter.toSnapshot(order);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public @NonNull Optional<OrderSnapshot> findByStripePaymentIntentId(@NonNull String paymentIntentId) {
-        return orderRepository.findByStripePaymentIntentId(paymentIntentId).map(orderDtoConverter::toSnapshot);
-    }
 
     @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId, UUID userId) {
@@ -126,59 +99,6 @@ public class OrderDetailProvider implements OrderPaymentApi {
                 .size(page.getSize())
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages());
-    }
-
-    Order findById(UUID orderId) {
-        return orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    Order findByIdWithItems(UUID orderId) {
-        return orderRepository.findByIdWithItems(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    @Override
-    @Transactional
-    public boolean confirmPayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, OrderStatus.PAID, reason);
-    }
-
-    @Override
-    @Transactional
-    public boolean expirePayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, OrderStatus.PAYMENT_EXPIRED, reason);
-    }
-
-    @Override
-    @Transactional
-    public boolean failPayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_FAILED_EVENT, OrderStatus.PAYMENT_FAILED, reason);
-    }
-
-    @Override
-    @Transactional
-    public void assignPaymentIntent(@NonNull UUID orderId, @NonNull String stripePaymentIntentId) {
-        Order order = findById(orderId);
-        order.setStripePaymentIntentId(stripePaymentIntentId);
-        orderRepository.save(order);
-    }
-
-    @Override
-    @Transactional
-    public boolean confirmRefund(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.REFUND_CONFIRMED, OrderStatus.REFUNDED, reason);
-    }
-
-    private boolean transitionPaymentOrder(UUID orderId, OrderEvent event, OrderStatus targetStatus, String reason) {
-        try {
-            orderStatusTransitioner.transition(orderId, event, null, reason);
-            return true;
-        } catch (InvalidOrderStateTransitionException _) {
-            return orderRepository
-                    .findById(orderId)
-                    .map(Order::getStatus)
-                    .filter(targetStatus::equals)
-                    .isPresent();
-        }
     }
 
     private boolean canCancel(Order order) {

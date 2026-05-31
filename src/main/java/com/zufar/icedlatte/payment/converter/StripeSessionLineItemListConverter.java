@@ -4,33 +4,38 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-import org.jspecify.annotations.NonNull;
-import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 
-@Mapper(
-        componentModel = MappingConstants.ComponentModel.SPRING,
-        imports = BigDecimal.class,
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
-@SuppressWarnings({"unused", "NullableProblems"}) // MapStruct generates and calls the implementation.
-public abstract class StripeSessionLineItemListConverter {
+import lombok.RequiredArgsConstructor;
 
-    @Autowired
-    protected StripeProperties stripeProperties;
+@Component
+@RequiredArgsConstructor
+@SuppressWarnings("unused") // Spring injects this converter into checkout services.
+public class StripeSessionLineItemListConverter {
 
-    public abstract List<SessionCreateParams.LineItem> toLineItems(@NonNull List<CartItemSnapshot> shoppingCartItems);
+    private final StripeProperties stripeProperties;
 
-    @Mapping(target = "priceData.unitAmount", source = "product.price", qualifiedByName = "toStripeUnitAmount")
-    @Mapping(target = "priceData.currency", expression = "java(stripeProperties.currency())")
-    @Mapping(target = "priceData.productData.name", source = "product.name")
-    @Mapping(target = "quantity", source = "productQuantity")
-    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
-    public abstract SessionCreateParams.LineItem toLineItem(@NonNull CartItemSnapshot shoppingCartItem);
+    public List<SessionCreateParams.LineItem> toLineItems(List<CartItemSnapshot> shoppingCartItems) {
+        return shoppingCartItems.stream().map(this::toLineItem).toList();
+    }
+
+    public SessionCreateParams.LineItem toLineItem(CartItemSnapshot shoppingCartItem) {
+        return SessionCreateParams.LineItem.builder()
+                .setQuantity((long) shoppingCartItem.productQuantity())
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency(stripeProperties.currency())
+                        .setUnitAmount(toStripeUnitAmount(shoppingCartItem.product().price()))
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName(shoppingCartItem.product().name())
+                                .build())
+                        .build())
+                .build();
+    }
 
     public SessionCreateParams.LineItem toLineItem(OrderSnapshot.OrderItemSnapshot item) {
         return SessionCreateParams.LineItem.builder()
@@ -45,8 +50,7 @@ public abstract class StripeSessionLineItemListConverter {
                 .build();
     }
 
-    @Named("toStripeUnitAmount")
-    Long toStripeUnitAmount(final BigDecimal price) {
+    private Long toStripeUnitAmount(final BigDecimal price) {
         return price.multiply(BigDecimal.valueOf(100))
                 .setScale(0, RoundingMode.UNNECESSARY)
                 .longValueExact();

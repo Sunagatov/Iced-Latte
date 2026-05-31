@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.BatchSize;
+
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 
@@ -31,7 +33,7 @@ public class Order extends AuditableEntity {
     @Column(name = "user_id", updatable = false, nullable = false)
     private UUID userId;
 
-    @Column(name = "session_id", updatable = false, nullable = false, length = 255)
+    @Column(name = "session_id", updatable = false, nullable = false)
     private String sessionId;
 
     @Enumerated(EnumType.STRING)
@@ -46,6 +48,7 @@ public class Order extends AuditableEntity {
     private String idempotencyKey;
 
     @OneToMany(mappedBy = "orderId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<OrderItem> items;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -70,7 +73,7 @@ public class Order extends AuditableEntity {
     @Column(name = "cancellation_deadline")
     private OffsetDateTime cancellationDeadline;
 
-    @Column(name = "stripe_payment_intent_id", length = 255)
+    @Column(name = "stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
     @Column(name = "refund_reason", length = 500)

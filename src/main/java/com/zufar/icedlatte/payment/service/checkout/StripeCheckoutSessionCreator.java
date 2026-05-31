@@ -16,7 +16,7 @@ import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.converter.StripeSessionLineItemListConverter;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
-import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
+import com.zufar.icedlatte.payment.exception.StripeSessionException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +79,7 @@ public class StripeCheckoutSessionCreator {
             Session session = stripeSessionGateway.create(params, "checkout-session:" + orderId);
             return new StripeSessionResult(session.getId(), session.getUrl());
         } catch (StripeException e) {
-            throw new StripeSessionCreationException(e.getMessage(), e);
+            throw new StripeSessionException(e.getMessage(), e);
         }
     }
 

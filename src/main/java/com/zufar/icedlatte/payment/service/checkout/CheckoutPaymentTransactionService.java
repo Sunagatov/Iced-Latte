@@ -2,7 +2,6 @@ package com.zufar.icedlatte.payment.service.checkout;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -74,7 +73,7 @@ public class CheckoutPaymentTransactionService {
                 .build();
         payment = paymentRepository.saveAndFlush(payment);
 
-        return new CheckoutPreparation(order, toSnapshot(payment), cart.items(), false);
+        return new CheckoutPreparation.NewCheckout(order, toSnapshot(payment), cart.items());
     }
 
     @Transactional(readOnly = true)
@@ -88,7 +87,7 @@ public class CheckoutPaymentTransactionService {
                             ? orderPaymentApi.getSnapshotWithItems(existing.getOrderId())
                             : orderPaymentApi.getSnapshot(existing.getOrderId()));
                     log.info("checkout.idempotent_hit: userId={}, key={}", userId, idempotencyKey);
-                    return new CheckoutPreparation(order, toSnapshot(existing), List.of(), true);
+                    return new CheckoutPreparation.ExistingCheckout(order, toSnapshot(existing));
                 });
     }
 

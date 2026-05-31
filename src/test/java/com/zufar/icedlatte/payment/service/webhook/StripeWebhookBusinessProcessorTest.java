@@ -21,13 +21,14 @@ import com.stripe.model.Charge;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
-import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.payment.entity.Payment;
 import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
+import com.zufar.icedlatte.payment.service.PaymentConfirmationService;
+import com.zufar.icedlatte.payment.service.PaymentConfirmationSource;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("StripeWebhookBusinessProcessor unit tests")
@@ -40,7 +41,7 @@ class StripeWebhookBusinessProcessorTest {
     private PaymentRepository paymentRepository;
 
     @Mock
-    private CartCheckoutApi shoppingCartService;
+    private PaymentConfirmationService paymentConfirmationService;
 
     @InjectMocks
     private StripeWebhookBusinessProcessor processor;
@@ -55,24 +56,14 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.STRIPE_SESSION_CREATED)
-                .build();
-
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-        when(orderPaymentApi.confirmPayment(ORDER_ID, "Stripe payment confirmed"))
-                .thenReturn(true);
-
         processor.process(event);
 
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test_123");
-        verify(orderPaymentApi).confirmPayment(eq(ORDER_ID), eq("Stripe payment confirmed"));
-        verify(shoppingCartService).deleteCartForUser(USER_ID);
+        verify(paymentConfirmationService)
+                .confirmPaid(
+                        eq(ORDER_ID),
+                        eq(session),
+                        eq(new PaymentConfirmationSource(
+                                "evt_1", "checkout.session.completed", "Stripe payment confirmed")));
     }
 
     @Test
@@ -102,94 +93,14 @@ class StripeWebhookBusinessProcessorTest {
         Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
         mockEventSession(event, session);
 
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.PAID)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-
         processor.process(event);
 
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
-        verify(shoppingCartService, never()).deleteCartForUser(any());
-    }
-
-    @Test
-    @DisplayName("Amount mismatch sets RECONCILIATION_FAILED and returns normally (no rollback)")
-    void markPaid_amountMismatch_setsReconciliationFailed() {
-        Event event = mockEvent("checkout.session.completed", "evt_4");
-        Session session = mockSession("paid", 9999L, "usd", "pi_test_123");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.STRIPE_SESSION_CREATED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        // Should NOT throw — returns normally so @Transactional commits
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
-    }
-
-    @Test
-    @DisplayName("Paid session with missing reconciliation data sets RECONCILIATION_FAILED")
-    void markPaid_missingAmount_setsReconciliationFailed() {
-        Event event = mockEvent("checkout.session.completed", "evt_missing_amount");
-        Session session = mockSession("paid", null, "usd", "pi_test_123");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.STRIPE_SESSION_CREATED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
-        verify(shoppingCartService, never()).deleteCartForUser(any());
-    }
-
-    @Test
-    @DisplayName("Paid session with rejected order transition sets RECONCILIATION_FAILED")
-    void markPaid_orderTransitionRejected_setsReconciliationFailed() {
-        Event event = mockEvent("checkout.session.completed", "evt_order_rejected");
-        Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.STRIPE_SESSION_CREATED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-        when(orderPaymentApi.confirmPayment(ORDER_ID, "Stripe payment confirmed"))
-                .thenReturn(false);
-        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test_123");
-        verify(orderPaymentApi, never()).assignPaymentIntent(any(), any());
-        verify(shoppingCartService, never()).deleteCartForUser(any());
+        verify(paymentConfirmationService)
+                .confirmPaid(
+                        eq(ORDER_ID),
+                        eq(session),
+                        eq(new PaymentConfirmationSource(
+                                "evt_3", "checkout.session.completed", "Stripe payment confirmed")));
     }
 
     @Test
@@ -321,72 +232,6 @@ class StripeWebhookBusinessProcessorTest {
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
         verify(paymentRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("markPaid does not overwrite FAILED payment")
-    void markPaid_failedPayment_skipped() {
-        Event event = mockEvent("checkout.session.completed", "evt_12");
-        Session session = mockSession("paid", 2500L, "usd", "pi_test");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.FAILED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
-    }
-
-    @Test
-    @DisplayName("markPaid does not overwrite EXPIRED payment")
-    void markPaid_expiredPayment_skipped() {
-        Event event = mockEvent("checkout.session.completed", "evt_13");
-        Session session = mockSession("paid", 2500L, "usd", "pi_test");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.EXPIRED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
-    }
-
-    @Test
-    @DisplayName("markPaid does not overwrite RECONCILIATION_FAILED payment")
-    void markPaid_reconciliationFailedPayment_skipped() {
-        Event event = mockEvent("checkout.session.completed", "evt_14");
-        Session session = mockSession("paid", 2500L, "usd", "pi_test");
-        mockEventSession(event, session);
-
-        Payment payment = Payment.builder()
-                .orderId(ORDER_ID)
-                .userId(USER_ID)
-                .amountMinor(2500L)
-                .currency("usd")
-                .status(PaymentStatus.RECONCILIATION_FAILED)
-                .build();
-        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
-
-        processor.process(event);
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
-        verify(orderPaymentApi, never()).confirmPayment(any(), any());
     }
 
     @Test

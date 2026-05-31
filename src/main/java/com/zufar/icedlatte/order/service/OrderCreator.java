@@ -104,9 +104,10 @@ public class OrderCreator implements OrderCheckoutApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     Order createPendingPaymentOrder(UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
-        validateCheckoutAddressInput(request.deliveryAddressId(), request.address());
+        validateCheckoutAddressInput(request.deliveryAddressId(), request.address() != null);
 
-        OrderAddress deliveryAddress = resolveDeliveryAddress(request.deliveryAddressId(), request.address(), userId);
+        OrderAddress deliveryAddress =
+                resolveDeliveryAddress(request.deliveryAddressId(), toAddressFields(request.address()), userId);
 
         List<OrderItem> items = orderDtoConverter.toOrderItems(cart.items());
         validateProductAvailability(items);
@@ -141,31 +142,10 @@ public class OrderCreator implements OrderCheckoutApi {
     }
 
     private OrderAddress resolveAddress(CreateNewOrderRequestDto request, UUID userId) {
-        return resolveDeliveryAddress(request.getDeliveryAddressId(), request.getAddress(), userId);
+        return resolveDeliveryAddress(request.getDeliveryAddressId(), toAddressFields(request.getAddress()), userId);
     }
 
-    private OrderAddress resolveDeliveryAddress(
-            @Nullable UUID deliveryAddressId, @Nullable AddressDto inlineAddress, UUID userId) {
-        if (deliveryAddressId != null) {
-            try {
-                return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
-            } catch (NotFoundException ex) {
-                throw new BadRequestException("Delivery address not found: " + deliveryAddressId);
-            }
-        }
-        if (inlineAddress == null) {
-            throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
-        }
-        return OrderAddress.builder()
-                .country(inlineAddress.getCountry())
-                .city(inlineAddress.getCity())
-                .line(inlineAddress.getLine())
-                .postcode(inlineAddress.getPostcode())
-                .build();
-    }
-
-    private OrderAddress resolveDeliveryAddress(
-            @Nullable UUID deliveryAddressId, @Nullable OrderAddressRequest inlineAddress, UUID userId) {
+    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId, @Nullable AddressFields inlineAddress, UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -194,13 +174,11 @@ public class OrderCreator implements OrderCheckoutApi {
     }
 
     private static void validateAddressInput(CreateNewOrderRequestDto request) {
-        validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress());
+        validateCheckoutAddressInput(request.getDeliveryAddressId(), request.getAddress() != null);
     }
 
-    private static void validateCheckoutAddressInput(
-            @Nullable UUID deliveryAddressId, @Nullable AddressDto inlineAddress) {
+    private static void validateCheckoutAddressInput(@Nullable UUID deliveryAddressId, boolean hasInline) {
         boolean hasId = deliveryAddressId != null;
-        boolean hasInline = inlineAddress != null;
         if (!hasId && !hasInline) {
             throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
         }
@@ -209,15 +187,26 @@ public class OrderCreator implements OrderCheckoutApi {
         }
     }
 
-    private static void validateCheckoutAddressInput(
-            @Nullable UUID deliveryAddressId, @Nullable OrderAddressRequest inlineAddress) {
-        boolean hasId = deliveryAddressId != null;
-        boolean hasInline = inlineAddress != null;
-        if (!hasId && !hasInline) {
-            throw new BadRequestException("Either 'deliveryAddressId' or 'address' must be provided.");
-        }
-        if (hasId && hasInline) {
-            throw new BadRequestException("Provide either 'deliveryAddressId' or 'address', not both.");
-        }
+    private static @Nullable AddressFields toAddressFields(@Nullable AddressDto address) {
+        return address == null
+                ? null
+                : new AddressFields(
+                        requireAddressPart(address.getCountry(), "country"),
+                        requireAddressPart(address.getCity(), "city"),
+                        requireAddressPart(address.getLine(), "line"),
+                        requireAddressPart(address.getPostcode(), "postcode"));
     }
+
+    private static @Nullable AddressFields toAddressFields(@Nullable OrderAddressRequest address) {
+        return address == null ? null : new AddressFields(address.country(), address.city(), address.line(), address.postcode());
+    }
+
+    private static String requireAddressPart(@Nullable String value, String fieldName) {
+        if (value == null) {
+            throw new BadRequestException("Address field '" + fieldName + "' must be provided.");
+        }
+        return value;
+    }
+
+    private record AddressFields(String country, String city, String line, String postcode) {}
 }

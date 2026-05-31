@@ -56,9 +56,19 @@ public class OrderStatusTransitioner {
     /** Transitions order state. Returns the updated Order entity for internal use. */
     @Transactional
     public Order transition(UUID orderId, OrderEvent event, UUID actorId, String reason) {
+        return transition(orderId, event, actorId, reason, true);
+    }
+
+    @Transactional
+    public Order expireUnpaid(UUID orderId, String reason) {
+        return transition(orderId, OrderEvent.CANCEL, null, reason, false);
+    }
+
+    private Order transition(
+            UUID orderId, OrderEvent event, UUID actorId, String reason, boolean enforceCancellationDeadline) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        validateGuards(order, event, actorId);
+        validateGuards(order, event, actorId, enforceCancellationDeadline);
 
         OrderStatus oldStatus = order.getStatus();
         OrderStatus newStatus = resolveTransition(oldStatus, event);
@@ -119,8 +129,10 @@ public class OrderStatusTransitioner {
                 .orElseThrow(() -> new InvalidOrderStateTransitionException(current, event));
     }
 
-    private static void validateGuards(Order order, OrderEvent event, UUID actorId) {
-        if (event == OrderEvent.CANCEL
+    private static void validateGuards(
+            Order order, OrderEvent event, UUID actorId, boolean enforceCancellationDeadline) {
+        if (enforceCancellationDeadline
+                && event == OrderEvent.CANCEL
                 && order.getCancellationDeadline() != null
                 && OffsetDateTime.now().isAfter(order.getCancellationDeadline())) {
             throw new OrderCancellationWindowExpiredException(order.getId());

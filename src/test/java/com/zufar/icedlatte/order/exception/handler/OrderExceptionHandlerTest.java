@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.exception.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
@@ -46,5 +47,16 @@ class OrderExceptionHandlerTest {
         ProblemDetail result = handler.handleTypeMismatch(ex);
 
         assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("Rethrows non-order type mismatch for generic handlers")
+    void handleTypeMismatch_rethrowsNonOrderParameterMismatch() throws Exception {
+        Method method = Object.class.getDeclaredMethod("toString");
+        MethodParameter mp = new MethodParameter(method, -1);
+        MethodArgumentTypeMismatchException ex =
+                new MethodArgumentTypeMismatchException("INVALID", Integer.class, "page", mp, new RuntimeException());
+
+        assertThatThrownBy(() -> handler.handleTypeMismatch(ex)).isSameAs(ex);
     }
 }

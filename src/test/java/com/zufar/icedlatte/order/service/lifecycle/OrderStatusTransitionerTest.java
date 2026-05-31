@@ -156,4 +156,26 @@ class OrderStatusTransitionerTest {
         assertThatThrownBy(() -> transitioner.transition(orderId, OrderEvent.CANCEL, UUID.randomUUID()))
                 .isInstanceOf(OrderCancellationWindowExpiredException.class);
     }
+
+    @Test
+    @DisplayName("Maintenance expiration bypasses user cancellation deadline and publishes history event")
+    void expireUnpaidBypassesCancellationDeadline() {
+        UUID orderId = UUID.randomUUID();
+        Order order = Order.builder()
+                .id(orderId)
+                .userId(UUID.randomUUID())
+                .status(OrderStatus.CREATED)
+                .cancellationDeadline(OffsetDateTime.now().minusHours(1))
+                .build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Order result = transitioner.expireUnpaid(orderId, "Unpaid order expired");
+
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        ArgumentCaptor<OrderStatusChangedEvent> captor = ArgumentCaptor.forClass(OrderStatusChangedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().reason()).isEqualTo("Unpaid order expired");
+    }
 }

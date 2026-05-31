@@ -106,10 +106,12 @@ class CheckoutPaymentTransactionServiceTest {
 
         CheckoutPreparation result = service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
 
-        assertThat(result.existing()).isFalse();
+        assertThat(result).isInstanceOf(CheckoutPreparation.NewCheckout.class);
+        CheckoutPreparation.NewCheckout newCheckout = (CheckoutPreparation.NewCheckout) result;
         assertThat(result.order()).isEqualTo(order);
         assertThat(result.payment().id()).isNotNull();
         assertThat(result.payment().providerSessionId()).isNull();
+        assertThat(newCheckout.cartItems()).containsExactly(cartItem);
 
         ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
         verify(paymentRepository).saveAndFlush(captor.capture());
@@ -151,10 +153,9 @@ class CheckoutPaymentTransactionServiceTest {
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"), IDEMPOTENCY_KEY);
 
-        assertThat(result.existing()).isTrue();
+        assertThat(result).isInstanceOf(CheckoutPreparation.ExistingCheckout.class);
         assertThat(result.order()).isEqualTo(existingOrder);
         assertThat(result.payment()).isEqualTo(new CheckoutPaymentSnapshot(paymentId, "cs_test_existing"));
-        assertThat(result.cartItems()).isEmpty();
         verify(shoppingCartService, never()).getByUserIdOrThrow(any());
     }
 
@@ -183,7 +184,7 @@ class CheckoutPaymentTransactionServiceTest {
         CheckoutPreparation result = service.prepareCheckout(
                 USER_ID, new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B"), IDEMPOTENCY_KEY);
 
-        assertThat(result.existing()).isTrue();
+        assertThat(result).isInstanceOf(CheckoutPreparation.ExistingCheckout.class);
         verify(orderPaymentApi).getSnapshotWithItems(orderId);
         verify(orderPaymentApi, never()).getSnapshot(orderId);
     }

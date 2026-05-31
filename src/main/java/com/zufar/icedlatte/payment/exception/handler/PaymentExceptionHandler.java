@@ -13,7 +13,7 @@ import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.payment.exception.PaymentAccessDeniedException;
 import com.zufar.icedlatte.payment.exception.PaymentEventProcessingException;
 import com.zufar.icedlatte.payment.exception.PaymentException;
-import com.zufar.icedlatte.payment.exception.StripeSessionCreationException;
+import com.zufar.icedlatte.payment.exception.StripeSessionException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class PaymentExceptionHandler {
                                 "Access denied",
                                 HttpStatus.FORBIDDEN,
                                 "Access denied.");
-                    case StripeSessionCreationException e -> {
+                    case StripeSessionException e -> {
                         if (e.getCause() instanceof AuthenticationException) {
                             log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);
                         } else {

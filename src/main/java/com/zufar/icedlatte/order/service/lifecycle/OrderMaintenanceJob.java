@@ -31,6 +31,7 @@ public class OrderMaintenanceJob {
     private static final String REFUND_MONITOR_SLUG = "order-refund-monitor-job";
 
     private final OrderRepository orderRepository;
+    private final OrderStatusTransitioner orderStatusTransitioner;
     private final SentryJobMonitor sentryJobMonitor;
     private final PlatformTransactionManager transactionManager;
 
@@ -51,7 +52,7 @@ public class OrderMaintenanceJob {
                 () -> transactionTemplate(false).executeWithoutResult(_ -> expireUnpaidOrdersInternal()));
     }
 
-    private void expireUnpaidOrdersInternal() {
+    void expireUnpaidOrdersInternal() {
         OffsetDateTime cutoff = OffsetDateTime.now().minusHours(24);
         Specification<Order> spec = Specification.where(OrderSpecifications.hasStatusIn(List.of(OrderStatus.CREATED)))
                 .and((root, _, cb) -> cb.lessThan(root.get("createdAt"), cutoff));
@@ -59,10 +60,9 @@ public class OrderMaintenanceJob {
         List<Order> expired =
                 orderRepository.findAll(spec, PageRequest.of(0, batchSize)).getContent();
         for (Order order : expired) {
-            order.setStatus(OrderStatus.CANCELLED);
+            orderStatusTransitioner.expireUnpaid(order.getId(), "Unpaid order expired");
             log.info("order.expired: orderId={}", order.getId());
         }
-        orderRepository.saveAll(expired);
         if (!expired.isEmpty()) {
             log.info("order.expiration.completed: count={}", expired.size());
         }
