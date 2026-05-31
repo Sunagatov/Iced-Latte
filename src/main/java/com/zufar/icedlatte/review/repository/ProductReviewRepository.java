@@ -42,7 +42,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     + "GROUP BY productReview.productRating")
     List<ProductRatingCount> getRatingsMapByProductId(UUID productId);
 
-    List<ProductReview> findAllByProductId(UUID productId);
+    List<ProductReview> findAllByProductId(UUID productId, Pageable pageable);
 
     boolean existsByIdAndProductId(UUID id, UUID productId);
 
@@ -76,7 +76,8 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     + "SELECT count(prl.id) "
                     + "FROM product_reviews_likes prl "
                     + "WHERE prl.is_like = true AND prl.review_id = pr.id"
-                    + ")")
+                    + ") "
+                    + "WHERE pr.id IS NOT NULL")
     void updateAllLikesCounts();
 
     @SuppressWarnings("SqlWithoutWhereClause")
@@ -87,6 +88,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     + "SELECT count(prl.id) "
                     + "FROM product_reviews_likes prl "
                     + "WHERE prl.is_like = false AND prl.review_id = pr.id"
-                    + ")")
+                    + ") "
+                    + "WHERE pr.id IS NOT NULL")
     void updateAllDislikesCounts();
 }

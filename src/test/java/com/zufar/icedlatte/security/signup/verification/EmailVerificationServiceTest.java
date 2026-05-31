@@ -23,13 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
@@ -138,7 +136,7 @@ class EmailVerificationServiceTest {
             UserRegistrationRequest registrationRequest =
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass!");
             AuthenticationTokens authResponse = new AuthenticationTokens("access-token", "refresh-token");
-            String token = emailTokenService.generate(registrationRequest, TokenPurpose.EMAIL_VERIFICATION);
+            String token = emailTokenService.generateEmailVerificationToken(registrationRequest);
             when(userRegistrationService.completeEmailVerifiedRegistration(
                             argThat(request ->
                                     request.getEmail().equals("john@example.com") && request.getPassword() == null),
@@ -146,7 +144,7 @@ class EmailVerificationServiceTest {
                             eq(httpRequest)))
                     .thenReturn(authResponse);
 
-            AuthenticationTokens result = service.confirmEmailByCode(new ConfirmEmailRequest(token), httpRequest);
+            AuthenticationTokens result = service.confirmEmailByCode(token, httpRequest);
 
             assertThat(result).isSameAs(authResponse);
             verify(userRegistrationService)
@@ -165,14 +163,12 @@ class EmailVerificationServiceTest {
         @Test
         @DisplayName("resolves user from password reset token and changes password")
         void resolvesUserFromPasswordResetTokenAndChangesPassword() {
-            UserRegistrationRequest registrationRequest = new UserRegistrationRequest();
-            registrationRequest.setEmail("user@example.com");
             UUID userId = UUID.randomUUID();
             var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "user@example.com");
-            String token = emailTokenService.generate(registrationRequest, TokenPurpose.PASSWORD_RESET);
+            String token = emailTokenService.generatePasswordResetToken("user@example.com");
             when(userLookupApi.getUserByEmail("user@example.com")).thenReturn(user);
 
-            service.confirmResetPasswordEmailByCode(new ConfirmEmailRequest(token), "newPass123!");
+            service.confirmResetPasswordEmailByCode(token, "newPass123!");
 
             verify(userLookupApi).getUserByEmail("user@example.com");
             verify(userAccessControlApi).changePassword(userId, "newPass123!");
@@ -185,7 +181,7 @@ class EmailVerificationServiceTest {
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Alice", "Smith", "alice@example.com", "Password1!");
 
-        String token = emailTokenService.generate(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generateEmailVerificationToken(request);
 
         assertThat(token).hasSize(43).matches("[A-Za-z0-9_-]{43}");
     }
@@ -193,8 +189,7 @@ class EmailVerificationServiceTest {
     @Test
     @DisplayName("validateToken rejects invalid token format")
     void validateTokenRejectsInvalidTokenFormat() {
-        assertThatThrownBy(() ->
-                        emailTokenService.consume(new ConfirmEmailRequest("12345"), TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(() -> emailTokenService.consumeEmailVerificationToken("12345"))
                 .isInstanceOf(com.zufar.icedlatte.common.exception.BadRequestException.class);
     }
 
@@ -249,7 +244,7 @@ class EmailVerificationServiceTest {
                         eq(Duration.ofMinutes(15))))
                 .thenReturn(true);
 
-        String token = serviceWithMockStore.generate(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = serviceWithMockStore.generateEmailVerificationToken(request);
 
         assertThat(request.getEmail()).isEqualTo(" User@Example.COM ");
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -279,7 +274,7 @@ class EmailVerificationServiceTest {
                 .thenReturn(false)
                 .thenReturn(true);
 
-        serviceWithMockStore.generate(request, TokenPurpose.PASSWORD_RESET);
+        serviceWithMockStore.generatePasswordResetToken(request.getEmail());
 
         verify(store, times(2))
                 .putIfAbsent(

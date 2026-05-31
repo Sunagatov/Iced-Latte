@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
@@ -56,7 +55,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
 
-        String resetToken = emailTokenService.generate(resetRequest, TokenPurpose.PASSWORD_RESET);
+        String resetToken = emailTokenService.generatePasswordResetToken(resetRequest.getEmail());
 
         given(jsonSpec(AUTH_BASE_PATH))
                 .body("""
@@ -118,7 +117,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
 
-        String resetToken = emailTokenService.generate(resetRequest, TokenPurpose.PASSWORD_RESET);
+        String resetToken = emailTokenService.generatePasswordResetToken(resetRequest.getEmail());
 
         given(jsonSpec(AUTH_BASE_PATH))
                 .body("""

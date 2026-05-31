@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.signup.password;
 
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.time.OffsetDateTime;
@@ -82,7 +81,7 @@ class PasswordResetServiceTest {
             String email = "known@example.com";
             when(userLookupApi.findUserByEmail(email))
                     .thenReturn(Optional.of(new UserLookupSnapshot(UUID.randomUUID(), "Known", "User", email)));
-            doThrow(new TimeTokenException(email, OffsetDateTime.now().plusMinutes(1)))
+            doThrow(new TimeTokenException(OffsetDateTime.now().plusMinutes(1)))
                     .when(emailVerificationService)
                     .sendPasswordResetCode(email);
 
@@ -98,9 +97,6 @@ class PasswordResetServiceTest {
     void confirmResetDelegatesWithProvidedTokenAndPassword() {
         service.confirmReset("reset-token", "new-password");
 
-        verify(emailVerificationService)
-                .confirmResetPasswordEmailByCode(
-                        argThat(request -> request != null && "reset-token".equals(request.getToken())),
-                        org.mockito.ArgumentMatchers.eq("new-password"));
+        verify(emailVerificationService).confirmResetPasswordEmailByCode("reset-token", "new-password");
     }
 }

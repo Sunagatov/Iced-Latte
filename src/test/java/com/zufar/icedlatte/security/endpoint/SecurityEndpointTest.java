@@ -15,7 +15,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
@@ -180,7 +179,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     void shouldFailRegistrationImmediatelyWhenConfirmedEmailAlreadyExists() {
         String uniqueEmail = "confirmed.duplicate." + System.currentTimeMillis() + "@gmail.com";
         UserRegistrationRequest pending = new UserRegistrationRequest("Jon", "Smith", uniqueEmail, "!h2h3kKl");
-        String token = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generateEmailVerificationToken(pending);
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail
                 + "\",\"password\":\"!h2h3kKl\"}";
 
@@ -264,7 +263,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
     void shouldAuthenticateUser() {
         UserRegistrationRequest pending =
                 new UserRegistrationRequest("Auth", "Registr", "AuthReg@gmail.com", "!h2h3kKl22");
-        String token = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String token = emailTokenService.generateEmailVerificationToken(pending);
 
         given(specification)
                 .body("{\"token\":\"" + token + "\"}")

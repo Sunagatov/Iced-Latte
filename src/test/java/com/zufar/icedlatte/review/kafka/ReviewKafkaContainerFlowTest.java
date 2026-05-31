@@ -95,7 +95,7 @@ class ReviewKafkaContainerFlowTest {
         try (Consumer<String, String> rawConsumer = rawConsumer()) {
             rawConsumer.subscribe(List.of(TOPIC));
 
-            new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository)
+            new ReviewCreatedKafkaPublisher(kafkaTemplate, objectMapper, properties, outboxEventRepository)
                     .publishPendingOutboxEvents();
 
             ConsumerRecord<String, String> kafkaRecord =

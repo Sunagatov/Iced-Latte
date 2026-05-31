@@ -7,7 +7,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.verification.EmailTokenService;
 
 import io.restassured.http.ContentType;
@@ -45,7 +44,7 @@ public abstract class AuthenticatedUserIntegrationSupport extends IntegrationTes
     protected AuthenticatedUser registerAndAuthenticateUser(
             String firstName, String lastName, String email, String password) {
         UserRegistrationRequest pending = new UserRegistrationRequest(firstName, lastName, email, password);
-        String confirmationToken = emailTokenService.generate(pending, TokenPurpose.EMAIL_VERIFICATION);
+        String confirmationToken = emailTokenService.generateEmailVerificationToken(pending);
 
         var response = given(jsonSpec(AUTH_BASE_PATH))
                 .body("""

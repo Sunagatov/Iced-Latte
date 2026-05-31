@@ -151,6 +151,7 @@ components:
         productIds:
           type: "array"
           minItems: 1
+          maxItems: 100
           description: "An array of unique identifiers for the products."
           items:
             type: "string"

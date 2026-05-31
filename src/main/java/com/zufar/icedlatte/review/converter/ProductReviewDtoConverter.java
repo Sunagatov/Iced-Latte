@@ -23,6 +23,7 @@ public interface ProductReviewDtoConverter {
     @Mapping(target = "productReviewId", source = "id")
     @Mapping(target = "userName", ignore = true)
     @Mapping(target = "userLastname", ignore = true)
+    @Mapping(target = "aiSummary", ignore = true)
     ProductReviewDto toProductReviewDto(ProductReview productReview);
 
     default ProductReviewDto toProductReviewDto(ProductReview productReview, UserLookupSnapshot user) {

@@ -78,6 +78,10 @@ public class ProductReviewSummaryDebouncer {
         firstTriggerTime.remove(productId);
         try {
             var summary = productSummaryService.summarize(productId);
+            if (summary == null || summary.isBlank()) {
+                log.info("product.ai_summary.skipped: productId={}, reason=EMPTY_SUMMARY", productId);
+                return;
+            }
             productReviewProductApi.updateAiSummary(productId, summary);
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
@@ -85,6 +89,7 @@ public class ProductReviewSummaryDebouncer {
                     "product.ai_summary.failed: productId={}, exceptionClass={}",
                     productId,
                     e.getClass().getSimpleName());
+            schedule(productId);
         }
     }
 

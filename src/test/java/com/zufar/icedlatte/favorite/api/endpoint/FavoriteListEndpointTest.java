@@ -69,7 +69,7 @@ class FavoriteListEndpointTest extends IntegrationTestBase {
                 given(specification)
                         .body(getRequestBody(PRODUCT_NOT_EXIST_ADD_TO_FAVORITE_LIST))
                         .post(),
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.NOT_FOUND,
                 FAVORITE_LIST_ERROR_SCHEMA);
     }
 

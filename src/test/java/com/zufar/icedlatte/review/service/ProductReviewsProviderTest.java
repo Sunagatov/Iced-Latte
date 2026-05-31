@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +84,7 @@ class ProductReviewsProviderTest {
         when(reviewRepository.findAllProductReviews(eq(productId), eq(null), any(Pageable.class)))
                 .thenReturn(page);
         var user = user();
-        when(userLookupApi.getUserById(userId)).thenReturn(user);
+        when(userLookupApi.getUsersByIds(Set.of(userId))).thenReturn(Set.of(user));
         var dto = new ProductReviewDto();
         when(productReviewDtoConverter.toProductReviewDto(review, user)).thenReturn(dto);
         var expected = new ProductReviewsAndRatingsWithPagination();
@@ -94,6 +96,7 @@ class ProductReviewsProviderTest {
         assertThat(result).isEqualTo(expected);
         verify(productReviewValidator).validateProductExists(productId);
         verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
+        verify(userLookupApi, never()).getUserById(userId);
     }
 
     @Test

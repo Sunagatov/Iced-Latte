@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 import org.junit.jupiter.api.DisplayName;
@@ -16,17 +15,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
+import com.zufar.icedlatte.favorite.exception.FavoriteProductNotFoundException;
+import com.zufar.icedlatte.favorite.exception.InvalidFavoriteRequestException;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FavoriteService unit tests")
@@ -68,10 +67,8 @@ class FavoriteServiceTest {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        FavoriteListEntity entity = new FavoriteListEntity();
-        entity.setFavoriteItems(new HashSet<>());
+        FavoriteListEntity entity = favoriteList(userId);
 
-        ProductSnapshot product = productSnapshot(productId);
         ProductSummaryDto productDto = new ProductSummaryDto();
         productDto.setId(productId);
 
@@ -82,54 +79,118 @@ class FavoriteServiceTest {
         response.setProducts(List.of(productDto));
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(product));
-        when(favoriteRepository.save(entity)).thenReturn(entity);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
         when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 
         assertThat(result).isSameAs(response);
-        verify(favoriteRepository).save(entity);
+        verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(entity.getId()), eq(productId));
+        verify(favoriteRepository).touchFavoriteList(entity.getId());
+        verify(favoriteRepository).flush();
     }
 
     @Test
-    @DisplayName("add recovers from concurrent insert conflict")
-    void addRecoversFromConcurrentConflict() {
+    @DisplayName("add creates favorite list before adding first item")
+    void addCreatesFavoriteListBeforeAddingFirstItem() {
         UUID userId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        FavoriteListEntity staleList = new FavoriteListEntity();
-        staleList.setFavoriteItems(new HashSet<>());
-
-        FavoriteItemEntity existingItem = FavoriteItemEntity.builder()
-                .id(UUID.randomUUID())
-                .productId(productId)
-                .build();
-        FavoriteListEntity freshList = new FavoriteListEntity();
-        freshList.setFavoriteItems(new HashSet<>(Set.of(existingItem)));
-
-        ProductSnapshot product = productSnapshot(productId);
-        ProductSummaryDto productDto = new ProductSummaryDto();
-        productDto.setId(productId);
+        FavoriteListEntity createdList = favoriteList(userId);
 
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(List.of(productId));
 
         ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
-        response.setProducts(List.of(productDto));
+        response.setProducts(List.of());
 
         when(favoriteRepository.findByUserId(userId))
-                .thenReturn(Optional.of(staleList))
-                .thenReturn(Optional.of(freshList));
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(product));
-        when(favoriteRepository.save(any(FavoriteListEntity.class)))
-                .thenThrow(new DataIntegrityViolationException("uq_favorite_item_list_product"))
-                .thenReturn(freshList);
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(createdList))
+                .thenReturn(Optional.of(createdList));
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
+        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
         when(favoriteListDtoConverter.toDto(any(), anyMap())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 
         assertThat(result).isSameAs(response);
+        verify(favoriteRepository).insertFavoriteListIfAbsent(any(UUID.class), eq(userId));
+        verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(createdList.getId()), eq(productId));
+    }
+
+    @Test
+    @DisplayName("add throws favorite-owned exception for missing products")
+    void addThrowsFavoriteExceptionForMissingProducts() {
+        UUID userId = UUID.randomUUID();
+        UUID missingProductId = UUID.randomUUID();
+        FavoriteListEntity entity = favoriteList(userId);
+
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of(missingProductId));
+
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
+        when(productCatalogApi.findExistingProductIds(Set.of(missingProductId))).thenReturn(Set.of());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(FavoriteProductNotFoundException.class)
+                .hasMessageContaining(missingProductId.toString());
+        verify(favoriteRepository, never()).insertFavoriteItemIfAbsent(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("add rejects oversized favorite requests")
+    void addRejectsOversizedFavoriteRequests() {
+        UUID userId = UUID.randomUUID();
+        List<UUID> productIds =
+                java.util.stream.Stream.generate(UUID::randomUUID).limit(101).toList();
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(productIds);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(InvalidFavoriteRequestException.class)
+                .hasMessageContaining("100");
+        verifyNoInteractions(favoriteRepository);
+    }
+
+    @Test
+    @DisplayName("add rejects null favorite request product ids")
+    void addRejectsNullFavoriteRequestProductIds() {
+        UUID userId = UUID.randomUUID();
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(null);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(InvalidFavoriteRequestException.class)
+                .hasMessageContaining("must not be null");
+        verifyNoInteractions(favoriteRepository);
+    }
+
+    @Test
+    @DisplayName("add rejects empty favorite request product ids")
+    void addRejectsEmptyFavoriteRequestProductIds() {
+        UUID userId = UUID.randomUUID();
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(InvalidFavoriteRequestException.class)
+                .hasMessageContaining("at least one");
+        verifyNoInteractions(favoriteRepository);
+    }
+
+    @Test
+    @DisplayName("add rejects null values in favorite request product ids")
+    void addRejectsNullValuesInFavoriteRequestProductIds() {
+        UUID userId = UUID.randomUUID();
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(new ArrayList<>(Collections.singletonList(null)));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(InvalidFavoriteRequestException.class)
+                .hasMessageContaining("must not contain null values");
+        verifyNoInteractions(favoriteRepository);
     }
 
     @Test
@@ -143,12 +204,14 @@ class FavoriteServiceTest {
                 .productId(productId)
                 .build();
         FavoriteListEntity entity = new FavoriteListEntity();
+        entity.setId(UUID.randomUUID());
         entity.setFavoriteItems(new HashSet<>(Set.of(item)));
 
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
 
         assertDoesNotThrow(() -> favoriteService.delete(productId, userId));
         assertTrue(entity.getFavoriteItems().isEmpty());
+        verify(favoriteRepository).touchFavoriteList(entity.getId());
     }
 
     @Test
@@ -161,7 +224,11 @@ class FavoriteServiceTest {
         verify(favoriteRepository, never()).save(any());
     }
 
-    private static ProductSnapshot productSnapshot(UUID productId) {
-        return new ProductSnapshot(productId, "Coffee", null, BigDecimal.TEN, null, null, null);
+    private static FavoriteListEntity favoriteList(UUID userId) {
+        return FavoriteListEntity.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .favoriteItems(new HashSet<>())
+                .build();
     }
 }

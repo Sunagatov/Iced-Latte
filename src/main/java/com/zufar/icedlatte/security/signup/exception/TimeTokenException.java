@@ -6,26 +6,20 @@ import java.time.OffsetDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import lombok.Getter;
-
-@Getter
 @ResponseStatus(HttpStatus.TOO_EARLY)
 public class TimeTokenException extends RuntimeException {
 
-    private final String email;
-
-    public TimeTokenException(String email, OffsetDateTime expireTime) {
-        super(buildMessageError(email, expireTime));
-        this.email = email;
+    public TimeTokenException(OffsetDateTime expireTime) {
+        super(buildMessageError(expireTime));
     }
 
-    private static String buildMessageError(String email, OffsetDateTime expireTime) {
+    private static String buildMessageError(OffsetDateTime expireTime) {
         StringBuilder stringBuilder = new StringBuilder();
         Duration remainingTime = Duration.between(OffsetDateTime.now(), expireTime);
         long minutes = remainingTime.toMinutesPart();
         long seconds = remainingTime.toSecondsPart();
 
-        stringBuilder.append("Token for email '").append(email).append("' will be expired after: ");
+        stringBuilder.append("Token will be expired after: ");
         if (minutes != 0) {
             stringBuilder.append(minutes).append(" min ");
         }

@@ -20,10 +20,10 @@ public class OAuthRedirectService {
     private static final String NEXT_QUERY_PARAM = "next";
     private static final String AUTH_FAILED_ERROR = "auth_failed";
 
-    private final String frontendUrl;
+    private final URI frontendUri;
 
     public OAuthRedirectService(@Value("${frontend.url}") String frontendUrl) {
-        this.frontendUrl = frontendUrl;
+        this.frontendUri = parseFrontendUri(frontendUrl);
     }
 
     String resolveCallbackBase(OAuthProvider provider, String redirectUrl) {
@@ -32,10 +32,9 @@ public class OAuthRedirectService {
         }
         try {
             URI incoming = new URI(redirectUrl);
-            URI allowed = new URI(frontendUrl);
-            boolean sameOrigin = allowed.getScheme().equalsIgnoreCase(incoming.getScheme())
-                    && allowed.getHost().equalsIgnoreCase(incoming.getHost())
-                    && effectivePort(allowed) == effectivePort(incoming);
+            boolean sameOrigin = frontendUri.getScheme().equalsIgnoreCase(incoming.getScheme())
+                    && frontendUri.getHost().equalsIgnoreCase(incoming.getHost())
+                    && effectivePort(frontendUri) == effectivePort(incoming);
             boolean expectedPath = provider.callbackPath().equals(incoming.getPath());
             if (!sameOrigin || !expectedPath) {
                 return defaultCallbackBase(provider);
@@ -47,7 +46,7 @@ public class OAuthRedirectService {
     }
 
     URI signInErrorRedirect(String errorCode) {
-        return URI.create(UriComponentsBuilder.fromUriString(frontendUrl)
+        return URI.create(UriComponentsBuilder.fromUri(frontendUri)
                 .path(SIGN_IN_PATH)
                 .queryParam(ERROR_QUERY_PARAM, errorCode)
                 .build(true)
@@ -57,7 +56,6 @@ public class OAuthRedirectService {
     URI frontendErrorRedirect(String callbackBase) {
         try {
             URI callbackUri = new URI(callbackBase);
-            URI frontendUri = new URI(frontendUrl);
             UriComponentsBuilder redirectBuilder = UriComponentsBuilder.fromUri(frontendUri)
                     .path(SIGN_IN_PATH)
                     .queryParam(ERROR_QUERY_PARAM, AUTH_FAILED_ERROR);
@@ -87,10 +85,30 @@ public class OAuthRedirectService {
     }
 
     private String defaultCallbackBase(OAuthProvider provider) {
-        return UriComponentsBuilder.fromUriString(frontendUrl)
+        return UriComponentsBuilder.fromUri(frontendUri)
                 .path(provider.callbackPath())
                 .build()
                 .toUriString();
+    }
+
+    private static URI parseFrontendUri(String frontendUrl) {
+        if (!StringUtils.hasText(frontendUrl)) {
+            throw new IllegalArgumentException("frontend.url must not be blank");
+        }
+        URI uri;
+        try {
+            uri = URI.create(frontendUrl);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("frontend.url must be a valid URI", e);
+        }
+        if (!StringUtils.hasText(uri.getScheme()) || !StringUtils.hasText(uri.getHost())) {
+            throw new IllegalArgumentException("frontend.url must be an absolute URI with scheme and host");
+        }
+        String scheme = uri.getScheme().toLowerCase();
+        if (!"http".equals(scheme) && !"https".equals(scheme)) {
+            throw new IllegalArgumentException("frontend.url must use http or https");
+        }
+        return uri;
     }
 
     private String allowedCallbackBase(URI incoming) {
@@ -132,7 +150,8 @@ public class OAuthRedirectService {
                     && uri.getRawAuthority() == null
                     && path != null
                     && path.startsWith("/")
-                    && !path.startsWith("//");
+                    && !path.startsWith("//")
+                    && !path.contains("\\");
         } catch (URISyntaxException _) {
             return false;
         }

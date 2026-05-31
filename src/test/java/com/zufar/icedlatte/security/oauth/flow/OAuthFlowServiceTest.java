@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -110,6 +111,23 @@ class OAuthFlowServiceTest {
     }
 
     @Test
+    void initiateDropsEncodedBackslashNextFromAllowedCallback() {
+        stubGoogleClient();
+        when(oAuthProviderClient.buildAuthorizationUri(anyString()))
+                .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
+
+        service.initiate(
+                OAuthProvider.GOOGLE,
+                "https://app.example.com/auth/google/callback?next=/%5Cevil.example.com",
+                request,
+                response);
+
+        ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
+        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        assertThat(callbackBase.getValue()).isEqualTo("https://app.example.com/auth/google/callback");
+    }
+
+    @Test
     void initiateReturnsEmptyWhenProviderClientIsNotRegistered() {
         when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
@@ -117,6 +135,20 @@ class OAuthFlowServiceTest {
 
         assertThat(result).isEmpty();
         verifyNoInteractions(oAuthStateStore, oAuthProviderClient);
+    }
+
+    @Test
+    void redirectServiceRejectsInvalidFrontendUrlConfiguration() {
+        assertThatThrownBy(() -> new OAuthRedirectService("app.example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("frontend.url");
+    }
+
+    @Test
+    void redirectServiceRejectsNonHttpFrontendUrlConfiguration() {
+        assertThatThrownBy(() -> new OAuthRedirectService("ftp://app.example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("http or https");
     }
 
     @Test

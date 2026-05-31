@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true")
 public class ReviewCreatedKafkaConsumer {
 
+    private static final String REVIEW_CREATED_EVENT_TYPE = "review.created";
+    private static final int REVIEW_CREATED_EVENT_VERSION = 1;
     private static final Set<String> SAFE_HEADER_NAMES =
             Set.of("eventId", "eventType", "eventVersion", "sourceApp", "correlationId", "contentType");
 
@@ -31,13 +33,37 @@ public class ReviewCreatedKafkaConsumer {
     private final KafkaIntegrationProperties properties;
     private final InboxEventRepository inboxEventRepository;
 
-    public void consume(ConsumerRecord<String, String> record, Acknowledgment acknowledgment)
-            throws JsonProcessingException {
+    public void consume(ConsumerRecord<String, String> record, Acknowledgment acknowledgment) {
         if (!properties.inbox().enabled()) {
             throw new IllegalStateException("Kafka inbox recording is disabled while Kafka consumer is active");
         }
 
-        ReviewCreatedKafkaEvent event = objectMapper.readValue(record.value(), ReviewCreatedKafkaEvent.class);
+        ReviewCreatedKafkaEvent event;
+        try {
+            event = objectMapper.readValue(record.value(), ReviewCreatedKafkaEvent.class);
+        } catch (JsonProcessingException e) {
+            log.warn(
+                    "event.inbox.malformed: topic={}, partition={}, offset={}, exceptionClass={}",
+                    record.topic(),
+                    record.partition(),
+                    record.offset(),
+                    e.getClass().getSimpleName());
+            acknowledgment.acknowledge();
+            return;
+        }
+        if (!REVIEW_CREATED_EVENT_TYPE.equals(event.eventType())
+                || event.eventVersion() != REVIEW_CREATED_EVENT_VERSION) {
+            log.warn(
+                    "event.inbox.unsupported: eventId={}, eventType={}, eventVersion={}, topic={}, partition={}, offset={}",
+                    event.eventId(),
+                    event.eventType(),
+                    event.eventVersion(),
+                    record.topic(),
+                    record.partition(),
+                    record.offset());
+            acknowledgment.acknowledge();
+            return;
+        }
         boolean inserted = inboxEventRepository.insertReceivedEvent(
                 event,
                 record.topic(),
@@ -67,16 +93,20 @@ public class ReviewCreatedKafkaConsumer {
         }
     }
 
-    private String safeHeadersAsJson(ConsumerRecord<String, String> record) throws JsonProcessingException {
+    private String safeHeadersAsJson(ConsumerRecord<String, String> record) {
         Map<String, String> safeHeaders = new LinkedHashMap<>();
         record.headers().forEach(header -> {
             String key = header.key();
-            String value = new String(header.value(), StandardCharsets.UTF_8);
 
             if (SAFE_HEADER_NAMES.contains(key)) {
+                String value = header.value() == null ? null : new String(header.value(), StandardCharsets.UTF_8);
                 safeHeaders.put(key, value);
             }
         });
-        return objectMapper.writeValueAsString(safeHeaders);
+        try {
+            return objectMapper.writeValueAsString(safeHeaders);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize safe Kafka headers", e);
+        }
     }
 }

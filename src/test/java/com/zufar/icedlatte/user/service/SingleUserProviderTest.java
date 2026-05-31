@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +62,24 @@ class SingleUserProviderTest {
         assertThat(snapshot.lastName()).isEqualTo("Lovelace");
         assertThat(snapshot.email()).isEqualTo("ada@example.com");
         verify(userCrudRepository).findById(userId);
+    }
+
+    @Test
+    @DisplayName("getUsersByIds returns lookup snapshots in a single repository call")
+    void getUsersByIdsReturnsLookupSnapshots() {
+        UUID userId = UUID.randomUUID();
+        UserEntity entity = UserEntity.builder()
+                .id(userId)
+                .firstName("Ada")
+                .lastName("Lovelace")
+                .email("ada@example.com")
+                .build();
+        when(userCrudRepository.findAllById(Set.of(userId))).thenReturn(List.of(entity));
+
+        var snapshots = singleUserProvider.getUsersByIds(Set.of(userId));
+
+        assertThat(snapshots).extracting("id").containsExactly(userId);
+        verify(userCrudRepository).findAllById(Set.of(userId));
     }
 
     @Test

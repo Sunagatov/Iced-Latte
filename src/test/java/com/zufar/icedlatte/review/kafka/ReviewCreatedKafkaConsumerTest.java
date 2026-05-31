@@ -2,6 +2,8 @@ package com.zufar.icedlatte.review.kafka;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -107,6 +109,7 @@ class ReviewCreatedKafkaConsumerTest {
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
         record.headers()
                 .add("eventId", eventId.toString().getBytes(StandardCharsets.UTF_8))
+                .add("correlationId", null)
                 .add("Authorization", "Bearer secret".getBytes(StandardCharsets.UTF_8))
                 .add("Cookie", "session=secret".getBytes(StandardCharsets.UTF_8));
         when(inboxEventRepository.insertReceivedEvent(
@@ -117,7 +120,7 @@ class ReviewCreatedKafkaConsumerTest {
                         eq(42L),
                         eq("iced-latte-review-ai"),
                         eq(payload),
-                        eq("{\"eventId\":\"" + eventId + "\"}"),
+                        eq("{\"eventId\":\"" + eventId + "\",\"correlationId\":null}"),
                         eq(10)))
                 .thenReturn(true);
 
@@ -169,5 +172,60 @@ class ReviewCreatedKafkaConsumerTest {
                 .hasMessage("database unavailable");
 
         verify(acknowledgment, never()).acknowledge();
+    }
+
+    @Test
+    @DisplayName("acknowledges malformed payload without recording inbox event")
+    void acknowledgesMalformedPayloadWithoutRecordingInboxEvent() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        var properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                KafkaIntegrationProperties.Outbox.defaults(),
+                new KafkaIntegrationProperties.Inbox(
+                        true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
+        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, "key", "{not-json");
+
+        consumer.consume(record, acknowledgment);
+
+        verify(acknowledgment).acknowledge();
+        verify(inboxEventRepository, never())
+                .insertReceivedEvent(any(), any(), any(), anyInt(), anyLong(), any(), any(), any(), anyInt());
+    }
+
+    @Test
+    @DisplayName("acknowledges unsupported event metadata without recording inbox event")
+    void acknowledgesUnsupportedEventMetadataWithoutRecordingInboxEvent() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        UUID reviewId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        ReviewCreatedKafkaEvent event = new ReviewCreatedKafkaEvent(
+                eventId,
+                "review.updated",
+                1,
+                "iced-latte",
+                Instant.parse("2026-05-18T12:00:00Z"),
+                null,
+                null,
+                new ReviewCreatedKafkaEvent.Payload(reviewId, productId));
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        String payload = objectMapper.writeValueAsString(event);
+        var properties = new KafkaIntegrationProperties(
+                true,
+                new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
+                new KafkaIntegrationProperties.ConsumerGroups("iced-latte-review-ai"),
+                KafkaIntegrationProperties.Outbox.defaults(),
+                new KafkaIntegrationProperties.Inbox(
+                        true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
+        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
+
+        consumer.consume(record, acknowledgment);
+
+        verify(acknowledgment).acknowledge();
+        verify(inboxEventRepository, never())
+                .insertReceivedEvent(any(), any(), any(), anyInt(), anyLong(), any(), any(), any(), anyInt());
     }
 }

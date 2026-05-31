@@ -46,6 +46,14 @@ class GetReviewsRequestValidatorTest {
     }
 
     @Test
+    @DisplayName("Empty productRatings throws")
+    void validate_emptyRatings_throws() {
+        assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("must not be empty");
+    }
+
+    @Test
     @DisplayName("Duplicate rating values throws")
     void validate_duplicateRatings_throws() {
         assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of(1, 1)))

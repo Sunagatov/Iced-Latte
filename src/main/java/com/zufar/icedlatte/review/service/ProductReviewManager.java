@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -43,11 +44,15 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(
-            final UUID productId, final UUID userId, final ProductReviewRequest productReviewRequest) {
+            final UUID productId, final UUID userId, final @Nullable ProductReviewRequest productReviewRequest) {
+        if (productReviewRequest == null) {
+            throw new BadRequestException("Product's review request must be provided");
+        }
         var productReviewText = productReviewRequest.getText();
 
         productReviewValidator.validateProductExists(productId);
         productReviewValidator.validateReviewText(productReviewText);
+        productReviewValidator.validateProductRating(productReviewRequest.getRating());
         productReviewValidator.validateReviewExistsForUser(userId, productId);
 
         var user = userLookupApi.getUserById(userId);
@@ -60,7 +65,15 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                 .dislikesCount(0)
                 .build();
 
-        reviewRepository.saveAndFlush(productReview);
+        try {
+            reviewRepository.saveAndFlush(productReview);
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    String.format(
+                            "Creation of the product's review for the user with userId = '%s' and the product with productId = '%s' is denied. Delete the previous product's review first.",
+                            userId, productId),
+                    e);
+        }
         summaryDebouncer.schedule(productId);
 
         productReviewProductApi.refreshReviewAggregates(productId);
@@ -113,7 +126,12 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                             .productReviewId(productReviewId)
                             .isLike(newProductReviewLike)
                             .build();
-                    productReviewLikeRepository.saveAndFlush(newReviewLike);
+                    try {
+                        productReviewLikeRepository.saveAndFlush(newReviewLike);
+                    } catch (DataIntegrityViolationException e) {
+                        throw new BadRequestException(
+                                "Product review vote could not be recorded because it was changed concurrently.", e);
+                    }
                 });
 
         reviewRepository.updateLikesCount(productReviewId);

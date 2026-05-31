@@ -31,7 +31,9 @@ public class GetReviewsRequestValidator {
                 pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
 
         if (productRatings != null) {
-            if (productRatings.stream().anyMatch(Objects::isNull)
+            if (productRatings.isEmpty()) {
+                errors.add(error("Product's rating filter list must not be empty."));
+            } else if (productRatings.stream().anyMatch(Objects::isNull)
                     || !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings)) {
                 errors.add(error(
                         "Some values of this product's rating list = '%s' are incorrect. Allowed 'productRating' values are '%s'."

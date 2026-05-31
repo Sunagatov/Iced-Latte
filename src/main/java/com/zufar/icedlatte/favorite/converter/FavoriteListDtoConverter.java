@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.favorite.converter;
 
+import static java.util.Comparator.comparing;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +21,7 @@ public class FavoriteListDtoConverter {
             final FavoriteListEntity entity, final Map<UUID, ProductSnapshot> productsById) {
         List<ProductSummaryDto> products = entity.getFavoriteItems().stream()
                 .map(FavoriteItemEntity::getProductId)
+                .sorted(comparing(UUID::toString))
                 .filter(productsById::containsKey)
                 .distinct()
                 .map(productsById::get)

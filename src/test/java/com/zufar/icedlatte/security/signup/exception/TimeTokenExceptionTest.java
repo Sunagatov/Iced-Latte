@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 class TimeTokenExceptionTest {
 
     @Test
-    @DisplayName("includes email and remaining time in the message")
-    void includesEmailAndRemainingTimeInTheMessage() {
+    @DisplayName("includes remaining time without exposing email in the message")
+    void includesRemainingTimeWithoutExposingEmailInTheMessage() {
         TimeTokenException exception =
-                new TimeTokenException("user@example.com", OffsetDateTime.now().plusSeconds(65));
+                new TimeTokenException(OffsetDateTime.now().plusSeconds(65));
 
-        assertThat(exception.getEmail()).isEqualTo("user@example.com");
         assertThat(exception.getMessage())
-                .contains("Token for email 'user@example.com' will be expired after:")
+                .contains("Token will be expired after:")
+                .doesNotContain("user@example.com")
                 .contains("1 min")
                 .contains("sec");
     }

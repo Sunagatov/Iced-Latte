@@ -8,7 +8,6 @@ import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 
 @Configuration
@@ -24,14 +23,7 @@ class ReviewCreatedKafkaConsumerConfiguration {
                 new ContainerProperties(properties.topics().reviewCreated());
         containerProperties.setGroupId(properties.consumerGroups().reviewAi());
         containerProperties.setAckMode(ContainerProperties.AckMode.MANUAL);
-        containerProperties.setMessageListener(
-                (AcknowledgingMessageListener<String, String>) (record, acknowledgment) -> {
-                    try {
-                        consumer.consume(record, acknowledgment);
-                    } catch (JsonProcessingException e) {
-                        throw new IllegalStateException("Failed to deserialize review-created event", e);
-                    }
-                });
+        containerProperties.setMessageListener((AcknowledgingMessageListener<String, String>) consumer::consume);
         return new ConcurrentMessageListenerContainer<>(consumerFactory, containerProperties);
     }
 }

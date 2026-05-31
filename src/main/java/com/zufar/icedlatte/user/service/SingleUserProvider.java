@@ -3,7 +3,9 @@ package com.zufar.icedlatte.user.service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,15 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
     @Transactional(readOnly = true)
     public UserLookupSnapshot getUserById(final UUID userId) throws UserNotFoundException {
         return toLookupSnapshot(getUserEntityById(userId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UserLookupSnapshot> getUsersByIds(final Set<UUID> userIds) {
+        Objects.requireNonNull(userIds, "userIds must not be null");
+        return userCrudRepository.findAllById(userIds).stream()
+                .map(this::toLookupSnapshot)
+                .collect(Collectors.toSet());
     }
 
     @Override

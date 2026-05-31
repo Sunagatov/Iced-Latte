@@ -5,12 +5,19 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+
+import io.restassured.response.Response;
 
 @DisplayName("Favorites endpoint integration tests")
 class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
@@ -61,6 +68,25 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                           "productIds": []
                         }
                         """)
+                .post()
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    @DisplayName("Should reject oversized favorites request")
+    void shouldRejectOversizedFavoritesRequest() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String productIds = java.util.stream.Stream.generate(() -> "\"" + PRODUCT_ID_ONE + "\"")
+                .limit(101)
+                .collect(java.util.stream.Collectors.joining(", "));
+
+        given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
+                .body("""
+                        {
+                          "productIds": [%s]
+                        }
+                        """.formatted(productIds))
                 .post()
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value());
@@ -118,6 +144,28 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 .body("products[0].id", not(PRODUCT_ID_ONE));
     }
 
+    @Test
+    @DisplayName("Should keep one favorite item when duplicate add requests race")
+    void shouldKeepOneFavoriteItemWhenDuplicateAddRequestsRace() throws Exception {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        CountDownLatch startGate = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<Response> firstAdd = executor.submit(() -> addFavoriteWhenReleased(startGate, user));
+            Future<Response> secondAdd = executor.submit(() -> addFavoriteWhenReleased(startGate, user));
+
+            startGate.countDown();
+
+            firstAdd.get(10, TimeUnit.SECONDS).then().statusCode(HttpStatus.OK.value());
+            secondAdd.get(10, TimeUnit.SECONDS).then().statusCode(HttpStatus.OK.value());
+
+            List<String> productIds = getFavoriteProductIds(user);
+
+            assertEquals(1, productIds.size());
+            org.assertj.core.api.Assertions.assertThat(productIds).containsExactly(PRODUCT_ID_ONE);
+        }
+    }
+
     private void addFavorites(AuthenticatedUser user, String... productIds) {
         String body = """
                 {
@@ -142,5 +190,17 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 .extract()
                 .jsonPath()
                 .getList("products.id", String.class);
+    }
+
+    private Response addFavoriteWhenReleased(CountDownLatch startGate, AuthenticatedUser user)
+            throws InterruptedException {
+        startGate.await();
+        return given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
+                .body("""
+                        {
+                          "productIds": ["%s"]
+                        }
+                        """.formatted(PRODUCT_ID_ONE))
+                .post();
     }
 }

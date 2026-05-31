@@ -3,7 +3,6 @@ package com.zufar.icedlatte.security.signup.password;
 import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;
@@ -34,8 +33,7 @@ public class PasswordResetService {
     }
 
     public void confirmReset(String token, String newPassword) {
-        ConfirmEmailRequest confirmEmailRequest = new ConfirmEmailRequest(token);
-        emailVerificationService.confirmResetPasswordEmailByCode(confirmEmailRequest, newPassword);
+        emailVerificationService.confirmResetPasswordEmailByCode(token, newPassword);
         log.info("auth.password.changed");
     }
 }

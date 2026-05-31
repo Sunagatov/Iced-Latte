@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.OutboxEventRepository;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.ReviewCreatedKafkaPublisher;
@@ -57,7 +58,8 @@ class ReviewCreatedKafkaPublisherTest {
                         Duration.ofSeconds(10),
                         "test-outbox-worker"),
                 KafkaIntegrationProperties.Inbox.defaults());
-        publisher = new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository);
+        publisher =
+                new ReviewCreatedKafkaPublisher(kafkaTemplate, new ObjectMapper(), properties, outboxEventRepository);
     }
 
     @Test
@@ -71,19 +73,33 @@ class ReviewCreatedKafkaPublisherTest {
                 "iced-latte.review.created.v1",
                 "product-1",
                 "{\"eventId\":\"" + eventId + "\"}",
-                "{}",
+                "{\"eventId\":\"" + eventId + "\",\"correlationId\":null}",
                 0,
                 10);
         when(outboxEventRepository.claimPublishableEvents(anyInt(), anyString()))
                 .thenReturn(List.of(row));
         var producerRecord = new ProducerRecord<>("iced-latte.review.created.v1", "product-1", row.payload());
         var metadata = new RecordMetadata(new TopicPartition("iced-latte.review.created.v1", 0), 42L, 0, 0L, 0, 0);
-        when(kafkaTemplate.send("iced-latte.review.created.v1", "product-1", row.payload()))
+        when(kafkaTemplate.send(org.mockito.ArgumentMatchers.<ProducerRecord<String, String>>argThat(
+                        record -> record.topic().equals("iced-latte.review.created.v1")
+                                && record.key().equals("product-1")
+                                && record.value().equals(row.payload())
+                                && new String(record.headers()
+                                                .lastHeader("eventId")
+                                                .value())
+                                        .equals(eventId.toString())
+                                && record.headers().lastHeader("correlationId").value() == null)))
                 .thenReturn(CompletableFuture.completedFuture(new SendResult<>(producerRecord, metadata)));
 
         publisher.publishPendingOutboxEvents();
 
-        verify(kafkaTemplate).send("iced-latte.review.created.v1", "product-1", row.payload());
+        verify(kafkaTemplate)
+                .send(org.mockito.ArgumentMatchers.<ProducerRecord<String, String>>argThat(record -> record.topic()
+                                .equals("iced-latte.review.created.v1")
+                        && record.key().equals("product-1")
+                        && record.value().equals(row.payload())
+                        && new String(record.headers().lastHeader("eventId").value()).equals(eventId.toString())
+                        && record.headers().lastHeader("correlationId").value() == null));
         verify(outboxEventRepository).markPublished(rowId, "test-outbox-worker", 0, 42L);
     }
 
@@ -106,7 +122,7 @@ class ReviewCreatedKafkaPublisherTest {
         CompletableFuture<SendResult<String, String>> failedSend = new CompletableFuture<>();
         IllegalStateException failure = new IllegalStateException("broker unavailable");
         failedSend.completeExceptionally(failure);
-        when(kafkaTemplate.send("iced-latte.review.created.v1", "product-1", row.payload()))
+        when(kafkaTemplate.send(org.mockito.ArgumentMatchers.<ProducerRecord<String, String>>any()))
                 .thenReturn(failedSend);
 
         publisher.publishPendingOutboxEvents();
@@ -132,7 +148,8 @@ class ReviewCreatedKafkaPublisherTest {
                         Duration.ofSeconds(10),
                         "test-outbox-worker"),
                 KafkaIntegrationProperties.Inbox.defaults());
-        var disabledPublisher = new ReviewCreatedKafkaPublisher(kafkaTemplate, properties, outboxEventRepository);
+        var disabledPublisher =
+                new ReviewCreatedKafkaPublisher(kafkaTemplate, new ObjectMapper(), properties, outboxEventRepository);
 
         disabledPublisher.publishPendingOutboxEvents();
 

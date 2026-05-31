@@ -22,13 +22,21 @@ public class ProductReviewValidator {
     private final ProductReviewProductApi productReviewProductApi;
 
     private static final Pattern INVALID_REVIEW_TEXT_PATTERN = Pattern.compile("[<>{}\\[\\]|\\\\^~`]");
+    private static final int MIN_PRODUCT_RATING = 1;
+    private static final int MAX_PRODUCT_RATING = 5;
 
     public void validateReviewText(final String productReviewText) {
-        if (productReviewText.trim().isEmpty()) {
+        if (productReviewText == null || productReviewText.trim().isEmpty()) {
             throw new BadRequestException("Product's review is empty");
         }
         if (INVALID_REVIEW_TEXT_PATTERN.matcher(productReviewText).find()) {
             throw new BadRequestException("The Product Review Text Is Invalid.");
+        }
+    }
+
+    public void validateProductRating(final Integer productRating) {
+        if (productRating == null || productRating < MIN_PRODUCT_RATING || productRating > MAX_PRODUCT_RATING) {
+            throw new BadRequestException("Product's review rating must be between 1 and 5");
         }
     }
 

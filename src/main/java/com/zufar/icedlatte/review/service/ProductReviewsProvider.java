@@ -1,7 +1,11 @@
 package com.zufar.icedlatte.review.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,9 +56,8 @@ public class ProductReviewsProvider {
         var pageRequest =
                 buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, productRatings);
 
-        var responsePage = reviewRepository
-                .findAllProductReviews(productId, productRatings, pageRequest)
-                .map(this::toProductReviewDto);
+        var responsePage =
+                toProductReviewDto(reviewRepository.findAllProductReviews(productId, productRatings, pageRequest));
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }
 
@@ -74,17 +78,30 @@ public class ProductReviewsProvider {
             final @Nullable Integer pageSize,
             final @Nullable String sortAttribute,
             final @Nullable String sortDirection) {
-        var responsePage = reviewRepository
-                .findAllByUserId(
-                        userId,
-                        buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, null))
-                .map(this::toProductReviewDto);
+        var responsePage = toProductReviewDto(reviewRepository.findAllByUserId(
+                userId, buildValidatedReviewsPageRequest(pageNumber, pageSize, sortAttribute, sortDirection, null)));
         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);
     }
 
+    private org.springframework.data.domain.Page<ProductReviewDto> toProductReviewDto(
+            org.springframework.data.domain.Page<ProductReview> page) {
+        Set<UUID> userIds =
+                page.getContent().stream().map(ProductReview::getUserId).collect(Collectors.toSet());
+        if (userIds.isEmpty()) {
+            return page.map(productReview -> productReviewDtoConverter.toProductReviewDto(
+                    productReview, userLookupApi.getUserById(productReview.getUserId())));
+        }
+        Map<UUID, UserLookupSnapshot> usersById = userLookupApi.getUsersByIds(userIds).stream()
+                .collect(Collectors.toMap(UserLookupSnapshot::id, Function.identity()));
+        return page.map(productReview -> productReviewDtoConverter.toProductReviewDto(
+                productReview,
+                java.util.Optional.ofNullable(usersById.get(productReview.getUserId()))
+                        .orElseGet(() -> userLookupApi.getUserById(productReview.getUserId()))));
+    }
+
     private ProductReviewDto toProductReviewDto(ProductReview productReview) {
-        var user = userLookupApi.getUserById(productReview.getUserId());
-        return productReviewDtoConverter.toProductReviewDto(productReview, user);
+        return productReviewDtoConverter.toProductReviewDto(
+                productReview, userLookupApi.getUserById(productReview.getUserId()));
     }
 
     private org.springframework.data.domain.Pageable buildValidatedReviewsPageRequest(

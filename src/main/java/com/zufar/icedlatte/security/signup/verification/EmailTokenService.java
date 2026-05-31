@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
@@ -38,20 +37,37 @@ public class EmailTokenService {
     private final EmailTokenProperties emailTokenProperties;
     private final TemporaryTokenProperties temporaryTokenProperties;
 
-    public String generate(UserRegistrationRequest request, TokenPurpose purpose) {
+    public String generateEmailVerificationToken(UserRegistrationRequest request) {
         String email = EmailNormalizer.normalize(request.getEmail());
         validateCooldown(email);
-        Duration ttl = tokenTtl();
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        var registration = new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), email);
+        var payload = new EmailVerificationTokenPayload(email, registration, encodedPassword);
+        return generate(email, TokenPurpose.EMAIL_VERIFICATION, tokenPayloadProtector.protect(payload));
+    }
 
+    public String generatePasswordResetToken(String email) {
+        String normalizedEmail = EmailNormalizer.normalize(email);
+        validateCooldown(normalizedEmail);
+        var payload = new PasswordResetTokenPayload(normalizedEmail);
+        return generate(normalizedEmail, TokenPurpose.PASSWORD_RESET, tokenPayloadProtector.protect(payload));
+    }
+
+    public EmailVerificationTokenPayload consumeEmailVerificationToken(String token) {
+        return consume(token, TokenPurpose.EMAIL_VERIFICATION, EmailVerificationTokenPayload.class);
+    }
+
+    public PasswordResetTokenPayload consumePasswordResetToken(String token) {
+        return consume(token, TokenPurpose.PASSWORD_RESET, PasswordResetTokenPayload.class);
+    }
+
+    private String generate(String email, TokenPurpose purpose, String protectedPayload) {
+        Duration ttl = tokenTtl();
         for (int attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
             String token = nextToken();
             String tokenKey = tokenKey(purpose, token);
-            String encodedPassword = encodedPassword(request, purpose);
-            EmailRegistrationPayload registration = registrationPayload(request, purpose, email);
-            EmailTokenEntry emailTokenEntry = new EmailTokenEntry(email, registration, purpose, encodedPassword);
-            String protectedEntry = tokenPayloadProtector.protect(emailTokenEntry);
 
-            if (temporaryStore.putIfAbsent(tokenKey, protectedEntry, ttl)) {
+            if (temporaryStore.putIfAbsent(tokenKey, protectedPayload, ttl)) {
                 String value = OffsetDateTime.now().plus(ttl).toString();
                 String key = cooldownKey(email);
                 temporaryStore.put(key, value, ttl);
@@ -62,23 +78,19 @@ public class EmailTokenService {
         throw new IllegalStateException("Failed to allocate unique email token");
     }
 
-    EmailTokenEntry consume(ConfirmEmailRequest confirmEmailRequest, TokenPurpose expectedPurpose) {
-        String token = confirmEmailRequest.getToken();
+    private <T extends EmailTokenPayload> T consume(String token, TokenPurpose purpose, Class<T> payloadType) {
         validateTokenFormat(token);
-        EmailTokenEntry entry = temporaryStore
-                .take(tokenKey(expectedPurpose, token))
-                .map(tokenPayloadProtector::unprotect)
+        T payload = temporaryStore
+                .take(tokenKey(purpose, token))
+                .map(protectedEntry -> tokenPayloadProtector.unprotect(protectedEntry, payloadType))
                 .orElseThrow(() -> new BadRequestException("Incorrect token"));
-        if (entry.purpose() != expectedPurpose) {
-            throw new BadRequestException("Incorrect token");
-        }
-        temporaryStore.remove(cooldownKey(entry.email()));
-        return entry;
+        temporaryStore.remove(cooldownKey(payload.email()));
+        return payload;
     }
 
     private void validateCooldown(String email) {
         temporaryStore.get(cooldownKey(email)).map(OffsetDateTime::parse).ifPresent(expiry -> {
-            throw new TimeTokenException(email, expiry);
+            throw new TimeTokenException(expiry);
         });
     }
 
@@ -103,21 +115,6 @@ public class EmailTokenService {
 
     private Duration tokenTtl() {
         return Duration.ofMinutes(temporaryTokenProperties.time().token());
-    }
-
-    private EmailRegistrationPayload registrationPayload(
-            UserRegistrationRequest request, TokenPurpose purpose, String email) {
-        if (purpose != TokenPurpose.EMAIL_VERIFICATION) {
-            return null;
-        }
-        return new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), email);
-    }
-
-    private String encodedPassword(UserRegistrationRequest request, TokenPurpose purpose) {
-        if (purpose != TokenPurpose.EMAIL_VERIFICATION) {
-            return null;
-        }
-        return passwordEncoder.encode(request.getPassword());
     }
 
     private static String tokenKey(TokenPurpose purpose, String token) {

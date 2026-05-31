@@ -36,6 +36,10 @@ public class FavoriteItemEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FavoriteItemEntity that)) return false;
+        if (favoriteListEntity == null
+                || productId == null
+                || that.favoriteListEntity == null
+                || that.productId == null) return false;
         return Objects.equals(favoriteListEntity, that.favoriteListEntity) && Objects.equals(productId, that.productId);
     }
 

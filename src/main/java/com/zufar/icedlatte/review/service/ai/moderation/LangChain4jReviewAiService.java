@@ -4,6 +4,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
@@ -21,6 +23,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
 
     private static final String OK = "OK";
     private static final String FALLBACK_SUMMARY = "Summary unavailable.";
+    private static final int MAX_REVIEWS_FOR_SUMMARY = 100;
 
     private final ReviewAiService reviewAiService;
     private final ProductReviewRepository reviewRepository;
@@ -46,7 +49,8 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
     @Override
     public String summarize(UUID productId) {
         try {
-            var reviews = reviewRepository.findAllByProductId(productId);
+            var reviews = reviewRepository.findAllByProductId(
+                    productId, PageRequest.of(0, MAX_REVIEWS_FOR_SUMMARY, Sort.by(Sort.Direction.DESC, "createdAt")));
             if (reviews.isEmpty()) return null;
             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
             return reviewAiService.aggregateSummary(combined);

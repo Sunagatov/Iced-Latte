@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
@@ -136,6 +137,50 @@ class ProductReviewManagerTest {
             assertThatThrownBy(() -> service.create(productId, userId, request))
                     .isInstanceOf(BadRequestException.class);
         }
+
+        @Test
+        @DisplayName("Rejects missing request")
+        void create_missingRequest_throwsBadRequestException() {
+            assertThatThrownBy(() -> service.create(UUID.randomUUID(), UUID.randomUUID(), null))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessage("Product's review request must be provided");
+        }
+
+        @Test
+        @DisplayName("Validates rating before saving")
+        void create_invalidRating_throwsBadRequestExceptionBeforeSave() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            ProductReviewRequest request = new ProductReviewRequest();
+            request.setText("Great coffee");
+            request.setRating(null);
+            doThrow(new BadRequestException("Product's review rating must be between 1 and 5"))
+                    .when(productReviewValidator)
+                    .validateProductRating(null);
+
+            assertThatThrownBy(() -> service.create(productId, userId, request))
+                    .isInstanceOf(BadRequestException.class);
+
+            verify(reviewRepository, never()).saveAndFlush(any());
+        }
+
+        @Test
+        @DisplayName("Translates duplicate review persistence race to BadRequestException")
+        void create_duplicateReviewRace_throwsBadRequestException() {
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            ProductReviewRequest request = new ProductReviewRequest();
+            request.setText("Great coffee");
+            request.setRating(5);
+            var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
+            when(userLookupApi.getUserById(userId)).thenReturn(user);
+            when(reviewRepository.saveAndFlush(any(ProductReview.class)))
+                    .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+            assertThatThrownBy(() -> service.create(productId, userId, request))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Creation of the product's review");
+        }
     }
 
     @Nested
@@ -171,6 +216,27 @@ class ProductReviewManagerTest {
 
             assertThatThrownBy(() -> service.delete(productId, reviewId, userId))
                     .isInstanceOf(BadRequestException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateLike")
+    class UpdateLike {
+
+        @Test
+        @DisplayName("Translates duplicate vote persistence race to BadRequestException")
+        void updateLike_duplicateVoteRace_throwsBadRequestException() {
+            UUID productId = UUID.randomUUID();
+            UUID reviewId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId))
+                    .thenReturn(java.util.Optional.empty());
+            when(productReviewLikeRepository.saveAndFlush(any()))
+                    .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+            assertThatThrownBy(() -> service.updateLike(productId, reviewId, userId, true))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("changed concurrently");
         }
     }
 }

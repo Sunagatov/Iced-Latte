@@ -3,7 +3,7 @@ package com.zufar.icedlatte.security.signup.verification;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 
@@ -14,21 +14,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
-import com.zufar.icedlatte.security.session.dto.TokenPurpose;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 
 @DisplayName("EmailTokenService contract tests")
 class EmailTokenServiceContractTest {
 
     private EmailTokenService service;
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
-        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        passwordEncoder = mock(PasswordEncoder.class);
         org.mockito.Mockito.when(passwordEncoder.encode(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn("encoded-password");
         ObjectMapper objectMapper = new ObjectMapper();
@@ -46,39 +45,38 @@ class EmailTokenServiceContractTest {
     void generatedTokenCanBeValidatedOnceAndOnlyOnce() {
         UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
 
-        String token = service.generate(request, TokenPurpose.EMAIL_VERIFICATION);
-        EmailTokenEntry consumed = service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION);
+        String token = service.generateEmailVerificationToken(request);
+        EmailVerificationTokenPayload consumed = service.consumeEmailVerificationToken(token);
 
         assertThat(consumed.email()).isEqualTo(request.getEmail());
         assertThat(consumed.registration().email()).isEqualTo(request.getEmail());
         assertThat(consumed.encodedPassword()).isEqualTo("encoded-password");
-        assertThatThrownBy(() -> service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.consumeEmailVerificationToken(token)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("wrong token purpose is rejected")
     void wrongTokenPurposeIsRejected() {
         UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
-        String token = service.generate(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = service.generateEmailVerificationToken(request);
 
-        assertThatThrownBy(() -> service.consume(new ConfirmEmailRequest(token), TokenPurpose.PASSWORD_RESET))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.consumePasswordResetToken(token)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("cooldown blocks repeated token generation until consumed")
     void cooldownBlocksRepeatedTokenGenerationUntilConsumed() {
         UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
-        String token = service.generate(request, TokenPurpose.EMAIL_VERIFICATION);
+        String token = service.generateEmailVerificationToken(request);
 
-        assertThatThrownBy(() -> service.generate(request, TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(() -> service.generateEmailVerificationToken(request))
                 .isInstanceOf(TimeTokenException.class);
+        verify(passwordEncoder, times(1)).encode("Password1!");
 
-        service.consume(new ConfirmEmailRequest(token), TokenPurpose.EMAIL_VERIFICATION);
+        service.consumeEmailVerificationToken(token);
 
-        assertThatCode(() -> service.generate(request, TokenPurpose.EMAIL_VERIFICATION))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> service.generateEmailVerificationToken(request)).doesNotThrowAnyException();
+        verify(passwordEncoder, times(2)).encode("Password1!");
     }
 
     @Test
@@ -88,9 +86,9 @@ class EmailTokenServiceContractTest {
         UserRegistrationRequest sameEmailDifferentCase =
                 new UserRegistrationRequest("John", "Doe", " john@example.COM ", "Password1!");
 
-        service.generate(request, TokenPurpose.EMAIL_VERIFICATION);
+        service.generateEmailVerificationToken(request);
 
-        assertThatThrownBy(() -> service.generate(sameEmailDifferentCase, TokenPurpose.EMAIL_VERIFICATION))
+        assertThatThrownBy(() -> service.generateEmailVerificationToken(sameEmailDifferentCase))
                 .isInstanceOf(TimeTokenException.class);
     }
 

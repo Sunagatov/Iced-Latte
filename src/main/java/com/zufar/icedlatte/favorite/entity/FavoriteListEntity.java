@@ -50,6 +50,7 @@ public class FavoriteListEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FavoriteListEntity that)) return false;
+        if (id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 

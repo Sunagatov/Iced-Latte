@@ -138,6 +138,30 @@ class ProductReviewSummaryDebouncerTest {
         verify(productReviewProductGateway).updateAiSummary(productId, "Fresh summary");
     }
 
+    @Test
+    @DisplayName("runSummary skips product update when summary is absent")
+    void runSummarySkipsProductUpdateWhenSummaryIsAbsent() {
+        UUID productId = UUID.randomUUID();
+        when(productSummaryService.summarize(productId)).thenReturn(null);
+
+        debouncer.runSummary(productId);
+
+        verify(productReviewProductGateway, never()).updateAiSummary(eq(productId), any());
+    }
+
+    @Test
+    @DisplayName("runSummary schedules a retry after summary failure")
+    void runSummarySchedulesRetryAfterSummaryFailure() {
+        UUID productId = UUID.randomUUID();
+        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
+        when(productSummaryService.summarize(productId)).thenThrow(new RuntimeException("timeout"));
+        doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
+
+        debouncer.runSummary(productId);
+
+        verify(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
+    }
+
     @SuppressWarnings("unchecked")
     private ConcurrentHashMap<UUID, ScheduledFuture<?>> pending() {
         return (ConcurrentHashMap<UUID, ScheduledFuture<?>>) ReflectionTestUtils.getField(debouncer, "pendingDebounce");

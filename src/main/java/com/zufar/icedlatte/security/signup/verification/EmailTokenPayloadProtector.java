@@ -11,7 +11,7 @@ import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 @Component
 class EmailTokenPayloadProtector {
 
-    private static final String PAYLOAD_DESCRIPTION = "email token entry";
+    private static final String PAYLOAD_DESCRIPTION = "email token payload";
 
     private final ObjectMapper objectMapper;
     private final AesGcmStringProtector protector;
@@ -25,19 +25,19 @@ class EmailTokenPayloadProtector {
         this.protector = new AesGcmStringProtector(keySource, PAYLOAD_DESCRIPTION);
     }
 
-    String protect(EmailTokenEntry entry) {
+    String protect(EmailTokenPayload entry) {
         try {
             return protector.protect(objectMapper.writeValueAsString(entry));
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize email token entry", e);
+            throw new IllegalStateException("Failed to serialize email token payload", e);
         }
     }
 
-    EmailTokenEntry unprotect(String protectedEntry) {
+    <T extends EmailTokenPayload> T unprotect(String protectedEntry, Class<T> payloadType) {
         try {
-            return objectMapper.readValue(protector.unprotect(protectedEntry), EmailTokenEntry.class);
+            return objectMapper.readValue(protector.unprotect(protectedEntry), payloadType);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to deserialize email token entry", e);
+            throw new IllegalStateException("Failed to deserialize email token payload", e);
         }
     }
 }

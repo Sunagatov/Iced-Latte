@@ -55,9 +55,35 @@ class ProductReviewValidatorTest {
     }
 
     @Test
+    @DisplayName("validateReviewText: null text throws BadRequestException")
+    void validateReviewTextNullThrowsBadRequestException() {
+        assertThatThrownBy(() -> validator.validateReviewText(null)).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     @DisplayName("validateReviewText: text with forbidden characters throws BadRequestException")
     void validateReviewTextForbiddenCharsThrowsBadRequestException() {
         assertThatThrownBy(() -> validator.validateReviewText("Bad <script>")).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("validateProductRating: valid boundary ratings pass")
+    void validateProductRatingValidBoundariesNoException() {
+        assertThatCode(() -> validator.validateProductRating(1)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateProductRating(5)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("validateProductRating: null rating throws BadRequestException")
+    void validateProductRatingNullThrowsBadRequestException() {
+        assertThatThrownBy(() -> validator.validateProductRating(null)).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("validateProductRating: out of range rating throws BadRequestException")
+    void validateProductRatingOutOfRangeThrowsBadRequestException() {
+        assertThatThrownBy(() -> validator.validateProductRating(0)).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> validator.validateProductRating(6)).isInstanceOf(BadRequestException.class);
     }
 
     // ── validateProductExists ───────────────────────────────────────────────
