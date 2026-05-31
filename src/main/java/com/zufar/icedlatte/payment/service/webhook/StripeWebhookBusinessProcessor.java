@@ -117,19 +117,23 @@ public class StripeWebhookBusinessProcessor {
         }
 
         payment.setProviderPaymentIntentId(paymentIntent);
-        payment.setStatus(PaymentStatus.PAID);
         payment.setRawEventId(event.getId());
         payment.setLatestEventType(event.getType());
+
+        if (!orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed")) {
+            payment.setStatus(PaymentStatus.RECONCILIATION_FAILED);
+            paymentRepository.save(payment);
+            log.warn("checkout.completed.order_transition_failed: orderId={}", orderId);
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
 
-        if (orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed")) {
-            // Store stripePaymentIntentId on Order for refund lookup
-            orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
-            cartCheckoutApi.deleteCartForUser(payment.getUserId());
-            log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
-        } else {
-            log.warn("checkout.completed.order_transition_failed: orderId={}", orderId);
-        }
+        // Store stripePaymentIntentId on Order for refund lookup
+        orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
+        cartCheckoutApi.deleteCartForUser(payment.getUserId());
+        log.info("checkout.completed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
     }
 
     private void handleExpired(Session stripeSession) {

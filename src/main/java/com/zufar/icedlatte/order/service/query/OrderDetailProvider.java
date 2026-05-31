@@ -139,19 +139,19 @@ public class OrderDetailProvider implements OrderPaymentApi {
     @Override
     @Transactional
     public boolean confirmPayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, reason);
+        return transitionPaymentOrder(orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, OrderStatus.PAID, reason);
     }
 
     @Override
     @Transactional
     public boolean expirePayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, reason);
+        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_EXPIRED_EVENT, OrderStatus.PAYMENT_EXPIRED, reason);
     }
 
     @Override
     @Transactional
     public boolean failPayment(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_FAILED_EVENT, reason);
+        return transitionPaymentOrder(orderId, OrderEvent.PAYMENT_FAILED_EVENT, OrderStatus.PAYMENT_FAILED, reason);
     }
 
     @Override
@@ -165,15 +165,19 @@ public class OrderDetailProvider implements OrderPaymentApi {
     @Override
     @Transactional
     public boolean confirmRefund(@NonNull UUID orderId, @NonNull String reason) {
-        return transitionPaymentOrder(orderId, OrderEvent.REFUND_CONFIRMED, reason);
+        return transitionPaymentOrder(orderId, OrderEvent.REFUND_CONFIRMED, OrderStatus.REFUNDED, reason);
     }
 
-    private boolean transitionPaymentOrder(UUID orderId, OrderEvent event, String reason) {
+    private boolean transitionPaymentOrder(UUID orderId, OrderEvent event, OrderStatus targetStatus, String reason) {
         try {
             orderStatusTransitioner.transition(orderId, event, null, reason);
             return true;
         } catch (InvalidOrderStateTransitionException _) {
-            return false;
+            return orderRepository
+                    .findById(orderId)
+                    .map(Order::getStatus)
+                    .filter(targetStatus::equals)
+                    .isPresent();
         }
     }
 

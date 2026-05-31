@@ -166,6 +166,33 @@ class StripeWebhookBusinessProcessorTest {
     }
 
     @Test
+    @DisplayName("Paid session with rejected order transition sets RECONCILIATION_FAILED")
+    void markPaid_orderTransitionRejected_setsReconciliationFailed() {
+        Event event = mockEvent("checkout.session.completed", "evt_order_rejected");
+        Session session = mockSession("paid", 2500L, "usd", "pi_test_123");
+        mockEventSession(event, session);
+
+        Payment payment = Payment.builder()
+                .orderId(ORDER_ID)
+                .userId(USER_ID)
+                .amountMinor(2500L)
+                .currency("usd")
+                .status(PaymentStatus.STRIPE_SESSION_CREATED)
+                .build();
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(orderPaymentApi.confirmPayment(ORDER_ID, "Stripe payment confirmed"))
+                .thenReturn(false);
+        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        processor.process(event);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
+        assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test_123");
+        verify(orderPaymentApi, never()).assignPaymentIntent(any(), any());
+        verify(shoppingCartService, never()).deleteCartForUser(any());
+    }
+
+    @Test
     @DisplayName("checkout.session.expired marks payment EXPIRED and transitions order")
     void handleExpired_marksExpiredAndTransitions() {
         Event event = mockEvent("checkout.session.expired", "evt_5");

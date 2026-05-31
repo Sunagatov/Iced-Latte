@@ -67,17 +67,20 @@ public class PaymentReconciliationService {
             }
 
             locked.setProviderPaymentIntentId(paymentIntent);
-            locked.setStatus(PaymentStatus.PAID);
             locked.setLatestEventType("sync.session.retrieve");
-            paymentRepository.save(locked);
 
-            if (orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed (sync fallback)")) {
-                orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
-                cartCheckoutApi.deleteCartForUser(locked.getUserId());
-                log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
-            } else {
+            if (!orderPaymentApi.confirmPayment(orderId, "Stripe payment confirmed (sync fallback)")) {
+                locked.setStatus(PaymentStatus.RECONCILIATION_FAILED);
+                paymentRepository.save(locked);
                 log.warn("payment.sync.order_transition_failed: orderId={}", orderId);
+                return;
             }
+
+            locked.setStatus(PaymentStatus.PAID);
+            paymentRepository.save(locked);
+            orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
+            cartCheckoutApi.deleteCartForUser(locked.getUserId());
+            log.info("payment.sync.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntent);
         });
     }
 }

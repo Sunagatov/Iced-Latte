@@ -89,6 +89,26 @@ class PaymentReconciliationServiceTest {
     }
 
     @Test
+    @DisplayName("Paid Stripe session fails closed when order transition is rejected")
+    void trySyncPaidStatus_orderTransitionRejected_setsReconciliationFailed() throws Exception {
+        Payment payment = payment();
+        Session session = paidSession(1000L);
+
+        when(stripeSessionGateway.retrieve("cs_test_1")).thenReturn(session);
+        when(paymentRepository.findByOrderIdForUpdate(ORDER_ID)).thenReturn(Optional.of(payment));
+        when(orderPaymentApi.confirmPayment(ORDER_ID, "Stripe payment confirmed (sync fallback)"))
+                .thenReturn(false);
+        executeTransactionTemplate();
+
+        service.trySyncPaidStatus(payment);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.RECONCILIATION_FAILED);
+        assertThat(payment.getProviderPaymentIntentId()).isEqualTo("pi_test");
+        verify(orderPaymentApi, never()).assignPaymentIntent(any(), any());
+        verify(cartCheckoutApi, never()).deleteCartForUser(any());
+    }
+
+    @Test
     @DisplayName("Unpaid Stripe session does not update local state")
     void trySyncPaidStatus_unpaidSession_doesNothing() throws Exception {
         Payment payment = payment();
