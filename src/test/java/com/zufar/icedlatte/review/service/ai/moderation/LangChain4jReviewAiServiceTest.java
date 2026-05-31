@@ -118,10 +118,10 @@ class LangChain4jReviewAiServiceTest {
 
         verify(reviewRepository).findAllByProductId(eq(productId), argThat(pageable -> {
             var createdAtOrder = pageable.getSort().getOrderFor("createdAt");
-            return pageable.getPageNumber() == 0
-                    && pageable.getPageSize() == 100
-                    && createdAtOrder != null
-                    && createdAtOrder.isDescending();
+            if (createdAtOrder == null) {
+                return false;
+            }
+            return pageable.getPageNumber() == 0 && pageable.getPageSize() == 100 && createdAtOrder.isDescending();
         }));
     }
 }

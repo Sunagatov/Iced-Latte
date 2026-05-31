@@ -45,14 +45,13 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(
             final UUID productId, final UUID userId, final @Nullable ProductReviewRequest productReviewRequest) {
-        if (productReviewRequest == null) {
-            throw new BadRequestException("Product's review request must be provided");
-        }
-        var productReviewText = productReviewRequest.getText();
+        ProductReviewRequest reviewRequest = Optional.ofNullable(productReviewRequest)
+                .orElseThrow(() -> new BadRequestException("Product's review request must be provided"));
+        var productReviewText = reviewRequest.getText();
 
         productReviewValidator.validateProductExists(productId);
         productReviewValidator.validateReviewText(productReviewText);
-        productReviewValidator.validateProductRating(productReviewRequest.getRating());
+        productReviewValidator.validateProductRating(reviewRequest.getRating());
         productReviewValidator.validateReviewExistsForUser(userId, productId);
 
         var user = userLookupApi.getUserById(userId);
@@ -60,7 +59,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                 .userId(userId)
                 .productId(productId)
                 .text(productReviewText.trim())
-                .productRating(productReviewRequest.getRating())
+                .productRating(reviewRequest.getRating())
                 .likesCount(0)
                 .dislikesCount(0)
                 .build();

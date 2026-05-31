@@ -68,6 +68,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     + "WHERE product_reviews.id = :productReviewId")
     void updateDislikesCount(final UUID productReviewId);
 
+    @SuppressWarnings("SqlWithoutWhere")
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
             nativeQuery = true,
@@ -79,6 +80,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, UU
                     + "WHERE pr.id IS NOT NULL")
     void updateAllLikesCounts();
 
+    @SuppressWarnings("SqlWithoutWhere")
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
             nativeQuery = true,
