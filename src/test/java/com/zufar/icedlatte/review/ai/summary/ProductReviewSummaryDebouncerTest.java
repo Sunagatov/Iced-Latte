@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
@@ -37,7 +37,7 @@ class ProductReviewSummaryDebouncerTest {
     private ProductReviewProductApi productReviewProductGateway;
 
     @Mock
-    private ApplicationContext applicationContext;
+    private ObjectProvider<ProductReviewSummaryDebouncer> selfProvider;
 
     @Mock
     private ScheduledExecutorService scheduler;
@@ -55,9 +55,10 @@ class ProductReviewSummaryDebouncerTest {
         debouncer = new ProductReviewSummaryDebouncer(
                 Duration.ofMinutes(2),
                 Duration.ofMinutes(10),
+                3,
                 productSummaryService,
                 productReviewProductGateway,
-                applicationContext);
+                selfProvider);
     }
 
     @AfterEach
@@ -99,7 +100,7 @@ class ProductReviewSummaryDebouncerTest {
     void scheduledRunnableCallsProxiedBeanSummaryMethod() {
         UUID productId = UUID.randomUUID();
         ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
-        when(applicationContext.getBean(ProductReviewSummaryDebouncer.class)).thenReturn(debouncer);
+        when(selfProvider.getObject()).thenReturn(debouncer);
         when(scheduler.schedule(any(Runnable.class), any(Long.class), eq(TimeUnit.SECONDS)))
                 .thenAnswer(invocation -> {
                     Runnable runnable = invocation.getArgument(0);
@@ -109,7 +110,7 @@ class ProductReviewSummaryDebouncerTest {
 
         debouncer.schedule(productId);
 
-        verify(applicationContext).getBean(ProductReviewSummaryDebouncer.class);
+        verify(selfProvider).getObject();
     }
 
     @Test
@@ -162,6 +163,20 @@ class ProductReviewSummaryDebouncerTest {
         verify(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
     }
 
+    @Test
+    @DisplayName("runSummary stops retrying after max retry attempts")
+    void runSummaryStopsRetryingAfterMaxRetryAttempts() {
+        UUID productId = UUID.randomUUID();
+        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
+        retryCounts().put(productId, 3);
+        when(productSummaryService.summarize(productId)).thenThrow(new RuntimeException("timeout"));
+
+        debouncer.runSummary(productId);
+
+        verify(scheduler, never()).schedule(any(Runnable.class), any(Long.class), eq(TimeUnit.SECONDS));
+        assertThat(retryCounts()).doesNotContainKey(productId);
+    }
+
     @SuppressWarnings("unchecked")
     private ConcurrentHashMap<UUID, ScheduledFuture<?>> pending() {
         return (ConcurrentHashMap<UUID, ScheduledFuture<?>>) ReflectionTestUtils.getField(debouncer, "pendingDebounce");
@@ -170,5 +185,10 @@ class ProductReviewSummaryDebouncerTest {
     @SuppressWarnings("unchecked")
     private ConcurrentHashMap<UUID, Long> firstTriggerTime() {
         return (ConcurrentHashMap<UUID, Long>) ReflectionTestUtils.getField(debouncer, "firstTriggerTime");
+    }
+
+    @SuppressWarnings("unchecked")
+    private ConcurrentHashMap<UUID, Integer> retryCounts() {
+        return (ConcurrentHashMap<UUID, Integer>) ReflectionTestUtils.getField(debouncer, "retryCounts");
     }
 }

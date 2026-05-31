@@ -45,7 +45,4 @@ public class ProductReview {
     @Column(name = "dislikes_count", nullable = false)
     private Integer dislikesCount;
 
-    // TODO: This field is dead, but removing it requires a DB migration for a harmless column.
-    @Column(name = "ai_summary", columnDefinition = "TEXT")
-    private String aiSummary;
 }

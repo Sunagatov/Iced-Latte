@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -72,8 +73,8 @@ class OrderReorderServiceTest {
                 .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(productCatalogApi.existsById(availableProductId)).thenReturn(true);
-        when(productCatalogApi.existsById(unavailableProductId)).thenReturn(false);
+        when(productCatalogApi.findExistingProductIds(Set.of(availableProductId, unavailableProductId)))
+                .thenReturn(Set.of(availableProductId));
 
         CartSnapshot cart = new CartSnapshot(
                 UUID.randomUUID(), userId, List.of(), 0, BigDecimal.ZERO, 0, OffsetDateTime.now(), null);

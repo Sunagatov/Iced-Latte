@@ -96,8 +96,8 @@ public class FileDeletionOutboxRepository {
                 """, EVENT_TYPE, Timestamp.from(lockedBefore));
     }
 
-    public void markDeleted(UUID id, String workerId) {
-        jdbcTemplate.update("""
+    public boolean markDeleted(UUID id, String workerId) {
+        int updated = jdbcTemplate.update("""
                 UPDATE outbox_events
                 SET status = 'PUBLISHED',
                     locked_by = NULL,
@@ -110,14 +110,15 @@ public class FileDeletionOutboxRepository {
                   AND status = 'IN_PROGRESS'
                   AND locked_by = ?
                 """, id, EVENT_TYPE, workerId);
+        return updated == 1;
     }
 
-    public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
+    public boolean markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
         Instant nextAttemptAt =
                 permanent ? null : Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS);
-        jdbcTemplate.update(
+        int updated = jdbcTemplate.update(
                 """
                 UPDATE outbox_events
                 SET status = ?,
@@ -139,6 +140,7 @@ public class FileDeletionOutboxRepository {
                 id,
                 EVENT_TYPE,
                 workerId);
+        return updated == 1;
     }
 
     private String toPayload(FileMetadataDto metadata) {

@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.order.service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +37,15 @@ public class OrderReorderService {
             throw new OrderAccessDeniedException();
         }
 
+        Set<UUID> requestedProductIds =
+                order.getItems().stream().map(OrderItem::getProductId).collect(Collectors.toSet());
+        Set<UUID> existingProductIds = productCatalogApi.findExistingProductIds(requestedProductIds);
+
         Set<AddCartItemRequest> itemsToAdd = new LinkedHashSet<>();
         List<UnavailableItemDto> unavailable = new ArrayList<>();
 
         for (OrderItem item : order.getItems()) {
-            if (productCatalogApi.existsById(item.getProductId())) {
+            if (existingProductIds.contains(item.getProductId())) {
                 itemsToAdd.add(new AddCartItemRequest(item.getProductId(), item.getProductsQuantity()));
             } else {
                 unavailable.add(new UnavailableItemDto()

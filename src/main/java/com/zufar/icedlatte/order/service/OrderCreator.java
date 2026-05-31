@@ -3,7 +3,9 @@ package com.zufar.icedlatte.order.service;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
@@ -132,8 +134,12 @@ public class OrderCreator implements OrderCheckoutApi {
     }
 
     private void validateProductAvailability(List<OrderItem> items) {
+        Set<UUID> requestedProductIds = items.stream()
+                .map(OrderItem::getProductId)
+                .collect(Collectors.toSet());
+        Set<UUID> existingProductIds = productCatalogApi.findExistingProductIds(requestedProductIds);
         List<String> unavailable = items.stream()
-                .filter(item -> !productCatalogApi.existsById(item.getProductId()))
+                .filter(item -> !existingProductIds.contains(item.getProductId()))
                 .map(OrderItem::getProductName)
                 .toList();
         if (!unavailable.isEmpty()) {

@@ -53,11 +53,24 @@ public class FileDeletionOutboxWorker {
                     objectMapper.readValue(event.payload(), FileObjectDeletionPayload.class);
             objectStorage.delete(
                     new FileMetadataDto(payload.relatedObjectId(), payload.bucketName(), payload.fileName()));
-            outboxRepository.markDeleted(event.id(), properties.workerId());
+            boolean markedDeleted = outboxRepository.markDeleted(event.id(), properties.workerId());
+            if (!markedDeleted) {
+                log.warn(
+                        "file.deletion_outbox.delete_mark_missed: eventId={}, workerId={}",
+                        event.eventId(),
+                        properties.workerId());
+                return;
+            }
             log.info("file.deletion_outbox.deleted: eventId={}, fileName={}", event.eventId(), payload.fileName());
         } catch (IOException | RuntimeException ex) {
-            outboxRepository.markFailed(
+            boolean markedFailed = outboxRepository.markFailed(
                     event.id(), properties.workerId(), event.attemptCount(), event.maxAttempts(), ex);
+            if (!markedFailed) {
+                log.warn(
+                        "file.deletion_outbox.failure_mark_missed: eventId={}, workerId={}",
+                        event.eventId(),
+                        properties.workerId());
+            }
             log.warn("file.deletion_outbox.failed: eventId={}", event.eventId(), ex);
         }
     }

@@ -16,11 +16,6 @@ class ModularityTests {
             ApplicationModules.of(IcedLatteApplication.class, ApplicationModules.Filters.withoutModule("openapi"));
 
     @Test
-    void printsApplicationModules() {
-        modules.forEach(System.out::println);
-    }
-
-    @Test
     void verifiesApplicationModuleStructure() {
         modules.verify();
     }

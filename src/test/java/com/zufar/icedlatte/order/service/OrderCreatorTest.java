@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -117,7 +118,7 @@ class OrderCreatorTest {
                 .build();
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(productCatalogApi.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
 
@@ -147,7 +148,7 @@ class OrderCreatorTest {
         UserAddressSnapshot savedAddr = new UserAddressSnapshot("DE", "Berlin", "Unter den Linden 1", "10117");
         when(userAddressApi.getDeliveryAddress(userId, addressId)).thenReturn(savedAddr);
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(productCatalogApi.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
         when(orderRepository.save(any(Order.class))).thenReturn(saved);
         when(orderDtoConverter.toResponseDto(saved)).thenReturn(new OrderDto());
 
@@ -169,7 +170,7 @@ class OrderCreatorTest {
         CartSnapshot cart = buildCart(productId);
 
         when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
-        when(productCatalogApi.existsById(productId)).thenReturn(true);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
         when(userAddressApi.getDeliveryAddress(userId, addressId))
                 .thenThrow(new NotFoundException("Delivery address not found."));
 
@@ -240,7 +241,7 @@ class OrderCreatorTest {
                 .address(buildAddressDto());
         CartSnapshot cart = buildCart(productId);
 
-        when(productCatalogApi.existsById(productId)).thenReturn(false);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of());
 
         assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), cart))
                 .isInstanceOf(BadRequestException.class)

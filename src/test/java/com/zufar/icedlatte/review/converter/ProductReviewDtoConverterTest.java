@@ -41,7 +41,6 @@ public class ProductReviewDtoConverterTest {
                 .productRating(1)
                 .text("")
                 .createdAt(OffsetDateTime.now())
-                .aiSummary("dead summary")
                 .build();
         var user = new UserLookupSnapshot(UUID.randomUUID(), "first", "last", "user@example.com");
         ProductReviewDto actualProductReviewDto = converter.toProductReviewDto(expectedProductReview, user);

@@ -7,10 +7,12 @@ import java.util.concurrent.*;
 import jakarta.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 
@@ -22,28 +24,45 @@ public class ProductReviewSummaryDebouncer {
 
     private final long debounceDelaySec;
     private final long maxWaitSec;
+    private final int maxRetryAttempts;
     private final ProductSummaryService productSummaryService;
     private final ProductReviewProductApi productReviewProductApi;
-    private final ApplicationContext applicationContext;
+    private final ObjectProvider<ProductReviewSummaryDebouncer> selfProvider;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final ConcurrentHashMap<UUID, ScheduledFuture<?>> pendingDebounce = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> firstTriggerTime = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Integer> retryCounts = new ConcurrentHashMap<>();
 
     public ProductReviewSummaryDebouncer(
             @Value("${ai.review-summary.debounce-delay:PT2M}") Duration debounceDelay,
             @Value("${ai.review-summary.max-wait:PT10M}") Duration maxWait,
+            @Value("${ai.review-summary.max-retry-attempts:3}") int maxRetryAttempts,
             ProductSummaryService productSummaryService,
             ProductReviewProductApi productReviewProductApi,
-            ApplicationContext applicationContext) {
+            ObjectProvider<ProductReviewSummaryDebouncer> selfProvider) {
         this.debounceDelaySec = debounceDelay.toSeconds();
         this.maxWaitSec = maxWait.toSeconds();
+        this.maxRetryAttempts = maxRetryAttempts;
         this.productSummaryService = productSummaryService;
         this.productReviewProductApi = productReviewProductApi;
-        this.applicationContext = applicationContext;
+        this.selfProvider = selfProvider;
     }
 
     public void schedule(UUID productId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    scheduleAfterCommit(productId);
+                }
+            });
+            return;
+        }
+        scheduleAfterCommit(productId);
+    }
+
+    private void scheduleAfterCommit(UUID productId) {
         long now = System.currentTimeMillis();
         firstTriggerTime.putIfAbsent(productId, now);
 
@@ -56,9 +75,7 @@ public class ProductReviewSummaryDebouncer {
         ScheduledFuture<?> future = scheduler.schedule(
                 () -> {
                     try {
-                        applicationContext
-                                .getBean(ProductReviewSummaryDebouncer.class)
-                                .runSummary(productId);
+                        selfProvider.getObject().runSummary(productId);
                     } catch (Exception e) {
                         log.warn(
                                 "product.ai_summary.schedule.failed: productId={}, exceptionClass={}",
@@ -83,12 +100,21 @@ public class ProductReviewSummaryDebouncer {
                 return;
             }
             productReviewProductApi.updateAiSummary(productId, summary);
+            retryCounts.remove(productId);
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
+            int retryCount = retryCounts.merge(productId, 1, Integer::sum);
             log.warn(
-                    "product.ai_summary.failed: productId={}, exceptionClass={}",
+                    "product.ai_summary.failed: productId={}, retryCount={}, maxRetryAttempts={}, exceptionClass={}",
                     productId,
+                    retryCount,
+                    maxRetryAttempts,
                     e.getClass().getSimpleName());
+            if (retryCount > maxRetryAttempts) {
+                retryCounts.remove(productId);
+                log.warn("product.ai_summary.retry_exhausted: productId={}", productId);
+                return;
+            }
             schedule(productId);
         }
     }
