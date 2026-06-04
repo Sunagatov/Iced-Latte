@@ -104,9 +104,9 @@ Profile behavior:
 | `dev` | local contributor mode; schema is recreated and seed data is loaded on restart |
 | `prod` | schema is preserved; production operations are managed outside this repo |
 
-Do not rely on a preconfigured account for manual checks. Create your own
-account through Google authentication when it is configured, or sign up with an
-email address and complete the email confirmation flow.
+Do not rely on a preconfigured account for manual checks. With the default local
+configuration, email sign-up authenticates you immediately. If you explicitly
+enable email confirmation or Google OAuth, complete that provider flow first.
 
 ### Main tables
 
@@ -398,7 +398,7 @@ Open:
 
 | Tool | URL |
 |---|---|
-| Backend | http://localhost:8083 |
+| Backend health | http://localhost:8083/actuator/health |
 | Swagger UI | http://localhost:8083/api/docs/swagger-ui/index.html |
 | MinIO console | http://localhost:9001 |
 

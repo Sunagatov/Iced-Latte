@@ -82,7 +82,7 @@ That file is intentionally safe for local contributors:
 
 - `SPRING_PROFILES_ACTIVE=dev`
 - Swagger UI is enabled
-- Stripe, Google OAuth, email, and AI integrations stay disabled unless you opt in
+- Stripe, Google OAuth, email, AI, Kafka, and Turnstile stay disabled unless you opt in
 - local HTTP access logs run at `DEBUG`
 - Liquibase re-seeds local data in the default dev profile
 
@@ -112,13 +112,14 @@ Verify:
 | Service | URL |
 |---|---|
 | 🌐 Frontend | http://localhost:3000 |
-| 🔌 Backend | http://localhost:8083 |
+| 🩺 Backend health | http://localhost:8083/actuator/health |
 | 📚 Swagger UI | http://localhost:8083/api/docs/swagger-ui/index.html |
 | 🪣 MinIO console | http://localhost:9001 |
 
-Create your own account before testing authenticated flows. Use Google
-authentication when it is configured, or sign up with an email address and
-complete the email confirmation flow.
+Create your own account before testing authenticated flows. With the default
+local config, email confirmation is disabled and email sign-up authenticates you
+immediately. If you explicitly enable email or Google OAuth, follow that
+provider's confirmation/authentication flow.
 
 ---
 
@@ -247,14 +248,15 @@ Use this checklist after starting any option:
 | Check | Expected result |
 |---|---|
 | `docker ps` | Required containers show status `Up` |
-| http://localhost:8083 | Backend responds |
+| http://localhost:8083/actuator/health | Backend health returns `UP` |
 | http://localhost:8083/api/docs/swagger-ui/index.html | Swagger UI opens |
 | http://localhost:3000 | Frontend opens if you started it |
 | http://localhost:9001 | MinIO console opens |
 
-For authenticated checks, create your own account through Google authentication
-when it is configured, or sign up with an email address and complete the email
-confirmation flow.
+For authenticated checks, create your own account. With the default local
+config, email confirmation is disabled and email sign-up authenticates you
+immediately. If you explicitly enable email or Google OAuth, follow that
+provider's confirmation/authentication flow.
 
 ---
 
@@ -399,7 +401,7 @@ window.location.search
 | Backend port `8083` already in use | Stop the process using the port, or run Docker with `BACKEND_HOST_PORT=8084` |
 | Frontend port `3000` already in use | Stop the process using the port, or run Docker with `FRONTEND_HOST_PORT=3001` |
 | `Could not resolve placeholder` | An env var is missing. Check the variable name in the error and compare with `.env.example` |
-| Login returns `401` | Create a fresh account through Google authentication or email sign-up with email confirmation, then sign in with that account |
+| Login returns `401` | Create a fresh account. With default local config, email sign-up logs you in immediately; if you enabled email confirmation or Google OAuth, complete that provider flow first |
 | Frontend container cannot reach local backend | Rebuild frontend with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1` |
 | Windows says `export` or `source` not found | Use IntelliJ with `.env.example`, or run the command in Git Bash |
 | Tests fail before starting | Make sure Docker Desktop is running |

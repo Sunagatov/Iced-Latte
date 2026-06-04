@@ -104,7 +104,7 @@ set -a && source .env.example && set +a && mvn spring-boot:run
 
 > 🪟 On Windows PowerShell / CMD, do not copy the last command blindly. Use the [Getting Started Guide](docs/getting-started.md) instead.
 
-🌐 App: `http://localhost:8083`<br>
+🩺 Health: `http://localhost:8083/actuator/health`<br>
 📚 Swagger UI: `http://localhost:8083/api/docs/swagger-ui/index.html`
 
 **🧪 Run the tests:**
@@ -119,7 +119,7 @@ mvn test
 
 | Category | Technologies |
 |---|---|
-| 💻 **Core backend** | Java 25, Spring Boot 4.0.5, Spring Framework 7, Maven |
+| 💻 **Core backend** | Java 25, Spring Boot 4.0.6, Spring Framework 7, Maven |
 | 🏗️ **Application framework** | Spring Web, Spring Security, Spring Data JPA, Spring Retry, Spring Actuator |
 | 🗄️ **Data layer** | PostgreSQL, Liquibase, Redis, Caffeine |
 | 🔒 **Authentication & security** | JWT with JJWT 0.13, Google OAuth2, Argon2, Bouncy Castle |
