@@ -340,6 +340,7 @@ turnstile:
   enabled: ${TURNSTILE_ENABLED:false}
   checkout-enabled: ${TURNSTILE_CHECKOUT_ENABLED:false}
   reviews-enabled: ${TURNSTILE_REVIEWS_ENABLED:false}
+  avatar-enabled: ${TURNSTILE_AVATAR_ENABLED:false}
   secret-key: ${TURNSTILE_SECRET_KEY:}
   connect-timeout: ${TURNSTILE_CONNECT_TIMEOUT:PT2S}
   read-timeout: ${TURNSTILE_READ_TIMEOUT:PT3S}

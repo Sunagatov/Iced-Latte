@@ -419,6 +419,10 @@ components:
           title: UserAvatarFile
           type: "string"
           format: "binary"
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required when avatar upload bot protection is enabled."
 
     UpdateUserAccountRequest:
       type: "object"
