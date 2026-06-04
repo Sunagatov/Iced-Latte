@@ -14,11 +14,13 @@ public class SecurityRouteAuthorization {
 
     private static final String STRIPE_WEBHOOK_URL = ApiPaths.PAYMENT + "/stripe/webhook";
     private static final String SHIPPING_URL_PATTERN = "/api/v1/shipping/**";
+
     private static final String PRODUCT_REVIEW_URL_PATTERN = ApiPaths.PRODUCTS + "/*/review";
     private static final String PRODUCT_REVIEWS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews";
     private static final String PRODUCT_REVIEW_ITEM_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*";
     private static final String PRODUCT_REVIEW_LIKES_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/*/likes";
     private static final String PRODUCT_REVIEWS_STATISTICS_URL_PATTERN = ApiPaths.PRODUCTS + "/*/reviews/statistics";
+
     private static final String AUTH_REGISTER_URL = ApiPaths.AUTH + "/register";
     private static final String AUTH_CONFIRM_URL = ApiPaths.AUTH + "/confirm";
     private static final String AUTH_LOGOUT_URL = ApiPaths.AUTH + "/logout";
@@ -28,27 +30,42 @@ public class SecurityRouteAuthorization {
     private static final String AUTH_OAUTH_PROVIDER_PATTERN = ApiPaths.AUTH_OAUTH + "/*";
     private static final String AUTH_OAUTH_CALLBACK_PATTERN = ApiPaths.AUTH_OAUTH + "/*/callback";
 
+    private static final String[] AUTHENTICATED_URL_PATTERNS = {
+        ApiPaths.AUTH_SESSIONS_PATTERN,
+        ApiPaths.AUTH_LOGOUT_ALL,
+        ApiPaths.CART_PATTERN,
+        ApiPaths.USERS_PATTERN,
+        ApiPaths.FAVORITES_PATTERN,
+        ApiPaths.ORDERS_PATTERN,
+        SHIPPING_URL_PATTERN
+    };
+
+    private static final String[] PUBLIC_AUTH_URL_PATTERNS = {
+        AUTH_REGISTER_URL,
+        AUTH_CONFIRM_URL,
+        ApiPaths.AUTH_AUTHENTICATE,
+        ApiPaths.AUTH_REFRESH,
+        AUTH_LOGOUT_URL,
+        AUTH_PASSWORD_FORGOT_URL,
+        AUTH_PASSWORD_CHANGE_URL,
+        AUTH_OAUTH_TOKEN_URL,
+        AUTH_OAUTH_PROVIDER_PATTERN,
+        AUTH_OAUTH_CALLBACK_PATTERN
+    };
+
+    private static final String[] PUBLIC_HEALTH_URL_PATTERNS = {
+        "/actuator/health", "/actuator/info", "/livez", "/readyz"
+    };
+
     public void authorize(
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth.dispatcherTypeMatchers(DispatcherType.ERROR)
                 .permitAll()
-                .requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
-                .authenticated()
-                .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL)
-                .authenticated()
-                .requestMatchers(ApiPaths.CART_PATTERN)
+                .requestMatchers(AUTHENTICATED_URL_PATTERNS)
                 .authenticated()
                 .requestMatchers(STRIPE_WEBHOOK_URL)
                 .permitAll()
                 .requestMatchers(ApiPaths.PAYMENT_PATTERN)
-                .authenticated()
-                .requestMatchers(ApiPaths.USERS_PATTERN)
-                .authenticated()
-                .requestMatchers(ApiPaths.FAVORITES_PATTERN)
-                .authenticated()
-                .requestMatchers(ApiPaths.ORDERS_PATTERN)
-                .authenticated()
-                .requestMatchers(SHIPPING_URL_PATTERN)
                 .authenticated()
                 .requestMatchers(PRODUCT_REVIEW_URL_PATTERN)
                 .authenticated()
@@ -60,23 +77,13 @@ public class SecurityRouteAuthorization {
                 .authenticated()
                 .requestMatchers(HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
                 .permitAll()
-                .requestMatchers(
-                        AUTH_REGISTER_URL,
-                        AUTH_CONFIRM_URL,
-                        ApiPaths.AUTH_AUTHENTICATE,
-                        ApiPaths.AUTH_REFRESH,
-                        AUTH_LOGOUT_URL,
-                        AUTH_PASSWORD_FORGOT_URL,
-                        AUTH_PASSWORD_CHANGE_URL,
-                        AUTH_OAUTH_TOKEN_URL,
-                        AUTH_OAUTH_PROVIDER_PATTERN,
-                        AUTH_OAUTH_CALLBACK_PATTERN)
+                .requestMatchers(PUBLIC_AUTH_URL_PATTERNS)
                 .permitAll()
                 .requestMatchers(ApiPaths.PRODUCTS_PATTERN)
                 .permitAll()
                 .requestMatchers(ApiPaths.DOCS_ROOT + "**")
                 .permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info", "/livez", "/readyz")
+                .requestMatchers(PUBLIC_HEALTH_URL_PATTERNS)
                 .permitAll()
                 .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
                 .hasRole("ADMIN")
