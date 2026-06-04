@@ -73,7 +73,11 @@ public class PaymentConfirmationService {
         paymentRepository.save(payment);
         orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
         cartCheckoutApi.deleteCartForUser(payment.getUserId());
-        log.info("payment.confirmed: orderId={}, paymentIntentId={}, source={}", orderId, paymentIntent, source.eventType());
+        log.info(
+                "payment.confirmed: orderId={}, paymentIntentId={}, source={}",
+                orderId,
+                paymentIntent,
+                source.eventType());
     }
 
     private void markReconciliationFailed(Payment payment, PaymentConfirmationSource source) {

@@ -44,11 +44,11 @@ class OrderPaymentServiceTest {
         UUID orderId = UUID.randomUUID();
         when(orderStatusTransitioner.transition(
                         orderId, OrderEvent.PENDING_PAYMENT_CONFIRMED, null, "Stripe payment confirmed"))
-                .thenThrow(new InvalidOrderStateTransitionException(OrderStatus.PAID, OrderEvent.PENDING_PAYMENT_CONFIRMED));
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(Order.builder()
-                .id(orderId)
-                .status(OrderStatus.PAID)
-                .build()));
+                .thenThrow(new InvalidOrderStateTransitionException(
+                        OrderStatus.PAID, OrderEvent.PENDING_PAYMENT_CONFIRMED));
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(
+                        Order.builder().id(orderId).status(OrderStatus.PAID).build()));
 
         boolean result = orderPaymentService.confirmPayment(orderId, "Stripe payment confirmed");
 

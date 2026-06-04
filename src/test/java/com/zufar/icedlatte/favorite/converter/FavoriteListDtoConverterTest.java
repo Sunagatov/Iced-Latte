@@ -1,16 +1,17 @@
 package com.zufar.icedlatte.favorite.converter;
 
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
+import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 class FavoriteListDtoConverterTest {
 

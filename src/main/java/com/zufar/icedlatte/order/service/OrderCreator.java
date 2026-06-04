@@ -134,9 +134,8 @@ public class OrderCreator implements OrderCheckoutApi {
     }
 
     private void validateProductAvailability(List<OrderItem> items) {
-        Set<UUID> requestedProductIds = items.stream()
-                .map(OrderItem::getProductId)
-                .collect(Collectors.toSet());
+        Set<UUID> requestedProductIds =
+                items.stream().map(OrderItem::getProductId).collect(Collectors.toSet());
         Set<UUID> existingProductIds = productCatalogApi.findExistingProductIds(requestedProductIds);
         List<String> unavailable = items.stream()
                 .filter(item -> !existingProductIds.contains(item.getProductId()))
@@ -151,7 +150,8 @@ public class OrderCreator implements OrderCheckoutApi {
         return resolveDeliveryAddress(request.getDeliveryAddressId(), toAddressFields(request.getAddress()), userId);
     }
 
-    private OrderAddress resolveDeliveryAddress(@Nullable UUID deliveryAddressId, @Nullable AddressFields inlineAddress, UUID userId) {
+    private OrderAddress resolveDeliveryAddress(
+            @Nullable UUID deliveryAddressId, @Nullable AddressFields inlineAddress, UUID userId) {
         if (deliveryAddressId != null) {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
@@ -204,7 +204,9 @@ public class OrderCreator implements OrderCheckoutApi {
     }
 
     private static @Nullable AddressFields toAddressFields(@Nullable OrderAddressRequest address) {
-        return address == null ? null : new AddressFields(address.country(), address.city(), address.line(), address.postcode());
+        return address == null
+                ? null
+                : new AddressFields(address.country(), address.city(), address.line(), address.postcode());
     }
 
     private static String requireAddressPart(@Nullable String value, String fieldName) {

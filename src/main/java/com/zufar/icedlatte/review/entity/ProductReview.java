@@ -44,5 +44,4 @@ public class ProductReview {
 
     @Column(name = "dislikes_count", nullable = false)
     private Integer dislikesCount;
-
 }

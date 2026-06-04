@@ -48,8 +48,7 @@ class OrderMaintenanceJobTest {
     void expireUnpaidOrdersInternalUsesTransitioner() {
         UUID orderId = UUID.randomUUID();
         ReflectionTestUtils.setField(orderMaintenanceJob, "batchSize", 100);
-        when(orderRepository.findAll(
-                        org.mockito.ArgumentMatchers.<Specification<Order>>any(), any(Pageable.class)))
+        when(orderRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Order>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(Order.builder().id(orderId).build())));
 
         orderMaintenanceJob.expireUnpaidOrdersInternal();

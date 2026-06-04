@@ -29,7 +29,8 @@ public class StripeSessionLineItemListConverter {
                 .setQuantity((long) shoppingCartItem.productQuantity())
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                         .setCurrency(stripeProperties.currency())
-                        .setUnitAmount(toStripeUnitAmount(shoppingCartItem.product().price()))
+                        .setUnitAmount(
+                                toStripeUnitAmount(shoppingCartItem.product().price()))
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(shoppingCartItem.product().name())
                                 .build())

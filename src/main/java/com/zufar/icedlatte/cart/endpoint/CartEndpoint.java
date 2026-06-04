@@ -80,7 +80,9 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     }
 
     private static Set<AddCartItemRequest> toAddCartItemRequests(AddNewItemsToShoppingCartRequest request) {
-        return request.getItems().stream().map(CartEndpoint::toAddCartItemRequest).collect(Collectors.toSet());
+        return request.getItems().stream()
+                .map(CartEndpoint::toAddCartItemRequest)
+                .collect(Collectors.toSet());
     }
 
     private static AddCartItemRequest toAddCartItemRequest(NewShoppingCartItemDto item) {

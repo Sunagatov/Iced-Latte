@@ -36,6 +36,13 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
                 <version>${aws-sdk-bom.version}</version>
@@ -46,6 +53,33 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
                 <version>1.28.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka-clients.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka-clients.version}</version>
+                <classifier>test</classifier>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.opennlp</groupId>
+                <artifactId>opennlp-tools</artifactId>
+                <version>${opennlp-tools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.proto</groupId>
+                <artifactId>opentelemetry-proto</artifactId>
+                <version>${opentelemetry-proto.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.semconv</groupId>
+                <artifactId>opentelemetry-semconv</artifactId>
+                <version>${opentelemetry-semconv.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -63,13 +97,15 @@
         <java.version>25</java.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
-        <postgresql.version>42.7.10</postgresql.version>
+        <postgresql.version>42.7.11</postgresql.version>
 
         <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
         <spring-framework.version>7.0.7</spring-framework.version>
         <spring-security.version>7.0.5</spring-security.version>
-        <tomcat.version>11.0.21</tomcat.version>
+        <tomcat.version>11.0.22</tomcat.version>
         <jackson-bom.version>3.1.2</jackson-bom.version>
+        <kafka-clients.version>4.3.0</kafka-clients.version>
+        <netty.version>4.2.15.Final</netty.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
@@ -86,7 +122,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
-        <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
+        <springdoc-openapi.version>3.0.3</springdoc-openapi.version>
         <openapi-generator.version>7.21.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
@@ -102,8 +138,11 @@
 
         <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.12.2</langchain4j.version>
+        <opennlp-tools.version>2.5.9</opennlp-tools.version>
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
+        <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>
+        <opentelemetry-semconv.version>1.41.1</opentelemetry-semconv.version>
         <sentry.version>8.37.1</sentry.version>
         <pyroscope.version>2.1.2</pyroscope.version>
 

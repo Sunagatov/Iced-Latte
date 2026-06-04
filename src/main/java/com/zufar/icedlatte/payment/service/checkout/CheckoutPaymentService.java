@@ -74,10 +74,7 @@ public class CheckoutPaymentService {
         // Stage 3: DB transaction — save Stripe details
         txService.saveStripeDetails(newCheckout.payment().id(), stripeResult);
 
-        log.info(
-                "checkout.created: orderId={}, stripeSessionId={}",
-                orderSnapshot.id(),
-                stripeResult.sessionId());
+        log.info("checkout.created: orderId={}, stripeSessionId={}", orderSnapshot.id(), stripeResult.sessionId());
 
         return new CheckoutResponseDto()
                 .orderId(orderSnapshot.id())

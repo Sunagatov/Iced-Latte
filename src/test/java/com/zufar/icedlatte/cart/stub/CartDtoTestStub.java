@@ -1,9 +1,5 @@
 package com.zufar.icedlatte.cart.stub;
 
-import com.zufar.icedlatte.cart.entity.ShoppingCart;
-import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
-import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -13,6 +9,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.zufar.icedlatte.cart.entity.ShoppingCart;
+import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 public class CartDtoTestStub {
 

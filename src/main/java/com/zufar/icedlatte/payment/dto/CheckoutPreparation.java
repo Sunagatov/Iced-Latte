@@ -7,8 +7,8 @@ import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.payment.service.checkout.CheckoutPaymentTransactionService;
 
 /**
- * Result of {@link CheckoutPaymentTransactionService#prepareCheckout}. Existing checkout retries use the persisted order
- * snapshot and never read the live cart.
+ * Result of {@link CheckoutPaymentTransactionService#prepareCheckout}. Existing checkout retries use the persisted
+ * order snapshot and never read the live cart.
  */
 public sealed interface CheckoutPreparation
         permits CheckoutPreparation.NewCheckout, CheckoutPreparation.ExistingCheckout {

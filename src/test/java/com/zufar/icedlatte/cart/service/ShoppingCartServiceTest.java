@@ -135,7 +135,8 @@ class ShoppingCartServiceTest {
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(existingProduct, newProduct));
         when(shoppingCartRepository.saveAndFlush(shoppingCart)).thenReturn(shoppingCart);
 
-        ShoppingCartDto result = shoppingCartService.addItemsToCart(userId, Set.of(existingProductToAdd, newProductToAdd));
+        ShoppingCartDto result =
+                shoppingCartService.addItemsToCart(userId, Set.of(existingProductToAdd, newProductToAdd));
 
         assertThat(result.getItems()).hasSize(2);
         assertThat(result.getProductsQuantity()).isEqualTo(6);
