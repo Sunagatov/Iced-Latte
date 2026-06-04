@@ -32,7 +32,7 @@ If you are unsure, choose **Option 3**.
 | Docker Desktop | Every option | latest |
 | Java JDK | Backend locally: Options 2 and 4 | 25 |
 | Maven | Backend locally: Options 2 and 4 | 3.9+ |
-| Node.js | Frontend locally: Options 2 and 3 | 20+ |
+| Node.js | Frontend locally: Options 2 and 3 | 22.18+ |
 | IntelliJ IDEA | Optional, recommended for backend debugging | any edition |
 
 Check your machine:
@@ -303,6 +303,13 @@ Frontend E2E tests require the frontend running on `http://localhost:3000`:
 
 ```bash
 npm run test:e2e
+```
+
+To verify the default local app without Stripe, Google OAuth, email
+confirmation, AI, or Cloudflare Turnstile:
+
+```bash
+npm run test:e2e:local-smoke
 ```
 
 ---
