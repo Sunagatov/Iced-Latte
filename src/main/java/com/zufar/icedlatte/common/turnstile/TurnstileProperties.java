@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.signin.turnstile;
+package com.zufar.icedlatte.common.turnstile;
 
 import java.time.Duration;
 

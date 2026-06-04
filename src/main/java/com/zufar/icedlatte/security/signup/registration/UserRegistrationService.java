@@ -9,13 +9,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 import com.zufar.icedlatte.user.api.UserRegistrationApi;
 
@@ -70,7 +70,7 @@ public class UserRegistrationService {
             log.info("auth.registration.succeeded: userId={}", snapshot.userId());
             return sessionTokenService.issueForNewSession(SecurityUserDetails.from(snapshot), httpRequest);
         } catch (DataIntegrityViolationException e) {
-            log.warn("auth.registration.failed: reason=email_already_registered");
+            log.warn("auth.registration.failed: reason=email_already_registered, source=database_constraint");
             throw duplicateEmailException(e);
         }
     }
@@ -78,7 +78,7 @@ public class UserRegistrationService {
     private void ensureEmailAvailable(final UserRegistrationRequest userRegistrationRequest) {
         String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
         if (userRegistrationApi.existsByEmail(email)) {
-            log.warn("auth.registration.failed: reason=email_already_registered");
+            log.warn("auth.registration.failed: reason=email_already_registered, source=preflight_check");
             throw duplicateEmailException();
         }
     }

@@ -18,12 +18,12 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 
 @ExtendWith(MockitoExtension.class)

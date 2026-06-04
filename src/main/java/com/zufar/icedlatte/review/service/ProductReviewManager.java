@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
+import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
@@ -25,8 +27,6 @@ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.zufar.icedlatte.security.signin.turnstile;
+package com.zufar.icedlatte.common.turnstile;
 
 import java.time.Duration;
 
@@ -13,7 +13,6 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
 
 import lombok.extern.slf4j.Slf4j;
 

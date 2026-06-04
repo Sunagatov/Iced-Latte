@@ -1,6 +1,7 @@
-package com.zufar.icedlatte.security.signin.turnstile;
+package com.zufar.icedlatte.common.turnstile;
 
-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+import java.time.Duration;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,8 +14,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestClient;
-
-import java.time.Duration;
 
 @DisplayName("TurnstileVerifier unit tests")
 class TurnstileVerifierTest {

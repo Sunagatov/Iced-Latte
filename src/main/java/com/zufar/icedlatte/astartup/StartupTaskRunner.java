@@ -41,13 +41,6 @@ final class StartupTaskRunner {
                 } else {
                     log.info("startup.task.finish: task={}", taskName);
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                if (taskTimedOut.get()) {
-                    log.warn("startup.task.interrupted_after_timeout: task={}", taskName);
-                } else {
-                    log.warn("startup.task.interrupted: task={}", taskName, e);
-                }
             } catch (Exception e) {
                 log.error(
                         "startup.task.error: task={}, exceptionClass={}",
@@ -65,6 +58,6 @@ final class StartupTaskRunner {
     @FunctionalInterface
     interface StartupTask {
 
-        void run() throws Exception;
+        void run();
     }
 }

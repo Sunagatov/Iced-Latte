@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
@@ -20,7 +21,6 @@ import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptProperties;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

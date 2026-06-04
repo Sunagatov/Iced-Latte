@@ -16,6 +16,7 @@ import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.http.RequestPathUtils;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +30,19 @@ public class SignInExceptionHandler {
 
     private final ProblemDetailFactory problemDetailFactory;
 
-    @ExceptionHandler(AuthSecurityException.class)
+    @ExceptionHandler({AuthSecurityException.class, TurnstileVerificationException.class})
     public ResponseEntity<ProblemDetail> handleSecurityException(
-            final AuthSecurityException ex, HttpServletRequest request) {
+            final RuntimeException ex, HttpServletRequest request) {
         record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
 
-        var mapping =
-                switch (ex) {
+        var mapping = ex instanceof TurnstileVerificationException
+                ? new ErrorMapping(
+                        "auth.turnstile.failed",
+                        ProblemType.TURNSTILE_FAILED,
+                        "Verification failed",
+                        HttpStatus.BAD_REQUEST,
+                        ex.getMessage())
+                : switch ((AuthSecurityException) ex) {
                     case AbsentBearerHeaderException _ ->
                         new ErrorMapping(
                                 "auth.sign_in.failed.AbsentBearerHeaderException",
@@ -78,13 +85,6 @@ public class SignInExceptionHandler {
                                 "Access denied",
                                 HttpStatus.FORBIDDEN,
                                 "Access denied.");
-                    case TurnstileVerificationException _ ->
-                        new ErrorMapping(
-                                "auth.turnstile.failed",
-                                ProblemType.TURNSTILE_FAILED,
-                                "Verification failed",
-                                HttpStatus.BAD_REQUEST,
-                                ex.getMessage());
                 };
 
         if (!(ex instanceof AbsentBearerHeaderException && ApiPaths.AUTH_REFRESH.equals(request.getRequestURI()))) {

@@ -2,8 +2,8 @@ package com.zufar.icedlatte.security.signup.password;
 
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
 import com.zufar.icedlatte.user.api.UserLookupApi;

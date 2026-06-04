@@ -29,10 +29,9 @@ class StripeWebhookEventTransactionService {
     private final StripeWebhookEventRepository repository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean tryInsertNewEvent(String eventId, String eventType) {
+    public void insertNewEvent(String eventId, String eventType) {
         repository.saveAndFlush(new StripeWebhookEvent(
                 eventId, eventType, WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null));
-        return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

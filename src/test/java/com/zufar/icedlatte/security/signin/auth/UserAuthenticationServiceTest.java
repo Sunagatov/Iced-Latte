@@ -20,6 +20,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
@@ -27,7 +28,6 @@ import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException
 import com.zufar.icedlatte.security.signin.exception.UserAccountLockedException;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptProperties;
 import com.zufar.icedlatte.security.signin.lockout.LoginAttemptService;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAuthenticationService Tests")

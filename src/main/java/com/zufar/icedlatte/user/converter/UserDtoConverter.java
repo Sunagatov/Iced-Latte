@@ -47,15 +47,20 @@ public interface UserDtoConverter {
 
         if (entity.getAddress() == null) {
             entity.setAddress(Address.builder()
-                    .country(dto.getCountry())
-                    .city(dto.getCity())
-                    .line(dto.getLine())
-                    .postcode(dto.getPostcode())
+                    .country(requireAddressPart(dto.getCountry(), "country"))
+                    .city(requireAddressPart(dto.getCity(), "city"))
+                    .line(requireAddressPart(dto.getLine(), "line"))
+                    .postcode(requireAddressPart(dto.getPostcode(), "postcode"))
                     .build());
             return;
         }
 
-        entity.getAddress().update(dto.getCountry(), dto.getCity(), dto.getLine(), dto.getPostcode());
+        entity.getAddress()
+                .update(
+                        requireAddressPart(dto.getCountry(), "country"),
+                        requireAddressPart(dto.getCity(), "city"),
+                        requireAddressPart(dto.getLine(), "line"),
+                        requireAddressPart(dto.getPostcode(), "postcode"));
     }
 
     private static boolean isBlankAddress(AddressDto dto) {
@@ -67,5 +72,12 @@ public interface UserDtoConverter {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private static String requireAddressPart(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("address." + fieldName + " is required");
+        }
+        return value;
     }
 }

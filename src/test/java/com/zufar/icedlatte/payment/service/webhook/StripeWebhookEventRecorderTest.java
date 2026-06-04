@@ -1,7 +1,9 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
@@ -25,17 +27,17 @@ class StripeWebhookEventRecorderTest {
     @Test
     @DisplayName("tryAcquire delegates insert to txService and returns true")
     void tryAcquire_newEvent_returnsTrue() {
-        when(txService.tryInsertNewEvent("evt_1", "checkout.session.completed")).thenReturn(true);
-
         assertThat(recorder.tryAcquire("evt_1", "checkout.session.completed")).isTrue();
-        verify(txService).tryInsertNewEvent("evt_1", "checkout.session.completed");
+        verify(txService).insertNewEvent("evt_1", "checkout.session.completed");
+        verifyNoMoreInteractions(txService);
     }
 
     @Test
     @DisplayName("tryAcquire falls back to re-acquire on duplicate")
     void tryAcquire_duplicate_fallsBackToReacquire() {
-        when(txService.tryInsertNewEvent("evt_1", "checkout.session.completed"))
-                .thenThrow(new DataIntegrityViolationException("dup"));
+        doThrow(new DataIntegrityViolationException("dup"))
+                .when(txService)
+                .insertNewEvent("evt_1", "checkout.session.completed");
         when(txService.tryReacquireRetryableEvent("evt_1")).thenReturn(true);
 
         assertThat(recorder.tryAcquire("evt_1", "checkout.session.completed")).isTrue();
@@ -45,8 +47,9 @@ class StripeWebhookEventRecorderTest {
     @Test
     @DisplayName("tryAcquire returns false when duplicate is not retryable")
     void tryAcquire_duplicateNotRetryable_returnsFalse() {
-        when(txService.tryInsertNewEvent("evt_1", "checkout.session.completed"))
-                .thenThrow(new DataIntegrityViolationException("dup"));
+        doThrow(new DataIntegrityViolationException("dup"))
+                .when(txService)
+                .insertNewEvent("evt_1", "checkout.session.completed");
         when(txService.tryReacquireRetryableEvent("evt_1")).thenReturn(false);
 
         assertThat(recorder.tryAcquire("evt_1", "checkout.session.completed")).isFalse();

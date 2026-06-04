@@ -10,8 +10,7 @@ public abstract sealed class AuthSecurityException extends RuntimeException
                 InvalidCredentialsException,
                 UserAccountLockedException,
                 SessionNotFoundException,
-                SessionOwnershipException,
-                TurnstileVerificationException {
+                SessionOwnershipException {
 
     protected AuthSecurityException(String message) {
         super(message);

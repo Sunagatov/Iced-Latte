@@ -36,8 +36,7 @@ class StripeWebhookEventTransactionServiceTest {
     void tryInsertNewEvent_savesProcessing() {
         when(repository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(service.tryInsertNewEvent("evt_1", "checkout.session.completed"))
-                .isTrue();
+        service.insertNewEvent("evt_1", "checkout.session.completed");
 
         ArgumentCaptor<StripeWebhookEvent> captor = ArgumentCaptor.forClass(StripeWebhookEvent.class);
         verify(repository).saveAndFlush(captor.capture());

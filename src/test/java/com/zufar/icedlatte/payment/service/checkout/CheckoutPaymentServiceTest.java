@@ -19,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
@@ -29,8 +31,6 @@ import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CheckoutPaymentService unit tests")

@@ -21,6 +21,20 @@ public class AppCorsConfiguration {
     public CorsConfigurationSource corsConfigurationSource() {
         validateCredentialsOrigins();
 
+        CorsConfiguration configuration = buildCorsConfiguration();
+
+        log.debug(
+                "cors.config.initialized: origins={}, methods={}, allowCredentials={}",
+                corsProperties.allowedOrigins(),
+                corsProperties.allowedMethods(),
+                corsProperties.allowCredentials());
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
+    }
+
+    private CorsConfiguration buildCorsConfiguration() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
@@ -37,15 +51,7 @@ public class AppCorsConfiguration {
         configuration.setAllowCredentials(corsProperties.allowCredentials());
         configuration.setMaxAge(corsProperties.maxAge());
 
-        log.debug(
-                "cors.config.initialized: origins={}, methods={}, allowCredentials={}",
-                corsProperties.allowedOrigins(),
-                corsProperties.allowedMethods(),
-                corsProperties.allowCredentials());
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-        return source;
+        return configuration;
     }
 
     private void validateCredentialsOrigins() {

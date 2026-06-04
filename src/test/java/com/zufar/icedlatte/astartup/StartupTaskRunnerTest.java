@@ -44,7 +44,7 @@ class StartupTaskRunnerTest {
                 Thread.sleep(Duration.ofSeconds(5));
             } catch (InterruptedException e) {
                 interrupted.countDown();
-                throw e;
+                Thread.currentThread().interrupt();
             }
         });
 
