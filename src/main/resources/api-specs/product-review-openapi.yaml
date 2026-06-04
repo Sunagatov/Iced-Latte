@@ -440,6 +440,10 @@ components:
           type: "integer"
           minimum: 1
           maximum: 5
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required when review bot protection is enabled."
       required:
         - text
         - rating

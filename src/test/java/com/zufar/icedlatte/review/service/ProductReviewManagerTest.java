@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
@@ -29,6 +30,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
@@ -60,6 +62,9 @@ class ProductReviewManagerTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private TurnstileVerifier turnstileVerifier;
+
     private ProductReviewManager service;
 
     @BeforeEach
@@ -72,7 +77,8 @@ class ProductReviewManagerTest {
                 productReviewValidator,
                 productReviewProductGateway,
                 summaryDebouncer,
-                eventPublisher);
+                eventPublisher,
+                turnstileVerifier);
     }
 
     @Nested
@@ -119,6 +125,59 @@ class ProductReviewManagerTest {
             verify(eventPublisher).publishEvent(eventCaptor.capture());
             assertThat(eventCaptor.getValue().text()).isEqualTo("Great coffee!");
             assertThat(eventCaptor.getValue().productId()).isEqualTo(productId);
+            verifyNoInteractions(turnstileVerifier);
+        }
+
+        @Test
+        @DisplayName("Verifies Turnstile token when review protection is enabled")
+        void create_reviewsTurnstileEnabled_verifiesToken() {
+            ReflectionTestUtils.setField(service, "reviewsTurnstileEnabled", true);
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            ProductReviewRequest request = new ProductReviewRequest();
+            request.setText("Great coffee!");
+            request.setRating(5);
+            request.setTurnstileToken("turnstile-token");
+            ProductReviewDto expectedDto = new ProductReviewDto();
+
+            var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
+            when(userLookupApi.getUserById(userId)).thenReturn(user);
+            doAnswer(invocation -> {
+                        ProductReview review = invocation.getArgument(0);
+                        review.setId(UUID.randomUUID());
+                        return review;
+                    })
+                    .when(reviewRepository)
+                    .saveAndFlush(any(ProductReview.class));
+            when(productReviewDtoConverter.toProductReviewDto(any(), eq(user))).thenReturn(expectedDto);
+
+            ProductReviewDto result = service.create(productId, userId, request);
+
+            assertThat(result).isEqualTo(expectedDto);
+            verify(turnstileVerifier).verify("turnstile-token");
+            verify(reviewRepository).saveAndFlush(any(ProductReview.class));
+        }
+
+        @Test
+        @DisplayName("Stops before saving when enabled Turnstile verification fails")
+        void create_reviewsTurnstileEnabledVerificationFails_doesNotSave() {
+            ReflectionTestUtils.setField(service, "reviewsTurnstileEnabled", true);
+            UUID userId = UUID.randomUUID();
+            UUID productId = UUID.randomUUID();
+            ProductReviewRequest request = new ProductReviewRequest();
+            request.setText("Great coffee!");
+            request.setRating(5);
+            request.setTurnstileToken("bad-token");
+            doThrow(new BadRequestException("Turnstile verification failed"))
+                    .when(turnstileVerifier)
+                    .verify("bad-token");
+
+            assertThatThrownBy(() -> service.create(productId, userId, request))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessage("Turnstile verification failed");
+
+            verify(turnstileVerifier).verify("bad-token");
+            verifyNoInteractions(productReviewValidator, userLookupApi, reviewRepository);
         }
 
         @Test

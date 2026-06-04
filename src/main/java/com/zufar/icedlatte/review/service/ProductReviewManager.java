@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -41,12 +43,19 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     private final ProductReviewProductApi productReviewProductApi;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
     private final ApplicationEventPublisher eventPublisher;
+    private final TurnstileVerifier turnstileVerifier;
+
+    @Value("${turnstile.reviews-enabled:false}")
+    private boolean reviewsTurnstileEnabled;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(
             final UUID productId, final UUID userId, final @Nullable ProductReviewRequest productReviewRequest) {
         ProductReviewRequest reviewRequest = Optional.ofNullable(productReviewRequest)
                 .orElseThrow(() -> new BadRequestException("Product's review request must be provided"));
+        if (reviewsTurnstileEnabled) {
+            turnstileVerifier.verify(reviewRequest.getTurnstileToken());
+        }
         var productReviewText = reviewRequest.getText();
 
         productReviewValidator.validateProductExists(productId);
