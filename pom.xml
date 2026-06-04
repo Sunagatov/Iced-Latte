@@ -17,6 +17,15 @@
     <name>Iced Latte</name>
     <description>Iced Latte is the modern online marketplace</description>
 
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+            <comments>SPDX-License-Identifier: Apache-2.0</comments>
+        </license>
+    </licenses>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
