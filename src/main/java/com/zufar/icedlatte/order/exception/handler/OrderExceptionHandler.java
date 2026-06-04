@@ -33,7 +33,12 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleTypeMismatch(final MethodArgumentTypeMismatchException ex) {
         if (ex.getRequiredType() != OrderStatus.class) {
-            throw ex;
+            log.debug("exception.order.type_mismatch.generic: status=400");
+            return problemDetailFactory.build(
+                    ProblemType.INVALID_PARAMETER,
+                    "Invalid parameter",
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid value for parameter '" + ex.getName() + "'.");
         }
         log.debug("exception.order.type_mismatch: status=400");
         return problemDetailFactory.build(
@@ -79,9 +84,10 @@ public class OrderExceptionHandler {
                                 "Order cannot be cancelled: cancellation window has expired.");
                 };
 
-        log.debug("{}: status={}", mapping.logTag(), mapping.status().value());
+        HttpStatus httpStatus = mapping.status();
+        log.debug("{}: status={}", mapping.logTag(), httpStatus.value());
         ProblemDetail pd =
-                problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail());
-        return ResponseEntity.status(mapping.status()).body(pd);
+                problemDetailFactory.build(mapping.typeSlug(), mapping.title(), httpStatus, mapping.detail());
+        return ResponseEntity.status(httpStatus).body(pd);
     }
 }

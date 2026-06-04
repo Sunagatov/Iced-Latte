@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.security.config;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
@@ -28,7 +30,9 @@ public class SecurityRouteAuthorization {
 
     public void authorize(
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
-        auth.requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
+        auth.dispatcherTypeMatchers(DispatcherType.ERROR)
+                .permitAll()
+                .requestMatchers(ApiPaths.AUTH_SESSIONS_PATTERN)
                 .authenticated()
                 .requestMatchers(ApiPaths.AUTH_LOGOUT_ALL)
                 .authenticated()
