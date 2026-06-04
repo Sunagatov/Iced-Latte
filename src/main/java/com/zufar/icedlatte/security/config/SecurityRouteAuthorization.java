@@ -59,15 +59,32 @@ public class SecurityRouteAuthorization {
 
     public void authorize(
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
-        auth.dispatcherTypeMatchers(DispatcherType.ERROR)
-                .permitAll()
-                .requestMatchers(AUTHENTICATED_URL_PATTERNS)
-                .authenticated()
-                .requestMatchers(STRIPE_WEBHOOK_URL)
+        auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+
+        authorizeAuthenticatedRoutes(auth);
+        authorizePaymentRoutes(auth);
+        authorizeProductReviewRoutes(auth);
+        authorizePublicRoutes(auth);
+        authorizeAdminRoutes(auth);
+        authorizeFallbackRoutes(auth);
+    }
+
+    private void authorizeAuthenticatedRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(AUTHENTICATED_URL_PATTERNS).authenticated();
+    }
+
+    private void authorizePaymentRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(STRIPE_WEBHOOK_URL)
                 .permitAll()
                 .requestMatchers(ApiPaths.PAYMENT_PATTERN)
-                .authenticated()
-                .requestMatchers(PRODUCT_REVIEW_URL_PATTERN)
+                .authenticated();
+    }
+
+    private void authorizeProductReviewRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(PRODUCT_REVIEW_URL_PATTERN)
                 .authenticated()
                 .requestMatchers(HttpMethod.POST, PRODUCT_REVIEWS_URL_PATTERN)
                 .authenticated()
@@ -76,20 +93,32 @@ public class SecurityRouteAuthorization {
                 .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN)
                 .authenticated()
                 .requestMatchers(HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
-                .permitAll()
-                .requestMatchers(PUBLIC_AUTH_URL_PATTERNS)
+                .permitAll();
+    }
+
+    private void authorizePublicRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(PUBLIC_AUTH_URL_PATTERNS)
                 .permitAll()
                 .requestMatchers(ApiPaths.PRODUCTS_PATTERN)
                 .permitAll()
                 .requestMatchers(ApiPaths.DOCS_ROOT + "**")
                 .permitAll()
                 .requestMatchers(PUBLIC_HEALTH_URL_PATTERNS)
-                .permitAll()
-                .requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
+                .permitAll();
+    }
+
+    private void authorizeAdminRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(ApiPaths.ACTUATOR_ROOT + "**")
                 .hasRole("ADMIN")
                 .requestMatchers(ApiPaths.ADMIN_ORDERS_PATTERN)
-                .hasRole("ADMIN")
-                .requestMatchers(ApiPaths.API_ROOT + "/**")
+                .hasRole("ADMIN");
+    }
+
+    private void authorizeFallbackRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(ApiPaths.API_ROOT + "/**")
                 .authenticated()
                 .anyRequest()
                 .denyAll();
