@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
@@ -37,10 +35,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     private final UserAvatarUploader userAvatarUploader;
     private final DeliveryAddressService deliveryAddressService;
     private final CurrentUserIdProvider currentUserIdProvider;
-    private final TurnstileVerifier turnstileVerifier;
-
-    @Value("${turnstile.avatar-enabled:false}")
-    private boolean avatarTurnstileEnabled;
 
     @Override
     @GetMapping
@@ -86,11 +80,8 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
     public ResponseEntity<Void> uploadUserAvatar(
             @RequestPart("file") MultipartFile file,
             @RequestPart(value = "turnstileToken", required = false) String turnstileToken) {
-        if (avatarTurnstileEnabled) {
-            turnstileVerifier.verify(turnstileToken);
-        }
         var userId = currentUserId();
-        userAvatarUploader.uploadUserAvatar(userId, file);
+        userAvatarUploader.uploadUserAvatar(userId, file, turnstileToken);
         log.info("user.avatar.uploaded: userId={}", userId);
         return ResponseEntity.ok().build();
     }

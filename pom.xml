@@ -154,9 +154,6 @@
         <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>
         <opentelemetry-semconv.version>1.41.1</opentelemetry-semconv.version>
         <sentry.version>8.37.1</sentry.version>
-        <pyroscope.version>2.1.2</pyroscope.version>
-
-        <guava.version>33.5.0-jre</guava.version>
 
         <!-- ========== ARCHITECTURE TESTING VERSIONS ========== -->
         <spring-modulith.version>2.0.6</spring-modulith.version>
@@ -263,6 +260,7 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -378,13 +376,6 @@
             <version>${sentry.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- Continuous profiling agent -->
-        <dependency>
-            <groupId>io.pyroscope</groupId>
-            <artifactId>agent</artifactId>
-            <version>${pyroscope.version}</version>
-        </dependency>
-
         <!-- ========== THIRD-PARTY INTEGRATIONS ========== -->
         <dependency>
             <groupId>com.stripe</groupId>
@@ -420,11 +411,6 @@
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
             <version>${jspecify.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

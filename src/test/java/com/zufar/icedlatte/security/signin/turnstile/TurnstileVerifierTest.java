@@ -1,22 +1,20 @@
 package com.zufar.icedlatte.security.signin.turnstile;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-
-import java.time.Duration;
-
+import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.match.MockRestRequestMatchers;
+import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestClient;
 
-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
+import java.time.Duration;
 
 @DisplayName("TurnstileVerifier unit tests")
 class TurnstileVerifierTest {
@@ -25,18 +23,18 @@ class TurnstileVerifierTest {
     @DisplayName("When disabled")
     class Disabled {
 
-        private final TurnstileVerifier verifier = new TurnstileVerifier("");
+        private final TurnstileVerifier verifier = new TurnstileVerifier(TurnstileProperties.disabled());
 
         @Test
         @DisplayName("should skip verification when token is null")
         void skipWhenTokenNull() {
-            assertThatCode(() -> verifier.verify(null)).doesNotThrowAnyException();
+            Assertions.assertThatCode(() -> verifier.verify(null)).doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("should skip verification when token is present")
         void skipWhenTokenPresent() {
-            assertThatCode(() -> verifier.verify("some-token")).doesNotThrowAnyException();
+            Assertions.assertThatCode(() -> verifier.verify("some-token")).doesNotThrowAnyException();
         }
     }
 
@@ -44,12 +42,12 @@ class TurnstileVerifierTest {
     @DisplayName("When enabled (secret key set)")
     class Enabled {
 
-        private final TurnstileVerifier verifier = new TurnstileVerifier("test-secret");
+        private final TurnstileVerifier verifier = new TurnstileVerifier(TurnstileProperties.enabledForTests());
 
         @Test
         @DisplayName("should throw when token is null")
         void throwWhenTokenNull() {
-            assertThatThrownBy(() -> verifier.verify(null))
+            Assertions.assertThatThrownBy(() -> verifier.verify(null))
                     .isInstanceOf(TurnstileVerificationException.class)
                     .hasMessage("Turnstile verification required");
         }
@@ -57,7 +55,7 @@ class TurnstileVerifierTest {
         @Test
         @DisplayName("should throw when token is blank")
         void throwWhenTokenBlank() {
-            assertThatThrownBy(() -> verifier.verify(""))
+            Assertions.assertThatThrownBy(() -> verifier.verify(""))
                     .isInstanceOf(TurnstileVerificationException.class)
                     .hasMessage("Turnstile verification required");
         }
@@ -66,9 +64,9 @@ class TurnstileVerifierTest {
         @DisplayName("should throw when Cloudflare returns success=false")
         void throwWhenVerificationFails() {
             var restClient = buildMockedRestClient("{\"success\": false}");
-            var verifier = new TurnstileVerifier(true, "test-secret", restClient);
+            var verifier = new TurnstileVerifier(TurnstileProperties.enabledForTests(), restClient);
 
-            assertThatThrownBy(() -> verifier.verify("invalid-token"))
+            Assertions.assertThatThrownBy(() -> verifier.verify("invalid-token"))
                     .isInstanceOf(TurnstileVerificationException.class)
                     .hasMessage("Turnstile verification failed");
         }
@@ -77,45 +75,54 @@ class TurnstileVerifierTest {
         @DisplayName("should pass when Cloudflare returns success=true")
         void passWhenVerificationSucceeds() {
             var restClient = buildMockedRestClient("{\"success\": true}");
-            var verifier = new TurnstileVerifier(true, "test-secret", restClient);
+            var verifier = new TurnstileVerifier(TurnstileProperties.enabledForTests(), restClient);
 
-            assertThatCode(() -> verifier.verify("valid-token")).doesNotThrowAnyException();
+            Assertions.assertThatCode(() -> verifier.verify("valid-token")).doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("should construct RestClient with explicit timeout settings")
         void constructsRestClientWithExplicitTimeoutSettings() {
-            assertThatCode(() ->
-                            new TurnstileVerifier(true, "test-secret", Duration.ofMillis(500), Duration.ofSeconds(1)))
+            Assertions.assertThatCode(() -> new TurnstileVerifier(new TurnstileProperties(
+                            true, false, false, false, "test-secret", Duration.ofMillis(500), Duration.ofSeconds(1))))
                     .doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("should fail fast when enabled without secret key")
         void failFastWhenEnabledWithoutSecretKey() {
-            var restClient = RestClient.builder().build();
-
-            assertThatThrownBy(() -> new TurnstileVerifier(true, "", restClient))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("turnstile.secret-key must be configured when turnstile.enabled=true");
+            Assertions.assertThatThrownBy(() -> bindTurnstileProperties("turnstile.enabled", "true"))
+                    .isInstanceOf(org.springframework.boot.context.properties.bind.BindException.class)
+                    .hasRootCauseInstanceOf(IllegalStateException.class)
+                    .hasRootCauseMessage("turnstile.secret-key must be configured when turnstile.enabled=true");
         }
 
         @Test
         @DisplayName("should fail fast when a feature flag is enabled while Turnstile is disabled")
         void failFastWhenFeatureProtectionEnabledWithoutGlobalTurnstile() {
-            var restClient = RestClient.builder().build();
+            Assertions.assertThatThrownBy(() ->
+                            bindTurnstileProperties("turnstile.enabled", "false", "turnstile.checkout-enabled", "true"))
+                    .isInstanceOf(org.springframework.boot.context.properties.bind.BindException.class)
+                    .hasRootCauseInstanceOf(IllegalStateException.class)
+                    .hasRootCauseMessage(
+                            "turnstile.enabled must be true when feature-specific Turnstile protection is enabled");
+        }
 
-            assertThatThrownBy(() -> new TurnstileVerifier(false, "", true, false, false, restClient))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("turnstile.enabled must be true when feature-specific Turnstile protection is enabled");
+        private void bindTurnstileProperties(String... entries) {
+            MapConfigurationPropertySource source = new MapConfigurationPropertySource();
+            for (int i = 0; i < entries.length; i += 2) {
+                source.put(entries[i], entries[i + 1]);
+            }
+            new Binder(source).bind("turnstile", TurnstileProperties.class).get();
         }
 
         private RestClient buildMockedRestClient(String responseBody) {
             var builder = RestClient.builder();
             var server = MockRestServiceServer.bindTo(builder).build();
-            server.expect(requestTo("https://challenges.cloudflare.com/turnstile/v0/siteverify"))
-                    .andExpect(method(HttpMethod.POST))
-                    .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
+            server.expect(MockRestRequestMatchers.requestTo(
+                            "https://challenges.cloudflare.com/turnstile/v0/siteverify"))
+                    .andExpect(MockRestRequestMatchers.method(HttpMethod.POST))
+                    .andRespond(MockRestResponseCreators.withSuccess(responseBody, MediaType.APPLICATION_JSON));
             return builder.build();
         }
     }

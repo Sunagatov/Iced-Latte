@@ -17,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
@@ -30,6 +29,7 @@ import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +58,9 @@ class CheckoutPaymentServiceTest {
 
     @Mock
     private TurnstileVerifier turnstileVerifier;
+
+    @Mock
+    private TurnstileProperties turnstileProperties;
 
     @InjectMocks
     private CheckoutPaymentService service;
@@ -121,7 +124,7 @@ class CheckoutPaymentServiceTest {
     @Test
     @DisplayName("verifies Turnstile token when checkout protection is enabled")
     void checkout_checkoutTurnstileEnabled_verifiesToken() {
-        ReflectionTestUtils.setField(service, "checkoutTurnstileEnabled", true);
+        when(turnstileProperties.checkoutEnabled()).thenReturn(true);
         request.setTurnstileToken("turnstile-token");
         UUID userId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();

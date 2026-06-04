@@ -18,6 +18,8 @@ import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,18 +33,29 @@ public class UserAvatarUploader {
 
     private final FileStorageWriterApi fileStorageWriterApi;
     private final ObjectProvider<FileCacheInvalidationApi> cacheInvalidator;
+    private final TurnstileVerifier turnstileVerifier;
+    private final TurnstileProperties turnstileProperties;
 
     public UserAvatarUploader(
-            FileStorageWriterApi fileStorageWriterApi, ObjectProvider<FileCacheInvalidationApi> cacheInvalidator) {
+            FileStorageWriterApi fileStorageWriterApi,
+            ObjectProvider<FileCacheInvalidationApi> cacheInvalidator,
+            TurnstileVerifier turnstileVerifier,
+            TurnstileProperties turnstileProperties) {
         this.fileStorageWriterApi = fileStorageWriterApi;
         this.cacheInvalidator = cacheInvalidator;
+        this.turnstileVerifier = turnstileVerifier;
+        this.turnstileProperties = turnstileProperties;
     }
 
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void uploadUserAvatar(final UUID userId, final MultipartFile file) {
+    public void uploadUserAvatar(final UUID userId, final MultipartFile file, final String turnstileToken) {
+        if (turnstileProperties.avatarEnabled()) {
+            turnstileVerifier.verify(turnstileToken);
+        }
+
         String contentType = normalizeContentType(file);
         validateAvatarFile(userId, file, contentType);
 

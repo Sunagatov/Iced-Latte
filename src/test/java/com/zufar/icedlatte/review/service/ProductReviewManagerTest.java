@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
@@ -30,6 +29,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
@@ -65,6 +65,9 @@ class ProductReviewManagerTest {
     @Mock
     private TurnstileVerifier turnstileVerifier;
 
+    @Mock
+    private TurnstileProperties turnstileProperties;
+
     private ProductReviewManager service;
 
     @BeforeEach
@@ -78,7 +81,8 @@ class ProductReviewManagerTest {
                 productReviewProductGateway,
                 summaryDebouncer,
                 eventPublisher,
-                turnstileVerifier);
+                turnstileVerifier,
+                turnstileProperties);
     }
 
     @Nested
@@ -131,7 +135,7 @@ class ProductReviewManagerTest {
         @Test
         @DisplayName("Verifies Turnstile token when review protection is enabled")
         void create_reviewsTurnstileEnabled_verifiesToken() {
-            ReflectionTestUtils.setField(service, "reviewsTurnstileEnabled", true);
+            when(turnstileProperties.reviewsEnabled()).thenReturn(true);
             UUID userId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
             ProductReviewRequest request = new ProductReviewRequest();
@@ -161,7 +165,7 @@ class ProductReviewManagerTest {
         @Test
         @DisplayName("Stops before saving when enabled Turnstile verification fails")
         void create_reviewsTurnstileEnabledVerificationFails_doesNotSave() {
-            ReflectionTestUtils.setField(service, "reviewsTurnstileEnabled", true);
+            when(turnstileProperties.reviewsEnabled()).thenReturn(true);
             UUID userId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
             ProductReviewRequest request = new ProductReviewRequest();

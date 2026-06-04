@@ -17,10 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +39,12 @@ class UserAvatarUploaderTest {
     @Mock
     private MultipartFile file;
 
+    @Mock
+    private TurnstileVerifier turnstileVerifier;
+
+    @Mock
+    private TurnstileProperties turnstileProperties;
+
     private UserAvatarUploader uploader;
 
     private static final String BUCKET = "test-bucket";
@@ -48,7 +57,8 @@ class UserAvatarUploaderTest {
 
     @BeforeEach
     void injectBucket() throws Exception {
-        uploader = new UserAvatarUploader(fileStorageService, cacheInvalidatorProvider);
+        uploader = new UserAvatarUploader(
+                fileStorageService, cacheInvalidatorProvider, turnstileVerifier, turnstileProperties);
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
         field.setAccessible(true);
         field.set(uploader, BUCKET);
@@ -63,8 +73,9 @@ class UserAvatarUploaderTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileStorageService.isEnabled()).thenReturn(true);
 
-        uploader.uploadUserAvatar(userId, file);
+        uploader.uploadUserAvatar(userId, file, "unused-turnstile-token");
 
+        verifyNoInteractions(turnstileVerifier);
         ArgumentCaptor<FileMetadataDto> captor = ArgumentCaptor.forClass(FileMetadataDto.class);
         verify(fileStorageService).store(eq(file), captor.capture());
         FileMetadataDto saved = captor.getValue();
@@ -81,7 +92,8 @@ class UserAvatarUploaderTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileStorageService.isEnabled()).thenReturn(false);
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file)).isInstanceOf(FileUploadException.class);
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
+                .isInstanceOf(FileUploadException.class);
 
         verify(fileStorageService).isEnabled();
         verify(fileStorageService, never()).store(any(), any());
@@ -93,7 +105,7 @@ class UserAvatarUploaderTest {
         UUID userId = UUID.randomUUID();
         when(file.getContentType()).thenReturn("image/gif");
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
                 .isInstanceOf(InvalidAvatarFileTypeException.class)
                 .hasMessageContaining("image/gif");
 
@@ -107,7 +119,7 @@ class UserAvatarUploaderTest {
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
                 .isInstanceOf(InvalidAvatarFileTypeException.class)
                 .hasMessageContaining("image/jpeg");
 
@@ -121,10 +133,42 @@ class UserAvatarUploaderTest {
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(PNG_HEADER));
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file))
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
                 .isInstanceOf(InvalidAvatarFileTypeException.class)
                 .hasMessageContaining("image/jpeg");
 
         verify(fileStorageService, never()).store(any(), any());
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar verifies Turnstile token when avatar protection is enabled")
+    void uploadUserAvatarAvatarTurnstileEnabledVerifiesToken() throws Exception {
+        when(turnstileProperties.avatarEnabled()).thenReturn(true);
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
+        when(fileStorageService.isEnabled()).thenReturn(true);
+
+        uploader.uploadUserAvatar(userId, file, "turnstile-token");
+
+        verify(turnstileVerifier).verify("turnstile-token");
+        verify(fileStorageService).store(eq(file), any(FileMetadataDto.class));
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar stops before upload when enabled Turnstile verification fails")
+    void uploadUserAvatarAvatarTurnstileVerificationFailsDoesNotUpload() {
+        when(turnstileProperties.avatarEnabled()).thenReturn(true);
+        UUID userId = UUID.randomUUID();
+        doThrow(new BadRequestException("Turnstile verification failed"))
+                .when(turnstileVerifier)
+                .verify("bad-token");
+
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "bad-token"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Turnstile verification failed");
+
+        verify(turnstileVerifier).verify("bad-token");
+        verifyNoInteractions(fileStorageService);
     }
 }
