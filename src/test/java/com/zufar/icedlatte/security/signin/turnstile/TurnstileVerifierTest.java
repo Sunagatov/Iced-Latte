@@ -22,7 +22,7 @@ import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationExcept
 class TurnstileVerifierTest {
 
     @Nested
-    @DisplayName("When disabled (blank secret key)")
+    @DisplayName("When disabled")
     class Disabled {
 
         private final TurnstileVerifier verifier = new TurnstileVerifier("");
@@ -98,6 +98,16 @@ class TurnstileVerifierTest {
             assertThatThrownBy(() -> new TurnstileVerifier(true, "", restClient))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("turnstile.secret-key must be configured when turnstile.enabled=true");
+        }
+
+        @Test
+        @DisplayName("should fail fast when a feature flag is enabled while Turnstile is disabled")
+        void failFastWhenFeatureProtectionEnabledWithoutGlobalTurnstile() {
+            var restClient = RestClient.builder().build();
+
+            assertThatThrownBy(() -> new TurnstileVerifier(false, "", true, false, false, restClient))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("turnstile.enabled must be true when feature-specific Turnstile protection is enabled");
         }
 
         private RestClient buildMockedRestClient(String responseBody) {

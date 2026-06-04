@@ -19,8 +19,7 @@ import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationExcept
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Verifies Cloudflare Turnstile tokens via the siteverify API. Disabled (no-op) when {@code turnstile.secret-key} is
- * blank.
+ * Verifies Cloudflare Turnstile tokens via the siteverify API. Disabled (no-op) when {@code turnstile.enabled=false}.
  */
 @Slf4j
 @Component
@@ -36,16 +35,49 @@ public class TurnstileVerifier {
     public TurnstileVerifier(
             @Value("${turnstile.enabled:false}") boolean enabled,
             @Value("${turnstile.secret-key:}") String secretKey,
+            @Value("${turnstile.checkout-enabled:false}") boolean checkoutEnabled,
+            @Value("${turnstile.reviews-enabled:false}") boolean reviewsEnabled,
+            @Value("${turnstile.avatar-enabled:false}") boolean avatarEnabled,
             @Value("${turnstile.connect-timeout:PT2S}") Duration connectTimeout,
             @Value("${turnstile.read-timeout:PT3S}") Duration readTimeout) {
-        this(enabled, secretKey, restClient(connectTimeout, readTimeout));
+        this(
+                enabled,
+                secretKey,
+                checkoutEnabled,
+                reviewsEnabled,
+                avatarEnabled,
+                restClient(connectTimeout, readTimeout));
     }
 
     TurnstileVerifier(String secretKey) {
-        this(!secretKey.isBlank(), secretKey, restClient(Duration.ofSeconds(2), Duration.ofSeconds(3)));
+        this(
+                !secretKey.isBlank(),
+                secretKey,
+                false,
+                false,
+                false,
+                restClient(Duration.ofSeconds(2), Duration.ofSeconds(3)));
     }
 
     TurnstileVerifier(boolean enabled, String secretKey, RestClient restClient) {
+        this(enabled, secretKey, false, false, false, restClient);
+    }
+
+    TurnstileVerifier(boolean enabled, String secretKey, Duration connectTimeout, Duration readTimeout) {
+        this(enabled, secretKey, false, false, false, restClient(connectTimeout, readTimeout));
+    }
+
+    TurnstileVerifier(
+            boolean enabled,
+            String secretKey,
+            boolean checkoutEnabled,
+            boolean reviewsEnabled,
+            boolean avatarEnabled,
+            RestClient restClient) {
+        if (!enabled && (checkoutEnabled || reviewsEnabled || avatarEnabled)) {
+            throw new IllegalStateException(
+                    "turnstile.enabled must be true when feature-specific Turnstile protection is enabled");
+        }
         if (enabled && secretKey.isBlank()) {
             throw new IllegalStateException("turnstile.secret-key must be configured when turnstile.enabled=true");
         }
