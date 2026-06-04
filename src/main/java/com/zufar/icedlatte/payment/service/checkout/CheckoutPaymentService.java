@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.payment.exception.StripeSessionException;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,10 @@ public class CheckoutPaymentService {
     private final StripeCheckoutSessionCreator stripeSessionCreator;
     private final StripeSessionGateway stripeSessionGateway;
     private final StripeSessionLineItemListConverter lineItemConverter;
+    private final TurnstileVerifier turnstileVerifier;
+
+    @Value("${turnstile.checkout-enabled:false}")
+    private boolean checkoutTurnstileEnabled;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
@@ -51,6 +57,9 @@ public class CheckoutPaymentService {
         }
         if (idempotencyKey.length() > 100) {
             throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
+        }
+        if (checkoutTurnstileEnabled) {
+            turnstileVerifier.verify(request.getTurnstileToken());
         }
 
         CurrentUserSnapshot user = currentUserProvider.get();

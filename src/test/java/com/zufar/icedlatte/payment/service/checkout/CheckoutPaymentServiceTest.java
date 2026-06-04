@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
@@ -29,6 +30,7 @@ import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
 import com.zufar.icedlatte.payment.dto.StripeSessionResult;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
+import com.zufar.icedlatte.security.signin.turnstile.TurnstileVerifier;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CheckoutPaymentService unit tests")
@@ -53,6 +55,9 @@ class CheckoutPaymentServiceTest {
     @Mock
     @SuppressWarnings("unused")
     private StripeSessionLineItemListConverter lineItemConverter;
+
+    @Mock
+    private TurnstileVerifier turnstileVerifier;
 
     @InjectMocks
     private CheckoutPaymentService service;
@@ -110,5 +115,31 @@ class CheckoutPaymentServiceTest {
         verify(txService)
                 .saveStripeDetails(
                         paymentId, new StripeSessionResult("cs_test_1", "https://checkout.stripe.test/session"));
+        verifyNoInteractions(turnstileVerifier);
+    }
+
+    @Test
+    @DisplayName("verifies Turnstile token when checkout protection is enabled")
+    void checkout_checkoutTurnstileEnabled_verifiesToken() {
+        ReflectionTestUtils.setField(service, "checkoutTurnstileEnabled", true);
+        request.setTurnstileToken("turnstile-token");
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        CheckoutPaymentSnapshot payment = new CheckoutPaymentSnapshot(paymentId, null);
+        OrderSnapshot order = new OrderSnapshot(
+                orderId, userId, OrderStatusSnapshot.PENDING_PAYMENT, BigDecimal.TEN, null, List.of());
+        CheckoutPreparation existing = new CheckoutPreparation.ExistingCheckout(order, payment);
+
+        when(currentUserProvider.get()).thenReturn(new CurrentUserSnapshot(userId, "user@example.com"));
+        when(txService.prepareCheckout(userId, request, "same-key"))
+                .thenThrow(new DataIntegrityViolationException("duplicate key"));
+        when(txService.findExistingCheckout(userId, "same-key")).thenReturn(Optional.of(existing));
+        when(stripeSessionCreator.createFromLineItems(eq(order), eq("user@example.com"), eq(List.of())))
+                .thenReturn(new StripeSessionResult("cs_test_1", "https://checkout.stripe.test/session"));
+
+        service.checkout(request, "same-key");
+
+        verify(turnstileVerifier).verify("turnstile-token");
     }
 }

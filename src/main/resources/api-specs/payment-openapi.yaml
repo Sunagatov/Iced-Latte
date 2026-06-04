@@ -180,6 +180,10 @@ components:
           description: "ID of a saved delivery address. Mutually exclusive with address."
         address:
           $ref: "user-openapi.yaml#/components/schemas/AddressDto"
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required when checkout bot protection is enabled."
 
     CheckoutResponseDto:
       type: "object"

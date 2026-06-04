@@ -168,7 +168,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @PostMapping("/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        passwordResetService.requestReset(request.getEmail());
+        passwordResetService.requestReset(request.getEmail(), request.getTurnstileToken());
         return ResponseEntity.ok().build();
     }
 
@@ -176,7 +176,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     // amazonq-ignore-next-line
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        passwordResetService.confirmReset(request.getCode(), request.getPassword());
+        passwordResetService.confirmReset(request.getCode(), request.getPassword(), request.getTurnstileToken());
         return ResponseEntity.ok().build();
     }
 

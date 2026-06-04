@@ -567,6 +567,10 @@ components:
           format: "email"
           maxLength: 254
           description: "Email address of the user requesting a password reset."
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required in production."
 
     ChangePasswordRequest:
       type: "object"
@@ -582,6 +586,10 @@ components:
           description: "Password reset token sent to the user's email."
         password:
           $ref: "#/components/schemas/PasswordField"
+        turnstileToken:
+          type: "string"
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required in production."
 
     PasswordField:
       type: "string"
