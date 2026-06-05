@@ -474,7 +474,7 @@ order:
   expiration-check-interval-ms: 3600000
   # How often (ms) to check for refunds stuck in REFUND_REQUESTED state > 4h.
   refund-monitor-interval-ms: 3600000
-  # Set to false to disable order maintenance scheduled jobs (e.g. in multi-instance deploys).
+  # Disable order maintenance scheduled jobs in multi-instance deploys if another instance owns them.
   maintenance:
     enabled: true
     batch-size: 100
@@ -610,7 +610,7 @@ management:
 monitoring:
   slow-query-threshold-ms: 200
   slow-query:
-    # Set to false to disable the AOP aspect that wraps every @Repository method.
+    # Disable the AOP aspect that wraps every @Repository method when repository timing is not needed.
     enabled: true
 
 # --- Pyroscope (continuous CPU/memory profiling) ---

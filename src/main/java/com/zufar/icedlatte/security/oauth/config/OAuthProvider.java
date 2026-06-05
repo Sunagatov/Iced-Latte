@@ -1,23 +1,18 @@
 package com.zufar.icedlatte.security.oauth.config;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
 
 public enum OAuthProvider {
-    GOOGLE("google");
-
-    private final String id;
-
-    OAuthProvider(String id) {
-        this.id = id;
-    }
+    GOOGLE;
 
     public String id() {
-        return id;
+        return name().toLowerCase(Locale.ROOT);
     }
 
     public String callbackPath() {
-        return "/auth/" + id + "/callback";
+        return "/auth/" + id() + "/callback";
     }
 
     public static Optional<OAuthProvider> fromId(String id) {
@@ -25,7 +20,7 @@ public enum OAuthProvider {
             return Optional.empty();
         }
         return Arrays.stream(values())
-                .filter(provider -> provider.id.equalsIgnoreCase(id))
+                .filter(provider -> provider.id().equalsIgnoreCase(id))
                 .findFirst();
     }
 }

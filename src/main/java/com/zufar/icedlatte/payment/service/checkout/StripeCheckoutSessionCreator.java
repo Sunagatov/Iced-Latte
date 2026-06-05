@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates Stripe Hosted Checkout Sessions. Test mode only; no real money is charged. Receives a persisted Order, not an
+ * Creates Stripe Hosted Checkout Sessions in test mode, so no real money is charged. Receives a persisted Order, not an
  * HttpServletRequest.
  */
 @Slf4j
