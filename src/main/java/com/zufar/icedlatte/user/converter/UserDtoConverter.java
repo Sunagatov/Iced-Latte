@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.user.converter;
 
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
 import org.mapstruct.*;
 
 import com.zufar.icedlatte.openapi.dto.AddressDto;
@@ -40,27 +43,36 @@ public interface UserDtoConverter {
     @AfterMapping
     default void updateAddress(@MappingTarget UserEntity entity, UpdateUserAccountRequest request) {
         AddressDto dto = request.getAddress();
-        if (dto == null || isBlankAddress(dto)) {
+        Optional<UserAddressParts> maybeAddressParts = readAddressParts(dto);
+        if (maybeAddressParts.isEmpty()) {
             entity.setAddress(null);
             return;
         }
+        UserAddressParts addressParts = maybeAddressParts.orElseThrow();
 
         if (entity.getAddress() == null) {
             entity.setAddress(Address.builder()
-                    .country(requireAddressPart(dto.getCountry(), "country"))
-                    .city(requireAddressPart(dto.getCity(), "city"))
-                    .line(requireAddressPart(dto.getLine(), "line"))
-                    .postcode(requireAddressPart(dto.getPostcode(), "postcode"))
+                    .country(addressParts.country())
+                    .city(addressParts.city())
+                    .line(addressParts.line())
+                    .postcode(addressParts.postcode())
                     .build());
             return;
         }
 
         entity.getAddress()
-                .update(
-                        requireAddressPart(dto.getCountry(), "country"),
-                        requireAddressPart(dto.getCity(), "city"),
-                        requireAddressPart(dto.getLine(), "line"),
-                        requireAddressPart(dto.getPostcode(), "postcode"));
+                .update(addressParts.country(), addressParts.city(), addressParts.line(), addressParts.postcode());
+    }
+
+    private static Optional<UserAddressParts> readAddressParts(@Nullable AddressDto dto) {
+        if (dto == null || isBlankAddress(dto)) {
+            return Optional.empty();
+        }
+        return Optional.of(new UserAddressParts(
+                requireAddressPart(dto.getCountry(), "country"),
+                requireAddressPart(dto.getCity(), "city"),
+                requireAddressPart(dto.getLine(), "line"),
+                requireAddressPart(dto.getPostcode(), "postcode")));
     }
 
     private static boolean isBlankAddress(AddressDto dto) {
@@ -70,14 +82,16 @@ public interface UserDtoConverter {
                 && isBlank(dto.getPostcode());
     }
 
-    private static boolean isBlank(String value) {
+    private static boolean isBlank(@Nullable String value) {
         return value == null || value.isBlank();
     }
 
-    private static String requireAddressPart(String value, String fieldName) {
+    private static String requireAddressPart(@Nullable String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("address." + fieldName + " is required");
         }
         return value;
     }
 }
+
+record UserAddressParts(String country, String city, String line, String postcode) {}

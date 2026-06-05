@@ -27,10 +27,10 @@ public class FileMetadata {
     @Column(name = "related_object_id")
     private UUID relatedObjectId;
 
-    @Column(name = "bucket_name", nullable = false, length = 255)
+    @Column(name = "bucket_name", nullable = false)
     private String bucketName;
 
-    @Column(name = "file_name", nullable = false, unique = true, length = 255)
+    @Column(name = "file_name", nullable = false, unique = true)
     private String fileName;
 
     @CreationTimestamp

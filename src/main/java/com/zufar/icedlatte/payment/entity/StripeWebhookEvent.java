@@ -23,7 +23,7 @@ import lombok.Setter;
 public class StripeWebhookEvent {
 
     @Id
-    @Column(name = "stripe_event_id", nullable = false, length = 255)
+    @Column(name = "stripe_event_id", nullable = false)
     private String stripeEventId;
 
     @Column(name = "event_type", nullable = false, length = 100)

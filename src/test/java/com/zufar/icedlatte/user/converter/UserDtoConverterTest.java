@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.converter;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -90,5 +91,24 @@ class UserDtoConverterTest {
         assertEquals("Paris", existingAddress.getCity());
         assertEquals("10 Rue de Rivoli", existingAddress.getLine());
         assertEquals("75001", existingAddress.getPostcode());
+    }
+
+    @Test
+    @DisplayName("updateEntity should reject partial address updates")
+    void updateEntityShouldRejectPartialAddressUpdates() {
+        UserEntity entity =
+                UserEntity.builder().firstName("Old").lastName("Name").build();
+        AddressDto partialAddress = new AddressDto();
+        partialAddress.setCountry("France");
+        partialAddress.setCity("Paris");
+        partialAddress.setLine("10 Rue de Rivoli");
+        UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+        request.setFirstName("New");
+        request.setLastName("Name");
+        request.setAddress(partialAddress);
+
+        assertThatThrownBy(() -> userDtoConverter.updateEntity(entity, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("address.postcode is required");
     }
 }

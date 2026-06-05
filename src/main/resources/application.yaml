@@ -458,7 +458,7 @@ product:
   placeholder-image-url: "/assets/images/product-placeholder.png"
 
 migration:
-  # Max time allowed for startup data migration tasks before they are cancelled.
+  # Max time allowed for startup data migration tasks before they are canceled.
   timeout-minutes: 5
   # Whether to upload seed product images to S3/MinIO on startup.
   upload:
@@ -470,7 +470,7 @@ migration:
 order:
   # How long (minutes) after creation a customer can cancel their order.
   cancellation-window-minutes: 30
-  # How often (ms) to check for unpaid orders older than 24h and mark them cancelled.
+  # How often (ms) to check for unpaid orders older than 24h and mark them canceled.
   expiration-check-interval-ms: 3600000
   # How often (ms) to check for refunds stuck in REFUND_REQUESTED state > 4h.
   refund-monitor-interval-ms: 3600000
