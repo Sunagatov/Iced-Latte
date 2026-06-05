@@ -573,6 +573,8 @@ management:
         include: health, info, metrics, prometheus
       base-path: /actuator
   prometheus:
+    # Shared secret for Prometheus/Alloy scrapes using Authorization: Metrics <token>.
+    scrape-token: ${MANAGEMENT_PROMETHEUS_SCRAPE_TOKEN:}
     metrics:
       export:
         enabled: true

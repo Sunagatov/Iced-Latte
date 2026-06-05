@@ -24,6 +24,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,10 +46,12 @@ import com.zufar.icedlatte.security.jwt.filter.JwtAuthenticationFilter;
         classes = {
             SpringSecurityConfiguration.class,
             SecurityRouteAuthorization.class,
+            ActuatorPrometheusScrapeTokenFilter.class,
             SecurityProblemResponseWriter.class,
             TestBeans.class,
             ActuatorSecurityTest.ActuatorController.class
         })
+@TestPropertySource(properties = "management.prometheus.scrape-token=test-scrape-token")
 @DisplayName("Actuator security")
 class ActuatorSecurityTest {
 
@@ -123,6 +126,13 @@ class ActuatorSecurityTest {
     }
 
     @Test
+    @DisplayName("prometheus metrics allow monitoring scrape token")
+    void prometheusMetricsAllowMonitoringScrapeToken() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus").header("Authorization", "Metrics test-scrape-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("health remains public")
     void healthRemainsPublic() throws Exception {
         mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
@@ -142,7 +152,7 @@ class ActuatorSecurityTest {
             authenticate("ROLE_ADMIN");
         } else if ("Bearer user-token".equals(authorization)) {
             authenticate("USER");
-        } else {
+        } else if (SecurityContextHolder.getContext().getAuthentication() == null) {
             SecurityContextHolder.clearContext();
         }
     }

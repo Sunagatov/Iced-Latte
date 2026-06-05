@@ -28,7 +28,8 @@ class SpringSecurityConfigurationTest {
     private final SpringSecurityConfiguration configuration = new SpringSecurityConfiguration(
             new SecurityRouteAuthorization(),
             new SecurityProblemResponseWriter(
-                    new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")));
+                    new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")),
+            new ActuatorPrometheusScrapeTokenFilter("test-scrape-token"));
 
     @Test
     @DisplayName("disables duplicate servlet registration for correlation filter")
@@ -47,6 +48,18 @@ class SpringSecurityConfigurationTest {
         JwtAuthenticationFilter filter = mock(JwtAuthenticationFilter.class);
 
         FilterRegistrationBean<JwtAuthenticationFilter> registration = configuration.jwtFilterRegistration(filter);
+
+        assertThat(registration.isEnabled()).isFalse();
+        assertThat(registration.getFilter()).isSameAs(filter);
+    }
+
+    @Test
+    @DisplayName("disables duplicate servlet registration for Prometheus scrape-token filter")
+    void disablesDuplicateServletRegistrationForPrometheusScrapeTokenFilter() {
+        ActuatorPrometheusScrapeTokenFilter filter = mock(ActuatorPrometheusScrapeTokenFilter.class);
+
+        FilterRegistrationBean<ActuatorPrometheusScrapeTokenFilter> registration =
+                configuration.prometheusScrapeTokenFilterRegistration(filter);
 
         assertThat(registration.isEnabled()).isFalse();
         assertThat(registration.getFilter()).isSameAs(filter);

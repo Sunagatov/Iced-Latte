@@ -45,6 +45,7 @@ public class SpringSecurityConfiguration {
 
     private final SecurityRouteAuthorization routeAuthorization;
     private final SecurityProblemResponseWriter problemResponseWriter;
+    private final ActuatorPrometheusScrapeTokenFilter prometheusScrapeTokenFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -76,6 +77,7 @@ public class SpringSecurityConfiguration {
                                 response, HttpServletResponse.SC_FORBIDDEN, "Access denied.", request.getRequestURI())))
                 .addFilterBefore(correlationFilter, DisableEncodeUrlFilter.class)
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(prometheusScrapeTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -90,6 +92,14 @@ public class SpringSecurityConfiguration {
     @Bean
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(JwtAuthenticationFilter filter) {
         FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<ActuatorPrometheusScrapeTokenFilter> prometheusScrapeTokenFilterRegistration(
+            ActuatorPrometheusScrapeTokenFilter filter) {
+        FilterRegistrationBean<ActuatorPrometheusScrapeTokenFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }
