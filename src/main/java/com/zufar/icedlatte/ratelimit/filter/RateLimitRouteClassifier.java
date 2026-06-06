@@ -20,11 +20,12 @@ class RateLimitRouteClassifier {
     static boolean shouldSkip(HttpServletRequest request) {
         String method = request.getMethod();
         String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method) || isActuatorPath(path) || path.startsWith(ApiPaths.DOCS_ROOT);
+        return "OPTIONS".equalsIgnoreCase(method) || isActuatorPath(path) || isDocsPath(path);
     }
 
     static RateLimitCategory classify(HttpServletRequest request) {
         String path = request.getRequestURI();
+        String method = request.getMethod().toUpperCase(Locale.ROOT);
         return switch (path) {
             case String uri
             when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
@@ -35,8 +36,7 @@ class RateLimitRouteClassifier {
             when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
             case String uri when uri.startsWith(TELEMETRY_ROOT) -> RateLimitCategory.TELEMETRY;
             case String uri when isFileUploadRequest(request, uri) -> RateLimitCategory.FILE_UPLOAD;
-            case String _
-            when !READ_METHODS.contains(request.getMethod().toUpperCase(Locale.ROOT)) -> RateLimitCategory.WRITE;
+            case String _ when !READ_METHODS.contains(method) -> RateLimitCategory.WRITE;
             default -> RateLimitCategory.GLOBAL;
         };
     }
@@ -46,14 +46,23 @@ class RateLimitRouteClassifier {
     }
 
     private static boolean isActuatorPath(String path) {
-        return path.startsWith(ApiPaths.ACTUATOR_ROOT) || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+        return isPathUnder(path, ApiPaths.ACTUATOR_ROOT) || isPathUnder(path, ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+    }
+
+    private static boolean isDocsPath(String path) {
+        return isPathUnder(path, ApiPaths.DOCS_ROOT);
     }
 
     private static boolean isFileUploadRequest(HttpServletRequest request, String path) {
         String contentType = request.getContentType();
         return contentType != null
-                && contentType.startsWith("multipart/")
+                && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/")
                 && (path.endsWith("/avatar") || path.contains("/images"));
+    }
+
+    private static boolean isPathUnder(String path, String root) {
+        String normalizedRoot = root.endsWith("/") ? root.substring(0, root.length() - 1) : root;
+        return path.equals(normalizedRoot) || path.startsWith(normalizedRoot + "/");
     }
 
     private static boolean isGlobalAuthPath(String path) {

@@ -83,7 +83,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String ip = clientIpExtractor.extract(request);
 
-        // #7: Short-circuit ban for repeat offenders
         if (banTracker.isBanned(ip)) {
             meterRegistry.counter("rate_limit.requests.banned").increment();
             RateLimitResult banResult = new RateLimitResult(
@@ -178,7 +177,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
-        return authenticatedRequestIdentityProvider.findIdentity(request);
+        return authenticatedRequestIdentityProvider.findIdentity(request)
+                .map(ClientIpExtractor::sanitize)
+                .map(String::trim)
+                .filter(identity -> !identity.isBlank());
     }
 
     private void logExceeded(

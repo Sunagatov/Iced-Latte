@@ -60,15 +60,7 @@ class RateLimitingFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new RateLimitingFilter(
-                openRateLimiter,
-                closedRateLimiter,
-                new SimpleMeterRegistry(),
-                clientIpExtractor,
-                authenticatedRequestIdentityProvider,
-                properties(),
-                problemTypeUriFactory,
-                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+        filter = newFilter(properties());
     }
 
     @ParameterizedTest(name = "{0} -> {1}")
@@ -256,10 +248,18 @@ class RateLimitingFilterTest {
     void actuatorAndDocsAreSkipped() {
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator/health")))
                 .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator")))
+                .isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/actuator/health")))
+                .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/actuator")))
                 .isTrue();
         assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs/swagger-ui")))
                 .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs")))
+                .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs-malicious")))
+                .isFalse();
     }
 
     @Test
@@ -294,15 +294,7 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.getAuth().setMaxRequests(0);
 
-        assertThatThrownBy(() -> new RateLimitingFilter(
-                        openRateLimiter,
-                        closedRateLimiter,
-                        new SimpleMeterRegistry(),
-                        clientIpExtractor,
-                        authenticatedRequestIdentityProvider,
-                        properties,
-                        problemTypeUriFactory,
-                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+        assertThatThrownBy(() -> newFilter(properties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("auth.max-requests must be > 0");
     }
@@ -313,17 +305,20 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.getSearch().setWindowDuration(Duration.ZERO);
 
-        assertThatThrownBy(() -> new RateLimitingFilter(
-                        openRateLimiter,
-                        closedRateLimiter,
-                        new SimpleMeterRegistry(),
-                        clientIpExtractor,
-                        authenticatedRequestIdentityProvider,
-                        properties,
-                        problemTypeUriFactory,
-                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+        assertThatThrownBy(() -> newFilter(properties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("search.window-duration must be positive");
+    }
+
+    @Test
+    @DisplayName("validation rejects sub-millisecond windows")
+    void validateRejectsSubMillisecondWindow() {
+        RateLimitProperties properties = properties();
+        properties.getSearch().setWindowDuration(Duration.ofNanos(1));
+
+        assertThatThrownBy(() -> newFilter(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("search.window-duration must be at least 1ms");
     }
 
     @Test
@@ -332,15 +327,7 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.setBanThreshold(0);
 
-        assertThatThrownBy(() -> new RateLimitingFilter(
-                        openRateLimiter,
-                        closedRateLimiter,
-                        new SimpleMeterRegistry(),
-                        clientIpExtractor,
-                        authenticatedRequestIdentityProvider,
-                        properties,
-                        problemTypeUriFactory,
-                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+        assertThatThrownBy(() -> newFilter(properties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ban-threshold must be > 0");
     }
@@ -351,17 +338,20 @@ class RateLimitingFilterTest {
         RateLimitProperties properties = properties();
         properties.setBanDuration(Duration.ZERO);
 
-        assertThatThrownBy(() -> new RateLimitingFilter(
-                        openRateLimiter,
-                        closedRateLimiter,
-                        new SimpleMeterRegistry(),
-                        clientIpExtractor,
-                        authenticatedRequestIdentityProvider,
-                        properties,
-                        problemTypeUriFactory,
-                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
+        assertThatThrownBy(() -> newFilter(properties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ban-duration must be positive");
+    }
+
+    @Test
+    @DisplayName("validation rejects sub-millisecond ban duration")
+    void validateRejectsSubMillisecondBanDuration() {
+        RateLimitProperties properties = properties();
+        properties.setBanDuration(Duration.ofNanos(1));
+
+        assertThatThrownBy(() -> newFilter(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ban-duration must be at least 1ms");
     }
 
     @Test
@@ -413,6 +403,43 @@ class RateLimitingFilterTest {
                 .tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any());
     }
 
+    @Test
+    @DisplayName("multipart content type matching is case-insensitive")
+    void multipartContentTypeMatchingIsCaseInsensitive() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("pre-auth:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 200, 199, RESET_MILLIS));
+        when(openRateLimiter.tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 5, 4, RESET_MILLIS));
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/users/avatar");
+        request.setContentType("Multipart/Form-Data; boundary=----");
+        filter.doFilterInternal(request, new MockHttpServletResponse(), mock(FilterChain.class));
+
+        verify(openRateLimiter)
+                .tryConsume(argThat(key -> key != null && key.startsWith("file-upload:")), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("blank authenticated identity falls back to the IP key")
+    void blankAuthenticatedIdentityFallsBackToIpKey() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("5.5.5.5");
+        when(authenticatedRequestIdentityProvider.findIdentity(any(MockHttpServletRequest.class)))
+                .thenReturn(Optional.of("  "));
+        when(openRateLimiter.tryConsume(any(), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
+
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/cart"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class));
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("global:ip:5.5.5.5"));
+        assertThat(keyCaptor.getAllValues()).noneMatch(key -> key.contains("user:"));
+    }
+
     @ParameterizedTest
     @CsvSource({"/api/v1/auth/password/forgot", "/api/v1/auth/password/change"})
     @DisplayName("password reset endpoints are blocked by strict pre-auth bucket")
@@ -439,15 +466,7 @@ class RateLimitingFilterTest {
         // Use a filter with low ban threshold for testing
         RateLimitProperties props = properties();
         props.setBanThreshold(3);
-        RateLimitingFilter banFilter = new RateLimitingFilter(
-                openRateLimiter,
-                closedRateLimiter,
-                new SimpleMeterRegistry(),
-                clientIpExtractor,
-                authenticatedRequestIdentityProvider,
-                props,
-                problemTypeUriFactory,
-                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
+        RateLimitingFilter banFilter = newFilter(props);
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/authenticate");
 
@@ -463,6 +482,18 @@ class RateLimitingFilterTest {
         assertThat(bannedResponse.getStatus()).isEqualTo(429);
         // The closed limiter was called 3 times for the blocks, but NOT for the banned request
         verify(closedRateLimiter, org.mockito.Mockito.times(3)).tryConsume(any(), anyInt(), any());
+    }
+
+    private RateLimitingFilter newFilter(RateLimitProperties properties) {
+        return new RateLimitingFilter(
+                openRateLimiter,
+                closedRateLimiter,
+                new SimpleMeterRegistry(),
+                clientIpExtractor,
+                authenticatedRequestIdentityProvider,
+                properties,
+                problemTypeUriFactory,
+                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
     }
 
     private static RateLimitProperties properties() {
