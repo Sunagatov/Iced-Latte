@@ -77,10 +77,11 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
         return userCrudRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    @Transactional(readOnly = true)
-    public UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
+    private UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
         String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
-        return userCrudRepository.findByEmail(normalizedEmail).orElseThrow(() -> new UserNotFoundException(email));
+        return userCrudRepository
+                .findByEmail(normalizedEmail)
+                .orElseThrow(() -> new UserNotFoundException(email));
     }
 
     private UserLookupSnapshot toLookupSnapshot(UserEntity user) {

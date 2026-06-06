@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.user.entity.UserEntity;
 
@@ -46,9 +45,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param userId The id of the user.
      */
     @Modifying
-    @Transactional
     @Query(value = "UPDATE UserEntity u " + "SET u.password = :newPassword " + "WHERE u.id = :userId")
-    void changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
+    int changeUserPassword(@Param("newPassword") String newPassword, @Param("userId") UUID userId);
 
     /**
      * Updates the accountNonLocked status of a user based on the given email.
@@ -57,7 +55,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @param accountNonLocked The new accountNonLocked value (true = unlocked, false = locked).
      */
     @Modifying
-    @Transactional
     @Query("UPDATE UserEntity u " + "SET u.accountNonLocked = :accountNonLocked " + "WHERE u.email = :email")
     int setAccountNonLockedStatus(@Param("email") String email, @Param("accountNonLocked") boolean accountNonLocked);
 }

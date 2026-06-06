@@ -26,10 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(UserEndpoint.API_CUSTOMERS)
+@RequestMapping(ApiPaths.USERS)
 public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserApi {
-
-    public static final String API_CUSTOMERS = ApiPaths.USERS;
 
     private final UserProfileService userProfileService;
     private final UserAvatarUploader userAvatarUploader;

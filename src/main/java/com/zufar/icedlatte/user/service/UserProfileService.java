@@ -23,6 +23,7 @@ import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,10 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteProfile(UUID userId) {
-        userRepository.deleteById(userId);
+        UserEntity userEntity = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        userRepository.delete(userEntity);
         cleanUpDeletedProfileAfterCommit(userId);
     }
 
@@ -78,8 +82,12 @@ public class UserProfileService implements UserAccessControlApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     @Override
     public void changePassword(UUID userId, String newPassword) {
-        userRepository.changeUserPassword(passwordEncoder.encode(newPassword), userId);
-        eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        int updatedRows = userRepository.changeUserPassword(encodedPassword, userId);
+        if (updatedRows == 0) {
+            throw new UserNotFoundException(userId);
+        }
+        requestSessionsRevocationAfterCommit(userId);
     }
 
     @Override
@@ -108,6 +116,19 @@ public class UserProfileService implements UserAccessControlApi {
         UserDto userDto = userDtoConverter.toDto(userEntity);
         userDto.setAvatarLink(findAvatarLink(userEntity.getId()).orElse(null));
         return userDto;
+    }
+
+    private void requestSessionsRevocationAfterCommit(UUID userId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+            }
+        });
     }
 
     private void cleanUpDeletedProfileAfterCommit(UUID userId) {

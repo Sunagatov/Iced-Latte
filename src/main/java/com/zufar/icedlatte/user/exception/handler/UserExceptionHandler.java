@@ -28,36 +28,34 @@ public class UserExceptionHandler {
 
     @ExceptionHandler(UserException.class)
     public ResponseEntity<ProblemDetail> handleUserException(final UserException ex) {
-        record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}
+        return switch (ex) {
+            case UserNotFoundException _ ->
+                problem(
+                        "exception.user.not_found",
+                        ProblemType.USER_NOT_FOUND,
+                        "User not found",
+                        HttpStatus.NOT_FOUND,
+                        ex.getMessage());
+            case InvalidAvatarFileTypeException _ ->
+                problem(
+                        "exception.avatar.invalid_type",
+                        ProblemType.INVALID_AVATAR_TYPE,
+                        "Invalid file type",
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid file type. Allowed types: JPEG, PNG, WebP");
+            case UserAvatarUploadException _ ->
+                problem(
+                        "exception.avatar.upload_failed",
+                        ProblemType.FILE_UPLOAD_FAILED,
+                        "File upload failed",
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Avatar upload is currently unavailable.");
+        };
+    }
 
-        var mapping =
-                switch (ex) {
-                    case UserNotFoundException _ ->
-                        new ErrorMapping(
-                                "exception.user.not_found",
-                                ProblemType.USER_NOT_FOUND,
-                                "User not found",
-                                HttpStatus.NOT_FOUND,
-                                ex.getMessage());
-                    case InvalidAvatarFileTypeException _ ->
-                        new ErrorMapping(
-                                "exception.avatar.invalid_type",
-                                ProblemType.INVALID_AVATAR_TYPE,
-                                "Invalid file type",
-                                HttpStatus.BAD_REQUEST,
-                                "Invalid file type. Allowed types: JPEG, PNG, WebP");
-                    case UserAvatarUploadException _ ->
-                        new ErrorMapping(
-                                "exception.avatar.upload_failed",
-                                ProblemType.FILE_UPLOAD_FAILED,
-                                "File upload failed",
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "Avatar upload is currently unavailable.");
-                };
-
-        log.debug("{}: status={}", mapping.logTag(), mapping.status().value());
-        return ResponseEntity.status(mapping.status())
-                .body(problemDetailFactory.build(
-                        mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail()));
+    private ResponseEntity<ProblemDetail> problem(
+            String logTag, String typeSlug, String title, HttpStatus status, String detail) {
+        log.debug("{}: status={}", logTag, status.value());
+        return ResponseEntity.status(status).body(problemDetailFactory.build(typeSlug, title, status, detail));
     }
 }

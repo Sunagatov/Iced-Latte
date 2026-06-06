@@ -52,10 +52,7 @@ public class UserAccountRegistrationService implements UserRegistrationApi {
                 .password(encodedPassword)
                 .oauthUser(oauthUser)
                 .build();
-        return saveDefaultEnabledUser(user);
-    }
 
-    private UserAuthenticationSnapshot saveDefaultEnabledUser(UserEntity user) {
         user.setAccountNonExpired(true);
         user.setAccountNonLocked(true);
         user.setCredentialsNonExpired(true);

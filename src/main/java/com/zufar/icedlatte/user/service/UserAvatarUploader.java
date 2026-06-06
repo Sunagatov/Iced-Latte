@@ -5,9 +5,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
@@ -45,7 +42,6 @@ public class UserAvatarUploader {
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void uploadUserAvatar(final UUID userId, final MultipartFile file, final String turnstileToken) {
         if (turnstileProperties.avatarEnabled()) {
             turnstileVerifier.verify(turnstileToken);

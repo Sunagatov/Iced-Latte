@@ -6,12 +6,26 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import com.zufar.icedlatte.common.audit.AuditableEntity;
 import com.zufar.icedlatte.common.audit.Identifiable;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Builder
 @Getter
@@ -55,7 +69,8 @@ public class UserEntity extends AuditableEntity implements Identifiable {
     private String stripeCustomerToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<UserGrantedAuthority> authorities;
+    @Builder.Default
+    private Set<UserGrantedAuthority> authorities = new HashSet<>();
 
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired;
@@ -74,9 +89,6 @@ public class UserEntity extends AuditableEntity implements Identifiable {
 
     public void addAuthority(UserGrantedAuthority authority) {
         Objects.requireNonNull(authority, "authority must not be null");
-        if (this.authorities == null) {
-            this.authorities = new HashSet<>();
-        }
         String authorityName = Objects.requireNonNull(authority.getAuthority(), "authority name must not be null");
         boolean alreadyGranted = this.authorities.stream()
                 .map(UserGrantedAuthority::getAuthority)

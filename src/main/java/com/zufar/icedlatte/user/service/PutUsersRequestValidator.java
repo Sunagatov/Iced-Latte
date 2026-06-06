@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
@@ -95,17 +96,20 @@ public class PutUsersRequestValidator {
     }
 
     private static void validateAddress(@Nullable AddressDto addressDto, List<String> errors) {
-        if (addressDto == null) return;
-        boolean anyFieldPresent = addressDto.getCountry() != null
-                || addressDto.getCity() != null
-                || addressDto.getLine() != null
-                || addressDto.getPostcode() != null;
-        if (anyFieldPresent) {
-            validateAddressField(addressDto.getCountry(), "country", errors);
-            validateAddressField(addressDto.getCity(), "city", errors);
-            validateAddressField(addressDto.getLine(), "line", errors);
-            validateAddressField(addressDto.getPostcode(), "postcode", errors);
+        if (addressDto == null || isEmptyAddress(addressDto)) {
+            return;
         }
+        validateAddressField(addressDto.getCountry(), "country", errors);
+        validateAddressField(addressDto.getCity(), "city", errors);
+        validateAddressField(addressDto.getLine(), "line", errors);
+        validateAddressField(addressDto.getPostcode(), "postcode", errors);
+    }
+
+    private static boolean isEmptyAddress(AddressDto addressDto) {
+        return !StringUtils.hasText(addressDto.getCountry())
+                && !StringUtils.hasText(addressDto.getCity())
+                && !StringUtils.hasText(addressDto.getLine())
+                && !StringUtils.hasText(addressDto.getPostcode());
     }
 
     private static void validateAddressField(@Nullable String value, String fieldName, List<String> errors) {
