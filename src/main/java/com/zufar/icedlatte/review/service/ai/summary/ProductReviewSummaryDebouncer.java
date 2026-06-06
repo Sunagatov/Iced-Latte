@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PreDestroy;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -38,6 +39,7 @@ public class ProductReviewSummaryDebouncer {
     private final ConcurrentHashMap<UUID, Long> firstTriggerTime = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> retryCounts = new ConcurrentHashMap<>();
 
+    @Autowired
     public ProductReviewSummaryDebouncer(
             @Value("${ai.review-summary.debounce-delay:PT2M}") Duration debounceDelay,
             @Value("${ai.review-summary.max-wait:PT10M}") Duration maxWait,
