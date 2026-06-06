@@ -1,6 +1,8 @@
 # Supabase S3 Operations
 
-How to upload, list, delete, and troubleshoot files in the Supabase Storage bucket used by Iced Latte.
+How to upload, list, delete, and troubleshoot files in the Supabase Storage bucket used by Iced Latte product images.
+
+Production credentials, host access, deployment commands, container logs, reverse proxy routing, and exact runtime values are owned by the private Vault repository. This backend document keeps the storage contract, local/operator workflow shape, and troubleshooting logic that are useful for application development.
 
 ---
 
@@ -12,10 +14,28 @@ How to upload, list, delete, and troubleshoot files in the Supabase Storage buck
 | S3 endpoint | `https://fzvwwpzdudxrdzwbucaw.storage.supabase.co/storage/v1/s3` |
 | Public URL base | `https://fzvwwpzdudxrdzwbucaw.supabase.co/storage/v1/object/public/iced-latte-products` |
 | Region | `eu-west-2` |
-| Credentials | Stored in the private deployment repository (SOPS-encrypted) |
-| Prod server | `root@116.203.197.65` (SSH key auth) |
-| Container name | `iced-latte-backend` |
-| Docker image | `zufarexplainedit/iced-latte-backend:latest` |
+| Credentials | Stored outside this repository; read Vault for production/runtime access |
+
+---
+
+## Object Key Contract
+
+Product image metadata is rebuilt from object-storage keys by `StorageKeyMetadataParser`.
+
+Expected object key shape:
+
+```text
+<ProductName>_<ProductUUID>/card_logo.png
+```
+
+Examples:
+
+```text
+Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png
+Cold_Brew_Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png
+```
+
+The parser reads the UUID after the last underscore in the folder name, so product names may contain underscores.
 
 ---
 
@@ -36,9 +56,12 @@ export AWS_ACCESS_KEY_ID=<access_key>
 export AWS_SECRET_ACCESS_KEY=<secret_key>
 export AWS_DEFAULT_REGION=eu-west-2
 ENDPOINT="https://fzvwwpzdudxrdzwbucaw.storage.supabase.co/storage/v1/s3"
+BUCKET="iced-latte-products"
 ```
 
-> **Important:** Always use `--no-verify-ssl` with Supabase S3 — their endpoint uses a certificate that the AWS CLI doesn't trust by default.
+Credentials must come from the approved runtime source, not from this repository.
+
+> **Important:** The historical Supabase S3 workflow used `--no-verify-ssl` with AWS CLI because the endpoint certificate chain was not trusted by that CLI setup. Prefer fixing the local trust chain when possible; if Vault still documents `--no-verify-ssl` for the current runtime, follow Vault.
 
 ---
 
@@ -47,7 +70,7 @@ ENDPOINT="https://fzvwwpzdudxrdzwbucaw.storage.supabase.co/storage/v1/s3"
 ### List all files
 
 ```bash
-aws s3 ls s3://iced-latte-products/ --recursive \
+aws s3 ls "s3://$BUCKET/" --recursive \
   --endpoint-url "$ENDPOINT" --no-verify-ssl
 ```
 
@@ -66,42 +89,44 @@ aws s3 cp seed/products/Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png
 cd seed/products
 for dir in */; do
   KEY="${dir}card_logo.png"
-  [ -f "$KEY" ] && aws s3 cp "$KEY" "s3://iced-latte-products/$KEY" \
+  [ -f "$KEY" ] && aws s3 cp "$KEY" "s3://$BUCKET/$KEY" \
     --endpoint-url "$ENDPOINT" --no-verify-ssl \
-    --content-type "image/png" && echo "✓ $KEY"
+    --content-type "image/png" && echo "uploaded $KEY"
 done
 ```
 
 ### Delete a single file
 
 ```bash
-aws s3 rm "s3://iced-latte-products/Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/old_file.jpeg" \
+aws s3 rm "s3://$BUCKET/Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/old_file.jpeg" \
   --endpoint-url "$ENDPOINT" --no-verify-ssl
 ```
 
-### Delete all files EXCEPT card_logo.png
+### Delete all files except `card_logo.png`
 
 Use Python to handle filenames with spaces correctly:
 
 ```bash
 python3 -c "
-import subprocess, re
+import re
+import subprocess
 
-ENDPOINT = '$ENDPOINT'
+endpoint = '$ENDPOINT'
+bucket = '$BUCKET'
 result = subprocess.run(
-    ['aws', 's3', 'ls', 's3://iced-latte-products/', '--recursive',
-     '--endpoint-url', ENDPOINT, '--no-verify-ssl'],
-    capture_output=True, text=True
+    ['aws', 's3', 'ls', f's3://{bucket}/', '--recursive',
+     '--endpoint-url', endpoint, '--no-verify-ssl'],
+    capture_output=True, text=True, check=False
 )
-for line in result.stdout.strip().split('\n'):
-    m = re.match(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\d+\s+(.*)', line)
-    if m:
-        key = m.group(1)
+for line in result.stdout.strip().split('\\n'):
+    match = re.match(r'\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\d+\\s+(.*)', line)
+    if match:
+        key = match.group(1)
         if not key.endswith('card_logo.png'):
             subprocess.run(
-                ['aws', 's3', 'rm', f's3://iced-latte-products/{key}',
-                 '--endpoint-url', ENDPOINT, '--no-verify-ssl'],
-                capture_output=True
+                ['aws', 's3', 'rm', f's3://{bucket}/{key}',
+                 '--endpoint-url', endpoint, '--no-verify-ssl'],
+                check=False
             )
             print(f'Deleted: {key}')
 "
@@ -117,78 +142,51 @@ curl -s -o /dev/null -w "%{http_code}" \
 
 ---
 
-## Decrypting Credentials
+## Backend Refresh Flow
 
-The prod `.env` is SOPS-encrypted with age:
-
-```bash
-SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
-  sops --input-type dotenv --output-type dotenv -d \
-  /path/to/private/deployment/env/.env.prod
+```text
+Supabase bucket
+      |
+      | list object keys
+      v
+FileStorageService.refreshBucketIndex(...)
+      |
+      | parse <ProductName>_<UUID>/card_logo.png
+      v
+StorageKeyMetadataParser
+      |
+      | upsert metadata rows
+      v
+file_metadata
+      |
+      | resolve product image URLs
+      v
+ProductImageReceiver -> product API response
 ```
 
----
-
-## Task Commands (Deployment)
-
-Deployment operations are run from the private deployment repository using [Task](https://taskfile.dev/):
-
-```bash
-cd /path/to/private/deployment/repo
-
-# Restart container without pulling new image (uses existing image on server)
-task release:restart:app APP=iced-latte
-
-# Pull latest image and deploy
-task release:deploy:app APP=iced-latte
-
-# Build the Docker image locally
-task release:build:app APP=iced-latte
-
-# Push image to Docker Hub
-task release:push:app APP=iced-latte
-
-# Check app health
-task release:health:app APP=iced-latte
-```
-
-> **Note:** The APP name is `iced-latte` (not `iced-latte-backend`). The deployment manifest maps this to the correct container.
-
----
-
-## Checking Logs on Production
-
-```bash
-# SSH to server and check recent logs
-ssh root@116.203.197.65 "docker logs iced-latte-backend --tail 50 2>&1"
-
-# Check for migration success
-ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'migration.metadata.refreshed'"
-
-# Check for errors
-ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'error\|exception' | tail -10"
-
-# Check for duplicate key issues specifically
-ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'Duplicate key\|IllegalState' | tail -5"
-
-# Watch logs in real-time after restart
-ssh root@116.203.197.65 "docker logs iced-latte-backend -f 2>&1"
-```
-
-> **Timing:** After restart, the backend takes ~30-60 seconds to become healthy (healthcheck has `start_period: 60s`). The migration runs asynchronously on a virtual thread — the app may report healthy before the S3 index refresh completes.
+`refreshBucketIndex()` is the backend-owned point where object storage becomes application metadata. Runtime scheduling and production restart/refresh commands are Vault-owned.
 
 ---
 
 ## Content-Type Handling
 
-When uploading PNGs, always set `--content-type "image/png"`. Without it, Supabase may serve the file as `application/octet-stream`, which can break browser image rendering and Next.js `<Image>` optimization.
+When uploading PNGs, always set:
 
-For the old files that existed before our migration:
-- `.jpeg` files → were served as `image/jpeg`
-- `.webp` files → were served as `image/webp`
-- `.png` files → served as `image/png`
+```text
+image/png
+```
 
-All are now standardized to `card_logo.png` with `image/png` content type.
+Without the correct content type, Supabase may serve the file as `application/octet-stream`, which can break browser image rendering and frontend image optimization.
+
+For older files that existed before image standardization:
+
+| Extension | Expected content type |
+|-----------|-----------------------|
+| `.jpeg` / `.jpg` | `image/jpeg` |
+| `.webp` | `image/webp` |
+| `.png` | `image/png` |
+
+The current product-card convention is one `card_logo.png` file per product folder.
 
 ---
 
@@ -198,11 +196,23 @@ The bucket previously contained a mix of formats with inconsistent naming:
 
 | Old pattern | Example |
 |-------------|---------|
-| `<ProductName>.jpeg` | `Vanilla Latte_uuid/Vanilla Latte.jpeg` |
-| `card_logo.webp` | `Iced Coffee_uuid/card_logo.webp` |
-| `<ProductName>.png` | `Hazelnut Latte_uuid/Hazwlnut Latte.png` (note: typo in original) |
+| `<ProductName>.jpeg` | `Vanilla Latte_<uuid>/Vanilla Latte.jpeg` |
+| `card_logo.webp` | `Iced Coffee_<uuid>/card_logo.webp` |
+| `<ProductName>.png` | `Hazelnut Latte_<uuid>/Hazwlnut Latte.png` |
 
-These were all deleted and replaced with `card_logo.png` per folder.
+These were standardized to `card_logo.png` per folder. Old files can be removed as cleanup, but the backend now prefers a single image instead of failing the whole product listing when multiple rows exist for one product UUID.
+
+---
+
+## Duplicate Files
+
+Each product folder should contain one preferred product card image:
+
+```text
+<ProductName>_<UUID>/card_logo.png
+```
+
+If multiple objects exist for one product UUID, `ProductImageReceiver` should not throw a duplicate-key exception. The backend selects a preferred row and falls back to the configured placeholder if URL resolution fails. Duplicate objects are still operational noise and should be cleaned up through the approved storage workflow.
 
 ---
 
@@ -210,69 +220,49 @@ These were all deleted and replaced with `card_logo.png` per folder.
 
 ### `aws s3 ls` splits filenames with spaces
 
-The `awk '{print $4}'` trick breaks on keys like `Vanilla Latte_uuid/file.png`. Use the Python regex approach above instead — it parses the fixed-width date/time/size prefix and captures everything after.
+The `awk '{print $4}'` trick breaks on keys like `Vanilla Latte_<uuid>/file.png`. Use the Python regex approach above; it parses the fixed-width date/time/size prefix and captures the full key.
 
 ### SSL certificate errors
 
-Always pass `--no-verify-ssl`. Supabase S3 endpoint uses a cert chain that AWS CLI doesn't trust. This is safe for our use case (non-sensitive public images).
+If AWS CLI rejects the Supabase endpoint certificate, first check whether the local trust chain can be fixed. If the current Vault runbook still requires `--no-verify-ssl`, use it for the public product-image bucket workflow.
 
-### Upload succeeds but file not visible on website
+### Upload succeeds but file is not visible
 
-1. **Check for duplicate files** — if a product folder has >1 file, the backend crashes with `Duplicate key` in `ProductImageReceiver`. Delete old files first.
-2. **Restart the backend** — the metadata index is built at startup only:
-   ```bash
-   cd /path/to/private/deployment/repo && task release:restart:app APP=iced-latte
-   ```
-3. **Check Redis cache** — `@Cacheable(cacheNames = "productImageUrl")` may serve stale URLs. A restart clears the cache.
+1. Confirm the key follows `<ProductName>_<UUID>/card_logo.png`.
+2. Confirm the object is in the `iced-latte-products` bucket.
+3. Confirm the content type is `image/png`.
+4. Refresh backend metadata using the runtime flow documented in Vault.
+5. Check whether the product API returns the real URL or the placeholder.
+6. If the old image still appears, clear the relevant runtime cache using the Vault-owned procedure.
 
-### Backend returns 500 on /api/v1/products
+### Product API returns placeholder
 
-Check logs for `Duplicate key` errors:
-```bash
-ssh root@116.203.197.65 "docker logs iced-latte-backend 2>&1 | grep -i 'Duplicate key\|IllegalState' | tail -5"
-```
+| Cause | Backend check |
+|-------|---------------|
+| `file_metadata` empty or stale | Run or verify `FileStorageService.refreshBucketIndex(...)` |
+| S3 key skipped | Check for `storage.key.skipped` or `storage.key.invalid_uuid` logs |
+| URL resolver failed | Check `product.image.fallback` metric tags |
+| Missing object | List the bucket and verify the expected key exists |
 
-This means multiple files exist for one product in S3. Delete the extras and restart.
+### Product API fails after image changes
 
-### Cannot curl backend from host
+Check for storage parsing or URL resolution errors in application logs. Production log access is Vault-owned; locally, run the relevant tests or start the backend with local configuration.
 
-The backend container uses `expose: "8083"` (not `ports:`), meaning it's only reachable from other containers on the `reverse-network` Docker network. It is NOT accessible via `localhost:8083` on the host.
+### Frontend cannot load images
 
-To hit the backend directly:
-```bash
-# From inside the container
-docker exec iced-latte-backend wget -qO- 'http://localhost:8083/api/v1/products?size=1'
+This repo owns the API response and storage metadata. The frontend repo owns image domain allow-lists, proxy routes, and Next.js image optimization behavior. Check `Iced-Latte-Frontend` for frontend-side image configuration.
 
-# From the host, through the frontend proxy
-curl -s 'https://iced-latte.uk/api/proxy/products?size=1'
-```
+---
 
-### Frontend returns 404 for /api/v1/products
+## Runtime Boundary
 
-The frontend does NOT proxy `/api/v1/*`. It proxies `/api/proxy/*`:
-- Frontend URL: `https://iced-latte.uk/api/proxy/products` → Backend: `http://iced-latte-backend:8083/api/v1/products`
-- The proxy route is at `src/app/api/proxy/[...path]/route.ts`
-- It reads `NEXT_PUBLIC_API_URL` (e.g., `http://iced-latte-backend:8083/api/v1`) and appends the path segments
+The following items intentionally live in Vault instead of this backend repo:
 
-If you curl `https://iced-latte.uk/api/v1/products` directly, you'll get the Next.js 404 page (HTML), not JSON.
+- SOPS decryption commands and secret file paths.
+- Production SSH host/user details.
+- Container names and host-specific Docker commands.
+- Task release commands.
+- Reverse-proxy routing and shared network wiring.
+- Production log commands and health checks.
 
-### Docker network architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│              reverse-network (external)          │
-│                                                 │
-│  ┌──────────────┐    ┌──────────────────────┐  │
-│  │ reverse proxy│───►│ iced-latte-backend   │  │
-│  │ (Caddy/nginx)│    │ expose: 8083         │  │
-│  └──────────────┘    └──────────────────────┘  │
-│         │                                       │
-│         ▼                                       │
-│  ┌──────────────┐                               │
-│  │ frontend     │                               │
-│  │ (Next.js)    │                               │
-│  └──────────────┘                               │
-└─────────────────────────────────────────────────┘
-```
-
-The reverse proxy terminates TLS and routes to containers by hostname alias. The backend is reachable as `iced-latte-backend` on the shared network.
+Keep this document focused on the backend storage contract and repeatable object-storage operations.

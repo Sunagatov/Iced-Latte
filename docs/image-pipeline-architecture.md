@@ -226,86 +226,102 @@ java.lang.IllegalStateException: Duplicate key fc88cd5d-5049-4b00-8d88-df1d9b4a3
 
 ---
 
-## Frontend → Backend Routing
+## Frontend -> Backend Routing
 
-The frontend (Next.js) does NOT expose the backend API directly. It uses a **server-side proxy route**:
+The frontend does not need to expose the backend API directly to browsers. The
+normal production shape is a server-side proxy route in `Iced-Latte-Frontend`
+that forwards allowed API paths to the backend service.
 
-```
-Browser → https://iced-latte.uk/api/proxy/products?size=10
-                                    │
-                                    ▼
-         Next.js Route Handler: src/app/api/proxy/[...path]/route.ts
-                                    │
-                                    │ fetch(`${NEXT_PUBLIC_API_URL}/products?size=10`)
-                                    │       = http://iced-latte-backend:8083/api/v1/products?size=10
-                                    ▼
-                          Backend container (port 8083)
+```text
+Browser
+  |
+  | GET /api/proxy/products?size=10
+  v
+Frontend proxy route
+  |
+  | fetch(<backend-api-base>/products?size=10)
+  | adds auth headers from server-side session/cookies when required
+  v
+Backend product API
+  |
+  | resolves image URLs from file_metadata
+  v
+Product response with imageUrl
 ```
 
 Key details:
-- `NEXT_PUBLIC_API_URL` in prod = `http://iced-latte-backend:8083/api/v1` (internal Docker network hostname)
-- The proxy handles auth (reads JWT from httpOnly cookies, adds `Authorization` header)
-- The proxy has a 30-second timeout (`FETCH_TIMEOUT_MS`)
-- Path validation: only `[a-zA-Z0-9/_-]` characters allowed
-- If the backend is down, the proxy returns `503 API unavailable`
 
-**Common mistake:** Curling `https://iced-latte.uk/api/v1/products` returns a Next.js 404 page (HTML). The correct public URL is `https://iced-latte.uk/api/proxy/products`.
-
----
-
-## Docker Network Architecture
-
-```yaml
-# From the production backend docker-compose.yml
-services:
-  backend:
-    image: zufarexplainedit/iced-latte-backend:latest
-    container_name: iced-latte-backend
-    expose:
-      - "8083"          # NOT ports: — only reachable on Docker network
-    networks:
-      reverse-network:
-        aliases:
-          - iced-latte-backend   # hostname other containers use
-
-networks:
-  reverse-network:
-    external: true      # shared across all compose projects on the server
-```
-
-The backend is **not accessible from the host** via `localhost:8083`. To debug:
-```bash
-# From inside the container
-docker exec iced-latte-backend wget -qO- 'http://localhost:8083/api/v1/products?size=1'
-```
+- Frontend proxy source code and image-domain allow-lists belong in
+  `Iced-Latte-Frontend`.
+- Production API base URLs, container aliases, and reverse-proxy routing belong
+  in Vault.
+- Backend ownership starts at the API request and image URL resolution path.
+- If a browser receives HTML for a product API call, the request likely hit the
+  wrong public route rather than the backend JSON endpoint.
 
 ---
 
-## Deployment Checklist (after image changes)
+## Runtime Network Shape
 
-1. ✅ Ensure exactly **one file per product folder** in S3.
-2. ✅ Folder names follow `<Name>_<UUID>` pattern.
-3. ✅ Restart backend through the private deployment repository.
-4. ✅ Wait ~30-60s, then verify logs show `migration.metadata.refreshed: bucket=iced-latte-products`.
-5. ✅ Test a direct public URL returns HTTP 200.
-6. ✅ Test the API returns the new URL (not placeholder).
-7. ✅ Check the website renders images (not broken image icons).
+The backend is normally reached by another service on a private runtime network;
+it should not require direct public exposure for product API traffic.
+
+```text
+                 public HTTPS
+Browser ─────────────────────────► edge / frontend entrypoint
+                                           |
+                                           | server-side API proxy
+                                           v
+                                  private runtime network
+                                           |
+                                           v
+                                  backend application
+                                           |
+                                           v
+                                  product API + image metadata
+```
+
+Exact production network names, container aliases, host ports, health checks,
+and shell commands are Vault-owned. Keep those values out of this backend repo
+unless they are also part of the backend source contract.
+
+---
+
+## Deployment Checklist After Image Changes
+
+Backend-owned checks:
+
+1. Folder names follow `<Name>_<UUID>`.
+2. Product image objects use the expected card-image file name.
+3. `StorageKeyMetadataParser` accepts product names that contain underscores.
+4. `FileStorageService.refreshBucketIndex` maps object keys into
+   `file_metadata`.
+5. The product API returns a resolved image URL or the configured placeholder.
+6. `ProductImageReceiver` records `product.image.fallback` if URL resolution
+   fails.
+
+Vault-owned/runtime checks:
+
+1. Upload or remove objects in the production bucket.
+2. Refresh or restart the production backend if needed.
+3. Check production logs, health checks, and reverse-proxy routing.
+4. Verify the public website renders product images.
 
 ---
 
 ## Configuration Reference
 
-### Backend (application.yaml / .env.prod)
+### Backend
 
 ```yaml
 spring:
   aws:
     public-url-base: ${AWS_PUBLIC_URL_BASE:}     # If set, uses public URLs (no pre-signing)
     buckets:
-      products: ${AWS_PRODUCT_BUCKET}            # "iced-latte-products"
+      products: ${AWS_PRODUCT_BUCKET}
     link-expiration-time: PT1H                   # Pre-signed URL TTL (fallback only)
     default-image-directory:
-      products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}  # "seed/products"
+      products: ${AWS_DEFAULT_PRODUCT_IMAGES_PATH}
 
 product:
   placeholder-image-url: "/assets/images/product-placeholder.png"  # Returned when no image found
@@ -316,11 +332,13 @@ migration:
   timeout-minutes: 5  # Max time for the async migration to complete
 ```
 
-### Frontend (env vars)
+### Frontend
 
-| Variable | Purpose | Prod value |
-|----------|---------|------------|
-| `NEXT_PUBLIC_API_URL` | Backend API base (used by proxy) | `http://iced-latte-backend:8083/api/v1` |
-| `NEXT_IMAGE_REMOTE_SOURCES` | Allowed domains for Next.js Image optimization | `https://fzvwwpzdudxrdzwbucaw.supabase.co` |
+| Configuration | Owner | Purpose |
+|---------------|-------|---------|
+| Backend API base for proxying | `Iced-Latte-Frontend` / Vault | Server-side proxy target for backend API calls |
+| Image remote-source allow-list | `Iced-Latte-Frontend` | Allows frontend image optimization to load storage URLs |
+| Public routing and reverse proxy | Vault | Runtime mapping from public traffic to services |
 
-> **If `NEXT_IMAGE_REMOTE_SOURCES` doesn't include the Supabase domain**, Next.js `<Image>` will refuse to optimize/load the images and they'll appear broken.
+If the frontend image allow-list does not include the storage public URL host,
+frontend image optimization can reject otherwise valid backend image URLs.

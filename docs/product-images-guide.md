@@ -16,8 +16,8 @@ How to generate, name, and deploy premium product images for the Iced Latte mark
 | Local seed path | `seed/products/<ProductName>_<UUID>/card_logo.png` |
 | Generator | ChatGPT Images (GPT-4o image gen, April 2026+) |
 | Typical file size | ~2 MB per image (36 images = ~72 MB total) |
-| Prod server | `root@116.203.197.65` |
-| Container | `iced-latte-backend` |
+| Runtime operations | Vault-owned |
+| Frontend rendering | `Iced-Latte-Frontend` |
 | Website | https://www.iced-latte.uk/ |
 
 ---
@@ -27,9 +27,29 @@ How to generate, name, and deploy premium product images for the Iced Latte mark
 1. **Write a prompt** per product (see style guide below).
 2. **Paste into ChatGPT** → download the PNG.
 3. **Drop into** `seed/products/<ProductName>_<UUID>/card_logo.png`.
-4. **Upload to S3** (see [supabase-s3-operations.md](supabase-s3-operations.md)).
-5. **Restart backend** — the startup migration re-indexes the bucket.
-6. **Verify** — hit the product API or check the website.
+4. **Upload to S3-compatible object storage** (see [supabase-s3-operations.md](supabase-s3-operations.md) for the key contract and safe command shape; use Vault for production credentials/runtime access).
+5. **Refresh backend metadata** — `FileStorageService.refreshBucketIndex(...)` rebuilds `file_metadata` from object keys.
+6. **Verify the API** — product responses should contain the new image URL, not the placeholder.
+7. **Verify the website** — frontend rendering and image-domain allow-lists live in `Iced-Latte-Frontend`; production routing checks live in Vault.
+
+```text
+Generated PNG
+  |
+  v
+seed/products/<ProductName>_<UUID>/card_logo.png
+  |
+  v
+S3-compatible product bucket
+  |
+  v
+backend metadata refresh
+  |
+  v
+product API imageUrl
+  |
+  v
+frontend product card
+```
 
 ---
 
