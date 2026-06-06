@@ -1,10 +1,6 @@
 package com.zufar.icedlatte.review.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
-public class ReviewModerationException extends RuntimeException {
+public final class ReviewModerationException extends ReviewException {
 
     public ReviewModerationException(String reason) {
         super("Review rejected by moderation: " + reason);
