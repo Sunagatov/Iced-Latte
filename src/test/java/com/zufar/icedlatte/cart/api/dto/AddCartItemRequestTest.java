@@ -10,6 +10,7 @@ class AddCartItemRequestTest {
 
     @Test
     @DisplayName("rejects missing product id")
+    @SuppressWarnings("DataFlowIssue")
     void rejectsMissingProductId() {
         assertThatThrownBy(() -> new AddCartItemRequest(null, 1)).isInstanceOf(NullPointerException.class);
     }
